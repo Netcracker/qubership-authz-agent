@@ -20,7 +20,7 @@ vlsi
   ADR-0097 R7, the text of an answer, ADR-0097 R5, the departures that allow more, which R8 here names, and the third
   defect of meaning.
 - [authz-agent-ADR-0098: Treat a value the agent could not read as unknown, and read each value once per request](20261107-authz-agent-adr-0098-unknown-values-and-source-calls.md):
-  ADR-0098 R1, the three-valued logic that R3 here uses for the attributes of a resource.
+  ADR-0098 R1, the three-valued logic that R3 and R9 here use for the attributes of a resource.
 
 ## Context
 
@@ -46,13 +46,18 @@ predicate of each rule as its condition on the row, and narrow that set where a 
 - **Allowed rows and denied rows of a node**: the rows for which a node of the policy tree, evaluated on that row,
   gives ALLOW and DENY. A node that gives neither on a row is not applicable to it.
 - **All rows** and **no rows**: the two sets that need no predicate.
+- **Target defined on every row**: a target each of whose comparisons gives true or false, under ADR-0098 R1, for every
+  value its operands can take, the state of a failed source included. The check is made once, when the tree is
+  translated, from the comparisons alone: a comparison with a GENERAL PIP is never defined on every row, because its
+  value is unknown where the call fails.
 
 ### Rules
 
 #### The set of rows
 
 - **R1** (`translate`). The rows that a `check/filter` answer admits are the rows that `check/resource` would allow for
-  the same subject and operation, where the predicate of each rule is its condition on the row. R5 and R6 are the exceptions.
+  the same subject and operation, where the predicate of each rule is its condition on the row. R5, R6, and R9 are the
+  exceptions.
 - **R2** (`translate`). With A the allowed rows and D the denied rows of the children of a node, the node gets these
   sets:
 
@@ -73,7 +78,23 @@ predicate of each rule as its condition on the row, and narrow that set where a 
   | unknown | the rows of the predicate | an ALLOW rule: no rows; a DENY rule: denied rows that are unknown |
 
   A rule with a predicate whose condition is false for the subject gives no rows, even where legacy returns its
-  predicate.
+  predicate. The last row of the table applies to a rule whose target is unknown only where the target is defined on
+  every row; a rule whose target is unknown, reads no value whose source failed on the request, and is not defined on
+  every row gets denied rows that are unknown and no allowed rows, whatever its effect and predicate.
+- **R9** (`translate`). The target of a policy or a set is evaluated with every attribute of the resource unknown.
+  Where that target is unknown and reads no value whose source failed on the request, the node gets its rows as
+  follows:
+
+  - where the target is defined on every row, the node is evaluated with its target taken as true. If that evaluation
+    denies some row, or would make the answer `DENY` because a value it reads could not be read (R6), the node gets
+    denied rows that are unknown and no allowed rows; otherwise the node is not applicable to any row;
+  - otherwise, the node gets denied rows that are unknown and no allowed rows.
+
+  A target that reads a value whose source failed on the request gives its node all rows as denied rows, whatever else
+  it reads. A policy whose target is defined on every row and whose rules are ALLOW rules with targets defined on every
+  row and with every value they read available is therefore not applicable under any other algorithm than
+  `DENY_UNLESS_PERMIT`, and a policy or a set with the algorithm `DENY_UNLESS_PERMIT` gets unknown denied rows unless
+  its children allow all rows.
 - **R4** (`translate`). At the root, a row on which the tree is not applicable is denied. The answer is `DENY` when the
   allowed rows of the root are no rows, `ALLOW` when they are all rows, including a tree whose rules have no conditions,
   and `USE_FILTER_CONDITION` with the predicate text otherwise.
@@ -84,7 +105,8 @@ predicate of each rule as its condition on the row, and narrow that set where a 
   dialect, never more. A set of denied rows that is unknown makes the allowed rows of its parent no rows under
   `DENY_OVERRIDES` and `PERMIT_UNLESS_DENY`. A subtraction that a dialect cannot write gives that dialect `null`, and the
   answer is `DENY` when no dialect is left.
-- **R6** (`translate`). A placeholder whose value the agent could not read makes the answer `DENY`.
+- **R6** (`translate`). A placeholder whose value the agent could not read makes the answer `DENY`, except below a
+  policy or a set whose target is unknown, where R9 gives that node its rows.
 
 #### The text of a predicate
 
@@ -121,6 +143,15 @@ is `ALLOW`, where legacy writes `USE_FILTER_CONDITION` with a `null` predicate, 
 The filter must never admit a row that `check/resource` denies, so where a dialect cannot express the exact set, the
 agent gives a smaller one (R5). A placeholder without a value would leave a predicate that matches the wrong rows (R6).
 
+The target of a policy or a set that reads the resource decides, row by row, whether the node applies, and the filter
+cannot name those rows. A node that denies some row where its target holds would deny rows the filter cannot name, so
+its denied rows are unknown, and R5 narrows the answer. Where the target is defined on every row, a node that denies no
+row can only allow or not apply on each row, so reading it as not applicable admits no row that `check/resource` denies
+and keeps the rows its siblings allow, as legacy does. Where `check/resource` can read the target as unknown on a row,
+the node, or the rule, denies that row whatever its children give, so the filter gives it unknown denied rows too (R3,
+R9). Whether a target is defined on every row is decided once, when the tree is translated, not for each request: a
+request-time answer would need the filter to tell, for each target, which of its parts left it unknown.
+
 The legacy text of a DENY group in mongodb and of some negated operators changes which rows the query matches, so these
 are changes of meaning that ADR-0097 R7 allows. The pairs that legacy already writes correctly keep their text, because
 an application may compare or parse it (R7).
@@ -136,6 +167,15 @@ legacy filter, so each is named as allowing more (R8).
   the answer would admit rows that `check/resource` denies.
 - **A3. Keep the legacy negation of `$gt`, `<=`, and `=gt=`.** Rejected by R7: the negated predicate matches a row that
   the DENY rule denies.
+- **A4. Leave every policy or set whose target reads the resource out of the filter, as legacy does.** Rejected by R9:
+  under `DENY_OVERRIDES` a DENY policy left out lets its siblings admit rows that `check/resource` denies.
+- **A5. Give unknown denied rows to every policy or set whose target reads the resource.** Rejected by R9: a policy of
+  ALLOW rules alone under `DENY_OVERRIDES` would empty the rows its siblings allow, where `check/resource` and legacy
+  allow them.
+- **A6. Read every such node that denies no row as not applicable, whatever `check/resource` gives its target.**
+  Rejected by R9: on a resource where `check/resource` reads the target as unknown, such as a comparison over a JSONPath
+  selection that can stop as too large, `check/resource` denies, and the filter would admit the row through the
+  siblings of the node.
 
 ## Consequences
 
@@ -146,6 +186,13 @@ Negative:
 - A DENY rule without a predicate next to a condition on the resource, under `DENY_OVERRIDES` or `PERMIT_UNLESS_DENY`,
   makes the answer `DENY`, where legacy returns the ALLOW predicate.
 - A tree without conditions gets `ALLOW` where legacy answers `USE_FILTER_CONDITION` with a `null` predicate.
+- A target that reads the resource and a PIP, such as `resource.a == '1' AND subject.g == 'x'` or
+  `resource.owner == subject.g` over a GENERAL PIP, is not defined on every row. Its policy, set, or rule makes the
+  answer `DENY` under a `DENY_OVERRIDES` parent even on a request where the PIP answered `["x"]` and `check/resource`
+  allows every row (R3, R9, R5).
+- A policy or a set whose target reads the resource and that denies some row where its target holds makes the answer
+  `DENY` under a `DENY_OVERRIDES` or `PERMIT_UNLESS_DENY` parent (R9, R5), where legacy leaves the node out and returns
+  the predicates of its siblings.
 
 ## Open points
 
