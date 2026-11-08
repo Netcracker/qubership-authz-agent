@@ -46,8 +46,12 @@ predicate of each rule as its condition on the row, and narrow that set where a 
 - **Allowed rows and denied rows of a node**: the rows for which a node of the policy tree, evaluated on that row,
   gives ALLOW and DENY. A node that gives neither on a row is not applicable to it.
 - **All rows** and **no rows**: the two sets that need no predicate.
-- **Node that can deny**: a DENY rule, a policy or a set with the algorithm `DENY_UNLESS_PERMIT`, or a policy or a set
-  with a child that can deny. Any other node can only allow or not apply.
+- **Node that can deny**: a rule, a policy, or a set whose outcome, evaluated on this request with its own target taken
+  as true, can be DENY under ADR-0098 R1. The values of the request are known, and in `check/filter` the attributes of
+  the resource are unknown. A DENY rule whose condition is not false for the subject, and a policy or a set with the
+  algorithm `DENY_UNLESS_PERMIT` whose children do not allow every row, are such nodes. A DENY rule whose condition is
+  false for the subject, and a `DENY_UNLESS_PERMIT` node with a child that allows every row, are not. Any other node
+  can only allow or not apply.
 - **Unknown target**: a target that is neither true nor false, under ADR-0098 R1, on the request or on a row: it reads
   an attribute of the resource during `check/filter`, or a value whose source failed.
 
@@ -162,6 +166,9 @@ legacy filter, so each is named as allowing more (R8).
 - **A6. Deny in `check/resource` for every rule, policy, or set whose target is unknown.** Rejected by R10: a policy of
   ALLOW rules alone would override the permissions of its siblings under `DENY_OVERRIDES`, although it cannot deny on
   any value of its target, and legacy treats it as not applicable.
+- **A7. Decide whether a node can deny from its effect and algorithm alone.** Rejected by R9 and R10: a DENY rule whose
+  condition is false for the subject would deny where its outcome on the request is never DENY, and legacy treats it as
+  not applicable.
 
 ## Consequences
 
