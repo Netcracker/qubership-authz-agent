@@ -531,6 +531,29 @@ func TestAStringEqualsANullOperandOnlyAsAnEmptyList(t *testing.T) {
 	}
 }
 
+// A string literal on the left of == or != compares with a resource operand
+// as a string reference there does, whatever state the operand is in.
+func TestALiteralOnTheLeftEqualsAsAReferenceDoes(t *testing.T) {
+	for _, lit := range []string{"[]", "x"} {
+		for _, op := range []string{"==", "!="} {
+			for _, a := range []Resolved{resolved(t, "NULL", ""), resolved(t, "ABSENT", ""),
+				resolved(t, "VALUE", `"x"`), resolved(t, "VALUE", `"y"`)} {
+				t.Run(fmt.Sprintf("'%s' %s %s %v", lit, op, a.State, a.Value), func(t *testing.T) {
+					b := resolved(t, "VALUE", fmt.Sprintf("%q", lit))
+					byRef := decideValues(t, tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.b "+op+" resource.a"),
+						DefaultOptions(), map[string]Resolved{keyA: a, `["res",".b"]`: b})
+					condition := "'" + lit + "' " + op + " resource.a"
+					got := decide(t, tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", condition), DefaultOptions(), keyA, a)
+					if got != byRef {
+						t.Errorf("allow(%s, resource.a = %s %v) = %v, want %v as for resource.b = %s", condition, a.State, a.Value, got,
+							byRef, lit)
+					}
+				})
+			}
+		}
+	}
+}
+
 // Two lists, nested ones included, are equal as sets of their elements; a
 // list inside keeps its order. Two objects are equal by their members, a
 // number by its value, a string with its case.

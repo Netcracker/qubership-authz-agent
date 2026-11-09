@@ -527,6 +527,19 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 		rails.f = union(rails.f, prod(dnf{at}, dnf{ne}, true))
 		return "eq with the right side read as []", nil
 	}
+	if (op == spectables.OpEQ || op == spectables.OpNE) && lp.st == spectables.StateValue &&
+		lp.cl == spectables.ClassString && L.ref == nil && L.lit != nil && R != nil && R.ref != nil &&
+		rp.st != spectables.StateValue && len(cell.ValueRule) == 1 && cell.ValueRule[0] == spectables.RuleEq {
+		// the same reading with a string literal on the left, whose text is
+		// known at generation
+		at := conj(L.at(lps[i]), rightAt(R, rps[j]))
+		if (L.lit.text == "[]") == (op == spectables.OpEQ) {
+			rails.t = union(rails.t, dnf{at})
+		} else {
+			rails.f = union(rails.f, dnf{at})
+		}
+		return "eq of a literal with the right side read as []", nil
+	}
 	if lp.st != spectables.StateValue || R != nil && rp.st != spectables.StateValue {
 		g.stats.NoTemplate[fmt.Sprintf("%s(%s %s, %s %s)", op, L.kind, lp.st, kindOf(R), rp.st)]++
 		return "", gap(FormGenerator, fmt.Errorf("%s(%s %s, %s %s): value-dependent cell in a state other than VALUE has no template", op,
