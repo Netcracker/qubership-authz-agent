@@ -569,25 +569,40 @@ func TestANestedSetOverTheResourceThatDeniesNoRowDoesNotApply(t *testing.T) {
 }
 
 // subject allowed 'write' reads the decision for write, which a rule over a
-// PIP whose call failed denies as a whole, so a read rule that requires it
-// denies every row over the policy beside it, as the check denies the read.
-// Such a rule used to read the decision as permitted, and the filter allowed
-// every row.
-func TestARuleThatReadsADecisionDeniedOverAFailedSourceDeniesEveryRow(t *testing.T) {
+// PIP whose call failed denies as a whole. A read rule that requires it reads
+// an unknown value rather than a failed source: the read is allowed where the
+// policy beside it allows whatever the value, and denied where the answer
+// depends on it, in the check and in the filter alike.
+func TestARuleThatReadsADecisionDeniedOverAFailedSourceKeepsItsBounds(t *testing.T) {
 	srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
-	r := pipRegistry(t)
-	load(t, r, generalPIP(srv.URL, ""), `{"policySetId": "s", "name": "s", "status": "ACTIVE",
-		"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "PERMIT_OVERRIDES",
-		"policies": [{"policyId": "w", "target": "operation == 'write'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-			"tenantId": "a", "rules": [{"ruleId": "w1", "target": "true", "effect": "ALLOW", "tenantId": "a"},
-				{"ruleId": "w2", "target": "true", "condition": "subject.g == 'x'", "effect": "ALLOW", "tenantId": "a"}]},
-			{"policyId": "p", "target": "operation == 'read'", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
-			"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
-			{"policyId": "q", "target": "operation == 'read'", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
-			"rules": [{"ruleId": "r", "target": "true", "condition": "subject allowed 'write' on resource",
-			"effect": "ALLOW", "tenantId": "a"}]}]}`)
-	if got := filterOf(t, r, "a", "read"); got != deny {
-		t.Errorf("Filter(doc, read) = %s, want %s", got, deny)
+	for _, tc := range []struct {
+		name, beside string
+		allowed      bool
+		want         string
+	}{
+		{"beside a policy that allows", `{"policyId": "p", "target": "operation == 'read'",
+			"combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},`, true, allow},
+		{"alone", ``, false, deny},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), `{"policySetId": "s", "name": "s", "status": "ACTIVE",
+				"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "PERMIT_OVERRIDES",
+				"policies": [{"policyId": "w", "target": "operation == 'write'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+					"tenantId": "a", "rules": [{"ruleId": "w1", "target": "true", "effect": "ALLOW", "tenantId": "a"},
+					{"ruleId": "w2", "target": "true", "condition": "subject.g == 'x'", "effect": "ALLOW", "tenantId": "a"}]},
+					`+tc.beside+`
+					{"policyId": "q", "target": "operation == 'read'", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+					"rules": [{"ruleId": "r", "target": "true", "condition": "subject allowed 'write' on resource",
+					"effect": "ALLOW", "tenantId": "a"}]}]}`)
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0].Allowed != tc.allowed {
+				t.Errorf("Decide(read doc) = %+v, want allowed %t", got[0], tc.allowed)
+			}
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
+			}
+		})
 	}
 }
 

@@ -835,19 +835,20 @@ func (g *gen) access(a policyir.Access) (leafRails, error) {
 		hi = name + "_loP"
 	}
 	// where a rule of the decision applies over a failed source, the
-	// decision denies the resource as a whole, so the leaf is unknown
-	known, failed := dnfTrue, dnfFalse
+	// decision denies the resource as a whole, so the leaf is unknown; a
+	// rule that reads it keeps its bounds there, as over any unknown value
+	known := dnfTrue
 	if g.fails(g.decRoots[name]) {
-		known, failed = ref(name+"_loE", true), ref(name+"_loE", false)
+		known, three = ref(name+"_loE", true), true
 	}
 	if !a.Denied {
 		return leafRails{t: g.product(ref(name+"_loP", false), known), f: g.product(ref(hi, true), known),
-			threeValued: three, failed: failed}, nil
+			threeValued: three}, nil
 	}
 	// denied: deny is true, permit false, and not applicable is
 	// denied_without_decision, true
 	return leafRails{t: g.product(ref(hi, true), known), f: g.product(ref(name+"_loP", false), known),
-		threeValued: three, failed: failed}, nil
+		threeValued: three}, nil
 }
 
 // fails reports whether a rule condition at or below n reads a source that

@@ -655,6 +655,22 @@ func TestARuleWhoseConditionReadsAFailedPIPDeniesTheResource(t *testing.T) {
 	}
 }
 
+// A PIP the tenant declares twice has no usable declaration, and a rule that
+// reads it denies the resource as one over a PIP whose call failed does,
+// beside a policy that allows; the filter denies every row.
+func TestARuleOverAPIPDeclaredTwiceDeniesTheResource(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusOK, `["y"]`)
+	r := pipRegistry(t)
+	load(t, r, generalPIP(srv.URL, "")+", "+generalPIP(srv.URL, ""),
+		besideAllow("PERMIT_OVERRIDES", "true", "true", "ALLOW", "subject.g == 'y'"))
+	if got, want := decide(t, r, readDoc(t, "a", "x", 1))[0], (Result{Reason: "PIP resolution failed: subject.g"}); got != want {
+		t.Errorf("Decide(read doc) = %+v, want %+v", got, want)
+	}
+	if got := filterOf(t, r, "a", "read"); got != deny {
+		t.Errorf("Filter(doc, read) = %s, want %s", got, deny)
+	}
+}
+
 // A condition that is unknown for a value alone keeps its bounds beside a
 // policy that allows: resource.a. is undefined on the doc, and the PIP the
 // condition also reads answers. With the PIP failed, the same rule denies
