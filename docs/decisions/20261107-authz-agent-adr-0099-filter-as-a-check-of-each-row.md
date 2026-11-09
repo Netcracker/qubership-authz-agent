@@ -83,9 +83,17 @@ predicate of each rule as its condition on the row, and narrow that set where a 
 
   A rule with a predicate whose condition is false for the subject gives no rows, even where legacy returns its
   predicate. R9 gives its rows to a rule whose target is an unknown target.
-- **R9** (`translate`). In `check/filter`, a rule, a policy, or a set whose target is an unknown target gets denied
-  rows that are unknown and no allowed rows if it is a node that can deny, and is not applicable to any row otherwise,
-  whatever made the target unknown.
+- **R9** (`translate`). In `check/filter`, a rule, a policy, or a set whose target is an unknown target gets its rows
+  as follows, whatever made the target unknown:
+  1. a DENY rule with a predicate, whose condition is not false for the subject, keeps its predicate: it gets the rows
+     of its predicate as denied rows and no allowed rows;
+  2. any other node that can deny gets denied rows that are unknown and no allowed rows;
+  3. a node that cannot deny is not applicable to any row.
+
+  In `check/filter`, an ALLOW rule whose condition reads a value whose source failed on the request gives all rows as
+  denied rows. A node with such a rule below it, and the rule itself, are therefore nodes that can deny in
+  `check/filter`, and get denied rows that are unknown under an unknown target. `check/resource` does not deny for such
+  a node under R10, and O2 records the difference.
 - **R10** (`translate`). In `check/resource`, a rule, a policy, or a set whose target is an unknown target on the
   resource gives DENY if it is a node that can deny, and is not applicable otherwise.
 - **R4** (`translate`). At the root, a row on which the tree is not applicable is denied. The answer is `DENY` when the
@@ -143,6 +151,10 @@ does not apply, so reading it as not applicable denies nothing that it would all
 siblings allow. Legacy answers so as well (R9, R10). The rule is the same whatever made the target unknown, a resource
 attribute in the filter or a failed source, because ADR-0098 R1 does not tell them apart.
 
+A DENY rule with a predicate already names the rows it denies, so under an unknown target the filter subtracts those
+rows rather than every row. That denies each row `check/resource` denies through the rule, and also the rows where the
+target does not hold (R9).
+
 The legacy text of a DENY group in mongodb and of some negated operators changes which rows the query matches, so these
 are changes of meaning that ADR-0097 R7 allows. The pairs that legacy already writes correctly keep their text, because
 an application may compare or parse it (R7).
@@ -187,3 +199,7 @@ Negative:
 - **O1.** Whether R5 may make the answer `DENY` for a DENY rule without a predicate next to a condition on the resource,
   as the second negative consequence states. The owner of the policy decision code (`vlsi`) confirms it against data on
   `check/filter` calls for resource types that use deny lists. The point affects R3 and R5.
+- **O2.** Under an unknown target, `check/filter` gives unknown denied rows to a node whose ALLOW rule reads a failed
+  source in its condition (R9), while `check/resource` treats that node as not applicable and can allow the resource
+  through its siblings (R10). The owner of the policy decision code (`vlsi`) decides how `check/resource` treats a
+  failed source in the condition of an ALLOW rule. The point affects R9 and R10.
