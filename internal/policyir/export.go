@@ -152,6 +152,7 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 			t.err = fmt.Errorf("policy set %d: %w", i, err)
 			continue
 		}
+		s.cutEnums()
 		for _, key := range unknown {
 			id := *head.TenantID
 			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: unknown key %s", i, head.ID, key))
@@ -239,7 +240,8 @@ type exportHead struct {
 	Status   string
 }
 
-// readHead reads the head of raw. A field of the wrong type reads as absent,
+// readHead reads the head of raw, with the status cut as [enumText] cuts it.
+// A field of the wrong type reads as absent,
 // so a set whose status is not a string fails its tenant when the set itself
 // is read.
 func readHead(raw json.RawMessage) *exportHead {
@@ -258,6 +260,7 @@ func readHead(raw json.RawMessage) *exportHead {
 	}
 	_ = json.Unmarshal(fields.PolicySetID, &h.ID)
 	_ = json.Unmarshal(fields.Status, &h.Status)
+	h.Status = enumText(h.Status)
 	return h
 }
 
@@ -351,11 +354,33 @@ func condition(text *string, place Place, iterVar string) *Condition {
 	return c
 }
 
-// algorithmOf reads the name of a combining algorithm, with the characters
-// up to U+0020 at either end cut, as the policy service cuts every enum field
-// of an upload.
+// enumText is the text of an enum field of an upload with the characters up
+// to U+0020 at either end cut, as the policy service cuts it.
+func enumText(s string) string {
+	return strings.TrimFunc(s, func(r rune) bool { return r <= ' ' })
+}
+
+// cutEnums cuts the enum fields of s and of the policies, rules, and sets it
+// holds, as [enumText] does.
+func (s *exportSet) cutEnums() {
+	s.Status, s.Type, s.CombiningAlgorithm = enumText(s.Status), enumText(s.Type), enumText(s.CombiningAlgorithm)
+	if s.Iterate != nil {
+		s.Iterate.CombiningAlgorithm = enumText(s.Iterate.CombiningAlgorithm)
+	}
+	for i := range s.Policies {
+		p := &s.Policies[i]
+		p.CombiningAlgorithm = enumText(p.CombiningAlgorithm)
+		for j := range p.Rules {
+			p.Rules[j].Effect, p.Rules[j].RuleType = enumText(p.Rules[j].Effect), enumText(p.Rules[j].RuleType)
+		}
+	}
+	for i := range s.PolicySets {
+		s.PolicySets[i].cutEnums()
+	}
+}
+
+// algorithmOf reads the name of a combining algorithm.
 func algorithmOf(a string) (Algorithm, error) {
-	a = strings.TrimFunc(a, func(r rune) bool { return r <= ' ' })
 	if !slices.Contains(algorithms, Algorithm(a)) {
 		return "", fmt.Errorf("combiningAlgorithm %q unknown", a)
 	}
@@ -688,6 +713,13 @@ func readPIP(raw json.RawMessage) (p *PIP, unknown []string, err error) {
 	}
 	if e.Name == nil {
 		return nil, nil, errors.New("no name")
+	}
+	// A text the cut would leave empty stays as sent, as the policy service
+	// keeps it.
+	for _, f := range []*string{&e.PipType, &e.Type} {
+		if c := enumText(*f); c != "" {
+			*f = c
+		}
 	}
 	p = &PIP{
 		Name: *e.Name, Type: PIPType(e.PipType), ReturnType: e.Type, Domain: e.Domain, URL: e.URL,

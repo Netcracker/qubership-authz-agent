@@ -733,11 +733,13 @@ func TestFromRegularCutsTheSpacesAroundAnAlgorithm(t *testing.T) {
 
 	e := fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "combiningAlgorithm": "\tDENY_OVERRIDES ",
 		"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": " DENY_UNLESS_PERMIT"},
-		"policies": [{"policyId": "p", "combiningAlgorithm": "PERMIT_OVERRIDES\n"}]}]`, `[]`)
+		"policies": [{"policyId": "p", "combiningAlgorithm": "PERMIT_OVERRIDES\n"}],
+		"policySets": [{"policySetId": "n", "combiningAlgorithm": " PERMIT_UNLESS_DENY"}]}]`, `[]`)
 
 	want := `set "s" name="" domain="" algorithm=DENY_OVERRIDES
   iterate var="iterate1" algorithm=DENY_UNLESS_PERMIT
   policy "p" name="" algorithm=PERMIT_OVERRIDES
+  set "n" name="" domain="" algorithm=PERMIT_UNLESS_DENY
 `
 	if got := tree(t, e, "t").Dump(); got != want {
 		t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
@@ -746,6 +748,57 @@ func TestFromRegularCutsTheSpacesAroundAnAlgorithm(t *testing.T) {
 		"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": "\u00a0DENY_UNLESS_PERMIT"}}]`, `[]`)
 	if got := tree(t, nbsp, "t").Dump(); !strings.Contains(got, "always fails") {
 		t.Errorf("Dump() of an algorithm after a no-break space =\n%s\nwant the set always failing", got)
+	}
+}
+
+// The status and the type of a set, the effect and the ruleType of a rule,
+// and the pipType and the type of a PIP are read with the characters up to
+// U+0020 at either end cut, as the policy service cuts every enum field of an
+// upload. A status after a no-break space is not cut, and the set applies.
+func TestFromRegularCutsTheSpacesAroundEveryEnumField(t *testing.T) {
+	t.Parallel()
+
+	inactive := fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "status": " INACTIVE\t"},
+		{"tenantId": "t", "policySetId": "n", "status": "\u00a0INACTIVE"}]`, `[]`)
+	if got, want := inactive.Dropped["t"], []string{`policy set 0 "s": status INACTIVE`}; !slices.Equal(got, want) {
+		t.Errorf("Dropped[t] = %q, want %q", got, want)
+	}
+
+	rules := tree(t, fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "policies": [{"policyId": "p", "rules": [
+		{"ruleId": "d", "effect": " DENY\n"},
+		{"ruleId": "f", "effect": "ALLOW", "ruleType": "\rAPPLICABLE_FOR_FRONTEND "}]}]}]`, `[]`), "t")
+	want := "set \"s\" name=\"\" domain=\"\" algorithm=absent\n  policy \"p\" name=\"\" algorithm=absent\n" +
+		"    rule \"d\" name=\"\" effect=DENY\n    rule \"f\" name=\"\" effect=ALLOW frontend\n"
+	if got := rules.Dump(); got != want {
+		t.Errorf("Dump() of the rules =\n%s\nwant\n%s", got, want)
+	}
+
+	simplified := tree(t, fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "type": " SIMPLIFIED",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "resourceType == 'R'",
+		"policies": [{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "operation == 'READ'",
+			"rules": [{"ruleId": "r", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]}]`, `[]`), "t")
+	if got, _, _ := strings.Cut(simplified.Dump(), "\n"); !strings.HasPrefix(got, `simplified "s"`) {
+		t.Errorf("first line of Dump() of a set of type \" SIMPLIFIED\" = %s, want a simplified group", got)
+	}
+
+	pips := tree(t, fromRegular(t, `[]`, `[{"tenantId": "t", "name": "subject.h", "pipType": "HEADER ", "header": "h"},
+		{"tenantId": "t", "name": "subject.g", "pipType": "\tGENERAL", "type": " JSON", "url": "http://pip", "jsonPath": "$.a"}]`), "t")
+	for name, want := range map[string][2]string{"subject.h": {"HEADER", ""}, "subject.g": {"GENERAL", "JSON"}} {
+		pip, ok := pips.PIP(name)
+		if !ok || string(pip.Type) != want[0] || pip.ReturnType != want[1] {
+			t.Errorf("PIP(%s) = %+v, %t, want pipType %s and type %q", name, pip, ok, want[0], want[1])
+		}
+	}
+
+	// A PIP field the cut would leave empty stays as sent: a blank type is
+	// kept, and a blank pipType is refused rather than read as GENERAL.
+	blankType := tree(t, fromRegular(t, `[]`, `[{"tenantId": "t", "name": "subject.g", "type": " ", "url": "http://pip"}]`), "t")
+	if pip, ok := blankType.PIP("subject.g"); !ok || pip.ReturnType != " " {
+		t.Errorf("PIP(subject.g) of type \" \" = %+v, %t, want the type kept as \" \"", pip, ok)
+	}
+	blankPIPType := fromRegular(t, `[]`, `[{"tenantId": "t", "name": "subject.g", "pipType": " ", "url": "http://pip"}]`)
+	if err := blankPIPType.Failed["t"]; err == nil || !strings.Contains(err.Error(), `pipType " " unknown`) {
+		t.Errorf("Failed[t] of a PIP of pipType \" \" = %v, want pipType \" \" unknown", err)
 	}
 }
 
