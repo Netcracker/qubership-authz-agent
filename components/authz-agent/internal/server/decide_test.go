@@ -16,10 +16,13 @@ package server
 
 import (
 	"fmt"
+	"maps"
 	"net/http"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
+
+	"authz-agent/components/authz-agent/internal/legacy"
 )
 
 // admissionStub stands in for the caller and token checks of the embedded
@@ -134,5 +137,29 @@ func TestDecide_ARefusedSubjectTokenDeniesEveryItem(t *testing.T) {
 		if code != 200 || got != tc.want {
 			t.Errorf("POST %s with an expired subject token = %d %s, want 200 %s", tc.path, code, got, tc.want)
 		}
+	}
+}
+
+// TestDecide_ThePIPsGetNoTokenOfTheCaller: the headers a PIP may forward, or
+// a HEADER PIP may read into a url or a body, leave out the caller's tokens,
+// as input.requestHeaders does; the other headers stay.
+func TestDecide_ThePIPsGetNoTokenOfTheCaller(t *testing.T) {
+	headers := map[string][]string{"Authorization": {"Bearer m2m"}, "Incoming-Token": {"eyJ.user.jwt"},
+		"X-Corr": {"c0", "c1"}}
+	input := legacy.Input(headers, nil)
+	want := map[string]string{"x-corr": "c1"}
+	req, err := snapshotRequest("a", input, nil, headers, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !maps.Equal(req.Headers, want) {
+		t.Errorf("snapshotRequest headers = %v, want %v", req.Headers, want)
+	}
+	freq, err := filterRequest("a", input, nil, headers, legacy.Resource{ResourceType: "doc"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !maps.Equal(freq.Headers, want) {
+		t.Errorf("filterRequest headers = %v, want %v", freq.Headers, want)
 	}
 }

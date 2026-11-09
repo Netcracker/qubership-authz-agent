@@ -414,6 +414,22 @@ var skipHeaders = map[string]bool{
 	"incoming-token": true,
 }
 
+// RequestHeaders returns the headers of a request that policies and PIPs
+// may read, under their lowercase names: every header but [skipHeaders],
+// which leaves out the transport's own headers, the caller's admission
+// token, and the subject's token. A repeated header has its last value.
+func RequestHeaders(headers map[string][]string) map[string]string {
+	out := map[string]string{}
+	for k, values := range headers {
+		name := strings.ToLower(k)
+		if skipHeaders[name] || len(values) == 0 {
+			continue
+		}
+		out[name] = values[len(values)-1]
+	}
+	return out
+}
+
 // Input builds the canonical authorize input of a legacy request from its
 // headers and resources. The admission token is the Authorization header.
 // The subject is Incoming-Token when present, else Authorization, and empty
@@ -439,12 +455,8 @@ func Input(headers map[string][]string, resources []Resource) map[string]any {
 		}
 	}
 	requestHeaders := map[string]any{}
-	for k, values := range headers {
-		name := strings.ToLower(k)
-		if skipHeaders[name] || len(values) == 0 {
-			continue
-		}
-		requestHeaders[name] = values[len(values)-1]
+	for name, v := range RequestHeaders(headers) {
+		requestHeaders[name] = v
 	}
 	list := make([]any, len(resources))
 	for i, r := range resources {
