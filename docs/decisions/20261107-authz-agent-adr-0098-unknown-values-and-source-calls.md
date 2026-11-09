@@ -72,10 +72,11 @@ it, answer 200, and read each value from its source at most once per request and
   of a node that can deny, as ADR-0099 defines both terms:
   1. `check/resource` denies the resource as a whole. A condition whose value R1 settles without the failed value,
      such as an `OR` with another true operand, gives no such denial.
-  2. `check/filter` denies the rows on which the rule can apply and its condition can be unknown, which the predicate
-     of the rule names, and admits the rows the tree allows minus those rows. Where a dialect cannot write those rows,
-     the answer in that dialect is `DENY`. A condition that reads the failed value is unknown on every row of the
-     predicate, even where another operand over the resource settles it on some rows.
+  2. `check/filter` denies exactly the rows on which the rule can apply and its condition is unknown under R1, with the
+     failed value unknown and each attribute of the resource taken from the row, and admits the rows the tree allows
+     minus those rows. `subject.x == 'v' OR resource.a == 'y'` with a failed `subject.x` denies the rows where `a` is
+     not `y`, and keeps the rows where `a` is `y`. Where a dialect cannot write the denied rows, the answer in that
+     dialect is `DENY`.
 - **R4** (`translate`). A resource denied under R2 because of an unknown value, or under R11, gets the denial reason
   `PIP resolution failed`, with the names of the sources that failed, and the agent writes a `WARN` line for it.
 
@@ -111,8 +112,7 @@ without roles keeps legacy behavior until the path with obligations has an owner
 Legacy denies a resource when an applicable rule's condition fails on a source, even where another rule allows it.
 Projects rely on that denial, so the owner decided on 2026-11-09 to keep it (ADR-0097 R1). Whether the condition
 depends on the failed value is settled by R1, so the order of operands still does not change the answer (R11). The filter
-cannot tell on which rows another operand over the resource settles such a condition, so it denies every row the
-predicate of the rule names, which keeps it no wider than `check/resource` (R11).
+denies the rows on which `check/resource` would deny under R11, row by row, as ADR-0099 R1 requires.
 
 The agent changes how it reacts to a failure, not what a response means, so a source's answers keep the meaning legacy
 gave them (R5). The permission scope service never returns 404 by its contract: a subject without assignments gets 200
@@ -150,9 +150,6 @@ Negative:
 - A permission scope service that answers 404 makes the agent deny where legacy reads an empty scope.
 - A resource that one rule allows is denied when the condition of another applicable rule depends on a failed source
   (R11), as in legacy.
-- In `check/filter`, a condition such as `subject.x == 'v' OR resource.a == 'y'` with a failed `subject.x` denies the
-  rows where `a` is `y` too, which `check/resource` allows (R11). The filter stays no wider than `check/resource`, as
-  ADR-0099 requires.
 
 ## Open points
 
