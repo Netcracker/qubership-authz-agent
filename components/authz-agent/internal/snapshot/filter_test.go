@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 
@@ -306,6 +307,48 @@ func TestACustomDenyPredicateIsNegated(t *testing.T) {
 	if want := `"customFilterCondition":{"logic":{"op":"NOT"`; !strings.Contains(got, want) ||
 		!strings.Contains(got, `"predicate":"owner"`) {
 		t.Errorf("Filter(doc, read) = %s, want a customFilterCondition with %s and the predicate owner", got, want)
+	}
+}
+
+// Two DENY customPredicates of rules with one ruleId, in two sets, are both
+// subtracted, each under a path of its own; one predicate written twice is
+// subtracted once.
+func TestCustomDenyPredicatesOfOneRuleIdAreKeptApart(t *testing.T) {
+	const owner = `"customPredicate": {"predicate": "owner", "params": {"x": 1}}`
+	for _, tc := range []struct {
+		name, second string
+		want         []string
+	}{
+		{"two predicates", `"customPredicate": {"predicate": "country", "params": {"x": 2}}`, []string{"country", "owner"}},
+		{"one predicate twice", owner, []string{"owner"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := filter(t, false, "read", denySet("s1", owner), denySet("s2", tc.second))
+			var a struct {
+				Custom struct {
+					Logic json.RawMessage            `json:"logic"`
+					Data  map[string]json.RawMessage `json:"data"`
+				} `json:"customFilterCondition"`
+			}
+			if err := json.Unmarshal([]byte(got), &a); err != nil {
+				t.Fatalf("Filter(doc, read) = %s: %v", got, err)
+			}
+			var predicates []string
+			for path, d := range a.Custom.Data {
+				if !strings.Contains(string(a.Custom.Logic), `"path":"`+path+`"`) {
+					t.Errorf("logic %s does not read the path %s of data", a.Custom.Logic, path)
+				}
+				var p struct{ Predicate string }
+				if err := json.Unmarshal(d, &p); err != nil {
+					t.Fatalf("data %s of Filter(doc, read) = %s: %v", path, d, err)
+				}
+				predicates = append(predicates, p.Predicate)
+			}
+			slices.Sort(predicates)
+			if !slices.Equal(predicates, tc.want) {
+				t.Errorf("Filter(doc, read) = %s, want the predicates %v under data", got, tc.want)
+			}
+		})
 	}
 }
 

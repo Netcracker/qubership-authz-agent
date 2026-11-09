@@ -16,6 +16,7 @@ package regogen
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -64,7 +65,11 @@ func orOf(terms []*fexpr) *fexpr {
 // key identifies x by its structure and its predicates.
 func (x *fexpr) key() string {
 	if x.kind == "leaf" {
-		return "leaf:" + x.term.key + "\x00" + jsonText(x.term.textObject())
+		k := "leaf:" + x.term.key + "\x00" + jsonText(x.term.textObject())
+		if c := x.term.custom; c != nil {
+			k += "\x00" + jsonText(c.object())
+		}
+		return k
 	}
 	parts := make([]string, len(x.parts))
 	for i, p := range x.parts {
@@ -486,6 +491,10 @@ func filterAnswer(a rows) FilterAnswer {
 	}
 	var logic []jsonvalue.Value
 	data := jsonvalue.NewObject()
+	paths := map[string]string{}
+	for _, g := range a.groups {
+		namePaths(g, paths)
+	}
 	for _, g := range a.groups {
 		if l := renderCustom(g); l != nil {
 			logic = append(logic, l)
@@ -563,17 +572,46 @@ func renderCustom(x *fexpr) jsonvalue.Value {
 	return opObject(op, parts)
 }
 
+// object is c as an entry of the data of customFilterCondition.
+func (c *customTerm) object() *jsonvalue.Object {
+	o := jsonvalue.NewObject()
+	o.Set("predicate", c.Predicate)
+	params := jsonvalue.NewObject()
+	for _, k := range sortedKeys(c.Params) {
+		params.Set(k, c.Params[k])
+	}
+	o.Set("params", params)
+	return o
+}
+
+// namePaths gives each customPredicate under x a path of its own in the
+// data of customFilterCondition: the key of its rule, followed by #2, #3,
+// and so on where a different predicate already holds that path. Rule IDs
+// are unique within a policy only, so two rules of one tenant may share
+// one. paths maps each path to the predicate there, as JSON.
+func namePaths(x *fexpr, paths map[string]string) {
+	if x.kind != "leaf" {
+		for _, p := range x.parts {
+			namePaths(p, paths)
+		}
+		return
+	}
+	if x.term.custom == nil {
+		return
+	}
+	body := jsonText(x.term.custom.object())
+	path := x.term.key
+	for n := 2; paths[path] != "" && paths[path] != body; n++ {
+		path = fmt.Sprintf("%s#%d", x.term.key, n)
+	}
+	paths[path] = body
+	x.term.key = path
+}
+
 func collectCustom(x *fexpr, data *jsonvalue.Object) {
 	if x.kind == "leaf" {
 		if c := x.term.custom; c != nil {
-			o := jsonvalue.NewObject()
-			o.Set("predicate", c.Predicate)
-			params := jsonvalue.NewObject()
-			for _, k := range sortedKeys(c.Params) {
-				params.Set(k, c.Params[k])
-			}
-			o.Set("params", params)
-			data.Set(x.term.key, o)
+			data.Set(x.term.key, c.object())
 		}
 		return
 	}
