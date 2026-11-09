@@ -74,7 +74,8 @@ meaning and only toward less access, and record every other departure in an ADR 
 
 - **R4** (`translate`). A departure that is not a narrowing departure, or that has a cause other than a defect of
   meaning, exists only where a rule of an ADR names it. Code that departs from the legacy answer without such a rule
-  violates R1.
+  violates R1. A rule of an ADR, here and in R1, R5, R6, R8, and R9, is a numbered rule; a Context, a Consequence, or a
+  record without numbered rules does not name a departure.
 - **R5** (`translate`). A departure that allows a resource or a row that legacy denies is named in a rule of an ADR as
   allowing more, whatever its cause.
 - **R6** (`translate`). A behavior legacy does not have, such as an input it does not read, a placeholder it does not
@@ -85,13 +86,17 @@ meaning and only toward less access, and record every other departure in an ADR 
 - **R7** (`translate`). The body of an answer matches the legacy answer byte for byte, including the escaping, the
   quotation marks, the URL encoding, and a mongodb predicate that is not valid JSON. A value from the policy data or the
   request is substituted into a predicate as legacy substitutes it, with no escaping of the agent's own. A departure
-  under R2 or R4 changes the bytes that its change of meaning needs and no others.
+  under R2 or R4 changes the bytes that its change of meaning needs and no others. Where legacy writes the elements of
+  a list or the terms of a predicate in an order that changes from one run of legacy to the next, that order is not
+  part of the legacy answer, and any order matches it.
 
 #### The record of departures
 
 - **R8** (`parity`). Every parity case that the agent answers differently from its golden has an entry in
   `test/parity/suite/accepted_divergences.go`, and the `Decision` of the entry names the ADR and the rule that allow the
-  departure, as `ADR-0097 R3`. An entry without such a rule fails the suite.
+  departure, as `ADR-0097 R3`. An entry without such a rule fails the suite. A normalization in the comparison of the
+  suite that removes only an order that R7 excludes from the legacy answer is not a departure and needs no entry; any
+  other normalization that hides a difference needs one.
 - **R9** (`parity`). An entry whose agent answer allows a resource or a row that the golden denies is marked as allowing
   more (`AllowsMore`), and its `Decision` names a rule under R5.
 - **R10** (`parity`). A golden stays as it was recorded when the agent departs from it. The agent's answer goes into
@@ -143,7 +148,9 @@ Negative:
 - Legacy defects that allow access stay in the agent until an ADR names each of them.
 - A predicate value with special characters can still change the structure of the predicate, as it does in legacy.
 - A parity case whose legacy answer depends on the order of operands or on which source failed gets a different answer
-  from the agent, and is listed in `accepted_divergences.go` with `ADR-0097 R3` or a rule of ADR-0098 or ADR-0099.
+  from the agent. Its entry in `accepted_divergences.go` names `ADR-0097 R3` for a narrowing departure in the order of
+  operands, `ADR-0097 R2` for another narrowing departure, and the rule under R5 that names it otherwise, such as
+  ADR-0098 R12.
 
 Follow-ups:
 
@@ -152,16 +159,19 @@ Follow-ups:
   need a rule under R5, or the agent gives the legacy answer there.
 - The substitution of `${subject.isM2M}` in `requestAttributes`, which legacy does not perform, is a decision of the
   owner without a record. It needs an ADR rule under R6.
+- #42 adds `acceptedExportDivergences`, whose entries `set-type` and `undeclared-pip` name
+  `docs/parity/export-fed-agent-divergences.md` as their `Decision`. Under R8 each needs an ADR rule; `undeclared-pip`
+  allows more, so its rule is one under R5, such as ADR-0098 R12.
+- The suite prints `Decision` and does not check it, and `AllowsMore` arrives with #42. The check that R8 and R9
+  describe needs a change of the suite of its own.
+- Two records depart from legacy without a numbered rule that names the departure, so their parity entries have no rule
+  to cite under R8: ADR-0093, whose first Negative bullet turns `tenant-claim/tc7-claim-in-the-end-user-token` from
+  `false` to `true`, and ADR-0083, which compares a number with a string by value and a list with its text in document
+  order. Each needs a numbered rule that names the departure.
 
 ## Open points
 
-- **O1.** ADR-0098 allows some requests that legacy does not. A condition such as `subject.x == 'v' OR resource.a == 'y'`
-  with an unknown `subject.x` and a true right operand allows, where legacy denies because it stops at the failed
-  operand; legacy allows the same request when the operands are swapped. A bulk request that reads a failed source gets
-  500 from legacy, and the agent allows the items that do not depend on the source. The owner of the policy decision
-  code (`vlsi`) decides whether such departures are narrowing departures under R2, or departures that allow more under
-  R5. The point affects R2, R5, and R9.
 - **O2.** The owner decided that the path that decides on behalf of a user reads the caller's token for a TOKEN PIP,
   where legacy reads nothing, and calls User Management at another address. Reading the caller's token can allow more
-  than legacy, which R2 does not permit without a record. The owner of the policy decision code (`vlsi`) decides whether it
-  gets an ADR rule under R5 or the legacy answer. The point affects R2 and R5.
+  than legacy, which R2 does not permit without a record. The owner of the policy decision code (`vlsi`) decides whether
+  it gets an ADR rule under R5 or the legacy answer. The point affects R2 and R5.
