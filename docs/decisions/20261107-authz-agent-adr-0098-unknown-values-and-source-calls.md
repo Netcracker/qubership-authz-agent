@@ -63,8 +63,11 @@ it, answer 200, and read each value from its source at most once per request and
   4. the result of `subject allowed` or `subject denied` over a decision that depends on an unknown value;
   5. the decision of a policy set that legacy never evaluates, as ADR-0100 defines it;
   6. a value of a PIP that ADR-0090 rule 2 isolates;
-  7. the decision of a policy set that ADR-0090 rule 2 isolates.
-- **Failed value**: an unknown value of item 1, 2, or 6 of the list above. Items 4, 5, and 7 are unknown values that
+  7. the decision of a policy set that ADR-0090 rule 2 isolates;
+  8. the result of a comparison on which legacy fails with an exception, over a value that the source returned
+     normally or an attribute of the resource, such as `IS EMPTY` or `IS NOT EMPTY` over a PIP body `null`, or an
+     operator that legacy cannot apply to an attribute of the resource that is `null`.
+- **Failed value**: an unknown value of item 1, 2, 6, or 8 of the list above. Items 4, 5, and 7 are unknown values that
   are not failed values: R2 alone decides a resource that depends on them.
 - **Key**: a source together with the request it sends: the URL, the method, the headers, and the body.
 
@@ -79,7 +82,7 @@ it, answer 200, and read each value from its source at most once per request and
 - **R3** (`handler`). A source failure never makes a check route answer 500. The answer is 200, and each resource gets
   its decision under R2. The exception is a subject whose token has no roles at all in a request with
   `obligations=true`, which gets 500 as in legacy.
-- **R11** (`translate`). A rule whose condition is unknown under R1 because it reads a failed value denies, whatever
+- **R11** (`translate`). A rule whose condition is unknown under R1 because of a failed value denies, whatever
   the effect of the rule and whatever the other rules and the combining algorithms give. It denies where the rule is
   applicable, and also where its target, or the target of a policy or a set above it, is an unknown target
   of a node that can deny, as ADR-0099 defines both terms:
@@ -91,8 +94,8 @@ it, answer 200, and read each value from its source at most once per request and
      not `y`, and keeps the rows where `a` is `y`. Where a dialect cannot write the denied rows, that dialect gets
      `null`, and the answer follows ADR-0099 R5.
 - **R4** (`translate`). A resource denied under R2 because of an unknown value, or under R11, gets the denial reason
-  `PIP resolution failed`, with the names of the sources that failed, or of the policy sets of item 5 or 7 whose
-  decision it depends on.
+  `PIP resolution failed`, with the names of the sources that failed, of the policy sets of item 5 or 7 whose
+  decision it depends on, or of the operator and the operand of item 8.
 - **R12** (`translate`). These departures can allow a resource that legacy denies, and they are departures that allow
   more under ADR-0097 R5:
   1. a condition whose value R1 settles without the failed value, such as `subject.x == 'v' OR resource.a == 'y'` with a
@@ -166,6 +169,11 @@ is a fault that a condition reads in the same way as a failed call, so it is a f
 A set that legacy never evaluates, an isolated set, and `subject allowed` over a decision that depends on a failed value
 are a nested decision that is unknown, so R2 decides them: a resource is allowed only where the answer does not depend
 on that decision.
+
+A comparison on which legacy throws, such as `IS EMPTY` over a PIP body `null`, drops the decision of the resource in
+legacy as a failed PIP does, although the source answered normally. Reading it as `false` would let a `NOT` or a DENY
+rule over it open access that legacy denies, so the owner decided on 2026-11-10 that its result is a failed value
+(item 8), and R11 denies through it.
 
 The agent changes how it reacts to a failure, not what a response means, so a source's answers keep the meaning legacy
 gave them (R5). The permission scope service never returns 404 by its contract: its release of 2026-10-12, called with a
