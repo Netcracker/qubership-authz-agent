@@ -51,7 +51,8 @@ meaning and only toward less access, and record every other departure in an ADR 
 - **Defect of meaning**: a legacy answer that, for policy data the legacy PAP accepts, has one of these properties:
   1. it changes when the operands of an `AND` or an `OR` are swapped;
   2. it depends on which of the sources a request reads failed, or in which order they failed;
-  3. a `check/filter` answer admits a row that `check/resource` denies for that row.
+  3. a `check/filter` answer admits a row that `check/resource` denies for that row, with the predicate of each rule
+     taken as its condition on the row, as in ADR-0099 R1.
 - **Narrowing departure**: a departure where every resource the agent allows, legacy allows too, and every row the
   agent's filter admits, the legacy filter admits too.
 
