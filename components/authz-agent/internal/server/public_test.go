@@ -392,8 +392,8 @@ func TestPublic_Surface(t *testing.T) {
 }
 
 // TestPublic_HealthLeavesOutTheTenants: the public /health answers the
-// verdict without the state of the tenants, whose IDs and refusals are not
-// for a caller of the check routes; the internal /health keeps them.
+// verdict and counts the tenants, whose IDs and refusals are not for a
+// caller of the check routes; the internal /health keeps them.
 func TestPublic_HealthLeavesOutTheTenants(t *testing.T) {
 	snapshots := &snapshot.Health{Tenants: []snapshot.TenantHealth{{Tenant: "PARITY_TENANT", Dropped: []string{"PARITY_SET"}}}}
 	cases := []struct {
@@ -401,8 +401,8 @@ func TestPublic_HealthLeavesOutTheTenants(t *testing.T) {
 		report Report
 		public string
 	}{
-		{"healthy", Report{Healthy: true, Snapshots: snapshots}, `{"status":"healthy"}`},
-		{"unhealthy", Report{Message: "bootstrap threshold not met", Snapshots: snapshots}, `{"message":"bootstrap threshold not met","details":{"opaReady":true}}`},
+		{"healthy", Report{Healthy: true, Snapshots: snapshots}, `{"status":"healthy","tenants":1,"served":0,"rejected":0,"failing":0}`},
+		{"unhealthy", Report{Message: "bootstrap threshold not met", Snapshots: snapshots}, `{"status":"unhealthy","tenants":1,"served":0,"rejected":0,"failing":0}`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -435,5 +435,40 @@ func TestPublic_CheckRoutesIgnoreExplain(t *testing.T) {
 		if code, got, _ := call(t, app, http.MethodPost, path, body, admin); code != 200 || got != "true" {
 			t.Errorf("POST %s = %d %s, want 200 true", path, code, got)
 		}
+	}
+}
+
+// TestPublic_HealthCountsTheTenantsWithoutNamingThem: the public /health
+// gives the status and the tenant counts, healthy or not, and no tenant,
+// set, PIP, or reason, which the internal /health gives to the operator.
+func TestPublic_HealthCountsTheTenantsWithoutNamingThem(t *testing.T) {
+	snapshots := &snapshot.Health{Tenants: []snapshot.TenantHealth{
+		{Tenant: "PARITY_TENANT_A", Ready: true, Failures: []snapshot.Failure{{Set: "PARITY_SET", Reason: "PARITY_REASON"}}},
+		{Tenant: "PARITY_TENANT_B", Ready: true, Rejected: &snapshot.Rejection{Stage: "compile", Reason: "PARITY_REFUSAL"}},
+		{Tenant: "PARITY_TENANT_C", Rejected: &snapshot.Rejection{Stage: "export", Reason: "PARITY_REFUSAL"}},
+	}}
+	counts := `"tenants":3,"served":2,"rejected":2,"failing":1}`
+	cases := []struct {
+		name   string
+		report Report
+		status int
+		want   string
+	}{
+		{"healthy", Report{Healthy: true, Snapshots: snapshots}, 200, `{"status":"healthy",` + counts},
+		{"unhealthy", Report{Message: "PARITY_MESSAGE", ConfigError: "PARITY_CONFIG", Snapshots: snapshots}, 503, `{"status":"unhealthy",` + counts},
+		{"healthy without a registry", Report{Healthy: true}, 200, `{"status":"healthy"}`},
+		{"unhealthy without a registry", Report{Message: "PARITY_MESSAGE"}, 503, `{"status":"unhealthy"}`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := newPublicAppOver(t, map[string]string{"internals.rego": admissionStub},
+				Options{Health: func() Report { return tc.report }})
+
+			code, body, _ := call(t, app, http.MethodGet, "/health", "", nil)
+
+			if code != tc.status || body != tc.want {
+				t.Errorf("GET /health = %d %s, want %d %s", code, body, tc.status, tc.want)
+			}
+		})
 	}
 }
