@@ -36,6 +36,11 @@ type leafRails struct {
 	// subjectOnly is set when every expression reads only the subject's
 	// projected attributes, so that the leaf can join a subject group.
 	subjectOnly bool
+	// failed holds where the leaf is unknown because a source it reads
+	// failed on the request: a point of a side at the failure of its source
+	// whose outcome depends on the source's value, or a PIP that is not
+	// declared. It is false for a leaf that reads no such source.
+	failed dnf
 }
 
 type point struct {
@@ -149,7 +154,7 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 	if err != nil {
 		if errors.Is(err, errUndeclared) {
 			g.reportLeaf(leafText(), nil)
-			return leafRails{threeValued: true}, nil
+			return leafRails{threeValued: true, failed: dnfTrue}, nil
 		}
 		return leafRails{}, err
 	}
@@ -158,7 +163,7 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 		if R, err = g.side(c.Right); err != nil {
 			if errors.Is(err, errUndeclared) {
 				g.reportLeaf(leafText(), nil)
-				return leafRails{threeValued: true}, nil
+				return leafRails{threeValued: true, failed: dnfTrue}, nil
 			}
 			return leafRails{}, err
 		}
@@ -190,9 +195,25 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 		}
 	}
 	g.stats.Lookups += len(lps) * len(rps)
-	failedCells(cells, L, lps, R, rps)
+	failedL, failedR := failedCells(cells, L, lps, R, rps)
 
 	var rails leafRails
+	// unknownAll reports whether the leaf is unknown at the point i of the
+	// left side whatever the right side holds
+	unknownAll := func(i int) bool {
+		return !slices.ContainsFunc(cells[i], func(c spectables.Cell) bool { return c.Outcome != spectables.OutcomeU })
+	}
+	for i := range lps {
+		if failedL[i] && unknownAll(i) {
+			rails.failed = union(rails.failed, dnf{L.at(lps[i])})
+			continue
+		}
+		for j := range rps {
+			if (failedL[i] || failedR[j]) && cells[i][j].Outcome == spectables.OutcomeU {
+				rails.failed = union(rails.failed, dnf{conj(L.at(lps[i]), rightAt(R, rps[j]))})
+			}
+		}
+	}
 	// add puts c on the rail of outcome o
 	add := func(o spectables.Outcome, c clause) {
 		switch o {
@@ -272,14 +293,15 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 // every value of the source gives against the other side's point, and U
 // where the values give different outcomes or depend on the value. A rule
 // over a failed source is then unknown wherever its outcome depends on the
-// source (LI-2), whatever outcome the table gives the failure itself. A
-// point where both sides failed is U.
-func failedCells(cells [][]spectables.Cell, L *side, lps []point, R *side, rps []point) {
-	failedL := make([]bool, len(lps))
+// source, whatever outcome the table gives the failure itself. A
+// point where both sides failed is U. failedCells returns, for each point of
+// each side, whether the side's source failed there.
+func failedCells(cells [][]spectables.Cell, L *side, lps []point, R *side, rps []point) (failedL, failedR []bool) {
+	failedL = make([]bool, len(lps))
 	for i, p := range lps {
 		failedL[i] = L.failed(p)
 	}
-	failedR := make([]bool, len(rps))
+	failedR = make([]bool, len(rps))
 	for j, p := range rps {
 		failedR[j] = R != nil && R.failed(p)
 	}
@@ -331,6 +353,7 @@ func failedCells(cells [][]spectables.Cell, L *side, lps []point, R *side, rps [
 	for i := range cells {
 		copy(cells[i], out[i])
 	}
+	return failedL, failedR
 }
 
 // failed reports whether the side at p is a source that failed: the ERROR
