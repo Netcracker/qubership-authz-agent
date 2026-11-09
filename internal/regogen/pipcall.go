@@ -17,6 +17,7 @@ package regogen
 import (
 	"encoding/json"
 	"fmt"
+	neturl "net/url"
 	"regexp"
 	"slices"
 	"strings"
@@ -86,8 +87,8 @@ var (
 	placeholderRE     = regexp.MustCompile(`\$\{([^}]+)\}`)
 	fullPlaceholderRE = regexp.MustCompile(`^\$\{([^}]+)\}$`)
 	// a resource placeholder in a url fails the call (ECFG
-	// url_resource_placeholder ERROR)
-	urlResourceRE = regexp.MustCompile(`\$\{resource[.\[]`)
+	// url_resource_placeholder ERROR), the whole resource included
+	urlResourceRE = regexp.MustCompile(`\$\{resource[.\[}]`)
 )
 
 // The knobs of the specification's agent profile that the request and the
@@ -172,7 +173,18 @@ func pipCall(r *Ref, req *Request, pips func(string) (*policyir.PIP, bool)) *ast
 	if urlResourceRE.MatchString(decl.URL) {
 		return stateCall(spectables.StateError)
 	}
-	url := placeholderRE.ReplaceAllStringFunc(decl.URL, func(m string) string {
+	// java.net.URI refuses these in a url, and the call fails before it is made
+	const refused = " \"<>\\^`{|}"
+	failed := false
+	query := strings.IndexByte(decl.URL, '?')
+	// where the path begins; a url without a scheme of its own has none
+	path := len(decl.URL)
+	if i := strings.Index(decl.URL, "://"); i >= 0 {
+		if j := strings.IndexAny(decl.URL[i+3:], "/?#"); j >= 0 {
+			path = i + 3 + j
+		}
+	}
+	url := replaceAllIndex(placeholderRE, decl.URL, func(at int, m string) string {
 		expr := m[2 : len(m)-1]
 		if !strings.HasPrefix(expr, "subject.") && !strings.HasPrefix(expr, "resource") {
 			return m
@@ -181,13 +193,25 @@ func pipCall(r *Ref, req *Request, pips func(string) (*policyir.PIP, bool)) *ast
 		if !ok || v == nil {
 			return m
 		}
-		if s, ok := v.(string); ok {
-			return s
+		s, ok := v.(string)
+		if !ok {
+			s = legacyvalue.Text(v)
 		}
-		return legacyvalue.Text(v)
+		if strings.ContainsAny(s, refused) {
+			failed = true
+		}
+		// the value stays one path segment or one query component: it
+		// cannot add a segment, a parameter, or a fragment to the call,
+		// and it cannot name the host the agent's token is sent to
+		if query >= 0 && at > query {
+			return neturl.QueryEscape(s)
+		}
+		if at < path || s == "." || s == ".." {
+			failed = true
+		}
+		return neturl.PathEscape(s)
 	})
-	// java.net.URI refuses these in a url, and the call fails before it is made
-	if strings.ContainsAny(url, " \"<>\\^`{|}") {
+	if failed || strings.ContainsAny(url, refused) {
 		return stateCall(spectables.StateError)
 	}
 	headers := ast.NewObject()
@@ -216,6 +240,20 @@ func pipCall(r *Ref, req *Request, pips func(string) (*policyir.PIP, bool)) *ast
 			ast.ObjectTerm(ast.Item(ast.StringTerm("requestAttributes"), body))))
 	}
 	return ast.ObjectTerm(items...)
+}
+
+// replaceAllIndex is [regexp.Regexp.ReplaceAllStringFunc] with the offset of
+// each match in s passed to repl.
+func replaceAllIndex(re *regexp.Regexp, s string, repl func(at int, m string) string) string {
+	var b strings.Builder
+	last := 0
+	for _, loc := range re.FindAllStringIndex(s, -1) {
+		b.WriteString(s[last:loc[0]])
+		b.WriteString(repl(loc[0], s[loc[0]:loc[1]]))
+		last = loc[1]
+	}
+	b.WriteString(s[last:])
+	return b.String()
 }
 
 func mapsKeys(m map[string]string) func(func(string) bool) {

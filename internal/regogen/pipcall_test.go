@@ -309,6 +309,39 @@ func TestPIPFunction_SendsTheRequestOfTheDeclaration(t *testing.T) {
 	})
 }
 
+// TestPIPFunction_EncodesTheValuesOfTheURL: a value put into the url of a
+// PIP is percent-encoded as a path segment before the query and as a query
+// component after it, so the value of a subject's operand or of a caller's
+// header cannot change the path or the query of a call that carries the
+// agent's token.
+func TestPIPFunction_EncodesTheValuesOfTheURL(t *testing.T) {
+	const decl = `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g/users/${subject.id}/roles?scope=${subject.id}"}`
+	tests := []struct{ name, id, url string }{
+		{"a plain value", `alice`, `http://g/users/alice/roles?scope=alice`},
+		{"a fragment", `x#`, `http://g/users/x%23/roles?scope=x%23`},
+		{"a path and a query", `bob/../../admin?x=`, `http://g/users/bob%2F..%2F..%2Fadmin%3Fx=/roles?scope=bob%2F..%2F..%2Fadmin%3Fx%3D`},
+		{"a parameter of the query", `a&all=true`, `http://g/users/a&all=true/roles?scope=a%26all%3Dtrue`},
+		{"a percent sign", `50%`, `http://g/users/50%25/roles?scope=50%25`},
+		{"dots inside a segment", `a..`, `http://g/users/a../roles?scope=a..`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := Request{Values: map[string]Resolved{`["subj","id"]`: {State: "VALUE", Value: tt.id}}}
+			checkPIPCases(t, decl, req, []pipCase{{name: tt.name, response: answer, state: "VALUE",
+				want: `{"method": "POST", "url": "` + tt.url + `", "headers": {}, "raise_error": false,
+					"pip": "subject.g", "body": {"requestAttributes": null}}`}})
+		})
+	}
+	t.Run("a HEADER PIP", func(t *testing.T) {
+		const decl = `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g/h/${subject.who}"},
+			{"name": "subject.who", "pipType": "HEADER", "header": "X-Who"}`
+		req := Request{Values: map[string]Resolved{}, Headers: map[string]string{"x-who": "bob/../admin?all=true#"}}
+		checkPIPCases(t, decl, req, []pipCase{{name: "a HEADER PIP", response: answer, state: "VALUE",
+			want: `{"method": "POST", "url": "http://g/h/bob%2F..%2Fadmin%3Fall=true%23", "headers": {}, "raise_error": false,
+				"pip": "subject.g", "body": {"requestAttributes": null}}`}})
+	})
+}
+
 // TestPIPFunction_FilteredAndUntypedPIPsAreGeneral: a FILTERED PIP and a
 // PIP without pipType send the request of a GENERAL one and read its
 // response the same way.
@@ -352,6 +385,16 @@ func TestPIPFunction_MakesNoCall(t *testing.T) {
 		{"a resource placeholder in the url",
 			`{"name": "subject.g", "pipType": "GENERAL", "url": "http://g/${resource.a}"}`,
 			Request{Values: map[string]Resolved{}}, "ERROR"},
+		{"the resource as a placeholder in the url",
+			`{"name": "subject.g", "pipType": "GENERAL", "url": "http://g/${resource}"}`,
+			Request{Values: map[string]Resolved{}, Body: Body{Resource: "r1", HasResource: true}}, "ERROR"},
+		{"a dot segment in the path", general, Request{Values: subjectValues(t, `".."`)}, "ERROR"},
+		{"a placeholder in the host of the url",
+			`{"name": "subject.g", "pipType": "GENERAL", "url": "http://${subject.id}/u"}`,
+			Request{Values: subjectValues(t, `"g"`)}, "ERROR"},
+		{"a placeholder that is the whole url",
+			`{"name": "subject.g", "pipType": "GENERAL", "url": "${subject.id}"}`,
+			Request{Values: subjectValues(t, `"http://g/u"`)}, "ERROR"},
 		{"no url", `{"name": "subject.g", "pipType": "GENERAL"}`, Request{Values: map[string]Resolved{}}, "PIP_NULL"},
 	}
 	for _, tt := range tests {
