@@ -862,6 +862,29 @@ func TestTheEntitlementsServiceIsCalledOncePerRequest(t *testing.T) {
 	}
 }
 
+// A permission scope service that answers 404 fails the scope rather than
+// returning an empty one: an iterate under PERMIT_UNLESS_DENY, which permits
+// over an empty scope, denies.
+func TestAPermissionScopeOf404Fails(t *testing.T) {
+	srv, calls := countingServer(t, "/nowhere", ``)
+	r := New(Config{HTTP: &regobuiltins.HTTP{Client: &http.Client{},
+		Token: func() (string, error) { return "own", nil }}}, tab(t), quiet{})
+	load(t, r, `{"tenantId": "a", "name": "subject.permissionScope", "pipType": "PERMISSION_SCOPE", "url": "`+srv.URL+`"}`,
+		`{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+		"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": "PERMIT_UNLESS_DENY"},
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+			"tenantId": "a", "rules": [{"ruleId": "r", "target": "true",
+				"condition": "subject.permissionScope.domain CONTAINS resource.a", "effect": "DENY", "tenantId": "a"}]}]}`)
+
+	if got := decide(t, r, readDoc(t, "a", "y", 1)); got[0].Allowed {
+		t.Errorf("Decide of the doc y with the scope service answering 404 = %+v, want denied", got[0])
+	}
+	if n := calls.Load(); n != 1 {
+		t.Errorf("reads of the permission scope = %d, want 1", n)
+	}
+}
+
 // The items of a bulk request share one read of the permission scope, at
 // the url of the tenant's PERMISSION_SCOPE PIP.
 func TestThePermissionScopeIsReadOncePerRequest(t *testing.T) {

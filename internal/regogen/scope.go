@@ -40,14 +40,16 @@ const ScopePIP = "subject.permissionScope"
 // is one pass, which reads the ids under each key of its scopeItems.
 //
 // The scope fails without a PERMISSION_SCOPE PIP, without a subject.id
-// value, on a failed call, on a status of 400 or more other than 404, and on
+// value, on a failed call, on a status of 400 or more, 404 included, and on
 // a body the specification cannot walk, such as no body or one without
-// permissionScope; it is empty on 404 and on the body null. Read as the
+// permissionScope; it is empty on the body null. Read as the
 // specification's _scope_call reads it under the agent profile:
-// scope_without_pip=http500, scope_404_is_empty=true, scope_error_empty=none,
+// scope_without_pip=http500, scope_error_empty=none,
 // scope_blank_body=json_null, scope_empty_list=empty,
 // scope_scalar_values=http500, scope_value_trim=false, scope_cache=request,
-// scope_missing_key=ABSENT, scope_empty_key=EMPTY_COLL.
+// scope_missing_key=ABSENT, scope_empty_key=EMPTY_COLL. The profile still
+// reads a 404 as an empty scope (scope_404_is_empty=true); the agent fails
+// it, by the owner's decision, ahead of the profile.
 func (m *Module) ReadScope(ctx context.Context, req *Request) *Scope {
 	failed := &Scope{Failed: true}
 	id := req.Values[keySubjID]
@@ -119,8 +121,6 @@ func scopeAnswer(resp *ast.Term) ([]map[string][]jsonvalue.Value, bool) {
 	switch {
 	case !ok || code <= 0:
 		return nil, false
-	case code == 404:
-		return nil, true
 	case code >= 400:
 		return nil, false
 	}
