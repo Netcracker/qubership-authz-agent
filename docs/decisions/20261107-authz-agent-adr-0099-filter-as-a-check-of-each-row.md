@@ -20,7 +20,8 @@ vlsi
   ADR-0097 R7, the text of an answer, ADR-0097 R5, the departures that allow more, which R8 here names, and the third
   defect of meaning.
 - [authz-agent-ADR-0098: Treat a value the agent could not read as unknown, and read each value once per request](20261107-authz-agent-adr-0098-unknown-values-and-source-calls.md):
-  ADR-0098 R1, the three-valued logic that R3 and R9 here use for the attributes of a resource.
+  ADR-0098 R1, the three-valued logic that R3 and R9 here use for the attributes of a resource, and ADR-0098 R11, the
+  denial of a resource whose rule depends on a failed source.
 
 ## Context
 
@@ -47,7 +48,7 @@ predicate of each rule as its condition on the row, and narrow that set where a 
   gives ALLOW and DENY. A node that gives neither on a row is not applicable to it.
 - **All rows** and **no rows**: the two sets that need no predicate.
 - **Node that can deny**: a rule, a policy, or a set whose outcome, evaluated on this request with its own target taken
-  as true, can be DENY under ADR-0098 R1. The values of the request are known, and in `check/filter` the attributes of
+  as true, can be DENY under ADR-0098 R1 or R11. The values of the request are known, and in `check/filter` the attributes of
   the resource are unknown. A DENY rule whose condition is not false for the subject, and a policy or a set with the
   algorithm `DENY_UNLESS_PERMIT` whose children do not allow every row, are such nodes. A DENY rule whose condition is
   false for the subject, and a `DENY_UNLESS_PERMIT` node with a child that allows every row, are not. Any other node
@@ -90,10 +91,9 @@ predicate of each rule as its condition on the row, and narrow that set where a 
   2. any other node that can deny gets denied rows that are unknown and no allowed rows;
   3. a node that cannot deny is not applicable to any row.
 
-  In `check/filter`, an ALLOW rule whose condition reads a value whose source failed on the request gives all rows as
-  denied rows. A node with such a rule below it, and the rule itself, are therefore nodes that can deny in
-  `check/filter`, and get denied rows that are unknown under an unknown target. `check/resource` does not deny for such
-  a node under R10, and O2 records the difference.
+  An ALLOW rule whose condition depends on a value whose source failed on the request denies under ADR-0098 R11. Such
+  a rule, and a node with such a rule below it, are therefore nodes that can deny, in `check/filter` under this rule
+  and in `check/resource` under R10.
 - **R10** (`translate`). In `check/resource`, a rule, a policy, or a set whose target is an unknown target on the
   resource gives DENY if it is a node that can deny, and is not applicable otherwise.
 - **R4** (`translate`). At the root, a row on which the tree is not applicable is denied. The answer is `DENY` when the
@@ -199,7 +199,3 @@ Negative:
 - **O1.** Whether R5 may make the answer `DENY` for a DENY rule without a predicate next to a condition on the resource,
   as the second negative consequence states. The owner of the policy decision code (`vlsi`) confirms it against data on
   `check/filter` calls for resource types that use deny lists. The point affects R3 and R5.
-- **O2.** Under an unknown target, `check/filter` gives unknown denied rows to a node whose ALLOW rule reads a failed
-  source in its condition (R9), while `check/resource` treats that node as not applicable and can allow the resource
-  through its siblings (R10). The owner of the policy decision code (`vlsi`) decides how `check/resource` treats a
-  failed source in the condition of an ALLOW rule. The point affects R9 and R10.

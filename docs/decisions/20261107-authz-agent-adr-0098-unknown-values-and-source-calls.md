@@ -61,11 +61,15 @@ it, answer 200, and read each value from its source at most once per request and
 - **R1** (`translate`). A condition is evaluated in Kleene's three-valued logic. A comparison with an unknown value is
   unknown, `AND` is false when any operand is false, and `OR` is true when any operand is true.
 - **R2** (`translate`). A resource is allowed only if it is allowed for every value that each unknown value could take.
-  Otherwise it is denied.
+  Otherwise it is denied. R11 denies some resources that this rule alone would allow.
 - **R3** (`handler`). A source failure never makes a check route answer 500. The answer is 200, and each resource gets
   its decision under R2. The exception is a subject whose token has no roles at all in a request with
   `obligations=true`, which gets 500 as in legacy.
-- **R4** (`translate`). A resource denied under R2 because of an unknown value gets the denial reason
+- **R11** (`translate`). A rule whose target is true and whose condition is unknown under R1 because it reads a value
+  whose source failed denies the resource as a whole, whatever the effect of the rule and whatever the other rules
+  give: `check/resource` denies the resource, and `check/filter` answers `DENY`. A condition whose value R1 settles
+  without the failed value, such as an `OR` with another true operand, gives no such denial.
+- **R4** (`translate`). A resource denied under R2 because of an unknown value, or under R11, gets the denial reason
   `PIP resolution failed`, with the names of the sources that failed, and the agent writes a `WARN` line for it.
 
 #### Reading a source
@@ -97,6 +101,10 @@ request useful for the rest, and the status no longer depends on whether a faile
 named reason and the `WARN` line let an operator tell a failure from a policy denial (R4). The exception for a subject
 without roles keeps legacy behavior until the path with obligations has an owner decision (O1).
 
+Legacy denies a resource when an applicable rule's condition fails on a source, even where another rule allows it.
+Projects rely on that denial, so the owner decided on 2026-11-09 to keep it (ADR-0097 R1). Whether the condition
+depends on the failed value is settled by R1, so the order of operands still does not change the answer (R11).
+
 The agent changes how it reacts to a failure, not what a response means, so a source's answers keep the meaning legacy
 gave them (R5). The permission scope service never returns 404 by its contract: a subject without assignments gets 200
 with an empty list. A 404 therefore comes from something other than the service, and reading it as an empty scope
@@ -112,12 +120,14 @@ request, and no source offers a way to invalidate it (R10).
 
 - **A1. Read a failed value as `false`.** Rejected by R1: a DENY rule that reads the value stops applying, and a deny
   list lets the request through.
-- **A2. Let a failed value fail the decision of the resource, as a strict built-in error does.** Rejected by R1 and by
-  ADR-0097 R3: whether the failed value is read at all depends on the index, the order of clauses, and the evaluator's
+- **A2. Let a failed value fail the decision of the resource whenever a condition reads it, as a strict built-in error
+  does.** Rejected by R11 and by ADR-0097 R3: whether the failed value is read at all depends on the index, the order of clauses, and the evaluator's
   early exit, so `pipA OR pipB` would get different answers from equivalent modules.
 - **A3. Answer 500 to a request that reads a failed source, as legacy does.** Rejected by R3: one failed call would fail
   every item of a bulk request.
 - **A4. Keep the values of a cacheable PIP between requests, as legacy does.** Rejected by R10.
+- **A5. Let a rule whose condition depends on a failed value deny only through the combining algorithm.** Rejected by
+  R11: an allowing sibling under `PERMIT_OVERRIDES` would allow the resource, where legacy denies it.
 
 ## Consequences
 
@@ -129,6 +139,8 @@ Negative:
 - Without a cache between requests, a source gets one call per key per decision request, which is more calls than
   legacy sends for a cacheable PIP.
 - A permission scope service that answers 404 makes the agent deny where legacy reads an empty scope.
+- A resource that one rule allows is denied when the condition of another applicable rule depends on a failed source
+  (R11), as in legacy.
 
 ## Open points
 
