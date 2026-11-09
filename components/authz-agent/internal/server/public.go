@@ -78,12 +78,15 @@ func (s *Server) notFound(c *fiber.Ctx) error {
 }
 
 // publicHealth is the public surface's /health: the service's own health
-// for GET, and 405 for any other method, as access-control answers.
+// for GET, and 405 for any other method, as access-control answers. It
+// leaves out [Report.Snapshots]: the tenants' IDs and the refusals of their
+// policies are for the operator on the internal surface, not for a caller of
+// the check routes.
 func (s *Server) publicHealth(c *fiber.Ctx) error {
 	if c.Method() != fiber.MethodGet {
 		return c.Status(http.StatusMethodNotAllowed).JSON(fiber.Map{"message": "method not allowed"})
 	}
-	return s.health(c)
+	return s.answerHealth(c, false)
 }
 
 func (s *Server) checkResource(v2 bool) fiber.Handler {

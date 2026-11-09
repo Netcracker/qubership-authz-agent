@@ -391,6 +391,40 @@ func TestPublic_Surface(t *testing.T) {
 	}
 }
 
+// TestPublic_HealthLeavesOutTheTenants: the public /health answers the
+// verdict without the state of the tenants, whose IDs and refusals are not
+// for a caller of the check routes; the internal /health keeps them.
+func TestPublic_HealthLeavesOutTheTenants(t *testing.T) {
+	snapshots := &snapshot.Health{Tenants: []snapshot.TenantHealth{{Tenant: "PARITY_TENANT", Dropped: []string{"PARITY_SET"}}}}
+	cases := []struct {
+		name   string
+		report Report
+		public string
+	}{
+		{"healthy", Report{Healthy: true, Snapshots: snapshots}, `{"status":"healthy"}`},
+		{"unhealthy", Report{Message: "bootstrap threshold not met", Snapshots: snapshots}, `{"message":"bootstrap threshold not met","details":{"opaReady":true}}`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			eng, err := engine.New(engine.Options{Modules: map[string]string{"internals.rego": admissionStub}})
+			if err != nil {
+				t.Fatalf("engine: %v", err)
+			}
+			internal := fiber.New(fiber.Config{DisableStartupMessage: true})
+			srv := Register(internal, eng, Options{Health: func() Report { return tc.report }})
+			public := fiber.New(fiber.Config{DisableStartupMessage: true})
+			srv.RegisterPublic(public)
+
+			if _, body, _ := call(t, public, http.MethodGet, "/health", "", nil); body != tc.public {
+				t.Errorf("public GET /health = %s, want %s", body, tc.public)
+			}
+			if _, body, _ := call(t, internal, http.MethodGet, "/health", "", nil); !strings.Contains(body, "PARITY_TENANT") {
+				t.Errorf("internal GET /health = %s, want the tenant PARITY_TENANT in it", body)
+			}
+		})
+	}
+}
+
 // TestPublic_CheckRoutesIgnoreExplain: a check route reads no query
 // parameter beyond the ones its request shape names, so ?explain=full gets
 // the same answer as the plain request.
