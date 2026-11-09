@@ -319,11 +319,12 @@ func newGen(tree *policyir.Tree, tab *spectables.Table, opt Options) (*gen, erro
 		sources: map[string]nodeSource{}, shared: map[string]bool{}, ruleHeads: map[string][]string{}, light: map[string]bool{},
 		hashedKeys: map[string]string{}}
 	g.stats.NoTemplate = map[string]int{}
-	if fs := tree.Unsupported(); len(fs) > 0 {
-		rej := &RejectedError{}
-		for _, f := range fs {
-			rej.Rejections = append(rej.Rejections, Rejection{Where: f.Where, Form: f.Form, Text: f.Text})
-		}
+	rej := &RejectedError{}
+	for _, f := range tree.Unsupported() {
+		rej.Rejections = append(rej.Rejections, Rejection{Where: f.Where, Form: f.Form, Text: f.Text})
+	}
+	rej.Rejections = append(rej.Rejections, predicateRejections(tree)...)
+	if len(rej.Rejections) > 0 {
 		return g, rej
 	}
 	g.nodes = tab.Nodes()

@@ -62,8 +62,9 @@ func (e *gapError) Unwrap() error { return e.err }
 // RejectedError is the error [Generate] returns for a tree with a form the
 // agent cannot execute: the candidate snapshot of the tenant is rejected as a
 // whole, and none of its forms is executed in part. It lists every form
-// [policyir.Tree.Unsupported] finds, or else the first comparison the
-// generator cannot translate. A defect of the export, such as a missing cell
+// [policyir.Tree.Unsupported] finds and every filter predicate that reads a
+// PIP whose jsonPath the agent does not compile, or else the first
+// comparison the generator cannot translate. A defect of the export, such as a missing cell
 // or knob, is another error: it is no form of the tenant's.
 type RejectedError struct {
 	Rejections []Rejection

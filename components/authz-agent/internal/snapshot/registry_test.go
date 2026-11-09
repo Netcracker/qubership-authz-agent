@@ -332,6 +332,87 @@ func TestAPIPWithAJSONPathOutsideTheSubsetRejectsTheTenantThatReadsIt(t *testing
 	}
 }
 
+// A filter predicate that reads a GENERAL or FILTERED PIP whose jsonPath the
+// agent does not compile, by a placeholder or by the first word of a
+// customPredicate parameter, rejects its tenant whole, naming the PIP and the
+// predicate; the tenant beside it is served. An escaped placeholder, a
+// parameter whose first word is empty, and a PIP of another type or declared
+// twice read no such path, and reject nothing.
+func TestAPredicateOverAPIPWithAJSONPathOutsideTheSubsetRejectsTheTenant(t *testing.T) {
+	rule := func(predicate string) string {
+		return `{"ruleId": "r", "target": "true", "effect": "ALLOW", "tenantId": "a", ` + predicate + `}`
+	}
+	regular := func(predicate string) string {
+		return `{"policySetId": "s-a", "name": "s", "status": "ACTIVE", "tenantId": "a",
+			"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "a",
+				"rules": [` + rule(predicate) + `]}]}`
+	}
+	nested := `{"policySetId": "s-a", "name": "s", "status": "ACTIVE", "tenantId": "a",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		"policySets": [{"policySetId": "n", "name": "n", "status": "ACTIVE", "tenantId": "a", "target": "true",
+			"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "a",
+				"rules": [` + rule(`"rsqlPredicate": "a==${subject.g}"`) + `]}]}]}`
+	simplified := `{"policySetId": "s-a", "type": "SIMPLIFIED", "tenantId": "a", "domain": "D", "component": "C",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "resourceType == 'doc'",
+		"policies": [{"policyId": "p", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "operation == 'read'",
+			"tenantId": "a", "rules": [{"ruleId": "r", "effect": "ALLOW", "tenantId": "a",
+				"target": "subject.roles CONTAINS ANY 'R'", "rsqlPredicate": "a==${subject.g}"}]}]}`
+	rejected := []struct{ name, pipType, set, where string }{
+		{"a placeholder", "GENERAL", regular(`"rsqlPredicate": "a==${subject.g}"`), `set "s-a" > policy "p" > rule "r" > predicate`},
+		{"a customPredicate parameter", "GENERAL", regular(`"customPredicate": {"predicate": "owner", "params": {"x": "subject.g"}}`),
+			`set "s-a" > policy "p" > rule "r" > predicate`},
+		{"a FILTERED PIP", "FILTERED", regular(`"rsqlPredicate": "a==${subject.g}"`), `set "s-a" > policy "p" > rule "r" > predicate`},
+		{"a nested set", "GENERAL", nested, `set "s-a" > set "n" > policy "p" > rule "r" > predicate`},
+		{"a simplified policy", "GENERAL", simplified, `simplified "D"/"C"/"doc" > policy "r" > predicate`},
+	}
+	served := []struct{ name, pips, set string }{
+		{"an escaped placeholder", "", regular(`"rsqlPredicate": "a==$${subject.g}"`)},
+		{"a parameter whose first word is empty", "", regular(`"customPredicate": {"predicate": "owner", "params": {"x": " subject.g"}}`)},
+		{"a HEADER PIP", `{"tenantId": "a", "name": "subject.g", "pipType": "HEADER", "header": "h", "jsonPath": "$.a.concat('x')"}`,
+			regular(`"rsqlPredicate": "a==${subject.g}"`)},
+		{"a PIP declared twice", "twice", regular(`"rsqlPredicate": "a==${subject.g}"`)},
+	}
+	pip := func(tenant, pipType string) string {
+		return `{"tenantId": "` + tenant + `", "name": "subject.g", "pipType": "` + pipType + `", "type": "JSON",
+			"url": "http://pip.invalid", "jsonPath": "$.a.concat('x')"}`
+	}
+	for _, tc := range rejected {
+		t.Run(tc.name, func(t *testing.T) {
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, pip("a", tc.pipType)+`, `+pip("b", tc.pipType), tc.set, set("b", "true"))
+
+			th, _ := tenantHealth(r, "a")
+			want := []Form{{Where: tc.where, Form: "jsonpath",
+				Text: `jsonPath "$.a.concat('x')" of PIP subject.g: jsonpath: unsupported path: ".a.concat('x')"`}}
+			if th.Ready || th.Rejected == nil || th.Rejected.Stage != "unsupported" || !slices.Equal(th.Rejected.Forms, want) {
+				t.Errorf("health of a = %+v, refused %+v, want not ready, refused as unsupported with forms %+v", th, th.Rejected, want)
+			}
+			if got := decide(t, r, readDoc(t, "b", "y", 1)); !got[0].Allowed {
+				t.Errorf("Decide(tenant b) = %+v, want allowed", got[0])
+			}
+		})
+	}
+	for _, tc := range served {
+		t.Run(tc.name, func(t *testing.T) {
+			pips := tc.pips
+			switch pips {
+			case "":
+				pips = pip("a", "GENERAL")
+			case "twice":
+				pips = pip("a", "GENERAL") + `, ` + pip("a", "GENERAL")
+			}
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, pips, tc.set)
+
+			if th, _ := tenantHealth(r, "a"); !th.Ready || th.Rejected != nil {
+				t.Errorf("health of a = %+v, want ready and not refused", th)
+			}
+		})
+	}
+}
+
 // LoadSnapshots fails with a *RefusedError for as long as a tenant's latest
 // candidate is refused: on the load that refuses it, on a load of the same
 // documents, and on a load that changes only another tenant. The load that

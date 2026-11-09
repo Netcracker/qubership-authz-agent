@@ -434,3 +434,42 @@ func hashSetOrder(vals []jsonvalue.Value) []jsonvalue.Value {
 }
 
 func sortedKeys[K ~string, V any](m map[K]V) []K { return slices.Sorted(maps.Keys(m)) }
+
+// predicateRejections lists the filter predicates of tree that read a GENERAL
+// or FILTERED PIP whose jsonPath package jsonpath does not compile: by a
+// placeholder of a template, as [substituter.substitute] reads it, or by the
+// first word of a customPredicate parameter, as [substituter.param] reads it.
+func predicateRejections(tree *policyir.Tree) []Rejection {
+	var out []Rejection
+	tree.EachPredicates(func(where string, p policyir.Predicates) {
+		var names []string
+		for _, d := range slices.Sorted(maps.Keys(p.Text)) {
+			for _, m := range placeholderRE.FindAllStringSubmatch(strings.ReplaceAll(p.Text[d], "$${", "\x00{"), -1) {
+				names = append(names, m[1])
+			}
+		}
+		if p.Custom != nil {
+			for _, k := range slices.Sorted(maps.Keys(p.Custom.Params)) {
+				if v, err := jsonvalue.Decode([]byte(p.Custom.Params[k])); err == nil {
+					if s, ok := v.(string); ok {
+						word, _, _ := strings.Cut(s, " ")
+						names = append(names, word)
+					}
+				}
+			}
+		}
+		seen := map[string]bool{}
+		for _, name := range names {
+			decl, ok := tree.PIP(name)
+			if !ok || seen[name] ||
+				decl.Type != policyir.PIPGeneral && decl.Type != policyir.PIPFiltered && decl.Type != "" {
+				continue
+			}
+			seen[name] = true
+			if _, err := pipPath(decl); err != nil {
+				out = append(out, Rejection{Where: where, Form: policyir.FormJSONPath, Text: err.Error()})
+			}
+		}
+	})
+	return out
+}
