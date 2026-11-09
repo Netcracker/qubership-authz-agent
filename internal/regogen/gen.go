@@ -856,7 +856,7 @@ func (g *gen) access(a policyir.Access) (leafRails, error) {
 	// where a rule of the decision applies over a failed source, the
 	// decision denies the resource as a whole, so the leaf is unknown
 	known, failed := dnfTrue, dnfFalse
-	if !g.filter && g.fails(g.decRoots[name]) {
+	if g.fails(g.decRoots[name]) {
 		known, failed = ref(name+"_loE", true), ref(name+"_loE", false)
 	}
 	if !a.Denied {

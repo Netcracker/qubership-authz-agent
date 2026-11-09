@@ -493,6 +493,9 @@ func (g *gen) side(o policyir.Operand) (*side, error) {
 		return nil, err
 	}
 	if !declared {
+		if g.touched != nil {
+			g.touched[undeclared] = true
+		}
 		return nil, errUndeclared
 	}
 	r, err := g.ref(o, kind, network)
