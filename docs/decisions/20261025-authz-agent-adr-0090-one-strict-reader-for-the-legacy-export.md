@@ -89,8 +89,9 @@ follows five rules.
    or whose `policySetId` the tenant has more than once, becomes an isolated set: it fails every request under its
    target and holds nothing else. A PIP name the tenant declares more than once becomes an isolated declaration, which
    a condition reads as a failed PIP. Each isolation is listed in `Export.Dropped`. An element the reader cannot read,
-   such as one with an unknown combining algorithm, fails the tenant's candidate snapshot (`Export.Failed`) and keeps
-   the previous snapshot. The Rego generator and the evaluator rely on these invariants and carry no fallback rule
+   such as a policy or a set with an unknown combining algorithm, fails the tenant's candidate snapshot
+   (`Export.Failed`) and keeps the previous snapshot. An `iterate` whose `foreach` or combining algorithm legacy cannot
+   evaluate is read, and makes its set one that legacy never evaluates, as ADR-0100 defines it. The Rego generator and the evaluator rely on these invariants and carry no fallback rule
    such as "the first declaration wins".
 3. **Text is normalized once, in the reader.** A whole condition equal to `true` or `false`, ignoring ASCII case and
    the characters up to U+0020 around it, which Java's `String.trim` removes, becomes a constant node. Every other

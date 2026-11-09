@@ -12,11 +12,12 @@ were recorded against a running instance of the legacy service (which is not
 part of this repository) and committed as the reference baseline.
 
 They cannot be regenerated from this repository. If you change authz-agent
-behaviour in a way that alters the answers to these cases, the affected
-goldens must be updated by hand (or the divergence recorded in
-[`suite/accepted_divergences.go`](suite/accepted_divergences.go) with a
-rationale). The goldens are evidence of which cases the authz-agent matches
-the legacy service on; they are not a test oracle that can be refreshed
+behaviour in a way that alters the answers to these cases, leave the goldens
+as recorded and add an entry to
+[`suite/accepted_divergences.go`](suite/accepted_divergences.go) that names
+the ADR rule allowing the departure, as ADR-0097 R8 and R10 require. The
+goldens are evidence of which cases the authz-agent matches the legacy service
+on; they are not a test oracle that can be refreshed
 without access to the original service.
 
 ## Prerequisites
@@ -86,14 +87,17 @@ the management endpoints too, which is why the probes hit `/auth/health/ready`.
 The 129 committed goldens represent the legacy service's answers. The
 authz-agent is expected to match all of them; cases where it intentionally
 differs are listed in
-[`suite/accepted_divergences.go`](suite/accepted_divergences.go) with a
-recorded rationale (decision ID + reason string).
+[`suite/accepted_divergences.go`](suite/accepted_divergences.go), each with
+a `Decision` that names the ADR rule allowing the departure.
 
 When authz-agent behaviour changes in a way that affects a previously-green
 case:
 
-- If the new behaviour is correct (i.e. the legacy answer was a bug): add an
-  entry to `accepted_divergences.go` with the rationale.
+- If an ADR rule allows the departure: add an entry to
+  `accepted_divergences.go` whose `Decision` names that rule (ADR-0097 R8),
+  and mark it as allowing more if the agent allows what the golden denies
+  (ADR-0097 R9). A
+  legacy bug that allows access is kept until a rule names it (ADR-0097 R1).
 - If the new behaviour is a regression: fix the regression.
 - The golden files themselves should not be edited — they are the record of
   what the legacy service did, not a living test spec.
