@@ -151,10 +151,19 @@ type HealthErrorDetails struct {
 // probe does not restart a service that is still waiting for its source;
 // /ready carries that.
 func (s *Server) health(c *fiber.Ctx) error {
+	return s.answerHealth(c, true)
+}
+
+// answerHealth writes the body of /health, with the state of the tenants'
+// policies when withSnapshots is set.
+func (s *Server) answerHealth(c *fiber.Ctx, withSnapshots bool) error {
 	if s.opts.Health == nil {
 		return c.JSON(HealthResponse{Status: "healthy"})
 	}
 	report := s.opts.Health()
+	if !withSnapshots {
+		report.Snapshots = nil
+	}
 	if report.Healthy {
 		return c.JSON(HealthResponse{Status: "healthy", Snapshots: report.Snapshots})
 	}
