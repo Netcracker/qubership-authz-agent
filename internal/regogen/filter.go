@@ -56,9 +56,8 @@ type status struct {
 	// constant, whose value is konst.
 	key   string
 	konst bool
-	// three is set when the status may be unknown, and rowThree when it
-	// may be unknown on a request of check/resource too.
-	three, rowThree bool
+	// three is set when the status may be unknown.
+	three bool
 	// pass is set for a status inside an iterate, which the module answers
 	// per pass.
 	pass bool
@@ -183,7 +182,7 @@ func (fg *filterGen) status(key string, prefix dnf, c *cond) status {
 		return status{konst: *c.isTrue && !prefix.isFalse()}
 	}
 	g := fg.g
-	s := status{key: key, three: c.three, rowThree: c.rowThree, pass: g.pass, refs: c.refs}
+	s := status{key: key, three: c.three, pass: g.pass, refs: c.refs}
 	fg.order = append(fg.order, key)
 	fg.t[key] = g.product(prefix, c.T())
 	if c.three {

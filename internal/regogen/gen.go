@@ -227,10 +227,6 @@ type gen struct {
 	// touched collects the references the condition being translated reads.
 	filter  bool
 	touched map[*Ref]bool
-	// probe is set while the generator looks up the cells of a comparison
-	// that the module does not evaluate: the references it builds are not
-	// recorded.
-	probe bool
 }
 
 // Generate translates the policy tree of a tenant into one Rego module that
@@ -681,12 +677,8 @@ type cond struct {
 	isTrue *bool
 	groups [][]leafRails
 	three  bool
-	// rowThree is set when check/resource may leave the condition
-	// undefined; three without rowThree marks a condition that is unknown in
-	// check/filter only because it reads the resource.
-	rowThree bool
-	t, f     dnf
-	done     bool
+	t, f   dnf
+	done   bool
 	// text is the condition as its rails' comments name it.
 	text string
 	// refs are the references the condition reads, set in the generator
@@ -750,7 +742,6 @@ func (g *gen) cond(c *policyir.Condition, place spectables.Place, effect policyi
 			l.f = stamp(l.f, &exprSrc{node: g.where.label, atom: atom, outcome: spectables.OutcomeF})
 			g.stats.Leaves++
 			cc.three = cc.three || l.threeValued
-			cc.rowThree = cc.rowThree || l.threeValued && !l.twoValuedPerRow
 			leaves = append(leaves, l)
 		}
 		cc.groups = append(cc.groups, leaves)

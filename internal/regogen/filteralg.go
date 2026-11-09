@@ -186,17 +186,6 @@ func (e *filterEval) sourceFailed(s status, pass int) bool {
 	return false
 }
 
-// and is a ∧ b by Kleene.
-func and(a, b tri) tri {
-	switch {
-	case a.v == 0 || b.v == 0:
-		return tri{}
-	case a.v == 1 && b.v == 1:
-		return tri{v: 1}
-	}
-	return tri{v: -1, err: a.v == -1 && a.err || b.v == -1 && b.err}
-}
-
 // top returns A of the root.
 func (e *filterEval) top(plan *filterPlan) (rows, error) {
 	var as []rows
@@ -251,33 +240,25 @@ func (e *filterEval) simplified(n *fnode) (pair, error) {
 // node evaluates a set, an iterate, or a policy in pass (-1 outside an
 // iterate). prefix starts the custom keys of the rules of a policy that a
 // pass evaluates.
+//
+// A node whose target is unknown, over a failed source or over the resource,
+// is evaluated as if its target held. It then denies rows the filter cannot
+// name if it denies some row, a failed source included, and does not apply
+// otherwise: the check gives such a node DENY or not applicable on a row.
 func (e *filterEval) node(n *fnode, pass int, prefix string) (pair, error) {
-	// an undefined target makes its node deny, as in the check: everywhere
-	// over a failed source, and on the rows the filter cannot name where the
-	// check may leave the target undefined too
 	t := e.status(n.tgt, pass)
-	switch {
-	case t.v == 0:
+	if t.v == 0 {
 		return pair{}, nil
-	case t.v == -1 && t.err:
-		return pair{d: allRows}, nil
-	case t.v == -1 && n.tgt.rowThree:
-		return pair{d: rows{kind: rowsUnknown}}, nil
 	}
 	p, err := e.body(n, pass, prefix)
-	if t.v == -1 && errors.Is(err, errDenyAll) {
-		// the body denies every row, which the node does only where its
-		// target holds
-		return pair{d: rows{kind: rowsUnknown}}, nil
-	}
-	if err != nil || t.v == 1 {
+	if t.v == 1 {
 		return p, err
 	}
-	// the check reads the target as true or false on every row, so the node
-	// is the body on the rows the filter cannot name where the target holds:
-	// it denies some of those rows if the body denies any row, and allows
-	// none the filter can name
-	if p.d.kind == rowsNone {
+	switch {
+	case errors.Is(err, errDenyAll):
+	case err != nil:
+		return pair{}, err
+	case p.d.kind == rowsNone:
 		return pair{}, nil
 	}
 	return pair{d: rows{kind: rowsUnknown}}, nil
@@ -342,28 +323,32 @@ func (e *filterEval) policy(n *fnode, pass int, prefix string) (pair, error) {
 	allowAll, denyAll, denyUnknown := false, false, false
 	for _, r := range n.kids {
 		t := e.status(r.tgt, pass)
-		if t.v == 0 {
+		if t.v == 0 || r.effect != "ALLOW" && r.effect != "DENY" {
 			continue
 		}
-		if t.v == -1 && t.err {
-			// an undefined target makes its rule deny, as in the check
-			denyAll = true
+		if t.v == -1 {
+			// the filter cannot name the rows where the target holds, so an
+			// ALLOW rule allows none, and a DENY rule whose condition is not
+			// false denies by its predicate, which may deny rows the check
+			// allows, or denies rows the filter cannot name
+			if r.effect == "ALLOW" || e.status(r.cond, pass).v == 0 {
+				continue
+			}
+			if !hasPredicate(r.preds) {
+				denyUnknown = true
+				continue
+			}
+			term, err := e.sub.term(r.preds, prefix+r.ruleID, pass)
+			if err != nil {
+				return pair{}, err
+			}
+			deny = append(deny, term)
 			continue
 		}
-		if t.v == -1 && r.tgt.rowThree {
-			// and so does one the check may leave undefined on a row, or on
-			// this request
-			denyUnknown = true
-			continue
-		}
-		if r.effect != "ALLOW" && r.effect != "DENY" {
-			continue
-		}
-		c := and(t, e.status(r.cond, pass))
+		c := e.status(r.cond, pass)
 		if hasPredicate(r.preds) {
-			// an ALLOW rule allows no row where its condition failed, nor where
-			// its target reads the resource, which drops the rule in the filter
-			if c.v == 0 || c.v == -1 && (c.err || t.v == -1) && r.effect == "ALLOW" {
+			// an ALLOW rule allows no row where its condition failed
+			if c.v == 0 || c.v == -1 && c.err && r.effect == "ALLOW" {
 				continue
 			}
 			term, err := e.sub.term(r.preds, prefix+r.ruleID, pass)

@@ -307,39 +307,46 @@ func TestACustomDenyPredicateIsNegated(t *testing.T) {
 	}
 }
 
-// denyPolicySet is a DENY_OVERRIDES set of tenant a on doc with two
-// policies: one allows every row, and one under policyTarget holds a DENY
-// rule under ruleTarget.
-func denyPolicySet(policyTarget, ruleTarget string) string {
+// policySetBeside is a DENY_OVERRIDES set of tenant a on doc with two
+// policies: one allows every row, and one under policyTarget holds a rule of
+// effect under ruleTarget with condition.
+func policySetBeside(policyTarget, ruleTarget, condition, effect string) string {
 	return fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
 		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
 		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
 			"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
 			{"policyId": "q", "target": %q, "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
-			"rules": [{"ruleId": "deny", "target": %q, "effect": "DENY", "tenantId": "a"}]}]}`,
-		policyTarget, ruleTarget)
+			"rules": [{"ruleId": "r", "target": %q, "condition": %q, "effect": %q, "tenantId": "a"}]}]}`,
+		policyTarget, ruleTarget, condition, effect)
 }
 
-// A target the filter cannot evaluate makes its node deny, as the check
-// does: a policy whose target reads the resource and that holds a DENY rule
-// denies rows the filter cannot name, and a policy or a rule whose target
-// reads a PIP whose call failed denies every row. Each such node used to be
-// left out, and the filter allowed every row where the check denied. A DENY
-// policy whose target is false for the operation is the control that the
-// ALLOW policy allows.
-func TestATargetTheFilterCannotEvaluateDenies(t *testing.T) {
+// A DENY rule under a target the filter cannot evaluate denies, as the check
+// does: under a policy target that reads the resource it denies rows the
+// filter cannot name, and under a policy or a rule target that reads a PIP
+// whose call failed it denies every row. An ALLOW rule under such a target
+// does not apply, as in the check, and the policy beside it allows; so does a
+// DENY rule whose condition is false. Each such node used to be left out,
+// and later to deny whatever it held. A DENY policy whose target is false
+// for the operation is the control that the ALLOW policy allows.
+func TestATargetTheFilterCannotEvaluateDeniesWhereItsNodeDenies(t *testing.T) {
 	srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
 	for _, tc := range []struct {
-		name, policyTarget, ruleTarget, want string
+		name, policyTarget, ruleTarget, condition, effect, want string
 	}{
-		{"a policy target over the resource", "resource.secret == 1", "true", deny},
-		{"a policy target over a failed PIP", "subject.g == 'blocked'", "true", deny},
-		{"a rule target over a failed PIP", "true", "subject.g == 'blocked'", deny},
-		{"a policy target false for the operation", "operation == 'write'", "true", allow},
+		{"a policy target over the resource and a DENY rule", "resource.secret == 1", "true", "true", "DENY", deny},
+		{"a policy target over a failed PIP and a DENY rule", "subject.g == 'blocked'", "true", "true", "DENY", deny},
+		{"a rule target over a failed PIP and a DENY rule", "true", "subject.g == 'blocked'", "true", "DENY", deny},
+		{"a policy target over a failed PIP and an ALLOW rule", "subject.g == 'blocked'", "true", "true", "ALLOW", allow},
+		{"a rule target over a failed PIP and an ALLOW rule", "true", "subject.g == 'blocked'", "true", "ALLOW", allow},
+		{"a policy target over the resource and a DENY rule whose condition is false", "resource.secret == 1", "true",
+			"operation == 'write'", "DENY", allow},
+		{"a rule target over a failed PIP and a DENY rule whose condition is false", "true", "subject.g == 'blocked'",
+			"operation == 'write'", "DENY", allow},
+		{"a policy target false for the operation", "operation == 'write'", "true", "true", "DENY", allow},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			r := pipRegistry(t)
-			load(t, r, generalPIP(srv.URL, ""), denyPolicySet(tc.policyTarget, tc.ruleTarget))
+			load(t, r, generalPIP(srv.URL, ""), policySetBeside(tc.policyTarget, tc.ruleTarget, tc.condition, tc.effect))
 			if got := filterOf(t, r, "a", "read"); got != tc.want {
 				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
 			}
@@ -347,14 +354,14 @@ func TestATargetTheFilterCannotEvaluateDenies(t *testing.T) {
 	}
 }
 
-// A policy whose target reads the resource, and which the check reads as
-// true or false on every row, denies rows the filter cannot name only where
-// it denies some row once its target holds. One that denies none does not
-// apply, and the policy beside it allows. A policy of ALLOW rules alone used
-// to deny too, and the filter answered DENY where the check allows every
-// row. DENY_UNLESS_PERMIT denies where its ALLOW rule does not apply. A
-// target over a selection that can stop as too large is undefined on some
-// rows of the check, which then denies, and so does the filter.
+// A policy whose target reads the resource denies rows the filter cannot
+// name only where it denies some row once its target holds. One that denies
+// none does not apply, and the policy beside it allows. A policy of ALLOW
+// rules alone used to deny too, and the filter answered DENY where the check
+// allows every row. DENY_UNLESS_PERMIT denies where its ALLOW rule does not
+// apply, and a DENY rule whose target is false denies nothing. A target over
+// a selection that can stop as too large, which the check may leave
+// undefined on a row, follows the same rule.
 func TestAPolicyOverTheResourceThatDeniesNoRowDoesNotApply(t *testing.T) {
 	for _, tc := range []struct{ setAlg, target, alg, effect, ruleTarget, want string }{
 		{"DENY_OVERRIDES", "resource.secret == 1", "PERMIT_OVERRIDES", "ALLOW", "true", allow},
@@ -364,7 +371,9 @@ func TestAPolicyOverTheResourceThatDeniesNoRowDoesNotApply(t *testing.T) {
 		{"DENY_OVERRIDES", "resource.secret == 1", "DENY_UNLESS_PERMIT", "ALLOW", "operation == 'write'", deny},
 		{"PERMIT_UNLESS_DENY", "resource.secret == 1", "PERMIT_OVERRIDES", "ALLOW", "true", allow},
 		{"PERMIT_UNLESS_DENY", "resource.secret == 1", "DENY_OVERRIDES", "DENY", "true", deny},
-		{"DENY_OVERRIDES", "resource.items[*].id == 1", "PERMIT_OVERRIDES", "ALLOW", "true", deny},
+		{"DENY_OVERRIDES", "resource.secret == 1", "DENY_OVERRIDES", "DENY", "operation == 'write'", allow},
+		{"DENY_OVERRIDES", "resource.items[*].id == 1", "PERMIT_OVERRIDES", "ALLOW", "true", allow},
+		{"DENY_OVERRIDES", "resource.items[*].id == 1", "DENY_OVERRIDES", "DENY", "true", deny},
 	} {
 		t.Run(tc.setAlg+" "+tc.target+" "+tc.alg+" "+tc.effect+" "+tc.ruleTarget, func(t *testing.T) {
 			r := New(Config{}, tab(t), quiet{})
@@ -383,27 +392,27 @@ func TestAPolicyOverTheResourceThatDeniesNoRowDoesNotApply(t *testing.T) {
 }
 
 // A rule whose target the check may leave undefined on a row, such as a
-// path with a trailing dot, denies that row in the check, whatever its
-// effect, and so the filter gives it denied rows it cannot name. An ALLOW
-// rule over such a target used to be dropped, and the filter allowed the
-// rows of the policy beside it. A target over a path of keys, which the check
-// reads as true or false on every row, is the control.
-func TestARuleTargetTheCheckMayLeaveUndefinedDenies(t *testing.T) {
-	for _, tc := range []struct{ policyTarget, ruleTarget, want string }{
-		{"true", "resource.a. == 1", deny},
-		{"resource.secret == 1", "resource.a. == 1", deny},
-		{"true", "resource.a == 1", allow},
-		{"resource.secret == 1", "resource.a == 1", allow},
+// path with a trailing dot, denies in the filter only when it is a DENY
+// rule, as in the check, and an ALLOW rule over such a target does not
+// apply: the policy beside it allows. A target over a path of keys is the
+// control.
+func TestARuleTargetTheCheckMayLeaveUndefinedDeniesOnlyForADenyRule(t *testing.T) {
+	for _, tc := range []struct{ policyTarget, ruleTarget, effect, want string }{
+		{"true", "resource.a. == 1", "ALLOW", allow},
+		{"resource.secret == 1", "resource.a. == 1", "ALLOW", allow},
+		{"true", "resource.a. == 1", "DENY", deny},
+		{"true", "resource.a == 1", "ALLOW", allow},
+		{"resource.secret == 1", "resource.a == 1", "ALLOW", allow},
 	} {
-		t.Run(tc.policyTarget+" "+tc.ruleTarget, func(t *testing.T) {
+		t.Run(tc.policyTarget+" "+tc.ruleTarget+" "+tc.effect, func(t *testing.T) {
 			r := New(Config{}, tab(t), quiet{})
 			load(t, r, ``, fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
 				"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
 				"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
 					"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
 					{"policyId": "q", "target": %q, "combiningAlgorithm": "PERMIT_OVERRIDES", "tenantId": "a",
-					"rules": [{"ruleId": "r", "target": %q, "effect": "ALLOW", "tenantId": "a"}]}]}`,
-				tc.policyTarget, tc.ruleTarget))
+					"rules": [{"ruleId": "r", "target": %q, "effect": %q, "tenantId": "a"}]}]}`,
+				tc.policyTarget, tc.ruleTarget, tc.effect))
 			if got := filterOf(t, r, "a", "read"); got != tc.want {
 				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
 			}
@@ -438,19 +447,75 @@ func TestAFailedSourceBelowATargetOverTheResourceDeniesOnlyItsRows(t *testing.T)
 	}
 }
 
-// A rule target over a PIP that the answer of the PIP leaves undefined, such
-// as a list with a null element, makes the check deny every row, whatever the
-// effect of the rule, so the filter denies too; an answer that makes the
-// target true allows. A target over the resource and such a PIP is decided
-// before any request, so it denies even where the PIP answers ["x"] and the
-// check allows: the filter then admits fewer rows than the check.
-func TestARuleTargetOverAPIPTheCheckMayLeaveUndefinedDenies(t *testing.T) {
-	for _, tc := range []struct{ answer, ruleTarget, want string }{
-		{`[null]`, "subject.g == 'x'", deny},
-		{`["x"]`, "subject.g == 'x'", allow},
-		{`["x"]`, "resource.a == '1' AND subject.g == 'x'", deny},
+// A policy of ALLOW rules under a target the filter cannot evaluate does not
+// apply, so the set's algorithm decides as over no child: PERMIT_UNLESS_DENY
+// allows every row, as legacy does, and DENY_UNLESS_PERMIT denies.
+func TestAnAllowPolicyUnderAnUnknownTargetLeavesTheSetToItsAlgorithm(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
+	for _, tc := range []struct{ setAlg, policyTarget, ruleTarget, want string }{
+		{"PERMIT_UNLESS_DENY", "subject.g == 'x'", "true", allow},
+		{"PERMIT_UNLESS_DENY", "true", "subject.g == 'x'", allow},
+		{"PERMIT_UNLESS_DENY", "resource.secret == 1", "true", allow},
+		{"DENY_UNLESS_PERMIT", "subject.g == 'x'", "true", deny},
+		{"DENY_UNLESS_PERMIT", "true", "subject.g == 'x'", deny},
+		{"DENY_UNLESS_PERMIT", "resource.secret == 1", "true", deny},
 	} {
-		t.Run(tc.answer+" "+tc.ruleTarget, func(t *testing.T) {
+		t.Run(tc.setAlg+" "+tc.policyTarget+" "+tc.ruleTarget, func(t *testing.T) {
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), loneAllowPolicySet(tc.setAlg, tc.policyTarget, tc.ruleTarget))
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
+			}
+		})
+	}
+}
+
+// A policy of ALLOW rules whose target reads the entitlements service, which
+// fails, does not apply, and PERMIT_UNLESS_DENY allows every row, as legacy
+// does; DENY_UNLESS_PERMIT denies.
+func TestAnAllowPolicyUnderAFailedEntitlementsReadLeavesTheSetToItsAlgorithm(t *testing.T) {
+	for _, tc := range []struct{ setAlg, policyTarget, ruleTarget, want string }{
+		{"PERMIT_UNLESS_DENY", entitled, "true", allow},
+		{"PERMIT_UNLESS_DENY", "true", entitled, allow},
+		{"DENY_UNLESS_PERMIT", entitled, "true", deny},
+	} {
+		t.Run(tc.setAlg+" "+tc.policyTarget+" "+tc.ruleTarget, func(t *testing.T) {
+			r := failedEntitlementsRegistry(t)
+			load(t, r, ``, loneAllowPolicySet(tc.setAlg, tc.policyTarget, tc.ruleTarget))
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
+			}
+		})
+	}
+}
+
+// A DENY rule with a predicate under a target the filter cannot evaluate
+// keeps its predicate, so the filter subtracts the rows it names from those
+// the ALLOW rule beside it allows, rather than denying every row.
+func TestADenyRuleWithAPredicateUnderAnUnknownTargetKeepsItsPredicate(t *testing.T) {
+	got := filter(t, false, "read", `{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "t",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "t",
+			"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "t"},
+				{"ruleId": "deny", "target": "resource.a. == 1", "effect": "DENY", "tenantId": "t",
+					"sqlPredicate": "b = 2"}]}]}`)
+	if want := condition("sqlFilterCondition", `NOT (b = 2)`); got != want {
+		t.Errorf("Filter(doc, read) = %s, want %s", got, want)
+	}
+}
+
+// A rule target over a PIP that the answer of the PIP leaves undefined, such
+// as a list with a null element, makes a DENY rule deny every row, in the
+// check and in the filter, and leaves an ALLOW rule out, so the policy beside
+// it allows. An ALLOW rule whose target compares the resource and a PIP
+// answering ["x"] does not apply either.
+func TestARuleTargetOverAPIPTheCheckMayLeaveUndefinedDeniesOnlyForADenyRule(t *testing.T) {
+	for _, tc := range []struct{ answer, ruleTarget, effect, want string }{
+		{`[null]`, "subject.g == 'x'", "ALLOW", allow},
+		{`[null]`, "subject.g == 'x'", "DENY", deny},
+		{`["x"]`, "resource.a == '1' AND subject.g == 'x'", "ALLOW", allow},
+	} {
+		t.Run(tc.answer+" "+tc.ruleTarget+" "+tc.effect, func(t *testing.T) {
 			srv, _ := pipServer(t, http.StatusOK, tc.answer)
 			r := pipRegistry(t)
 			load(t, r, generalPIP(srv.URL, ""), fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE",
@@ -458,7 +523,7 @@ func TestARuleTargetOverAPIPTheCheckMayLeaveUndefinedDenies(t *testing.T) {
 				"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
 					"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
 					{"policyId": "q", "target": "true", "combiningAlgorithm": "PERMIT_OVERRIDES", "tenantId": "a",
-					"rules": [{"ruleId": "r", "target": %q, "effect": "ALLOW", "tenantId": "a"}]}]}`, tc.ruleTarget))
+					"rules": [{"ruleId": "r", "target": %q, "effect": %q, "tenantId": "a"}]}]}`, tc.ruleTarget, tc.effect))
 			if got := filterOf(t, r, "a", "read"); got != tc.want {
 				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
 			}
