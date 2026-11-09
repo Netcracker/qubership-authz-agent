@@ -22,8 +22,6 @@ import (
 	"strings"
 
 	"authz-agent/internal/policyir"
-	"authz-agent/internal/regobuiltins"
-	"authz-agent/internal/regogen/spectables"
 )
 
 // The filter returns the rows that a check of each row would allow, where a
@@ -37,16 +35,13 @@ import (
 //	DENY_UNLESS_PERMIT  A = ∪A        D = all rows ∖ ∪A
 //	PERMIT_UNLESS_DENY  A = all ∖ ∪D  D = ∪D
 //
-// A rule that applies and whose condition a failed source leaves unknown
-// denies the row whatever its siblings give, as the check denies the whole
-// resource there. Its rows (H) pass up through every algorithm. The filter
-// counts a condition as failed where it is unknown and reads a source that
-// failed, even where another operand settles it on some row, so H may hold
-// rows the check allows, never fewer than it denies.
-//
-// The answer is A of the root, the union of the top-level nodes' A, less
-// their H: empty is DENY, all rows ALLOW, anything else USE_FILTER_CONDITION
-// with its text.
+// The answer is A of the root, the union of the top-level nodes' A: empty is
+// DENY, all rows ALLOW, anything else USE_FILTER_CONDITION with its text.
+// Where the condition of a rule that applies is unknown on some row because a
+// source it reads failed, the check denies that resource whole, so the answer
+// is ANDed with the rows where no such condition is unknown ([rowsVal]),
+// whatever the algorithms give: a veto. A veto no dialect can write, such as
+// over every row, makes the answer DENY.
 //
 // A set the agent cannot write as a predicate shrinks A and never grows it,
 // so the filter never returns a row the check would deny. D may grow for the
@@ -71,20 +66,18 @@ type rows struct {
 	groups []*fexpr
 }
 
-// pair is what a node gives on the rows: those it allows, those it denies,
-// and those it denies whatever its siblings give.
-type pair struct{ a, d, h rows }
+// pair is what a node gives on the rows: those it allows and those it denies.
+type pair struct{ a, d rows }
 
 var (
 	none    = rows{}
 	allRows = rows{kind: rowsAll}
 )
 
-// errDenyAll ends the evaluation: the whole filter is DENY, as a rule without
-// a predicate whose condition a failed source leaves unknown denies every
-// row, and as a predicate whose placeholder cannot be filled does
-// ([substituter.term]). Below a target that is unknown, [filterEval.node] turns it into rows
-// the filter cannot name that are denied whatever the siblings give.
+// errDenyAll ends the evaluation: the whole filter is DENY, as where a
+// predicate's placeholder reads a source that failed. Below a target that is
+// unknown, [filterEval.node] turns it into denied rows that are unknown
+// instead.
 var errDenyAll = errors.New("filter: deny all")
 
 // unionRows is the union of xs. Every row but those of g, joined with the
@@ -124,22 +117,29 @@ func unionRows(xs ...rows) rows {
 
 // filterEval holds what one evaluation of the filter reads.
 type filterEval struct {
-	m      *Module
-	ctx    context.Context
-	req    *Request
-	st     *Statuses
-	failed map[string]bool
+	m   *Module
+	ctx context.Context
+	req *Request
+	st  *Statuses
+	// vetoes are the rows each failed condition leaves allowed; vetoAll is
+	// set where one leaves no row a dialect can write.
+	vetoes  []*fexpr
+	vetoAll bool
+	// path is the rows where the targets of the nodes being evaluated may
+	// hold; a veto keeps to them.
+	path rowsF
 	// approx is the first approximation of the plan: a node's A loses every
 	// row once any of its children denies a row it can name.
 	approx bool
 	sub    *substituter
 }
 
-// tri is a three-valued status: true, false, or unknown; err marks an
-// unknown that rests on a failed source rather than on the resource.
+// tri is a three-valued status: true, false, or unknown. veto, of a
+// condition, is the rows where a failed source leaves it unknown; v is then
+// its value on the other rows.
 type tri struct {
-	v   int8 // 1 true, 0 false, -1 unknown
-	err bool
+	v    int8 // 1 true, 0 false, -1 unknown
+	veto *rowsF
 }
 
 func (e *filterEval) status(s status, pass int) tri {
@@ -161,49 +161,91 @@ func (e *filterEval) status(s status, pass int) tri {
 	case f || !s.three:
 		return tri{}
 	}
-	return tri{v: -1, err: e.sourceFailed(s, pass)}
+	return tri{v: -1}
 }
 
-// scopeOutside stands in the references of a status for a read of
-// subject.permissionScope outside a pass of iterate, which fails the decision
-// as a failed source does.
-var scopeOutside = &Ref{Key: "subject.permissionScope"}
+// cond is the status of the condition s, with its rows where a failed source
+// leaves it unknown.
+func (e *filterEval) cond(s status, pass int) tri {
+	c := e.status(s, pass)
+	if c.v != -1 || s.leaves == nil {
+		return c
+	}
+	r := e.rows(s, pass)
+	if r.u.kind == "false" {
+		return c
+	}
+	switch r.t.kind {
+	case "true":
+		c.v = 1
+	case "false":
+		c.v = 0
+	}
+	c.veto = &r.u
+	return c
+}
 
-// undeclared stands in the references of a status for a read of a PIP that
-// is not declared, which the check reads as a source that failed.
-var undeclared = &Ref{Key: "undeclared"}
-
-// sourceFailed reports whether a reference of s reads a source that failed
-// on this request.
-func (e *filterEval) sourceFailed(s status, pass int) bool {
-	for _, r := range s.refs {
-		switch {
-		case r == scopeOutside, r == undeclared:
-			return true
-		case r.pip != nil:
-			if e.failed[r.pip.Name] {
-				return true
+// rows is the condition s on the rows by Kleene's logic: a leaf over the
+// resource is true on the rows it matches, a leaf a failed source leaves
+// unknown is unknown on every row, and any other leaf that is not true is
+// false.
+func (e *filterEval) rows(s status, pass int) rowsVal {
+	holds := func(key string) bool {
+		if s.pass {
+			return e.st.tp[passKey{key, pass}]
+		}
+		return e.st.t[key]
+	}
+	var acc rowsVal
+	for i, grp := range s.leaves {
+		var g rowsVal
+		for j, l := range grp {
+			v := rowsVal{t: rowsFalse, u: rowsFalse}
+			switch {
+			case l.fails && holds(l.key+"e"):
+				v.u = rowsTrue
+			case l.row != nil:
+				v.t = rowsF{kind: "atom", atom: l.row}
+			case holds(l.key):
+				v.t = rowsTrue
 			}
-		case r.ent != nil:
-			if e.failed[entitlementsPIP] {
-				return true
-			}
-		case r.Pass:
-			if e.req.Scope != nil && pass >= 0 && pass < len(e.req.Scope.Passes) &&
-				e.req.Scope.Passes[pass][r.Key].State == spectables.StateError {
-				return true
+			if j == 0 {
+				g = v
+			} else {
+				g = kleeneAnd(g, v)
 			}
 		}
-		if v, ok := e.req.Values[r.Key]; ok && v.State == spectables.StateError {
-			return true
+		if i == 0 {
+			acc = g
+		} else {
+			acc = kleeneOr(acc, g)
 		}
 	}
-	return false
+	return acc
+}
+
+// veto denies the rows u, where a failed source leaves a condition unknown.
+func (e *filterEval) veto(u rowsF) {
+	if x := rowsExpr(fAnd(u, e.path), true); x != nil {
+		e.vetoes = append(e.vetoes, x)
+	} else {
+		e.vetoAll = true
+	}
+}
+
+// within is the rows where target s may hold: true or unknown. A target that
+// does not read the resource may hold on every row.
+func (e *filterEval) within(s status, pass int) rowsF {
+	if s.leaves == nil || s.leaves[0][0].whole {
+		return rowsTrue
+	}
+	r := e.rows(s, pass)
+	return fOr(r.t, r.u)
 }
 
 // top returns A of the root.
 func (e *filterEval) top(plan *filterPlan) (rows, error) {
-	var as, hs []rows
+	var as []rows
 	for _, n := range plan.tops {
 		var p pair
 		var err error
@@ -216,21 +258,44 @@ func (e *filterEval) top(plan *filterPlan) (rows, error) {
 			return none, err
 		}
 		as = append(as, p.a)
-		hs = append(hs, p.h)
 	}
-	return e.subtract(unionRows(as...), unionRows(hs...)), nil
+	a := unionRows(as...)
+	switch {
+	case e.vetoAll:
+		return none, nil
+	case len(e.vetoes) == 0:
+		return a, nil
+	case a.kind == rowsAll:
+		return rows{kind: rowsSome, groups: []*fexpr{andOrOne(e.vetoes)}}, nil
+	case a.kind == rowsSome:
+		allowed := a.groups[0]
+		if len(a.groups) > 1 {
+			allowed = &fexpr{kind: "grp", parts: a.groups}
+		}
+		return rows{kind: rowsSome, groups: []*fexpr{{kind: "and", parts: append([]*fexpr{allowed}, e.vetoes...)}}}, nil
+	}
+	return none, nil
+}
+
+// andOrOne is the AND of xs, the one alone where there is one.
+func andOrOne(xs []*fexpr) *fexpr {
+	if len(xs) == 1 {
+		return xs[0]
+	}
+	return &fexpr{kind: "and", parts: xs}
 }
 
 // simplified evaluates the policies of one operation of a simplified group.
 func (e *filterEval) simplified(n *fnode) (pair, error) {
-	var terms, hard []*fexpr
-	allowAll := false
+	var terms []*fexpr
 	for _, s := range n.simp {
 		if e.status(s.match, -1).v != 1 {
 			continue
 		}
-		c := e.status(s.cond, -1)
-		failed := c.v == -1 && c.err
+		c := e.cond(s.cond, -1)
+		if c.veto != nil {
+			e.veto(*c.veto)
+		}
 		if hasPredicate(s.preds) {
 			if c.v == 0 {
 				continue
@@ -239,31 +304,17 @@ func (e *filterEval) simplified(n *fnode) (pair, error) {
 			if err != nil {
 				return pair{}, err
 			}
-			if failed {
-				hard = append(hard, t)
-			} else {
-				terms = append(terms, t)
-			}
+			terms = append(terms, t)
 			continue
 		}
-		switch {
-		case c.v == 1:
-			allowAll = true
-		case failed:
-			return pair{}, errDenyAll
+		if c.v == 1 {
+			return pair{a: allRows}, nil
 		}
 	}
-	var p pair
-	switch {
-	case allowAll:
-		p.a = allRows
-	case len(terms) > 0:
-		p.a = rows{kind: rowsSome, groups: []*fexpr{orOf(terms)}}
+	if len(terms) == 0 {
+		return pair{}, nil
 	}
-	if len(hard) > 0 {
-		p.h = rows{kind: rowsSome, groups: hard}
-	}
-	return p, nil
+	return pair{a: rows{kind: rowsSome, groups: []*fexpr{orOf(terms)}}}, nil
 }
 
 // node evaluates a set, an iterate, or a policy in pass (-1 outside an
@@ -271,29 +322,32 @@ func (e *filterEval) simplified(n *fnode) (pair, error) {
 // pass evaluates.
 //
 // A node whose target is unknown, over a failed source or over the resource,
-// is evaluated as if its target held. It then denies rows the filter cannot
-// name if it denies some row, and does not apply otherwise: the check gives
-// such a node DENY or not applicable on a row. The rows it denies whatever
-// its siblings give stay so, a superset of those where its target holds, and
-// a rule without a predicate makes them rows the filter cannot name.
+// is evaluated as if its target held, with its vetoes kept to the rows where
+// its target may hold. Where its predicates deny some row, it denies rows the
+// filter cannot name; otherwise it does not apply. On each row, the check
+// gives such a node either its answer or not applicable.
 func (e *filterEval) node(n *fnode, pass int, prefix string) (pair, error) {
 	t := e.status(n.tgt, pass)
 	if t.v == 0 {
 		return pair{}, nil
 	}
+	path := e.path
+	if t.v == -1 && n.tgt.leaves != nil {
+		e.path = fAnd(path, e.within(n.tgt, pass))
+	}
 	p, err := e.body(n, pass, prefix)
+	e.path = path
 	if t.v == 1 {
 		return p, err
 	}
 	switch {
 	case errors.Is(err, errDenyAll):
-		return pair{h: rows{kind: rowsUnknown}}, nil
 	case err != nil:
 		return pair{}, err
 	case p.d.kind == rowsNone:
-		return pair{h: p.h}, nil
+		return pair{}, nil
 	}
-	return pair{d: rows{kind: rowsUnknown}, h: p.h}, nil
+	return pair{d: rows{kind: rowsUnknown}}, nil
 }
 
 // body evaluates node n as node does where its target holds.
@@ -351,38 +405,42 @@ func (e *filterEval) iterate(n *fnode) (pair, error) {
 // policy evaluates the rules of policy n. The allowed predicates of a policy
 // form one group of the answer.
 func (e *filterEval) policy(n *fnode, pass int, prefix string) (pair, error) {
-	var allow, deny, hard []*fexpr
-	allowAll, denyAll, denyUnknown, hardUnknown := false, false, false, false
+	var allow, deny []*fexpr
+	allowAll, denyAll, denyUnknown := false, false, false
 	for _, r := range n.kids {
 		t := e.status(r.tgt, pass)
-		if t.v == 0 || r.effect != "ALLOW" && r.effect != "DENY" {
+		if t.v == 0 {
 			continue
 		}
-		c := e.status(r.cond, pass)
-		failed := c.v == -1 && c.err
+		c := e.cond(r.cond, pass)
 		if t.v == -1 {
 			// the filter cannot name the rows where the target holds, so an
 			// ALLOW rule allows none, and a DENY rule whose condition is not
-			// false, or a rule whose condition a failed source leaves
-			// unknown, denies by its predicate, which may deny rows the check
-			// allows, or denies rows the filter cannot name
-			if r.effect == "ALLOW" && !failed || c.v == 0 {
+			// false denies by its predicate, which may deny rows the check
+			// allows, or denies rows the filter cannot name; a rule of any
+			// effect vetoes the rows where its condition fails and its target
+			// may hold
+			if c.veto != nil {
+				e.veto(fAnd(*c.veto, e.within(r.tgt, pass)))
+			}
+			if r.effect != "DENY" || c.v == 0 {
 				continue
 			}
 			if !hasPredicate(r.preds) {
-				hardUnknown = hardUnknown || failed
-				denyUnknown = denyUnknown || !failed
+				denyUnknown = true
 				continue
 			}
 			term, err := e.sub.term(r.preds, prefix+r.ruleID, pass)
 			if err != nil {
 				return pair{}, err
 			}
-			if failed {
-				hard = append(hard, term)
-			} else {
-				deny = append(deny, term)
-			}
+			deny = append(deny, term)
+			continue
+		}
+		if c.veto != nil {
+			e.veto(*c.veto)
+		}
+		if r.effect != "ALLOW" && r.effect != "DENY" {
 			continue
 		}
 		if hasPredicate(r.preds) {
@@ -393,12 +451,9 @@ func (e *filterEval) policy(n *fnode, pass int, prefix string) (pair, error) {
 			if err != nil {
 				return pair{}, err
 			}
-			switch {
-			case failed:
-				hard = append(hard, term)
-			case r.effect == "ALLOW":
+			if r.effect == "ALLOW" {
 				allow = append(allow, term)
-			default:
+			} else {
 				deny = append(deny, term)
 			}
 			continue
@@ -408,8 +463,6 @@ func (e *filterEval) policy(n *fnode, pass int, prefix string) (pair, error) {
 			allowAll = true
 		case c.v == 1:
 			denyAll = true
-		case failed:
-			return pair{}, errDenyAll
 		case c.v == -1 && r.effect == "DENY":
 			denyUnknown = true
 		}
@@ -430,38 +483,31 @@ func (e *filterEval) policy(n *fnode, pass int, prefix string) (pair, error) {
 	case len(deny) > 0:
 		d = rows{kind: rowsSome, groups: deny}
 	}
-	h := none
-	switch {
-	case hardUnknown:
-		h = rows{kind: rowsUnknown}
-	case len(hard) > 0:
-		h = rows{kind: rowsSome, groups: hard}
-	}
-	return e.combine(n.alg, []pair{{a: a}, {d: d}, {h: h}}), nil
+	return e.combine(n.alg, []pair{{a: a}, {d: d}}), nil
 }
 
 // combine applies algorithm alg to the pairs of the children.
 func (e *filterEval) combine(alg policyir.Algorithm, kids []pair) pair {
-	as, ds, hs := make([]rows, len(kids)), make([]rows, len(kids)), make([]rows, len(kids))
+	as, ds := make([]rows, len(kids)), make([]rows, len(kids))
 	for i, k := range kids {
-		as[i], ds[i], hs[i] = k.a, k.d, k.h
+		as[i], ds[i] = k.a, k.d
 	}
-	A, D, H := unionRows(as...), unionRows(ds...), unionRows(hs...)
+	A, D := unionRows(as...), unionRows(ds...)
 	switch alg {
 	case policyir.AlgorithmDenyOverrides:
-		return pair{a: e.subtract(A, D), d: D, h: H}
+		return pair{a: e.subtract(A, D), d: D}
 	case policyir.AlgorithmPermitOverrides:
 		if A.kind == rowsAll {
-			return pair{a: A, h: H}
+			return pair{a: A}
 		}
 		// D ∖ A may stay D: a D that grows only shrinks the A of an ancestor
-		return pair{a: A, d: D, h: H}
+		return pair{a: A, d: D}
 	case policyir.AlgorithmDenyUnlessPermit:
-		return pair{a: A, d: complement(A), h: H}
+		return pair{a: A, d: complement(A)}
 	case policyir.AlgorithmPermitUnlessDeny:
-		return pair{a: e.subtract(allRows, D), d: D, h: H}
+		return pair{a: e.subtract(allRows, D), d: D}
 	}
-	return pair{a: A, d: D, h: H}
+	return pair{a: A, d: D}
 }
 
 // complement is every row but those of x.
@@ -517,15 +563,6 @@ func groupOf(gs []*fexpr) *fexpr {
 		return &fexpr{kind: "or", parts: gs}
 	}
 	return gs[0]
-}
-
-// failedSources returns the PIPs whose calls failed in ctx, by name.
-func failedSources(ctx context.Context) map[string]bool {
-	out := map[string]bool{}
-	for _, n := range regobuiltins.FailedPIPs(ctx) {
-		out[n] = true
-	}
-	return out
 }
 
 func groupsKey(gs []*fexpr) string {

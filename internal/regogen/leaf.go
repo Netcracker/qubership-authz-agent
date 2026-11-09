@@ -41,6 +41,9 @@ type leafRails struct {
 	// whose outcome depends on the source's value, or a PIP that is not
 	// declared. It is false for a leaf that reads no such source.
 	failed dnf
+	// row is set on a leaf over the resource in check/filter, which is true
+	// on the rows it matches.
+	row *rowAtom
 }
 
 type point struct {
@@ -148,7 +151,31 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 		// check/filter has no resource: what a comparison over it gives
 		// row by row is the predicate's part of the answer
 		g.reportLeaf(leafText(), nil)
-		return leafRails{threeValued: true}, nil
+		rails := leafRails{threeValued: true, row: rowAtomOf(c)}
+		other := c.Left
+		if readsResource(c.Left) {
+			other = c.Right
+		}
+		if other == nil || readsResource(other) {
+			return rails, nil
+		}
+		// a source the resource is compared with leaves the leaf unknown on
+		// every row where it fails
+		S, err := g.side(other)
+		switch {
+		case errors.Is(err, errUndeclared):
+			rails.failed = dnfTrue
+		case err != nil:
+			return leafRails{}, err
+		}
+		if S != nil {
+			for _, p := range S.points() {
+				if S.failed(p) {
+					rails.failed = union(rails.failed, dnf{S.at(p)})
+				}
+			}
+		}
+		return rails, nil
 	}
 	L, err := g.side(c.Left)
 	if err != nil {

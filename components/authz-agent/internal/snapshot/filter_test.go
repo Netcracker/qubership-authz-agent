@@ -21,6 +21,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"authz-agent/internal/jsonvalue"
 )
 
 // denySet is a DENY_OVERRIDES set of tenant t on the resource type doc: one
@@ -420,26 +422,36 @@ func TestARuleTargetTheCheckMayLeaveUndefinedDeniesOnlyForADenyRule(t *testing.T
 	}
 }
 
-// A policy whose target reads the resource and whose DENY rule without a
-// predicate reads a PIP whose call failed denies the rows where its target
-// holds, which the filter cannot name, whatever the policy beside it gives:
-// under PERMIT_OVERRIDES too the filter allows no row, as the check denies
-// such a row. It used to deny those rows under DENY_OVERRIDES alone.
-func TestAFailedSourceBelowATargetOverTheResourceDeniesOverItsNeighbors(t *testing.T) {
+// A policy whose target reads the resource and whose rule reads a PIP whose
+// call failed denies the rows where its target holds, whatever the rule's
+// effect and whatever the policy beside it gives, as the check denies such a
+// row. A target with no text in a dialect denies every row.
+func TestAFailedSourceBelowATargetOverTheResourceDeniesTheRowsOfTheTarget(t *testing.T) {
 	srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
-	for _, tc := range []struct{ setAlg, want string }{
-		{"PERMIT_OVERRIDES", deny},
-		{"DENY_OVERRIDES", deny},
+	notSecret := answerOf("", `{"secret": { "$ne": 1 }}`, "secret!=1", "secret <> 1")
+	for _, tc := range []struct{ name, setAlg, target, effect, setTarget, want string }{
+		{"a DENY rule under PERMIT_OVERRIDES", "PERMIT_OVERRIDES", "resource.secret == 1", "DENY", "", notSecret},
+		{"a DENY rule under DENY_OVERRIDES", "DENY_OVERRIDES", "resource.secret == 1", "DENY", "", notSecret},
+		{"an ALLOW rule under PERMIT_OVERRIDES", "PERMIT_OVERRIDES", "resource.secret == 1", "ALLOW", "", notSecret},
+		{"a target of a nested set", "PERMIT_OVERRIDES", "true", "ALLOW", "resource.secret == 1", notSecret},
+		{"a target without text", "PERMIT_OVERRIDES", "resource.secret > 1", "ALLOW", "", deny},
 	} {
-		t.Run(tc.setAlg, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
+			q := fmt.Sprintf(`{"policyId": "q", "target": %q, "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+				"rules": [{"ruleId": "r", "target": "true", "condition": "subject.g == 'blocked'", "effect": %q,
+				"tenantId": "a"}]}`, tc.target, tc.effect)
+			policies, sets := ", "+q, ""
+			if tc.setTarget != "" {
+				policies = ""
+				sets = fmt.Sprintf(`, "policySets": [{"policySetId": "n", "name": "n", "status": "ACTIVE", "tenantId": "a",
+					"target": %q, "combiningAlgorithm": "DENY_OVERRIDES", "policies": [%s]}]`, tc.setTarget, q)
+			}
 			r := pipRegistry(t)
 			load(t, r, generalPIP(srv.URL, ""), fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE",
 				"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": %q,
 				"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
-					"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
-					{"policyId": "q", "target": "resource.secret == 1", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
-					"rules": [{"ruleId": "deny", "target": "true", "condition": "subject.g == 'blocked'", "effect": "DENY",
-					"tenantId": "a"}]}]}`, tc.setAlg))
+					"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]}%s]%s}`,
+				tc.setAlg, policies, sets))
 			if got := filterOf(t, r, "a", "read"); got != tc.want {
 				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
 			}
@@ -556,97 +568,6 @@ func TestANestedSetOverTheResourceThatDeniesNoRowDoesNotApply(t *testing.T) {
 	}
 }
 
-// A rule whose condition reads a PIP whose call failed denies the rows of its
-// predicate whatever its effect, and the policy beside it does not lift the
-// denial, as the check denies such a row whatever its neighbors give. An
-// ALLOW rule under a target over the resource denies them too, since the
-// check denies a row where that target holds, and so does every algorithm of
-// the set above. A rule without a predicate, or with a predicate that reads
-// the failed PIP, denies every row, under a target over the resource as well,
-// and a condition the PIP answers is the control.
-func TestARuleOverAFailedSourceDeniesTheRowsOfItsPredicateOverItsNeighbors(t *testing.T) {
-	failed, _ := pipServer(t, http.StatusInternalServerError, `oops`)
-	answers, _ := pipServer(t, http.StatusOK, `["x"]`)
-	notB := condition("sqlFilterCondition", `NOT (b = 2)`)
-	for _, tc := range []struct {
-		name, url, setAlg, policyTarget, ruleTarget, effect, predicate, want string
-	}{
-		{"an ALLOW rule beside a policy that allows", failed.URL, "PERMIT_OVERRIDES", "true", "true", "ALLOW",
-			`, "sqlPredicate": "b = 2"`, notB},
-		{"a DENY rule beside a policy that allows", failed.URL, "PERMIT_OVERRIDES", "true", "true", "DENY",
-			`, "sqlPredicate": "b = 2"`, notB},
-		{"an ALLOW rule under DENY_OVERRIDES", failed.URL, "DENY_OVERRIDES", "true", "true", "ALLOW",
-			`, "sqlPredicate": "b = 2"`, notB},
-		{"an ALLOW rule under a target over the resource", failed.URL, "PERMIT_OVERRIDES", "resource.secret == 1",
-			"true", "ALLOW", `, "sqlPredicate": "b = 2"`, notB},
-		{"an ALLOW rule under PERMIT_UNLESS_DENY", failed.URL, "PERMIT_UNLESS_DENY", "true", "true", "ALLOW",
-			`, "sqlPredicate": "b = 2"`, notB},
-		{"an ALLOW rule under DENY_UNLESS_PERMIT", failed.URL, "DENY_UNLESS_PERMIT", "true", "true", "ALLOW",
-			`, "sqlPredicate": "b = 2"`, notB},
-		{"an ALLOW rule whose predicate reads the failed PIP", failed.URL, "PERMIT_OVERRIDES", "true", "true",
-			"ALLOW", `, "sqlPredicate": "b = ${subject.g}"`, deny},
-		{"an ALLOW rule without a predicate", failed.URL, "PERMIT_OVERRIDES", "true", "true", "ALLOW", ``, deny},
-		{"an ALLOW rule without a predicate under a rule target over the resource", failed.URL, "PERMIT_OVERRIDES",
-			"true", "resource.secret == 1", "ALLOW", ``, deny},
-		{"an ALLOW rule over a PIP that answers", answers.URL, "PERMIT_OVERRIDES", "true", "true", "ALLOW",
-			`, "sqlPredicate": "b = 2"`, allow},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			r := pipRegistry(t)
-			load(t, r, generalPIP(tc.url, ""), fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE",
-				"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": %q,
-				"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
-					"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
-					{"policyId": "q", "target": %q, "combiningAlgorithm": "PERMIT_OVERRIDES", "tenantId": "a",
-					"rules": [{"ruleId": "r", "target": %q, "condition": "subject.g == 'x'", "effect": %q,
-					"tenantId": "a"%s}]}]}`, tc.setAlg, tc.policyTarget, tc.ruleTarget, tc.effect, tc.predicate))
-			if got := filterOf(t, r, "a", "read"); got != tc.want {
-				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
-			}
-		})
-	}
-}
-
-// A simplified policy whose condition reads a PIP whose call failed denies
-// the rows of its predicate, and the simplified policy beside it that allows
-// every row does not lift the denial.
-func TestASimplifiedPolicyOverAFailedSourceDeniesTheRowsOfItsPredicate(t *testing.T) {
-	srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
-	r := pipRegistry(t)
-	load(t, r, generalPIP(srv.URL, ""), `{"policySetId": "s", "name": "s", "status": "ACTIVE", "type": "SIMPLIFIED",
-		"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-		"policies": [{"policyId": "p", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-			"tenantId": "a", "rules": [{"ruleId": "r", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
-			{"policyId": "q", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-			"tenantId": "a", "rules": [{"ruleId": "r", "target": "true", "condition": "subject.g == 'x'",
-			"effect": "ALLOW", "tenantId": "a", "sqlPredicate": "b = 2"}]}]}`)
-	if got, want := filterOf(t, r, "a", "read"), condition("sqlFilterCondition", `NOT (b = 2)`); got != want {
-		t.Errorf("Filter(doc, read) = %s, want %s", got, want)
-	}
-}
-
-// A rule whose condition reads a PIP that is not declared denies the rows of
-// its predicate over its neighbors, as the check denies a resource there as
-// over a PIP whose call failed. Such a rule used to allow its rows.
-func TestARuleOverAnUndeclaredPIPDeniesTheRowsOfItsPredicate(t *testing.T) {
-	srv, _ := pipServer(t, http.StatusOK, `["x"]`)
-	for _, effect := range []string{"ALLOW", "DENY"} {
-		t.Run(effect, func(t *testing.T) {
-			r := pipRegistry(t)
-			load(t, r, generalPIP(srv.URL, ""), `{"policySetId": "s", "name": "s", "status": "ACTIVE",
-				"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "PERMIT_OVERRIDES",
-				"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
-					"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
-					{"policyId": "q", "target": "true", "combiningAlgorithm": "PERMIT_OVERRIDES", "tenantId": "a",
-					"rules": [{"ruleId": "r", "target": "true", "condition": "subject.h == 'x'", "effect": "`+effect+`",
-					"tenantId": "a", "sqlPredicate": "b = 2"}]}]}`)
-			if got, want := filterOf(t, r, "a", "read"), condition("sqlFilterCondition", `NOT (b = 2)`); got != want {
-				t.Errorf("Filter(doc, read) = %s, want %s", got, want)
-			}
-		})
-	}
-}
-
 // subject allowed 'write' reads the decision for write, which a rule over a
 // PIP whose call failed denies as a whole, so a read rule that requires it
 // denies every row over the policy beside it, as the check denies the read.
@@ -667,5 +588,174 @@ func TestARuleThatReadsADecisionDeniedOverAFailedSourceDeniesEveryRow(t *testing
 			"effect": "ALLOW", "tenantId": "a"}]}]}`)
 	if got := filterOf(t, r, "a", "read"); got != deny {
 		t.Errorf("Filter(doc, read) = %s, want %s", got, deny)
+	}
+}
+
+// answerOf is the answer USE_FILTER_CONDITION with the text of each dialect,
+// null where it is empty.
+func answerOf(querydsl, mongodb, rsql, sql string) string {
+	field := func(t string) string {
+		if t == "" {
+			return "null"
+		}
+		quoted, _ := json.Marshal(t)
+		return string(quoted)
+	}
+	return fmt.Sprintf(`{"calculationResult":"USE_FILTER_CONDITION","filterCondition":%s,"mongodbFilterCondition":%s,`+
+		`"rsqlFilterCondition":%s,"sqlFilterCondition":%s,"customFilterCondition":null}`,
+		field(querydsl), field(mongodb), field(rsql), field(sql))
+}
+
+// openRule is an ALLOW rule whose predicate allows the rows with allowed = 1.
+const openRule = `{"ruleId": "open", "target": "true", "effect": "ALLOW", "tenantId": "a",
+	"predicate": "doc.allowed.eq(1)", "mongodbPredicate": "\"allowed\": 1", "rsqlPredicate": "allowed==1",
+	"sqlPredicate": "allowed=1"}`
+
+// A condition that a PIP whose call failed leaves unknown on some rows denies
+// exactly those rows, whatever the rule's effect and whatever the rule beside
+// it allows, as the check denies such a resource whole. A leaf over the
+// resource is true on the rows it matches, so an AND with resource.a == 'y'
+// is unknown on the rows with a = 'y', and an OR with it on the others; the
+// answer is ANDed with the rows left. A comparison of a path with a literal
+// by == or != has text in rsql, sql, and mongodb, and none in querydsl, so
+// that dialect has no condition. A condition unknown on every row, or on rows
+// another comparison names, denies every row. A known operand that settles
+// the condition leaves the rule as it is without the failure, in either
+// order. A PIP that
+// is not declared counts as one whose call failed. A DENY rule under a target
+// over the resource denies the rows where its condition fails and its target
+// may hold.
+func TestAFailedConditionDeniesTheRowsWhereItIsUnknown(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
+	open := answerOf("doc.allowed.eq(1)", `{"allowed": 1}`, "allowed==1", "allowed=1")
+	notY := answerOf("", `{ "$and": [ {"allowed": 1}, {"a": { "$ne": "y" }} ] }`, `allowed==1;a!="y"`,
+		`allowed=1 AND a <> 'y'`)
+	for _, tc := range []struct {
+		name, setAlg, ruleTarget, condition, effect, predicate string
+		beside                                                 bool
+		want                                                   string
+	}{
+		{"an ALLOW rule over the failed PIP alone", "DENY_OVERRIDES", "true", "subject.g == 'v'", "ALLOW", ``, true,
+			deny},
+		{"an ALLOW rule with a predicate over the failed PIP alone", "DENY_OVERRIDES", "true", "subject.g == 'v'",
+			"ALLOW", `, "sqlPredicate": "owner=1"`, true, deny},
+		{"a DENY rule with a predicate over the failed PIP alone", "PERMIT_UNLESS_DENY", "true", "subject.g == 'v'",
+			"DENY", `, "sqlPredicate": "owner=1"`, false, deny},
+		{"a false operand AND the failed PIP", "DENY_OVERRIDES", "true", "operation == 'write' AND subject.g == 'v'",
+			"ALLOW", ``, true, open},
+		{"the failed PIP AND a false operand", "DENY_OVERRIDES", "true", "subject.g == 'v' AND operation == 'write'",
+			"ALLOW", ``, true, open},
+		{"the failed PIP OR a true operand", "DENY_OVERRIDES", "true", "subject.g == 'v' OR operation == 'read'",
+			"ALLOW", ``, true, allow},
+		{"the failed PIP AND a leaf over the resource", "DENY_OVERRIDES", "true",
+			"subject.g == 'v' AND resource.a == 'y'", "ALLOW", ``, true, notY},
+		{"a leaf over the resource AND the failed PIP", "DENY_OVERRIDES", "true",
+			"resource.a == 'y' AND subject.g == 'v'", "ALLOW", ``, true, notY},
+		{"the failed PIP OR a leaf over the resource", "DENY_OVERRIDES", "true",
+			"subject.g == 'v' OR resource.a == 'y'", "ALLOW", ``, true,
+			answerOf("", `{ "$and": [ {"allowed": 1}, {"a": "y"} ] }`, `allowed==1;a=="y"`, `allowed=1 AND a = 'y'`)},
+		{"the failed PIP AND a leaf over a number", "DENY_OVERRIDES", "true", "subject.g == 'v' AND resource.n != 5",
+			"ALLOW", ``, true,
+			answerOf("", `{ "$and": [ {"allowed": 1}, {"n": 5} ] }`, `allowed==1;n==5`, `allowed=1 AND n = 5`)},
+		{"the failed PIP AND a comparison without text", "DENY_OVERRIDES", "true", "subject.g == 'v' AND resource.n > 1",
+			"ALLOW", ``, true, deny},
+		{"a PIP that is not declared AND a leaf over the resource", "DENY_OVERRIDES", "true",
+			"subject.h == 'v' AND resource.a == 'y'", "ALLOW", ``, true, notY},
+		{"an ALLOW rule under a target over the resource", "DENY_OVERRIDES", "resource.a == 'y'", "subject.g == 'v'",
+			"ALLOW", ``, true, notY},
+		{"a DENY rule without a predicate under a target over the resource", "DENY_OVERRIDES", "resource.a == 'y'",
+			"subject.g == 'v'", "DENY", ``, true, notY},
+		{"a leaf that compares the resource with the failed PIP", "DENY_OVERRIDES", "true", "resource.a == subject.g",
+			"ALLOW", ``, true, deny},
+		{"a leaf that compares the resource with a PIP that is not declared", "DENY_OVERRIDES", "true",
+			"resource.a == subject.h", "ALLOW", ``, true, deny},
+		{"a DENY rule with a predicate under a target over the resource", "DENY_OVERRIDES", "resource.a == 'y'",
+			"subject.g == 'v'", "DENY", `, "sqlPredicate": "b=2"`, true, notY},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rules := fmt.Sprintf(`{"ruleId": "probe", "target": %q, "condition": %q, "effect": %q, "tenantId": "a"%s}`,
+				tc.ruleTarget, tc.condition, tc.effect, tc.predicate)
+			if tc.beside {
+				rules += ", " + openRule
+			}
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE",
+				"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": %q,
+				"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": %q, "tenantId": "a",
+					"rules": [%s]}]}`, tc.setAlg, tc.setAlg, rules))
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
+			}
+		})
+	}
+}
+
+// A PIP that answers leaves no row unknown, and the filter is the one it
+// gives without a failed source: the condition is false, so only the rule
+// beside it allows.
+func TestAnAnsweringPIPDeniesNoRowOfACondition(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusOK, `["x"]`)
+	r := pipRegistry(t)
+	load(t, r, generalPIP(srv.URL, ""), `{"policySetId": "s", "name": "s", "status": "ACTIVE",
+		"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "probe", "target": "true", "condition": "subject.g == 'v' AND resource.a == 'y'",
+			"effect": "ALLOW", "tenantId": "a"}, `+openRule+`]}]}`)
+	want := answerOf("doc.allowed.eq(1)", `{"allowed": 1}`, "allowed==1", "allowed=1")
+	if got := filterOf(t, r, "a", "read"); got != want {
+		t.Errorf("Filter(doc, read) = %s, want %s", got, want)
+	}
+}
+
+// Inside an iterate, a condition that a PIP whose call failed leaves unknown
+// on the rows with a = 'y' denies those rows in each pass.
+func TestAFailedConditionInAnIterateDeniesTheRowsWhereItIsUnknown(t *testing.T) {
+	failed, _ := pipServer(t, http.StatusInternalServerError, `oops`)
+	scope, _ := countingServer(t, "/api/v1/permission-scope/user/u1/policies",
+		`{"permissionScope": [{"policies": [{"scopeItems": [{"key": "domain", "values": [{"id": "y"}]}]}]}]}`)
+	r := pipRegistry(t)
+	load(t, r, generalPIP(failed.URL, "")+`, {"tenantId": "a", "name": "subject.permissionScope",
+		"pipType": "PERMISSION_SCOPE", "url": "`+scope.URL+`"}`, `{"policySetId": "s", "name": "s", "status": "ACTIVE",
+		"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": "DENY_UNLESS_PERMIT"},
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "probe", "target": "true", "condition": "subject.g == 'v' AND resource.a == 'y'",
+			"effect": "ALLOW", "tenantId": "a"}, `+openRule+`]}]}`)
+	claims, err := jsonvalue.Decode([]byte(`{"sub": "u1", "realm_access": {"roles": ["R"]}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	op := "read"
+	a, err := r.Filter(context.Background(), FilterRequest{Tenant: "a", Claims: claims.(*jsonvalue.Object),
+		ResourceType: "doc", Operation: &op})
+	if err != nil {
+		t.Fatalf("Filter(doc, read): %v", err)
+	}
+	raw, err := json.Marshal(a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := string(raw), answerOf("", `{ "$and": [ {"allowed": 1}, {"a": { "$ne": "y" }} ] }`,
+		`allowed==1;a!="y"`, `allowed=1 AND a <> 'y'`); got != want {
+		t.Errorf("Filter(doc, read) = %s, want %s", got, want)
+	}
+}
+
+// A simplified policy whose condition a PIP whose call failed leaves unknown
+// on the rows with a = 'y' denies those rows, and the simplified policy
+// beside it that allows every row does not lift the denial.
+func TestASimplifiedPolicyOverAFailedSourceDeniesTheRowsWhereItIsUnknown(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
+	r := pipRegistry(t)
+	load(t, r, generalPIP(srv.URL, ""), `{"policySetId": "s", "name": "s", "status": "ACTIVE", "type": "SIMPLIFIED",
+		"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		"policies": [{"policyId": "p", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "a", "rules": [{"ruleId": "r", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
+			{"policyId": "q", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "a", "rules": [{"ruleId": "r", "target": "true",
+			"condition": "subject.g == 'x' AND resource.a == 'y'", "effect": "ALLOW", "tenantId": "a",
+			"sqlPredicate": "b = 2"}]}]}`)
+	if got, want := filterOf(t, r, "a", "read"), answerOf("", `{"a": { "$ne": "y" }}`, `a!="y"`, `a <> 'y'`); got != want {
+		t.Errorf("Filter(doc, read) = %s, want %s", got, want)
 	}
 }

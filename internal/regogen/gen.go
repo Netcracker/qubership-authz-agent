@@ -224,10 +224,8 @@ type gen struct {
 	failsMemo     map[*node]bool
 
 	// filter is set while the generator translates the tree for
-	// check/filter, where a comparison that reads the resource is unknown;
-	// touched collects the references the condition being translated reads.
-	filter  bool
-	touched map[*Ref]bool
+	// check/filter, where a comparison that reads the resource is unknown.
+	filter bool
 }
 
 // Generate translates the policy tree of a tenant into one Rego module that
@@ -705,9 +703,6 @@ type cond struct {
 	done   bool
 	// text is the condition as its rails' comments name it.
 	text string
-	// refs are the references the condition reads, set in the generator
-	// for check/filter only.
-	refs []*Ref
 }
 
 func (g *gen) constCond(v bool) *cond { return &cond{g: g, isTrue: &v} }
@@ -733,20 +728,6 @@ func (g *gen) cond(c *policyir.Condition, place spectables.Place, effect policyi
 	}
 	cc := &cond{g: g, text: condText(c)}
 	g.where.place = place
-	var outer map[*Ref]bool
-	if g.filter {
-		outer, g.touched = g.touched, map[*Ref]bool{}
-		defer func() {
-			for r := range g.touched {
-				cc.refs = append(cc.refs, r)
-				if outer != nil {
-					outer[r] = true
-				}
-			}
-			slices.SortFunc(cc.refs, func(a, b *Ref) int { return strings.Compare(a.Key, b.Key) })
-			g.touched = outer
-		}()
-	}
 	for _, d := range c.Disjuncts {
 		var leaves []leafRails
 		for _, a := range d {
