@@ -39,6 +39,7 @@ import (
 	// its init function; importing it is the whole configuration.
 	_ "github.com/netcracker/qubership-core-lib-go/v3/memlimit"
 	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/engine"
@@ -104,6 +105,8 @@ func main() {
 		HTTP:         &regobuiltins.HTTP{Client: &http.Client{}, Token: ownToken, Timeout: cfg.PIPTimeout},
 		Entitlements: cfg.EntitlementsURL,
 	}, table, logger)
+	// /prometheus serves the default registry
+	prometheus.MustRegister(snapshot.NewCollector(snapshots))
 	cfg.Pull.Snapshots = snapshots
 	tenant := newDefaultTenant(cfg.DefaultTenant, cfg.Authn.TenantManagerURL)
 	puller := pull.New(cfg.Pull, source, logger)
