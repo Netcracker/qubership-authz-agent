@@ -649,6 +649,42 @@ func TestARuleThatReadsADecisionDeniedOverAFailedSourceKeepsItsBounds(t *testing
 	}
 }
 
+// Under PERMIT_OVERRIDES the rows a node denies are those its children deny
+// less those they allow, so a set above under DENY_OVERRIDES keeps the rows
+// the nested set both allows and denies. Those rows used to be removed. A
+// child that allows every row leaves no row denied.
+func TestAPermitOverridesSetDeniesOnlyTheRowsItDoesNotAllow(t *testing.T) {
+	cases := []struct {
+		name, allow, want string
+	}{
+		{"a predicate", `"sqlPredicate": "b = 1", "rsqlPredicate": "b==1"`, answerOf("", "", "a!=1,b==1", "NOT (a = 1) OR b = 1")},
+		{"every row", ``, allow},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			allow := `"ruleId": "y", "target": "true", "effect": "ALLOW", "tenantId": "a"`
+			if tc.allow != "" {
+				allow += ", " + tc.allow
+			}
+			r := pipRegistry(t)
+			load(t, r, ``, `{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]}],
+		"policySets": [{"policySetId": "n", "name": "n", "status": "ACTIVE", "tenantId": "a",
+			"target": "true", "combiningAlgorithm": "PERMIT_OVERRIDES",
+			"policies": [{"policyId": "q", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+				"rules": [{`+allow+`}]},
+				{"policyId": "w", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+				"rules": [{"ruleId": "d", "target": "true", "effect": "DENY", "tenantId": "a",
+				"sqlPredicate": "a = 1", "rsqlPredicate": "a==1"}]}]}]}`)
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
+			}
+		})
+	}
+}
+
 // answerOf is the answer USE_FILTER_CONDITION with the text of each dialect,
 // null where it is empty.
 func answerOf(querydsl, mongodb, rsql, sql string) string {
