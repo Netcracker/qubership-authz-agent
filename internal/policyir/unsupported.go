@@ -27,9 +27,11 @@ type Form string
 // The forms the agent cannot execute yet. A frontend writes FormJSONPath and
 // FormSyntax as an [Unsupported] atom or operand; [Tree.Unsupported] finds
 // FormNestedIterate from the shape of the tree and FormPIPExtension from
-// [PIP.Unsupported].
+// [PIP.Unsupported]. A generator also rejects with FormJSONPath a condition
+// that reads a PIP whose jsonPath it does not compile.
 const (
-	// FormJSONPath is a resource path that package jsonpath does not compile.
+	// FormJSONPath is a resource path, or the jsonPath of a PIP a condition
+	// reads, that package jsonpath does not compile.
 	FormJSONPath Form = "jsonpath"
 	// FormSyntax is condition text of an export that the agent's parser
 	// refuses. The PAP refuses such text too, so its presence means the two

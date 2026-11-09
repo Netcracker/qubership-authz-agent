@@ -306,8 +306,8 @@ func (g *gen) operandKind(o policyir.Operand) (kind spectables.Kind, network, de
 		}
 		if pip.Type == policyir.PIPGeneral || pip.Type == policyir.PIPFiltered || pip.Type == "" {
 			if _, err := pipPath(pip); err != nil {
-				g.fail(Failure{Set: g.where.set, PIP: o.Name, Reason: err.Error()})
-				return "", false, false, nil
+				return "", false, true, &RejectedError{Rejections: []Rejection{{Where: g.whereText(),
+					Form: policyir.FormJSONPath, Text: err.Error()}}}
 			}
 		}
 		switch pip.Type {
