@@ -9,4 +9,6 @@ caller and PIPs. Reading a byte once per nesting level or per item of another ar
 keeps it linear. Cost should stay polynomial in policy size. Input too big or too deep fails its request or load, not
 the process. The Rego in `policies/` stays exempt.
 
+A pull request that changes code under a record in `docs/decisions/` names the rules it covers in `Implements:` and `Defers:` lines, in its description and as trailers of its commit message. See "Name the rules of a change" in `docs/decisions/README.md`.
+
 Tests: Go `testing` from the standard library, with `testing/synctest` for code that waits on goroutines or timers. testify is used only in `test/integration` and `test/parity`; new tests elsewhere do not use it.
