@@ -322,6 +322,7 @@ func (r *Registry) Load(ctx context.Context, policySets, pips []byte) (LoadSumma
 			sum.Removed++
 		}
 	}
+	r.warnNew(prev, next)
 	r.cur.Store(next)
 	sum.Duration = time.Since(start)
 	sum.Refused = refusalsOf(next.tenants)
@@ -476,4 +477,30 @@ func (r *Registry) LoadSnapshots(ctx context.Context, policySets, pips []byte) e
 		return &RefusedError{Tenants: sum.Refused}
 	}
 	return nil
+}
+
+// warnNew warns of each element that next leaves out of the policies or
+// names no tenant, and of each part of a published snapshot that answers as
+// a failed source, where prev did not have it: a rule that loses a key or a
+// set that is dropped changes the answers while every tenant stays ready, so
+// /health alone does not reach the operator.
+func (r *Registry) warnNew(prev, next *state) {
+	for _, o := range next.orphans {
+		if !slices.Contains(prev.orphans, o) {
+			r.log.Warnf("policies: left out of the policies: %s", o)
+		}
+	}
+	for _, t := range slices.Sorted(maps.Keys(next.tenants)) {
+		th, old := next.tenants[t], prev.tenants[t]
+		for _, d := range th.Dropped {
+			if !slices.Contains(old.Dropped, d) {
+				r.log.Warnf("policies: tenant %s: left out of the policies: %s", t, d)
+			}
+		}
+		for _, f := range th.Failures {
+			if !slices.Contains(old.Failures, f) {
+				r.log.Warnf("policies: tenant %s: answers as a failed source: %s", t, f)
+			}
+		}
+	}
 }

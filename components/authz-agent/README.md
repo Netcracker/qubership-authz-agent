@@ -62,9 +62,11 @@ load. A decision that denies its caller is not reported at either level: it is t
 Every line carries the request id under `request_id`, the same id the response carries in `X-Request-Id`.
 
 `GET /health` is 200 once the trusted providers meet the bootstrap rules, and 503 with the reason and its details until
-then. On the internal port, its `snapshots` member lists each tenant of the last policy load: whether it is `ready`, the snapshot it answers
-from, the sets and PIPs that answer as failed, and the `rejected` reason of a candidate that was not published; the
-public port leaves `snapshots` out, so a caller of the check routes does not see other tenants. A tenant
+then. On the internal port, its `snapshots` member lists each tenant of the last policy load: whether it is `ready`, the
+snapshot it answers from, the sets and PIPs that answer as failed, what the load left out, and the `rejected` reason of
+a candidate that was not published; the public port leaves `snapshots` out, so a caller of the check routes does not see
+other tenants. A load also writes a warning for each element it leaves out and each set or PIP that answers as failed,
+unless the previous load reported the same text; the text names an element by its position in the document. A tenant
 keeps its previous snapshot when a new candidate is rejected; a tenant rejected on its first load is not ready and
 denies every check request. `GET /ready`, on the internal port, adds the policies: 503 with the same details until a
 load gives every tenant the source names a snapshot, then 200 `{"status":"ready"}`. The 503 reason is `no snapshot

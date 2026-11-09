@@ -60,6 +60,18 @@ type Failure struct {
 	Reason string `json:"reason"`
 }
 
+// String names the set or the PIP of f and the reason.
+func (f Failure) String() string {
+	s := f.Reason
+	if f.PIP != "" {
+		s = "PIP " + f.PIP + ": " + s
+	}
+	if f.Set != "" {
+		s = "policy set " + f.Set + ": " + s
+	}
+	return s
+}
+
 // Rejection says why a tenant's candidate was not published. Stage is
 // export (the tenant's elements cannot be read), unsupported (the tenant
 // has a form the agent cannot execute; Forms lists them), generate, or
