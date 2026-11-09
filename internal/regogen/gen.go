@@ -847,8 +847,8 @@ func (g *gen) access(a policyir.Access) (leafRails, error) {
 // uncertain reports whether the lo and hi bounds of n can differ: a rule
 // condition at or below n is three-valued, or n or a node below it fails as a
 // source or iterates over a permission scope that may fail. A three-valued
-// target does not split the bounds, as an undefined target makes its node
-// deny on both.
+// target does not split the bounds, as an undefined target gives both bounds
+// of the node's body with its permit taken away.
 func (g *gen) uncertain(n *node) bool {
 	if u, ok := g.uncertainMemo[n]; ok {
 		return u
@@ -1116,18 +1116,14 @@ func (g *gen) flagBody(n *node, b, x string) (dnf, error) {
 				}
 				return g.product(t.T(), c.notF()), nil
 			}
-			return t.U(), nil
+			return dnfFalse, nil
 		case "DENY":
 			if x == "D" {
 				if b == "lo" {
-					return union(t.U(), g.product(t.T(), c.notF())), nil
+					return g.product(t.notF(), c.notF()), nil
 				}
-				return union(t.U(), g.product(t.T(), c.T())), nil
+				return g.product(t.notF(), c.T()), nil
 			}
-			return dnfFalse, nil
-		}
-		if x == "D" {
-			return t.U(), nil
 		}
 		return dnfFalse, nil
 	case kindSimplified:
@@ -1161,15 +1157,13 @@ func (g *gen) flagBody(n *node, b, x string) (dnf, error) {
 	case kindIterate:
 		return g.iterateFlag(n, b, x)
 	case kindUnknown:
-		// [deny, permit] under a true target, [deny, deny] under an
-		// undefined one
+		// [deny, permit] under a true target, [deny, not applicable] under
+		// an undefined one
 		switch b + x {
 		case "loD":
-			return union(n.tgt.U(), n.tgt.T()), nil
+			return n.tgt.notF(), nil
 		case "hiP":
 			return n.tgt.T(), nil
-		case "hiD":
-			return n.tgt.U(), nil
 		}
 		return dnfFalse, nil
 	}
@@ -1183,7 +1177,7 @@ func (g *gen) flagBody(n *node, b, x string) (dnf, error) {
 	if x == "P" {
 		return g.product(n.tgt.T(), inner), nil
 	}
-	return union(n.tgt.U(), g.product(n.tgt.T(), inner)), nil
+	return g.product(n.tgt.notF(), inner), nil
 }
 
 // anyKid returns the clauses of "some child of n has bound b equal to x",
@@ -1328,8 +1322,6 @@ func (g *gen) used(allow dnf) map[string]bool {
 }
 
 // decisionText is the rule decision, as [Options.Decision] describes it.
-// Only a denial whose bounds differ is unknown: a failed value in a target
-// makes its node deny on both bounds, and the denial is deny.
 const decisionText = `
 decision := "permit" if {
 	allow

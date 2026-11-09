@@ -45,7 +45,7 @@ func (g *gen) iterateFlag(n *node, b, x string) (dnf, error) {
 	if x == "P" {
 		return g.product(n.tgt.T(), read), nil
 	}
-	return union(n.tgt.U(), g.product(n.tgt.T(), read)), nil
+	return g.product(n.tgt.notF(), read), nil
 }
 
 // anyPass returns the clauses of "some pass of iterate node n has bound b

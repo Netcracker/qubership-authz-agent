@@ -503,6 +503,127 @@ func TestADenyOverAFailedPIPDenies(t *testing.T) {
 	}
 }
 
+// A target that is undefined, as one over a PIP whose call failed is, makes
+// its node deny where the node denies once the target holds, and not apply
+// otherwise, so the policy beside it allows. Each such node used to deny,
+// whatever it held: a policy of ALLOW rules alone denied every resource.
+// What the node gives is computed on the request: a DENY rule whose condition
+// is false, or a DENY_UNLESS_PERMIT policy whose ALLOW rule applies, does not
+// deny, while a DENY_UNLESS_PERMIT policy whose ALLOW rule does not apply
+// denies.
+func TestAnUndefinedTargetDeniesOnlyWhereItsNodeDenies(t *testing.T) {
+	const failed = "subject.g == 'x'"
+	for _, tc := range []struct {
+		name, policyTarget, alg, ruleTarget, effect, condition string
+		allowed                                                bool
+	}{
+		{"a policy target over a failed PIP and an ALLOW rule", failed, "DENY_OVERRIDES", "true", "ALLOW", "true", true},
+		{"a policy target over a failed PIP and a DENY rule", failed, "DENY_OVERRIDES", "true", "DENY", "true", false},
+		{"a policy target over a failed PIP and a DENY rule whose condition reads it", failed, "DENY_OVERRIDES",
+			"true", "DENY", "subject.g == 'blocked'", false},
+		{"a policy target over a failed PIP and a DENY rule whose condition is false", failed, "DENY_OVERRIDES",
+			"true", "DENY", "operation == 'write'", true},
+		{"a policy target over a failed PIP and DENY_UNLESS_PERMIT that permits", failed, "DENY_UNLESS_PERMIT",
+			"true", "ALLOW", "true", true},
+		{"a policy target over a failed PIP and DENY_UNLESS_PERMIT that denies", failed, "DENY_UNLESS_PERMIT",
+			"true", "ALLOW", "operation == 'write'", false},
+		{"a rule target over a failed PIP and an ALLOW rule", "true", "DENY_OVERRIDES", failed, "ALLOW", "true", true},
+		{"a rule target over a failed PIP and a DENY rule", "true", "DENY_OVERRIDES", failed, "DENY", "true", false},
+		{"a rule target over a failed PIP and a DENY rule whose condition is false", "true", "DENY_OVERRIDES", failed,
+			"DENY", "operation == 'write'", true},
+		{"a policy target over a path with a trailing dot and an ALLOW rule", "resource.a. == 'x'", "DENY_OVERRIDES",
+			"true", "ALLOW", "true", true},
+		{"a policy target over a path with a trailing dot and a DENY rule", "resource.a. == 'x'", "DENY_OVERRIDES",
+			"true", "DENY", "true", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE",
+				"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+				"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+					"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
+					{"policyId": "q", "target": %q, "combiningAlgorithm": %q, "tenantId": "a",
+					"rules": [{"ruleId": "r", "target": %q, "condition": %q, "effect": %q, "tenantId": "a"}]}]}`,
+				tc.policyTarget, tc.alg, tc.ruleTarget, tc.condition, tc.effect))
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0].Allowed != tc.allowed {
+				t.Errorf("Decide = %+v, want allowed %v", got[0], tc.allowed)
+			}
+		})
+	}
+}
+
+// loneAllowPolicySet is a set of tenant a on doc under setAlg whose one
+// policy, under policyTarget, holds an ALLOW rule under ruleTarget.
+func loneAllowPolicySet(setAlg, policyTarget, ruleTarget string) string {
+	return fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": %q,
+		"policies": [{"policyId": "q", "target": %q, "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "r", "target": %q, "effect": "ALLOW", "tenantId": "a"}]}]}`,
+		setAlg, policyTarget, ruleTarget)
+}
+
+// A policy of ALLOW rules under a target over a PIP whose call failed does
+// not apply, so the set's algorithm decides as over no child:
+// PERMIT_UNLESS_DENY allows, as legacy does, and DENY_UNLESS_PERMIT denies.
+// It neither permits nor denies, whether the failed read is in the policy
+// target or in the rule target.
+func TestAnAllowPolicyUnderAnUndefinedTargetLeavesTheSetToItsAlgorithm(t *testing.T) {
+	const failed = "subject.g == 'x'"
+	for _, tc := range []struct {
+		setAlg, policyTarget, ruleTarget string
+		allowed                          bool
+	}{
+		{"PERMIT_UNLESS_DENY", failed, "true", true},
+		{"PERMIT_UNLESS_DENY", "true", failed, true},
+		{"DENY_UNLESS_PERMIT", failed, "true", false},
+		{"DENY_UNLESS_PERMIT", "true", failed, false},
+	} {
+		t.Run(tc.setAlg+" "+tc.policyTarget+" "+tc.ruleTarget, func(t *testing.T) {
+			srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), loneAllowPolicySet(tc.setAlg, tc.policyTarget, tc.ruleTarget))
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0].Allowed != tc.allowed {
+				t.Errorf("Decide = %+v, want allowed %v", got[0], tc.allowed)
+			}
+		})
+	}
+}
+
+// entitled is a target over the entitlements service.
+const entitled = "subject.entitledResources.of('doc').as('owner') CONTAINS 'e1'"
+
+// failedEntitlementsRegistry is a registry whose entitlements service
+// answers every read with 404.
+func failedEntitlementsRegistry(t *testing.T) *Registry {
+	t.Helper()
+	srv, _ := countingServer(t, "/nowhere", ``)
+	return New(Config{Entitlements: srv.URL, HTTP: &regobuiltins.HTTP{Client: &http.Client{},
+		Token: func() (string, error) { return "own", nil }}}, tab(t), quiet{})
+}
+
+// A policy of ALLOW rules whose target reads the entitlements service, which
+// fails, does not apply: PERMIT_UNLESS_DENY allows, as legacy does, and
+// DENY_UNLESS_PERMIT denies.
+func TestAnAllowPolicyUnderAFailedEntitlementsReadDoesNotApply(t *testing.T) {
+	for _, tc := range []struct {
+		setAlg, policyTarget, ruleTarget string
+		allowed                          bool
+	}{
+		{"PERMIT_UNLESS_DENY", entitled, "true", true},
+		{"PERMIT_UNLESS_DENY", "true", entitled, true},
+		{"DENY_UNLESS_PERMIT", entitled, "true", false},
+	} {
+		t.Run(tc.setAlg+" "+tc.policyTarget+" "+tc.ruleTarget, func(t *testing.T) {
+			r := failedEntitlementsRegistry(t)
+			load(t, r, ``, loneAllowPolicySet(tc.setAlg, tc.policyTarget, tc.ruleTarget))
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0].Allowed != tc.allowed {
+				t.Errorf("Decide = %+v, want allowed %v", got[0], tc.allowed)
+			}
+		})
+	}
+}
+
 // scopeSet is a policy set of tenant that iterates over the permission
 // scope and allows the operation read on a doc whose member a is a domain
 // of the pass.
