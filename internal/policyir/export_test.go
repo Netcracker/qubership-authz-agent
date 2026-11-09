@@ -725,6 +725,30 @@ func TestFromRegularBindsThePassInsideTheIteratingSet(t *testing.T) {
 	}
 }
 
+// The name of a combining algorithm is read with the spaces, tabs, and line
+// breaks at either end cut, in a set, a policy, and an iterate alike; a
+// no-break space is not cut, and the name stays unknown.
+func TestFromRegularCutsTheSpacesAroundAnAlgorithm(t *testing.T) {
+	t.Parallel()
+
+	e := fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "combiningAlgorithm": "\tDENY_OVERRIDES ",
+		"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": " DENY_UNLESS_PERMIT"},
+		"policies": [{"policyId": "p", "combiningAlgorithm": "PERMIT_OVERRIDES\n"}]}]`, `[]`)
+
+	want := `set "s" name="" domain="" algorithm=DENY_OVERRIDES
+  iterate var="iterate1" algorithm=DENY_UNLESS_PERMIT
+  policy "p" name="" algorithm=PERMIT_OVERRIDES
+`
+	if got := tree(t, e, "t").Dump(); got != want {
+		t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
+	}
+	nbsp := fromRegular(t, `[{"tenantId": "t", "policySetId": "s",
+		"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": "\u00a0DENY_UNLESS_PERMIT"}}]`, `[]`)
+	if got := tree(t, nbsp, "t").Dump(); !strings.Contains(got, "always fails") {
+		t.Errorf("Dump() of an algorithm after a no-break space =\n%s\nwant the set always failing", got)
+	}
+}
+
 // An iterate the legacy service never evaluates makes its set a permanent
 // failure under the set's target.
 func TestFromRegularMarksAnIterateLegacyNeverEvaluates(t *testing.T) {

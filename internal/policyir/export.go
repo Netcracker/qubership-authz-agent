@@ -351,7 +351,11 @@ func condition(text *string, place Place, iterVar string) *Condition {
 	return c
 }
 
+// algorithmOf reads the name of a combining algorithm, with the characters
+// up to U+0020 at either end cut, as the policy service cuts every enum field
+// of an upload.
 func algorithmOf(a string) (Algorithm, error) {
+	a = strings.TrimFunc(a, func(r rune) bool { return r <= ' ' })
 	if !slices.Contains(algorithms, Algorithm(a)) {
 		return "", fmt.Errorf("combiningAlgorithm %q unknown", a)
 	}
