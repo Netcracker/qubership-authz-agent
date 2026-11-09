@@ -68,13 +68,14 @@ a candidate that was not published; the public port leaves `snapshots` out, so a
 other tenants. A load also writes a warning for each element it leaves out and each set or PIP that answers as failed,
 unless the previous load reported the same text; the text names an element by its position in the document. A tenant
 keeps its previous snapshot when a new candidate is rejected; a tenant rejected on its first load is not ready and
-denies every check request. `GET /ready`, on the internal port, adds the policies: 503 with the same details until a
-load gives every tenant the source names a snapshot, then 200 `{"status":"ready"}`. The 503 reason is `no snapshot
-accepted yet for tenants <tenants>` while a tenant rejected on its first load holds readiness back, and `policies not
-loaded yet` before any load. Once ready, the service stays ready: a pull that fails later, or a later load that rejects
-a tenant, keeps the published snapshots and both verdicts. An empty `AUTHZ_PAP_CLIENT_SOURCE_URL` or an
-`AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and `/ready` then answers 200 as soon as the trusted
-providers meet the bootstrap rules, with no policies loaded.
+denies every check request. The gauge `authz_agent_policy_tenants` on `/prometheus` counts the tenants by the snapshot
+they answer from: `current`, `stale` (an earlier snapshot, after a rejected candidate), or `none`. `GET /ready`, on the
+internal port, adds the policies: 503 with the same details until a load gives every tenant the source names a snapshot,
+then 200 `{"status":"ready"}`. The 503 reason is `no snapshot accepted yet for tenants <tenants>` while a tenant
+rejected on its first load holds readiness back, and `policies not loaded yet` before any load. Once ready, the service
+stays ready: a pull that fails later, or a later load that rejects a tenant, keeps the published snapshots and both
+verdicts. An empty `AUTHZ_PAP_CLIENT_SOURCE_URL` or an `AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and
+`/ready` then answers 200 as soon as the trusted providers meet the bootstrap rules, with no policies loaded.
 
 ## Running it
 
