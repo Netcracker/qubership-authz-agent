@@ -126,6 +126,10 @@ predicate of each rule as its condition on the row, and narrow that set where a 
      `$lte`, `$lte` as `$gt`, `<=` as `>`, `>=` as `<`, and `a>"x==y"` as `a<="x==y"`. SQL and QueryDSL negate by
      wrapping, `NOT (...)` and `(...).not()`.
   3. A mongodb fragment that has no opposite operator, such as a bare value, is negated by wrapping it in `$nor`.
+- **R11** (`translate`). The text of a predicate depends only on the rule's template in that dialect and on the values
+  substituted into it under R7, not on the rule's condition. The agent does not check that a template selects the rows
+  on which the condition holds, and adds no guard to a negated predicate for a case where the two can differ, such as
+  a comparison that ignores case, a missing attribute, or a value of another type.
 
 #### Departures that allow more
 
@@ -171,6 +175,13 @@ The legacy text of a DENY group in mongodb and of some negated operators changes
 are changes of meaning that ADR-0097 R7 allows. The pairs that legacy already writes correctly keep their text, because
 an application may compare or parse it (R7).
 
+The author of a policy writes the condition and the template of a rule separately, in different languages, and they
+are evaluated by different rules. `==` in a condition ignores case and converts types, and a comparison in SQL, RSQL,
+or mongodb follows the collation and the column types of the application's store. The agent knows neither. A guard
+such as `LOWER(...)` or `IS NOT NULL` would guess at the store, could keep the database from using an index, and
+cannot be written in an RSQL dialect whose parser has no such operator. The author knows the store, so keeping the
+template in step with the condition is the author's task (R11).
+
 Each of these departures agrees with `check/resource`, and still admits rows that a project may never have seen in a
 legacy filter, so each is named as allowing more (R8).
 
@@ -193,6 +204,11 @@ legacy filter, so each is named as allowing more (R8).
 - **A7. Decide whether a node can deny from its effect and algorithm alone.** Rejected by R9 and R10: a DENY rule whose
   condition is false for the subject would deny where its outcome on the request is never DENY, and legacy treats it as
   not applicable.
+- **A8. Guard the negation of a DENY predicate with `LOWER(...)`, `IS NOT NULL`, `$exists`, or `DENY` for a value of
+  another type.** Rejected by R11: a guard guesses at the collation and the types of the store, and changes text that
+  an application may compare or parse.
+- **A9. Answer `null` in every dialect for a DENY predicate whose condition can differ from its template.** Rejected
+  for its cost: almost every DENY predicate on a string qualifies, so deny lists would stop working in `check/filter`.
 
 ## Consequences
 
@@ -206,8 +222,16 @@ Negative:
   `null` (R8).
 - A node that can deny and whose target reads the resource makes the answer `DENY` under a `DENY_OVERRIDES` or
   `PERMIT_UNLESS_DENY` parent (R9, R5), where legacy leaves the node out and returns the predicates of its siblings.
+- Where the template of a DENY rule selects fewer rows than its condition denies, `check/filter` admits rows that
+  `check/resource` denies, as legacy does (R11). With the condition `resource.segment == "VIP"` and the SQL template
+  `segment = 'VIP'`, a row with `segment = 'vip'` appears in the list, and `check/resource` denies it because `==`
+  ignores case. A value of another type, such as `5` against `"5"`, and, in mongodb, a document without the attribute
+  differ in the same way.
 
 Follow-ups:
+
+- A warning at load time for a DENY rule whose template and condition visibly differ, such as a case-sensitive
+  template for a `==` condition on a string, is left for a later change.
 
 - `combine` in #205 keeps the denied rows of a node whole, where R2 subtracts its allowed rows. The answer is narrower
   than R1 states, which is safe, and the code changes to match R2.
