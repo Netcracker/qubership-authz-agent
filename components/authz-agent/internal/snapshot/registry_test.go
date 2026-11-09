@@ -311,6 +311,27 @@ func TestATenantRefusedOnItsFirstLoadIsNotServed(t *testing.T) {
 	}
 }
 
+// A condition that reads a PIP whose jsonPath the agent does not compile
+// rejects its tenant whole, naming the PIP; the tenant beside it is served.
+// The same PIP declared and read by no condition rejects nothing.
+func TestAPIPWithAJSONPathOutsideTheSubsetRejectsTheTenantThatReadsIt(t *testing.T) {
+	pip := func(tenant string) string {
+		return `{"tenantId": "` + tenant + `", "name": "subject.g", "pipType": "GENERAL", "type": "JSON",
+			"url": "http://pip.invalid", "jsonPath": "$.a.concat('x')"}`
+	}
+	r := New(Config{}, tab(t), quiet{})
+	load(t, r, pip("a")+`, `+pip("b"), set("a", "subject.g == 'x'"), set("b", "true"))
+
+	th, _ := tenantHealth(r, "a")
+	if th.Ready || th.Rejected == nil || th.Rejected.Stage != "unsupported" || len(th.Rejected.Forms) != 1 ||
+		th.Rejected.Forms[0].Form != "jsonpath" || !strings.Contains(th.Rejected.Forms[0].Text, "subject.g") {
+		t.Errorf("health of a = %+v, want not ready, refused as unsupported with one jsonpath form naming subject.g", th)
+	}
+	if got := decide(t, r, readDoc(t, "b", "y", 1)); !got[0].Allowed {
+		t.Errorf("Decide(tenant b) = %+v, want allowed", got[0])
+	}
+}
+
 // LoadSnapshots fails with a *RefusedError for as long as a tenant's latest
 // candidate is refused: on the load that refuses it, on a load of the same
 // documents, and on a load that changes only another tenant. The load that
