@@ -255,6 +255,45 @@ func TestARefusedCandidateKeepsThePreviousSnapshot(t *testing.T) {
 	}
 }
 
+// warnings records the warnings a registry writes, formatted.
+type warnings struct {
+	quiet
+	lines []string
+}
+
+func (w *warnings) Warnf(format string, args ...any) { w.lines = append(w.lines, fmt.Sprintf(format, args...)) }
+
+// A load warns of each element the export leaves out, each element that
+// names no tenant, and each part of a published snapshot that answers as a
+// failed source; a later load warns only of what the previous one did not
+// have.
+func TestALoadWarnsOfWhatItLeavesOutOnce(t *testing.T) {
+	w := &warnings{}
+	r := New(Config{}, tab(t), w)
+	inactive := strings.Replace(set("a", "true"), `"ACTIVE"`, `"INACTIVE"`, 1)
+	inactive = strings.Replace(inactive, `"s-a"`, `"s-a2"`, 1)
+	orphan := strings.Replace(set("", "true"), `"tenantId": ""`, `"x": 1`, 1)
+	load(t, r, ``, set("a", "subject.g == 'x'"), inactive, orphan)
+
+	want := []string{
+		`policies: tenant a: left out of the policies: policy set 1 "s-a2": status INACTIVE`,
+		`policies: tenant a: answers as a failed source: policy set s-a: PIP subject.g: not declared`,
+		`policies: left out of the policies: policy set 2: tenantId absent, empty, or not a string`,
+	}
+	slices.Sort(want)
+	got := slices.Sorted(slices.Values(w.lines))
+	if !slices.Equal(got, want) {
+		t.Errorf("warnings of the first load:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+
+	w.lines = nil
+	inactive3 := strings.Replace(inactive, `"s-a2"`, `"s-a3"`, 1)
+	load(t, r, ``, set("a", "subject.g == 'x'"), inactive, orphan, set("b", "true"), inactive3)
+	if want := []string{`policies: tenant a: left out of the policies: policy set 4 "s-a3": status INACTIVE`}; !slices.Equal(w.lines, want) {
+		t.Errorf("warnings of a load that adds a tenant b and an inactive set s-a3 = %q, want %q", w.lines, want)
+	}
+}
+
 // On its first load a refused tenant has no snapshot: it is not ready and
 // denies every request, and the other tenants are served.
 func TestATenantRefusedOnItsFirstLoadIsNotServed(t *testing.T) {
