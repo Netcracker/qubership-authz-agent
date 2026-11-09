@@ -406,6 +406,31 @@ func TestHTTPSend_AResponseOverTheLimitFails(t *testing.T) {
 	}
 }
 
+// TestHTTPSend_ARedirectIsTheResponse: a PIP that answers with a redirect
+// gets no second request, so the agent's token reaches only the url the
+// declaration names; the redirect is the response.
+func TestHTTPSend_ARedirectIsTheResponse(t *testing.T) {
+	target, reached := pipServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`["acc-7"]`))
+	})
+	srv, _ := pipServer(t, func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, target.URL+"/stolen", http.StatusFound)
+	})
+	ctx := (&HTTP{Client: &http.Client{}, Token: ownToken}).Context(context.Background())
+
+	resp, err := sendEval(t, ctx, `nc.http.send({"url": "`+srv.URL+`", "raise_error": false})`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if got := resp.Get(ast.StringTerm("status_code")); got == nil || got.String() != "302" {
+		t.Errorf("nc.http.send of a redirect: status_code = %v, want 302", got)
+	}
+	if n := reached.Load(); n != 0 {
+		t.Errorf("the redirect target received %d requests, want 0", n)
+	}
+}
+
 // TestHTTPSend_AQueryThatEndsLeavesNoAnswer: when the query that makes a
 // call is cancelled, another query waiting for the call stops at its own
 // cancellation, and a later query of the decision calls again.
