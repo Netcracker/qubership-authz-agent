@@ -48,6 +48,9 @@ const maxResponseBody = 8 << 20
 // the HTTP that [HTTP.Context] put into its context; without one, every call
 // fails.
 type HTTP struct {
+	// Client sends the calls, nil for a zero [http.Client]. Its CheckRedirect
+	// is not used: a call follows no redirect, and a redirect is its
+	// response.
 	Client *http.Client
 	// Token returns the agent's own token, which every call presents in
 	// Authorization. When it returns an error, the call is not made and
@@ -341,10 +344,13 @@ func do(ctx context.Context, req sendRequest, timeout time.Duration) (*ast.Term,
 	if body != nil {
 		hr.Header.Set("Content-Type", "application/json")
 	}
-	hc := h.Client
-	if hc == nil {
-		hc = http.DefaultClient
+	hc := http.Client{}
+	if h.Client != nil {
+		hc = *h.Client
 	}
+	// a redirect would carry the agent's token to a url the declaration
+	// does not name, on another port of the same host too
+	hc.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
 	if c, ok := ctx.Value(callsKey{}).(*calls); ok {
 		c.mu.Lock()
 		c.sent++
