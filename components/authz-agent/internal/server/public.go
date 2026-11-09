@@ -23,6 +23,7 @@ import (
 	"github.com/netcracker/qubership-core-lib-go/v3/context-propagation/ctxmanager"
 
 	"authz-agent/components/authz-agent/internal/legacy"
+	"authz-agent/components/authz-agent/internal/snapshot"
 )
 
 // RegisterPublic adds the public routes to app: the check routes of the
@@ -77,16 +78,64 @@ func (s *Server) notFound(c *fiber.Ctx) error {
 	return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "not found"})
 }
 
-// publicHealth is the public surface's /health: the service's own health
-// for GET, and 405 for any other method, as access-control answers. It
-// leaves out [Report.Snapshots]: the tenants' IDs and the refusals of their
-// policies are for the operator on the internal surface, not for a caller of
-// the check routes.
+// PublicHealthResponse is the body of the public GET /health. It names no
+// tenant, set, PIP, or reason: those are for the operator, on the internal
+// /health.
+type PublicHealthResponse struct {
+	Status string `json:"status"`
+	*TenantCounts
+}
+
+// TenantCounts counts the tenants of [snapshot.Health].
+type TenantCounts struct {
+	// Tenants counts every tenant the registry knows.
+	Tenants int `json:"tenants"`
+	// Served counts the tenants with a published snapshot.
+	Served int `json:"served"`
+	// Rejected counts the tenants whose latest candidate was refused.
+	Rejected int `json:"rejected"`
+	// Failing counts the tenants whose published snapshot has a part that
+	// answers as a failed source.
+	Failing int `json:"failing"`
+}
+
+// publicHealth is the public surface's /health: the status and the tenant
+// counts for GET, 200 when healthy and 503 otherwise, and 405 for any
+// other method, as access-control answers.
 func (s *Server) publicHealth(c *fiber.Ctx) error {
 	if c.Method() != fiber.MethodGet {
 		return c.Status(http.StatusMethodNotAllowed).JSON(fiber.Map{"message": "method not allowed"})
 	}
-	return s.answerHealth(c, false)
+	if s.opts.Health == nil {
+		return c.JSON(PublicHealthResponse{Status: "healthy"})
+	}
+	report := s.opts.Health()
+	body := PublicHealthResponse{Status: "healthy", TenantCounts: countTenants(report.Snapshots)}
+	if !report.Healthy {
+		body.Status = "unhealthy"
+		c.Status(http.StatusServiceUnavailable)
+	}
+	return c.JSON(body)
+}
+
+// countTenants counts the tenants of h, nil without a registry.
+func countTenants(h *snapshot.Health) *TenantCounts {
+	if h == nil {
+		return nil
+	}
+	n := &TenantCounts{Tenants: len(h.Tenants)}
+	for _, t := range h.Tenants {
+		if t.Ready {
+			n.Served++
+		}
+		if t.Rejected != nil {
+			n.Rejected++
+		}
+		if len(t.Failures) > 0 {
+			n.Failing++
+		}
+	}
+	return n
 }
 
 func (s *Server) checkResource(v2 bool) fiber.Handler {

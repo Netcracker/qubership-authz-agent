@@ -64,8 +64,7 @@ Every line carries the request id under `request_id`, the same id the response c
 `GET /health` is 200 once the trusted providers meet the bootstrap rules, and 503 with the reason and its details until
 then. On the internal port, its `snapshots` member lists each tenant of the last policy load: whether it is `ready`, the
 snapshot it answers from, the sets and PIPs that answer as failed, what the load left out, and the `rejected` reason of
-a candidate that was not published; the public port leaves `snapshots` out, so a caller of the check routes does not see
-other tenants. A load also writes a warning for each element it leaves out and each set or PIP that answers as failed,
+a candidate that was not published. A load also writes a warning for each element it leaves out and each set or PIP that answers as failed,
 unless the previous load reported the same text; the text names an element by its position in the document. A tenant
 keeps its previous snapshot when a new candidate is rejected; a tenant rejected on its first load is not ready and
 denies every check request. The gauge `authz_agent_policy_tenants` on `/prometheus` counts the tenants by the snapshot
@@ -76,6 +75,10 @@ rejected on its first load holds readiness back, and `policies not loaded yet` b
 stays ready: a pull that fails later, or a later load that rejects a tenant, keeps the published snapshots and both
 verdicts. An empty `AUTHZ_PAP_CLIENT_SOURCE_URL` or an `AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and
 `/ready` then answers 200 as soon as the trusted providers meet the bootstrap rules, with no policies loaded.
+
+`GET /health` on the public port gives the same status, 200 `healthy` or 503 `unhealthy`, and counts the tenants
+instead of naming them: `tenants`, `served` (with a published snapshot), `rejected` (whose latest candidate was
+refused), and `failing` (whose snapshot has a part that answers as failed). It names no tenant and no reason.
 
 ## Running it
 
