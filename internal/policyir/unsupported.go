@@ -140,6 +140,39 @@ func (t *Tree) Unsupported() []Finding {
 	return out
 }
 
+// EachPredicates calls f with the filter predicates of every simplified
+// policy and every rule of the tree, with the path [Tree.Unsupported] gives
+// the node and "predicate" after it, in the order of [Tree.Unsupported].
+func (t *Tree) EachPredicates(f func(where string, p Predicates)) {
+	groups := labels(t.Simplified, groupLabel)
+	for i, g := range t.Simplified {
+		group := (*node)(nil).child(groups[i])
+		policies := labels(g.Policies, simplifiedPolicyLabel)
+		for j, p := range g.Policies {
+			f(group.child(policies[j]).child("predicate").String(), p.Predicates)
+		}
+	}
+	var set func(here *node, s *PolicySet)
+	set = func(here *node, s *PolicySet) {
+		policies := labels(s.Policies, policyLabel)
+		for i, p := range s.Policies {
+			pp := here.child(policies[i])
+			rules := labels(p.Rules, ruleLabel)
+			for j, r := range p.Rules {
+				f(pp.child(rules[j]).child("predicate").String(), r.Predicates)
+			}
+		}
+		children := labels(s.Sets, setLabel)
+		for i, c := range s.Sets {
+			set(here.child(children[i]), c)
+		}
+	}
+	top := labels(t.Sets, setLabel)
+	for i, s := range t.Sets {
+		set((*node)(nil).child(top[i]), s)
+	}
+}
+
 // labels names each of the sibling nodes by label, and adds the position of a
 // node whose label another sibling shares, so a path names one node.
 func labels[T any](nodes []T, label func(T) string) []string {
