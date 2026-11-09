@@ -497,17 +497,28 @@ func (e *filterEval) combine(alg policyir.Algorithm, kids []pair) pair {
 	case policyir.AlgorithmDenyOverrides:
 		return pair{a: e.subtract(A, D), d: D}
 	case policyir.AlgorithmPermitOverrides:
-		if A.kind == rowsAll {
-			return pair{a: A}
-		}
-		// D ∖ A may stay D: a D that grows only shrinks the A of an ancestor
-		return pair{a: A, d: D}
+		return pair{a: A, d: e.denied(D, A)}
 	case policyir.AlgorithmDenyUnlessPermit:
 		return pair{a: A, d: complement(A)}
 	case policyir.AlgorithmPermitUnlessDeny:
 		return pair{a: e.subtract(allRows, D), d: D}
 	}
 	return pair{a: A, d: D}
+}
+
+// denied is d ∖ a, the rows d denies that a does not allow. Where the
+// predicates cannot write d ∖ a, it is d whole: a d that grows only shrinks
+// the allowed rows of an ancestor.
+func (e *filterEval) denied(d, a rows) rows {
+	switch {
+	case a.kind == rowsAll:
+		return none
+	case a.kind == rowsNone || d.kind == rowsNone:
+		return d
+	case a.kind == rowsUnknown || d.kind == rowsUnknown || d.kind == rowsNot || e.approx:
+		return d
+	}
+	return e.subtract(d, a)
 }
 
 // complement is every row but those of x.
