@@ -87,7 +87,7 @@ predicate of each rule as its condition on the row, and narrow that set where a 
 
   A rule with a predicate whose condition is false for the subject gives no rows, even where legacy returns its
   predicate. R9 gives its rows to a rule whose target is an unknown target, and ADR-0098 R11 to a rule whose condition
-  stays unknown because it reads a failed value. A condition that reads a failed value and that R1 of ADR-0098 settles
+  stays unknown because of a failed value. A condition that holds a failed value and that R1 of ADR-0098 settles
   without it, such as an `OR` with a true operand, gets its row here.
 - **R9** (`translate`). In `check/filter`, a rule, a policy, or a set whose target is an unknown target gets its rows
   as follows, whatever made the target unknown:
@@ -152,8 +152,8 @@ combining algorithms, restated for rows (R2).
 
 The attributes of a resource are unknown when the filter is built, which is the case ADR-0098 R1 handles. The part of a
 condition that reads the subject is known, so a rule whose subject part is false gives nothing, and the predicate
-describes the part that reads the resource (R3). A condition that reads a failed value is decided by ADR-0098 R11,
-because a predicate cannot describe the value that failed (R3). A tree that allows every row answers `ALLOW`, where
+describes the part that reads the resource (R3). A condition that a failed value leaves unknown is decided by ADR-0098
+R11, because a predicate cannot describe the value that failed (R3). A tree that allows every row answers `ALLOW`, where
 legacy sometimes writes `USE_FILTER_CONDITION` with every predicate `null`, which an application cannot add to a query
 (R4).
 
