@@ -152,7 +152,7 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 			t.err = fmt.Errorf("policy set %d: %w", i, err)
 			continue
 		}
-		s.cutEnums()
+		s.cutTexts()
 		for _, key := range unknown {
 			id := *head.TenantID
 			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: unknown key %s", i, head.ID, key))
@@ -354,28 +354,42 @@ func condition(text *string, place Place, iterVar string) *Condition {
 	return c
 }
 
-// enumText is the text of an enum field of an upload with the characters up
-// to U+0020 at either end cut, as the policy service cuts it.
+// enumText is the text of an enum field or an expression of an upload with
+// the characters up to U+0020 at either end cut, as the policy service cuts
+// it.
 func enumText(s string) string {
 	return strings.TrimFunc(s, func(r rune) bool { return r <= ' ' })
 }
 
-// cutEnums cuts the enum fields of s and of the policies, rules, and sets it
-// holds, as [enumText] does.
-func (s *exportSet) cutEnums() {
+// cutTexts cuts the enum fields, the targets, and the conditions of s and of
+// the policies, rules, and sets it holds, as [enumText] does: the policy
+// service cuts an expression before it parses it.
+func (s *exportSet) cutTexts() {
 	s.Status, s.Type, s.CombiningAlgorithm = enumText(s.Status), enumText(s.Type), enumText(s.CombiningAlgorithm)
+	cutExpression(s.Target)
 	if s.Iterate != nil {
 		s.Iterate.CombiningAlgorithm = enumText(s.Iterate.CombiningAlgorithm)
 	}
 	for i := range s.Policies {
 		p := &s.Policies[i]
 		p.CombiningAlgorithm = enumText(p.CombiningAlgorithm)
+		cutExpression(p.Target)
 		for j := range p.Rules {
-			p.Rules[j].Effect, p.Rules[j].RuleType = enumText(p.Rules[j].Effect), enumText(p.Rules[j].RuleType)
+			r := &p.Rules[j]
+			r.Effect, r.RuleType = enumText(r.Effect), enumText(r.RuleType)
+			cutExpression(r.Target)
+			cutExpression(r.Condition)
 		}
 	}
 	for i := range s.PolicySets {
-		s.PolicySets[i].cutEnums()
+		s.PolicySets[i].cutTexts()
+	}
+}
+
+// cutExpression cuts the target or condition e, when there is one.
+func cutExpression(e *string) {
+	if e != nil {
+		*e = enumText(*e)
 	}
 }
 

@@ -802,6 +802,45 @@ func TestFromRegularCutsTheSpacesAroundEveryEnumField(t *testing.T) {
 	}
 }
 
+// The target and the condition of a set, a policy, and a rule are read with
+// the characters up to U+0020 at either end cut, as the policy service cuts
+// them before it parses them: a SIMPLIFIED set with padded expressions is
+// read as the same simplified group, and a regular set as the same set.
+func TestFromRegularCutsTheSpacesAroundATargetAndACondition(t *testing.T) {
+	t.Parallel()
+
+	simplified := func(pad string) string {
+		return `[{"tenantId": "t", "policySetId": "s", "type": "SIMPLIFIED", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "` + pad + `resourceType == 'R'` + pad + `",
+			"policies": [{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "` + pad + `operation == 'READ'",
+				"rules": [{"ruleId": "r", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'` + pad + `"}]}]}]`
+	}
+	regular := func(pad string) string {
+		return `[{"tenantId": "t", "policySetId": "s", "target": "` + pad + `resourceType == 'R'",
+			"policies": [{"policyId": "p", "target": "operation == 'READ'` + pad + `",
+				"rules": [{"ruleId": "r", "effect": "ALLOW", "target": "` + pad + `true",
+					"condition": "` + pad + `resource.a == 'x'` + pad + `"}]}]}]`
+	}
+	for name, doc := range map[string]func(string) string{"simplified": simplified, "regular": regular} {
+		want := tree(t, fromRegular(t, doc(""), `[]`), "t").Dump()
+		if got := tree(t, fromRegular(t, doc(` \t\r\n`), `[]`), "t").Dump(); got != want {
+			t.Errorf("Dump() of the %s set with padded expressions =\n%s\nwant\n%s", name, got, want)
+		}
+	}
+	if first, _, _ := strings.Cut(tree(t, fromRegular(t, simplified(" "), `[]`), "t").Dump(), "\n"); !strings.HasPrefix(first, `simplified "s"`) {
+		t.Errorf("first line of Dump() of the padded SIMPLIFIED set = %s, want a simplified group", first)
+	}
+	if first, _, _ := strings.Cut(tree(t, fromRegular(t, simplified("\u00a0"), `[]`), "t").Dump(), "\n"); strings.HasPrefix(first, `simplified "s"`) {
+		t.Errorf("first line of Dump() of the SIMPLIFIED set padded with a no-break space = %s, want no simplified group", first)
+	}
+	blank := func(target string) string {
+		return tree(t, fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "target": "`+target+`"}]`, `[]`), "t").Dump()
+	}
+	if got, want := blank(` \t`), blank(``); got != want {
+		t.Errorf("Dump() of a set with a blank target =\n%s\nwant that of an empty target\n%s", got, want)
+	}
+}
+
 // An iterate the legacy service never evaluates makes its set a permanent
 // failure under the set's target.
 func TestFromRegularMarksAnIterateLegacyNeverEvaluates(t *testing.T) {
