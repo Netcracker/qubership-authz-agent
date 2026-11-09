@@ -61,8 +61,8 @@ predicate of each rule as its condition on the row, and narrow that set where a 
 #### The set of rows
 
 - **R1** (`translate`). The rows that a `check/filter` answer admits are the rows that `check/resource` would allow for
-  the same subject and operation, where the predicate of each rule is its condition on the row. R5, R6, and R9 are the
-  exceptions.
+  the same subject and operation, where the predicate of each rule is its condition on the row. R5, R6, R9, and
+  ADR-0098 R11 are the exceptions.
 - **R2** (`translate`). With A the allowed rows and D the denied rows of the children of a node, the node gets these
   sets:
 
