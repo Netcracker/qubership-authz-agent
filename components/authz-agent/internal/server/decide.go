@@ -171,15 +171,16 @@ func (s *Server) tenant(c *fiber.Ctx) string {
 
 // snapshotRequest builds the request of the registry from the verified
 // claims the subject is read from, which an anonymous request takes from
-// its admission token, the request's headers, and the items as the request
-// wrote them.
+// its admission token, the headers the policies read, as
+// [legacy.RequestHeaders] gives them, so no PIP receives the caller's
+// tokens, and the items as the request wrote them.
 func snapshotRequest(tenant string, input map[string]any, payload any, headers map[string][]string,
 	resources []legacy.Resource) (snapshot.Request, error) {
 	claims, err := claimsOf(payload)
 	if err != nil {
 		return snapshot.Request{}, err
 	}
-	req := snapshot.Request{Tenant: tenant, Headers: lastValues(headers), Anonymous: input["subject"] == "",
+	req := snapshot.Request{Tenant: tenant, Headers: legacy.RequestHeaders(headers), Anonymous: input["subject"] == "",
 		Claims: claims}
 	for _, r := range resources {
 		b, err := body(r.Raw)
@@ -199,23 +200,12 @@ func filterRequest(tenant string, input map[string]any, payload any, headers map
 	if err != nil {
 		return snapshot.FilterRequest{}, err
 	}
-	req := snapshot.FilterRequest{Tenant: tenant, Headers: lastValues(headers), Anonymous: input["subject"] == "",
+	req := snapshot.FilterRequest{Tenant: tenant, Headers: legacy.RequestHeaders(headers), Anonymous: input["subject"] == "",
 		Claims: claims, ResourceType: fmt.Sprint(r.ResourceType)}
 	if op := fmt.Sprint(r.Operation); op != "" {
 		req.Operation = &op
 	}
 	return req, nil
-}
-
-// lastValues holds the last value of each header by lower-case name.
-func lastValues(headers map[string][]string) map[string]string {
-	out := map[string]string{}
-	for k, values := range headers {
-		if len(values) > 0 {
-			out[strings.ToLower(k)] = values[len(values)-1]
-		}
-	}
-	return out
 }
 
 // claimsOf is the token payload of the admission as claims, an empty
