@@ -57,7 +57,7 @@ jobs:
 
       # Installs the OPA CLI at the version mise.toml pins, and only that tool.
       - name: Install OPA
-        uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
+        uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
         with:
           version: 2026.10.25
           install_args: aqua:open-policy-agent/opa
@@ -108,7 +108,7 @@ jobs:
 
       # Installs hadolint, kubeconform, and trivy at the versions mise.toml pins.
       - name: Install hadolint, kubeconform, and trivy
-        uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
+        uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
         with:
           version: 2026.10.25
 
