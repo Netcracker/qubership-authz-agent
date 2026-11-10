@@ -146,7 +146,9 @@ target also writes the survivors to `mutago-agentic.json` in the root of the che
 mutator, a hint for the test that would kill it, and the test files of its package. A mutant mutago cannot classify is
 printed under an `UNKNOWN` or `INTERNAL ERROR` line and counted as errored; it does not fail the run, so list it in the
 pull request as unresolved. Do not accept survivors with `--update-baseline`, which the output suggests; the target
-reads no baseline file.
+reads no baseline file. mutago also skips the lines that a `// mutator-disable-next-line`, `// mutator-disable-func`,
+or `// mutator-disable-regexp` comment marks, so such a comment hides survivors the same way and does not belong in
+the code.
 
 `Error 3` means the run did not complete, and no `mutago-agentic.json` is left. The first line mutago printed gives
 the reason. `Baseline test failed for "<package>"` says that the tests of a changed package failed, or ran longer than
