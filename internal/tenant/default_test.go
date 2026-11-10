@@ -364,34 +364,38 @@ func TestDefault_RetriesAfterAnAnswerThatGivesNoIdentifier(t *testing.T) {
 		{"1025 bytes", reply{status: http.StatusOK, body: uuid + strings.Repeat(" ", 1025-len(uuid))}},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			synctest.Test(t, func(t *testing.T) {
-				manager := &fakeManager{next: tt.answer}
-				log := &recorder{}
-				d := newDefault(t, Config{ManagerURL: managerURL, Transport: manager, Log: log})
-				go d.Run(t.Context())
-				synctest.Wait()
-				if d.Ready() {
-					t.Fatalf("Ready() = true after the answer, ID() = %q, want false", d.ID())
-				}
-				if len(log.warns) != 1 {
-					t.Fatalf("warnings after one attempt = %q, want one", log.warns)
-				}
-				if got := log.warns[0]; !strings.HasPrefix(got, "default tenant: tenant-manager") {
-					t.Errorf("warning %q does not start with the source of the failure", got)
-				}
-				if got := manager.requests(); len(got) != 1 || got[0] != lookupURL {
-					t.Errorf("requests after one attempt = %q, want one to %q", got, lookupURL)
-				}
-				manager.answerWith(reply{status: http.StatusOK, body: uuid})
-				time.Sleep(time.Second)
-				synctest.Wait()
-				if got := d.ID(); got != uuid {
-					t.Errorf("ID() after the good answer = %q, want %q", got, uuid)
-				}
-			})
-		})
+		t.Run(tt.name, func(t *testing.T) { checkRetriesAfter(t, tt.answer) })
 	}
+}
+
+// checkRetriesAfter runs a Default against a tenant-manager that gives answer
+// on the first attempt and an identifier on the second.
+func checkRetriesAfter(t *testing.T, answer reply) {
+	synctest.Test(t, func(t *testing.T) {
+		manager := &fakeManager{next: answer}
+		log := &recorder{}
+		d := newDefault(t, Config{ManagerURL: managerURL, Transport: manager, Log: log})
+		go d.Run(t.Context())
+		synctest.Wait()
+		if d.Ready() {
+			t.Fatalf("Ready() = true after the answer, ID() = %q, want false", d.ID())
+		}
+		if len(log.warns) != 1 {
+			t.Fatalf("warnings after one attempt = %q, want one", log.warns)
+		}
+		if got := log.warns[0]; !strings.HasPrefix(got, "default tenant: tenant-manager") {
+			t.Errorf("warning %q does not start with the source of the failure", got)
+		}
+		if got := manager.requests(); len(got) != 1 || got[0] != lookupURL {
+			t.Errorf("requests after one attempt = %q, want one to %q", got, lookupURL)
+		}
+		manager.answerWith(reply{status: http.StatusOK, body: uuid})
+		time.Sleep(time.Second)
+		synctest.Wait()
+		if got := d.ID(); got != uuid {
+			t.Errorf("ID() after the good answer = %q, want %q", got, uuid)
+		}
+	})
 }
 
 func TestDefault_RunReadsNoMoreOfAnAnswerThanOneByteOverTheLimit(t *testing.T) {
@@ -497,21 +501,23 @@ func TestDefault_RunWarnsOnEachFailedAttemptAndRecordsTheTranslation(t *testing.
 			t.Fatalf("warnings = %q, want two", log.warns)
 		}
 		for i, pause := range []string{"retrying in 1s", "retrying in 2s"} {
-			for _, part := range []string{lookupURL, "HTTP 404", "no tenant of this name", "not ready", pause} {
-				if !strings.Contains(log.warns[i], part) {
-					t.Errorf("warning %q does not name %q", log.warns[i], part)
-				}
-			}
+			checkNames(t, log.warns[i], lookupURL, "HTTP 404", "no tenant of this name", "not ready", pause)
 		}
 		if len(log.infos) != 1 {
 			t.Fatalf("records = %q, want one", log.infos)
 		}
-		for _, part := range []string{`"default"`, uuid} {
-			if !strings.Contains(log.infos[0], part) {
-				t.Errorf("record %q does not name %q", log.infos[0], part)
-			}
-		}
+		checkNames(t, log.infos[0], `"default"`, uuid)
 	})
+}
+
+// checkNames reports each of parts that line does not hold.
+func checkNames(t *testing.T, line string, parts ...string) {
+	t.Helper()
+	for _, part := range parts {
+		if !strings.Contains(line, part) {
+			t.Errorf("log line %q does not name %q", line, part)
+		}
+	}
 }
 
 // The answer is the text of another service, and the warning goes into a log
