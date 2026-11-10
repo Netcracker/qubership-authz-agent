@@ -41,10 +41,8 @@ func (s *RuntimeSuite) TestTenantRealm() {
 			s.cfg.KcTokenScope, s.cfg.KcAdminUser, s.cfg.KcPassword, s.currentRequestID())
 		s.Require().NoError(err, "token from %s", s.cfg.KcUnregisteredTenantBaseURL)
 
-		mark := s.decisionLogMark()
 		code, b := s.post("/access/v1/check/resource", incomingTokenHeader(token), body)
 		s.Require().Equal(401, code, "body: %s", string(b))
-		authError, _ := s.loggedDecision(mark)["authError"].(map[string]interface{})
-		s.Assert().Equal("JWT kid is not found in trusted provider keys", authError["reason"])
+		s.Assert().Equal("JWT kid is not found in trusted provider keys", jsonObj(b)["message"])
 	})
 }

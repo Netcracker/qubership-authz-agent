@@ -18,8 +18,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/open-policy-agent/opa/v1/topdown/builtins"
-
 	"authz-agent/policies"
 )
 
@@ -30,8 +28,6 @@ import rego.v1
 allow if input.x == 1
 
 roles := data.policies.roles
-
-when := time.now_ns()
 `
 
 func newTestEngine(t *testing.T) *Engine {
@@ -48,15 +44,15 @@ func newTestEngine(t *testing.T) *Engine {
 func TestEval_InputAndUndefined(t *testing.T) {
 	e := newTestEngine(t)
 	ctx := context.Background()
-	v, ok, err := e.Eval(ctx, []string{"t", "allow"}, map[string]any{"x": 1}, nil)
+	v, ok, err := e.Eval(ctx, []string{"t", "allow"}, map[string]any{"x": 1})
 	if err != nil || !ok || v != true {
 		t.Fatalf("allow with x=1: v=%v ok=%v err=%v", v, ok, err)
 	}
-	_, ok, err = e.Eval(ctx, []string{"t", "allow"}, map[string]any{"x": 2}, nil)
+	_, ok, err = e.Eval(ctx, []string{"t", "allow"}, map[string]any{"x": 2})
 	if err != nil || ok {
 		t.Fatalf("allow with x=2 must be undefined: ok=%v err=%v", ok, err)
 	}
-	_, ok, err = e.Eval(ctx, []string{"nothing", "here"}, nil, nil)
+	_, ok, err = e.Eval(ctx, []string{"nothing", "here"}, nil)
 	if err != nil || ok {
 		t.Fatalf("unknown document must be undefined: ok=%v err=%v", ok, err)
 	}
@@ -71,7 +67,7 @@ func TestPut_DocumentsReachTheRules(t *testing.T) {
 	if err := e.Put(ctx, []string{"policies"}, map[string]any{"roles": []any{"a"}}); err != nil {
 		t.Fatalf("Put: %v", err)
 	}
-	v, ok, err := e.Eval(ctx, []string{"t", "roles"}, nil, nil)
+	v, ok, err := e.Eval(ctx, []string{"t", "roles"}, nil)
 	if err != nil || !ok {
 		t.Fatalf("roles after Put: ok=%v err=%v", ok, err)
 	}
@@ -81,22 +77,8 @@ func TestPut_DocumentsReachTheRules(t *testing.T) {
 	if err := e.Put(ctx, []string{"deep", "er", "doc"}, "x"); err != nil {
 		t.Fatalf("Put with parents: %v", err)
 	}
-	if v, ok, err := e.Eval(ctx, []string{"deep", "er", "doc"}, nil, nil); err != nil || !ok || v != "x" {
+	if v, ok, err := e.Eval(ctx, []string{"deep", "er", "doc"}, nil); err != nil || !ok || v != "x" {
 		t.Fatalf("data.deep.er.doc after Put = %v ok=%v err=%v, want x", v, ok, err)
-	}
-}
-
-// TestNDBuiltinCache_RecordsTimeNow: the cache handed to Eval collects the
-// non-deterministic builtins the rules called, which the decision log
-// carries so a decision can be replayed.
-func TestNDBuiltinCache_RecordsTimeNow(t *testing.T) {
-	e := newTestEngine(t)
-	ndbc := builtins.NDBCache{}
-	if _, ok, err := e.Eval(context.Background(), []string{"t", "when"}, nil, ndbc); err != nil || !ok {
-		t.Fatalf("when: ok=%v err=%v", ok, err)
-	}
-	if _, ok := ndbc["time.now_ns"]; !ok {
-		t.Fatalf("nd_builtin_cache lacks time.now_ns: %v", ndbc)
 	}
 }
 
@@ -123,7 +105,7 @@ func TestNew_EmbeddedProductPoliciesCompile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New with product policies: %v", err)
 	}
-	v, ok, err := e.Eval(context.Background(), []string{"authorize"}, map[string]any{}, nil)
+	v, ok, err := e.Eval(context.Background(), []string{"authorize"}, map[string]any{})
 	if err != nil || !ok {
 		t.Fatalf("data.authorize with an empty input: ok=%v err=%v", ok, err)
 	}

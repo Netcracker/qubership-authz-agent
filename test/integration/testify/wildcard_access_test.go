@@ -34,24 +34,18 @@ func (s *RuntimeSuite) TestWildcardAccess() {
 
 	s.Step("wildcard_access.all_all.no_predicates", func() {
 		h := incomingTokenHeader(s.validAdminToken)
-		mark := s.decisionLogMark()
 		code, b := s.post("/access/v1/check/filter?resourceType=ORDER&operation=READ", h, map[string]interface{}{})
 		s.Require().Equal(200, code, "body: %s", string(b))
 		s.Assert().Equal("ALLOW", jsonObj(b)["calculationResult"],
 			"wildcard short-circuit must allow without a filter condition")
-		_, hasPreds := firstLoggedResult(s.loggedDecision(mark))["predicates"]
-		s.Assert().False(hasPreds, "wildcard short-circuit must not produce predicates")
 	})
 
-	s.Step("wildcard_access.all_all.no_deny_reason", func() {
+	s.Step("wildcard_access.all_all.exact_type_allowed", func() {
 		h := incomingTokenHeader(s.validAdminToken)
 		body := map[string]interface{}{"type": "WC_EXACT_ONLY", "operation": "READ", "resource": map[string]interface{}{}}
-		mark := s.decisionLogMark()
 		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
 		s.Require().Equal(200, code, "body: %s", string(b))
 		s.Assert().Equal("true", bodyStr(b))
-		_, hasReason := firstLoggedResult(s.loggedDecision(mark))["reason"]
-		s.Assert().False(hasReason, "wildcard short-circuit must not produce reason")
 	})
 
 	// ── ALL/<operation>: order-reader READ on any resourceType ──────────

@@ -258,13 +258,12 @@ e2e-restart:
 	$(E2E_KUBECTL) rollout restart $(addprefix deploy/,$(E2E_LOCAL_DEPLOYMENTS))
 	for d in $(E2E_LOCAL_DEPLOYMENTS); do $(E2E_KUBECTL) rollout status deploy/$$d --timeout=3m || exit 1; done
 
-# Everything needed to read a failed run: every container log on the node,
-# the namespace events, and the decision logs downloaded from the agent.
+# Everything needed to read a failed run: every container log on the node and
+# the namespace events.
 e2e-logs:
 	mkdir -p $(E2E_ARTIFACTS)
 	kind export logs --name $(KIND_CLUSTER) $(E2E_ARTIFACTS)/cluster
 	$(E2E_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/events.txt
-	-$(E2E_KUBECTL) exec deploy/pip-stub -- wget -qO- http://authz-agent:8080/internal/v1/decision-logs > $(E2E_ARTIFACTS)/decision-logs.jsonl
 
 e2e-down:
 	kind delete cluster --name $(KIND_CLUSTER)
@@ -310,6 +309,5 @@ parity-logs:
 	mkdir -p $(E2E_ARTIFACTS)/parity
 	kind export logs --name $(KIND_CLUSTER) $(E2E_ARTIFACTS)/parity/cluster
 	$(PARITY_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/parity/events.txt
-	-$(PARITY_KUBECTL) exec deploy/pip-mock -- wget -qO- http://authz-agent:8080/internal/v1/decision-logs > $(E2E_ARTIFACTS)/parity/decision-logs.jsonl
 
 .PHONY: lint install-hooks test-jayway jayway-suite-calls mutation-diff e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs

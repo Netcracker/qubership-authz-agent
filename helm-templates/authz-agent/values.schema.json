@@ -496,16 +496,6 @@
       ],
       "minimum": 1
     },
-    "AUTHZ_DECISION_LOG_PATH": {
-      "$id": "#/properties/AUTHZ_DECISION_LOG_PATH",
-      "type": "string",
-      "title": "The AUTHZ_DECISION_LOG_PATH schema",
-      "description": "Directory where the decision-log collector writes its NDJSON file, on ephemeral container storage",
-      "default": "/var/log/authz-agent/decisions/",
-      "examples": [
-        "/var/log/authz-agent/decisions/"
-      ]
-    },
     "HPA_ENABLED": {
       "$id": "#/properties/HPA_ENABLED",
       "description": "Defines whether horizontal autoscaling enabled for microservice",
@@ -774,18 +764,6 @@
       "examples": [
         "512Mi",
         "4Gi"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "AUTHZ_DECISION_LOG_SIZE_LIMIT": {
-      "$id": "#/properties/AUTHZ_DECISION_LOG_SIZE_LIMIT",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_DECISION_LOG_SIZE_LIMIT schema",
-      "description": "Defines maximum size of the emptyDir volume the decision log is written to",
-      "examples": [
-        "256Mi",
-        "2Gi"
       ],
       "internal": true,
       "envSpecific": true

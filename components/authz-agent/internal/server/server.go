@@ -23,11 +23,8 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/open-policy-agent/opa/v1/ast"
-	"github.com/open-policy-agent/opa/v1/topdown/builtins"
 
 	"authz-agent/components/authz-agent/internal/authn"
-	"authz-agent/components/authz-agent/internal/decisionlog"
 	"authz-agent/components/authz-agent/internal/engine"
 	"authz-agent/components/authz-agent/internal/pull"
 )
@@ -41,12 +38,10 @@ const LegacyAPIVersion = `{"specs":[{"specRootUrl":"/access","major":3,"minor":0
 // as request_id, so a line here can be matched with the caller's own line for
 // the same request.
 //
-// The decision itself is not written here: its input carries the caller's
-// token and claims, and the decision log is the surface that records those,
-// under the collector's own retention.
+// The decision itself is not written here, because its input carries the
+// caller's token and claims.
 type Logger interface {
 	DebugC(ctx context.Context, format string, args ...any)
-	WarnC(ctx context.Context, format string, args ...any)
 	ErrorC(ctx context.Context, format string, args ...any)
 }
 
@@ -54,9 +49,6 @@ type Logger interface {
 type discardLogger struct{}
 
 func (discardLogger) DebugC(context.Context, string, ...any) {
-	// Deliberately empty: a caller that passes no logger wants no line.
-}
-func (discardLogger) WarnC(context.Context, string, ...any) {
 	// Deliberately empty: a caller that passes no logger wants no line.
 }
 func (discardLogger) ErrorC(context.Context, string, ...any) {
@@ -68,25 +60,8 @@ type Options struct {
 	// Health reports the state of the loops the service runs; nil means
 	// the service is healthy and ready as long as it answers.
 	Health func() Report
-	// NDBuiltinCache builds the non-deterministic builtin cache, which the
-	// evaluator reads as a memo within one decision and which is recorded
-	// into the decision's event, as OPA's nd_builtin_cache does. Off,
-	// neither happens. It is also left unbuilt when the decisions are not
-	// logged, where the memo is all it would be: every non-deterministic
-	// builtin the policies call is stable within a decision without it,
-	// http.send and uuid.rfc4122 through caches of their own and
-	// io.jwt.decode_verify and time.now_ns through the evaluation's fixed
-	// clock. The two that would differ, io.jwt.encode_sign and
-	// io.jwt.encode_sign_raw, read no cache at all and are not called.
-	NDBuiltinCache bool
 	// Log receives the diagnostics of the request path; nil discards them.
 	Log Logger
-	// CollectorURL is the base URL of the decision-log collector the
-	// decisions are uploaded to, which serves the download of the ones it
-	// received; the public surface relays GET /internal/v1/decision-logs to
-	// it unless the decisions are stored in the service. Empty, with no
-	// store, leaves the download unregistered.
-	CollectorURL string
 	// PullNow loads the policies from their source and returns once they
 	// are stored. Only a build with the paritytest tag routes a request to
 	// it.
@@ -96,18 +71,17 @@ type Options struct {
 // Server owns the handlers.
 type Server struct {
 	engine *engine.Engine
-	logs   *decisionlog.Logger
 	opts   Options
 }
 
 // Register adds the routes of the internal surface to app: /health,
 // /ready, and /api-version, and in a build with the paritytest tag
 // POST /internal/v1/pull when [Options.PullNow] is set.
-func Register(app *fiber.App, eng *engine.Engine, logs *decisionlog.Logger, opts Options) *Server {
+func Register(app *fiber.App, eng *engine.Engine, opts Options) *Server {
 	if opts.Log == nil {
 		opts.Log = discardLogger{}
 	}
-	s := &Server{engine: eng, logs: logs, opts: opts}
+	s := &Server{engine: eng, opts: opts}
 	app.Get("/health", s.health)
 	app.Get("/ready", s.ready)
 	app.Get("/api-version", apiVersion)
@@ -213,79 +187,15 @@ func opaError(c *fiber.Ctx, status int, code, message string) error {
 	return c.Status(status).JSON(fiber.Map{"code": code, "message": message})
 }
 
-// evaluate runs the decision at segments with input and, when decisions are
-// logged, records it under a fresh decision id; id is "" otherwise. defined
-// is false when the document is undefined.
-func (s *Server) evaluate(c *fiber.Ctx, segments []string, input any) (result any, defined bool, id string, err error) {
-	logged := s.logs != nil && s.logs.Enabled()
-	var ndbc builtins.NDBCache
-	if s.opts.NDBuiltinCache && logged {
-		ndbc = builtins.NDBCache{}
-	}
-	result, defined, err = s.engine.Eval(c.UserContext(), segments, input, ndbc)
+// evaluate runs the decision at segments with input. defined is false when
+// the document is undefined.
+func (s *Server) evaluate(c *fiber.Ctx, segments []string, input any) (result any, defined bool, err error) {
+	result, defined, err = s.engine.Eval(c.UserContext(), segments, input)
 	if err != nil {
 		// Reported here because the caller answers 500 and reports nothing.
 		s.opts.Log.ErrorC(c.UserContext(), "decision failed path=%s: %v", strings.Join(segments, "/"), err)
-		return nil, false, "", err
+		return nil, false, err
 	}
-	if logged {
-		id = decisionlog.NewDecisionID()
-		s.logDecision(c, id, segments, input, result, defined, ndbc)
-	}
-	s.opts.Log.DebugC(c.UserContext(), "decision path=%s defined=%t decisionId=%s",
-		strings.Join(segments, "/"), defined, id)
-	return result, defined, id, nil
-}
-
-// undefinedEnvelope is the body of an undefined decision in the shape of
-// OPA's data API: no result, and the decision id when the decision was
-// logged.
-func undefinedEnvelope(id string) fiber.Map {
-	if id == "" {
-		return fiber.Map{}
-	}
-	return fiber.Map{"decision_id": id}
-}
-
-func (s *Server) logDecision(c *fiber.Ctx, id string, segments []string, input, result any, ok bool, ndbc builtins.NDBCache) {
-	ev := decisionlog.Event{
-		DecisionID:  id,
-		Path:        strings.Join(segments, "/"),
-		RequestedBy: strings.Clone(c.IP()),
-	}
-	if input != nil {
-		ev.Input = input
-	}
-	if ok {
-		ev.Result = result
-	}
-	if len(ndbc) > 0 {
-		if v, err := ast.JSON(ndbc.AsValue()); err == nil {
-			ev.NDBuiltinCache = v
-		}
-	}
-	if names := s.logs.Headers(); len(names) > 0 {
-		ev.RequestContext = &decisionlog.RequestContext{HTTP: &decisionlog.HTTPRequestContext{Headers: recordedHeaders(c, names)}}
-	}
-	s.logs.Log(ev)
-}
-
-// recordedHeaders copies the values of the named request headers, keyed by
-// the configured lowercase names, out of the request buffer.
-func recordedHeaders(c *fiber.Ctx, names []string) map[string][]string {
-	headers := map[string][]string{}
-	all := c.GetReqHeaders()
-	for _, name := range names {
-		for k, values := range all {
-			if !strings.EqualFold(k, name) {
-				continue
-			}
-			copied := make([]string, len(values))
-			for i, v := range values {
-				copied[i] = strings.Clone(v)
-			}
-			headers[name] = copied
-		}
-	}
-	return headers
+	s.opts.Log.DebugC(c.UserContext(), "decision path=%s defined=%t", strings.Join(segments, "/"), defined)
+	return result, defined, nil
 }

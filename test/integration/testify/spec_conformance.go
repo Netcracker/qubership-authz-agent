@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -46,27 +45,6 @@ var (
 	specRouter routers.Router
 	specErr    error
 )
-
-// init registers a pass-through body decoder for `application/x-ndjson`.
-// The spec declares this content type for GET /internal/v1/decision-logs
-// (the per-line shape is OPA-defined and intentionally not part of the
-// contract), but kin-openapi ships no built-in decoder for it, which
-// would otherwise surface as a false-positive drift signal.
-func init() {
-	openapi3filter.RegisterBodyDecoder("application/x-ndjson", ndjsonPassthroughDecoder)
-}
-
-// ndjsonPassthroughDecoder treats the entire NDJSON stream as an opaque
-// string for schema validation purposes. The spec's schema for this body
-// is `type: string`, so returning the raw bytes as a string lets the
-// validator accept it without trying to JSON-parse each line.
-func ndjsonPassthroughDecoder(body io.Reader, header http.Header, schema *openapi3.SchemaRef, encFn openapi3filter.EncodingFn) (interface{}, error) {
-	raw, err := io.ReadAll(body)
-	if err != nil {
-		return nil, err
-	}
-	return string(raw), nil
-}
 
 // LoadSpec lazy-loads the OpenAPI document and the gorillamux router once
 // per test process. Both the structural lint (TestOpenAPISpecLints) and

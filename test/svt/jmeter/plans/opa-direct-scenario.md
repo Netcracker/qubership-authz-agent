@@ -22,7 +22,6 @@ The runner expects a CSV file with these columns:
 - `authorizationToken`
 - `authorizationType`
 - `requestHeaders`
-- `decisionLogPipTrace`
 - `resources`
 - `subject`
 - `ignoreRls`

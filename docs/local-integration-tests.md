@@ -110,12 +110,12 @@ Step by step, in the order `make e2e` runs them:
 | `e2e-suite` | Runs the suite Job with `helm test`, streams its log, and fails if the Job did not complete |
 
 Each step prints a `STEP PASS/FAIL <name> <ms>` line. The Job sets `FULL_RUNTIME_SUITE=true`, so the run ends with the
-two catalog coverage checks. Expected: `--- PASS: TestRuntimeSuite` with 19 groups.
+two catalog coverage checks. Expected: `--- PASS: TestRuntimeSuite`.
 
 Artifacts:
 
 ```bash
-make e2e-logs     # every container log on the node, the namespace events, and the decision logs, into test/artifacts/kind/
+make e2e-logs     # every container log on the node and the namespace events, into test/artifacts/kind/
 make e2e-down     # delete the cluster
 ```
 

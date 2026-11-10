@@ -96,8 +96,7 @@ The operators:
 In the record, `ck` is the `String.valueOf` text, `k` is its folded form, the number is the one `new BigDecimal(ck)`
 reads, and the key `o` of a list or an object keys each number inside by its value. The record holds no other text of a
 number. A string has a number wherever `new BigDecimal` reads it, so generated code compares a number with a string by
-that number alone. The record writes the number as `n` where Rego's own operators compare it exactly, and otherwise
-sets `nl` for `nc.decimal.compare`.
+that number alone.
 
 ### Justification
 

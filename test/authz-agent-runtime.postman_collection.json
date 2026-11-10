@@ -440,7 +440,7 @@
               "options": {"raw": {"language": "json"}}
             },
             "url": "{{authz_base_url}}/access/v1/check/resource?tenant_id={{tenant_id}}",
-            "description": "PIP for brokenPip fails, so the answer is false; the decision log records a reason containing 'PIP resolution failed: brokenPip'. Requires the broken PIP to be uploaded first."
+            "description": "PIP for brokenPip fails, so the answer is false."
           },
           "response": []
         },
@@ -458,7 +458,7 @@
               "options": {"raw": {"language": "json"}}
             },
             "url": "{{authz_base_url}}/access/v1/check/resource?tenant_id={{tenant_id}}",
-            "description": "The policy reads subject.nonExistentAttr, so the answer is false; the decision log records a reason containing 'subject attribute not found: nonExistentAttr'."
+            "description": "The policy reads subject.nonExistentAttr, so the answer is false."
           },
           "response": []
         }
@@ -517,7 +517,7 @@
               "options": {"raw": {"language": "json"}}
             },
             "url": "{{authz_base_url}}/access/v1/check/filter?resourceType=CUSTOMER&operation=READ&tenant_id={{tenant_id}}",
-            "description": "Calls the allowedCustomers PIP on the pip-stub; the decision log records its response. Requires the PIP config uploaded beforehand."
+            "description": "Calls the allowedCustomers PIP on the pip-stub. Requires the PIP config uploaded beforehand."
           },
           "response": []
         }

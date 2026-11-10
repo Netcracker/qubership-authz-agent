@@ -94,22 +94,17 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `token_pip_filter.positive_alias_in_filter` | admin | `POST /access/v1/check/filter` | TOKEN_PIP_POSITIVE | READ | ROLE_ADMINISTRATOR |
 | `token_pip_filter.default_value_fallback` | admin | `POST /access/v1/check/filter` | TOKEN_PIP_DEFAULT | READ | ROLE_ADMINISTRATOR |
 | `pip_deny.upload_broken_pip` | n/a | `PUT /access/v1/simplifiedPolicies/domainPIPs/{domain}` | PIP_FAIL_TEST | READ | none |
-| `pip_deny.pip_failure_deny_reason` | admin | `POST /access/v1/check/resource` | PIP_FAIL_TEST | READ | ROLE_ADMINISTRATOR |
-| `pip_deny.missing_attr_deny_reason` | admin | `POST /access/v1/check/resource` | ATTR_MISS_TEST | READ | ROLE_ADMINISTRATOR |
+| `pip_deny.pip_failure_denied` | admin | `POST /access/v1/check/resource` | PIP_FAIL_TEST | READ | ROLE_ADMINISTRATOR |
 | `health.healthy_strict` | n/a | `GET /health` | - | - | none |
 | `health.method_not_allowed` | n/a | `POST /health` | - | - | none |
 | `health.regression.check_resource` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `decision_logs.download_no_token.200` | n/a | `GET /internal/v1/decision-logs` | - | - | none |
-| `decision_logs.content_is_ndjson` | n/a | `GET /internal/v1/decision-logs` | - | - | none |
 | `entitlements.contains.allow_hit` | admin | `POST /access/v1/check/resource` | ENT_CONTRACT | READ | ROLE_ADMINISTRATOR |
 | `entitlements.contains.deny_miss` | admin | `POST /access/v1/check/resource` | ENT_CONTRACT | READ | ROLE_ADMINISTRATOR |
 | `entitlements.is_empty.allow_when_empty` | admin | `POST /access/v1/check/resource` | ENT_EMPTY | READ | ROLE_ADMINISTRATOR |
 | `entitlements.multi_as_union.allow` | admin | `POST /access/v1/check/resource` | ENT_MULTI | READ | ROLE_ADMINISTRATOR |
-| `decision_logs.catalog_coverage` | n/a | `GET /internal/v1/decision-logs` | - | - | none |
-| `decision_logs.legacy_path_header` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
 | `wildcard_access.upload_wildcard_policies` | n/a | `PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}` | - | - | none |
 | `wildcard_access.all_all.no_predicates` | admin | `POST /access/v1/check/filter` | ORDER | READ | ROLE_ADMINISTRATOR |
-| `wildcard_access.all_all.no_deny_reason` | admin | `POST /access/v1/check/resource` | WC_EXACT_ONLY | READ | ROLE_ADMINISTRATOR |
+| `wildcard_access.all_all.exact_type_allowed` | admin | `POST /access/v1/check/resource` | WC_EXACT_ONLY | READ | ROLE_ADMINISTRATOR |
 | `wildcard_access.all_op.reader_delete_denied` | order-reader | `POST /access/v1/check/resource` | UNKNOWN_TYPE | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.rt_all.reader_any_op` | order-reader | `POST /access/v1/check/filter` | WC_RT_TARGET | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.rt_all.reader_other_rt_denied` | order-reader | `POST /access/v1/check/resource` | OTHER_TYPE | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
@@ -190,7 +185,7 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 - The admission token is the `Authorization` header. The subject token is `Incoming-Token` when it is present, the
   `Authorization` token otherwise, and none when `Authorization-Type` is `anonymous`.
 - Invalid `Authorization` token returns `401` with `message`.
-- Valid `Authorization` + invalid subject token returns `200` with a denial, and the decision log records the `reason`.
+- Valid `Authorization` + invalid subject token returns `200` with a denial.
 - Missing token returns `401` unless anonymous mode is explicitly allowed.
 - An object-form `subject` in the decision input is rejected.
 - Authorization roles are derived only from `realm_access.roles`; non-realm claims like `groups`, `authorities`, direct `roles`, and `resource_access.*.roles` are ignored.

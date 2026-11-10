@@ -379,13 +379,13 @@ func uniqueIDs(ids []json.RawMessage) *RequestError {
 
 // skipHeaders are the request headers left out of input.requestHeaders: the
 // transport's own, the tokens the input carries in their own fields, and
-// the two the agent itself uses for the request id and the decision log.
+// the one the agent itself uses for the request id.
 var skipHeaders = map[string]bool{
 	":authority": true, ":path": true, ":method": true, ":scheme": true, ":status": true, ":protocol": true,
 	"content-type": true, "content-length": true, "accept-encoding": true, "host": true,
 	"transfer-encoding": true, "connection": true, "x-forwarded-for": true, "x-forwarded-proto": true,
 	"x-request-id": true, "x-envoy-expected-rq-timeout-ms": true, "authorization": true,
-	"x-authz-original-path": true, "incoming-token": true,
+	"incoming-token": true,
 }
 
 // Input builds the canonical authorize input of a legacy request from its

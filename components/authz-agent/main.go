@@ -40,7 +40,6 @@ import (
 	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
 
 	"authz-agent/components/authz-agent/internal/authn"
-	"authz-agent/components/authz-agent/internal/decisionlog"
 	"authz-agent/components/authz-agent/internal/engine"
 	"authz-agent/components/authz-agent/internal/m2m"
 	"authz-agent/components/authz-agent/internal/pull"
@@ -75,11 +74,6 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if cfg.DecisionLogFile != "" {
-		cfg.DecisionLogs.Store = decisionlog.NewStore(cfg.DecisionLogFile)
-	}
-	logs := decisionlog.New(cfg.DecisionLogs, logger.Warnf)
-
 	// The trusted providers' keys are fetched before the service listens:
 	// a token cannot be verified without them, and the outcome, whatever
 	// it is, goes into the health report.
@@ -99,16 +93,13 @@ func main() {
 	}
 	puller := pull.New(cfg.Pull, eng, source, logger)
 	opts := server.Options{
-		Log:            logger,
-		CollectorURL:   cfg.DecisionLogs.URL,
-		NDBuiltinCache: cfg.NDBuiltinCache,
-		Health:         func() server.Report { return report(providers, puller) },
-		PullNow:        puller.PullNow,
+		Log:     logger,
+		Health:  func() server.Report { return report(providers, puller) },
+		PullNow: puller.PullNow,
 	}
 
-	// Immutable: strings handed out by the request context, such as a header
-	// that goes into a decision log event, must not alias the buffer the
-	// server reuses for the next request.
+	// Immutable: strings handed out by the request context must not alias the
+	// buffer the server reuses for the next request.
 	internal, err := fiberserver.New(fiber.Config{
 		Immutable:             true,
 		BodyLimit:             32 << 20,
@@ -131,7 +122,7 @@ func main() {
 		logger.Errorf("fiber: %v", err)
 		os.Exit(1)
 	}
-	srv := server.Register(internal, eng, logs, opts)
+	srv := server.Register(internal, eng, opts)
 	srv.RegisterPublic(public)
 
 	if tokens != nil {
@@ -143,7 +134,7 @@ func main() {
 	if providers != nil {
 		go providers.Run(ctx)
 	}
-	if serve(ctx, stop, logs, cfg, len(modules), public, internal) {
+	if serve(ctx, stop, cfg, len(modules), public, internal) {
 		os.Exit(1)
 	}
 }
@@ -156,7 +147,7 @@ func main() {
 // Both sockets are bound before either surface serves, so an address
 // already in use fails the start rather than leaving one surface up; the
 // public socket is closed again when the internal one cannot be bound.
-func serve(ctx context.Context, stop func(), logs *decisionlog.Logger, cfg config, modules int, public, internal *fiber.App) bool {
+func serve(ctx context.Context, stop func(), cfg config, modules int, public, internal *fiber.App) bool {
 	publicSocket, err := net.Listen("tcp", cfg.PublicAddr)
 	if err != nil {
 		logger.Errorf("public listener on %s: %v", cfg.PublicAddr, err)
@@ -168,9 +159,9 @@ func serve(ctx context.Context, stop func(), logs *decisionlog.Logger, cfg confi
 		logger.Errorf("internal listener on %s: %v", cfg.Addr, err)
 		return true
 	}
-	logger.Infof("authz-agent: %d policy modules, decision logs to %q, public surface on %s, internal surface on %s",
-		modules, decisionLogTarget(cfg), cfg.PublicAddr, cfg.Addr)
-	return serveUntilShutdown(ctx, stop, logs, []surface{
+	logger.Infof("authz-agent: %d policy modules, public surface on %s, internal surface on %s",
+		modules, cfg.PublicAddr, cfg.Addr)
+	return serveUntilShutdown(ctx, stop, []surface{
 		{"public", public, publicSocket},
 		{"internal", internal, internalSocket},
 	})
@@ -184,21 +175,11 @@ type surface struct {
 	socket net.Listener
 }
 
-// serveUntilShutdown runs the decision-log loop and the surfaces until ctx
-// ends, shuts the surfaces down, and drains the log queue. It reports
-// whether a surface ended on its own, which is a failed start rather than a
-// shutdown; stop ends ctx for the rest of the process when one does.
-//
-// The order the two halves end in is the point. Fiber's shutdown waits for
-// the requests still in their handlers, and every one of those produces a
-// decision, so the queue is read until the last handler has returned. A
-// logger sharing ctx with the surfaces stops reading at the signal instead,
-// and the decisions of a rolling restart are the ones an operator reading
-// the log afterwards goes looking for.
-func serveUntilShutdown(ctx context.Context, stop func(), logs *decisionlog.Logger, surfaces []surface) bool {
-	logCtx, stopLogs := context.WithCancel(context.WithoutCancel(ctx))
-	go logs.Run(logCtx)
-
+// serveUntilShutdown runs the surfaces until ctx ends and shuts them down,
+// giving each five seconds to finish the requests still in its handlers. It
+// reports whether a surface ended on its own, which is a failed start rather
+// than a shutdown; stop ends ctx for the rest of the process when one does.
+func serveUntilShutdown(ctx context.Context, stop func(), surfaces []surface) bool {
 	// A surface that ends on its own cancels the signal context, and the
 	// caller then ends the other one and the loops; one that ends because
 	// the shutdown closed its socket is not that failure.
@@ -228,9 +209,6 @@ func serveUntilShutdown(ctx context.Context, stop func(), logs *decisionlog.Logg
 		_ = s.socket.Close()
 	}
 	servers.Wait()
-	// Every handler has returned, so nothing can queue a decision now.
-	stopLogs()
-	logs.Wait()
 	return failed.Load()
 }
 
@@ -260,11 +238,4 @@ func report(providers *authn.Manager, puller *pull.Puller) server.Report {
 	r.Conversion = status.Conversion
 	r.Loaded = status.PoliciesLoaded
 	return r
-}
-
-func decisionLogTarget(cfg config) string {
-	if cfg.DecisionLogFile != "" {
-		return cfg.DecisionLogFile
-	}
-	return cfg.DecisionLogs.URL
 }

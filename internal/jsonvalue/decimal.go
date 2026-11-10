@@ -206,20 +206,6 @@ func compareMagnitude(d, e Decimal) int {
 	return strings.Compare(d.coef, e.coef)
 }
 
-// Short reports whether d has at most 15 significant digits and the exponent
-// of its first digit is from -307 to 307. OPA's own comparison orders two
-// such numbers correctly: it compares them exactly, and where it compares two
-// fractions that end in zeros as float64 values instead, a float64 holds each
-// closely enough to keep their order. OPA reads a number with a far larger exponent as 0, or
-// spends milliseconds reading it.
-func (d Decimal) Short() bool {
-	if d.IsZero() {
-		return true
-	}
-	adj := d.adjusted()
-	return len(d.coef) <= 15 && adj >= -307 && adj <= 307
-}
-
 // String returns d as a JSON number: plain digits while the exponent of the
 // first significant digit is from -7 to 19, otherwise one digit before the
 // point and an exponent, such as 1.5e400. The text has no trailing zeros, and

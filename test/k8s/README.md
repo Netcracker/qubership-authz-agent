@@ -83,11 +83,7 @@ waits a pull interval after each upload instead of asking the local agent to pul
 ## What runs
 
 The suite Job of `test-stand-values.yaml` runs the whole Testify suite, including the two
-coverage checks that need a full run (`FULL_RUNTIME_SUITE=true`). Groups that
-inspect what the engine received or decided, such as `TestDecisionLogs` and
-`TestPIPDenyReason`, read the decision logs the agent serves at
-`/internal/v1/decision-logs` instead of a capture proxy: the agent's own store of
-the decisions it made.
+coverage checks that need a full run (`FULL_RUNTIME_SUITE=true`).
 
 The Job reaches every target by Service name and asks the API server for
 nothing, so the `runtime-suite` ServiceAccount the chart creates for it

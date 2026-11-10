@@ -46,7 +46,6 @@ same semantic call family:
 - `authorizationToken`
 - `authorizationType`
 - `requestHeaders`
-- `decisionLogPipTrace`
 - `resources`
 - `subject`
 - `ignoreRls`

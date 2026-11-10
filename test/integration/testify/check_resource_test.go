@@ -188,8 +188,7 @@ func (s *RuntimeSuite) TestCheckResource() {
 	// covers the negative path: sending an incoming-token header with a
 	// well-known literal and then asserting the subsequent decision is
 	// unchanged from the no-header baseline. (Direct header-leak inspection
-	// would require decision-log scraping — we cover that in
-	// tests/unit/policies/pip_resolution_test.rego.)
+	// is in policies/pip_resolution_test.rego.)
 	s.Step("check_resource.incoming_token_stripped_from_header_pip", func() {
 		baseline := map[string]string{
 			"Content-Type":  "application/json",
@@ -214,8 +213,8 @@ func (s *RuntimeSuite) TestCheckResource() {
 			"incoming-token must not alter decision through HEADER PIP resolution")
 	})
 
-	// A token that is not a JWT fails admission, and the decision log names
-	// the format as the reason.
+	// A token that is not a JWT fails admission, and the response names the
+	// format as the reason.
 	s.Step("check_resource.invalid_authorization.401", func() {
 		h := map[string]string{
 			"Content-Type":  "application/json",
@@ -224,16 +223,13 @@ func (s *RuntimeSuite) TestCheckResource() {
 		body := map[string]interface{}{
 			"type": "ATTACHMENT", "operation": "READ", "resource": map[string]interface{}{},
 		}
-		mark := s.decisionLogMark()
 		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
 		s.Require().Equal(401, code)
-		s.Assert().NotEmpty(jsonObj(b)["message"], "legacy 401 must include message")
-		authError, _ := s.loggedDecision(mark)["authError"].(map[string]interface{})
-		s.Assert().Equal("Token is not a valid JWT", authError["reason"])
+		s.Assert().Equal("Token is not a valid JWT", jsonObj(b)["message"])
 	})
 
 	// The admission token has to carry the Bearer scheme: a valid token sent
-	// without it fails admission, and the decision log names the scheme.
+	// without it fails admission, and the response names the scheme.
 	s.Step("check_resource.authorization_without_bearer.401", func() {
 		h := map[string]string{
 			"Content-Type":  "application/json",
@@ -242,17 +238,13 @@ func (s *RuntimeSuite) TestCheckResource() {
 		body := map[string]interface{}{
 			"type": "ATTACHMENT", "operation": "READ", "resource": map[string]interface{}{},
 		}
-		mark := s.decisionLogMark()
 		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
 		s.Require().Equal(401, code)
-		s.Assert().NotEmpty(jsonObj(b)["message"], "legacy 401 must include message")
-		authError, _ := s.loggedDecision(mark)["authError"].(map[string]interface{})
-		s.Assert().Equal("Authorization scheme must be Bearer", authError["reason"])
+		s.Assert().Equal("Authorization scheme must be Bearer", jsonObj(b)["message"])
 	})
 
 	// A subject token without the Bearer scheme fails authentication after
-	// admission passed: the resource is denied with 200, and the decision log
-	// names the scheme as the reason.
+	// admission passed: the resource is denied with 200.
 	s.Step("check_resource.incoming_token_without_bearer.deny", func() {
 		h := map[string]string{
 			"Content-Type":   "application/json",
@@ -262,32 +254,33 @@ func (s *RuntimeSuite) TestCheckResource() {
 		body := map[string]interface{}{
 			"type": "ORDER", "operation": "READ", "resource": map[string]interface{}{},
 		}
-		mark := s.decisionLogMark()
 		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
 		s.Require().Equal(200, code)
 		s.Assert().Equal("false", bodyStr(b))
-		s.Assert().Equal("Authorization scheme must be Bearer", firstLoggedResult(s.loggedDecision(mark))["reason"])
 	})
 
-	// The policy's ${subject.allowedCustomers} template is filled from the
-	// GENERAL PIP the pip-stub answers, and the decision log records the rsql
-	// predicate it rendered. The step pins the stub's answer itself, because
-	// another step may have pinned a different one.
+	// The policy's condition compares the resource with subject.allowedCustomers,
+	// which the GENERAL PIP the pip-stub answers fills in: a customer on the
+	// list is allowed and one off it is denied. The step pins the stub's answer
+	// itself, because another step may have pinned a different one.
 	s.Step("check_resource.pip_value_substituted", func() {
 		pin := `[{"path":"/api/v1/pip/allowed","responses":[{"statusCode":200,"body":["C1","C2","C3"]}]}]`
 		pinCode, _ := s.doHTTPDirect("PUT", s.cfg.PIPStubURL+"/pip-stub/configure",
 			map[string]string{"Content-Type": "application/json"}, []byte(pin))
 		s.Require().Equal(200, pinCode)
-		body := map[string]interface{}{
+
+		listed := map[string]interface{}{
 			"type": "CUSTOMER", "operation": "READ", "resource": map[string]interface{}{"customerId": "C1"},
 		}
-		mark := s.decisionLogMark()
-		code, b := s.post("/access/v1/check/resource?tenant_id=default", incomingTokenHeader(s.validAdminToken), body)
+		code, b := s.post("/access/v1/check/resource?tenant_id=default", incomingTokenHeader(s.validAdminToken), listed)
 		s.Require().Equal(200, code, "body: %s", string(b))
-		s.Assert().Equal("true", bodyStr(b))
-		// PIP-resolved array elements are
-		// JSON-quoted and comma-space-joined.
-		s.Assert().Equal(`customerId=in=("C1", "C2", "C3")`,
-			loggedPredicate(firstLoggedResult(s.loggedDecision(mark)), "rsql"))
+		s.Assert().Equal("true", bodyStr(b), "customerId C1 is on the list the PIP returned")
+
+		unlisted := map[string]interface{}{
+			"type": "CUSTOMER", "operation": "READ", "resource": map[string]interface{}{"customerId": "C9"},
+		}
+		code, b = s.post("/access/v1/check/resource?tenant_id=default", incomingTokenHeader(s.validAdminToken), unlisted)
+		s.Require().Equal(200, code, "body: %s", string(b))
+		s.Assert().Equal("false", bodyStr(b), "customerId C9 is not on the list the PIP returned")
 	})
 }
