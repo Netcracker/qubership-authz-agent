@@ -521,23 +521,12 @@ func renderFiles(b *strings.Builder, files []fileMutants, internalErrors []strin
 			continue
 		}
 		shownFiles++
-		b.WriteString("\n  " + f.path)
-		if len(f.tests) > 0 {
-			b.WriteString(" (tests of the package: " + strings.Join(f.tests, ", ") + ")")
-		}
-		b.WriteString("\n")
-		source := src.get(f.path)
 		allowed := len(f.lines)
 		if !full {
 			allowed = min(allowed, lim.linesPerFile, rowsLeft)
 			rowsLeft -= allowed
 		}
-		for _, l := range f.lines[:allowed] {
-			renderLine(b, l, source, full)
-		}
-		if more := len(f.lines) - allowed; more > 0 {
-			fmt.Fprintf(b, "    %d more %s\n", more, plural(more, "line", "lines"))
-		}
+		renderFile(b, f, allowed, src.get(f.path), full)
 	}
 	if more := len(files) - shownFiles; more > 0 {
 		fmt.Fprintf(b, "\n  %d more %s\n", more, plural(more, "file", "files"))
@@ -546,6 +535,22 @@ func renderFiles(b *strings.Builder, files []fileMutants, internalErrors []strin
 		b.WriteString("\n  errored without a line: " + e + "\n")
 	}
 	fmt.Fprintf(b, "\nListed mutants on %d %s in %d %s.\n\n", lines, plural(lines, "line", "lines"), len(files), plural(len(files), "file", "files"))
+}
+
+// renderFile writes the path of f, the test files it carries, and its first
+// allowed lines, with how many lines it leaves out.
+func renderFile(b *strings.Builder, f fileMutants, allowed int, source sourceFile, full bool) {
+	b.WriteString("\n  " + f.path)
+	if len(f.tests) > 0 {
+		b.WriteString(" (tests of the package: " + strings.Join(f.tests, ", ") + ")")
+	}
+	b.WriteString("\n")
+	for _, l := range f.lines[:allowed] {
+		renderLine(b, l, source, full)
+	}
+	if more := len(f.lines) - allowed; more > 0 {
+		fmt.Fprintf(b, "    %d more %s\n", more, plural(more, "line", "lines"))
+	}
 }
 
 // renderLine writes one line of a report and its mutants. The console
