@@ -112,42 +112,62 @@ cd test/integration/tenantmanager && go test -count=1 ./...
 
 ### Mutation testing of a change
 
-`make mutation-diff` mutates the Go lines your branch changes and lists every mutant on them that no test kills. Run
-it before you open a pull request. It compares the working tree with the merge base of `HEAD` and `origin/main`, so
-fetch `origin` first; in a shallow clone, fetch the full history with `git fetch --unshallow origin`, or the diff starts
-at the tip of the base. Uncommitted changes to tracked files count, and a new file counts once it is committed or added
-with `git add -N`. For a pull request that targets another branch, `MUTATION_BASE` names that branch, or any commit, to
-take the merge base with:
+`make mutation-diff` mutates the Go lines your branch changes outside `test/` and lists every mutant on them that no
+test kills. Run it before you open a pull request, or on a pull request you review. The diff starts at the merge base of
+`HEAD` and `MUTATION_BASE`, `origin/main` by default, so fetch `origin` first. For a pull request that targets another
+branch, such as the parent of a stacked pull request, set `MUTATION_BASE` to that branch. In a clone of a fork,
+`origin` is the fork, so fetch the upstream repository and pass its branch, for example `MUTATION_BASE=upstream/main`
+after `git fetch upstream`. In a shallow clone, run `git fetch --unshallow origin` first: without a merge base, the
+diff starts at the tip of the base, and the target says so. Uncommitted changes to tracked files count, and a new
+file counts once it is committed or added with `git add -N`.
 
 ```sh
 make mutation-diff
 make mutation-diff MUTATION_BASE=origin/<target-branch>
 ```
 
-The target runs [mutago](https://github.com/quality-gates/mutago) at a pinned version with `go run`, so it needs only
-Go, and takes its file and mutator settings from `.mutago.yml`. It mutates the root module and leaves `test/` and
-`_test.go` files alone. A file behind a build tag, such as `testroutes_paritytest.go`, is not built, so its lines get no
-mutants. The tests of every package have to pass within `MUTATION_TIMEOUT` seconds (default 120) before any mutation, or
-the run stops, and a mutant whose tests run longer counts as killed. mutago runs the mutants in parallel and leaves the
-source files unmodified. With the test cache warm, a change in `internal/token` that gives five mutants takes about 12
-seconds.
+The target runs [mutago](https://github.com/quality-gates/mutago) at the version `tools/mutago/go.mod` pins, built
+with `go tool`, so it needs only Go. It takes its file and mutator settings from `.mutago.yml`. It mutates the packages
+of the changed files, excludes `test/` (`exclude_dirs` in `.mutago.yml`), and does not mutate `_test.go` files. A file
+behind a build tag, such as `testroutes_paritytest.go`, is not built, so its lines get no mutants.
 
-The target fails when a mutant on a changed line survives and prints each one as a diff. The tests pass with that
-change, so they would also pass if the line broke the same way: add or strengthen a test, or, when the mutant changes
-nothing a caller can observe, say in the pull request why it is equivalent. The target also writes the survivors to
-`mutago-agentic.json` in the root of the checkout, each with its file, line, and mutator, a hint for the test that
-would kill it, and the test files of its package. A mutant the run counts as errored does not fail it; list it in the
+Before any mutation, the tests of each changed package run once without the test cache, within 300 seconds. A
+mutant's tests may then run 5 times as long as the slowest of those runs, and a mutant whose tests run longer counts as
+killed. Set `MUTATION_TIMEOUT` to a number of seconds to use that fixed limit for the clean runs and every mutant
+instead, for example when a clean run needs more than 300 seconds. mutago runs the mutants in parallel and leaves the
+source files unmodified, and its output appears when it exits. A change in `internal/token/verify` that gives five
+mutants takes about 3 seconds, and about 12 seconds with an empty build cache, which includes building mutago.
+
+`make` exits 2 whenever the target fails, and the number after `Error` in its last line is the target's own status.
+When a mutant on a changed line survives, the target prints it as a diff under an `ESCAPED` line, and the status is
+`Error 4`. The tests pass with that change, so they would also pass if the line broke the same way: add or strengthen
+a test, or, when the mutant changes nothing a caller can observe, say in the pull request why it is equivalent. The
+target also writes the survivors to `mutago-agentic.json` in the root of the checkout, each with its file, line, and
+mutator, a hint for the test that would kill it, and the test files of its package. A mutant mutago cannot classify is
+printed under an `UNKNOWN` or `INTERNAL ERROR` line and counted as errored; it does not fail the run, so list it in the
 pull request as unresolved. Do not accept survivors with `--update-baseline`, which the output suggests; the target
 reads no baseline file.
 
-`make` exits 2 whenever the target fails, and the last lines say why: `3 mutant(s) escaped` for survivors, and a tool
-error otherwise, such as `Cannot load git diff: git diff --unified=0 nosuchref: exit status 128` for a base that is not
-a commit.
+`Error 3` means the run did not complete, and no `mutago-agentic.json` is left. The first line mutago printed gives
+the reason. `Baseline test failed for "<package>"` says that the tests of a changed package failed, or ran longer than
+the limit, before any mutation: fix them, or set a larger `MUTATION_TIMEOUT` when they only need more time. Report such
+a run as not completed, not as one without survivors. `Error 2` comes from the target itself, for example for a
+`MUTATION_BASE` that is not a commit in the clone.
 
-mutago reads the output of a plain `git diff`, so the target overrides the git settings that change its colors,
-prefixes, or paths. It cannot override `diff.external`: with an external diff tool configured, the run finds no changed
-line and passes with `0 total`. `git config --show-origin diff.external` shows where it is set; when that is your
-global git config, run the target as `GIT_CONFIG_GLOBAL=/dev/null make mutation-diff`.
+When the changed files get no mutant at all, the target lists them, ends with a line that starts
+`mutation-diff: no test was shown able to fail on them`, and exits 0. That is expected when no enabled mutator changes
+the changed lines, as with comments, imports, type, const, or var declarations, and number literals. When the lines
+hold code a mutator would change, rule out two causes. A file behind a build tag is not built; say in the pull request
+that its lines were not mutated, which also holds when the branch changes other files too. Or the git config sets
+`diff.external`: mutago cannot read the diff an external tool prints, and the target cannot override that setting.
+`git config --show-scope --show-origin diff.external` shows where it is set. For the `global` scope, run
+`GIT_CONFIG_GLOBAL=/dev/null make mutation-diff`; for `system`, run `GIT_CONFIG_NOSYSTEM=1 make mutation-diff`. For
+`local` or `worktree`, unset it there, or run the target from a clone without it. Report a run you cannot repeat
+without the setting as not completed.
+
+mutago reads the output of a plain `git diff`, so the target overrides the git settings that change its colors, its
+prefixes, or the quoting of its paths, and unsets `GIT_CONFIG_PARAMETERS`, through which `git -c` passes settings to
+commands it starts.
 
 ### jsonPath against Jayway
 

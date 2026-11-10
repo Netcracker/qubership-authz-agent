@@ -6,12 +6,15 @@
 #
 # Module configuration note
 # -------------------------
-# This repository has five Go modules:
+# This repository has five Go modules with code:
 #   .                              — the product module (two binaries, zero external deps)
 #   test/parity/suite              — parity-replay test suite
 #   test/integration/testify       — runtime integration suite (needs a running stack)
 #   test/integration/pipstub       — pip-stub service used by the integration suite
 #   test/integration/tenantmanager — tenant-manager emulator the agent calls in the kind harness
+#
+# A sixth, tools/mutago, records only the version of the mutago tool that
+# make mutation-diff runs; it has no Go file, and this workflow leaves it out.
 #
 # The shared workflow takes a single go-module-dir and would only build and test
 # the product module.  The explicit go-module-configs list below makes all five
