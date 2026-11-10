@@ -22,9 +22,13 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"testing/iotest"
 	"testing/synctest"
 	"time"
+
+	"authz-agent/internal/token/outbound"
 )
 
 const (
@@ -36,12 +40,15 @@ const (
 	uuid = "6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b"
 )
 
-// reply is what fakeManager answers: a status with a body, or err.
+// reply is what fakeManager answers.
 type reply struct {
 	status   int
 	body     string
 	location string
-	err      error
+	// err fails the request, and bodyErr fails the read after body.
+	err, bodyErr error
+	// reader, when set, is the body in place of body.
+	reader io.Reader
 }
 
 // fakeManager answers in memory, so a test runs on the fake clock of a synctest
@@ -88,18 +95,32 @@ func (f *fakeManager) RoundTrip(r *http.Request) (*http.Response, error) {
 	if next.location != "" {
 		header.Set("Location", next.location)
 	}
-	return &http.Response{
-		StatusCode: next.status,
-		Header:     header,
-		Body:       io.NopCloser(strings.NewReader(next.body)),
-		Request:    r,
-	}, nil
+	body := next.reader
+	if body == nil {
+		body = strings.NewReader(next.body)
+	}
+	if next.bodyErr != nil {
+		body = io.MultiReader(body, iotest.ErrReader(next.bodyErr))
+	}
+	return &http.Response{StatusCode: next.status, Header: header, Body: io.NopCloser(body), Request: r}, nil
+}
+
+// countingReader counts the bytes read from r.
+type countingReader struct {
+	r    io.Reader
+	read atomic.Int64
+}
+
+func (c *countingReader) Read(p []byte) (int, error) {
+	n, err := c.r.Read(p)
+	c.read.Add(int64(n))
+	return n, err
 }
 
 // recorder keeps the diagnostics.
 type recorder struct {
-	mu          sync.Mutex
-	infos, warn []string
+	mu           sync.Mutex
+	infos, warns []string
 }
 
 func (r *recorder) Infof(format string, args ...any) {
@@ -111,7 +132,7 @@ func (r *recorder) Infof(format string, args ...any) {
 func (r *recorder) Warnf(format string, args ...any) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.warn = append(r.warn, fmt.Sprintf(format, args...))
+	r.warns = append(r.warns, fmt.Sprintf(format, args...))
 }
 
 func newDefault(t *testing.T, cfg Config) *Default {
@@ -123,6 +144,18 @@ func newDefault(t *testing.T, cfg Config) *Default {
 	return d
 }
 
+// runBriefly calls d.Run with one minute on the fake clock of a synctest
+// bubble, so a regression that keeps it retrying reaches the assertions of the
+// test and not the timeout of go test.
+func runBriefly(t *testing.T, d *Default) {
+	t.Helper()
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
+		defer cancel()
+		d.Run(ctx)
+	})
+}
+
 func TestNewDefault_UsesTheNameAsGivenWithoutTenantManager(t *testing.T) {
 	longest := strings.Repeat("a", 128)
 	tests := []struct {
@@ -132,6 +165,7 @@ func TestNewDefault_UsesTheNameAsGivenWithoutTenantManager(t *testing.T) {
 	}{
 		{"no name", "", "default"},
 		{"letters", "acme", "acme"},
+		{"one character", "a", "a"},
 		{"every allowed sign", "a.b_c-d", "a.b_c-d"},
 		{"digits and upper case", "Tenant42", "Tenant42"},
 		{"128 characters", longest, longest},
@@ -152,7 +186,7 @@ func TestNewDefault_UsesTheNameAsGivenWithoutTenantManager(t *testing.T) {
 func TestDefault_RunSendsNoRequestWithoutTenantManager(t *testing.T) {
 	manager := &fakeManager{}
 	d := newDefault(t, Config{Transport: manager})
-	d.Run(t.Context())
+	runBriefly(t, d)
 	if got := manager.requests(); len(got) != 0 {
 		t.Errorf("Run() sent %q, want no request", got)
 	}
@@ -169,11 +203,25 @@ func TestNewDefault_RefusesAnInvalidName(t *testing.T) {
 		{"a letter outside ASCII", "caf\u00e9"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if _, err := NewDefault(Config{Name: tt.value, ManagerURL: managerURL}); err == nil {
-				t.Errorf("NewDefault(Name: %q) error = nil, want an error", tt.value)
-			}
-		})
+		for _, address := range []string{"", managerURL} {
+			t.Run(tt.name+" with manager URL "+address, func(t *testing.T) {
+				if _, err := NewDefault(Config{Name: tt.value, ManagerURL: address}); err == nil {
+					t.Errorf("NewDefault(Name: %q, ManagerURL: %q) error = nil, want an error", tt.value, address)
+				}
+			})
+		}
+	}
+}
+
+// The name reaches the log of a failed start, so its error cuts a long name and
+// marks the cut.
+func TestNewDefault_CutsALongNameInItsError(t *testing.T) {
+	_, err := NewDefault(Config{Name: strings.Repeat("a", 500)})
+	if err == nil {
+		t.Fatal("NewDefault() error = nil, want an error")
+	}
+	if got := err.Error(); strings.Contains(got, strings.Repeat("a", 65)) || !strings.Contains(got, `"...`) {
+		t.Errorf("NewDefault() error = %q, want the name cut to 64 bytes with the cut marked", got)
 	}
 }
 
@@ -187,11 +235,13 @@ func TestNewDefault_RefusesAnInvalidManagerURL(t *testing.T) {
 		{"no scheme", "tenant-manager:8080"},
 		{"another scheme", "ftp://tenant-manager"},
 		{"no host", "http://"},
+		{"a port with no host name", "http://:8080"},
 		{"a relative path", "/tenant-manager"},
 		{"a user with a password", "http://user:secret@tenant-manager"},
 		{"a query", "http://tenant-manager?secret=1"},
 		{"an empty query", "http://tenant-manager?"},
 		{"a fragment", "http://tenant-manager#secret"},
+		{"an empty fragment", "http://tenant-manager#"},
 		{"an address that does not parse", "http://user:secret@tenant-manager:port"},
 	}
 	for _, tt := range tests {
@@ -224,9 +274,10 @@ func TestDefault_RunAsksTenantManagerForTheName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			manager := &fakeManager{next: reply{status: http.StatusOK, body: uuid}}
 			d := newDefault(t, Config{Name: tt.tenant, ManagerURL: tt.managerURL, Transport: manager})
-			d.Run(t.Context())
-			if got := manager.requests(); len(got) != 1 || got[0] != tt.want {
-				t.Errorf("Run() sent %q, want one request to %q", got, tt.want)
+			runBriefly(t, d)
+			got := manager.requests()
+			if len(got) != 1 || got[0] != tt.want {
+				t.Fatalf("Run() sent %q, want one request to %q", got, tt.want)
 			}
 			if got := manager.accepts[0]; got != "text/plain" {
 				t.Errorf("Accept header = %q, want %q", got, "text/plain")
@@ -244,9 +295,19 @@ func TestDefault_ReadyWaitsForTheAnswer(t *testing.T) {
 	if got := d.ID(); got != "" {
 		t.Errorf("ID() = %q before Run, want empty", got)
 	}
-	d.Run(t.Context())
+	runBriefly(t, d)
 	if !d.Ready() {
 		t.Error("Ready() = false after the answer, want true")
+	}
+}
+
+func TestDefault_RunAsksOnlyUntilItHasTheIdentifier(t *testing.T) {
+	manager := &fakeManager{next: reply{status: http.StatusOK, body: uuid}}
+	d := newDefault(t, Config{ManagerURL: managerURL, Transport: manager})
+	runBriefly(t, d)
+	runBriefly(t, d)
+	if got := manager.requests(); len(got) != 1 {
+		t.Errorf("two calls of Run sent %q, want one request", got)
 	}
 }
 
@@ -258,8 +319,11 @@ func TestDefault_TakesTheIdentifierFromTheAnswer(t *testing.T) {
 		want   string
 	}{
 		{"UUID", reply{status: http.StatusOK, body: uuid}, uuid},
+		{"one character", reply{status: http.StatusOK, body: "a"}, "a"},
 		{"trailing newline", reply{status: http.StatusOK, body: uuid + "\n"}, uuid},
-		{"another 2xx status", reply{status: http.StatusCreated, body: uuid}, uuid},
+		{"leading space", reply{status: http.StatusOK, body: " " + uuid}, uuid},
+		{"status 201", reply{status: http.StatusCreated, body: uuid}, uuid},
+		{"status 299", reply{status: 299, body: uuid}, uuid},
 		{"128 characters", reply{status: http.StatusOK, body: longest}, longest},
 		{"1024 bytes", reply{status: http.StatusOK, body: uuid + strings.Repeat(" ", 1024-len(uuid))}, uuid},
 	}
@@ -267,7 +331,7 @@ func TestDefault_TakesTheIdentifierFromTheAnswer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			manager := &fakeManager{next: tt.answer}
 			d := newDefault(t, Config{ManagerURL: managerURL, Transport: manager})
-			d.Run(t.Context())
+			runBriefly(t, d)
 			if got := d.ID(); got != tt.want {
 				t.Errorf("ID() = %q, want %q", got, tt.want)
 			}
@@ -287,8 +351,11 @@ func TestDefault_RetriesAfterAnAnswerThatGivesNoIdentifier(t *testing.T) {
 		{"server error", reply{status: http.StatusInternalServerError}},
 		{"identifier beside a failure status", reply{status: http.StatusServiceUnavailable, body: uuid}},
 		{"redirect", reply{status: http.StatusFound, location: "http://elsewhere/", body: uuid}},
+		{"status 300", reply{status: http.StatusMultipleChoices, body: uuid}},
 		{"status below 200", reply{status: http.StatusSwitchingProtocols, body: uuid}},
+		{"no token yet", reply{err: outbound.ErrNoToken}},
 		{"no connection", reply{err: errors.New("connection refused")}},
+		{"answer cut short", reply{status: http.StatusOK, body: uuid, bodyErr: errors.New("connection reset")}},
 		{"empty answer", reply{status: http.StatusOK}},
 		{"URL", reply{status: http.StatusOK, body: "http://elsewhere/"}},
 		{"slash", reply{status: http.StatusOK, body: "a/b"}},
@@ -307,8 +374,11 @@ func TestDefault_RetriesAfterAnAnswerThatGivesNoIdentifier(t *testing.T) {
 				if d.Ready() {
 					t.Fatalf("Ready() = true after the answer, ID() = %q, want false", d.ID())
 				}
-				if got := len(log.warn); got != 1 {
-					t.Errorf("warnings after one attempt = %d, want 1: %q", got, log.warn)
+				if len(log.warns) != 1 {
+					t.Fatalf("warnings after one attempt = %q, want one", log.warns)
+				}
+				if got := log.warns[0]; !strings.HasPrefix(got, "default tenant: tenant-manager") {
+					t.Errorf("warning %q does not start with the source of the failure", got)
 				}
 				if got := manager.requests(); len(got) != 1 || got[0] != lookupURL {
 					t.Errorf("requests after one attempt = %q, want one to %q", got, lookupURL)
@@ -322,6 +392,19 @@ func TestDefault_RetriesAfterAnAnswerThatGivesNoIdentifier(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestDefault_RunReadsNoMoreOfAnAnswerThanOneByteOverTheLimit(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		body := &countingReader{r: strings.NewReader(strings.Repeat("a", 1<<20))}
+		manager := &fakeManager{next: reply{status: http.StatusOK, reader: body}}
+		d := newDefault(t, Config{ManagerURL: managerURL, Transport: manager})
+		go d.Run(t.Context())
+		synctest.Wait()
+		if got := body.read.Load(); got > 1025 {
+			t.Errorf("bytes read = %d, want at most 1025", got)
+		}
+	})
 }
 
 func TestDefault_RunPausesLongerAfterEachFailedAttempt(t *testing.T) {
@@ -385,8 +468,8 @@ func TestDefault_RunStopsWhenItsContextEnds(t *testing.T) {
 				if d.Ready() {
 					t.Error("Ready() = true after the context ended, want false")
 				}
-				if got := len(log.warn); got != tt.warnings {
-					t.Errorf("warnings = %d, want %d: %q", got, tt.warnings, log.warn)
+				if got := len(log.warns); got != tt.warnings {
+					t.Errorf("warnings = %d, want %d: %q", got, tt.warnings, log.warns)
 				}
 				if got := tt.manager.requests(); len(got) != 1 {
 					t.Errorf("requests = %d, want 1", len(got))
@@ -396,25 +479,28 @@ func TestDefault_RunStopsWhenItsContextEnds(t *testing.T) {
 	}
 }
 
-// The reader of a stuck start holds the log: the warning has to name what
-// failed and that the service waits, and the record of success the answer, so a
-// substituted identifier can be checked against tenant-manager.
-func TestDefault_RunLogsEachFailureAndTheTranslation(t *testing.T) {
+// The reader of a stuck start holds the log: every warning has to name what
+// failed and that the service waits, and the record of success has to name the
+// answer, so a substituted identifier can be checked against tenant-manager.
+func TestDefault_RunWarnsOnEachFailedAttemptAndRecordsTheTranslation(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		manager := &fakeManager{next: reply{status: http.StatusNotFound}}
 		log := &recorder{}
 		d := newDefault(t, Config{ManagerURL: managerURL, Transport: manager, Log: log})
 		go d.Run(t.Context())
-		synctest.Wait()
-		manager.answerWith(reply{status: http.StatusOK, body: uuid})
 		time.Sleep(time.Second)
 		synctest.Wait()
-		if len(log.warn) != 1 {
-			t.Fatalf("warnings = %q, want one", log.warn)
+		manager.answerWith(reply{status: http.StatusOK, body: uuid})
+		time.Sleep(2 * time.Second)
+		synctest.Wait()
+		if len(log.warns) != 2 {
+			t.Fatalf("warnings = %q, want two", log.warns)
 		}
-		for _, part := range []string{lookupURL, "HTTP 404", "not ready", "retrying in 1s"} {
-			if !strings.Contains(log.warn[0], part) {
-				t.Errorf("warning %q does not name %q", log.warn[0], part)
+		for i, pause := range []string{"retrying in 1s", "retrying in 2s"} {
+			for _, part := range []string{lookupURL, "HTTP 404", "no tenant of this name", "not ready", pause} {
+				if !strings.Contains(log.warns[i], part) {
+					t.Errorf("warning %q does not name %q", log.warns[i], part)
+				}
 			}
 		}
 		if len(log.infos) != 1 {
@@ -426,4 +512,37 @@ func TestDefault_RunLogsEachFailureAndTheTranslation(t *testing.T) {
 			}
 		}
 	})
+}
+
+// The answer is the text of another service, and the warning goes into a log
+// line, so the warning escapes a line break and cuts the text with a mark.
+func TestDefault_RunEscapesAndCutsAnAnswerInItsWarning(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		answer := "a\nb" + strings.Repeat("c", 500)
+		manager := &fakeManager{next: reply{status: http.StatusOK, body: answer}}
+		log := &recorder{}
+		d := newDefault(t, Config{ManagerURL: managerURL, Transport: manager, Log: log})
+		go d.Run(t.Context())
+		synctest.Wait()
+		if len(log.warns) != 1 {
+			t.Fatalf("warnings = %q, want one", log.warns)
+		}
+		got := log.warns[0]
+		if strings.Contains(got, "\n") {
+			t.Errorf("warning %q holds a raw line break", got)
+		}
+		if strings.Contains(got, strings.Repeat("c", 62)) || !strings.Contains(got, `"...`) {
+			t.Errorf("warning %q does not cut the answer to 64 bytes with the cut marked", got)
+		}
+	})
+}
+
+// A deployment that lost its tenant-manager URL takes the name without a word
+// unless this record says so.
+func TestNewDefault_RecordsThatTheNameIsUsedAsGiven(t *testing.T) {
+	log := &recorder{}
+	newDefault(t, Config{Name: "acme", Log: log})
+	if len(log.infos) != 1 || !strings.Contains(log.infos[0], `"acme"`) || !strings.Contains(log.infos[0], "no tenant-manager URL") {
+		t.Errorf("records = %q, want one that names the tenant and the missing URL", log.infos)
+	}
 }

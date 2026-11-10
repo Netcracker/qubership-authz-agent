@@ -73,7 +73,7 @@ func (discard) Warnf(string, ...any) {
 // Config describes the default tenant of a deployment.
 type Config struct {
 	// Name is the name of the default tenant, [DefaultName] when empty. It
-	// holds 1 to 128 letters, digits, '.', '_', and '-'.
+	// holds 1 to 128 ASCII letters, digits, '.', '_', and '-'.
 	Name string
 	// ManagerURL is the address of tenant-manager: an absolute http or https
 	// URL with a host and without a user, a query, or a fragment. When it is
@@ -81,7 +81,9 @@ type Config struct {
 	// without tenant-manager gets.
 	ManagerURL string
 	// Transport sends the request to tenant-manager, and it is where the
-	// service adds its own token. Nil means [http.DefaultTransport].
+	// service adds its own token. An error from it, such as no token yet,
+	// fails the attempt, so the service stays not ready until the token comes.
+	// Nil means [http.DefaultTransport].
 	Transport http.RoundTripper
 	// Log receives the diagnostics; nil discards them.
 	Log Logger
@@ -108,13 +110,14 @@ func NewDefault(cfg Config) (*Default, error) {
 		name = DefaultName
 	}
 	if !tenantShape.MatchString(name) {
-		return nil, fmt.Errorf("default tenant %.64q: a tenant name holds 1 to 128 letters, digits, '.', '_', and '-'", name)
+		return nil, fmt.Errorf("default tenant %s: a tenant name holds 1 to 128 ASCII letters, digits, '.', '_', and '-'", short(name))
 	}
 	d := &Default{name: name, log: cfg.Log}
 	if d.log == nil {
 		d.log = discard{}
 	}
 	if cfg.ManagerURL == "" {
+		d.log.Infof("default tenant: %q, used as given, because no tenant-manager URL is set", name)
 		d.id.Store(&name)
 		return d, nil
 	}
@@ -126,8 +129,9 @@ func NewDefault(cfg Config) (*Default, error) {
 	d.client = &http.Client{
 		Transport: cfg.Transport,
 		Timeout:   requestTimeout,
-		// A redirect would send the token of the service to an address the
-		// configuration does not name, so a 3xx fails the attempt.
+		// The answer has to come from the address the configuration names, and
+		// Transport may add the token to any request it sends, so a 3xx fails
+		// the attempt.
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 	}
 	return d, nil
@@ -138,8 +142,8 @@ func NewDefault(cfg Config) (*Default, error) {
 // because a URL that names a user can hold a password.
 func managerBase(raw string) (string, error) {
 	u, err := url.Parse(raw)
-	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" ||
-		u.User != nil || u.RawQuery != "" || u.ForceQuery || u.Fragment != "" {
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" ||
+		u.User != nil || strings.ContainsAny(raw, "?#") {
 		return "", errors.New("tenant-manager URL has to be an absolute http or https URL with a host and without a user, a query, or a fragment")
 	}
 	return strings.TrimRight(raw, "/"), nil
@@ -160,9 +164,10 @@ func (d *Default) ID() string {
 
 // Run asks tenant-manager for the identifier until it gets one or ctx ends,
 // pausing 1 second after the first failed attempt, then twice as long each
-// time, up to 10 seconds. An unknown tenant fails an attempt like any other
-// answer, so a misspelled name leaves the service not ready with a warning for
-// each attempt. Run returns at once when the identifier is already known.
+// time, up to 10 seconds. An answer without an identifier fails the attempt, an
+// unknown tenant included, so a misspelled name leaves the service not ready
+// with a warning for each attempt. Run returns at once when the identifier is
+// already known.
 func (d *Default) Run(ctx context.Context) {
 	delay := firstRetryDelay
 	for !d.Ready() {
@@ -197,12 +202,15 @@ func (d *Default) translate(ctx context.Context) (string, error) {
 	req.Header.Set("Accept", "text/plain")
 	resp, err := d.client.Do(req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("tenant-manager: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes+1))
 	if err != nil {
 		return "", fmt.Errorf("tenant-manager GET %s: read the answer: %w", d.endpoint, err)
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return "", fmt.Errorf("tenant-manager GET %s: HTTP 404: tenant-manager has no tenant of this name, so check the name of the default tenant", d.endpoint)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return "", fmt.Errorf("tenant-manager GET %s: HTTP %d", d.endpoint, resp.StatusCode)
@@ -212,7 +220,17 @@ func (d *Default) translate(ctx context.Context) (string, error) {
 	}
 	id := strings.TrimSpace(string(body))
 	if !tenantShape.MatchString(id) {
-		return "", fmt.Errorf("tenant-manager GET %s: the answer %.64q is not 1 to 128 letters, digits, '.', '_', and '-'", d.endpoint, id)
+		return "", fmt.Errorf("tenant-manager GET %s: the answer %s is not 1 to 128 ASCII letters, digits, '.', '_', and '-'", d.endpoint, short(id))
 	}
 	return id, nil
+}
+
+// short quotes s for a message, cut to 64 bytes with the cut marked: s can be
+// the text of an answer, and a message goes into a log line.
+func short(s string) string {
+	const limit = 64
+	if len(s) > limit {
+		return fmt.Sprintf("%q...", s[:limit])
+	}
+	return fmt.Sprintf("%q", s)
 }
