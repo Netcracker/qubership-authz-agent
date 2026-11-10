@@ -364,60 +364,79 @@ type lineMutants struct {
 // mutants first, then by path; the lines in order; on a line, the survivors
 // before the errored ones, each by mutator, description, and diff.
 func (r *result) group() []fileMutants {
-	byFile := map[string]*fileMutants{}
-	byLine := map[string]map[int]*lineMutants{}
-	tests := map[string]map[string]struct{}{}
+	byFile := map[string]*fileBuilder{}
 	for _, m := range r.mutants {
 		f := byFile[m.File]
 		if f == nil {
-			f = &fileMutants{path: m.File}
+			f = &fileBuilder{lines: map[int]*lineMutants{}, tests: map[string]struct{}{}}
 			byFile[m.File] = f
-			byLine[m.File] = map[int]*lineMutants{}
-			tests[m.File] = map[string]struct{}{}
 		}
-		f.count++
-		l := byLine[m.File][m.Line]
-		if l == nil {
-			l = &lineMutants{number: m.Line}
-			byLine[m.File][m.Line] = l
-		}
-		l.mutants = append(l.mutants, m)
-		for _, t := range m.TestFiles {
-			tests[m.File][path.Base(t)] = struct{}{}
-		}
+		f.add(m)
 	}
 	files := make([]fileMutants, 0, len(byFile))
 	for name, f := range byFile {
-		for _, l := range byLine[name] {
-			sort.SliceStable(l.mutants, func(i, j int) bool {
-				a, b := l.mutants[i], l.mutants[j]
-				if a.errored != b.errored {
-					return !a.errored
-				}
-				if a.Mutator != b.Mutator {
-					return a.Mutator < b.Mutator
-				}
-				if a.Description != b.Description {
-					return a.Description < b.Description
-				}
-				return a.Diff < b.Diff
-			})
-			f.lines = append(f.lines, *l)
-		}
-		sort.Slice(f.lines, func(i, j int) bool { return f.lines[i].number < f.lines[j].number })
-		for t := range tests[name] {
-			f.tests = append(f.tests, t)
-		}
-		sort.Strings(f.tests)
-		files = append(files, *f)
+		files = append(files, f.build(name))
 	}
-	sort.Slice(files, func(i, j int) bool {
-		if files[i].count != files[j].count {
-			return files[i].count > files[j].count
-		}
-		return files[i].path < files[j].path
-	})
+	sort.Slice(files, func(i, j int) bool { return fileBefore(files[i], files[j]) })
 	return files
+}
+
+// fileBuilder collects the mutants of one file for group.
+type fileBuilder struct {
+	lines map[int]*lineMutants
+	tests map[string]struct{}
+	count int
+}
+
+func (f *fileBuilder) add(m mutant) {
+	f.count++
+	l := f.lines[m.Line]
+	if l == nil {
+		l = &lineMutants{number: m.Line}
+		f.lines[m.Line] = l
+	}
+	l.mutants = append(l.mutants, m)
+	for _, t := range m.TestFiles {
+		f.tests[path.Base(t)] = struct{}{}
+	}
+}
+
+// build returns the file named name with its lines and test files in order.
+func (f *fileBuilder) build(name string) fileMutants {
+	out := fileMutants{path: name, count: f.count}
+	for _, l := range f.lines {
+		sort.SliceStable(l.mutants, func(i, j int) bool { return mutantBefore(l.mutants[i], l.mutants[j]) })
+		out.lines = append(out.lines, *l)
+	}
+	sort.Slice(out.lines, func(i, j int) bool { return out.lines[i].number < out.lines[j].number })
+	for t := range f.tests {
+		out.tests = append(out.tests, t)
+	}
+	sort.Strings(out.tests)
+	return out
+}
+
+// mutantBefore orders the mutants of one line: the survivors before the
+// errored ones, then by mutator, description, and diff.
+func mutantBefore(a, b mutant) bool {
+	switch {
+	case a.errored != b.errored:
+		return !a.errored
+	case a.Mutator != b.Mutator:
+		return a.Mutator < b.Mutator
+	case a.Description != b.Description:
+		return a.Description < b.Description
+	}
+	return a.Diff < b.Diff
+}
+
+// fileBefore orders the files of a report: the most mutants first, then by
+// path.
+func fileBefore(a, b fileMutants) bool {
+	if a.count != b.count {
+		return a.count > b.count
+	}
+	return a.path < b.path
 }
 
 func (r *result) renderMutants(b *strings.Builder, lim limits, src sources) {
@@ -502,37 +521,62 @@ func renderLine(b *strings.Builder, l lineMutants, source sourceFile, full bool)
 		in = ", in " + fn
 	}
 	for i := 0; i < len(l.mutants); {
-		m := l.mutants[i]
-		same := 1
-		for !full && i+same < len(l.mutants) && sameKind(m, l.mutants[i+same]) {
-			same++
+		m, same := l.mutants[i], 1
+		if !full {
+			same = runLength(l.mutants[i:])
 		}
 		i += same
-		status := "survived"
-		if m.errored {
-			status = "errored"
+		fmt.Fprintf(b, "        %s: %s%s\n", statusWord(m, same), describe(m, full), in)
+		if full {
+			renderDetails(b, m)
 		}
-		if same > 1 {
-			status = fmt.Sprintf("%d %s", same, status)
-		}
-		what := m.Mutator
-		if desc := m.Description; desc != "" {
-			if !full {
-				desc = cut(desc)
-			}
-			what = desc + " (" + m.Mutator + ")"
-		}
-		fmt.Fprintf(b, "        %s: %s%s\n", status, what, in)
-		if !full {
-			continue
-		}
-		if m.KillHint != "" {
-			b.WriteString("          hint: " + m.KillHint + "\n")
-		}
-		for _, d := range strings.Split(strings.TrimRight(m.Diff, "\n"), "\n") {
-			if d != "" {
-				b.WriteString("          " + d + "\n")
-			}
+	}
+}
+
+// runLength returns how many mutants at the start of ms print the same way as
+// the first of them.
+func runLength(ms []mutant) int {
+	n := 1
+	for n < len(ms) && sameKind(ms[0], ms[n]) {
+		n++
+	}
+	return n
+}
+
+// statusWord returns "survived" or "errored" for m, after their number n when
+// more than one of them print the same way.
+func statusWord(m mutant, n int) string {
+	word := "survived"
+	if m.errored {
+		word = "errored"
+	}
+	if n > 1 {
+		return fmt.Sprintf("%d %s", n, word)
+	}
+	return word
+}
+
+// describe returns what m changes and its mutator; the console cuts a long
+// description.
+func describe(m mutant, full bool) string {
+	if m.Description == "" {
+		return m.Mutator
+	}
+	desc := m.Description
+	if !full {
+		desc = cut(desc)
+	}
+	return desc + " (" + m.Mutator + ")"
+}
+
+// renderDetails writes the hint and the diff of m, which only the file shows.
+func renderDetails(b *strings.Builder, m mutant) {
+	if m.KillHint != "" {
+		b.WriteString("          hint: " + m.KillHint + "\n")
+	}
+	for _, d := range strings.Split(strings.TrimRight(m.Diff, "\n"), "\n") {
+		if d != "" {
+			b.WriteString("          " + d + "\n")
 		}
 	}
 }
