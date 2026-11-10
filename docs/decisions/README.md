@@ -37,7 +37,9 @@ Anything no rule states is the implementer's choice.
 
 ## Name the rules of a change
 
-A pull request that changes code under a record says which rules it covers, in its description:
+A pull request that changes code under a record says which rules it covers, in its description and as trailers at
+the end of its commit message. A squash merge does not always copy the description into the commit, so the trailers
+keep the lines in the history:
 
 ```text
 Implements: ADR-0092 R6, R8; ADR-0091 R54.
