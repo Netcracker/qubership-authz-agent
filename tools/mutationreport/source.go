@@ -25,7 +25,7 @@ import (
 	"strings"
 )
 
-// maxSourceRunes is the longest source line, or mutant description on the
+// maxSourceRunes is the longest source line, or mutago description on the
 // console, that the report prints whole; a longer one is cut there and marked
 // with "...".
 const maxSourceRunes = 120
@@ -127,14 +127,14 @@ func (f sourceFile) line(n int) string {
 	if n < 1 || n > len(f.lines) {
 		return ""
 	}
-	return cut(strings.TrimSpace(f.lines[n-1]))
+	return cut(strings.TrimSpace(f.lines[n-1]), maxSourceRunes)
 }
 
-// cut returns s cut to maxSourceRunes, with "..." after a cut.
-func cut(s string) string {
+// cut returns s cut to limit runes, with "..." after a cut.
+func cut(s string, limit int) string {
 	text := []rune(s)
-	if len(text) > maxSourceRunes {
-		return string(text[:maxSourceRunes]) + "..."
+	if len(text) > limit {
+		return string(text[:limit]) + "..."
 	}
 	return s
 }

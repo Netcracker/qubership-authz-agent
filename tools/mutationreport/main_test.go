@@ -27,7 +27,7 @@ import (
 func TestRun_WritesTheWholeReportAndPrintsTheShortOne(t *testing.T) {
 	dir := writeRun(t,
 		`{"totalMutantsCount":1,"escapedCount":1}`,
-		`{"mutants":[{"file":"a.go","line":1,"mutator":"branch/if","kill_hint":"Write a test"}]}`,
+		`{"mutants":[{"file":"a.go","line":1,"mutator":"branch/if","diff":"--- Original\n+++ New\n@@ -1,1 +1,1 @@\n-if ok {\n+if true {\n"}]}`,
 		"ESCAPED a.go:1 (branch/if)\n")
 	var stdout, stderr bytes.Buffer
 	status := run([]string{"-dir", dir, "-base", "origin/main", "-merge-base", "abc", "-status", "4", "a.go"}, &stdout, &stderr)
@@ -38,11 +38,12 @@ func TestRun_WritesTheWholeReportAndPrintsTheShortOne(t *testing.T) {
 	if err != nil {
 		t.Fatalf("report.txt: %v", err)
 	}
-	if !strings.Contains(string(report), "hint: Write a test") {
-		t.Errorf("report.txt =\n%s\nwant the mutant's hint", report)
+	if !strings.Contains(string(report), "\n          +if true {\n") || !strings.Contains(string(report), "mutago prints each diff") {
+		t.Errorf("report.txt =\n%s\nwant the mutant's diff and the note on mutago's diffs", report)
 	}
-	if !strings.Contains(stdout.String(), "Full report, with each mutant's diff") || strings.Contains(stdout.String(), "hint:") {
-		t.Errorf("stdout =\n%s\nwant the short report, which points to the file", stdout.String())
+	if !strings.Contains(stdout.String(), "Full report, with each mutant's diff") || strings.Contains(stdout.String(), "+if true {") ||
+		strings.Contains(stdout.String(), "mutago prints each diff") {
+		t.Errorf("stdout =\n%s\nwant the short report, without diffs, which points to the file", stdout.String())
 	}
 }
 

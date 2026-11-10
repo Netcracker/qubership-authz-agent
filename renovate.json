@@ -52,7 +52,7 @@
       "major": { "enabled": false }
     },
     {
-      "description": "mutago runs only in make mutation-diff, which no CI job runs. tools/mutationreport reads mutago's JSON reports and four texts of its output: the constants and the erroredLine pattern in tools/mutationreport/report.go. No run of the target reliably produces all four, so an update is merged by hand after those texts are checked against the new version's source.",
+      "description": "mutago runs only in make mutation-diff, which no CI job runs. tools/mutationreport reads mutago's JSON reports, its exit statuses, and four texts of its output, and it replaces a hint of mutago's: see the constants, erroredLine, hintFixes, and outcome in tools/mutationreport/report.go, and changeOf in tools/mutationreport/change.go, which reads the hunks of mutago's diffs. No run of the target reliably produces all of them, so an update is merged by hand after they are checked against the new version's source. mutago v2.10.41 exits 3 when a mutant errors (quality-gates/mutago#361), and the target reports such a run as one that did not complete.",
       "matchManagers": ["gomod"],
       "matchFileNames": ["tools/mutago/go.mod"],
       "automerge": false

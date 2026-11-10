@@ -71,7 +71,7 @@ For each surviving mutant, decide which case it is:
 Report each errored mutant as unresolved: no test was shown able to kill it.
 Quote the counts above in the pull request.
 
-Full report, with each mutant's diff and a hint for the test that kills it: out/report.txt
+Full report, with each mutant's diff: out/report.txt
 mutago's output: out/mutago.log
 `
 	if got := r.render(consoleLimits, sourceOf("a/a.go", "package a", "\tif ok {", "\t\treturn x")); got != want {
@@ -79,31 +79,34 @@ mutago's output: out/mutago.log
 	}
 }
 
-func TestRender_TheFileAddsEachMutantsHintAndDiff(t *testing.T) {
+func TestRender_TheFileAddsEachMutantsDiff(t *testing.T) {
 	r := newResult(summary{Total: 1, Escaped: 1}, "a.go")
-	r.mutants = []mutant{{File: "a.go", Line: 1, Mutator: "branch/if", Description: "Removes an if-block body",
-		KillHint: "Write a test that enters this branch", Diff: "--- Original\n+++ New\n-if ok {\n+if true {\n"}}
+	r.mutants = []mutant{{File: "a.go", Line: 1, Mutator: "expression/error-guard", Description: "Removes an error-guard block",
+		KillHint: "Write a test that triggers the error condition", Diff: "--- Original\n+++ New\n@@ -1,1 +1,1 @@\n-if err != nil {\n+if false {\n"}}
 	want := `Mutation testing of changed lines against origin/main (5de690df), packages .
   1 mutant: 0 killed, 1 survived, 0 errored
   ordered by listed mutants per file, then by line
+  mutago prints each diff from the syntax node it mutated: a diff can span more lines than the change, and its added lines can lose the file's indentation (quality-gates/mutago#354)
 
   a.go
-    1: if ok {
-        survived: Removes an if-block body (branch/if), in f
-          hint: Write a test that enters this branch
+    1: if err != nil {
+        survived: ` + "`err != nil` → `false`" + ` (expression/error-guard), in f
           --- Original
           +++ New
-          -if ok {
-          +if true {
+          @@ -1,1 +1,1 @@
+          -if err != nil {
+          +if false {
 
 Listed mutants on 1 line in 1 file.
 
 ` + whatToDo + `
+Hints for a test that kills a mutant, by mutator:
+  expression/error-guard: Write a test that triggers the error condition
 Quote the counts above in the pull request.
 
 mutago's output: out/mutago.log
 `
-	if got := r.render(noLimits, sourceOf("a.go", "if ok {")); got != want {
+	if got := r.render(noLimits, sourceOf("a.go", "if err != nil {")); got != want {
 		t.Errorf("render(noLimits) =\n%s\nwant\n%s", got, want)
 	}
 }
@@ -525,29 +528,34 @@ func TestRender_AnIncompleteRunWithNoOutputSaysSo(t *testing.T) {
 func TestRender_OrdersTheMutantsOfALineSurvivorsFirstThenByMutator(t *testing.T) {
 	r := newResult(summary{Total: 3, Escaped: 2, Errored: 1}, "a.go")
 	r.mutants = []mutant{
-		{File: "a.go", Line: 1, Mutator: "x/errored", errored: true},
-		{File: "a.go", Line: 1, Mutator: "b/second"},
-		{File: "a.go", Line: 1, Mutator: "a/first"},
+		{File: "a.go", Line: 1, Mutator: "c/second"},
+		{File: "a.go", Line: 1, Mutator: "a/errored", errored: true},
+		{File: "a.go", Line: 1, Mutator: "b/first"},
 	}
 	want := `    1: 
-        survived: a/first
-        survived: b/second
-        errored: x/errored
+        survived: b/first
+        survived: c/second
+        errored: a/errored
 `
 	if got := r.render(consoleLimits, sources{}); !strings.Contains(got, want) {
 		t.Errorf("render(consoleLimits) =\n%s\nwant it to contain\n%s", got, want)
 	}
 }
 
-func TestRender_NamesTheTestFilesOfAFileInOrder(t *testing.T) {
-	r := newResult(summary{Total: 2, Escaped: 2}, "a.go")
+// a/y.go comes first, with the most mutants, although a/x.go comes first by
+// path, and carries the test files of every mutant of package a, in order.
+func TestRender_NamesTheTestFilesOfAPackageAtItsFirstFile(t *testing.T) {
+	r := newResult(summary{Total: 4, Escaped: 4}, "a/x.go", "a/y.go", "b/z.go")
 	r.mutants = []mutant{
-		{File: "a.go", Line: 1, Mutator: "m", TestFiles: []string{"x/f_test.go", "x/c_test.go", "x/e_test.go"}},
-		{File: "a.go", Line: 2, Mutator: "m", TestFiles: []string{"x/b_test.go", "x/d_test.go", "x/a_test.go"}},
+		{File: "a/x.go", Line: 1, Mutator: "m", TestFiles: []string{"a/x_test.go", "a/b_test.go"}},
+		{File: "a/y.go", Line: 1, Mutator: "m", TestFiles: []string{"a/y_test.go"}},
+		{File: "a/y.go", Line: 2, Mutator: "m", TestFiles: []string{"a/y_test.go"}},
+		{File: "b/z.go", Line: 1, Mutator: "m", TestFiles: []string{"b/z_test.go"}},
 	}
-	want := "\n  a.go (tests of the package: a_test.go, b_test.go, c_test.go, d_test.go, e_test.go, f_test.go)\n"
-	if got := r.render(consoleLimits, sources{}); !strings.Contains(got, want) {
-		t.Errorf("render(consoleLimits) =\n%s\nwant it to contain %q", got, want)
+	got := strings.Join(fileHeaders(r.render(consoleLimits, sources{})), "\n")
+	want := "a/y.go (tests of the package: b_test.go, x_test.go, y_test.go)\na/x.go\nb/z.go (tests of the package: z_test.go)"
+	if got != want {
+		t.Errorf("file headers =\n%s\nwant\n%s", got, want)
 	}
 }
 
@@ -676,7 +684,9 @@ func TestRender_TheConsoleKeepsApartMutantsThatPrintDifferently(t *testing.T) {
 	}
 }
 
-func TestRender_TheFileOrdersMutantsOfOneMutatorByTheirDiff(t *testing.T) {
+// The diffs show no change, so the three mutants print mutago's description,
+// which they share.
+func TestRender_TheFileOrdersMutantsThatPrintTheSameWayByTheirDiff(t *testing.T) {
 	r := newResult(summary{Total: 3, Escaped: 3}, "a.go")
 	for _, d := range []string{"+c", "+a", "+b"} {
 		r.mutants = append(r.mutants, mutant{File: "a.go", Line: 1, Mutator: "m", Description: "d", Diff: d})
@@ -698,9 +708,10 @@ func TestRender_AnIncompleteRunSkipsBlankLinesBeforeTheFirstOne(t *testing.T) {
 	}
 }
 
-// Mutants of one mutator are ordered by description before diff, so those
-// that print the same way are counted together.
-func TestRender_TheConsoleCountsMutantsOfOneDescriptionWhateverTheirDiffs(t *testing.T) {
+// The diffs show no change, so the mutants print mutago's description, and
+// they are ordered by it before their diff, so those that print the same way
+// are counted together.
+func TestRender_TheConsoleCountsMutantsOfOneDescriptionWhenTheirDiffsShowNoChange(t *testing.T) {
 	r := newResult(summary{Total: 3, Escaped: 3}, "a.go")
 	for _, m := range []mutant{
 		{Mutator: "m", Description: "A", Diff: "1"},
@@ -713,5 +724,113 @@ func TestRender_TheConsoleCountsMutantsOfOneDescriptionWhateverTheirDiffs(t *tes
 	want := "        2 survived: A (m)\n        survived: B (m)\n"
 	if got := r.render(consoleLimits, sources{}); !strings.Contains(got, want) {
 		t.Errorf("render(consoleLimits) =\n%s\nwant it to contain\n%s", got, want)
+	}
+}
+
+func TestRender_ShowsTheCodeAMutantChangesInPlaceOfMutagosDescription(t *testing.T) {
+	r := newResult(summary{Total: 1, Escaped: 1}, "a.go")
+	r.mutants = []mutant{{File: "a.go", Line: 1, Mutator: "expression/errorf-wrap",
+		Description: "Changes: `return fmt.Errorf(\"read: %w\", err)` → `return fmt.Errorf(\"read: %v\", err)`",
+		Diff:        lineDiff(`return fmt.Errorf("read: %w", err)`, `return fmt.Errorf("read: %v", err)`)}}
+	want := "\n        survived: `%w` → `%v` (expression/errorf-wrap)\n"
+	if got := r.render(consoleLimits, sources{}); !strings.Contains(got, want) {
+		t.Errorf("render(consoleLimits) =\n%s\nwant it to contain %q", got, want)
+	}
+}
+
+// lineDiff returns a diff in mutago's shape that replaces the line before
+// with the line after.
+func lineDiff(before, after string) string {
+	return "--- Original\n+++ New\n@@ -1,1 +1,1 @@\n-" + before + "\n+" + after + "\n"
+}
+
+// The two errorf-wrap mutants downgrade different verbs and carry different
+// descriptions; the two field-clear mutants drop different fields and carry
+// one description.
+func TestRender_TheConsoleCountsMutantsThatChangeTheSameCode(t *testing.T) {
+	r := newResult(summary{Total: 4, Escaped: 4}, "a.go")
+	for _, m := range []mutant{
+		{Mutator: "expression/errorf-wrap", Description: "first verb",
+			Diff: lineDiff(`return fmt.Errorf("%w %w", a, b)`, `return fmt.Errorf("%v %w", a, b)`)},
+		{Mutator: "expression/errorf-wrap", Description: "second verb",
+			Diff: lineDiff(`return fmt.Errorf("%w %w", a, b)`, `return fmt.Errorf("%w %v", a, b)`)},
+		{Mutator: "composite/field-clear", Description: "Drops a keyed field",
+			Diff: lineDiff(`return T{A: 1, B: 2}`, `return T{B: 2}`)},
+		{Mutator: "composite/field-clear", Description: "Drops a keyed field",
+			Diff: lineDiff(`return T{A: 1, B: 2}`, `return T{A: 1}`)},
+	} {
+		m.File, m.Line = "a.go", 1
+		r.mutants = append(r.mutants, m)
+	}
+	want := "        survived: removes `, B: 2` (composite/field-clear)\n" +
+		"        survived: removes `A: 1,` (composite/field-clear)\n" +
+		"        2 survived: `%w` → `%v` (expression/errorf-wrap)\n"
+	if got := r.render(consoleLimits, sources{}); !strings.Contains(got, want) {
+		t.Errorf("render(consoleLimits) =\n%s\nwant it to contain\n%s", got, want)
+	}
+}
+
+// A mutant that errored carries no hint, and a survivor without a kill_hint
+// adds no line.
+func TestRender_EndsWithTheHintOfEachMutatorOfTheSurvivorsOnce(t *testing.T) {
+	r := newResult(summary{Total: 5, Escaped: 4, Errored: 1}, "a.go")
+	r.mutants = []mutant{
+		{File: "a.go", Line: 2, Mutator: "loop/break", KillHint: "Assert the iteration the loop stops at"},
+		{File: "a.go", Line: 1, Mutator: "branch/if", KillHint: "Enter the branch"},
+		{File: "a.go", Line: 3, Mutator: "branch/if", KillHint: "Enter the branch"},
+		{File: "a.go", Line: 4, Mutator: "numbers/incrementer"},
+		{File: "a.go", Line: 5, Mutator: "expression/remove", errored: true},
+	}
+	want := `  - you cannot tell: report it as unresolved
+Hints for a test that kills a mutant, by mutator:
+  branch/if: Enter the branch
+  loop/break: Assert the iteration the loop stops at
+Report each errored mutant as unresolved`
+	if got := r.render(consoleLimits, sources{}); !strings.Contains(got, want) {
+		t.Errorf("render(consoleLimits) =\n%s\nwant it to contain\n%s", got, want)
+	}
+}
+
+// mutago v2.10.40 asks for a side effect, while the mutator replaces an
+// operand of && or ||.
+func TestRender_ReplacesTheHintOfExpressionRemove(t *testing.T) {
+	r := newResult(summary{Total: 1, Escaped: 1}, "a.go")
+	r.mutants = []mutant{{File: "a.go", Line: 1, Mutator: "expression/remove",
+		KillHint: "Write a test that asserts the side effect or state change this expression produces"}}
+	want := "\n  expression/remove: Write a test in which this operand alone decides the condition: " +
+		"it is false and the other operands of && are true, or it is true and the other operands of || are false\n"
+	if got := r.render(consoleLimits, sources{}); !strings.Contains(got, want) {
+		t.Errorf("render(consoleLimits) =\n%s\nwant it to contain %q", got, want)
+	}
+}
+
+// The three mutants replace names that share their first 50 characters; two
+// of them replace it with x, and the console prints those two the same way.
+func TestRender_TheConsoleCountsMutantsThatPrintTheSameWayOnceCut(t *testing.T) {
+	prefix := strings.Repeat("p", 50)
+	r := newResult(summary{Total: 3, Escaped: 3}, "a.go")
+	for _, m := range []mutant{
+		{Diff: lineDiff("v = "+prefix+"a", "v = x")},
+		{Diff: lineDiff("v = "+prefix+"b", "v = y")},
+		{Diff: lineDiff("v = "+prefix+"c", "v = x")},
+	} {
+		m.File, m.Line, m.Mutator = "a.go", 1, "m"
+		r.mutants = append(r.mutants, m)
+	}
+	want := "        2 survived: `" + prefix + "...` → `x` (m)\n" +
+		"        survived: `" + prefix + "...` → `y` (m)\n"
+	if got := r.render(consoleLimits, sources{}); !strings.Contains(got, want) {
+		t.Errorf("render(consoleLimits) =\n%s\nwant it to contain\n%s", got, want)
+	}
+}
+
+// An errored mutant has no diff, so the file has nothing for the note about
+// mutago's diffs to explain; TestRender_TheFileAddsEachMutantsDiff shows the
+// note above a diff.
+func TestRender_TheFileOmitsTheNoteOnDiffsWhenNoMutantHasOne(t *testing.T) {
+	r := newResult(summary{Total: 1, Errored: 1}, "a.go")
+	r.mutants = []mutant{{File: "a.go", Line: 1, Mutator: "branch/if", errored: true}}
+	if got := r.render(noLimits, sources{}); strings.Contains(got, "mutago prints each diff") {
+		t.Errorf("render(noLimits) =\n%s\nwant no note on diffs", got)
 	}
 }

@@ -15,14 +15,17 @@
 package main
 
 import (
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -58,6 +61,15 @@ var (
 	ansiCode    = regexp.MustCompile("\x1b\\[[0-9;]*m")
 )
 
+// hintFixes replaces the kill hints of mutago v2.10.40 that misdescribe their
+// mutator. The hint of expression/remove asks for a side effect, while the
+// mutator replaces an operand of && with true or of || with false
+// (quality-gates/mutago#369).
+var hintFixes = map[string]string{
+	"expression/remove": "Write a test in which this operand alone decides the condition: " +
+		"it is false and the other operands of && are true, or it is true and the other operands of || are false",
+}
+
 // whatToDo tells the reader of surviving mutants how to settle each one.
 const whatToDo = `For each surviving mutant, decide which case it is:
   - the tests miss behavior the change defines: add or strengthen a test through the package's interface
@@ -85,6 +97,10 @@ type mutant struct {
 	Diff        string   `json:"diff"`
 	TestFiles   []string `json:"test_files"`
 	errored     bool
+	// change is the code the mutant changes, as changeOf finds it in Diff,
+	// or nil when Diff shows none. group sets it on the mutants it returns,
+	// not on those of result.mutants.
+	change *change
 }
 
 // result is one mutago run as make mutation-diff started it.
@@ -166,6 +182,8 @@ const (
 	incomplete                // mutago stopped before it reported every mutant
 )
 
+// outcome returns what r produced. mutago v2.10.40 exits 0 for a run that
+// completed, or 4 when a mutant of it survived.
 func (r *result) outcome() outcome {
 	switch {
 	case r.noSourceFiles:
@@ -192,8 +210,8 @@ func (r *result) exitStatus() int {
 }
 
 // render returns the report, with as much of it as lim allows. Without limits
-// it is the file, which adds each mutant's diff and hint and drops the pointer
-// to itself.
+// it is the file, which adds each mutant's diff and drops the pointer to
+// itself.
 func (r *result) render(lim limits, src sources) string {
 	var b strings.Builder
 	b.WriteString(r.header())
@@ -208,7 +226,7 @@ func (r *result) render(lim limits, src sources) string {
 	r.renderNotBuilt(&b)
 	b.WriteString("\n\n")
 	if lim != noLimits && r.outcome() == mutated && len(r.mutants) > 0 {
-		fmt.Fprintf(&b, "Full report, with each mutant's diff and a hint for the test that kills it: %s\n", path.Join(r.dir, "report.txt"))
+		fmt.Fprintf(&b, "Full report, with each mutant's diff: %s\n", path.Join(r.dir, "report.txt"))
 	}
 	fmt.Fprintf(&b, "mutago's output: %s\n", path.Join(r.dir, "mutago.log"))
 	return b.String()
@@ -347,7 +365,8 @@ func (r *result) renderNotBuilt(b *strings.Builder) {
 }
 
 // fileMutants is one file of the report with its lines that have a listed
-// mutant.
+// mutant, and the test files of its package when it is the first file of
+// that package in the report.
 type fileMutants struct {
 	path  string
 	tests []string
@@ -362,29 +381,46 @@ type lineMutants struct {
 
 // group returns the listed mutants by file and line: the files with the most
 // mutants first, then by path; the lines in order; on a line, the survivors
-// before the errored ones, each by mutator, description, and diff.
+// before the errored ones, each by mutator, the text that describes it, and
+// diff. The first file of each package carries the test files of the
+// package's mutants.
 func (r *result) group() []fileMutants {
 	byFile := map[string]*fileBuilder{}
+	tests := map[string]map[string]struct{}{}
 	for _, m := range r.mutants {
 		f := byFile[m.File]
 		if f == nil {
-			f = &fileBuilder{lines: map[int]*lineMutants{}, tests: map[string]struct{}{}}
+			f = &fileBuilder{lines: map[int]*lineMutants{}}
 			byFile[m.File] = f
 		}
 		f.add(m)
+		dir := path.Dir(m.File)
+		if tests[dir] == nil {
+			tests[dir] = map[string]struct{}{}
+		}
+		for _, t := range m.TestFiles {
+			tests[dir][path.Base(t)] = struct{}{}
+		}
 	}
 	files := make([]fileMutants, 0, len(byFile))
 	for name, f := range byFile {
 		files = append(files, f.build(name))
 	}
-	sort.Slice(files, func(i, j int) bool { return fileBefore(files[i], files[j]) })
+	slices.SortFunc(files, compareFiles)
+	for i := range files {
+		dir := path.Dir(files[i].path)
+		for t := range tests[dir] {
+			files[i].tests = append(files[i].tests, t)
+		}
+		sort.Strings(files[i].tests)
+		delete(tests, dir)
+	}
 	return files
 }
 
 // fileBuilder collects the mutants of one file for group.
 type fileBuilder struct {
 	lines map[int]*lineMutants
-	tests map[string]struct{}
 	count int
 }
 
@@ -395,48 +431,43 @@ func (f *fileBuilder) add(m mutant) {
 		l = &lineMutants{number: m.Line}
 		f.lines[m.Line] = l
 	}
-	l.mutants = append(l.mutants, m)
-	for _, t := range m.TestFiles {
-		f.tests[path.Base(t)] = struct{}{}
+	if c, ok := changeOf(m.Diff); ok {
+		m.change = &c
 	}
+	l.mutants = append(l.mutants, m)
 }
 
-// build returns the file named name with its lines and test files in order.
+// build returns the file named name with its lines in order.
 func (f *fileBuilder) build(name string) fileMutants {
 	out := fileMutants{path: name, count: f.count}
 	for _, l := range f.lines {
-		sort.SliceStable(l.mutants, func(i, j int) bool { return mutantBefore(l.mutants[i], l.mutants[j]) })
+		slices.SortStableFunc(l.mutants, compareMutants)
 		out.lines = append(out.lines, *l)
 	}
-	sort.Slice(out.lines, func(i, j int) bool { return out.lines[i].number < out.lines[j].number })
-	for t := range f.tests {
-		out.tests = append(out.tests, t)
-	}
-	sort.Strings(out.tests)
+	slices.SortFunc(out.lines, func(a, b lineMutants) int { return cmp.Compare(a.number, b.number) })
 	return out
 }
 
-// mutantBefore orders the mutants of one line: the survivors before the
-// errored ones, then by mutator, description, and diff.
-func mutantBefore(a, b mutant) bool {
-	switch {
-	case a.errored != b.errored:
-		return !a.errored
-	case a.Mutator != b.Mutator:
-		return a.Mutator < b.Mutator
-	case a.Description != b.Description:
-		return a.Description < b.Description
-	}
-	return a.Diff < b.Diff
+// compareMutants orders the mutants of one line: the survivors before the
+// errored ones, then by mutator, by the text the console prints for them, and
+// by diff, so that the mutants the console counts together are adjacent.
+func compareMutants(a, b mutant) int {
+	return cmp.Or(cmp.Compare(errorRank(a), errorRank(b)), strings.Compare(a.Mutator, b.Mutator),
+		strings.Compare(a.text(false), b.text(false)), strings.Compare(a.Diff, b.Diff))
 }
 
-// fileBefore orders the files of a report: the most mutants first, then by
-// path.
-func fileBefore(a, b fileMutants) bool {
-	if a.count != b.count {
-		return a.count > b.count
+// errorRank is 1 for a mutant that errored and 0 for one that survived.
+func errorRank(m mutant) int {
+	if m.errored {
+		return 1
 	}
-	return a.path < b.path
+	return 0
+}
+
+// compareFiles orders the files of a report: the most mutants first, then by
+// path.
+func compareFiles(a, b fileMutants) int {
+	return cmp.Or(cmp.Compare(b.count, a.count), strings.Compare(a.path, b.path))
 }
 
 func (r *result) renderMutants(b *strings.Builder, lim limits, src sources) {
@@ -465,6 +496,7 @@ func (r *result) renderMutants(b *strings.Builder, lim limits, src sources) {
 	}
 	if s.Escaped > 0 {
 		b.WriteString(whatToDo + "\n")
+		r.renderHints(b)
 	}
 	if s.Errored > 0 {
 		b.WriteString("Report each errored mutant as unresolved: no test was shown able to kill it.\n")
@@ -473,10 +505,15 @@ func (r *result) renderMutants(b *strings.Builder, lim limits, src sources) {
 }
 
 // renderFiles writes the listed mutants by file and line, with as many of them
-// as lim allows, and their totals.
+// as lim allows, and their totals. Without limits, a note on mutago's diffs
+// precedes them when a mutant has one.
 func renderFiles(b *strings.Builder, files []fileMutants, internalErrors []string, lim limits, src sources) {
 	b.WriteString("  ordered by listed mutants per file, then by line\n")
 	full := lim == noLimits
+	if full && slices.ContainsFunc(files, hasDiff) {
+		b.WriteString("  mutago prints each diff from the syntax node it mutated: a diff can span more lines than the " +
+			"change, and its added lines can lose the file's indentation (quality-gates/mutago#354)\n")
+	}
 	rowsLeft, shownFiles, lines := lim.lines, 0, 0
 	for _, f := range files {
 		lines += len(f.lines)
@@ -512,8 +549,8 @@ func renderFiles(b *strings.Builder, files []fileMutants, internalErrors []strin
 }
 
 // renderLine writes one line of a report and its mutants. The console
-// prints mutants of one kind on the line once, with their number; the file
-// prints each, with its hint and diff.
+// prints mutants that print the same way once, with their number; the file
+// prints each, with its diff.
 func renderLine(b *strings.Builder, l lineMutants, source sourceFile, full bool) {
 	fmt.Fprintf(b, "    %d: %s\n", l.number, source.line(l.number))
 	in := ""
@@ -556,24 +593,33 @@ func statusWord(m mutant, n int) string {
 	return word
 }
 
-// describe returns what m changes and its mutator; the console cuts a long
-// description.
+// describe returns what m changes and its mutator.
 func describe(m mutant, full bool) string {
-	if m.Description == "" {
+	text := m.text(full)
+	if text == "" {
 		return m.Mutator
 	}
-	desc := m.Description
-	if !full {
-		desc = cut(desc)
-	}
-	return desc + " (" + m.Mutator + ")"
+	return text + " (" + m.Mutator + ")"
 }
 
-// renderDetails writes the hint and the diff of m, which only the file shows.
-func renderDetails(b *strings.Builder, m mutant) {
-	if m.KillHint != "" {
-		b.WriteString("          hint: " + m.KillHint + "\n")
+// text returns what m changes: the code from its diff, or mutago's
+// description when the diff shows none. Unless full is set, the text is cut.
+//
+// mutago's description is the whole line before and after when the diff
+// replaces one line, and the mutator's general text otherwise, which for
+// expression/remove names a different mutation (quality-gates/mutago#369).
+func (m mutant) text(full bool) string {
+	switch {
+	case m.change != nil:
+		return m.change.label(full)
+	case full:
+		return m.Description
 	}
+	return cut(m.Description, maxSourceRunes)
+}
+
+// renderDetails writes the diff of m, which only the file shows.
+func renderDetails(b *strings.Builder, m mutant) {
 	for _, d := range strings.Split(strings.TrimRight(m.Diff, "\n"), "\n") {
 		if d != "" {
 			b.WriteString("          " + d + "\n")
@@ -581,9 +627,39 @@ func renderDetails(b *strings.Builder, m mutant) {
 	}
 }
 
-// sameKind reports whether two mutants of one line print the same way.
+// sameKind reports whether two mutants of one line print the same way on the
+// console.
 func sameKind(a, b mutant) bool {
-	return a.errored == b.errored && a.Mutator == b.Mutator && a.Description == b.Description
+	return a.errored == b.errored && a.Mutator == b.Mutator && a.text(false) == b.text(false)
+}
+
+// hasDiff reports whether a mutant of f has a diff; one that errored has none.
+func hasDiff(f fileMutants) bool {
+	for _, l := range f.lines {
+		if slices.ContainsFunc(l.mutants, func(m mutant) bool { return m.Diff != "" }) {
+			return true
+		}
+	}
+	return false
+}
+
+// renderHints writes the kill hint of each mutator of the survivors once, in
+// the order of the mutators' names, taking it from hintFixes where that has
+// one.
+func (r *result) renderHints(b *strings.Builder) {
+	hints := map[string]string{}
+	for _, m := range r.mutants {
+		if hint := cmp.Or(hintFixes[m.Mutator], m.KillHint); !m.errored && hint != "" {
+			hints[m.Mutator] = hint
+		}
+	}
+	if len(hints) == 0 {
+		return
+	}
+	b.WriteString("Hints for a test that kills a mutant, by mutator:\n")
+	for _, name := range slices.Sorted(maps.Keys(hints)) {
+		b.WriteString("  " + name + ": " + hints[name] + "\n")
+	}
 }
 
 func plural(n int, one, many string) string {

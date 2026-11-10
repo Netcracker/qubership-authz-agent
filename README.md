@@ -141,14 +141,14 @@ source files unmodified. A change in `internal/token/verify` that gives five mut
 12 seconds with an empty build cache.
 
 The report lists each changed line with a mutant that no test killed, under its file and with its source text, and
-under the line each such mutant: what mutago changed, the mutator, and the function the line is in. Mutants of one
-kind on a line are counted rather than repeated. The files with the most mutants come first, and the report shows at
-most 10 files, 20 lines per file, and 50 lines in all. It ends with what to do with each surviving mutant: add or
-strengthen a test, or, when the mutant changes nothing a caller can observe, say in the pull request why it is
-equivalent. A mutant mutago could not classify is listed as errored and is reported as unresolved.
-`test/artifacts/mutation/report.txt` holds the whole report, with each mutant's diff and a hint for the test that
-kills it, and `mutago.log` beside it holds mutago's own output. `tools/mutationreport` writes the report from mutago's
-files.
+under the line each such mutant: the code it replaces and the code that replaces it, such as `%w` and `%v` in a format
+string, the mutator, and the function the line is in. Mutants that print the same way on a line are counted rather
+than repeated. The files with the most mutants come first, and the report shows at most 10 files, 20 lines per file,
+and 50 lines in all. It ends with what to do with each surviving mutant: add or strengthen a test, or, when the mutant
+changes nothing a caller can observe, say in the pull request why it is equivalent. A hint for the test that kills a
+mutant follows, once for each mutator of the survivors. A mutant mutago could not classify is listed as errored and is
+reported as unresolved. `test/artifacts/mutation/report.txt` holds the whole report, with each mutant's diff, and
+`mutago.log` beside it holds mutago's own output. `tools/mutationreport` writes the report from mutago's files.
 
 When the changed files get no mutant, the report lists them and says why that can be: no enabled mutator changes the
 lines, as with comments, imports, declarations, and number literals, or the git config sets `diff.external`, and mutago
