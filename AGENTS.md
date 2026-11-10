@@ -11,9 +11,6 @@ the process. The Rego in `policies/` stays exempt.
 
 Tests: Go `testing` from the standard library, with `testing/synctest` for code that waits on goroutines or timers. testify is used only in `test/integration/testify` and `test/parity/suite`, and go-cmp only in `test/parity/suite`; new tests elsewhere use neither. Mutation: mutago, through `make mutation-diff`.
 
-For a branch that changes Go code outside `test/`:
+For a branch that changes Go code outside `test/`, run `make mutation-diff` after `git fetch` and act on the report it prints. Do not run mutago with `--update-baseline`.
 
-- Run `make mutation-diff` after `git fetch`. It mutates the lines changed since the merge base with `MUTATION_BASE`, `origin/main` by default. When the base of the pull request is another branch, as for a stacked pull request, or when `origin` is a fork, pass the base branch of the upstream repository, such as `MUTATION_BASE=upstream/main`.
-- For each survivor it lists, also in `mutago-agentic.json`, add a test through the unit's interface, not one that asserts on the implementation of the mutated line, or say in the pull request description why the mutant is equivalent. Quote the summary line there, and list as unresolved each errored mutant and each survivor you cannot tell is equivalent.
-- Do not run mutago with `--update-baseline`.
-- When the run fails without listing a survivor, ends with the warning that no test was shown able to fail on the changed files, or the branch changes a file behind a build tag, follow "Mutation testing of a change" in README.md.
+It mutates the lines changed since the merge base with `MUTATION_BASE`, `origin/main` by default. When the base of the pull request is another branch, as for a stacked pull request, or when `origin` is a fork, pass the base branch of the upstream repository, such as `MUTATION_BASE=upstream/main`.

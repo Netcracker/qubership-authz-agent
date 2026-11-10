@@ -16,6 +16,8 @@ lint: test-stand-files
 	cd test/integration/pipstub && golangci-lint run ./...
 	@echo "[lint] Go — test/integration/tenantmanager"
 	cd test/integration/tenantmanager && golangci-lint run ./...
+	@echo "[lint] Go — tools/mutationreport"
+	cd tools/mutationreport && golangci-lint run ./...
 	@echo "[lint] Shell"
 	find . -name '*.sh' -not -path './.git/*' | xargs shellcheck --severity=error
 	@echo "[lint] YAML"
@@ -69,13 +71,15 @@ jayway-suite-calls:
 
 # mutation-diff: run mutago on the Go lines that the working tree changes since
 # the merge base of HEAD and MUTATION_BASE, in the packages of the changed
-# files, and list every mutant on those lines that no test kills, also in
-# mutago-agentic.json. make reports mutago's exit status: 4 when a mutant
-# survives, 3 when the run did not complete. An errored mutant does not fail
-# the run. When the changed files get no mutant at all, the target lists them
-# and ends with a warning that no test was shown able to fail on them.
-# File and mutator settings are in .mutago.yml, and mutago's version is in
-# tools/mutago/go.mod. See "Mutation testing of a change" in README.md.
+# files, and print a report of every mutant on those lines that no test kills,
+# grouped by file and line, with what to do about each. The whole report, with
+# each mutant's diff, and mutago's own files go to test/artifacts/mutation/.
+# The target exits 0 when mutago completed its run, whether or not a mutant
+# survived, or found no built file to mutate; with mutago's exit status, or 3,
+# when the run did not complete; and with 2 for its own errors. The report says
+# which. File and mutator settings are in .mutago.yml, and mutago's
+# version is in tools/mutago/go.mod. See "Mutation testing of a change" in
+# README.md.
 MUTATION_BASE ?= origin/main
 # Unset, a mutant's tests may run 5 times as long as the slowest clean test run
 # of the changed packages. Set, MUTATION_TIMEOUT seconds bound the clean runs
@@ -85,19 +89,19 @@ MUTATION_TIMEOUT ?=
 # the settings that change its colors, its prefixes, or the quoting of its paths
 # are overridden for the run, after any GIT_CONFIG_* entries the caller
 # exported. GIT_CONFIG_PARAMETERS, which git -c exports and git reads after
-# those entries, is unset. diff.external cannot be overridden this way.
+# those entries, is unset. diff.external cannot be overridden this way, so the
+# report names its scope when the run finds no changed line.
 MUTATION_GIT_CONFIG := color.diff=false diff.mnemonicPrefix=false diff.noprefix=false \
 	diff.srcPrefix=a/ diff.dstPrefix=b/ core.quotePath=false
 
-# mutago writes mutago-agentic.json only when the run completes, so the report
-# of an earlier run goes first. A baseline file that does not exist keeps a
+# mutago writes its reports into the root only when the run completes, so those
+# of an earlier run go first. A baseline file that does not exist keeps a
 # mutago-baseline.json in the checkout from accepting a survivor. mutago runs
-# from the root with go.work in effect; its own module stays out of go.work. A
-# changed file behind a build tag is not built, and when no file of the
-# packages of the changed files is built, mutago stops with "Could not find any
-# suitable Go source files". mutago's output is printed when it exits.
+# from the root with go.work in effect; its own module stays out of go.work.
 mutation-diff:
-	@rm -f mutago-agentic.json; \
+	@rm -f mutago-agentic.json mutago-summary.json test/artifacts/mutation/mutago-agentic.json \
+	  test/artifacts/mutation/mutago-summary.json test/artifacts/mutation/mutago.log test/artifacts/mutation/report.txt; \
+	mkdir -p test/artifacts/mutation; \
 	n=$${GIT_CONFIG_COUNT:-0}; \
 	for setting in $(MUTATION_GIT_CONFIG); do \
 	  export "GIT_CONFIG_KEY_$$n=$${setting%%=*}" "GIT_CONFIG_VALUE_$$n=$${setting#*=}"; \
@@ -120,19 +124,19 @@ mutation-diff:
 	fi; \
 	dirs=$$(for f in $$files; do d=$${f%/*}; [ "$$d" = "$$f" ] && d=.; echo "./$$d"; done | sort -u); \
 	mutago=$$(cd tools/mutago && GOWORK=off go tool -n mutago) || exit 2; \
-	echo "mutation-diff: mutating the lines changed since $$base in" $$dirs "(mutago prints its results when it exits)"; \
-	output=$$("$$mutago" --config=.mutago.yml --baseline="$$(mktemp -u)" --git-diff-lines --git-diff-base="$$base" \
+	go build -o test/artifacts/mutation/mutation-report ./tools/mutationreport || exit 2; \
+	external=$$(git config --show-scope --get diff.external); \
+	echo "mutation-diff: mutating the lines changed since $$base in" $$dirs; \
+	"$$mutago" --config=.mutago.yml --baseline="$$(mktemp -u)" --git-diff-lines --git-diff-base="$$base" \
 	  $(if $(MUTATION_TIMEOUT),--exec-timeout=$(MUTATION_TIMEOUT),--timeout-coefficient=5) \
-	  --fail-on-escaped --quiet --output-statuses=ex --logger-agentic-json $$dirs 2>&1); \
+	  --fail-on-escaped --quiet --no-diffs --output-statuses=ex --logger-agentic-json --logger-summary-json \
+	  $$dirs >test/artifacts/mutation/mutago.log 2>&1; \
 	status=$$?; \
-	printf '%s\n' "$$output"; \
-	case $$output in *', 0 total)'*|*'Could not find any suitable Go source files'*) \
-	  echo "mutation-diff: these changed files got no mutant:"; \
-	  printf '  %s\n' $$files; \
-	  echo "mutation-diff: no test was shown able to fail on them; see \"Mutation testing of a change\" in README.md before you count this run as a pass."; \
-	  status=0;; \
-	esac; \
-	exit $$status
+	for report in mutago-agentic.json mutago-summary.json; do \
+	  if [ -f "$$report" ]; then mv -f "$$report" test/artifacts/mutation/; fi; \
+	done; \
+	test/artifacts/mutation/mutation-report -dir test/artifacts/mutation -base "$(MUTATION_BASE)" \
+	  -merge-base "$$base" -status "$$status" -diff-external "$$external" $$files
 
 # ── kind end-to-end ──────────────────────────────────────────────────────────
 # Install the chart on a kind cluster and run the runtime suite against it.

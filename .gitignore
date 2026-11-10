@@ -45,5 +45,7 @@ apm_modules/
 # `make test-stand-files` (build/authz-agent-transfer/Dockerfile, stage chart-files).
 /helm-templates/authz-test-stand/files/
 
-# mutago report of make mutation-diff
+# The reports mutago writes into the root, which make mutation-diff moves to
+# test/artifacts/mutation/ after the run
 /mutago-agentic.json
+/mutago-summary.json

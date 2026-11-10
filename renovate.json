@@ -52,7 +52,7 @@
       "major": { "enabled": false }
     },
     {
-      "description": "mutago runs only in make mutation-diff, which no CI job runs. The target recognizes a run that generated no mutant by two texts in mutago's output, ', 0 total)' and 'Could not find any suitable Go source files', so an update is merged by hand after a run of the target on a branch with an untested line and on one whose only change is behind a build tag.",
+      "description": "mutago runs only in make mutation-diff, which no CI job runs. tools/mutationreport reads mutago's JSON reports and four texts of its output: the constants and the erroredLine pattern in tools/mutationreport/report.go. No run of the target reliably produces all four, so an update is merged by hand after those texts are checked against the new version's source.",
       "matchManagers": ["gomod"],
       "matchFileNames": ["tools/mutago/go.mod"],
       "automerge": false
