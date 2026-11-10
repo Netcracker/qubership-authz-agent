@@ -26,6 +26,9 @@ A rule names the layer where its check runs, or two layers, in parentheses:
 | `client` | Outgoing calls, the policy pull, and the agent's token | `components/authz-agent/internal/{m2m,pull}`, `internal/pips` |
 | `policy` | The policies and the input they read | `policies/` |
 | `chart` | The Helm chart and its values schema | `helm-templates/authz-agent` |
+| `image` | The image of the agent, its base, and its entrypoint | `build/authz-agent` |
+| `docker` | The Compose example and the page for running the agent under Docker | `deploy/docker` |
+| `ci` | The workflows that build, release, and test the agent | `.github/workflows`, `.qubership/docker.cfg` |
 
 A layer says where to look first. Another layer may meet a rule, provided the behavior the rule states holds.
 
