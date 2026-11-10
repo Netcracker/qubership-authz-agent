@@ -17,6 +17,8 @@ package main
 import (
 	"go/scanner"
 	"go/token"
+	"regexp"
+	"slices"
 	"strings"
 	"unicode"
 )
@@ -35,8 +37,9 @@ type change struct {
 // comparing Go tokens and, inside string and character literals, words, so
 // that whitespace, line breaks, and comments do not count. mutago prints the
 // node it mutated anew, with its own line breaks and indentation, so the
-// lines of a diff can differ well beyond the change. ok is false when diff
-// has no hunk, or its sides have the same tokens.
+// lines of a diff can differ well beyond the change. Where the change
+// starts with mutago's noop, the code it replaces counts as removed. ok is
+// false when diff has no hunk, or its sides have the same tokens.
 func changeOf(diff string) (c change, ok bool) {
 	before, after := sides(diff)
 	a, b := pieces(before), pieces(after)
@@ -44,6 +47,7 @@ func changeOf(diff string) (c change, ok bool) {
 	for head < len(a) && head < len(b) && a[head].text == b[head].text {
 		head++
 	}
+	b = withoutNoop(after, b, head)
 	tail := 0
 	for tail < len(a)-head && tail < len(b)-head && a[len(a)-1-tail].text == b[len(b)-1-tail].text {
 		tail++
@@ -53,6 +57,29 @@ func changeOf(diff string) (c change, ok bool) {
 		return change{}, false
 	}
 	return change{before: span(before, a), after: span(after, b)}, true
+}
+
+// noop matches the start of the statement that mutago writes, on a line of
+// its own, in place of code it removes, so that the mutant still compiles: a
+// blank assignment of the names that code used, such as
+// "_, _ = fmt.Errorf, err".
+var noop = regexp.MustCompile(`^_(, _)* = `)
+
+// withoutNoop returns ps, the pieces of src, without those of the line that
+// ps[at] starts when that line is mutago's noop.
+func withoutNoop(src string, ps []piece, at int) []piece {
+	if at == len(ps) {
+		return ps
+	}
+	line, _, _ := strings.Cut(src[ps[at].start:], "\n")
+	if !noop.MatchString(line) {
+		return ps
+	}
+	end, next := ps[at].start+len(line), at
+	for next < len(ps) && ps[next].end <= end {
+		next++
+	}
+	return slices.Delete(slices.Clone(ps), at, next)
 }
 
 // sides returns the lines of the hunks of diff as they were before and after

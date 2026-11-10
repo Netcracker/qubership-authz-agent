@@ -92,6 +92,20 @@ func TestChangeOf_FindsTheCodeAMutantChanges(t *testing.T) {
 			change{before: "b", after: "c"}, true},
 		{"a character literal", "--- Original\n+++ New\n@@ -1,1 +1,1 @@\n-\tif r == 'a' {\n+\tif r == 'b' {\n",
 			change{before: "a", after: "b"}, true},
+		{"a body that mutago replaces with its noop", `--- Original
++++ New
+@@ -280,4 +280,4 @@
+ 	if err != nil {
+-		return "", fmt.Errorf("issuer of a token file: %w", err)
+-	}
++	_, _ = fmt.Errorf, err
++}
+ 	parts := strings.Split(token, ".")
+`, change{before: `return "", fmt.Errorf("issuer of a token file: %w", err)`}, true},
+		{"a statement whose last name the noop that ends the hunk repeats", "--- Original\n+++ New\n@@ -1,1 +1,1 @@\n-\treturn x\n+\t_ = x\n",
+			change{before: "return x"}, true},
+		{"a blank assignment that a mutant changes", "--- Original\n+++ New\n@@ -1,1 +1,1 @@\n-\t_ = a + b\n+\t_ = a - b\n",
+			change{before: "+", after: "-"}, true},
 		{"a statement added at the end", "--- Original\n+++ New\n@@ -1,1 +1,2 @@\n \tuse(p)\n+\tbreak\n",
 			change{after: "break"}, true},
 		{"a statement removed at the end", "--- Original\n+++ New\n@@ -1,2 +1,1 @@\n \tuse(p)\n-\tbreak\n",
