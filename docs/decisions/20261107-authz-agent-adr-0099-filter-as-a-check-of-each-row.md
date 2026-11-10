@@ -62,8 +62,8 @@ predicate of each rule as its condition on the row, and narrow that set where a 
 #### The set of rows
 
 - **R1** (`translate`). The rows that a `check/filter` answer admits are the rows that `check/resource` would allow for
-  the same subject and operation, where the predicate of each rule is its condition on the row. R5, R6, and R9 are the
-  exceptions. ADR-0098 R11 gives the rows of a rule whose condition stays unknown through a failed value.
+  the same subject and operation, where the predicate of each rule is its condition on the row. R5, R6, R9, and R12 are
+  the exceptions. ADR-0098 R11 gives the rows of a rule whose condition stays unknown through a failed value.
 - **R2** (`translate`). With A the allowed rows and D the denied rows of the children of a node, the node gets these
   sets:
 
@@ -113,6 +113,17 @@ predicate of each rule as its condition on the row, and narrow that set where a 
   the answer is `DENY` when no dialect is left.
 - **R6** (`translate`). A placeholder whose value the agent could not read makes the answer `DENY`, except in or below a
   rule, a policy, or a set whose target is an unknown target, where R9 gives that node its rows.
+- **R12** (`translate`). The answer is `DENY` when the filter passes either of two bounds:
+  1. Depth: the filter evaluates the children of a set deeper than level 8, where a set at the root of the tree is at
+     level 1. A set counts when the filter evaluates its children: its target is true, or it is an unknown target that
+     R9 evaluates. A set whose target is false does not count. A set with `iterate` counts as any other set. A tree of
+     8 nested sets gets its text; a tree of 9 gets `DENY`.
+  2. Size: the text of any dialect, or the compact JSON of `customFilterCondition`, is longer than 1 MiB, that is,
+     1 048 576 bytes in UTF-8. Each text is measured on its own and in bytes, so a text in Cyrillic can pass the bound
+     with fewer characters than that, and one dialect, such as mongodb, can pass it alone. Compact JSON has no space
+     after `,` or `:`, and escaping that the JSON encoder adds to `<`, `>`, and `&` is not counted. A text of exactly
+     1 MiB is returned; one byte more gives `DENY`. The agent may stop building a text as soon as a part of it passes
+     the bound.
 
 #### The text of a predicate
 
@@ -159,6 +170,13 @@ legacy sometimes writes `USE_FILTER_CONDITION` with every predicate `null`, whic
 
 The filter must never admit a row that `check/resource` denies, so where a dialect cannot express the exact set, the
 agent gives a smaller one (R5). A placeholder without a value would leave a predicate that matches the wrong rows (R6).
+
+Under R2 the allowed rows and the denied rows of a node both refer to both sets of each child. In nested sets that
+alternate `PERMIT_OVERRIDES` and `DENY_OVERRIDES`, the parts the two sets share grow exponentially with depth. In memory
+they can be shared, but no dialect can write a shared part once, so the exact text doubles at each level: 20 levels give
+219 244 characters of RSQL, where legacy writes 421, and 25 levels do not finish in 8 seconds. The owner decided on
+2026-11-10 to answer `DENY` past 8 levels and past 1 MiB of text. `DENY` admits fewer rows than R1 states, in the
+direction R5 allows, and legacy has neither bound (R12).
 
 A node whose target is unknown either applies or does not, and ADR-0098 R2 allows a resource only if it is allowed
 both ways. A node that can deny may deny when its target holds, so `check/resource` denies, and the filter gives the
@@ -209,6 +227,10 @@ legacy filter, so each is named as allowing more (R8).
   an application may compare or parse.
 - **A9. Answer `null` in every dialect for a DENY predicate whose condition can differ from its template.** Rejected
   for its cost: almost every DENY predicate on a string qualifies, so deny lists would stop working in `check/filter`.
+- **A10. Write the parts shared by the allowed and the denied rows once.** Rejected by R12: RSQL, SQL, QueryDSL, and
+  mongodb have no way to name a part of a predicate and refer to it again.
+- **A11. Build the exact text at any depth and size.** Rejected by R12: the text and the time to build it grow
+  exponentially with the depth of alternating sets.
 
 ## Consequences
 
@@ -222,6 +244,8 @@ Negative:
   `null` (R8).
 - A node that can deny and whose target reads the resource makes the answer `DENY` under a `DENY_OVERRIDES` or
   `PERMIT_UNLESS_DENY` parent (R9, R5), where legacy leaves the node out and returns the predicates of its siblings.
+- A tree that evaluates sets deeper than 8 levels, or whose text in any dialect passes 1 MiB, gets `DENY` (R12), where
+  legacy, which has neither bound, answers with a predicate.
 - Where the template of a DENY rule selects fewer rows than its condition denies, `check/filter` admits rows that
   `check/resource` denies, as legacy does (R11). With the condition `resource.segment == "VIP"` and the SQL template
   `segment = 'VIP'`, a row with `segment = 'vip'` appears in the list, and `check/resource` denies it because `==`
