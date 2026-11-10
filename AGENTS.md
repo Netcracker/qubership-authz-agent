@@ -9,4 +9,8 @@ caller and PIPs. Reading a byte once per nesting level or per item of another ar
 keeps it linear. Cost should stay polynomial in policy size. Input too big or too deep fails its request or load, not
 the process. The Rego in `policies/` stays exempt.
 
-Tests: Go `testing` from the standard library, with `testing/synctest` for code that waits on goroutines or timers. testify is used only in `test/integration` and `test/parity`; new tests elsewhere do not use it.
+Tests: Go `testing` from the standard library, with `testing/synctest` for code that waits on goroutines or timers. testify is used only in `test/integration/testify` and `test/parity/suite`, and go-cmp only in `test/parity/suite`; new tests elsewhere use neither. Mutation: mutago, through `make mutation-diff`.
+
+For a branch that changes Go code outside `test/`, run `make mutation-diff` after `git fetch` and act on the report it prints. Do not run mutago with `--update-baseline`.
+
+It mutates the lines changed since the merge base with `MUTATION_BASE`, `origin/main` by default. When the base of the pull request is another branch, as for a stacked pull request, or when `origin` is a fork, pass the base branch of the upstream repository, such as `MUTATION_BASE=upstream/main`.

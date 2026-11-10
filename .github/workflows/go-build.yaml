@@ -6,15 +6,19 @@
 #
 # Module configuration note
 # -------------------------
-# This repository has five Go modules:
+# This repository has six Go modules with code:
 #   .                              — the product module (two binaries, zero external deps)
 #   test/parity/suite              — parity-replay test suite
 #   test/integration/testify       — runtime integration suite (needs a running stack)
 #   test/integration/pipstub       — pip-stub service used by the integration suite
 #   test/integration/tenantmanager — tenant-manager emulator the agent calls in the kind harness
+#   tools/mutationreport           — the program that writes the report of make mutation-diff
+#
+# A seventh, tools/mutago, records only the version of the mutago tool that
+# make mutation-diff runs; it has no Go file, and this workflow leaves it out.
 #
 # The shared workflow takes a single go-module-dir and would only build and test
-# the product module.  The explicit go-module-configs list below makes all five
+# the product module.  The explicit go-module-configs list below makes all six
 # modules visible so CI does not silently skip the test suites.
 #
 # The integration-tagged suites are not built here: without -tags integration
@@ -54,8 +58,8 @@ jobs:
     with:
       sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
       # Uploads each module's coverage profile to Codecov from the test run that
-      # feeds Sonar; codecov.yml ignores test/**, so only the product module
-      # reaches the report.  codecov-fail-on-error keeps its default of false,
+      # feeds Sonar; codecov.yml ignores test/** and tools/**, so only the
+      # product module reaches the report.  codecov-fail-on-error keeps its default of false,
       # so an upload that Codecov rejects fails neither this job nor Build gate.
       codecov-upload: true
       # Explicit module list — see the comment at the top of this file for why
@@ -66,7 +70,8 @@ jobs:
           {"dir": "test/parity/suite",        "cover-packages": "./..."},
           {"dir": "test/integration/testify", "cover-packages": "./..."},
           {"dir": "test/integration/pipstub", "cover-packages": "./..."},
-          {"dir": "test/integration/tenantmanager", "cover-packages": "./..."}
+          {"dir": "test/integration/tenantmanager", "cover-packages": "./..."},
+          {"dir": "tools/mutationreport", "cover-packages": "./..."}
         ]
     # The shared workflow declares SONAR_TOKEN and the optional CODECOV_TOKEN;
     # pass them explicitly instead of `secrets: inherit` (zizmor: secrets-inherit).

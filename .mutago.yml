@@ -1,0 +1,17 @@
+# Settings for make mutation-diff.
+
+# skip_without_test skips a file that has no _test.go file of the same name,
+# and skip_with_build_tags skips a file whose _test.go file of the same name has
+# a build tag. A file's tests often live in another _test.go file of its
+# package, so both are off (quality-gates/mutago#351).
+skip_without_test: false
+skip_with_build_tags: false
+
+# The modules under test/ hold the test harnesses.
+exclude_dirs: [test/]
+
+# The numbers/* mutators shift integer and float literals by one and replace a
+# non-zero float literal with 0.0. Their survivors are mostly tuning constants
+# and the values a function returns beside an error, which no test is meant to
+# assert exactly.
+disable_mutators: ["numbers/*"]

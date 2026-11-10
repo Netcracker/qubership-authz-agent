@@ -27,4 +27,6 @@ ignore:
   # are empty after this rule, and Codecov marks them as errors and leaves them
   # out of the report.  after_n_builds stays unset: Codecov waits for uploads
   # it has received and processed, and it may never count the errored ones.
+  # tools/ holds the report program of make mutation-diff, not product code.
   - "test/**"
+  - "tools/**"

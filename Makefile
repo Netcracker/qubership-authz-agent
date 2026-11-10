@@ -16,6 +16,8 @@ lint: test-stand-files
 	cd test/integration/pipstub && golangci-lint run ./...
 	@echo "[lint] Go — test/integration/tenantmanager"
 	cd test/integration/tenantmanager && golangci-lint run ./...
+	@echo "[lint] Go — tools/mutationreport"
+	cd tools/mutationreport && golangci-lint run ./...
 	@echo "[lint] Shell"
 	find . -name '*.sh' -not -path './.git/*' | xargs shellcheck --severity=error
 	@echo "[lint] YAML"
@@ -66,6 +68,75 @@ jayway-suite-calls:
 	    -PrecorderJar=$(CURDIR)/$(JAYWAY_DIR)/recorder/target/recorder.jar \
 	    -PrecorderOut="$(abspath $(JAYWAY_SUITE_CALLS))" \
 	    :json-path:test :json-path-assert:test
+
+# mutation-diff: run mutago on the Go lines that the working tree changes since
+# the merge base of HEAD and MUTATION_BASE, in the packages of the changed
+# files, and print a report of every mutant on those lines that no test kills,
+# grouped by file and line, with what to do about each. The whole report, with
+# each mutant's diff, and mutago's own files go to test/artifacts/mutation/.
+# The target exits 0 when mutago completed its run, whether or not a mutant
+# survived, or found no built file to mutate; with mutago's exit status, or 3,
+# when the run did not complete; and with 2 for its own errors. The report says
+# which. File and mutator settings are in .mutago.yml, and mutago's
+# version is in tools/mutago/go.mod. See "Mutation testing of a change" in
+# README.md.
+MUTATION_BASE ?= origin/main
+# Unset, a mutant's tests may run 5 times as long as the slowest clean test run
+# of the changed packages. Set, MUTATION_TIMEOUT seconds bound the clean runs
+# and every mutant.
+MUTATION_TIMEOUT ?=
+# mutago parses the output of a plain git diff (quality-gates/mutago#353), so
+# the settings that change its colors, its prefixes, or the quoting of its paths
+# are overridden for the run, after any GIT_CONFIG_* entries the caller
+# exported. GIT_CONFIG_PARAMETERS, which git -c exports and git reads after
+# those entries, is unset. diff.external cannot be overridden this way, so the
+# report names its scope when the run finds no changed line.
+MUTATION_GIT_CONFIG := color.diff=false diff.mnemonicPrefix=false diff.noprefix=false \
+	diff.srcPrefix=a/ diff.dstPrefix=b/ core.quotePath=false
+
+# mutago writes its reports into the root only when the run completes, so those
+# of an earlier run go first. A baseline file that does not exist keeps a
+# mutago-baseline.json in the checkout from accepting a survivor. mutago runs
+# from the root with go.work in effect; its own module stays out of go.work.
+mutation-diff:
+	@rm -f mutago-agentic.json mutago-summary.json test/artifacts/mutation/mutago-agentic.json \
+	  test/artifacts/mutation/mutago-summary.json test/artifacts/mutation/mutago.log test/artifacts/mutation/report.txt; \
+	mkdir -p test/artifacts/mutation; \
+	n=$${GIT_CONFIG_COUNT:-0}; \
+	for setting in $(MUTATION_GIT_CONFIG); do \
+	  export "GIT_CONFIG_KEY_$$n=$${setting%%=*}" "GIT_CONFIG_VALUE_$$n=$${setting#*=}"; \
+	  n=$$((n + 1)); \
+	done; \
+	export GIT_CONFIG_COUNT=$$n; \
+	unset GIT_EXTERNAL_DIFF GIT_CONFIG_PARAMETERS; \
+	if ! git rev-parse --verify --quiet "$(MUTATION_BASE)^{commit}" >/dev/null; then \
+	  echo "mutation-diff: MUTATION_BASE=$(MUTATION_BASE) is not a commit in this clone. Fetch the remote it names, or set MUTATION_BASE to the base branch of the pull request on a remote you have fetched." >&2; \
+	  exit 2; \
+	fi; \
+	if ! base=$$(git merge-base HEAD "$(MUTATION_BASE)"); then \
+	  base="$(MUTATION_BASE)"; \
+	  echo "mutation-diff: HEAD and $(MUTATION_BASE) have no merge base in this clone, so the diff starts at the tip of $(MUTATION_BASE) and takes in lines this branch did not change; in a shallow clone, run git fetch --unshallow first." >&2; \
+	fi; \
+	files=$$(git diff --name-only --no-color --diff-filter=d "$$base" -- '*.go' ':!:*_test.go' ':!:test/') || exit 2; \
+	if [ -z "$$files" ]; then \
+	  echo "mutation-diff: no Go file outside test/ changed since $$base; nothing to mutate."; \
+	  exit 0; \
+	fi; \
+	dirs=$$(for f in $$files; do d=$${f%/*}; [ "$$d" = "$$f" ] && d=.; echo "./$$d"; done | sort -u); \
+	mutago=$$(cd tools/mutago && GOWORK=off go tool -n mutago) || exit 2; \
+	go build -o test/artifacts/mutation/mutation-report ./tools/mutationreport || exit 2; \
+	external=$$(git config --show-scope --get diff.external); \
+	echo "mutation-diff: mutating the lines changed since $$base in" $$dirs; \
+	"$$mutago" --config=.mutago.yml --baseline="$$(mktemp -u)" --git-diff-lines --git-diff-base="$$base" \
+	  $(if $(MUTATION_TIMEOUT),--exec-timeout=$(MUTATION_TIMEOUT),--timeout-coefficient=5) \
+	  --fail-on-escaped --quiet --no-diffs --output-statuses=ex --logger-agentic-json --logger-summary-json \
+	  $$dirs >test/artifacts/mutation/mutago.log 2>&1; \
+	status=$$?; \
+	for report in mutago-agentic.json mutago-summary.json; do \
+	  if [ -f "$$report" ]; then mv -f "$$report" test/artifacts/mutation/; fi; \
+	done; \
+	test/artifacts/mutation/mutation-report -dir test/artifacts/mutation -base "$(MUTATION_BASE)" \
+	  -merge-base "$$base" -status "$$status" -diff-external "$$external" $$files
 
 # ── kind end-to-end ──────────────────────────────────────────────────────────
 # Install the chart on a kind cluster and run the runtime suite against it.
@@ -279,4 +350,4 @@ parity-logs:
 	kind export logs --name $(KIND_CLUSTER) $(E2E_ARTIFACTS)/parity/cluster
 	$(PARITY_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/parity/events.txt
 
-.PHONY: lint install-hooks test-jayway jayway-suite-calls e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs
+.PHONY: lint install-hooks test-jayway jayway-suite-calls mutation-diff e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs
