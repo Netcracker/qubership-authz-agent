@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -59,6 +60,8 @@ type fakeManager struct {
 	next reply
 	// block, when set, holds every request until its context ends.
 	block bool
+	// gate, when set, holds every request until it is closed.
+	gate chan struct{}
 	// urls and accepts hold the address and the Accept header of each request,
 	// and times the time it arrived.
 	urls, accepts []string
@@ -82,11 +85,14 @@ func (f *fakeManager) RoundTrip(r *http.Request) (*http.Response, error) {
 	f.urls = append(f.urls, r.URL.String())
 	f.accepts = append(f.accepts, r.Header.Get("Accept"))
 	f.times = append(f.times, time.Now())
-	next, block := f.next, f.block
+	next, block, gate := f.next, f.block, f.gate
 	f.mu.Unlock()
 	if block {
 		<-r.Context().Done()
 		return nil, r.Context().Err()
+	}
+	if gate != nil {
+		<-gate
 	}
 	if next.err != nil {
 		return nil, next.err
@@ -144,6 +150,16 @@ func newDefault(t *testing.T, cfg Config) *Default {
 	return d
 }
 
+// isReady reports whether d.Ready() is closed, without waiting.
+func isReady(d *Default) bool {
+	select {
+	case <-d.Ready():
+		return true
+	default:
+		return false
+	}
+}
+
 // runBriefly calls d.Run with one minute on the fake clock of a synctest
 // bubble, so a regression that keeps it retrying reaches the assertions of the
 // test and not the timeout of go test.
@@ -158,6 +174,7 @@ func runBriefly(t *testing.T, d *Default) {
 
 func TestNewDefault_UsesTheNameAsGivenWithoutTenantManager(t *testing.T) {
 	longest := strings.Repeat("a", 128)
+	twoByteLetters := strings.Repeat("é", 64)
 	tests := []struct {
 		name   string
 		tenant string
@@ -166,18 +183,42 @@ func TestNewDefault_UsesTheNameAsGivenWithoutTenantManager(t *testing.T) {
 		{"no name", "", "default"},
 		{"letters", "acme", "acme"},
 		{"one character", "a", "a"},
-		{"every allowed sign", "a.b_c-d", "a.b_c-d"},
+		{"every sign tenant-manager takes", "a.b_c-d", "a.b_c-d"},
 		{"digits and upper case", "Tenant42", "Tenant42"},
-		{"128 characters", longest, longest},
+		{"128 bytes", longest, longest},
+		{"a colon and an at sign", "a:b@c", "a:b@c"},
+		{"a space", "a b", "a b"},
+		{"a slash", "a/b", "a/b"},
+		{"a letter outside ASCII", "café", "café"},
+		{"128 bytes of two-byte letters", twoByteLetters, twoByteLetters},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := newDefault(t, Config{Name: tt.tenant})
-			if !d.Ready() {
-				t.Errorf("Ready() = false before Run, want true")
+			if !isReady(d) {
+				t.Errorf("Ready() is open before Run, want closed")
 			}
 			if got := d.ID(); got != tt.want {
 				t.Errorf("ID() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+// White space is not an address: a deployment that blanks the setting with a
+// space or a line break has no tenant-manager, and its name is used as given,
+// even one tenant-manager would not take.
+func TestNewDefault_ReadsABlankManagerURLAsNoTenantManager(t *testing.T) {
+	for _, address := range []string{" ", "\t\n"} {
+		t.Run(fmt.Sprintf("%q", address), func(t *testing.T) {
+			manager := &fakeManager{}
+			d := newDefault(t, Config{Name: "a b", ManagerURL: address, Transport: manager})
+			runBriefly(t, d)
+			if got := d.ID(); got != "a b" {
+				t.Errorf("ID() = %q, want %q", got, "a b")
+			}
+			if got := manager.requests(); len(got) != 0 {
+				t.Errorf("Run() sent %q, want no request", got)
 			}
 		})
 	}
@@ -192,7 +233,7 @@ func TestDefault_RunSendsNoRequestWithoutTenantManager(t *testing.T) {
 	}
 }
 
-func TestNewDefault_RefusesAnInvalidName(t *testing.T) {
+func TestNewDefault_RefusesANameTenantManagerDoesNotTake(t *testing.T) {
 	tests := []struct {
 		name  string
 		value string
@@ -203,25 +244,61 @@ func TestNewDefault_RefusesAnInvalidName(t *testing.T) {
 		{"a letter outside ASCII", "caf\u00e9"},
 	}
 	for _, tt := range tests {
-		for _, address := range []string{"", managerURL} {
-			t.Run(tt.name+" with manager URL "+address, func(t *testing.T) {
-				if _, err := NewDefault(Config{Name: tt.value, ManagerURL: address}); err == nil {
-					t.Errorf("NewDefault(Name: %q, ManagerURL: %q) error = nil, want an error", tt.value, address)
-				}
-			})
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			if _, err := NewDefault(Config{Name: tt.value, ManagerURL: managerURL}); err == nil {
+				t.Errorf("NewDefault(Name: %q, ManagerURL: %q) error = nil, want an error", tt.value, managerURL)
+			}
+		})
 	}
 }
 
-// The name reaches the log of a failed start, so its error cuts a long name and
-// marks the cut.
-func TestNewDefault_CutsALongNameInItsError(t *testing.T) {
-	_, err := NewDefault(Config{Name: strings.Repeat("a", 500)})
-	if err == nil {
-		t.Fatal("NewDefault() error = nil, want an error")
+// A name used as given is the key of the policy data, so a control character
+// or broken UTF-8, such as a line break left over from the configuration, is
+// refused at start.
+func TestNewDefault_RefusesANameThatCannotBeUsedAsGiven(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+	}{
+		{"129 bytes", strings.Repeat("a", 129)},
+		{"128 bytes of two-byte letters and one more byte", strings.Repeat("\u00e9", 64) + "a"},
+		{"a line break", "a\nb"},
+		{"a tab", "a\tb"},
+		{"DEL", "a\x7fb"},
+		{"a C1 control character", "a\u0085b"},
+		{"broken UTF-8", "a\xffb"},
 	}
-	if got := err.Error(); strings.Contains(got, strings.Repeat("a", 65)) || !strings.Contains(got, `"...`) {
-		t.Errorf("NewDefault() error = %q, want the name cut to 64 bytes with the cut marked", got)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, err := NewDefault(Config{Name: tt.value}); err == nil {
+				t.Errorf("NewDefault(Name: %q) error = nil, want an error", tt.value)
+			}
+		})
+	}
+}
+
+// The error of a refused name reaches the log of a failed start, so it quotes
+// the name and cuts it after 64 bytes with the cut marked.
+func TestNewDefault_QuotesTheRefusedNameInItsError(t *testing.T) {
+	tests := []struct {
+		name   string
+		tenant string
+		quoted string
+	}{
+		{"a short name", "a/b", `"a/b"`},
+		{"64 bytes", strings.Repeat("a", 63) + "/", `"` + strings.Repeat("a", 63) + `/"`},
+		{"65 bytes", strings.Repeat("a", 64) + "/", `"` + strings.Repeat("a", 64) + `"...`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := NewDefault(Config{Name: tt.tenant, ManagerURL: managerURL})
+			if err == nil {
+				t.Fatalf("NewDefault(Name: %q) error = nil, want an error", tt.tenant)
+			}
+			if want := "default tenant " + tt.quoted + ": "; !strings.HasPrefix(err.Error(), want) {
+				t.Errorf("NewDefault(Name: %q) error = %q, want it to start with %q", tt.tenant, err, want)
+			}
+		})
 	}
 }
 
@@ -268,6 +345,7 @@ func TestDefault_RunAsksTenantManagerForTheName(t *testing.T) {
 		{"default name", managerURL, "", managerURL + path + "default"},
 		{"named tenant", managerURL, "acme", managerURL + path + "acme"},
 		{"trailing slash", managerURL + "/", "acme", managerURL + path + "acme"},
+		{"white space around the URL", " " + managerURL + "\n", "acme", managerURL + path + "acme"},
 		{"https and a path", "https://gateway/tenants/", "acme", "https://gateway/tenants" + path + "acme"},
 	}
 	for _, tt := range tests {
@@ -289,15 +367,57 @@ func TestDefault_RunAsksTenantManagerForTheName(t *testing.T) {
 func TestDefault_ReadyWaitsForTheAnswer(t *testing.T) {
 	manager := &fakeManager{next: reply{status: http.StatusOK, body: uuid}}
 	d := newDefault(t, Config{ManagerURL: managerURL, Transport: manager})
-	if d.Ready() {
-		t.Error("Ready() = true before Run, want false")
+	if isReady(d) {
+		t.Error("Ready() is closed before Run, want open")
 	}
 	if got := d.ID(); got != "" {
 		t.Errorf("ID() = %q before Run, want empty", got)
 	}
 	runBriefly(t, d)
-	if !d.Ready() {
-		t.Error("Ready() = false after the answer, want true")
+	if !isReady(d) {
+		t.Error("Ready() is open after the answer, want closed")
+	}
+}
+
+// Ready closes once however many calls of Run get the key: both calls here
+// send their request before either gets the response.
+func TestDefault_TwoRunsAtOnceCloseReadyOnce(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		gate := make(chan struct{})
+		manager := &fakeManager{next: reply{status: http.StatusOK, body: uuid}, gate: gate}
+		log := &recorder{}
+		d := newDefault(t, Config{ManagerURL: managerURL, Transport: manager, Log: log})
+		go d.Run(t.Context())
+		go d.Run(t.Context())
+		synctest.Wait()
+		if got := manager.requests(); len(got) != 2 {
+			t.Fatalf("requests before the response = %q, want two", got)
+		}
+		close(gate)
+		synctest.Wait()
+		if got := d.ID(); got != uuid {
+			t.Errorf("ID() = %q, want %q", got, uuid)
+		}
+		if len(log.infos) != 1 {
+			t.Errorf("records = %q, want one", log.infos)
+		}
+	})
+}
+
+// The other tests answer through fakeManager, whose body needs no open
+// connection; this one reads the body from a socket, as a deployment does.
+func TestDefault_RunReadsTheIdentifierOverAConnection(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = io.WriteString(w, uuid)
+	}))
+	t.Cleanup(srv.Close)
+	log := &recorder{}
+	d := newDefault(t, Config{ManagerURL: srv.URL, Log: log})
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	d.Run(ctx)
+	if got := d.ID(); got != uuid {
+		t.Errorf("ID() = %q, want %q; warnings: %q", got, uuid, log.warns)
 	}
 }
 
@@ -339,8 +459,8 @@ func TestDefault_TakesTheIdentifierFromTheAnswer(t *testing.T) {
 	}
 }
 
-// Each answer fails one attempt, and the next attempt gets a good answer, so
-// the service becomes ready once tenant-manager repairs itself.
+// Each case fails the first attempt, and Run gets the identifier on the next
+// one.
 func TestDefault_RetriesAfterAnAnswerThatGivesNoIdentifier(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -377,8 +497,8 @@ func checkRetriesAfter(t *testing.T, answer reply) {
 		d := newDefault(t, Config{ManagerURL: managerURL, Transport: manager, Log: log})
 		go d.Run(t.Context())
 		synctest.Wait()
-		if d.Ready() {
-			t.Fatalf("Ready() = true after the answer, ID() = %q, want false", d.ID())
+		if isReady(d) {
+			t.Fatalf("Ready() is closed after the answer, ID() = %q, want open", d.ID())
 		}
 		if len(log.warns) != 1 {
 			t.Fatalf("warnings after one attempt = %q, want one", log.warns)
@@ -469,8 +589,8 @@ func TestDefault_RunStopsWhenItsContextEnds(t *testing.T) {
 				synctest.Wait()
 				cancel()
 				<-done
-				if d.Ready() {
-					t.Error("Ready() = true after the context ended, want false")
+				if isReady(d) {
+					t.Error("Ready() is closed after the context ended, want open")
 				}
 				if got := len(log.warns); got != tt.warnings {
 					t.Errorf("warnings = %d, want %d: %q", got, tt.warnings, log.warns)
@@ -483,9 +603,10 @@ func TestDefault_RunStopsWhenItsContextEnds(t *testing.T) {
 	}
 }
 
-// The reader of a stuck start holds the log: every warning has to name what
-// failed and that the service waits, and the record of success has to name the
-// answer, so a substituted identifier can be checked against tenant-manager.
+// When the service does not become ready, the log is all an operator has:
+// every warning has to name what failed, both causes of a 404, and that the
+// service waits, and the record of success has to name the identifier, so a
+// substituted one can be checked against tenant-manager.
 func TestDefault_RunWarnsOnEachFailedAttemptAndRecordsTheTranslation(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		manager := &fakeManager{next: reply{status: http.StatusNotFound}}
@@ -501,7 +622,7 @@ func TestDefault_RunWarnsOnEachFailedAttemptAndRecordsTheTranslation(t *testing.
 			t.Fatalf("warnings = %q, want two", log.warns)
 		}
 		for i, pause := range []string{"retrying in 1s", "retrying in 2s"} {
-			checkNames(t, log.warns[i], lookupURL, "HTTP 404", "no tenant of this name", "not ready", pause)
+			checkNames(t, log.warns[i], lookupURL, "HTTP 404", "no tenant of this name", "the tenant-manager URL", "not ready", pause)
 		}
 		if len(log.infos) != 1 {
 			t.Fatalf("records = %q, want one", log.infos)
@@ -520,31 +641,85 @@ func checkNames(t *testing.T, line string, parts ...string) {
 	}
 }
 
-// The answer is the text of another service, and the warning goes into a log
-// line, so the warning escapes a line break and cuts the text with a mark.
-func TestDefault_RunEscapesAndCutsAnAnswerInItsWarning(t *testing.T) {
+// The response body is the text of another service, and the warning goes into
+// a log line, so the warning quotes the body, escapes a line break, and cuts
+// the text after 64 bytes with the cut marked.
+func TestDefault_RunQuotesTheRefusedResponseBodyInItsWarning(t *testing.T) {
+	tests := []struct {
+		name   string
+		body   string
+		quoted string
+	}{
+		{"a short body", "a/b", `the response body "a/b" is not`},
+		{"a line break and a long body", "a\nb" + strings.Repeat("c", 500), `the response body "a\nb` + strings.Repeat("c", 61) + `"... is not`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				manager := &fakeManager{next: reply{status: http.StatusOK, body: tt.body}}
+				log := &recorder{}
+				d := newDefault(t, Config{ManagerURL: managerURL, Transport: manager, Log: log})
+				go d.Run(t.Context())
+				synctest.Wait()
+				if len(log.warns) != 1 {
+					t.Fatalf("warnings = %q, want one", log.warns)
+				}
+				if got := log.warns[0]; !strings.Contains(got, tt.quoted) {
+					t.Errorf("warning %q does not hold %q", got, tt.quoted)
+				}
+			})
+		})
+	}
+}
+
+// A refused redirect leaves the service not ready until the URL changes, so
+// the warning of every 3xx says that redirects are not followed and names the
+// address the redirect points to; a 4xx says nothing about redirects.
+func TestDefault_RunNamesTheTargetOfARefusedRedirect(t *testing.T) {
+	const target = "https://tenant-manager:8443/api"
+	tests := []struct {
+		name   string
+		answer reply
+		want   string
+	}{
+		{"300 without a Location", reply{status: http.StatusMultipleChoices}, `HTTP 300 without a Location: redirects are not followed`},
+		{"301", reply{status: http.StatusMovedPermanently, location: target}, `HTTP 301 to "` + target + `": redirects are not followed`},
+		{"399", reply{status: 399, location: target}, `HTTP 399 to "` + target + `": redirects are not followed`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := firstWarning(t, tt.answer); !strings.Contains(got, tt.want) {
+				t.Errorf("warning %q does not hold %q", got, tt.want)
+			}
+		})
+	}
+	t.Run("400", func(t *testing.T) {
+		if got := firstWarning(t, reply{status: http.StatusBadRequest, location: target}); strings.Contains(got, "redirect") {
+			t.Errorf("warning %q speaks of a redirect after HTTP 400", got)
+		}
+	})
+}
+
+// firstWarning runs a Default against a tenant-manager that gives answer, and
+// returns the warning of the first attempt.
+func firstWarning(t *testing.T, answer reply) string {
+	t.Helper()
+	var warning string
 	synctest.Test(t, func(t *testing.T) {
-		answer := "a\nb" + strings.Repeat("c", 500)
-		manager := &fakeManager{next: reply{status: http.StatusOK, body: answer}}
 		log := &recorder{}
-		d := newDefault(t, Config{ManagerURL: managerURL, Transport: manager, Log: log})
+		d := newDefault(t, Config{ManagerURL: managerURL, Transport: &fakeManager{next: answer}, Log: log})
 		go d.Run(t.Context())
 		synctest.Wait()
 		if len(log.warns) != 1 {
 			t.Fatalf("warnings = %q, want one", log.warns)
 		}
-		got := log.warns[0]
-		if strings.Contains(got, "\n") {
-			t.Errorf("warning %q holds a raw line break", got)
-		}
-		if strings.Contains(got, strings.Repeat("c", 62)) || !strings.Contains(got, `"...`) {
-			t.Errorf("warning %q does not cut the answer to 64 bytes with the cut marked", got)
-		}
+		warning = log.warns[0]
 	})
+	return warning
 }
 
-// A deployment that lost its tenant-manager URL takes the name without a word
-// unless this record says so.
+// Without a tenant-manager URL, NewDefault logs the name it uses, so a
+// deployment that lost the URL by mistake shows it in the log.
 func TestNewDefault_RecordsThatTheNameIsUsedAsGiven(t *testing.T) {
 	log := &recorder{}
 	newDefault(t, Config{Name: "acme", Log: log})
