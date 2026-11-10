@@ -22,10 +22,12 @@ A rule names the layer where its check runs, or two layers, in parentheses:
 | `verify` | The check of one token and its result | `internal/token/verify` |
 | `namespaces` | The topology file and the allowed namespaces | `internal/token/namespaces` |
 | `handler` | Each request before policy evaluation, and the responses of the check routes | `components/authz-agent/internal/server`, `api/openapi.yaml` |
-| `startup` | Settings read at start, readiness, and liveness | `components/authz-agent/internal/` packages and `main.go` |
+| `startup` | Settings read at start, readiness, and liveness | `components/authz-agent/internal/` packages and `main.go`, `components/authz-policy-admin` |
 | `client` | Outgoing calls, the policy pull, and the agent's token | `components/authz-agent/internal/{m2m,pull}`, `internal/pips` |
 | `policy` | The policies and the input they read | `policies/` |
 | `chart` | The Helm chart and its values schema | `helm-templates/authz-agent` |
+| `host` | The systemd units, the environment files, the examples, and the installation page for a Linux host | `deploy/linux` |
+| `ci` | The workflows that build, release, and test the services | `.github/workflows`, `.qubership/docker.cfg` |
 
 A layer says where to look first. Another layer may meet a rule, provided the behavior the rule states holds.
 
