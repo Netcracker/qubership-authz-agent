@@ -18,6 +18,8 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -102,12 +104,15 @@ func TestParseConfig_RejectsAKeycloakThatBreaksARule(t *testing.T) {
 
 // The file names no issuer, as a chart renders it, so the only source of the
 // issuer is the token, and the fake provider serves discovery under that value.
+// A provider with an issuer of its own comes first, as in a file that also
+// trusts an identity provider.
 func TestNew_TakesTheIssuerOfAMarkedProviderFromItsToken(t *testing.T) {
+	other := newIdP(t, ecJWK(t, "k2", nil))
 	idp := newIdP(t, ecJWK(t, "k1", nil))
 	fromToken := idp.srv.URL
 	token := writeFile(t, "token", jwtWith(`{"iss": "`+fromToken+`"}`))
-	doc, err := json.Marshal(map[string]any{"providers": []any{map[string]any{"id": "k8s",
-		"tokenFile": token, "audiences": []string{"netcracker"}, "kubernetes": true}}})
+	doc, err := json.Marshal(map[string]any{"providers": []any{map[string]any{"id": "idp", "issuer": other.srv.URL},
+		map[string]any{"id": "k8s", "tokenFile": token, "audiences": []string{"netcracker"}, "kubernetes": true}}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +127,7 @@ func TestNew_TakesTheIssuerOfAMarkedProviderFromItsToken(t *testing.T) {
 	if _, err := set.Lookup(Query{Issuer: fromToken, KID: "k1"}); err != nil {
 		t.Errorf("Lookup(the issuer of the token) error = %v, want none", err)
 	}
-	if got := cfg.Providers[0].Issuer; got != "" {
+	if got := cfg.Providers[1].Issuer; got != "" {
 		t.Errorf("New() changed the Config of its caller: Issuer = %q, want empty", got)
 	}
 }
@@ -216,6 +221,21 @@ func TestNew_SendsTheTokenWithDiscoveryUnderAnInClusterIssuerFromIt(t *testing.T
 				t.Errorf("Authorization headers = %q, want %q", server.headers, want)
 			}
 		})
+	}
+}
+
+// A provider whose issuer is still empty is left out of the comparison, and the
+// providers after it are still compared.
+func TestParseConfig_RefusesADuplicateIssuerAfterAProviderThatTakesItsIssuerFromItsToken(t *testing.T) {
+	doc := `{"providers": [
+		{"id": "k8s", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "caFile": "/var/run/ca.crt",
+		 "tokenFile": "/var/run/token", "audiences": ["netcracker"], "kubernetes": true},
+		{"id": "a", "issuer": "https://idp.example"},
+		{"id": "b", "issuer": "https://idp.example"}
+	]}`
+	_, err := ParseConfig([]byte(doc))
+	if err == nil || !strings.Contains(err.Error(), `providers[2]: issuer "https://idp.example" is used by an earlier provider`) {
+		t.Errorf("ParseConfig(%s) error = %v, want the duplicate issuer of providers[2]", doc, err)
 	}
 }
 
@@ -355,8 +375,8 @@ func TestNew_ReadsTheInternalCAOnlyForDiscoveryOutsideTheCluster(t *testing.T) {
 	}
 }
 
-// The reader of this error set CERTIFICATE_FILE_PATH, and the caFile of the
-// provider is not the file that failed.
+// InternalCAFile is not a setting of the providers file, so the error names it
+// apart from the caFile of the provider.
 func TestNew_NamesTheInternalCAFileItCannotUse(t *testing.T) {
 	path := writeFile(t, "internal-ca", "not a certificate")
 	opts := testOptions()
@@ -508,10 +528,10 @@ func TestParseConfig_AcceptsAnotherTokenOnAnUnmarkedProvider(t *testing.T) {
 }
 
 // A caller that builds a Config in code gets the refusal of a parsed file. The
-// token in the file is valid, so nothing else stops the provider.
+// token and the CA in the files are valid, so nothing else stops the provider.
 func TestNew_RefusesAMarkedProviderThatSetsAnIssuer(t *testing.T) {
 	const fromToken = "https://kubernetes.default.svc"
-	_, err := New(Config{Providers: []Provider{{ID: "k8s", Issuer: fromToken, CAFile: writeFile(t, "ca", "unused"),
+	_, err := New(Config{Providers: []Provider{{ID: "k8s", Issuer: fromToken, CAFile: newTLSIdP(t, ecJWK(t, "k1", nil)).caFile(t),
 		TokenFile: writeFile(t, "token", jwtWith(`{"iss": "`+fromToken+`"}`)), Audiences: []string{"netcracker"}, Kubernetes: true}}}, testOptions())
 	if err == nil || !strings.Contains(err.Error(), "remove issuer") {
 		t.Errorf("New() error = %v, want the refusal of the issuer", err)
@@ -669,16 +689,17 @@ func TestIssuerOfTokenFile_ReturnsTheIssOfTheToken(t *testing.T) {
 	}
 }
 
+// The payload that is not base64url ends in an asterisk, and the characters
+// before it decode to a JSON object with an iss, so only the check of the
+// decoding refuses it.
 func TestIssuerOfTokenFile_RefusesAFileWithoutAnIssuer(t *testing.T) {
 	tests := []struct {
 		name, path string
 	}{
-		{"missing file", filepath.Join(t.TempDir(), "absent")},
 		{"empty file", writeFile(t, "token", "\n")},
 		{"two parts", writeFile(t, "token", strings.TrimSuffix(jwtWith(`{"iss": "https://a.example"}`), ".c2ln"))},
 		{"four parts", writeFile(t, "token", jwtWith(`{"iss": "https://a.example"}`)+".c2ln")},
-		{"payload that is not base64url", writeFile(t, "token", "e30.%%%.c2ln")},
-		{"payload that is not JSON", writeFile(t, "token", jwtWith("not json"))},
+		{"payload that is not base64url", writeFile(t, "token", strings.Replace(jwtWith(`{"iss":"https://a.example"}`), ".c2ln", "*.c2ln", 1))},
 		{"payload without iss", writeFile(t, "token", jwtWith(`{"sub": "a"}`))},
 		{"ISS in place of iss", writeFile(t, "token", jwtWith(`{"ISS": "https://a.example"}`))},
 		{"iss that is a number", writeFile(t, "token", jwtWith(`{"iss": 5}`))},
@@ -691,6 +712,22 @@ func TestIssuerOfTokenFile_RefusesAFileWithoutAnIssuer(t *testing.T) {
 				t.Errorf("issuerOfTokenFile(%s) = %q, want an error", tt.path, got)
 			}
 		})
+	}
+}
+
+// The error keeps the cause, so the operator reads that the file is missing
+// rather than that it holds no JWT.
+func TestIssuerOfTokenFile_ReportsAMissingFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "absent")
+	if got, err := issuerOfTokenFile(path); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("issuerOfTokenFile(%s) = %q, %v, want an error that wraps fs.ErrNotExist", path, got, err)
+	}
+}
+
+func TestIssuerOfTokenFile_ReportsAPayloadThatIsNotJSON(t *testing.T) {
+	path := writeFile(t, "token", jwtWith("not json"))
+	if got, err := issuerOfTokenFile(path); !errors.As(err, new(*json.SyntaxError)) {
+		t.Errorf("issuerOfTokenFile(%s) = %q, %v, want an error that wraps a *json.SyntaxError", path, got, err)
 	}
 }
 

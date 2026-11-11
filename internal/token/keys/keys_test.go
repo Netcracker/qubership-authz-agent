@@ -19,9 +19,11 @@ import (
 	"context"
 	"crypto/elliptic"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -261,6 +263,28 @@ func TestNew_RefusesAnUnusableCAFile(t *testing.T) {
 				t.Errorf("New() with caFile %s error = %v, want an error naming caFile", tt.caFile, err)
 			}
 		})
+	}
+}
+
+// x509.SystemCertPool fails only when a file of roots exists and cannot be
+// read, which a test cannot arrange, so the base pool here is a stand-in.
+func TestNewClient_FailsWhenItsBasePoolFails(t *testing.T) {
+	errNoRoots := errors.New("no root store")
+	base := func() (*x509.CertPool, error) { return nil, errNoRoots }
+	caFile := newTLSIdP(t, ecJWK(t, "k1", nil)).caFile(t)
+	client, err := newClient("provider \"k8s\" internal CA file", base, caFile, time.Second)
+	if client != nil || !errors.Is(err, errNoRoots) {
+		t.Errorf("newClient() = %v, %v, want no client and an error that wraps %v", client, err, errNoRoots)
+	}
+}
+
+// The error keeps the cause, so the operator reads that the file is missing
+// rather than that it holds no certificate.
+func TestNewClient_ReportsACAFileItCannotRead(t *testing.T) {
+	caFile := filepath.Join(t.TempDir(), "absent.pem")
+	client, err := newClient("provider \"k8s\" caFile", emptyCertPool, caFile, time.Second)
+	if client != nil || !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("newClient(%s) = %v, %v, want no client and an error that wraps fs.ErrNotExist", caFile, client, err)
 	}
 }
 

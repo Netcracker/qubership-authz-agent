@@ -118,8 +118,7 @@ type Options struct {
 	// InternalCAFile is a PEM bundle trusted together with the system roots
 	// by a provider that sets [Provider.Kubernetes] and finds its keys through
 	// discovery under an issuer outside its cluster. "" leaves the system
-	// roots alone. The caller sets it to CERTIFICATE_FILE_PATH when
-	// INTERNAL_TLS_ENABLED is on.
+	// roots alone.
 	InternalCAFile string
 	// Log receives the diagnostics; nil discards them.
 	Log Logger

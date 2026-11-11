@@ -108,9 +108,10 @@ func checkSubject(claims map[string]json.RawMessage, from keys.Source) error {
 	return nil
 }
 
-// checkAudience applies the audiences of the provider p. With none listed,
-// every token passes. Otherwise aud, a string or an array of strings, has to
-// name one of them exactly, and a token without aud passes only when p sets
+// checkAudience applies the audiences of the provider of from. The aud of a
+// realm token is not checked, and with no audiences listed every token passes.
+// Otherwise aud, a string or an array of strings, has to name one of them
+// exactly, and a token without aud passes only when the provider sets
 // AllowMissingAud.
 func checkAudience(claims map[string]json.RawMessage, from keys.Source) error {
 	p := from.Provider
