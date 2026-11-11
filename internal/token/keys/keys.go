@@ -117,9 +117,8 @@ type Options struct {
 	ReloadWait time.Duration
 	// InternalCAFile is a PEM bundle trusted together with the system roots
 	// by a provider that sets [Provider.Kubernetes] and finds its keys through
-	// discovery under an issuer outside its cluster. "" leaves the system
-	// roots alone. The caller sets it to CERTIFICATE_FILE_PATH when
-	// INTERNAL_TLS_ENABLED is on.
+	// discovery under an issuer that is not an https in-cluster address. ""
+	// leaves the system roots alone.
 	InternalCAFile string
 	// Log receives the diagnostics; nil discards them.
 	Log Logger
@@ -271,19 +270,22 @@ type Set struct {
 }
 
 // New returns a [Set] for cfg, with no keys loaded yet. It takes the issuer of
-// a provider that sets [Provider.Kubernetes] from its [Provider.TokenFile]. When
-// that issuer is outside the cluster and the provider has no JWKSURI, the
-// provider sends no token, does not use its CAFile, and trusts the system roots
+// a provider that sets [Provider.Kubernetes] from its [Provider.TokenFile].
+// Such a provider without a JWKSURI whose issuer is not an https in-cluster
+// address sends no token, does not use its CAFile, and trusts the system roots
 // together with [Options.InternalCAFile]. New fails when cfg breaks
-// [Config.Validate], when such a file holds no token with an iss that is a URL,
-// when an in-cluster issuer has neither a CAFile nor a JWKSURI, when two
-// providers end up with one issuer, and when a CA file cannot be read.
+// [Config.Validate], when the TokenFile of a provider that sets Kubernetes
+// holds no token with a non-empty string iss, when such a provider without a
+// JWKSURI takes an iss that is not an https URL with a host, when an https
+// in-cluster issuer has neither a CAFile nor a JWKSURI, when two providers end
+// up with one issuer, and when a CA file cannot be read or holds no PEM
+// certificate.
 func New(cfg Config, opts Options) (*Set, error) {
 	opts = opts.withDefaults()
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
-	cfg, err := cfg.withIssuers(opts.Log)
+	cfg, err := cfg.withIssuers(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +320,7 @@ func New(cfg Config, opts Options) (*Set, error) {
 
 // clientOf returns the client of p, whose issuer is filled in.
 func clientOf(p Provider, opts Options) (*http.Client, error) {
-	if p.discoversOutsideTheCluster() {
+	if p.discoversWithoutToken() {
 		return newClient(fmt.Sprintf("provider %q internal CA file", p.ID), x509.SystemCertPool, opts.InternalCAFile, opts.HTTPTimeout)
 	}
 	return newClient(fmt.Sprintf("provider %q caFile", p.ID), emptyCertPool, p.CAFile, opts.HTTPTimeout)

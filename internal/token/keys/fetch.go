@@ -114,6 +114,11 @@ type fetcher struct {
 	// warning, but only keys it publishes itself. The fetches of a source are
 	// serialized, so it needs no lock.
 	skipped entrySum
+	// otherIssuer is the iss, other than the issuer of the provider, that the
+	// token named at the last warning of [fetcher.logIssuerChange], and "" while
+	// the token names the issuer of the provider. The fetches of a source are
+	// serialized, so it needs no lock.
+	otherIssuer string
 }
 
 // jwksURI returns the [Provider.JWKSURI] of a provider, and "" for a realm.
@@ -124,12 +129,15 @@ func (f *fetcher) jwksURI() string {
 	return f.source.Provider.JWKSURI
 }
 
-// tokenFile returns the [Provider.TokenFile] of a provider, and "" for a realm.
+// tokenFile returns the [Provider.TokenFile] that a provider sends with its
+// requests: "" for a realm, and for a provider that discovers its keys without
+// its token, as [Provider.discoversWithoutToken] decides.
 func (f *fetcher) tokenFile() string {
-	if f.source.Provider == nil {
+	p := f.source.Provider
+	if p == nil || p.discoversWithoutToken() {
 		return ""
 	}
-	return f.source.Provider.TokenFile
+	return p.TokenFile
 }
 
 // emptyCertPool is the base pool of a caFile that replaces the system roots.
@@ -178,6 +186,7 @@ var errNoUsableKey = errors.New("no usable signing key")
 // provider that sets Kubernetes, and when the JWKS lists two different keys
 // under one kid; a JWKS without a usable signing key fails with errNoUsableKey.
 func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
+	f.logIssuerChange()
 	uri := f.jwksURI()
 	if uri == "" {
 		discovery := strings.TrimRight(f.address, "/") + "/.well-known/openid-configuration"
@@ -194,8 +203,8 @@ func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 		if doc.JWKSURI == "" {
 			return nil, fmt.Errorf("discovery document %s has no jwks_uri", discovery)
 		}
-		if f.tokenFile() != "" && !strings.HasPrefix(doc.JWKSURI, "https://") {
-			return nil, fmt.Errorf("discovery document %s names the jwks_uri %.200q; %s sends its token, so that address has to be https", discovery, doc.JWKSURI, f.source.label())
+		if p := f.source.Provider; p != nil && p.Kubernetes && !isHTTPSURL(doc.JWKSURI) {
+			return nil, fmt.Errorf("discovery document %s names the jwks_uri %.200q; %s sets kubernetes, so it reads its keys only over https; to read the keys without discovery, set jwksUri to %s%s", discovery, doc.JWKSURI, f.source.label(), apiServerJWKSURI, p.caFileRemedy())
 		}
 		uri = doc.JWKSURI
 	}
@@ -211,8 +220,8 @@ func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 }
 
 // get returns the body of a 2xx response to a GET of url, with the bearer token
-// of the [Provider.TokenFile] of a provider that sets one. Any other status, a
-// redirect included, is an error.
+// in the file that [fetcher.tokenFile] returns, where it returns one. Any other
+// status, a redirect included, is an error.
 func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -242,6 +251,30 @@ func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 		return nil, fmt.Errorf("GET %s: response is longer than %d bytes", url, maxResponseBytes)
 	}
 	return body, nil
+}
+
+// logIssuerChange reads the iss of the token that [New] took the issuer of a
+// provider from, whether or not the provider sends that token. It logs a
+// warning each time the iss changes to one other than the issuer of the
+// provider, and an informational record when the token names that issuer
+// again after a warning. A token file it cannot read or parse is skipped with
+// no record, and the next fetch reads it again.
+func (f *fetcher) logIssuerChange() {
+	p := f.source.Provider
+	if p == nil || !p.Kubernetes {
+		return
+	}
+	issuer, err := issuerOfTokenFile(p.TokenFile)
+	switch {
+	case err != nil, issuer == f.otherIssuer, issuer == p.Issuer && f.otherIssuer == "":
+		return
+	case issuer == p.Issuer:
+		f.log.Infof("trusted providers: the token in %s names the issuer %q of %s again, so the warning about the issuer %q no longer holds", p.TokenFile, issuer, f.source.label(), f.otherIssuer)
+		f.otherIssuer = ""
+		return
+	}
+	f.otherIssuer = issuer
+	f.log.Warnf("trusted providers: the token in %s names the issuer %q, and %s accepts only the issuer %q that it took at start; tokens of the new issuer are refused until the agent restarts", p.TokenFile, issuer, f.source.label(), p.Issuer)
 }
 
 func readToken(path string) (string, error) {
