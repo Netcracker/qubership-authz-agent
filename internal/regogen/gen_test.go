@@ -568,6 +568,9 @@ func TestStructuresEqualByTheirElements(t *testing.T) {
 		{"a list with a null differs from one without", `[null, "x"]`, `["x"]`, false},
 		{"objects with equal numbers are equal", `{"n": 1}`, `{"n": 1.0}`, true},
 		{"objects with strings in another case differ", `{"k": "V"}`, `{"k": "v"}`, false},
+		{"an object member and its text differ", `{"n": 1}`, `{"n": "1"}`, false},
+		{"a list element and its text differ", `[1]`, `["1"]`, false},
+		{"a member of an object in a list and its text differ", `[{"n": 1}]`, `[{"n": "1"}]`, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a == resource.b")
