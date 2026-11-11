@@ -372,9 +372,10 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 			f := conj(bind, clause{{cls: c, text: L.field(fieldEqualityKey) + " != " + R.field(fieldEqualityKey), fact: vfact(L)}})
 			return out(spectables.RuleListEq, dnf{t}, dnf{f})
 		}
-		if (cl == spectables.ClassScalar || cl == spectables.ClassObject) && isListClass(cr) && rref {
-			// a number, a boolean, or an object equals no list: only a string
-			// is compared with a list's Java text
+		if (cl == spectables.ClassScalar || cl == spectables.ClassObject || cl == spectables.ClassNull) &&
+			isListClass(cr) && rref {
+			// a number, a boolean, an object, or a null equals no list: only a
+			// string is compared with a list's Java text
 			return out(spectables.RuleEq, dnfFalse, dnf{conj(L.bind(), R.bind())})
 		}
 		if !isScalar(cl) || !isScalar(cr) || !lref && !rref {

@@ -857,6 +857,30 @@ func TestANumberOrAnObjectEqualsNoList(t *testing.T) {
 	}
 }
 
+// Under == a null subject attribute equals no subject list, so != holds for a
+// list of one value; a list of two or more answers the setting
+// right_list_scalar_ops, false for the agent.
+func TestANullEqualsNoList(t *testing.T) {
+	const name, id = `["subj","name"]`, `["subj","id"]`
+	for _, tc := range []struct {
+		name, op, id string
+		want         bool
+	}{
+		{"a null equals no list", "==", `["x"]`, false},
+		{"a null is not a list of one value", "!=", `["x"]`, true},
+		{"a list of two values answers the setting", "!=", `["x", "y"]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.name "+tc.op+" subject.id")
+			values := map[string]Resolved{name: resolved(t, "VALUE", `null`), id: resolved(t, "VALUE", tc.id)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(subject.name %s subject.id, subject.name = null, subject.id = %s) = %v, want %v", tc.op,
+					tc.id, got, tc.want)
+			}
+		})
+	}
+}
+
 // A subject list on the right of CONTAINS or NOT CONTAINS compares element
 // by element when it holds one value; with two or more it answers the
 // setting right_list_scalar_ops, false for the agent, under either operator.
