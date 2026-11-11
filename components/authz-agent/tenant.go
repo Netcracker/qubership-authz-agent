@@ -74,8 +74,7 @@ func (d *defaultTenant) Run(ctx context.Context, maxPause time.Duration) {
 	if d.baseURL == "" || d.name == "" {
 		return
 	}
-	pause := min(time.Second, maxPause)
-	for {
+	for attempt := 0; ; attempt++ {
 		id, err := d.lookup(ctx)
 		if err == nil {
 			d.id.Store(&id)
@@ -83,6 +82,7 @@ func (d *defaultTenant) Run(ctx context.Context, maxPause time.Duration) {
 			logger.Infof("default tenant: %q resolved to %q via tenant-manager", d.name, id)
 			return
 		}
+		pause := retryPause(attempt, maxPause)
 		logger.Warnf("default tenant: %q not resolved via tenant-manager, retrying in %s; "+
 			"the service is not ready, and a check request without tenant_id or Tenant is denied until then: %v",
 			d.name, pause, err)
@@ -91,8 +91,13 @@ func (d *defaultTenant) Run(ctx context.Context, maxPause time.Duration) {
 			return
 		case <-time.After(pause):
 		}
-		pause = min(2*pause, maxPause)
 	}
+}
+
+// retryPause is the pause after the failed attempt numbered attempt, from 0:
+// a second, doubled after each attempt, and maxPause at most.
+func retryPause(attempt int, maxPause time.Duration) time.Duration {
+	return min(time.Second<<min(attempt, 30), maxPause)
 }
 
 func (d *defaultTenant) lookup(ctx context.Context) (string, error) {

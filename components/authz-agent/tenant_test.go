@@ -18,6 +18,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -88,5 +89,24 @@ func TestDefaultTenant_WithoutTenantManagerKeepsTheName(t *testing.T) {
 	d.Run(context.Background(), time.Millisecond)
 	if got := d.Get(); got != "acme" {
 		t.Errorf("Get = %q, want acme", got)
+	}
+}
+
+// After a failed lookup Run pauses a second, then doubles the pause up to
+// its maximum.
+func TestRetryPause(t *testing.T) {
+	var got []time.Duration
+	for attempt := range 6 {
+		got = append(got, retryPause(attempt, 10*time.Second))
+	}
+	want := []time.Duration{time.Second, 2 * time.Second, 4 * time.Second, 8 * time.Second, 10 * time.Second, 10 * time.Second}
+	if !slices.Equal(got, want) {
+		t.Errorf("retryPause(0..5, 10s) = %v, want %v", got, want)
+	}
+	if got := retryPause(0, time.Millisecond); got != time.Millisecond {
+		t.Errorf("retryPause(0, 1ms) = %v, want 1ms", got)
+	}
+	if got := retryPause(1000, 10*time.Second); got != 10*time.Second {
+		t.Errorf("retryPause(1000, 10s) = %v, want 10s", got)
 	}
 }
