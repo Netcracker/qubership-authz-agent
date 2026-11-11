@@ -1006,11 +1006,13 @@ var numberRE = regexp.MustCompile(`^(-?)(\d*)(?:\.(\d*))?(?:[eE]([-+]?\d+))?$`)
 // or 5e0, which print 1000.0, 15.0, and 5.0; plainStripped of any other.
 func structureNumberText(text string) string {
 	m := numberRE.FindStringSubmatch(text)
-	if m == nil || m[4] == "" || strings.HasPrefix(m[4], "-") {
+	if m == nil || m[4] == "" {
 		return plainStripped(text)
 	}
-	// an exponent too long for an int64 leaves no digits after the point
-	if exp, err := strconv.ParseInt(m[4], 10, 64); err == nil && int64(len(m[3])) > exp {
+	// an exponent too long for an int64 leaves digits after the point when
+	// it is negative, and none when it is positive
+	exp, err := strconv.ParseInt(m[4], 10, 64)
+	if err != nil && strings.HasPrefix(m[4], "-") || err == nil && int64(len(m[3])) > exp {
 		return plainStripped(text)
 	}
 	// a number beyond the range of a float64 parses as an infinity with
