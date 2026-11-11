@@ -16,6 +16,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -88,6 +89,44 @@ func TestPIPRoundTripThroughTheServiceReader(t *testing.T) {
 	want := []string{"subject.tenant TOKEN tenant_id", "subject.org HEADER X-Org-Id"}
 	if !slices.Equal(got, want) {
 		t.Errorf("PIPs read back = %q, want %q", got, want)
+	}
+}
+
+// TestPIPExportKeepsTheMappingAndCacheFields: the tables of a MAPPING PIP,
+// the cache settings, and the resource type of a FILTERED PIP reach the
+// service reader as uploaded.
+func TestPIPExportKeepsTheMappingAndCacheFields(t *testing.T) {
+	var input []simplifiedPIP
+	if err := json.Unmarshal([]byte(`[
+		{"name": "subject.permissions", "pipType": "MAPPING", "domain": "billing",
+		 "productMapping": {}, "customMapping": {"ROLE_A": ["P1"]}},
+		{"name": "subject.g", "pipType": "GENERAL", "url": "http://g", "domain": "billing",
+		 "cacheable": true, "cachePeriod": 5},
+		{"name": "subject.f", "pipType": "FILTERED", "url": "http://f", "domain": "billing",
+		 "resourceType": "ORDER"}]`), &input); err != nil {
+		t.Fatalf("unmarshal the upload: %v", err)
+	}
+	for i := range input {
+		input[i].Tenant = "tenant-a"
+	}
+	raw, err := json.Marshal(v3PIPsResponse{Hash: "deadbeef", PIPs: toV3PIPs(input, defaultTenant)})
+	if err != nil {
+		t.Fatalf("marshal v3 envelope: %v", err)
+	}
+
+	tree := readTree(t, []byte(`{"policySets": []}`), raw, "tenant-a")
+	var got []string
+	for _, p := range tree.PIPs {
+		got = append(got, fmt.Sprintf("%s product=%s custom=%s cacheable=%s period=%s rt=%s",
+			p.Name, p.ProductMapping, p.CustomMapping, p.Cacheable, p.CachePeriod, p.ResourceType))
+	}
+	want := []string{
+		`subject.permissions product={} custom={"ROLE_A":["P1"]} cacheable= period= rt=`,
+		`subject.g product= custom= cacheable=true period=5 rt=`,
+		`subject.f product= custom= cacheable= period= rt=ORDER`,
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("PIPs read back =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
 }
 

@@ -63,6 +63,11 @@ type simplifiedPIP struct {
 	Headers           json.RawMessage            `json:"headers,omitempty"`
 	Type              string                     `json:"type,omitempty"`
 	JsonPath          string                     `json:"jsonPath,omitempty"`
+	ResourceType      string                     `json:"resourceType,omitempty"`
+	ProductMapping    json.RawMessage            `json:"productMapping,omitempty"`
+	CustomMapping     json.RawMessage            `json:"customMapping,omitempty"`
+	Cacheable         json.RawMessage            `json:"cacheable,omitempty"`
+	CachePeriod       json.RawMessage            `json:"cachePeriod,omitempty"`
 
 	// ── PDP contract extension (authz-agent-ADR-0066..0069) ──────────────
 	// These four fields do NOT exist in access-control: its authoritative
@@ -146,6 +151,11 @@ type v3PIP struct {
 	JsonPath          string                     `json:"jsonPath,omitempty"`
 	RequestAttributes map[string]json.RawMessage `json:"requestAttributes,omitempty"`
 	Headers           json.RawMessage            `json:"headers,omitempty"`
+	ResourceType      string                     `json:"resourceType,omitempty"`
+	ProductMapping    json.RawMessage            `json:"productMapping,omitempty"`
+	CustomMapping     json.RawMessage            `json:"customMapping,omitempty"`
+	Cacheable         json.RawMessage            `json:"cacheable,omitempty"`
+	CachePeriod       json.RawMessage            `json:"cachePeriod,omitempty"`
 
 	// Extension fields, mirrored from the northbound shape — see the note on
 	// simplifiedPIP. Real access-control never emits these.
@@ -277,6 +287,11 @@ func toV3PIPs(items []simplifiedPIP, defaultTenantID string) []v3PIP {
 			JsonPath:          p.JsonPath,
 			RequestAttributes: p.RequestAttributes,
 			Headers:           p.Headers,
+			ResourceType:      p.ResourceType,
+			ProductMapping:    p.ProductMapping,
+			CustomMapping:     p.CustomMapping,
+			Cacheable:         p.Cacheable,
+			CachePeriod:       p.CachePeriod,
 			Query:             p.Query,
 			Body:              p.Body,
 			TimeoutSeconds:    p.TimeoutSeconds,
