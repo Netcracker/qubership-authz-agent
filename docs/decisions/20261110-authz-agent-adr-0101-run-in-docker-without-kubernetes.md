@@ -258,4 +258,4 @@ Follow-ups:
 
 - **O1.** R6 reads a boolean as `true` or `false` alone, as ADR-0096 R3 does, so `1`, `yes`, and `on`, which the agent
   accepts today, stop the start. The other answer keeps those spellings for every boolean, the one of ADR-0096
-  included. The maintainers decide. It affects R6.
+  included. The architect decides. It affects R6.
