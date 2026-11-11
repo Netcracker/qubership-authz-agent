@@ -36,11 +36,12 @@ import (
 // agent the v3 exports legacy access-control held, as the raw reads of the
 // sequence cases recorded them, and compares the agent's decisions with the
 // legacy goldens recorded at the same point (legacyExportCases). Each point's
-// export is mounted on the export source with a canary set beside it. The
-// point's setup subtest fails, with setupBrokenPrefix, when the agent does not
-// load the export: the pull fails, or the canary is denied. The decisions of
-// that point are then skipped and counted apart, because the agent holds
-// another export. A golden fails when the agent's answer differs from it, unless the kind of its
+// export is mounted on the export source with a canary set beside it in each
+// tenant its decisions run in (legacyCanaries). The point's setup subtests
+// fail, with setupBrokenPrefix, when the agent does not load the export or one
+// of its tenants: the pull fails, or a canary is denied. The decisions that
+// depend on it are then skipped and counted apart (setUpLegacyPoint), because
+// the agent holds another configuration. A golden fails when the agent's answer differs from it, unless the kind of its
 // class (set-type for set-type:DEFAULT) is listed in
 // acceptedExportDivergences and the answer allows nothing the golden denies,
 // or the entry covers such an answer too (AllowsMore). It runs only under
@@ -208,14 +209,16 @@ func (b legacyPointSetup) brokenFor(d legacyDecision) string {
 
 // setUpLegacyPoint mounts the export of p with canaries through l and checks
 // them, the first, which is in the tenant of the case, in the subtest "setup"
-// and each other in a subtest "setup <tenant>". When the mount fails or the
-// first canary is denied, the agent holds another export, and every decision
-// of p is broken. When a later canary is denied, the agent loaded the export
-// without that tenant, and the decisions in that tenant are broken.
+// and each other in a subtest "setup <tenant>". A denied canary means the
+// agent holds another configuration of its tenant, and the decisions in that
+// tenant are broken. When the mount fails, or every canary is denied, the
+// agent holds none of the export, and every decision of p is broken, those in
+// a tenant without a canary included.
 func setUpLegacyPoint(t *testing.T, p legacyExportPoint, canaries []legacyCanary, stand string, l legacyPointLoader) legacyPointSetup {
 	t.Helper()
 	b := legacyPointSetup{tenants: map[string]string{}, stand: stand}
-	b.point = runSetup(t, func(t *testing.T) error {
+	mounted := false
+	first := runSetup(t, func(t *testing.T) error {
 		ps, pips, err := legacyExportDocuments(p, canaries)
 		if err != nil {
 			return err
@@ -223,25 +226,39 @@ func setUpLegacyPoint(t *testing.T, p legacyExportPoint, canaries []legacyCanary
 		if err := l.mount(t, ps, pips); err != nil {
 			return fmt.Errorf("mount the export of step %s: %w", p.step, err)
 		}
-		if c := canaries[0]; !l.allowed(t, c) {
-			return fmt.Errorf("the agent did not load the export of step %s: the canary set %s is "+
-				"denied in tenant %s, so the agent holds another export", p.step, c.rt, c.tenant)
-		}
-		return nil
+		mounted = true
+		return deniedCanary(t, p, canaries[0], l)
 	})
-	if b.point != "" {
+	if !mounted {
+		b.point = first
 		return b
 	}
+	denied := 0
+	if first != "" {
+		b.tenants[canaries[0].tenant] = first
+		denied++
+	}
 	for _, c := range canaries[1:] {
-		b.tenants[c.tenant] = runNamedSetup(t, "setup "+c.tenant, func(t *testing.T) error {
-			if !l.allowed(t, c) {
-				return fmt.Errorf("the agent did not load tenant %s of the export of step %s: the canary set %s "+
-					"is denied there, so the agent holds another configuration of that tenant", c.tenant, p.step, c.rt)
-			}
-			return nil
-		})
+		report := runNamedSetup(t, "setup "+c.tenant, func(t *testing.T) error { return deniedCanary(t, p, c, l) })
+		if report != "" {
+			b.tenants[c.tenant] = report
+			denied++
+		}
+	}
+	if denied == len(canaries) {
+		b.point = first
 	}
 	return b
+}
+
+// deniedCanary checks the canary c of point p through l and returns an error
+// when the agent denies it.
+func deniedCanary(t *testing.T, p legacyExportPoint, c legacyCanary, l legacyPointLoader) error {
+	if l.allowed(t, c) {
+		return nil
+	}
+	return fmt.Errorf("the agent did not load tenant %s of the export of step %s: the canary set %s is denied "+
+		"there, so the agent holds another configuration of that tenant", c.tenant, p.step, c.rt)
 }
 
 // legacyCanaryAllowed checks the canary type for parity-reader and reports
