@@ -178,6 +178,27 @@ func TestABooleanConditionDecidesAsItsText(t *testing.T) {
 	}
 }
 
+// Two top-level sets of one policySetId in one tenant are evaluated as one set
+// when they are identical, and answer as a failed source when they differ.
+func TestTwoSetsOfOnePolicySetIdAreEvaluatedOnlyWhenIdentical(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		second string
+		want   Result
+	}{
+		{"identical", set("a", "true"), Result{Allowed: true}},
+		{"different", set("a", "false"), Result{Reason: "PIP resolution failed: set s-a"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, ``, set("a", "true"), tc.second)
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0] != tc.want {
+				t.Errorf("Decide(read doc) = %+v, want %+v", got[0], tc.want)
+			}
+		})
+	}
+}
+
 // subject.isM2M as an operand of a comparison is ABSENT, whatever the
 // subject's token holds: IS NULL holds, and an equality with a literal
 // aborts the condition. The decision request used to fail with "no resolved

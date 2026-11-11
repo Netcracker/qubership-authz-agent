@@ -369,12 +369,15 @@ func TestFromRegularIsolatesASetWithAnElementOfAnotherTenant(t *testing.T) {
 // tenantId and with the policySetId of the tenant's own set, and nothing in it
 // tells the two apart. A top-level set that applies is isolated when the tenant
 // has another top-level set of its policySetId, whatever the status of the
-// other, while a set of the same policySetId in another tenant is read as
-// usual.
+// other, unless every such set is identical to the first, which is then read
+// alone. Identical means equal in every field and in the unknown keys, with the
+// spaces around a text cut. A set of the same policySetId in another tenant is
+// read as usual.
 func TestFromRegularIsolatesTheSetsOfAPolicySetIdATenantHasTwice(t *testing.T) {
 	t.Parallel()
 
 	const reason = "the tenant has 2 top-level sets with this policySetId"
+	const reason3 = "the tenant has 3 top-level sets with this policySetId"
 	const other = `{"tenantId": "u", "policySetId": "s", "target": "resourceType == 'R'"}`
 	cases := []struct {
 		name        string
@@ -393,6 +396,32 @@ func TestFromRegularIsolatesTheSetsOfAPolicySetIdATenantHasTwice(t *testing.T) {
 			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason + "\"\n" +
 				"  target[set_target]: resourceType EQ \"R1\"\n",
 			[]string{`policy set 0 "s": isolated: ` + reason, `policy set 1 "s": status INACTIVE`}},
+		{"two identical sets", `{"tenantId": "t", "policySetId": "s", "status": "ACTIVE",
+			"target": "resourceType == 'R1'"}`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  target[set_target]: resourceType EQ \"R1\"\n",
+			[]string{`policy set 1 "s": identical to policy set 0, read once`}},
+		{"two sets that differ in the spaces around the target", `{"tenantId": "t", "policySetId": "s",
+			"status": "ACTIVE", "target": "  resourceType == 'R1' "}`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  target[set_target]: resourceType EQ \"R1\"\n",
+			[]string{`policy set 1 "s": identical to policy set 0, read once`}},
+		{"two sets that differ in an unknown key", `{"tenantId": "t", "policySetId": "s", "status": "ACTIVE",
+			"target": "resourceType == 'R1'", "PARITY_extra": 1}`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason + "\"\n" +
+				"  target[set_target]: resourceType EQ \"R1\"\n" +
+				"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason + "\"\n" +
+				"  target[set_target]: resourceType EQ \"R1\"\n",
+			[]string{`policy set 0 "s": isolated: ` + reason, `policy set 1 "s": unknown key PARITY_extra`,
+				`policy set 1 "s": isolated: ` + reason}},
+		{"two identical sets and a third that differs", `{"tenantId": "t", "policySetId": "s", "status": "ACTIVE",
+			"target": "resourceType == 'R1'"}, {"tenantId": "t", "policySetId": "s", "target": "resourceType == 'R2'"}`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason3 + "\"\n" +
+				"  target[set_target]: resourceType EQ \"R1\"\n" +
+				"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason3 + "\"\n" +
+				"  target[set_target]: resourceType EQ \"R1\"\n" +
+				"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason3 + "\"\n" +
+				"  target[set_target]: resourceType EQ \"R2\"\n",
+			[]string{`policy set 0 "s": isolated: ` + reason3, `policy set 1 "s": isolated: ` + reason3,
+				`policy set 2 "s": isolated: ` + reason3}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
