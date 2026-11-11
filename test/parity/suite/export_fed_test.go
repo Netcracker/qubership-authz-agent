@@ -181,6 +181,7 @@ type fakeStand struct {
 	mu      sync.Mutex
 	mounted string
 	answers map[string]string // mounted policySets text -> check body
+	refused map[string]bool   // policySets text the agent does not load
 	pins    []string
 	sent    []*http.Request
 }
@@ -188,6 +189,9 @@ type fakeStand struct {
 func (f *fakeStand) Mount(_ context.Context, policySets, _ json.RawMessage) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if f.refused[string(policySets)] {
+		return &pullStatusError{url: "http://agent/internal/v1/pull", status: http.StatusBadGateway, body: "refused"}
+	}
 	f.mounted = string(policySets)
 	return nil
 }
@@ -226,6 +230,13 @@ func replayBundle(t *testing.T, fn exportFunction, goldens map[string]string) ([
 // replayBundle does, and returns the verdicts of each function.
 func replayFunctions(t *testing.T, fns []exportFunction, goldens map[string]string) ([][]exportResult, *fakeStand) {
 	t.Helper()
+	return replayRefusing(t, fns, goldens, nil)
+}
+
+// replayRefusing replays fns as replayFunctions does, against a stand whose
+// agent does not load the exports refused names by id.
+func replayRefusing(t *testing.T, fns []exportFunction, goldens map[string]string, refused []string) ([][]exportResult, *fakeStand) {
+	t.Helper()
 	dir := t.TempDir()
 	writeFile(t, filepath.Join(dir, "elements.json"), `{"a":{"name":"allows"},"d":{"name":"denies"}}`)
 	writeFile(t, filepath.Join(dir, "exports", "allows.json"), `{"policySets":["a"],"pips":[]}`)
@@ -240,7 +251,14 @@ func replayFunctions(t *testing.T, fns []exportFunction, goldens map[string]stri
 	}
 	stand := &fakeStand{answers: map[string]string{
 		`{"policySets":[{"name":"allows"}]}`: "true", `{"policySets":[{"name":"denies"}]}`: "false",
-		string(emptyExportPolicySets): "false"}}
+		string(emptyExportPolicySets): "false"}, refused: map[string]bool{}}
+	for _, id := range refused {
+		ps, _, err := exports.documents(id)
+		if err != nil {
+			t.Fatal(err)
+		}
+		stand.refused[string(ps)] = true
+	}
 	agent, stub := httptest.NewServer(stand.agent()), httptest.NewServer(stand.stub())
 	t.Cleanup(agent.Close)
 	t.Cleanup(stub.Close)
@@ -317,6 +335,33 @@ func TestExportReplayer_StartsEachFunctionFromTheEmptyExport(t *testing.T) {
 		map[string]string{outcomePath + "a.json": allowed, outcomePath + "d.json": denied})
 	if got := results[1]; len(got) != 1 || got[0].Verdict != verdictMatch {
 		t.Errorf("TestAfter after TestBefore: results = %+v, want one match with the decision of the empty export", got)
+	}
+}
+
+// Between an export the agent did not load and the next one it loads, the agent
+// holds the export before, so the goldens there are reported as a broken setup
+// and their requests are not sent.
+func TestExportReplayer_NeitherSendsNorJudgesTheRequestsOfAnExportTheAgentDidNotLoad(t *testing.T) {
+	allowed, denied := `{"status":200,"decision":true}`, `{"status":200,"decision":false}`
+	fn := exportFunction{Test: "TestX", Events: []exportEvent{
+		{Ev: "export", ID: "allows"}, check("parity/m2m:parity-m2m"), golden(outcomePath+"a.json", "agree", ""),
+		{Ev: "export", ID: "denies"}, check("parity/m2m:parity-m2m"), golden(outcomePath+"d.json", "agree", ""),
+		{Ev: "export", ID: "allows"}, check("parity/m2m:parity-m2m"), golden(outcomePath+"a2.json", "agree", "")}}
+	all, stand := replayRefusing(t, []exportFunction{fn}, map[string]string{
+		outcomePath + "a.json": allowed, outcomePath + "d.json": denied, outcomePath + "a2.json": allowed}, []string{"denies"})
+	results := all[0]
+	var got []exportVerdict
+	for _, res := range results {
+		got = append(got, res.Verdict)
+	}
+	if diff := cmp.Diff([]exportVerdict{verdictMatch, verdictBroken, verdictMatch}, got); diff != "" {
+		t.Fatalf("verdicts (-want +got):\n%s\nresults: %+v", diff, results)
+	}
+	if want := setupBrokenPrefix + ": export denies: the agent did not load the policies"; !strings.HasPrefix(results[1].Detail, want) {
+		t.Errorf("detail of the golden after the refused export = %q, want it to start with %q", results[1].Detail, want)
+	}
+	if len(stand.sent) != 2 {
+		t.Errorf("requests sent = %d, want 2: none after the refused export", len(stand.sent))
 	}
 }
 
@@ -562,34 +607,34 @@ func mountAsking(t *testing.T, status int) ([]string, error) {
 	return seen, err
 }
 
-// A 502 is the agent refusing the export it fetched, which is a result the
-// canary set of the point reports, not a failure of the mount.
-func TestStubExportSource_ReturnsOnceTheAgentAnsweredThePull(t *testing.T) {
+func TestStubExportSource_ReturnsOnceTheAgentStoredThePull(t *testing.T) {
+	seen, err := mountAsking(t, http.StatusNoContent)
+	if err != nil {
+		t.Errorf("Mount with the pull route answering 204 = %v, want nil", err)
+	}
+	want := []string{"PUT /pip-stub/configure", "GET /pip-stub/reset", "POST /internal/v1/pull"}
+	if diff := cmp.Diff(want, seen); diff != "" {
+		t.Errorf("requests of Mount with the pull route answering 204 (-want +got):\n%s", diff)
+	}
+}
+
+// A 502 is the agent refusing the export it fetched, or failing to fetch it;
+// either way it keeps its previous policies, so the mount has failed.
+func TestStubExportSource_FailsOnAPullAnswerOtherThanStoredOrMissing(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		status int
 	}{
-		{"stored", http.StatusNoContent},
 		{"refused", http.StatusBadGateway},
+		{"server error", http.StatusInternalServerError},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			seen, err := mountAsking(t, tc.status)
-			if err != nil {
-				t.Errorf("Mount with the pull route answering %d = %v, want nil", tc.status, err)
-			}
-			want := []string{"PUT /pip-stub/configure", "GET /pip-stub/reset", "POST /internal/v1/pull"}
-			if diff := cmp.Diff(want, seen); diff != "" {
-				t.Errorf("requests of Mount with the pull route answering %d (-want +got):\n%s", tc.status, diff)
+			_, err := mountAsking(t, tc.status)
+			var answered *pullStatusError
+			if !errors.As(err, &answered) || answered.status != tc.status {
+				t.Errorf("Mount with the pull route answering %d = %v, want a *pullStatusError with status %d", tc.status, err, tc.status)
 			}
 		})
-	}
-}
-
-func TestStubExportSource_FailsOnAPullAnswerOtherThanStoredRefusedOrMissing(t *testing.T) {
-	_, err := mountAsking(t, http.StatusInternalServerError)
-	var answered *pullStatusError
-	if !errors.As(err, &answered) || answered.status != http.StatusInternalServerError {
-		t.Errorf("Mount with the pull route answering 500 = %v, want a *pullStatusError with status 500", err)
 	}
 }
 
@@ -602,8 +647,8 @@ func TestExportReport_CountsVerdictsPerFamilyAndListsTenantDifferencesFirst(t *t
 	})
 	for _, want := range []string{
 		"export-fed agent: 4 goldens",
-		"family none           match 0, accepted 0, differs 0, skipped 1",
-		"family policy-set     match 1, accepted 0, differs 1, skipped 0",
+		"family none           match 0, accepted 0, differs 0, skipped 1, setup broken 0",
+		"family policy-set     match 1, accepted 0, differs 1, skipped 0, setup broken 0",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("exportReport lacks %q:\n%s", want, got)
@@ -611,6 +656,39 @@ func TestExportReport_CountsVerdictsPerFamilyAndListsTenantDifferencesFirst(t *t
 	}
 	if strings.Index(got, "DIFFERS b.json") > strings.Index(got, "DIFFERS a.json") {
 		t.Errorf("exportReport lists the tenant difference after another:\n%s", got)
+	}
+}
+
+func TestExportReport_CountsTheGoldensOfABrokenSetupApart(t *testing.T) {
+	broken := setupBrokenPrefix + ": export denies: HTTP 502"
+	got := exportReport([]exportResult{
+		{Test: "TestX", Path: "a.json", Families: []string{"policy-set"}, Verdict: verdictBroken, Detail: broken},
+		{Test: "TestX", Path: "b.json", Families: []string{"policy-set"}, Verdict: verdictBroken, Detail: broken},
+		{Test: "TestX", Path: "c.json", Class: "agree", Families: []string{"policy-set"}, Verdict: verdictMatch},
+	})
+	for _, want := range []string{
+		"family policy-set     match 1, accepted 0, differs 0, skipped 0, setup broken 2",
+		"NOT COMPARED 2 goldens of TestX: " + broken,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("exportReport lacks %q:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "DIFFERS") {
+		t.Errorf("exportReport lists a golden of the broken setup as a difference:\n%s", got)
+	}
+}
+
+func TestSetupBroken_StartsWithThePrefixOnce(t *testing.T) {
+	for _, tc := range []struct{ name, err, want string }{
+		{"a plain error", "HTTP 502", "SETUP BROKEN: HTTP 502"},
+		{"an error that carries the prefix", "SETUP BROKEN: HTTP 502", "SETUP BROKEN: HTTP 502"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := setupBroken(errors.New(tc.err)); got != tc.want {
+				t.Errorf("setupBroken(%q) = %q, want %q", tc.err, got, tc.want)
+			}
+		})
 	}
 }
 
@@ -631,6 +709,7 @@ func TestExportRunProblem_NamesARunThatComparedNothing(t *testing.T) {
 	}{
 		{"no golden selected", nil, true},
 		{"every golden skipped", []exportResult{{Verdict: verdictSkipped}, {Verdict: verdictSkipped}}, true},
+		{"every golden skipped or of a broken setup", []exportResult{{Verdict: verdictSkipped}, {Verdict: verdictBroken}}, true},
 		{"one golden compared", []exportResult{{Verdict: verdictSkipped}, {Verdict: verdictDiffers}}, false},
 	}
 	for _, tc := range cases {

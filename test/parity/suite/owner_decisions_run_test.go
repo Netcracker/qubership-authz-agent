@@ -18,6 +18,7 @@ package paritysuite
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -38,8 +39,11 @@ import (
 // The exports come from the case files and the goldens: the regular cases
 // whose upload legacy accepted (regularOwnerDecisionCases), and the points
 // of part A whose raw reads hold the form (legacyOwnerDecisionCases). Each
-// export is mounted with the canary set of part A, and a denied canary means
-// the agent refused the export. Each of the three checks fails on its own.
+// export is mounted with the canary set of part A. Each of the three checks is a subtest of the case: "setup", which
+// fails with setupBrokenPrefix when the agent does not load the export (the
+// pull fails, or the canary is denied); "health-names-failing-sets"; and one
+// per decision, named by its golden path. The last two are skipped when the
+// setup broke, since the agent then holds another export.
 // It runs only under PARITY_PROFILE=authz-agent-export
 // (make parity-export-owner-decisions); PARITY_EXPORT_RUN selects the cases
 // whose name it matches.
@@ -69,50 +73,57 @@ func TestExportFedOwnerDecisions(t *testing.T) {
 		}
 		ran++
 		t.Run(oc.name, func(t *testing.T) {
-			s.SetT(t)
 			defer func() { s.cfg.TenantID = stand }()
-			for _, c := range []*PipController{s.pipMock, s.eaMock, s.umMock} {
-				if err := c.ResetPinnedRoutes(ctx); err != nil {
-					t.Fatalf("reset the stubs: %v", err)
-				}
-			}
-			s.pinRoutes(oc.pins)
-			s.pinUserManagement(oc.userManagement)
 			canary, tenant := legacyCanaryType(i+1), valueOr(oc.tenant, stand)
-			ps, pips, err := legacyExportDocuments(legacyExportPoint{policySets: oc.policySets, pips: oc.pips}, canary, tenant)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if err := source.Mount(ctx, ps, pips); err != nil {
-				t.Fatalf("mount the export: %v", err)
-			}
-			for _, f := range oc.forms {
-				t.Logf("form %s: %s, in set %s", f.kind, f.what, strings.Join(f.sets, " / "))
-			}
-			s.cfg.TenantID = tenant
-			if !s.legacyCanaryAllowed(canary) {
-				t.Errorf("the agent refused the export: the canary set %s is denied, so the agent kept its previous "+
-					"snapshot; want the export accepted with the set as a failed source", canary)
-			}
-			status, body, err := agentHealth(ctx, cfg.ACBaseURL)
-			if err != nil {
-				t.Errorf("GET /health: %v", err)
-			}
-			for _, f := range oc.forms {
-				if err == nil && !healthNames(body, f) {
-					t.Errorf("/health answered %d and names none of the sets [%s] that hold %s: %s",
-						status, strings.Join(f.sets, ", "), f.what, truncate(body, 500))
+			broken := runSetup(t, func(t *testing.T) error {
+				s.SetT(t)
+				for _, c := range []*PipController{s.pipMock, s.eaMock, s.umMock} {
+					if err := c.ResetPinnedRoutes(ctx); err != nil {
+						return fmt.Errorf("reset the stubs: %w", err)
+					}
 				}
-			}
+				s.pinRoutes(oc.pins)
+				s.pinUserManagement(oc.userManagement)
+				ps, pips, err := legacyExportDocuments(legacyExportPoint{policySets: oc.policySets, pips: oc.pips}, canary, tenant)
+				if err != nil {
+					return err
+				}
+				if err := source.Mount(ctx, ps, pips); err != nil {
+					return fmt.Errorf("mount the export: %w; want the export accepted with the set as a failed source", err)
+				}
+				for _, f := range oc.forms {
+					t.Logf("form %s: %s, in set %s", f.kind, f.what, strings.Join(f.sets, " / "))
+				}
+				s.cfg.TenantID = tenant
+				if !s.legacyCanaryAllowed(canary) {
+					return fmt.Errorf("the agent refused the export: the canary set %s is denied, so the agent kept its "+
+						"previous snapshot; want the export accepted with the set as a failed source", canary)
+				}
+				return nil
+			})
+			t.Run("health-names-failing-sets", func(t *testing.T) {
+				skipIfBroken(t, broken)
+				status, body, err := agentHealth(ctx, cfg.ACBaseURL)
+				if err != nil {
+					t.Fatalf("GET /health: %v", err)
+				}
+				for _, f := range oc.forms {
+					if !healthNames(body, f) {
+						t.Errorf("/health answered %d and names none of the sets [%s] that hold %s: %s",
+							status, strings.Join(f.sets, ", "), f.what, truncate(body, 500))
+					}
+				}
+			})
 			for _, d := range oc.decisions {
-				s.cfg.TenantID = d.tenant
-				if d.tenant == "" {
-					s.cfg.TenantID = stand
-				}
-				_, outcome := s.sendRequest(oc.resourceType, d.request, s.requestTokens(d.request))
-				if problem := refusalProblem(outcome); problem != "" {
-					t.Errorf("%s: legacy answered %d; want 200 with nothing allowed, got %s", d.path, d.status, problem)
-				}
+				t.Run(d.path, func(t *testing.T) {
+					skipIfBroken(t, broken)
+					s.SetT(t)
+					s.cfg.TenantID = valueOr(d.tenant, stand)
+					_, outcome := s.sendRequest(oc.resourceType, d.request, s.requestTokens(d.request))
+					if problem := refusalProblem(outcome); problem != "" {
+						t.Errorf("%s: legacy answered %d; want 200 with nothing allowed, got %s", d.path, d.status, problem)
+					}
+				})
 			}
 		})
 	}

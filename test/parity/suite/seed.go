@@ -226,7 +226,8 @@ func HelperDeletePolicySetsByExternalID(ctx context.Context, cfg Config, m2mToke
 // profile the uploads go to authz-policy-admin, and the status is its own: it
 // refuses part of what the PAP refuses, with a body of its own wording. After an
 // accepted upload the call waits for the agent's next pull; the status 200 then
-// says nothing about the agent.
+// says nothing about the agent, and a load the agent did not complete returns
+// 200 with an *[agentLoadError].
 func UploadIsolatedPolicies(ctx context.Context, cfg Config, tokens *TokenFactory, domain string, pips, policies []any) (int, error) {
 	status, _, err := UploadIsolatedPoliciesWithQuery(ctx, cfg, tokens, domain, pips, policies, "")
 	return status, err
@@ -261,7 +262,7 @@ func UploadIsolatedPoliciesWithQuery(ctx context.Context, cfg Config, tokens *To
 			}
 		}
 		if err := awaitPull(ctx); err != nil {
-			return 0, nil, err
+			return http.StatusOK, nil, err
 		}
 		return http.StatusOK, nil, nil
 	}
@@ -330,14 +331,17 @@ func pullSettleDelay() time.Duration {
 // policies it fetched after the request. With the variable empty, or on the 404
 // of an agent built without the tag, it waits pullSettleDelay. Any other
 // answer, or no answer, means the agent did not load what the seeder wrote, and
-// awaitPull returns an error rather than let the case run against the policies
-// of the previous one. The wait is a fixed delay, not a poll, for the same
+// awaitPull returns an *[agentLoadError] rather than let the case run against
+// the policies of the previous one. The wait is a fixed delay, not a poll, for the same
 // reason the runtime suite's waitForACPull is: the agent exposes no "applied
 // revision" that a poll could compare against.
 func awaitPull(ctx context.Context) error {
 	loaded, err := pullNow(ctx)
-	if err != nil || loaded {
-		return err
+	if err != nil {
+		return &agentLoadError{err: err}
+	}
+	if loaded {
+		return nil
 	}
 	select {
 	case <-ctx.Done():
@@ -345,6 +349,18 @@ func awaitPull(ctx context.Context) error {
 	}
 	return nil
 }
+
+// agentLoadError is a load the agent did not complete after the seeder wrote
+// the policies, so the agent holds the policies it had before. Its message
+// starts with setupBrokenPrefix: a case that fails on it has a broken setup,
+// not a wrong answer.
+type agentLoadError struct {
+	err error
+}
+
+func (e *agentLoadError) Error() string { return setupBroken(e.err) }
+
+func (e *agentLoadError) Unwrap() error { return e.err }
 
 // pullNowTimeout bounds one POST to PARITY_AGENT_PULL_URL. A load on the
 // parity stand takes well under a second; an agent whose fetch from the stub
