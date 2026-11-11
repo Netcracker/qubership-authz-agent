@@ -114,6 +114,37 @@ func TestDomainsAreIndependentAndExportIsTheUnion(t *testing.T) {
 	}
 }
 
+// TestTwoDomainsKeepTheirPoliciesInTwoSets: the same component and resource
+// type uploaded to two domains are two policy sets, as in access-control,
+// where each set is its own filter group.
+func TestTwoDomainsKeepTheirPoliciesInTwoSets(t *testing.T) {
+	mux := newTestServer(t, t.TempDir())
+	for _, domain := range []string{"domain1", "domain2"} {
+		body := `[{"component":"PARITY","resourceType":"PARITY_DOC","operation":"READ","roles":["ROLE_A"],` +
+			`"rsqlPredicate":"` + domain + `==1"}]`
+		if rec := do(t, mux, http.MethodPut, policiesPath+domain, body); rec.Code != http.StatusOK {
+			t.Fatalf("%s upload: got %d, body %s", domain, rec.Code, rec.Body.String())
+		}
+	}
+
+	var resp v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
+	var got []string
+	for _, ps := range resp.PolicySets {
+		var preds []string
+		for _, p := range ps.Policies {
+			for _, r := range p.Rules {
+				preds = append(preds, r.RSQLPredicate)
+			}
+		}
+		got = append(got, ps.PolicySetID+" "+strings.Join(preds, ","))
+	}
+	want := []string{"ps-domain1-PARITY-PARITY_DOC domain1==1", "ps-domain2-PARITY-PARITY_DOC domain2==1"}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("policy sets =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
 // An unknown domain reads as an empty collection, which is what access-control
 // answers for a domain nobody has uploaded yet.
 func TestUnknownDomainReadsEmpty(t *testing.T) {

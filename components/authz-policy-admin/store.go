@@ -163,7 +163,7 @@ func (s *store) loadFromDisk() {
 			logger.Errorf("%s is malformed, skipping domain %q: %v", f.path, f.domain, err)
 			continue
 		}
-		s.policies[scopeKey(f.tenant, f.domain)] = withPolicyTenant(normalizePolicies(items), f.tenant)
+		s.policies[scopeKey(f.tenant, f.domain)] = withPolicyScope(normalizePolicies(items), f.tenant, f.domain)
 		logger.Infof("loaded %d policies of tenant %q for domain %q from %s", len(items), f.tenant, f.domain, f.path)
 	}
 	for _, f := range globDomainFiles(s.dataDir, pipsFilePrefix) {
@@ -199,7 +199,7 @@ func (s *store) SetDomainPolicies(tenant, domain string, items []simplifiedPolic
 
 	key := scopeKey(tenant, domain)
 	previous, existed := s.policies[key]
-	s.policies[key] = withPolicyTenant(normalizePolicies(items), tenant)
+	s.policies[key] = withPolicyScope(normalizePolicies(items), tenant, domain)
 	if err := s.commitLocked(scopeFileName(policiesFilePrefix, tenant, domain), raw); err != nil {
 		if existed {
 			s.policies[key] = previous
@@ -399,9 +399,10 @@ func hashItems(v any) string {
 	return hex.EncodeToString(sum[:])[:16]
 }
 
-func withPolicyTenant(items []simplifiedPolicy, tenant string) []simplifiedPolicy {
+func withPolicyScope(items []simplifiedPolicy, tenant, domain string) []simplifiedPolicy {
 	for i := range items {
 		items[i].Tenant = tenant
+		items[i].Domain = domain
 	}
 	return items
 }

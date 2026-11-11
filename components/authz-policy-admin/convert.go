@@ -33,7 +33,9 @@ import (
 // the stub has no endpoint for.
 type simplifiedPolicy struct {
 	// Tenant is the tenant that uploaded the policy, from the request.
-	Tenant           string `json:"-"`
+	Tenant string `json:"-"`
+	// Domain is the domain the policy was uploaded to, from the request.
+	Domain           string `json:"-"`
 	Component        string `json:"component"`
 	ResourceType     string `json:"resourceType"`
 	Operation        string `json:"operation"`
@@ -168,13 +170,14 @@ type v3PIP struct {
 // ── Conversion: simplified → v3 ──────────────────────────────────────────────
 
 // toV3PolicySets converts simplified policies into v3 policy sets.
-// Policies are grouped by (component, resourceType) → PolicySet,
+// Policies are grouped by (upload domain, component, resourceType) → PolicySet,
 // then by (roles) → Policy, then each (operation, condition, rsqlPredicate)
 // becomes one Rule.  This mirrors what access-control creates when a SIMPLIFIED
 // policy is uploaded via the simplified API.
 func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3PolicySet {
-	// Group by (domain/component, resourceType).
-	type psKey struct{ tenant, domain, resourceType string }
+	// Group by (upload domain, component, resourceType): legacy keeps the
+	// policies of two domains in two sets, and so in two filter groups.
+	type psKey struct{ tenant, upload, domain, resourceType string }
 	type pKey struct{ roles string }
 	type ruleVal struct {
 		operation        string
@@ -190,7 +193,8 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 	psMap := make(map[psKey]map[pKey][]ruleVal)
 
 	for _, p := range items {
-		pk := psKey{tenant: exportTenant(p.Tenant, defaultTenantID), domain: p.Component, resourceType: p.ResourceType}
+		pk := psKey{tenant: exportTenant(p.Tenant, defaultTenantID), upload: p.Domain, domain: p.Component,
+			resourceType: p.ResourceType}
 		if _, seen := psMap[pk]; !seen {
 			psOrder = append(psOrder, pk)
 			psMap[pk] = make(map[pKey][]ruleVal)
@@ -249,8 +253,12 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 			})
 		}
 
+		id := fmt.Sprintf("ps-%s-%s", pk.domain, pk.resourceType)
+		if pk.upload != "" {
+			id = fmt.Sprintf("ps-%s-%s-%s", pk.upload, pk.domain, pk.resourceType)
+		}
 		result = append(result, v3PolicySet{
-			PolicySetID:        fmt.Sprintf("ps-%s-%s", pk.domain, pk.resourceType),
+			PolicySetID:        id,
 			Name:               fmt.Sprintf("%s-%s policy set", pk.domain, pk.resourceType),
 			Type:               "SIMPLIFIED",
 			Domain:             pk.domain,
