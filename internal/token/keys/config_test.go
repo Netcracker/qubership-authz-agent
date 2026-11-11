@@ -128,33 +128,53 @@ func TestNew_TakesTheIssuerOfAMarkedProviderFromItsToken(t *testing.T) {
 }
 
 // With an unexpected iss in the token, the agent refuses every token of the
-// cluster with TOKEN_ISSUER_UNKNOWN, so the reader needs the value it took and
-// whether discovery still uses the token and the CA.
+// cluster with TOKEN_ISSUER_UNKNOWN, so the reader needs the value it took and,
+// outside the cluster, the roots that discovery trusts in place of the CA and
+// the jwksUri that sends the token and uses the CA again.
 func TestNew_RecordsTheIssuerItTakesFromAToken(t *testing.T) {
 	ca := newTLSIdP(t, ecJWK(t, "k1", nil)).caFile(t)
+	const remedy = "; to send the token and use caFile, set jwksUri to https://kubernetes.default.svc/openid/v1/jwks"
 	tests := []struct {
-		name       string
-		issuer     string
-		wantIgnore bool
+		name, issuer, internalCA string
+		want, wantAbsent         []string
 	}{
-		{"in-cluster issuer", "https://kubernetes.default.svc", false},
-		{"issuer outside the cluster", "https://oidc.example/cluster", true},
+		{"in-cluster issuer", "https://kubernetes.default.svc", ca,
+			nil, []string{"instead of caFile", "internal CA file", "set jwksUri"}},
+		{"issuer outside the cluster", "https://oidc.example/cluster", ca,
+			[]string{"trusts the system roots and the internal CA file " + ca + " instead of caFile" + remedy}, nil},
+		{"issuer outside the cluster without an internal CA file", "https://oidc.example/cluster", "",
+			[]string{"trusts the system roots instead of caFile" + remedy}, nil},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			log := &infoRecorder{}
 			opts := testOptions()
 			opts.Log = log
+			opts.InternalCAFile = tt.internalCA
 			token := writeFile(t, "token", jwtWith(`{"iss": "`+tt.issuer+`"}`))
 			mustNew(t, Config{Providers: []Provider{{ID: "k8s", CAFile: ca, TokenFile: token,
 				Audiences: []string{"netcracker"}, Kubernetes: true}}}, opts)
 			if len(log.infos) != 1 || !strings.Contains(log.infos[0], tt.issuer) || !strings.Contains(log.infos[0], `provider "k8s"`) {
 				t.Fatalf("records = %q, want one that names the provider and %q", log.infos, tt.issuer)
 			}
-			if got := strings.Contains(log.infos[0], "ignores caFile"); got != tt.wantIgnore {
-				t.Errorf("record %q says that caFile is ignored = %t, want %t", log.infos[0], got, tt.wantIgnore)
-			}
+			checkRecord(t, log.infos[0], tt.want, tt.wantAbsent)
 		})
+	}
+}
+
+// checkRecord reports each string in want that record does not contain, and
+// each string in absent that record contains.
+func checkRecord(t *testing.T, record string, want, absent []string) {
+	t.Helper()
+	for _, part := range want {
+		if !strings.Contains(record, part) {
+			t.Errorf("record %q, want it to name %q", record, part)
+		}
+	}
+	for _, part := range absent {
+		if strings.Contains(record, part) {
+			t.Errorf("record %q, want it without %q", record, part)
+		}
 	}
 }
 
@@ -221,12 +241,14 @@ func TestNew_RefusesTwoProvidersThatTakeOneIssuerFromTheirTokens(t *testing.T) {
 	}
 }
 
+// A marked provider sets no issuer, so the error names the token file the iss
+// came from, not the issuer setting.
 func TestNew_RefusesATokenWhoseIssIsNotAURL(t *testing.T) {
 	token := writeFile(t, "token", jwtWith(`{"iss": "cluster-1"}`))
 	_, err := New(Config{Providers: []Provider{{ID: "k8s", JWKSURI: "https://kubernetes.default.svc/openid/v1/jwks",
 		CAFile: "/var/run/ca.crt", TokenFile: token, Audiences: []string{"netcracker"}, Kubernetes: true}}}, testOptions())
-	if err == nil || !strings.Contains(err.Error(), `provider "k8s" issuer`) {
-		t.Errorf("New() error = %v, want one that names the issuer of the provider", err)
+	if err == nil || !containsAll(err.Error(), `provider "k8s" takes its issuer from the iss of the token in `+token, `"cluster-1"`, "fix tokenFile") {
+		t.Errorf("New() error = %v, want one that names provider \"k8s\", %s, and its iss", err, token)
 	}
 }
 
@@ -638,12 +660,12 @@ func jwtWith(payload string) string {
 func TestIssuerOfTokenFile_ReturnsTheIssOfTheToken(t *testing.T) {
 	const want = "https://kubernetes.default.svc.cluster.local"
 	path := writeFile(t, "token", jwtWith(`{"iss": "`+want+`", "sub": "system:serviceaccount:ns:app"}`)+"\n")
-	got, err := IssuerOfTokenFile(path)
+	got, err := issuerOfTokenFile(path)
 	if err != nil {
-		t.Fatalf("IssuerOfTokenFile() error = %v", err)
+		t.Fatalf("issuerOfTokenFile() error = %v", err)
 	}
 	if got != want {
-		t.Errorf("IssuerOfTokenFile() = %q, want %q", got, want)
+		t.Errorf("issuerOfTokenFile() = %q, want %q", got, want)
 	}
 }
 
@@ -664,9 +686,9 @@ func TestIssuerOfTokenFile_RefusesAFileWithoutAnIssuer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := IssuerOfTokenFile(tt.path)
+			got, err := issuerOfTokenFile(tt.path)
 			if err == nil {
-				t.Errorf("IssuerOfTokenFile(%s) = %q, want an error", tt.path, got)
+				t.Errorf("issuerOfTokenFile(%s) = %q, want an error", tt.path, got)
 			}
 		})
 	}

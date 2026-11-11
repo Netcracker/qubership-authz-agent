@@ -283,7 +283,7 @@ func New(cfg Config, opts Options) (*Set, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
-	cfg, err := cfg.withIssuers(opts.Log)
+	cfg, err := cfg.withIssuers(opts)
 	if err != nil {
 		return nil, err
 	}

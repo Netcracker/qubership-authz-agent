@@ -111,6 +111,11 @@ type fetcher struct {
 	// to load a key skipped, so a parse warns only when those keys change. The
 	// fetches of a source are serialized, so it needs no lock.
 	skipped string
+	// otherIssuer is the iss, other than the issuer of the provider, that the
+	// token named at the last warning of [fetcher.checkIssuerOf], and "" while
+	// the token names the issuer of the provider. The fetches of a source are
+	// serialized, so it needs no lock.
+	otherIssuer string
 }
 
 // jwksURI returns the [Provider.JWKSURI] of a provider, and "" for a realm.
@@ -192,7 +197,7 @@ func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 			return nil, fmt.Errorf("discovery document %s has no jwks_uri", discovery)
 		}
 		if f.tokenFile() != "" && !strings.HasPrefix(doc.JWKSURI, "https://") {
-			return nil, fmt.Errorf("discovery document %s names the jwks_uri %.200q; %s sends its token, so that address has to be https", discovery, doc.JWKSURI, f.source.label())
+			return nil, fmt.Errorf("discovery document %s names the jwks_uri %.200q; %s sends its token, so that address has to be https; to read the keys without discovery, set jwksUri to %s", discovery, doc.JWKSURI, f.source.label(), apiServerJWKSURI)
 		}
 		uri = doc.JWKSURI
 	}
@@ -221,6 +226,7 @@ func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s tokenFile: %w", f.source.label(), err)
 		}
+		f.checkIssuerOf(token, path)
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	resp, err := f.client.Do(req)
@@ -239,6 +245,28 @@ func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 		return nil, fmt.Errorf("GET %s: response is longer than %d bytes", url, maxResponseBytes)
 	}
 	return body, nil
+}
+
+// checkIssuerOf warns when token, read from path for a provider that sets
+// [Provider.Kubernetes], names an iss other than the issuer [New] took for the
+// provider and other than the iss of its last warning, so it warns each time
+// the iss changes to one the provider does not accept. A token whose iss
+// cannot be read is left to the request it goes with.
+func (f *fetcher) checkIssuerOf(token, path string) {
+	p := f.source.Provider
+	if p == nil || !p.Kubernetes {
+		return
+	}
+	issuer, err := issuerOf(token)
+	switch {
+	case err != nil, issuer == f.otherIssuer:
+		return
+	case issuer == p.Issuer:
+		f.otherIssuer = ""
+		return
+	}
+	f.otherIssuer = issuer
+	f.log.Warnf("trusted providers: the token in %s names the issuer %q, and %s accepts only the issuer %q that it took at start; tokens of the new issuer are refused until the agent restarts", path, issuer, f.source.label(), p.Issuer)
 }
 
 func readToken(path string) (string, error) {

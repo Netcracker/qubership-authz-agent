@@ -423,8 +423,8 @@ func TestFetch_RefusesToSendTheTokenToAnHTTPJWKSURI(t *testing.T) {
 	jwks := []byte(`{"keys": [` + string(ecJWK(t, "k1", nil)) + `]}`)
 	server := &clusterAPIServer{jwksURI: jwksURI, jwks: jwks}
 	f := providerFetcher(&Provider{ID: "k8s", Issuer: "https://kubernetes.default.svc", TokenFile: writeFile(t, "token", "sa-token")}, &http.Client{Transport: server}, &warnRecorder{})
-	if _, err := f.fetch(t.Context()); err == nil || !strings.Contains(err.Error(), "has to be https") {
-		t.Errorf("fetch() error = %v, want one that names https", err)
+	if _, err := f.fetch(t.Context()); err == nil || !containsAll(err.Error(), "has to be https", "set jwksUri to https://kubernetes.default.svc/openid/v1/jwks") {
+		t.Errorf("fetch() error = %v, want one that names https and the jwksUri that avoids discovery", err)
 	}
 	if slices.Contains(server.urls, jwksURI) {
 		t.Errorf("requests = %q, want none to %q", server.urls, jwksURI)
@@ -437,6 +437,61 @@ func TestFetch_RefusesToSendTheTokenToAnHTTPJWKSURI(t *testing.T) {
 	}
 	if got := strings.Join(control.headers, ""); got != "" {
 		t.Errorf("Authorization headers without a token = %q, want none", got)
+	}
+}
+
+// The provider took https://kubernetes.default.svc at start, and the kubelet
+// then rotates the token through other issuers. A token whose iss cannot be
+// read is left to the API server.
+func TestFetch_WarnsWhenTheTokenChangesToAnIssuerTheProviderDoesNotAccept(t *testing.T) {
+	const own = "https://kubernetes.default.svc"
+	server := &clusterAPIServer{jwks: []byte(`{"keys": [` + string(ecJWK(t, "k1", nil)) + `]}`)}
+	path := writeFile(t, "token", jwtWith(`{"iss": "`+own+`"}`))
+	log := &warnRecorder{}
+	f := providerFetcher(&Provider{ID: "k8s", Issuer: own, JWKSURI: own + "/openid/v1/jwks", TokenFile: path, Kubernetes: true},
+		&http.Client{Transport: server}, log)
+	steps := []struct {
+		name, token  string
+		wantWarnings int
+	}{
+		{"the issuer of the provider", jwtWith(`{"iss": "` + own + `"}`), 0},
+		{"issuer a", jwtWith(`{"iss": "https://oidc.example/a"}`), 1},
+		{"issuer a again", jwtWith(`{"iss": "https://oidc.example/a"}`), 1},
+		{"a token that is not a JWT", "sa-token", 1},
+		{"issuer b", jwtWith(`{"iss": "https://oidc.example/b"}`), 2},
+		{"the issuer of the provider after issuer b", jwtWith(`{"iss": "` + own + `"}`), 2},
+		{"issuer b after the issuer of the provider", jwtWith(`{"iss": "https://oidc.example/b"}`), 3},
+	}
+	for _, step := range steps {
+		if err := os.WriteFile(path, []byte(step.token), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := f.fetch(t.Context()); err != nil {
+			t.Fatalf("fetch() after %s error = %v", step.name, err)
+		}
+		if len(log.warnings) != step.wantWarnings {
+			t.Errorf("warnings after %s = %q, want %d", step.name, log.warnings, step.wantWarnings)
+		}
+	}
+	for _, w := range log.warnings {
+		if !containsAll(w, path, `provider "k8s"`, `the issuer "`+own+`"`, "restarts") {
+			t.Errorf("warning %q, want one that names %s, provider \"k8s\", its issuer, and the restart", w, path)
+		}
+	}
+}
+
+// The token of a provider without the mark is a credential for that provider,
+// and its iss has nothing to do with the issuer of the provider.
+func TestFetch_DoesNotCompareTheIssuerOfTheTokenOfAnUnmarkedProvider(t *testing.T) {
+	server := &clusterAPIServer{jwks: []byte(`{"keys": [` + string(ecJWK(t, "k1", nil)) + `]}`)}
+	log := &warnRecorder{}
+	f := providerFetcher(&Provider{ID: "idp", Issuer: "https://idp.example", JWKSURI: "https://idp.example/jwks",
+		TokenFile: writeFile(t, "token", jwtWith(`{"iss": "https://client.example"}`))}, &http.Client{Transport: server}, log)
+	if _, err := f.fetch(t.Context()); err != nil {
+		t.Fatalf("fetch() error = %v", err)
+	}
+	if len(log.warnings) != 0 {
+		t.Errorf("warnings = %q, want none", log.warnings)
 	}
 }
 

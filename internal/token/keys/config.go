@@ -113,6 +113,13 @@ type Provider struct {
 	// API server or for another service is refused. A provider whose id is
 	// kubernetes in any case, or whose issuer or jwksUri is on an in-cluster
 	// name of the API server, has to set the mark.
+	//
+	// [New] takes the issuer from TokenFile once. When the token there later
+	// names another iss, as after the cluster changes its issuer, the
+	// provider still accepts only the first one, so the tokens of the new
+	// issuer are refused until a restart. A fetch of the keys that sends the
+	// token logs a warning each time the iss of the token changes to one the
+	// provider does not accept.
 	Kubernetes bool `json:"kubernetes,omitempty"`
 }
 
@@ -126,6 +133,10 @@ const kubernetesAudience = "netcracker"
 // apiServerTokenDir is the directory of the Pod that holds the token for the
 // API server, which only a provider that sets [Provider.Kubernetes] sends.
 const apiServerTokenDir = "/var/run/secrets/tokens/kubernetes"
+
+// apiServerJWKSURI is the address of the keys on the API server, which a
+// provider that sets [Provider.Kubernetes] reads with its token and caFile.
+const apiServerJWKSURI = "https://kubernetes.default.svc/openid/v1/jwks"
 
 // ReadConfig reads and validates the trusted providers file at path.
 func ReadConfig(path string) (Config, error) {
@@ -296,34 +307,44 @@ func checkHTTPURL(raw string) error {
 	return nil
 }
 
-// IssuerOfTokenFile returns the iss of the JWT in the file at path, without
+// issuerOfTokenFile returns the iss of the JWT in the file at path, without
 // checking its signature. A Pod holds such a file, written by the kubelet, so
 // a [Provider] of the API server can take the issuer of the cluster from it
 // rather than from a setting. It returns an error when the file cannot be read
-// or does not hold three parts whose second is a payload with a non-empty
-// string iss.
-func IssuerOfTokenFile(path string) (string, error) {
+// or when [issuerOf] fails on its token.
+func issuerOfTokenFile(path string) (string, error) {
 	token, err := readToken(path)
 	if err != nil {
 		return "", fmt.Errorf("issuer of a token file: %w", err)
 	}
+	issuer, err := issuerOf(token)
+	if err != nil {
+		return "", fmt.Errorf("issuer of a token file: %s: %w", path, err)
+	}
+	return issuer, nil
+}
+
+// issuerOf returns the iss of the compact JWT token, without checking its
+// signature. It returns an error when token does not hold three parts whose
+// second is a base64url payload with a non-empty string iss.
+func issuerOf(token string) (string, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
-		return "", fmt.Errorf("issuer of a token file: %s holds %d parts separated by dots, and a JWT has 3", path, len(parts))
+		return "", fmt.Errorf("the token holds %d parts separated by dots, and a JWT has 3", len(parts))
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return "", fmt.Errorf("issuer of a token file: payload of %s: %w", path, err)
+		return "", fmt.Errorf("payload of the token: %w", err)
 	}
 	// A map matches only the exact key, where a struct field would also take
 	// ISS.
 	var claims map[string]json.RawMessage
 	if err := json.Unmarshal(payload, &claims); err != nil {
-		return "", fmt.Errorf("issuer of a token file: payload of %s: %w", path, err)
+		return "", fmt.Errorf("payload of the token: %w", err)
 	}
 	var issuer string
 	if err := json.Unmarshal(claims["iss"], &issuer); err != nil || issuer == "" {
-		return "", fmt.Errorf("issuer of a token file: the token in %s has no non-empty string iss", path)
+		return "", errors.New("the token has no non-empty string iss")
 	}
 	return issuer, nil
 }
@@ -386,30 +407,35 @@ func (p Provider) discoversOutsideTheCluster() bool {
 // [New] gives it a client on the system roots and [Options.InternalCAFile]. It
 // fails when a token file holds no token with an iss, when that iss is not an
 // http or https URL, when an in-cluster issuer has neither a caFile nor a
-// jwksUri, and when two providers end up with one issuer.
-func (c Config) withIssuers(log Logger) (Config, error) {
+// jwksUri, and when two providers end up with one issuer. It logs the issuer it
+// takes to opts.Log.
+func (c Config) withIssuers(opts Options) (Config, error) {
 	c.Providers = slices.Clone(c.Providers)
 	for i := range c.Providers {
 		p := &c.Providers[i]
 		if !p.takesIssuerFromToken() {
 			continue
 		}
-		issuer, err := IssuerOfTokenFile(p.TokenFile)
+		issuer, err := issuerOfTokenFile(p.TokenFile)
 		if err != nil {
 			return Config{}, fmt.Errorf("provider %q takes its issuer from tokenFile, so mount the token there or fix tokenFile: %w", p.ID, err)
 		}
 		if err := checkHTTPURL(issuer); err != nil {
-			return Config{}, fmt.Errorf("provider %q issuer: %w", p.ID, err)
+			return Config{}, fmt.Errorf("provider %q takes its issuer from the iss of the token in %s, and that iss is not usable: %w; mount the token for the API server there or fix tokenFile", p.ID, p.TokenFile, err)
 		}
 		p.Issuer = issuer
 		switch {
 		case p.discoversOutsideTheCluster():
-			log.Infof("trusted providers: provider %q takes the issuer %q from %s; discovery under an issuer outside the cluster sends no token and ignores caFile, so set jwksUri if it needs them", p.ID, issuer, p.TokenFile)
+			roots := "the system roots"
+			if opts.InternalCAFile != "" {
+				roots += " and the internal CA file " + opts.InternalCAFile
+			}
+			opts.Log.Infof("trusted providers: provider %q takes the issuer %q from %s; discovery under that issuer, outside the cluster, sends no token and trusts %s instead of caFile; to send the token and use caFile, set jwksUri to %s", p.ID, issuer, p.TokenFile, roots, apiServerJWKSURI)
 			p.TokenFile, p.CAFile = "", ""
 		case p.JWKSURI == "" && p.CAFile == "":
 			return Config{}, fmt.Errorf("provider %q takes the in-cluster issuer %q from tokenFile, and discovery there needs the cluster CA, so set caFile", p.ID, issuer)
 		default:
-			log.Infof("trusted providers: provider %q takes the issuer %q from %s", p.ID, issuer, p.TokenFile)
+			opts.Log.Infof("trusted providers: provider %q takes the issuer %q from %s", p.ID, issuer, p.TokenFile)
 		}
 	}
 	return c, c.checkIssuers()
