@@ -37,12 +37,13 @@ var tenantID = regexp.MustCompile(`^[A-Za-z0-9._-]{1,128}$`)
 // in. It starts as the configured display name and becomes the tenant's ID
 // once tenant-manager resolves the name; until then a request without a
 // tenant is decided in a tenant named by the display name, which the
-// export normally does not carry, and is denied.
+// export normally does not carry, and is denied, and /ready answers 503.
 type defaultTenant struct {
-	name    string
-	baseURL string
-	client  *http.Client
-	id      atomic.Pointer[string]
+	name     string
+	baseURL  string
+	client   *http.Client
+	id       atomic.Pointer[string]
+	resolved atomic.Bool
 }
 
 func newDefaultTenant(name, tenantManagerURL string) *defaultTenant {
@@ -56,30 +57,41 @@ func newDefaultTenant(name, tenantManagerURL string) *defaultTenant {
 // is resolved.
 func (d *defaultTenant) Get() string { return *d.id.Load() }
 
-// Run resolves the display name every interval until tenant-manager
-// answers or ctx ends. Without a tenant-manager URL the name is the ID.
-func (d *defaultTenant) Run(ctx context.Context, interval time.Duration) {
+// Unresolved returns the display name while a tenant-manager URL is set and
+// tenant-manager has not resolved the name yet, and "" otherwise.
+func (d *defaultTenant) Unresolved() string {
+	if d.baseURL == "" || d.name == "" || d.resolved.Load() {
+		return ""
+	}
+	return d.name
+}
+
+// Run resolves the display name until tenant-manager answers or ctx ends.
+// The first attempt is immediate; the pause after a failed one starts at a
+// second and doubles up to maxPause. Without a tenant-manager URL the name
+// is the ID.
+func (d *defaultTenant) Run(ctx context.Context, maxPause time.Duration) {
 	if d.baseURL == "" || d.name == "" {
 		return
 	}
-	reported := false
+	pause := min(time.Second, maxPause)
 	for {
 		id, err := d.lookup(ctx)
 		if err == nil {
 			d.id.Store(&id)
+			d.resolved.Store(true)
 			logger.Infof("default tenant: %q resolved to %q via tenant-manager", d.name, id)
 			return
 		}
-		if !reported {
-			logger.Warnf("default tenant: %q not resolved via tenant-manager, retrying every %s; "+
-				"a check request without tenant_id or Tenant is denied until then: %v", d.name, interval, err)
-			reported = true
-		}
+		logger.Warnf("default tenant: %q not resolved via tenant-manager, retrying in %s; "+
+			"the service is not ready, and a check request without tenant_id or Tenant is denied until then: %v",
+			d.name, pause, err)
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(interval):
+		case <-time.After(pause):
 		}
+		pause = min(2*pause, maxPause)
 	}
 }
 

@@ -128,6 +128,27 @@ func TestReady_NamesTheTenantsWithoutASnapshot(t *testing.T) {
 	}
 }
 
+// TestReady_WaitsForTheDefaultTenant: /ready is 503 naming the default
+// tenant while tenant-manager has not resolved it, together with the
+// policies when they have not loaded either, and /health stays 200.
+func TestReady_WaitsForTheDefaultTenant(t *testing.T) {
+	report := Report{Healthy: true, Loaded: true, UnresolvedTenant: "acme"}
+	app, _ := newApp(t, func() Report { return report })
+
+	if code, body, _ := do(t, app, http.MethodGet, "/ready", "", nil); code != 503 ||
+		body["message"] != `default tenant "acme" not resolved via tenant-manager yet` {
+		t.Errorf("GET /ready unresolved = %d %v, want 503 naming the default tenant", code, body)
+	}
+	if code, _, raw := do(t, app, http.MethodGet, "/health", "", nil); code != 200 {
+		t.Errorf("GET /health unresolved = %d %s, want 200: tenant-manager is not a liveness matter", code, raw)
+	}
+	report.Loaded = false
+	if code, body, _ := do(t, app, http.MethodGet, "/ready", "", nil); code != 503 ||
+		body["message"] != `policies not loaded yet; default tenant "acme" not resolved via tenant-manager yet` {
+		t.Errorf("GET /ready unresolved and not loaded = %d %v, want 503 naming both", code, body)
+	}
+}
+
 // TestHealth_ReportsTheLoops: /health is 200 when the report is healthy, 503 with the reason and its details when it
 // is not, and 200 without details when there is no report.
 func TestHealth_ReportsTheLoops(t *testing.T) {

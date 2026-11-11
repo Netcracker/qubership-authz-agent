@@ -40,7 +40,7 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_JWKS_HTTP_TIMEOUT` | `5` | Seconds per discovery or JWKS request |
 | `AUTHZ_JWKS_HTTP_RETRIES` | `3` | Attempts per request |
 | `AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL` | `30` | Seconds between checks of the file for a change; `0` never reloads |
-| `AUTHZ_TENANT_MANAGER_URL` | `http://tenant-manager:8080` | Resolves to a tenant ID a realm written by its tenant display name, and `AUTHZ_DEFAULT_TENANT`; empty disables the lookup, and the display name is then used as the ID |
+| `AUTHZ_TENANT_MANAGER_URL` | `http://tenant-manager:8080` | Resolves to a tenant ID a realm written by its tenant display name, and `AUTHZ_DEFAULT_TENANT`; `/ready` answers 503 until `AUTHZ_DEFAULT_TENANT` is resolved. Empty disables the lookup, and the display name is then used as the ID |
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
 | `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
 | `AUTHZ_DEFAULT_TENANT` | `default` | Display name of the tenant a check request is decided in when it names none in the `tenant_id` parameter or the `Tenant` header; resolved to the tenant ID through `AUTHZ_TENANT_MANAGER_URL` |
@@ -71,10 +71,15 @@ denies every check request. The gauge `authz_agent_policy_tenants` on `/promethe
 they answer from: `current`, `stale` (an earlier snapshot, after a rejected candidate), or `none`. `GET /ready`, on the
 internal port, adds the policies: 503 with the same details until a load gives every tenant the source names a snapshot,
 then 200 `{"status":"ready"}`. The 503 reason is `no snapshot accepted yet for tenants <tenants>` while a tenant
-rejected on its first load holds readiness back, and `policies not loaded yet` before any load. Once ready, the service
+rejected on its first load holds readiness back, and `policies not loaded yet` before any load. With
+`AUTHZ_TENANT_MANAGER_URL` set, `/ready` also waits until tenant-manager resolves `AUTHZ_DEFAULT_TENANT` to its tenant
+ID, with the reason `default tenant "<name>" not resolved via tenant-manager yet`; the agent retries the lookup after 1,
+2, 4, 8, and then every 10 seconds, and logs a warning for each failed attempt. The reason names each unmet condition,
+separated by semicolons. `GET /health` does not wait for tenant-manager. Once ready, the service
 stays ready: a pull that fails later, or a later load that rejects a tenant, keeps the published snapshots and both
 verdicts. An empty `AUTHZ_PAP_CLIENT_SOURCE_URL` or an `AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and
-`/ready` then answers 200 as soon as the trusted providers meet the bootstrap rules, with no policies loaded.
+`/ready` then answers 200 as soon as the trusted providers meet the bootstrap rules and the default tenant is resolved,
+with no policies loaded.
 
 `GET /health` on the public port gives the same status, 200 `healthy` or 503 `unhealthy`, and counts the tenants
 instead of naming them: `tenants`, `served` (with a published snapshot), `rejected` (whose latest candidate was

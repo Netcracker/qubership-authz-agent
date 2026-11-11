@@ -19,6 +19,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"runtime/debug"
 	"strings"
@@ -115,6 +116,10 @@ type Report struct {
 	// Waiting names the tenants whose policies keep Loaded unset, because
 	// the source names them and no snapshot of theirs was accepted.
 	Waiting []string
+	// UnresolvedTenant is the display name of the default tenant while
+	// tenant-manager has not resolved it, and keeps the service not ready;
+	// "" when it is resolved or the lookup is off.
+	UnresolvedTenant string
 	// Snapshots is the state of every tenant's generated policies, nil
 	// without a registry.
 	Snapshots *snapshot.Health
@@ -162,8 +167,10 @@ func (s *Server) health(c *fiber.Ctx) error {
 }
 
 // ready is the readiness answer: 200 {"status":"ready"} once the service
-// is healthy and the policies have loaded, 503 with the reason otherwise;
-// the reason names the tenants of [Report.Waiting].
+// is healthy, the policies have loaded, and the default tenant is resolved,
+// 503 otherwise. The 503 reason is the health reason when unhealthy, and
+// otherwise names each unmet condition, separated by "; ": the tenants of
+// [Report.Waiting] and [Report.UnresolvedTenant].
 func (s *Server) ready(c *fiber.Ctx) error {
 	if s.opts.Health == nil {
 		return c.JSON(fiber.Map{"status": "ready"})
@@ -172,11 +179,20 @@ func (s *Server) ready(c *fiber.Ctx) error {
 	if !report.Healthy {
 		return unavailable(c, report)
 	}
+	var reasons []string
 	if !report.Loaded {
-		report.Message = "policies not loaded yet"
+		reason := "policies not loaded yet"
 		if len(report.Waiting) > 0 {
-			report.Message = "no snapshot accepted yet for tenants " + strings.Join(report.Waiting, ", ")
+			reason = "no snapshot accepted yet for tenants " + strings.Join(report.Waiting, ", ")
 		}
+		reasons = append(reasons, reason)
+	}
+	if report.UnresolvedTenant != "" {
+		reasons = append(reasons, fmt.Sprintf("default tenant %q not resolved via tenant-manager yet",
+			report.UnresolvedTenant))
+	}
+	if len(reasons) > 0 {
+		report.Message = strings.Join(reasons, "; ")
 		return unavailable(c, report)
 	}
 	return c.JSON(fiber.Map{"status": "ready"})
