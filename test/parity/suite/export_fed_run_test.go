@@ -86,7 +86,7 @@ func TestExportFedAgent(t *testing.T) {
 				case verdictBroken:
 					if !reported[res.Detail] {
 						reported[res.Detail] = true
-						t.Run("setup", func(t *testing.T) { t.Error(res.Detail) })
+						failSetup(t, res.Detail)
 					}
 					t.Logf("NOT COMPARED %s: %s", res.Path, res.Detail)
 				case verdictDiffers:
