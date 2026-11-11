@@ -23,9 +23,9 @@ pipStub:
           ephemeral-storage: 128Mi
 
 # TestExportFedAgent against the export bundle the image carries under
-# testdata/export-bundle. Each mounted export waits for a pull, so a whole
-# bundle takes hours; PARITY_EXPORT_RUN narrows it to the test functions it
-# matches.
+# testdata/export-bundle. Each mounted export waits for a pull, which the
+# suite requests at PARITY_AGENT_PULL_URL; PARITY_EXPORT_RUN narrows the run to
+# the test functions it matches.
 suite:
   name: parity-export
   # The suite image with the bundle, from `make parity-export-image`; the

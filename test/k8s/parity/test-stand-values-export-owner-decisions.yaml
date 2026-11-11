@@ -6,9 +6,10 @@
 # and no export bundle.
 suite:
   imageRepository: local/authz-parity-suite
-  # The goldens give about 80 exports, each mounted once and waited on for one
-  # or two pulls a second apart, so the run takes minutes; the limits leave
-  # room for a slow pull on every export.
+  # The goldens give about 80 exports, each mounted once and pulled on request,
+  # or waited on for one or two pulls a second apart where the agent has no
+  # pull route, so the run takes minutes; the limits leave room for a slow pull
+  # on every export.
   args:
     - ./parity.test
     - -test.v
