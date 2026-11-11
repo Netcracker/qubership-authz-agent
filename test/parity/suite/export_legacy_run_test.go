@@ -246,7 +246,8 @@ func setUpLegacyPoint(t *testing.T, p legacyExportPoint, canaries []legacyCanary
 		}
 	}
 	if denied == len(canaries) {
-		b.point = first
+		b.point = setupBroken(fmt.Errorf("the agent did not load the export of step %s: the canary of each of its %d tenants is denied",
+			p.step, len(canaries)))
 	}
 	return b
 }
