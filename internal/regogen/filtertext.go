@@ -204,10 +204,7 @@ func render(x *fexpr, d policyir.Dialect) (string, bool) {
 			return "", false
 		}
 		if d == policyir.DialectMongoDB {
-			if strings.Contains(x.term.template[d], "${") {
-				return "{ " + t + " }", true
-			}
-			return "{" + t + "}", true
+			return braceMongo(x.term, t), true
 		}
 		return t, true
 	case "not":
@@ -224,7 +221,7 @@ func render(x *fexpr, d policyir.Dialect) (string, bool) {
 		case policyir.DialectQueryDSL:
 			return "(" + inner + ").not()", true
 		}
-		return negateMongo(leaf.term.text[d], inner), true
+		return braceMongo(leaf.term, negateMongo(leaf.term.text[d])), true
 	}
 	type part struct {
 		x    *fexpr
@@ -353,22 +350,30 @@ var mongoOps = map[string]string{"$eq": "$ne", "$ne": "$eq", "$in": "$nin", "$ni
 
 var mongoOpRE = regexp.MustCompile(`"(\$[a-z]+)"`)
 
-// negateMongo is the MongoDB text of the negation of the rendered predicate
-// s, whose predicate text is t: s with each operator replaced by its opposite
-// where that negates t, and { "$nor": [ s ] } where it does not, such as for
-// a field matched by a bare value, a field with two operators, or an
-// operator without an opposite. The braces render puts around t make s
-// itself no JSON, so the test reads t.
-func negateMongo(t, s string) string {
+// braceMongo wraps the MongoDB text t of a predicate of term, or of its
+// negation, in the braces legacy puts around a predicate: "{ " and " }" where
+// the template of the predicate substitutes a value, "{" and "}" otherwise.
+func braceMongo(term *fterm, t string) string {
+	if strings.Contains(term.template[policyir.DialectMongoDB], "${") {
+		return "{ " + t + " }"
+	}
+	return "{" + t + "}"
+}
+
+// negateMongo is the MongoDB text of the negation of the predicate text t: t
+// with each operator replaced by its opposite where that negates t, and
+// { "$nor": [ t ] } where it does not, such as for a field matched by a bare
+// value, a field with two operators, or an operator without an opposite.
+func negateMongo(t string) string {
 	if v, err := jsonvalue.Decode([]byte(t)); err == nil && mongoInvertible(v) {
-		return mongoOpRE.ReplaceAllStringFunc(s, func(m string) string {
+		return mongoOpRE.ReplaceAllStringFunc(t, func(m string) string {
 			if op, ok := mongoOps[m[1:len(m)-1]]; ok {
 				return `"` + op + `"`
 			}
 			return m
 		})
 	}
-	return `{ "$nor": [ ` + s + " ] }"
+	return `{ "$nor": [ ` + t + " ] }"
 }
 
 // mongoInvertible reports whether swapping each operator of the filter

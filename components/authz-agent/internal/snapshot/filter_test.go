@@ -101,7 +101,7 @@ func TestADenyPredicateIsNegatedInItsDialect(t *testing.T) {
 		{"mongodb $gt becomes $lte", `"mongodbPredicate": "{\"a\": {\"$gt\": 5}}"`,
 			"mongodbFilterCondition", `{{"a": {"$lte": 5}}}`},
 		{"a mongodb bare value is wrapped in $nor", `"mongodbPredicate": "{\"a\": 5}"`,
-			"mongodbFilterCondition", `{ "$nor": [ {{"a": 5}} ] }`},
+			"mongodbFilterCondition", `{{ "$nor": [ {"a": 5} ] }}`},
 		{"rsql =in= becomes =out=", `"rsqlPredicate": "a=in=(1,2)"`, "rsqlFilterCondition", `a=out=(1,2)`},
 		{"rsql < becomes >=", `"rsqlPredicate": "a<5"`, "rsqlFilterCondition", `a>=5`},
 		{"rsql <= becomes >", `"rsqlPredicate": "a<=5"`, "rsqlFilterCondition", `a>5`},
@@ -116,6 +116,31 @@ func TestADenyPredicateIsNegatedInItsDialect(t *testing.T) {
 				t.Errorf("Filter(doc, read) = %s, want %s", got, want)
 			}
 		})
+	}
+}
+
+// A MongoDB predicate whose template substitutes a value keeps the braces
+// legacy puts around such a template, "{ " and " }", outside the $nor that
+// negates it.
+func TestANegatedMongoDBPredicateWithAPlaceholderKeepsItsBracesOutsideNor(t *testing.T) {
+	r := New(Config{}, tab(t), quiet{})
+	load(t, r, "", denySet("s", `"mongodbPredicate": "{\"a\": \"${subject.name}\"}"`))
+	claims, err := jsonvalue.Decode([]byte(`{"sub": "u1", "preferred_username": "PARITY_N", "realm_access": {"roles": ["R"]}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	op := "read"
+	a, err := r.Filter(context.Background(), FilterRequest{Tenant: "t", Claims: claims.(*jsonvalue.Object),
+		ResourceType: "doc", Operation: &op})
+	if err != nil {
+		t.Fatalf("Filter(doc, read): %v", err)
+	}
+	raw, err := json.Marshal(a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := string(raw), condition("mongodbFilterCondition", `{ { "$nor": [ {"a": "PARITY_N"} ] } }`); got != want {
+		t.Errorf("Filter(doc, read) = %s, want %s", got, want)
 	}
 }
 
