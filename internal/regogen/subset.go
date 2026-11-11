@@ -37,23 +37,25 @@ import (
 // elements are equal exactly when the tokens of the left one meet those of the
 // right one. A token is a prefix and a text:
 //
-//	t:  a scalar by its text, which a number, a string, and a boolean on the
-//	    left share; on the right also a list by its Java text, which a string
-//	    on the left equals
+//	t:  a string or a boolean by its text, which a string and a boolean on
+//	    the left share; on the right also a list by its Java text, which a
+//	    string on the left equals
 //	b:  a boolean, which on the right only a boolean on the left meets
+//	n:  a number by its value, on the left and on the right; on the right
+//	    also a string that BigDecimal reads, by that value
+//	m:  a string that BigDecimal reads, by that value, on the left; a number
+//	    by its value on the right
 //	s:  a list or an object on the left by its Java text, which a string on the
 //	    right equals
 //	l:  a list by its elements in order, each by its own token
 //	o:  an object by its members
+//
+// So a number equals a number or a string of the same value (ADR-0083), and
+// two strings compare by their texts.
 
-// numberText returns the text a number compares by under ==: for a number of
-// the input, its digits when it is an integer and Double.toString otherwise;
-// the BigDecimal text of a number literal; the text as written of an item of
-// a literal list.
-type numberText func(jsonvalue.Number) string
-
-// subsetLeft returns the tokens of each element of v read as a list.
-func subsetLeft(v jsonvalue.Value, num numberText) [][]string {
+// subsetLeft returns the tokens of each element of v read as a list; num
+// gives the value of a number.
+func subsetLeft(v jsonvalue.Value, num numberValue) [][]string {
 	out := [][]string{}
 	for _, e := range asList(v) {
 		var ts []string
@@ -66,8 +68,13 @@ func subsetLeft(v jsonvalue.Value, num numberText) [][]string {
 			if t, ok := caseToken(e, num); ok {
 				ts = append(ts, t)
 			}
-		default:
-			ts = []string{"t:" + scalarText(e, num)}
+		case jsonvalue.Number:
+			ts = []string{"n:" + num(e)}
+		case string:
+			ts = []string{"t:" + e}
+			if d, ok := jsonvalue.ParseBigDecimal(e); ok {
+				ts = append(ts, "m:"+d.String())
+			}
 		}
 		out = append(out, ts)
 	}
@@ -76,12 +83,15 @@ func subsetLeft(v jsonvalue.Value, num numberText) [][]string {
 
 // subsetRight returns the tokens of the elements of v read as a list; with
 // oneValue, those of its strings only.
-func subsetRight(v jsonvalue.Value, num numberText, oneValue bool) []string {
+func subsetRight(v jsonvalue.Value, num numberValue, oneValue bool) []string {
 	out := []string{}
 	for _, e := range asList(v) {
 		switch e := e.(type) {
 		case string:
 			out = append(out, "t:"+e, "s:"+e)
+			if d, ok := jsonvalue.ParseBigDecimal(e); ok {
+				out = append(out, "n:"+d.String())
+			}
 		case nil, *jsonvalue.Object:
 		default:
 			if oneValue {
@@ -95,8 +105,9 @@ func subsetRight(v jsonvalue.Value, num numberText, oneValue bool) []string {
 				if t, ok := caseToken(e, num); ok {
 					out = append(out, t)
 				}
-			default:
-				out = append(out, "t:"+scalarText(e, num))
+			case jsonvalue.Number:
+				v := num(e)
+				out = append(out, "n:"+v, "m:"+v)
 			}
 		}
 	}
@@ -110,23 +121,11 @@ func asList(v jsonvalue.Value) []jsonvalue.Value {
 	return []jsonvalue.Value{v}
 }
 
-func scalarText(e jsonvalue.Value, num numberText) string {
-	switch e := e.(type) {
-	case string:
-		return e
-	case jsonvalue.Number:
-		return num(e)
-	case bool:
-		return strconv.FormatBool(e)
-	}
-	panic(fmt.Sprintf("regogen: %T is not a scalar", e))
-}
-
 // caseToken is the token of a list or an object as an element of a list: a
-// list by the tokens of its elements in order, a scalar by its text with case,
-// an object by its members. A list that holds null equals nothing and has no
-// token.
-func caseToken(e jsonvalue.Value, num numberText) (string, bool) {
+// list by the tokens of its elements in order, a number by its value, a string
+// or a boolean by its text with case, an object by its members. A list that
+// holds null equals nothing and has no token.
+func caseToken(e jsonvalue.Value, num numberValue) (string, bool) {
 	switch e := e.(type) {
 	case nil:
 		return "", false
@@ -134,24 +133,15 @@ func caseToken(e jsonvalue.Value, num numberText) (string, bool) {
 		return "o:" + *legacyvalue.Of(e).Structure, true
 	case []jsonvalue.Value:
 		return listToken(e, func(x jsonvalue.Value) (string, bool) { return caseToken(x, num) })
+	case jsonvalue.Number:
+		return "n:" + num(e), true
+	case bool:
+		return "t:" + strconv.FormatBool(e), true
+	case string:
+		return "t:" + e, true
 	}
-	return "t:" + scalarText(e, num), true
+	panic(fmt.Sprintf("regogen: %T is not a Value", e))
 }
-
-// inputNumberText is the text a number of the input compares by.
-func inputNumberText(n jsonvalue.Number) string { return legacyvalue.NumberText(n) }
-
-// literalNumberText is the text a number literal compares by: its BigDecimal
-// text, so 5.0 stays 5.0 and 1e3 is 1E+3.
-func literalNumberText(n jsonvalue.Number) string {
-	if t, ok := jsonvalue.BigDecimalText(string(n)); ok {
-		return t
-	}
-	return string(n)
-}
-
-// listNumberText is the text an item of a literal list compares by: as written.
-func listNumberText(n jsonvalue.Number) string { return string(n) }
 
 // subsetOneValue reports whether an operand of kind k on the right of IS
 // SUBSET is one value: a resource attribute or a PIP.

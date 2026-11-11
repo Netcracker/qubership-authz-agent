@@ -669,15 +669,17 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 	}
 	// same reports whether the template's true rows are the same at every
 	// point of s whose record carries the fields they read, with the other
-	// side at its point. A SINGLE_ODD record carries element_keys too, so a
-	// row that reads element_keys keeps its check where the domain has that state.
+	// side at its point. A SINGLE_ODD record carries element_keys and
+	// element_own_keys too, so a row that reads them keeps its check where
+	// the domain has that state.
 	same := func(s *side, isLeft bool) bool {
 		if s == nil || s.ref == nil {
 			return true
 		}
 		fields := tp.fields[s]
 		if len(fields) == 0 || fields["guard"] ||
-			fields[fieldElementKeys] && slices.Contains(s.ref.domain.States, spectables.StateSingleOdd) {
+			(fields[fieldElementKeys] || fields[fieldElementOwnKeys]) &&
+				slices.Contains(s.ref.domain.States, spectables.StateSingleOdd) {
 			return false
 		}
 		classes := tp.fieldClasses(s)
@@ -767,11 +769,11 @@ func constCompare(op spectables.Operator, L, R *side) (bool, bool) {
 	switch op {
 	case spectables.OpEQ:
 		if isScalar(L.lit.class) && isScalar(R.lit.class) {
-			return L.lit.key == R.lit.key, true
+			return meets(L.lit.own, R.lit.keys), true
 		}
 	case spectables.OpIn:
 		if isScalar(L.lit.class) {
-			return slices.Contains(R.lit.keys, L.lit.key), true
+			return meets(L.lit.own, R.lit.keys), true
 		}
 	case spectables.OpIsSubset:
 		t := &test{kind: "subset", sets: L.lit.subsetLeft, set: R.lit.subsetRight}

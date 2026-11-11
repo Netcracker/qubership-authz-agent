@@ -62,10 +62,12 @@ func TestStructureText(t *testing.T) {
 }
 
 // The record of a value carries the folded text a string compares it by
-// (TextKey), the tokens of its elements (ElementTokens), and those tokens
-// with the folded text of each nested list or object after the element's own
-// token (ElementTokensWithText). A list with a number or null is not a list
-// of strings, whose text TextKey takes from the folded Java text.
+// (TextKey), the own tokens of its elements (ElementTokens), and their match
+// tokens with the folded text of each nested list or object after the
+// element's own token (ElementTokensWithText). A number has the token of its
+// value, N1 for 1.0, and S1 among its match tokens; a string inside a nested
+// list keeps its case. A list with a number or null is not a list of strings,
+// whose text TextKey takes from the folded Java text.
 func TestRecordReadsTheTokensOfTheElements(t *testing.T) {
 	for _, tc := range []struct {
 		value, tk string
@@ -73,9 +75,10 @@ func TestRecordReadsTheTokensOfTheElements(t *testing.T) {
 	}{
 		{`["Ab", "c"]`, `[ab, c]`, []string{"t:ab", "t:c"}, []string{"t:ab", "t:c"}},
 		{`[]`, `[]`, []string{}, []string{}},
-		{`["x", ["Y"], "Z"]`, `[x, ["y"], z]`, []string{"t:x", `l:["t:y"]`, "t:z"},
-			[]string{"t:x", `l:["t:y"]`, "t:[y]", "t:z"}},
-		{`[1.0, "A"]`, `[1, a]`, []string{"t:1.0", "t:a"}, []string{"t:1.0", "t:a"}},
+		{`["x", ["Y"], "Z"]`, `[x, ["y"], z]`, []string{"t:x", `l:["c:Y"]`, "t:z"},
+			[]string{"t:x", `l:["c:Y"]`, "t:[y]", "t:z"}},
+		{`[1.0, "A"]`, `[1, a]`, []string{"t:N1", "t:a"}, []string{"t:N1", "t:S1", "t:a"}},
+		{`["05", 5]`, `[05, 5]`, []string{"t:05", "t:S5", "t:N5"}, []string{"t:05", "t:N5", "t:N5", "t:S5"}},
 		{`[null, "A"]`, `[null, a]`, []string{"t:a"}, []string{"t:a"}},
 		{`"Q"`, ``, []string{"t:q"}, []string{"t:q"}},
 	} {
@@ -113,8 +116,9 @@ func TestAListTokenGrowsByAFixedLengthPerLevelOfNesting(t *testing.T) {
 }
 
 // Two lists have one element token exactly when the operator reads them as
-// equal: the collection operators (ElementTokens) fold case, and IS SUBSET
-// (SubsetLeft) does not. A string that holds a quote and a comma, or a comma
+// equal: a string inside a nested list keeps its case under the collection
+// operators (ElementTokens) and IS SUBSET (SubsetLeft) alike, and a number
+// compares by its value and never equals a string. A string that holds a quote and a comma, or a comma
 // and what follows it in the token of the next element, or that spells the
 // token of a list, stays apart from the lists it looks like.
 func TestNestedListsShareAnElementTokenOnlyWhenEqual(t *testing.T) {
@@ -126,7 +130,9 @@ func TestNestedListsShareAnElementTokenOnlyWhenEqual(t *testing.T) {
 		{"a string with a comma and a token against two strings", `[["a,t:b"]]`, `[["a", "b"]]`, false, false},
 		{"a string that spells a list token against the list", `[["l:[\"t:a\"]"]]`, `[[["a"]]]`, false, false},
 		{"two lists against one list of both", `[[["a"], ["b"]]]`, `[[["a", "b"]]]`, false, false},
-		{"lists that differ in case", `[[["A"]]]`, `[[["a"]]]`, true, false},
+		{"lists that differ in case", `[[["A"]]]`, `[[["a"]]]`, false, false},
+		{"numbers of one value in two spellings", `[[[1]]]`, `[[[1.0]]]`, true, true},
+		{"a number against its text", `[[[1]]]`, `[[["1"]]]`, false, false},
 		{"equal lists", `[[["a"]]]`, `[[["a"]]]`, true, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

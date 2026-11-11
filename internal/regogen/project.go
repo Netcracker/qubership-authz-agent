@@ -87,15 +87,26 @@ type Scope struct {
 }
 
 // Record is the value record of a reference, as the module reads it.
-// ElementKeys, TextKey, EqualityKey, ElementTokens, and ElementTokensWithText
-// are set only where the module reads them ([Ref.read]).
+// ElementKeys, ElementOwnKeys, TextKey, EqualityKey, ElementTokens, and
+// ElementTokensWithText are set only where the module reads them
+// ([Ref.read]).
 type Record struct {
-	State       string
-	Class       string
-	Key         *string
-	ElementKeys []string
-	Text        *string
-	Segments    []string
+	State string
+	Class string
+	// Key, ValueKey, and MatchKey are the tokens two scalars are equal by
+	// (scalarTokens): Key is the folded text of a string or a boolean and N
+	// followed by the value of a number, ValueKey is set for a string, and
+	// MatchKey for a number and a string that BigDecimal reads. The ValueKey
+	// of a string that BigDecimal does not read is the bare prefix S, which
+	// no token equals.
+	Key, ValueKey, MatchKey *string
+	// ElementKeys holds the match tokens of the elements of a list that are
+	// not null, a list or an object among them by its folded Java text, or
+	// those of a value read as a list of one; ElementOwnKeys holds their own
+	// tokens.
+	ElementKeys, ElementOwnKeys []string
+	Text                        *string
+	Segments                    []string
 	// HasNull is set for a list that holds a null element; its keys leave the
 	// null out.
 	HasNull bool
@@ -186,12 +197,7 @@ func record(r *Ref, v Resolved) Record {
 		// a one-element GENERAL list of null, a boolean, or an object: the
 		// collection operators read it as a list
 		lv := legacyvalue.OfParts(v.Value, r.parts())
-		if r.reads(fieldElementKeys) {
-			rec.ElementKeys = lv.Keys
-			if rec.ElementKeys == nil {
-				rec.ElementKeys = []string{}
-			}
-		}
+		rec.elementKeys(r, v.Value, lv)
 		rec.HasNull = lv.State == legacyvalue.StateNullElement
 		if r.reads(fieldElementTokens, fieldElementTokensWithText) {
 			rec.ElementTokens, rec.ElementTokensWithText = elementTokens(v.Value, lv)
@@ -219,23 +225,33 @@ func record(r *Ref, v Resolved) Record {
 	rec.subset(r, v.Value)
 	switch cl {
 	case spectables.ClassString, spectables.ClassScalar:
-		rec.Key = lv.Key
+		t := scalarTokensOfRecord(v.Value, lv)
+		rec.Key = &t.key
+		if t.valueKey != "" {
+			rec.ValueKey = &t.valueKey
+		} else if cl == spectables.ClassString {
+			// a negation reads a value_key that is not there as undefined
+			// rather than unequal, so every string has one
+			noValue := valueTokenPrefix
+			rec.ValueKey = &noValue
+		}
+		if t.matchKey != "" {
+			rec.MatchKey = &t.matchKey
+		}
 		if _, ok := v.Value.(jsonvalue.Number); ok && lv.Number == nil {
 			// a number beyond the range of a double: its Double text,
 			// Infinity, is the only number text BigDecimal does not read
 			rec.BeyondDouble = lv.CaseKey
 		}
 		if r.reads(fieldElementKeys) {
-			rec.ElementKeys = []string{*lv.Key}
+			rec.ElementKeys = t.match()
+		}
+		if r.reads(fieldElementOwnKeys) {
+			rec.ElementOwnKeys = t.own()
 		}
 		rec.Number = lv.Number
 	default:
-		if r.reads(fieldElementKeys) {
-			rec.ElementKeys = lv.Keys
-			if rec.ElementKeys == nil {
-				rec.ElementKeys = []string{}
-			}
-		}
+		rec.elementKeys(r, v.Value, lv)
 		rec.HasNull = lv.State == legacyvalue.StateNullElement
 		switch l, ok := v.Value.([]jsonvalue.Value); {
 		case !r.reads(fieldTextKey):
@@ -269,58 +285,80 @@ func record(r *Ref, v Resolved) Record {
 	return rec
 }
 
+// elementKeys sets ElementKeys and ElementOwnKeys, where the module reads
+// them, for a list, an object, or a SINGLE_ODD value v; lv is its record.
+func (rec *Record) elementKeys(r *Ref, v jsonvalue.Value, lv legacyvalue.Record) {
+	if !r.reads(fieldElementKeys, fieldElementOwnKeys) {
+		return
+	}
+	l, ok := v.([]jsonvalue.Value)
+	if !ok {
+		l = []jsonvalue.Value{v}
+	}
+	match, own := listTokens(l, lv.Keys)
+	if r.reads(fieldElementKeys) {
+		rec.ElementKeys = match
+	}
+	if r.reads(fieldElementOwnKeys) {
+		rec.ElementOwnKeys = own
+	}
+}
+
 // subset sets SubsetLeft and SubsetRight for a reference that IS SUBSET reads.
 func (rec *Record) subset(r *Ref, v jsonvalue.Value) {
 	if !r.Subset {
 		return
 	}
-	rec.SubsetLeft = subsetLeft(v, inputNumberText)
-	rec.SubsetRight = subsetRight(v, inputNumberText, subsetOneValue(r.Kind))
+	rec.SubsetLeft = subsetLeft(v, inputNumberValue)
+	rec.SubsetRight = subsetRight(v, inputNumberValue, subsetOneValue(r.Kind))
 }
 
 // elementTokens returns the ElementTokens and ElementTokensWithText of a
 // value, a list or a value read as a list of one; lv is its legacyvalue.Of.
-// Where no element is a list or an object, withText is tokens itself.
+// A scalar element contributes its own tokens to tokens and its match tokens
+// to withText (scalarTokens), each behind t:. Where every element has the
+// same tokens in both, withText is tokens itself.
 func elementTokens(v jsonvalue.Value, lv legacyvalue.Record) (tokens, withText []string) {
 	l, ok := v.([]jsonvalue.Value)
 	elems := lv.Elements
 	if !ok {
 		l, elems = []jsonvalue.Value{v}, []legacyvalue.Record{lv}
 	}
-	tokens = []string{}
+	tokens, withText = []string{}, []string{}
+	same := true
 	for i, e := range l {
-		t, ok := "", false
 		switch e.(type) {
 		case string, jsonvalue.Number, bool:
-			// the key of the element's record is the one eqToken reads
-			t, ok = "t:"+*elems[i].Key, true
-		default:
-			t, ok = eqToken(e)
-		}
-		if ok {
-			tokens = append(tokens, t)
-			if withText != nil {
-				withText = append(withText, t)
+			t := scalarTokensOfRecord(e, elems[i])
+			for _, x := range t.own() {
+				tokens = append(tokens, "t:"+x)
 			}
+			for _, x := range t.match() {
+				withText = append(withText, "t:"+x)
+			}
+			same = same && t.valueKey == "" && t.matchKey == ""
+			continue
+		}
+		if t, ok := eqToken(e); ok {
+			tokens = append(tokens, t)
+			withText = append(withText, t)
 		}
 		switch e.(type) {
 		case []jsonvalue.Value, *jsonvalue.Object:
-			if withText == nil {
-				withText = slices.Clone(tokens)
-			}
 			withText = append(withText, "t:"+legacyvalue.Fold(structureText(e)))
+			same = false
 		}
 	}
-	if withText == nil {
+	if same {
 		withText = tokens
 	}
 	return tokens, withText
 }
 
-// eqToken returns the token two elements are equal by when neither is a
-// string facing a list or an object: a scalar by its key, as
-// equalsIgnoreCase compares the texts; an object by its members, with their
-// case; a list by its elements in order, each by its token. Null equals
+// eqToken returns the token two elements that are not scalars are equal by,
+// and the token of a scalar inside a nested list: a number by its value, a string by
+// its text with case, a boolean by its text; an object by its members, with
+// their case; a list by its elements in order, each by its token. Null equals
 // nothing, so null and a list that holds one have no token.
 func eqToken(e jsonvalue.Value) (string, bool) {
 	switch e := e.(type) {
@@ -330,8 +368,14 @@ func eqToken(e jsonvalue.Value) (string, bool) {
 		return "o:" + *legacyvalue.Of(e).Structure, true
 	case []jsonvalue.Value:
 		return listToken(e, eqToken)
+	case jsonvalue.Number:
+		return "n:" + inputNumberValue(e), true
+	case string:
+		return "c:" + e, true
+	case bool:
+		return "t:" + strconv.FormatBool(e), true
 	}
-	return "t:" + *legacyvalue.Of(e).Key, true
+	panic("regogen: not a Value")
 }
 
 // listToken returns the token of a list by the tokens of its elements in
@@ -502,8 +546,17 @@ func (r Record) term() *ast.Term {
 	if r.Key != nil {
 		o.Insert(strTerm(fieldKey), strTerm(*r.Key))
 	}
+	if r.ValueKey != nil {
+		o.Insert(strTerm(fieldValueKey), strTerm(*r.ValueKey))
+	}
+	if r.MatchKey != nil {
+		o.Insert(strTerm(fieldMatchKey), strTerm(*r.MatchKey))
+	}
 	if r.ElementKeys != nil {
 		o.Insert(strTerm(fieldElementKeys), keysTerm(r.ElementKeys))
+	}
+	if r.ElementOwnKeys != nil {
+		o.Insert(strTerm(fieldElementOwnKeys), keysTerm(r.ElementOwnKeys))
 	}
 	if r.Text != nil {
 		o.Insert(strTerm(fieldText), strTerm(*r.Text))
@@ -612,7 +665,10 @@ const (
 	fieldState                 = "state"
 	fieldClass                 = "class"
 	fieldKey                   = "key"
+	fieldValueKey              = "value_key"
+	fieldMatchKey              = "match_key"
 	fieldElementKeys           = "element_keys"
+	fieldElementOwnKeys        = "element_own_keys"
 	fieldText                  = "text"
 	fieldSegments              = "segments"
 	fieldSegmentsFromEnd       = "segments_from_end"
@@ -644,7 +700,7 @@ const (
 var recordFields = []string{fieldState, fieldClass, fieldKey, fieldElementKeys, fieldText, fieldSegments,
 	fieldSegmentsFromEnd, fieldSegmentCount, fieldHasNull, fieldTextKey, fieldEqualityKey, fieldLength,
 	fieldElementTokens, fieldElementTokensWithText, fieldNumber, fieldSubsetLeft, fieldSubsetRight,
-	fieldBeyondDouble}
+	fieldBeyondDouble, fieldValueKey, fieldMatchKey, fieldElementOwnKeys}
 
 // fieldSet holds names of recordFields, one bit each, and fieldsKnown.
 type fieldSet uint32
@@ -719,7 +775,7 @@ func (r *Ref) parts() legacyvalue.Parts {
 	if r.reads(fieldTextKey) {
 		p |= legacyvalue.PartKey
 	}
-	if r.reads(fieldElementKeys) {
+	if r.reads(fieldElementKeys, fieldElementOwnKeys) {
 		p |= legacyvalue.PartKeys
 	}
 	if r.reads(fieldEqualityKey) {
@@ -768,8 +824,17 @@ func (rec Record) fields(emit fieldSet, put func(field string, v *ast.Term)) {
 	if rec.Key != nil && emit.has(fieldKey) {
 		put(fieldKey, strTerm(*rec.Key))
 	}
+	if rec.ValueKey != nil && emit.has(fieldValueKey) {
+		put(fieldValueKey, strTerm(*rec.ValueKey))
+	}
+	if rec.MatchKey != nil && emit.has(fieldMatchKey) {
+		put(fieldMatchKey, strTerm(*rec.MatchKey))
+	}
 	if rec.ElementKeys != nil && emit.has(fieldElementKeys) {
 		put(fieldElementKeys, keysTerm(rec.ElementKeys))
+	}
+	if rec.ElementOwnKeys != nil && emit.has(fieldElementOwnKeys) {
+		put(fieldElementOwnKeys, keysTerm(rec.ElementOwnKeys))
 	}
 	if rec.Text != nil && emit.has(fieldText) {
 		put(fieldText, strTerm(*rec.Text))

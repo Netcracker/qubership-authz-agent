@@ -37,8 +37,10 @@ type test struct {
 	rightRef string
 	// field and rightField name the list of the record of ref and of rightRef
 	// that has, nothas, none, overlap, and disjoint read: element_keys when
-	// empty, or element_tokens or element_tokens_with_text; rightField is
-	// subset_right for the right of IS SUBSET.
+	// empty, or element_own_keys, element_tokens, or
+	// element_tokens_with_text; rightField is subset_right for the right of
+	// IS SUBSET. For a test of a scalar they name its field: key when empty,
+	// or value_key or match_key.
 	field, rightField string
 	// num is the literal number rel compares with.
 	num *jsonvalue.Decimal
@@ -233,6 +235,9 @@ func EvalGroups(m *Module, in *Input) []string {
 		if rec.Key != nil {
 			try(ix.byKey["eq\x00"+id+"\x00"+*rec.Key])
 		}
+		if rec.ValueKey != nil {
+			try(ix.byKey["eq"+fieldValueKey+"\x00"+id+"\x00"+*rec.ValueKey])
+		}
 	}
 	slices.Sort(out)
 	return out
@@ -367,7 +372,7 @@ func (m *Module) groupIndex() *groupIndex {
 					k := ""
 					for _, t := range c {
 						if t.kind == "has" && t.field == "" || t.kind == "eq" {
-							k = t.kind + "\x00" + t.ref + "\x00" + t.val
+							k = t.kind + t.field + "\x00" + t.ref + "\x00" + t.val
 							break
 						}
 					}
@@ -392,7 +397,7 @@ func (m *Module) groupIndex() *groupIndex {
 		ix.pool.New = func() any {
 			return &groupEval{seen: make([]bool, len(ix.ids)), factors: make([]int8, len(ix.factors)),
 				recs: make([]Record, len(ix.refs)), loaded: make([]int8, len(ix.refs)),
-				sets: make([]map[string]struct{}, 4*len(ix.refs)+1), cands: make([][]int, len(ix.factors))}
+				sets: make([]map[string]struct{}, slotsPerRef*len(ix.refs)+1), cands: make([][]int, len(ix.factors))}
 		}
 		m.ix = ix
 	})
@@ -507,14 +512,19 @@ func listSlot(refIndex int, field string) int {
 	case refIndex < 0:
 		return 0
 	case field == fieldElementTokens:
-		return 4*refIndex + 2
+		return slotsPerRef*refIndex + 2
 	case field == fieldElementTokensWithText:
-		return 4*refIndex + 3
+		return slotsPerRef*refIndex + 3
 	case field == fieldSubsetRight:
-		return 4*refIndex + 4
+		return slotsPerRef*refIndex + 4
+	case field == fieldElementOwnKeys:
+		return slotsPerRef*refIndex + 5
 	}
-	return 4*refIndex + 1
+	return slotsPerRef*refIndex + 1
 }
+
+// slotsPerRef is the number of lists of a record listSlot numbers.
+const slotsPerRef = 5
 
 func (e *groupEval) groupHolds(fs []int) bool {
 	for _, f := range fs {
@@ -569,11 +579,11 @@ func (t *test) holds(e *groupEval) bool {
 	if t.ref == memberFoldedRoles {
 		keys = e.in.FoldedRoles
 	} else if r, ok := e.rec(t.refIndex); ok {
-		keys, k, st, cl, hasNull, num = r.list(t.field), r.Key, r.State, r.Class, r.HasNull, r.Number
+		keys, k, st, cl, hasNull, num = r.list(t.field), r.scalar(t.field), r.State, r.Class, r.HasNull, r.Number
 	}
 	right := func() ([]string, *string) {
 		if r, ok := e.rec(t.rightRefIndex); ok {
-			return r.list(t.rightField), r.Key
+			return r.list(t.rightField), r.scalar(t.rightField)
 		}
 		return nil, nil
 	}
@@ -612,13 +622,15 @@ func (t *test) holds(e *groupEval) bool {
 		return cl == t.val
 	case "clsin":
 		return slices.Contains(t.set, cl)
-	case "eqref", "neref", "inref", "notinref":
+	case "eqref", "neref", "noteqref", "inref", "notinref":
 		rightKeys, rightKey := right()
 		switch t.kind {
 		case "eqref":
 			return k != nil && rightKey != nil && *k == *rightKey
 		case "neref":
 			return k != nil && rightKey != nil && *k != *rightKey
+		case "noteqref":
+			return k == nil || rightKey == nil || *k != *rightKey
 		case "inref":
 			return k != nil && rightKeys != nil && e.contains(t.rightSlot, rightKeys, *k)
 		default:
@@ -635,14 +647,28 @@ func (t *test) holds(e *groupEval) bool {
 }
 
 // list returns the list field f of the record: ElementKeys when f is empty,
-// ElementTokens for element_tokens, or ElementTokensWithText for
-// element_tokens_with_text.
+// ElementOwnKeys for element_own_keys, ElementTokens for element_tokens, or
+// ElementTokensWithText for element_tokens_with_text.
 func (r Record) list(f string) []string {
 	switch f {
+	case fieldElementOwnKeys:
+		return r.ElementOwnKeys
 	case fieldElementTokens:
 		return r.ElementTokens
 	case fieldElementTokensWithText:
 		return r.ElementTokensWithText
 	}
 	return r.ElementKeys
+}
+
+// scalar returns the scalar field f of the record: Key when f is empty,
+// ValueKey for value_key, or MatchKey for match_key.
+func (r Record) scalar(f string) *string {
+	switch f {
+	case fieldValueKey:
+		return r.ValueKey
+	case fieldMatchKey:
+		return r.MatchKey
+	}
+	return r.Key
 }

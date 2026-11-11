@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 <!-- markdownlint-disable-next-line MD001 -->
 #### Date
@@ -96,7 +96,9 @@ The operators:
 In the record, `ck` is the `String.valueOf` text, `k` is its folded form, the number is the one `new BigDecimal(ck)`
 reads, and the key `o` of a list or an object keys each number inside by its value. The record holds no other text of a
 number. A string has a number wherever `new BigDecimal` reads it, so generated code compares a number with a string by
-that number alone.
+that number alone. Since `==` is not transitive, no single key per scalar expresses it: the Rego generator gives each
+scalar the tokens it owns and the tokens it matches, and two scalars are equal when the tokens one owns meet the tokens
+the other matches. `internal/regogen/eqtokens.go` lists them.
 
 ### Justification
 

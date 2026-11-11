@@ -99,9 +99,13 @@ type Ref struct {
 type litVal struct {
 	kind  spectables.Kind
 	class spectables.Class
-	key   string
-	keys  []string
-	text  string // the text of a string literal
+	// key is the key of a scalar (scalarTokens) and the folded Java text of
+	// a list.
+	key string
+	// keys and own are the match and the own tokens of a scalar, or of the
+	// items of a list.
+	keys, own []string
+	text      string // the text of a string literal
 	// num is the number <, <=, >, and >= read the literal as, nil for none.
 	num *jsonvalue.Decimal
 	// subsetLeft and subsetRight are the tokens IS SUBSET reads of the
@@ -242,12 +246,22 @@ func literalSplit(o policyir.Operand, split func(raw string) ([]jsonvalue.Value,
 		return nil, fmt.Errorf("operand %T is not a literal", o)
 	}
 	rec := legacyvalue.Of(v)
-	l := &litVal{kind: kind, keys: rec.Keys}
+	l := &litVal{kind: kind}
 	if s, ok := v.(string); ok {
 		l.text = s
 	}
-	if rec.Key != nil {
-		l.key = *rec.Key
+	if items, ok := v.([]jsonvalue.Value); ok {
+		if rec.Key != nil {
+			l.key = *rec.Key
+		}
+		for _, it := range items {
+			t := scalarTokensOf(it, literalNumberValue)
+			l.keys = append(l.keys, t.match()...)
+			l.own = append(l.own, t.own()...)
+		}
+	} else {
+		t := scalarTokensOf(v, literalNumberValue)
+		l.key, l.keys, l.own = t.key, t.match(), t.own()
 	}
 	switch o := o.(type) {
 	case policyir.String:
@@ -257,11 +271,7 @@ func literalSplit(o policyir.Operand, split func(raw string) ([]jsonvalue.Value,
 	case policyir.Number:
 		l.num = literalNumber(o.Text)
 	}
-	num := literalNumberText
-	if _, ok := o.(policyir.List); ok {
-		num = listNumberText
-	}
-	l.subsetLeft, l.subsetRight = subsetLeft(v, num), subsetRight(v, num, false)
+	l.subsetLeft, l.subsetRight = subsetLeft(v, literalNumberValue), subsetRight(v, literalNumberValue, false)
 	switch kind {
 	case spectables.KindLitStr:
 		l.class = spectables.ClassString
@@ -461,7 +471,7 @@ func (g *gen) side(o policyir.Operand) (*side, error) {
 		if g.fixedOp != nil {
 			l, _ := literal(policyir.String{Value: *g.fixedOp})
 			return &side{kind: spectables.KindOperation, lit: &litVal{kind: spectables.KindOperation,
-				class: spectables.ClassString, key: l.key, keys: l.keys, text: l.text, num: l.num, subsetLeft: l.subsetLeft, subsetRight: l.subsetRight}}, nil
+				class: spectables.ClassString, key: l.key, keys: l.keys, own: l.own, text: l.text, num: l.num, subsetLeft: l.subsetLeft, subsetRight: l.subsetRight}}, nil
 		}
 	case policyir.Subject:
 		if o.Attr == policyir.SubjectPermissionScope {

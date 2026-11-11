@@ -56,15 +56,17 @@ func (t tpl) fieldClasses(s *side) []spectables.Class {
 }
 
 // fieldOf reports whether [record] writes field f, which the module reads,
-// for a value of class cl: key and number for s and n; element_keys for every
-// class but z; text and the segments for s; text_key and equality_key for the
-// lists and the object. Any other field, such as has_null, keeps the check of
-// the class.
+// for a value of class cl: key, match_key, and number for s and n; value_key
+// for s; element_keys and element_own_keys for every class but z; text and
+// the segments for s; text_key and equality_key for the lists and the object.
+// Any other field, such as has_null, keeps the check of the class.
 func fieldOf(f string, cl spectables.Class) bool {
 	switch f {
-	case fieldKey, fieldNumber:
+	case fieldKey, fieldNumber, fieldMatchKey:
 		return cl == spectables.ClassString || cl == spectables.ClassScalar
-	case fieldElementKeys:
+	case fieldValueKey:
+		return cl == spectables.ClassString
+	case fieldElementKeys, fieldElementOwnKeys:
 		return cl != spectables.ClassNull
 	case fieldText, fieldSegments:
 		return cl == spectables.ClassString
@@ -378,21 +380,20 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		if !isScalar(cl) || !isScalar(cr) || !lref && !rref {
 			return tpl{}, false
 		}
-		cls := clsIndexEq
 		if lref && rref {
-			cls = clsCheck
+			c := clsCheck
+			if net {
+				c = clsAfterBuilt
+			}
+			t, f := b.eqRefs(L, R, cl, cr, c)
+			return out(spectables.RuleEq, t, dnf{f})
 		}
-		if net {
-			cls = clsAfterBuilt
+		ref, lits, rc := L, R, cl
+		if !lref {
+			ref, lits, rc = R, L, cr
 		}
-		bind := conj(L.bind(), R.bind())
-		t := conj(bind, clause{{cls: cls, text: b.key(L) + " == " + b.key(R), fact: vfact(L), test: scalarTest("eq", L, R)}})
-		fc := cls
-		if fc == clsIndexEq {
-			fc = clsCheck
-		}
-		f := conj(bind, clause{{cls: fc, text: b.key(L) + " != " + b.key(R), fact: vfact(L), test: scalarTest("ne", L, R)}})
-		return out(spectables.RuleEq, dnf{t}, dnf{f})
+		t, f := b.eqLiteral(ref, lits.lit.keys, rc)
+		return out(spectables.RuleEq, t, dnf{f})
 	case spectables.OpIn:
 		if cl == spectables.ClassNull && lref {
 			// a null on the left is in no list; a null element on the right
@@ -421,35 +422,45 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 			if !rref {
 				return tpl{}, false
 			}
-			t := conj(R.bind(), clause{{cls: R.cls(clsIndexIn), text: b.key(L) + " in " + b.elementKeys(R), fact: vfact(R),
-				test: refTest(R, &test{kind: "has", val: L.lit.key})}})
-			f := conj(R.bind(), clause{{cls: R.cls(clsCheck), text: "not " + b.key(L) + " in " + b.elementKeys(R),
-				fact: vfact(R), test: refTest(R, &test{kind: "nothas", val: L.lit.key})}})
-			return out(spectables.RuleInAny, dnf{t}, dnf{f})
+			// each own token of the literal is a clause of its own, which
+			// the OPA rule index files under the token
+			var t dnf
+			var f clause
+			eks := b.elementKeys(R)
+			for _, k := range L.lit.own {
+				t = append(t, conj(R.bind(), clause{{cls: R.cls(clsIndexIn), text: lit(k) + " in " + eks, fact: vfact(R),
+					test: refTest(R, &test{kind: "has", val: k})}}))
+				f = append(f, expr{cls: R.cls(clsCheck), text: "not " + lit(k) + " in " + eks,
+					fact: vfact(R), test: refTest(R, &test{kind: "nothas", val: k})})
+			}
+			return out(spectables.RuleInAny, t, dnf{conj(R.bind(), f)})
 		}
 		if !rref {
-			keys := R.lit.keys
-			var t clause
-			if len(keys) == 1 {
-				t = conj(L.bind(), clause{{cls: L.cls(clsIndexEq), text: b.key(L) + " == " + lit(keys[0]), fact: vfact(L),
-					test: refTest(L, &test{kind: "eq", val: keys[0]})}})
-			} else {
-				t = conj(L.bind(), clause{{cls: L.cls(clsIndexIn), text: b.key(L) + " in " + setLit(keys), fact: vfact(L),
-					test: refTest(L, &test{kind: "in", set: keys})}})
-			}
-			f := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: "not " + b.key(L) + " in " + setLit(keys),
-				fact: vfact(L), test: refTest(L, &test{kind: "notin", set: keys})}})
-			return out(spectables.RuleInAny, dnf{t}, dnf{f})
+			t, f := b.eqLiteral(L, R.lit.keys, cl)
+			return out(spectables.RuleInAny, t, dnf{f})
 		}
 		c := clsCheck
 		if net {
 			c = clsAfterBuilt
 		}
 		bind := conj(L.bind(), R.bind())
-		t := conj(bind, clause{{cls: c, text: b.key(L) + " in " + b.elementKeys(R), fact: vfact(L), test: pairTest("inref", L, R)}})
-		f := conj(bind, clause{{cls: c, text: "not " + b.key(L) + " in " + b.elementKeys(R), fact: vfact(L),
-			test: pairTest("notinref", L, R)}})
-		return out(spectables.RuleInAny, dnf{t}, dnf{f})
+		var t dnf
+		var f clause
+		for _, lf := range ownFields(cl) {
+			b.use(L, lf)
+			inref := func(kind string) *test {
+				if t := pairTest(kind, L, R); t != nil {
+					t.field = scalarField(lf)
+					return t
+				}
+				return nil
+			}
+			t = append(t, conj(bind, clause{{cls: c, text: L.field(lf) + " in " + b.elementKeys(R), fact: vfact(L),
+				test: inref("inref")}}))
+			f = append(f, expr{cls: c, text: "not " + L.field(lf) + " in " + b.elementKeys(R), fact: vfact(L),
+				test: inref("notinref")})
+		}
+		return out(spectables.RuleInAny, t, dnf{conj(bind, f)})
 	case spectables.OpContains, spectables.OpContainsAny:
 		listy := func(c spectables.Class) bool {
 			return isScalar(c) || c == spectables.ClassList || c == spectables.ClassPIPList || isStructure(c)
@@ -486,18 +497,18 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 				c = clsAfterBuilt
 			}
 			if !lref || !rref {
-				// a literal's tokens are its keys, the same in element_tokens
-				// and element_tokens_with_text, and the first is part of the
-				// second, so the other side's element_tokens_with_text decides
+				// the own tokens of the literal meet the match tokens in the
+				// other side's element_tokens_with_text exactly where two
+				// elements are equal
 				lits, other := L, R
 				if lref {
 					lits, other = R, L
 				}
 				b.use(other, fieldElementTokensWithText)
 				eb := other.field(fieldElementTokensWithText)
-				toks := make([]string, len(lits.lit.keys))
+				toks := make([]string, len(lits.lit.own))
 				var ts dnf
-				for i, k := range lits.lit.keys {
+				for i, k := range lits.lit.own {
 					toks[i] = "t:" + k
 					ts = append(ts, conj(other.bind(), clause{{cls: other.cls(c), text: lit(toks[i]) + " in " + eb,
 						fact: vfact(other), test: refTest(other, &test{kind: "has", val: toks[i], field: fieldElementTokensWithText})}}))
@@ -547,24 +558,24 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 				return tpl{}, false
 			}
 			var ts dnf
-			for _, k := range L.lit.keys {
+			for _, k := range L.lit.own {
 				ts = append(ts, conj(R.bind(), clause{{cls: R.cls(clsIndexIn), text: lit(k) + " in " + rks,
 					fact: vfact(R), test: refTest(R, &test{kind: "has", val: k})}}))
 			}
 			f := conj(R.bind(), clause{{cls: R.cls(clsCheck), fact: vfact(R),
-				test: refTest(R, &test{kind: "none", set: L.lit.keys}),
-				text: fmt.Sprintf("every x in %s { not x in %s }", rks, setLit(L.lit.keys))}})
+				test: refTest(R, &test{kind: "none", set: L.lit.own}),
+				text: fmt.Sprintf("every x in %s { not x in %s }", rks, setLit(L.lit.own))}})
 			return out(spectables.RuleContainsAny, union(ts), dnf{f})
 		}
 		if !rref {
 			var ts dnf
-			for _, k := range R.lit.keys {
+			for _, k := range R.lit.own {
 				ts = append(ts, conj(L.bind(), clause{{cls: L.cls(clsIndexIn), text: lit(k) + " in " + b.elementKeys(L),
 					fact: vfact(L), test: refTest(L, &test{kind: "has", val: k})}}))
 			}
 			f := conj(L.bind(), clause{{cls: L.cls(clsCheck), fact: vfact(L),
-				test: refTest(L, &test{kind: "none", set: R.lit.keys}),
-				text: fmt.Sprintf("every x in %s { not x in %s }", b.elementKeys(L), setLit(R.lit.keys))}})
+				test: refTest(L, &test{kind: "none", set: R.lit.own}),
+				text: fmt.Sprintf("every x in %s { not x in %s }", b.elementKeys(L), setLit(R.lit.own))}})
 			return out(spectables.RuleContainsAny, union(ts), dnf{f})
 		}
 		c := clsCheck
@@ -573,11 +584,20 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		}
 		v := "x_" + L.ref.Var + "_" + R.ref.Var
 		bind := conj(L.bind(), R.bind())
-		t := conj(bind, clause{{cls: c, text: fmt.Sprintf("some %s in %s", v, b.elementKeys(L)), fact: vfact(L),
-			test: pairTest("overlap", L, R)},
+		b.use(L, fieldElementOwnKeys)
+		own := L.field(fieldElementOwnKeys)
+		pair := func(kind string) *test {
+			if t := pairTest(kind, L, R); t != nil {
+				t.field = fieldElementOwnKeys
+				return t
+			}
+			return nil
+		}
+		t := conj(bind, clause{{cls: c, text: fmt.Sprintf("some %s in %s", v, own), fact: vfact(L),
+			test: pair("overlap")},
 			{cls: c, text: fmt.Sprintf("%s in %s", v, rks), fact: vfact(R), test: pairTest("noop", L, R)}})
-		f := conj(bind, clause{{cls: c, fact: vfact(L), test: pairTest("disjoint", L, R),
-			text: fmt.Sprintf("every %s in %s { not %s in %s }", v, b.elementKeys(L), v, rks)}})
+		f := conj(bind, clause{{cls: c, fact: vfact(L), test: pair("disjoint"),
+			text: fmt.Sprintf("every %s in %s { not %s in %s }", v, own, v, rks)}})
 		return out(spectables.RuleContainsAny, dnf{t}, dnf{f})
 	}
 	return tpl{}, false
@@ -675,16 +695,87 @@ func refTest(s *side, t *test) *test {
 	return t
 }
 
-// scalarTest is the test of an equality (eq) or inequality (ne) of two keys.
-func scalarTest(kind string, L, R *side) *test {
-	switch {
-	case L.ref != nil && R.ref != nil:
-		return pairTest(kind+"ref", L, R)
-	case L.ref != nil:
-		return refTest(L, &test{kind: kind, val: R.lit.key})
-	default:
-		return refTest(R, &test{kind: kind, val: L.lit.key})
+// eqLiteral returns the rows where the scalar reference s of class cl equals
+// a literal whose match tokens are match, and the clause where it does not:
+// where the own tokens of s, its key and value_key, meet match.
+func (b *tb) eqLiteral(s *side, match []string, cl spectables.Class) (dnf, clause) {
+	keys, values := splitTokens(match, cl == spectables.ClassString)
+	var t dnf
+	var f clause
+	for _, g := range []struct {
+		field  string
+		tokens []string
+	}{{fieldKey, keys}, {fieldValueKey, values}} {
+		if len(g.tokens) == 0 {
+			continue
+		}
+		b.use(s, g.field)
+		x, tf := s.field(g.field), scalarField(g.field)
+		if len(g.tokens) == 1 {
+			t = append(t, conj(s.bind(), clause{{cls: s.cls(clsIndexEq), text: x + " == " + lit(g.tokens[0]), fact: vfact(s),
+				test: refTest(s, &test{kind: "eq", val: g.tokens[0], field: tf})}}))
+			f = append(f, expr{cls: s.cls(clsCheck), text: x + " != " + lit(g.tokens[0]), fact: vfact(s),
+				test: refTest(s, &test{kind: "ne", val: g.tokens[0], field: tf})})
+			continue
+		}
+		t = append(t, conj(s.bind(), clause{{cls: s.cls(clsIndexIn), text: x + " in " + setLit(g.tokens), fact: vfact(s),
+			test: refTest(s, &test{kind: "in", set: g.tokens, field: tf})}}))
+		f = append(f, expr{cls: s.cls(clsCheck), text: "not " + x + " in " + setLit(g.tokens), fact: vfact(s),
+			test: refTest(s, &test{kind: "notin", set: g.tokens, field: tf})})
 	}
+	return t, conj(s.bind(), f)
+}
+
+// eqRefs returns the rows where the scalar references L, of class cl, and R,
+// of class cr, are equal, and the clause where they are not: where the own
+// tokens of L meet the match tokens of R. Two values of one class compare by
+// key alone: the N token a number owns never meets the S token another number
+// matches, nor does the S token a string owns meet the N token another string
+// matches.
+func (b *tb) eqRefs(L, R *side, cl, cr spectables.Class, c int) (dnf, clause) {
+	bind := conj(L.bind(), R.bind())
+	b.use(L, fieldKey)
+	b.use(R, fieldKey)
+	t := dnf{conj(bind, clause{{cls: c, text: L.field(fieldKey) + " == " + R.field(fieldKey), fact: vfact(L),
+		test: pairTest("eqref", L, R)}})}
+	f := clause{{cls: c, text: L.field(fieldKey) + " != " + R.field(fieldKey), fact: vfact(L), test: pairTest("neref", L, R)}}
+	if cl != cr {
+		lf := fieldKey
+		if cl == spectables.ClassString {
+			lf = fieldValueKey
+		}
+		b.use(L, lf)
+		b.use(R, fieldMatchKey)
+		pair := func(kind string) *test {
+			if t := pairTest(kind, L, R); t != nil {
+				t.field, t.rightField = scalarField(lf), fieldMatchKey
+				return t
+			}
+			return nil
+		}
+		x := L.field(lf) + " == " + R.field(fieldMatchKey)
+		t = append(t, conj(bind, clause{{cls: c, text: x, fact: vfact(L), test: pair("eqref")}}))
+		f = append(f, expr{cls: c, text: "not " + x, fact: vfact(L), test: pair("noteqref")})
+	}
+	return t, conj(bind, f)
+}
+
+// ownFields are the fields of the own tokens of a scalar of class cl: key,
+// and value_key for a string.
+func ownFields(cl spectables.Class) []string {
+	if cl == spectables.ClassString {
+		return []string{fieldKey, fieldValueKey}
+	}
+	return []string{fieldKey}
+}
+
+// scalarField is the field a test names for a scalar field f of a record:
+// empty for key, which a test reads by default.
+func scalarField(f string) string {
+	if f == fieldKey {
+		return ""
+	}
+	return f
 }
 
 // pairTest is a test over two references.

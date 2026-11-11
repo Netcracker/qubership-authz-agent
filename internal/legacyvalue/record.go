@@ -93,7 +93,7 @@ type Record struct {
 	// "TRUE". For a list or an object it is Fold of its Java [Text], which a
 	// string equals it by. Generated code compares a number with a number or
 	// a string by Number instead, and the two are unequal unless both have
-	// one; two numbers that both lack one, such as 1e400, compare by k
+	// one; two numbers that both lack one, such as 1e400, compare by ck
 	// (ADR-0083).
 	Key *string
 	// ck: the key with case, the same text before [Fold].

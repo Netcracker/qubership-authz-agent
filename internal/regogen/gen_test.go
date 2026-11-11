@@ -1069,7 +1069,7 @@ func TestASingleOddListContainsNoEmptyAttributeList(t *testing.T) {
 // Two lists have an element in common under CONTAINS ANY, or a list on the
 // left contains a subject list of one value, when two elements are equal: an
 // object by its members, with their case, and a list by its elements in
-// order, each as equalsIgnoreCase compares texts.
+// order, a string with its case and a number by its value (ADR-0083).
 func TestStructureElementsAreEqualByValue(t *testing.T) {
 	for _, tc := range []struct {
 		name, condition, a, b string
@@ -1079,7 +1079,9 @@ func TestStructureElementsAreEqualByValue(t *testing.T) {
 			`[{"k": "v"}]`, true},
 		{"an object element in another case", "resource.a CONTAINS subject.id", `[{"k": "V"}]`, `[{"k": "v"}]`,
 			false},
-		{"a list element in another case", "resource.a CONTAINS ANY subject.id", `[["A"]]`, `[["a"]]`, true},
+		{"a list element in another case", "resource.a CONTAINS ANY subject.id", `[["A"]]`, `[["a"]]`, false},
+		{"a list element with a number in another spelling", "resource.a CONTAINS ANY subject.id", `[[1]]`, `[[1.0]]`,
+			true},
 		{"a list element in another order", "resource.a CONTAINS ANY subject.id", `[["a", "b"]]`, `[["b", "a"]]`,
 			false},
 		{"a list element with a null equals nothing", "resource.a CONTAINS ANY subject.id", `[[null]]`, `[[null]]`,
@@ -3040,7 +3042,7 @@ func TestAJSONPathOperandIsReadFromTheResource(t *testing.T) {
 		{"keys in the document's order", "resource.o.keys() == '[b, a]'", `{"o": {"b": 1, "a": 2}}`, "T"},
 		{"keys in sorted order", "resource.o.keys() == '[a, b]'", `{"o": {"b": 1, "a": 2}}`, "F"},
 		{"a number with its text", "resource.items[0].n == '1.0'", `{"items": [{"n": 1.0}]}`, "T"},
-		{"a number without its fraction", "resource.items[0].n == '1'", `{"items": [{"n": 1.0}]}`, "F"},
+		{"a number without its fraction", "resource.items[0].n == '1'", `{"items": [{"n": 1.0}]}`, "T"},
 		{"two paths with equal values", "resource.a[0] == resource.b[0]", `{"a": ["x"], "b": ["X"]}`, "T"},
 		{"two paths with other values", "resource.a[0] == resource.b[0]", `{"a": ["x"], "b": ["y"]}`, "F"},
 		{"two paths, the second past the end", "resource.a[0] == resource.b[0]", `{"a": ["x"], "b": []}`, "F"},
@@ -3405,4 +3407,75 @@ func line(lines []string, i int) string {
 		return lines[i]
 	}
 	return ""
+}
+
+// A number equals a number or a string of the same value, whatever its
+// spelling, and two strings compare by their texts, so the relation is not
+// transitive (ADR-0083). A literal has the value of its own text, while a
+// number of the input is read as a double beyond its integers. A condition on
+// the subject alone moves into a group, which every form must answer alike.
+func TestANumberEqualsANumberOrAStringOfTheSameValue(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	const keyB, keyID, keyName = `["res",".b"]`, `["subj","id"]`, `["subj","name"]`
+	tiny := "0." + strings.Repeat("0", 399) + "1"
+	for _, tc := range []struct {
+		name, condition, a, b string
+		want                  bool
+	}{
+		{"a literal in another spelling", "resource.a == 5.0", `5`, `0`, true},
+		{"a string literal of the value", "resource.a == '05'", `5`, `0`, true},
+		{"a string of the value and a literal", "resource.a == 5", `"5.0"`, `0`, true},
+		{"two strings of one value differ", "resource.a == '5.0'", `"5.00"`, `0`, false},
+		{"two references in other spellings", "resource.a == resource.b", `5`, `5.0`, true},
+		{"a reference and a string of its value", "resource.a == resource.b", `5`, `"5.0"`, true},
+		{"a string reference and a number of its value", "resource.a == resource.b", `"5.0"`, `5`, true},
+		{"a string of no value is not a number", "resource.a != resource.b", `"abc"`, `5`, true},
+		{"a string of no value is not a number literal", "resource.a != 5", `"abc"`, `0`, true},
+		{"two string references of one value differ", "resource.a == resource.b", `"5.0"`, `"5.00"`, false},
+		{"not equal to a string of its value", "resource.a != resource.b", `5`, `"5.0"`, false},
+		{"a number beyond the doubles and its text differ", "resource.a == resource.b", `1e400`, `"Infinity"`, false},
+		{"two numbers beyond the doubles are equal", "resource.a == resource.b", `1e400`, `1e401`, true},
+		{"numbers beyond the doubles of two signs differ", "resource.a == resource.b", `1e400`, `-1e400`, false},
+		{"a literal below the doubles is not the zero an input reads", tiny + " == resource.a", tiny, `0`, false},
+		{"an input number below the doubles equals zero", "resource.a == 0", tiny, `0`, true},
+		{"in a literal list in another spelling", "resource.a IN 5.0, 6", `5`, `0`, true},
+		{"a string in a literal list of its value", "resource.a IN 5, 6", `"5.0"`, `0`, true},
+		{"a literal in a reference list of its value", "5.0 IN resource.b", `0`, `["5"]`, true},
+		{"a string literal in a reference list of its value", "'5.0' IN resource.b", `0`, `[5]`, true},
+		{"a string in a reference list of its value", "resource.a IN resource.b", `"5.0"`, `[5]`, true},
+		{"in a reference list of its text", "resource.a IN resource.b", `5`, `["5.0"]`, true},
+		{"a string in a list of a string of its value", "resource.a IN resource.b", `"5.0"`, `["5.00"]`, false},
+		{"contains a string of an element's value", "resource.a CONTAINS ANY resource.b", `[5]`, `["5.0"]`, true},
+		{"contains no string of another text", "resource.a CONTAINS ANY resource.b", `["5.0"]`, `["5.00"]`, false},
+		{"contains a number in another spelling", "resource.a CONTAINS 6.0", `[5, 6]`, `0`, true},
+		{"a subset by value", "resource.a IS SUBSET resource.b", `[5]`, `["5.0", 6]`, true},
+		{"a subset of strings by value", "resource.a IS SUBSET 5, 6", `["5.0"]`, `0`, true},
+		{"a subset of a literal list by value", "resource.a IS SUBSET 5.0, 6", `[5]`, `0`, true},
+		{"a structure contains a string of an element's value", "resource.a CONTAINS '5.0'", `[5, ["x"]]`, `0`, true},
+		{"two literals by value", "'5.0' == 5", `0`, `0`, true},
+		{"two string literals by text", "'5.0' == '5.00'", `0`, `0`, false},
+		{"a literal in a literal list by value", "5 IN '5.0', 'x'", `0`, `0`, true},
+		{"a subject number and a literal", "subject.id == 5.0", `0`, `0`, true},
+		{"a subject number and a string literal", "subject.id IN '5.0', 'x'", `0`, `0`, true},
+		{"a subject number and a reference", "subject.id == resource.b", `0`, `"5.0"`, true},
+		{"a subject string and a number literal", "subject.name == 5", `0`, `0`, true},
+		{"a subject string is equal to a number literal", "subject.name != 5", `0`, `0`, false},
+		{"a subject string and a subject number", "subject.name == subject.id", `0`, `0`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), keyB: resolved(t, "VALUE", tc.b),
+				keyID: resolved(t, "VALUE", `5`), keyName: resolved(t, "VALUE", `"5.0"`)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s, resource.a = %s, resource.b = %s, subject.id = 5, subject.name = \"5.0\") %s"+
+						" = %v, want %v", tc.condition, tc.a, tc.b, form, got, tc.want)
+				}
+			}
+		})
+	}
 }
