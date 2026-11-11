@@ -838,7 +838,8 @@ func opsSubset(a, b map[string][]string) bool {
 
 // exportRunProblem returns why a run of the profile established nothing, or ""
 // when at least one golden was compared: a selector that matched no function
-// of the bundle, or a stand that skipped every golden.
+// of the bundle, a stand that skipped every golden, or an agent that loaded
+// none of the exports.
 func exportRunProblem(results []exportResult) string {
 	for _, res := range results {
 		if res.Verdict != verdictSkipped && res.Verdict != verdictBroken {

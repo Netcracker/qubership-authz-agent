@@ -47,7 +47,9 @@ The other classes are not accepted; they are defects of the conversion:
 - `pull-failure` contradicts the converter's own rule that one bad element must not cost the agent every other
   policy: one value of an unexpected JSON type, or one condition the agent's parser refuses, fails the whole pull.
   Filed as [issue #85](https://github.com/Netcracker/qubership-authz-agent/issues/85); the panic on a PIP name
-  shorter than `subject.` is [issue #86](https://github.com/Netcracker/qubership-authz-agent/issues/86).
+  shorter than `subject.` is [issue #86](https://github.com/Netcracker/qubership-authz-agent/issues/86). The profile
+  does not compare a golden after such a pull: it reports the function as `SETUP BROKEN` and counts the golden as
+  `setup broken`.
 - `conversion` drops data the legacy decision reads, and produces wrong allows: a policy of every operation with a
   condition becomes an unconditional grant of its roles
   ([issue #89](https://github.com/Netcracker/qubership-authz-agent/issues/89)). `pip-kind` drops PIPs the legacy
@@ -71,8 +73,9 @@ The other classes are not accepted; they are defects of the conversion:
   those goldens with legacy directly.
 - Part A of the profile (`TestExportFedLegacyAgent`, `make parity-export-legacy`) mounts the exports legacy
   access-control recorded, and has no prediction of the agent's answer. There a golden whose point holds a regular
-  policy set (class `set-type`) passes when the agent allows nothing the golden denies. Its other classes are
-  `pull-failure`, the remaining export features (`status`, `rule-effect`, `customization`, `tenant`, `pip-kind`,
+  policy set (class `set-type`) passes when the agent allows nothing the golden denies. A point whose export the agent
+  does not load is reported as `SETUP BROKEN` and its decisions are not compared. Its other classes are the remaining
+  export features (`status`, `rule-effect`, `customization`, `tenant`, `pip-kind`,
   `undeclared-pip`), and `agent` for a difference at a point with none of them, which is a defect of the agent's
   evaluation rather than of the conversion. A difference of class `undeclared-pip` is accepted whatever the agent
   answers. The class belongs to the point, not to the rule: a decision gets it when any rule of the point's export

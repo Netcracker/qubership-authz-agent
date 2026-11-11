@@ -76,7 +76,9 @@ var acceptedDivergences = map[string]AcceptedDivergence{
 
 // acceptedExportDivergences is keyed by the difference class the
 // specification's export bundle gives a golden of the export-fed profile
-// (TestExportFedAgent): set-type, conversion, tenant, pip-kind, pull-failure.
+// (TestExportFedAgent): set-type, conversion, tenant, pip-kind. A golden after
+// an export the agent did not load, which the bundle gives the class
+// pull-failure, is not compared (verdictBroken).
 // A class is accepted, not a case, because one decision about the conversion
 // explains every golden of the class. Such a golden still runs and passes only
 // when the agent answers exactly as the bundle predicts for it, so an agent that
