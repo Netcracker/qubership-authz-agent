@@ -713,23 +713,34 @@ func TestMatchAPathPattern(t *testing.T) {
 	}
 }
 
-// The right operand of MATCH that starts with resource. is a resource path,
-// and its text is the pattern. A number on its left ends the rule, as over
-// any number: 1e400 is not read as the text Infinity, which a pattern of
-// literal text compares instead.
-func TestANumberLeftOfAResourcePathInMatchEndsTheRule(t *testing.T) {
-	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a NOT MATCH resource.q")
+// A number beyond the range of a double is matched as the text it prints as,
+// Infinity or -Infinity, against a pattern written in the condition and
+// against the text of a resource path on the right of MATCH. A number in the
+// range, up to the largest double, takes the outcome the tables give every
+// number on the left of MATCH.
+func TestANumberBeyondTheDoubleRangeMatchesAsItsText(t *testing.T) {
 	for _, tc := range []struct {
-		name, value string
-		want        bool
+		name, condition, a, b string
+		want                  bool
 	}{
-		{"a number beyond the double range denies", `1e400`, false},
-		{"the string Infinity allows", `"Infinity"`, true},
-		{"the path text itself denies", `"resource.q"`, false},
+		{"1e400 matches Inf.*", "resource.a MATCH Inf.*", `1e400`, `"n"`, true},
+		{"1e400 does not match 1.*", "resource.a MATCH 1.*", `1e400`, `"n"`, false},
+		{"-1e400 matches -Inf.*", "resource.a MATCH -Inf.*", `-1e400`, `"n"`, true},
+		{"-1e400 does not match Inf.*", "resource.a MATCH Inf.*", `-1e400`, `"n"`, false},
+		{"1e400 is not NOT MATCH Inf.*", "resource.a NOT MATCH Inf.*", `1e400`, `"n"`, false},
+		{"a number in range ends the rule under NOT MATCH", "resource.a NOT MATCH Inf.*", `5`, `"n"`, false},
+		{"the largest double does not match Inf.*", "resource.a MATCH Inf.*", `1.7976931348623157e308`, `"n"`, false},
+		{"1.8e308, just past the largest double, matches Inf.*", "resource.a MATCH Inf.*", `1.8e308`, `"n"`, true},
+		{"1e400 decides MATCH in an OR", "resource.a MATCH Inf.* OR resource.b == 'y'", `1e400`, `"n"`, true},
+		{"1e400 is NOT MATCH the text of a resource path", "resource.a NOT MATCH resource.q", `1e400`, `"n"`, true},
+		{"the string Infinity is NOT MATCH the text of a resource path", "resource.a NOT MATCH resource.q", `"Infinity"`, `"n"`, true},
+		{"the text of the path itself matches it", "resource.a NOT MATCH resource.q", `"resource.q"`, `"n"`, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := decide(t, tree, DefaultOptions(), keyA, resolved(t, "VALUE", tc.value)); got != tc.want {
-				t.Errorf("allow(resource.a = %s) = %v, want %v", tc.value, got, tc.want)
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["res",".b"]`: resolved(t, "VALUE", tc.b)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(%s, resource.a = %s, resource.b = %s) = %v, want %v", tc.condition, tc.a, tc.b, got, tc.want)
 			}
 		})
 	}

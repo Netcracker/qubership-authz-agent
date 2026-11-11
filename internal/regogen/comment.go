@@ -276,7 +276,8 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # element_tokens_with_text those and the token of the text of a list or an
 # object element, number the key < and > compare a number by, a list that
 # sorts as the numbers do, subset_left and subset_right the tokens IS SUBSET
-# reads on the left and on the right. A token is a key with its kind: t: text, o: object,
+# reads on the left and on the right, beyond_double the text Infinity or
+# -Infinity of a number beyond the range of a double, which MATCH reads. A token is a key with its kind: t: text, o: object,
 # l:[...] list, and in the tokens of IS SUBSET also s: string and b: boolean.
 # A class is string, scalar (a number or a boolean), list, pip_list (a list
 # of several values a HEADER, GENERAL, or FILTERED PIP builds),

@@ -280,7 +280,20 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 			add(o, R.at(rps[j]))
 		}
 	}
+	if (op == spectables.OpMatch || op == spectables.OpNotMatch) && R != nil && R.isPattern() && L.ref != nil {
+		if i := slices.Index(lps, point{spectables.StateValue, spectables.ClassScalar}); i >= 0 {
+			if o, ok := constant(cells[i]); ok {
+				coveredL[i] = true
+				add(o, conj(L.at(lps[i]), L.bind(), clause{{cls: L.cls(clsCheck),
+					text: "not " + L.field(fieldBeyondDouble), fact: vfact(L)}}))
+				matchBeyondDouble(&rails, op == spectables.OpNotMatch, L, R, lps[i])
+			}
+		}
+	}
 	for i := range lps {
+		if coveredL[i] {
+			continue
+		}
 		if o, ok := constant(cells[i]); ok {
 			coveredL[i] = true
 			add(o, L.at(lps[i]))
@@ -316,6 +329,30 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 	}
 	rails.subjectOnly = sideSubjectOnly(L) && (R == nil || sideSubjectOnly(R))
 	return rails, nil
+}
+
+// matchBeyondDouble puts on the rails the MATCH, or the NOT MATCH when not is
+// set, of the pattern R against a number of L at the point lp that is beyond
+// the range of a double: the pattern, written in the condition or the text
+// of a resource path, is matched against the text the number prints as,
+// Infinity or -Infinity (CFG match_number_beyond_double text of the
+// specification). The tables give that point the outcome of every number,
+// which [gen.compare] keeps for the numbers in range.
+func matchBeyondDouble(rails *leafRails, not bool, L, R *side, lp point) {
+	rx, err := matchRegex(R.pattern)
+	if err != nil {
+		return
+	}
+	text := L.field(fieldBeyondDouble)
+	at := conj(L.at(lp), L.bind(), clause{{cls: L.cls(clsCheck), text: text, fact: vfact(L)}})
+	matches := dnf{conj(at, clause{{cls: L.cls(clsCheck), text: fmt.Sprintf("regex.match(%s, %s)", lit(rx), text),
+		fact: vfact(L)}})}
+	misses := dnf{conj(at, clause{{cls: L.cls(clsCheck), text: fmt.Sprintf("not regex.match(%s, %s)", lit(rx), text),
+		fact: vfact(L)}})}
+	if not {
+		matches, misses = misses, matches
+	}
+	rails.t, rails.f = union(rails.t, matches), union(rails.f, misses)
 }
 
 // failedCells replaces the cell of each point where a side's source failed

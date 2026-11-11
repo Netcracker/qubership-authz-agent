@@ -118,6 +118,10 @@ type Record struct {
 	// Number is the number <, <=, >, and >= compare a string or a scalar by,
 	// nil for a value they read as no number.
 	Number *jsonvalue.Decimal
+	// BeyondDouble is the text of a number beyond the range of a double,
+	// Infinity or -Infinity, which MATCH reads (matchBeyondDouble); nil for
+	// any other value.
+	BeyondDouble *string
 	// SubsetLeft holds the tokens of each element of the value read as a
 	// list, and SubsetRight those of all its elements, as IS SUBSET compares
 	// them on the left and on the right (subsetLeft, subsetRight); set when
@@ -216,6 +220,11 @@ func record(r *Ref, v Resolved) Record {
 	switch cl {
 	case spectables.ClassString, spectables.ClassScalar:
 		rec.Key = lv.Key
+		if _, ok := v.Value.(jsonvalue.Number); ok && lv.Number == nil {
+			// a number beyond the range of a double: its Double text,
+			// Infinity, is the only number text BigDecimal does not read
+			rec.BeyondDouble = lv.CaseKey
+		}
 		if r.reads(fieldElementKeys) {
 			rec.ElementKeys = []string{*lv.Key}
 		}
@@ -519,6 +528,9 @@ func (r Record) term() *ast.Term {
 	if r.Number != nil {
 		o.Insert(strTerm(fieldNumber), orderKey(*r.Number))
 	}
+	if r.BeyondDouble != nil {
+		o.Insert(strTerm(fieldBeyondDouble), strTerm(*r.BeyondDouble))
+	}
 	if r.SubsetLeft != nil {
 		o.Insert(strTerm(fieldSubsetLeft), setsTerm(r.SubsetLeft))
 		o.Insert(strTerm(fieldSubsetRight), keysTerm(r.SubsetRight))
@@ -614,6 +626,7 @@ const (
 	fieldNumber                = "number"
 	fieldSubsetLeft            = "subset_left"
 	fieldSubsetRight           = "subset_right"
+	fieldBeyondDouble          = "beyond_double"
 )
 
 // The names of the members of the input besides the maps of [fieldMaps].
@@ -630,7 +643,8 @@ const (
 // recordFields names the maps of [fieldMaps].
 var recordFields = []string{fieldState, fieldClass, fieldKey, fieldElementKeys, fieldText, fieldSegments,
 	fieldSegmentsFromEnd, fieldSegmentCount, fieldHasNull, fieldTextKey, fieldEqualityKey, fieldLength,
-	fieldElementTokens, fieldElementTokensWithText, fieldNumber, fieldSubsetLeft, fieldSubsetRight}
+	fieldElementTokens, fieldElementTokensWithText, fieldNumber, fieldSubsetLeft, fieldSubsetRight,
+	fieldBeyondDouble}
 
 // fieldSet holds names of recordFields, one bit each, and fieldsKnown.
 type fieldSet uint32
@@ -783,6 +797,9 @@ func (rec Record) fields(emit fieldSet, put func(field string, v *ast.Term)) {
 	}
 	if rec.Number != nil && emit.has(fieldNumber) {
 		put(fieldNumber, orderKey(*rec.Number))
+	}
+	if rec.BeyondDouble != nil && emit.has(fieldBeyondDouble) {
+		put(fieldBeyondDouble, strTerm(*rec.BeyondDouble))
 	}
 	if rec.SubsetLeft != nil {
 		if emit.has(fieldSubsetLeft) {
