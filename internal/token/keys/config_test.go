@@ -54,12 +54,12 @@ func TestParseConfig_ReadsKeycloakAndProviders(t *testing.T) {
 // fails the test.
 func TestParseConfig_ReadsTheKubernetesMark(t *testing.T) {
 	doc := `{"providers": [
-		{"id": "k8s", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "tokenFile": "/var/run/token",
-		 "audiences": ["netcracker"], "kubernetes": true},
+		{"id": "k8s", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "caFile": "/var/run/ca.crt",
+		 "tokenFile": "/var/run/token", "audiences": ["netcracker"], "kubernetes": true},
 		{"id": "idp", "issuer": "https://idp.example", "jwksUri": "https://idp.example/openid/v1/jwks", "audiences": ["netcracker"]}
 	]}`
 	want := Config{Providers: []Provider{
-		{ID: "k8s", JWKSURI: "https://kubernetes.default.svc/openid/v1/jwks", TokenFile: "/var/run/token", Audiences: []string{"netcracker"}, Kubernetes: true},
+		{ID: "k8s", JWKSURI: "https://kubernetes.default.svc/openid/v1/jwks", CAFile: "/var/run/ca.crt", TokenFile: "/var/run/token", Audiences: []string{"netcracker"}, Kubernetes: true},
 		{ID: "idp", Issuer: "https://idp.example", JWKSURI: "https://idp.example/openid/v1/jwks", Audiences: []string{"netcracker"}},
 	}}
 	got, err := ParseConfig([]byte(doc))
@@ -205,7 +205,7 @@ func TestNew_RefusesTwoProvidersThatTakeOneIssuerFromTheirTokens(t *testing.T) {
 	const fromToken = "https://kubernetes.default.svc"
 	token := writeFile(t, "token", jwtWith(`{"iss": "`+fromToken+`"}`))
 	entry := func(id string) map[string]any {
-		return map[string]any{"id": id, "jwksUri": fromToken + "/openid/v1/jwks", "tokenFile": token,
+		return map[string]any{"id": id, "jwksUri": fromToken + "/openid/v1/jwks", "caFile": "/var/run/ca.crt", "tokenFile": token,
 			"audiences": []string{"netcracker"}, "kubernetes": true}
 	}
 	doc, err := json.Marshal(map[string]any{"providers": []any{entry("first"), entry("second")}})
@@ -224,7 +224,7 @@ func TestNew_RefusesTwoProvidersThatTakeOneIssuerFromTheirTokens(t *testing.T) {
 func TestNew_RefusesATokenWhoseIssIsNotAURL(t *testing.T) {
 	token := writeFile(t, "token", jwtWith(`{"iss": "cluster-1"}`))
 	_, err := New(Config{Providers: []Provider{{ID: "k8s", JWKSURI: "https://kubernetes.default.svc/openid/v1/jwks",
-		TokenFile: token, Audiences: []string{"netcracker"}, Kubernetes: true}}}, testOptions())
+		CAFile: "/var/run/ca.crt", TokenFile: token, Audiences: []string{"netcracker"}, Kubernetes: true}}}, testOptions())
 	if err == nil || !strings.Contains(err.Error(), `provider "k8s" issuer`) {
 		t.Errorf("New() error = %v, want one that names the issuer of the provider", err)
 	}
@@ -235,7 +235,7 @@ func TestNew_RefusesATokenWhoseIssIsNotAURL(t *testing.T) {
 func TestNew_FailsWithoutTheTokenThatNamesTheIssuer(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "missing")
 	_, err := New(Config{Providers: []Provider{{ID: "k8s", JWKSURI: "https://kubernetes.default.svc/openid/v1/jwks",
-		TokenFile: path, Audiences: []string{"netcracker"}, Kubernetes: true}}}, testOptions())
+		CAFile: "/var/run/ca.crt", TokenFile: path, Audiences: []string{"netcracker"}, Kubernetes: true}}}, testOptions())
 	if err == nil || !strings.Contains(err.Error(), `provider "k8s"`) || !strings.Contains(err.Error(), path) {
 		t.Errorf("New() error = %v, want one that names the provider and %s", err, path)
 	}
@@ -396,11 +396,12 @@ func TestParseConfig_LimitsTheAddressAMarkedProviderSendsItsTokenTo(t *testing.T
 		{"in-cluster name inside a longer host", "https://kubernetes.default.svc.example.com/jwks", "outside the cluster"},
 		{"in-cluster name as user information", "https://kubernetes.default.svc@oidc.example/jwks", "outside the cluster"},
 		{"in-cluster name over http", "http://kubernetes.default.svc/openid/v1/jwks", "over http"},
+		{"in-cluster name with a trailing dot", "https://kubernetes.default.svc./openid/v1/jwks", "outside the cluster"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			doc, err := json.Marshal(map[string]any{"providers": []any{map[string]any{"id": "k8s", "jwksUri": tt.jwksURI,
-				"tokenFile": "/var/run/token", "audiences": []string{"netcracker"}, "kubernetes": true}}})
+				"caFile": "/var/run/ca.crt", "tokenFile": "/var/run/token", "audiences": []string{"netcracker"}, "kubernetes": true}}})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -413,6 +414,72 @@ func TestParseConfig_LimitsTheAddressAMarkedProviderSendsItsTokenTo(t *testing.T
 			}
 			if err == nil || !strings.Contains(err.Error(), tt.want) || !strings.Contains(err.Error(), `provider "k8s"`) {
 				t.Errorf("ParseConfig(%s) error = %v, want one that names provider \"k8s\" and %q", doc, err, tt.want)
+			}
+		})
+	}
+}
+
+// The certificate of the API server is signed by the cluster CA, which the
+// system roots of an image do not hold, so a jwksUri without caFile would fail
+// every fetch after a start that succeeded.
+func TestParseConfig_RefusesAJWKSURIOfAMarkedProviderWithoutACA(t *testing.T) {
+	doc := `{"providers": [{"id": "k8s", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "tokenFile": "/var/run/token",
+		"audiences": ["netcracker"], "kubernetes": true}]}`
+	if _, err := ParseConfig([]byte(doc)); err == nil || !strings.Contains(err.Error(), `provider "k8s"`) || !strings.Contains(err.Error(), "set caFile") {
+		t.Errorf("ParseConfig(%s) error = %v, want one that names provider \"k8s\" and caFile", doc, err)
+	}
+}
+
+// unmarkedWithTokenFile returns a trusted providers file with one provider
+// that does not set kubernetes and sends the token at path to its jwksUri.
+func unmarkedWithTokenFile(t *testing.T, path string) []byte {
+	t.Helper()
+	doc, err := json.Marshal(map[string]any{"providers": []any{map[string]any{"id": "idp", "issuer": "https://idp.example",
+		"jwksUri": "https://idp.example/jwks", "tokenFile": path}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return doc
+}
+
+func TestParseConfig_RefusesTheTokenForTheAPIServerOnAnUnmarkedProvider(t *testing.T) {
+	tests := []struct{ name, path string }{
+		{"the token", "/var/run/secrets/tokens/kubernetes/token"},
+		{"a path through another directory", "/var/run/secrets/tokens/netcracker/../kubernetes/token"},
+		{"a path with a doubled slash", "/var/run/secrets/tokens/kubernetes//token"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc := unmarkedWithTokenFile(t, tt.path)
+			if _, err := ParseConfig(doc); err == nil || !strings.Contains(err.Error(), `provider "idp" sends the token for the API server`) {
+				t.Errorf("ParseConfig(%s) error = %v, want the refusal of the token for the API server", doc, err)
+			}
+		})
+	}
+}
+
+// The working directory is /var/run, so a relative path leads to the token for
+// the API server.
+func TestParseConfig_RefusesARelativePathToTheTokenForTheAPIServerOnAnUnmarkedProvider(t *testing.T) {
+	t.Chdir("/var/run")
+	doc := unmarkedWithTokenFile(t, "secrets/tokens/kubernetes/token")
+	if _, err := ParseConfig(doc); err == nil || !strings.Contains(err.Error(), `provider "idp" sends the token for the API server`) {
+		t.Errorf("ParseConfig(%s) in /var/run error = %v, want the refusal of the token for the API server", doc, err)
+	}
+}
+
+// A directory whose name only starts with that of the token for the API server
+// holds another token.
+func TestParseConfig_AcceptsAnotherTokenOnAnUnmarkedProvider(t *testing.T) {
+	tests := []struct{ name, path string }{
+		{"the token for netcracker", "/var/run/secrets/tokens/netcracker/token"},
+		{"a directory whose name starts with kubernetes", "/var/run/secrets/tokens/kubernetes-idp/token"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc := unmarkedWithTokenFile(t, tt.path)
+			if _, err := ParseConfig(doc); err != nil {
+				t.Errorf("ParseConfig(%s) error = %v, want none", doc, err)
 			}
 		})
 	}
@@ -443,22 +510,43 @@ func TestNew_RefusesAnInClusterIssuerFromATokenWithoutACA(t *testing.T) {
 // and never parses a file gets the same refusal.
 func TestNew_RefusesAnUnmarkedProviderThatLooksLikeKubernetes(t *testing.T) {
 	_, err := New(Config{Providers: []Provider{{ID: "kubernetes", Issuer: "https://idp.example"}}}, testOptions())
-	if err == nil || !strings.Contains(err.Error(), `provider "kubernetes" looks like a Kubernetes API server`) {
+	if err == nil || !strings.Contains(err.Error(), `provider "kubernetes" has the id of a Kubernetes API server`) {
 		t.Errorf("New() error = %v, want the refusal of the unmarked provider", err)
 	}
 }
 
-// The reader holds only this text, so it names the setting that repairs the
-// file and the way out for a provider that is not the API server.
+// The reader holds only this text, so it names the field that matched and the
+// setting that repairs the file. Another id is a way out only when the id
+// matched, since an address on an in-cluster name stays on the API server.
 func TestParseConfig_SaysHowToRepairAnUnmarkedProvider(t *testing.T) {
-	_, err := ParseConfig([]byte(`{"providers": [{"id": "kubernetes", "issuer": "https://idp.example"}]}`))
-	if err == nil {
-		t.Fatal("ParseConfig() error = nil, want one for the unmarked provider")
+	tests := []struct {
+		name             string
+		doc              string
+		want             []string
+		wantAnotherIDWay bool
+	}{
+		{"id", `{"providers": [{"id": "kubernetes", "issuer": "https://idp.example"}]}`,
+			[]string{`provider "kubernetes" has the id of a Kubernetes API server`, `"kubernetes": true`, "no namespace check"}, true},
+		{"jwksUri", `{"providers": [{"id": "idp", "issuer": "https://idp.example", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks"}]}`,
+			[]string{`provider "idp" sets jwksUri "https://kubernetes.default.svc/openid/v1/jwks"`, `"kubernetes": true`, "no namespace check"}, false},
+		{"issuer", `{"providers": [{"id": "idp", "issuer": "https://kubernetes.default.svc.cluster.local"}]}`,
+			[]string{`provider "idp" sets issuer "https://kubernetes.default.svc.cluster.local"`, `"kubernetes": true`, "no namespace check"}, false},
 	}
-	for _, part := range []string{`provider "kubernetes"`, `"kubernetes": true`, "no namespace check", "another id"} {
-		if !strings.Contains(err.Error(), part) {
-			t.Errorf("ParseConfig() error = %q, want it to name %q", err, part)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ParseConfig([]byte(tt.doc))
+			if err == nil {
+				t.Fatalf("ParseConfig(%s) error = nil, want one for the unmarked provider", tt.doc)
+			}
+			for _, part := range tt.want {
+				if !strings.Contains(err.Error(), part) {
+					t.Errorf("ParseConfig(%s) error = %q, want it to name %q", tt.doc, err, part)
+				}
+			}
+			if got := strings.Contains(err.Error(), "another id"); got != tt.wantAnotherIDWay {
+				t.Errorf("ParseConfig(%s) error = %q offers another id = %t, want %t", tt.doc, err, got, tt.wantAnotherIDWay)
+			}
+		})
 	}
 }
 
@@ -480,7 +568,7 @@ func TestParseConfig_RejectsAnEntryThatBreaksARule(t *testing.T) {
 		{"id with a space", map[string]any{"id": "realm b", "issuer": "https://idp.example/realms/b"}},
 		{"duplicate id", map[string]any{"id": "a", "issuer": "https://idp.example/realms/b"}},
 		{"no issuer", map[string]any{"id": "b"}},
-		{"no issuer on a marked provider without a tokenFile", map[string]any{"id": "b", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "audiences": []string{"netcracker"}, "kubernetes": true}},
+		{"no issuer on a marked provider without a tokenFile", map[string]any{"id": "b", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "caFile": "/var/run/ca.crt", "audiences": []string{"netcracker"}, "kubernetes": true}},
 		{"no issuer with a tokenFile on an unmarked provider", map[string]any{"id": "b", "jwksUri": "https://idp.example/realms/b/certs", "tokenFile": "/var/run/token"}},
 		{"jwksUri without issuer", map[string]any{"id": "b", "jwksUri": "https://idp.example/realms/b/certs"}},
 		{"duplicate issuer", map[string]any{"id": "b", "issuer": "https://idp.example/realms/a"}},
@@ -488,12 +576,16 @@ func TestParseConfig_RejectsAnEntryThatBreaksARule(t *testing.T) {
 		{"tokenFile without jwksUri on another host, with a CA", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "caFile": "/var/run/ca.crt", "tokenFile": "/var/run/token"}},
 		{"issuer on a marked provider", map[string]any{"id": "b", "issuer": "https://kubernetes.default.svc", "caFile": "/var/run/ca.crt", "tokenFile": "/var/run/token", "audiences": []string{"netcracker"}, "kubernetes": true}},
 		{"unmarked provider named kubernetes", map[string]any{"id": "kubernetes", "issuer": "https://idp.example/realms/b"}},
+		{"unmarked provider named kubernetes in capitals", map[string]any{"id": "Kubernetes", "issuer": "https://idp.example/realms/b"}},
 		{"unmarked issuer on an in-cluster name", map[string]any{"id": "b", "issuer": "https://kubernetes.default.svc"}},
+		{"unmarked issuer on an in-cluster name with a trailing dot", map[string]any{"id": "b", "issuer": "https://kubernetes.default.svc.cluster.local."}},
 		{"unmarked jwksUri on an in-cluster name", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks"}},
 		{"unmarked jwksUri on the full in-cluster name, in capitals, with a port", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "jwksUri": "https://KUBERNETES.default.svc.cluster.local:443/openid/v1/jwks"}},
 		{"allowMissingAud without audiences", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "allowMissingAud": true}},
-		{"kubernetes without audiences", map[string]any{"id": "b", "tokenFile": "/var/run/token", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "kubernetes": true}},
-		{"kubernetes with allowMissingAud", map[string]any{"id": "b", "tokenFile": "/var/run/token", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "kubernetes": true, "audiences": []string{"netcracker"}, "allowMissingAud": true}},
+		{"kubernetes without audiences", map[string]any{"id": "b", "tokenFile": "/var/run/token", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "caFile": "/var/run/ca.crt", "kubernetes": true}},
+		{"kubernetes with another audience", map[string]any{"id": "b", "tokenFile": "/var/run/token", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "caFile": "/var/run/ca.crt", "kubernetes": true, "audiences": []string{"account"}}},
+		{"kubernetes with netcracker and another audience", map[string]any{"id": "b", "tokenFile": "/var/run/token", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "caFile": "/var/run/ca.crt", "kubernetes": true, "audiences": []string{"netcracker", "account"}}},
+		{"kubernetes with allowMissingAud", map[string]any{"id": "b", "tokenFile": "/var/run/token", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "caFile": "/var/run/ca.crt", "kubernetes": true, "audiences": []string{"netcracker"}, "allowMissingAud": true}},
 		{"empty audience", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "audiences": []string{""}}},
 		{"issuer that is not http", map[string]any{"id": "b", "issuer": "ftp://idp.example/realms/b"}},
 		{"issuer without a host", map[string]any{"id": "b", "issuer": "https:///realms/b"}},

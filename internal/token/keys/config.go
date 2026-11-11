@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -83,35 +84,48 @@ type Provider struct {
 	// such a provider trusts the system roots and [Options.InternalCAFile].
 	CAFile string `json:"caFile,omitempty"`
 	// TokenFile holds a bearer token sent with every request for the keys of
-	// this provider. A provider that does not set Kubernetes needs JWKSURI
-	// with it. A provider that sets Kubernetes has to set it, because [New]
-	// takes the Issuer from this token. That token grants access to the API
-	// server, so such a provider sends it to a JWKSURI only on an https
-	// in-cluster name of the API server. Without a JWKSURI it sends the token
-	// through discovery when the Issuer is an https in-cluster name and
-	// CAFile is set: that server names the jwks_uri the token goes to, and a
-	// fetch fails when that address is not https. Under any other issuer it
-	// sends no token. No request follows a redirect, so the token goes to no
-	// other address. It is read on every request, so a rotated token takes
-	// effect without a restart.
+	// this provider. It is read on every request, so a rotated token takes
+	// effect without a restart. A provider that does not set Kubernetes needs
+	// JWKSURI with it, and its TokenFile, made absolute and cleaned, may not
+	// lie under /var/run/secrets/tokens/kubernetes/, where the Pod holds the
+	// token for the API server.
+	//
+	// A provider that sets Kubernetes has to set it, because [New] takes the
+	// Issuer from this token. That token grants access to the API server, so
+	// such a provider sends it only to that server and only over https. It
+	// goes to a JWKSURI on an in-cluster name, or through discovery under an
+	// https in-cluster Issuer, where that server names the jwks_uri and a
+	// fetch fails when that address is not https. Both need CAFile,
+	// the cluster CA: [Config.Validate] refuses a JWKSURI without it, and
+	// [New] refuses discovery under an in-cluster Issuer without it. Without a
+	// JWKSURI and under any other issuer, the provider sends no token. No
+	// request follows a redirect, so the token goes to no other address.
 	TokenFile string `json:"tokenFile,omitempty"`
 	// Kubernetes marks the provider as the service account token issuer of
 	// a Kubernetes API server, and
 	// [authz-agent/internal/token/verify.Token.Kubernetes] reports the mark
 	// on every token its keys verify. Such a token is refused when its sub
-	// does not start with system:serviceaccount, when its iat is ahead of
+	// does not start with system:serviceaccount:, when its iat is ahead of
 	// the verifier's clock by more than the verifier's leeway, and when its
-	// namespace is not an allowed one. The mark requires Audiences, because
-	// every Pod's default token is issued for the API server itself, and
-	// refuses AllowMissingAud, so a Kubernetes token is accepted only when it
-	// names an audience the service accepts. A provider with the id
-	// kubernetes, or with an address on an in-cluster name of the API server,
-	// has to set the mark.
+	// namespace is not an allowed one. The mark requires Audiences to be
+	// exactly netcracker, the audience that the services of an installation
+	// request, and refuses AllowMissingAud, so a token that a Pod got for the
+	// API server or for another service is refused. A provider whose id is
+	// kubernetes in any case, or whose issuer or jwksUri is on an in-cluster
+	// name of the API server, has to set the mark.
 	Kubernetes bool `json:"kubernetes,omitempty"`
 }
 
 // validProviderID is the accepted shape of [Provider.ID].
 var validProviderID = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
+
+// kubernetesAudience is the one audience a provider that sets
+// [Provider.Kubernetes] accepts.
+const kubernetesAudience = "netcracker"
+
+// apiServerTokenDir is the directory of the Pod that holds the token for the
+// API server, which only a provider that sets [Provider.Kubernetes] sends.
+const apiServerTokenDir = "/var/run/secrets/tokens/kubernetes"
 
 // ReadConfig reads and validates the trusted providers file at path.
 func ReadConfig(path string) (Config, error) {
@@ -209,22 +223,31 @@ func (p Provider) validate() error {
 		return fmt.Errorf("provider %q sets both kubernetes and issuer; a provider that sets kubernetes takes its issuer from the token in tokenFile, so remove issuer", p.ID)
 	case p.Issuer == "" && !p.takesIssuerFromToken():
 		return fmt.Errorf("provider %q has no issuer; only a provider that sets kubernetes and tokenFile takes it from its token", p.ID)
+	case !p.Kubernetes && isAPIServerToken(p.TokenFile):
+		return fmt.Errorf("provider %q sends the token for the API server in tokenFile %q but does not set \"kubernetes\": true, and that token grants access to the API server; set it on this provider if it is the API server, or point tokenFile at the token this provider needs", p.ID, p.TokenFile)
 	case !p.Kubernetes && p.TokenFile != "" && p.JWKSURI == "":
 		return fmt.Errorf("provider %q sets tokenFile without jwksUri; only a provider that sets kubernetes sends a token through discovery, so set jwksUri or remove tokenFile", p.ID)
 	case p.AllowMissingAud && len(p.Audiences) == 0:
 		return fmt.Errorf("provider %q sets allowMissingAud without audiences", p.ID)
-	case p.Kubernetes && len(p.Audiences) == 0:
-		return fmt.Errorf("provider %q sets kubernetes without audiences; every Pod's default token is issued for the API server, so list the audience this service accepts", p.ID)
+	case p.Kubernetes && !slices.Equal(p.Audiences, []string{kubernetesAudience}):
+		return fmt.Errorf("provider %q sets kubernetes with the audiences %q; a Kubernetes token is accepted only for %s, the audience that the services of an installation request, so set audiences to [%q]", p.ID, p.Audiences, kubernetesAudience, kubernetesAudience)
 	case p.Kubernetes && p.AllowMissingAud:
 		return fmt.Errorf("provider %q sets both kubernetes and allowMissingAud; a Kubernetes token has to name an audience this service accepts", p.ID)
-	case !p.Kubernetes && p.looksLikeKubernetes():
-		return fmt.Errorf("provider %q looks like a Kubernetes API server by its id or an address but does not set \"kubernetes\": true, so the token of any Pod of the cluster would pass with no namespace check; set it on this provider, or give the provider another id if it is not the API server", p.ID)
+	case !p.Kubernetes && strings.EqualFold(p.ID, "kubernetes"):
+		return fmt.Errorf("provider %q has the id of a Kubernetes API server but does not set \"kubernetes\": true, so the token of any Pod of the cluster would pass with no namespace check; set it on this provider, or give the provider another id if it is not the API server", p.ID)
+	case !p.Kubernetes && p.inClusterAddress() != "":
+		return fmt.Errorf("provider %q sets %s on an in-cluster name of the Kubernetes API server but does not set \"kubernetes\": true, so the token of any Pod of the cluster would pass with no namespace check; set it on this provider", p.ID, p.inClusterAddress())
 	}
-	for _, aud := range p.Audiences {
-		if aud == "" {
-			return fmt.Errorf("provider %q lists an empty audience", p.ID)
-		}
+	if slices.Contains(p.Audiences, "") {
+		return fmt.Errorf("provider %q lists an empty audience", p.ID)
 	}
+	return p.checkAddresses()
+}
+
+// checkAddresses refuses a set Issuer or JWKSURI of p that is not an absolute
+// http or https URL with a host. For a provider that sets Kubernetes, it also
+// refuses a JWKSURI that [Provider.checkTokenAddress] refuses.
+func (p Provider) checkAddresses() error {
 	if p.Issuer != "" {
 		if err := checkHTTPURL(p.Issuer); err != nil {
 			return fmt.Errorf("provider %q issuer: %w", p.ID, err)
@@ -243,7 +266,8 @@ func (p Provider) validate() error {
 }
 
 // checkTokenAddress refuses a JWKSURI that p, which sets Kubernetes, must not
-// send its token to.
+// send its token to. It also refuses one when p has no CAFile, because the
+// cluster CA signs the certificate of the API server.
 func (p Provider) checkTokenAddress() error {
 	u, err := url.Parse(p.JWKSURI)
 	switch {
@@ -251,6 +275,8 @@ func (p Provider) checkTokenAddress() error {
 		return fmt.Errorf("provider %q sends the token in tokenFile to jwksUri %q, which is outside the cluster, and that token grants access to the API server; set jwksUri to an https address on kubernetes.default.svc or kubernetes.default.svc.cluster.local, or remove jwksUri to find the keys through discovery", p.ID, p.JWKSURI)
 	case u.Scheme != "https":
 		return fmt.Errorf("provider %q sends the token in tokenFile to jwksUri %q over http, and that token grants access to the API server; use https", p.ID, p.JWKSURI)
+	case p.CAFile == "":
+		return fmt.Errorf("provider %q sets jwksUri %q on the API server without caFile, and the cluster CA signs the certificate of that server; set caFile to the cluster CA", p.ID, p.JWKSURI)
 	}
 	return nil
 }
@@ -308,19 +334,32 @@ var kubernetesHosts = map[string]bool{
 	"kubernetes.default.svc.cluster.local": true,
 }
 
-// looksLikeKubernetes reports whether p is named kubernetes or names an
-// in-cluster address of the Kubernetes API server, whether or not it sets
-// [Provider.Kubernetes].
-func (p Provider) looksLikeKubernetes() bool {
-	if p.ID == "kubernetes" {
-		return true
-	}
-	for _, raw := range []string{p.JWKSURI, p.Issuer} {
-		if u, err := url.Parse(raw); err == nil && kubernetesHosts[strings.ToLower(u.Hostname())] {
-			return true
+// inClusterAddress returns the field of p, jwksUri or issuer, whose host is an
+// in-cluster name of the Kubernetes API server, as its name and its quoted
+// value, and "" when neither is. The host is compared without regard to case
+// and to one trailing dot, which names the same host.
+func (p Provider) inClusterAddress() string {
+	for _, field := range []struct{ name, value string }{{"jwksUri", p.JWKSURI}, {"issuer", p.Issuer}} {
+		u, err := url.Parse(field.value)
+		if err == nil && kubernetesHosts[strings.TrimSuffix(strings.ToLower(u.Hostname()), ".")] {
+			return fmt.Sprintf("%s %q", field.name, field.value)
 		}
 	}
-	return false
+	return ""
+}
+
+// isAPIServerToken reports whether path, made absolute and cleaned, lies in
+// apiServerTokenDir. A relative path is resolved against the working directory,
+// as a read of the file would resolve it.
+func isAPIServerToken(path string) bool {
+	if path == "" {
+		return false
+	}
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		abs = filepath.Clean(path)
+	}
+	return strings.HasPrefix(abs, apiServerTokenDir+"/")
 }
 
 // hasInClusterIssuer reports whether the issuer of p is an https address on an
