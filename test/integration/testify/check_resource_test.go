@@ -71,15 +71,17 @@ func (s *RuntimeSuite) TestCheckResource() {
 		s.Assert().NotEmpty(jsonObj(b)["message"], "legacy 401 must include message")
 	})
 
-	s.Step("check_resource.unknown_tenant_id.deny", func() {
+	// A user's token without a tenant-id claim reaches only the default
+	// tenant; the realm gives no test user an M2M token.
+	s.Step("check_resource.unknown_tenant_id.403", func() {
 		h := incomingTokenHeader(s.validOrderReaderToken)
 		body := map[string]interface{}{
 			"type": "ORDER", "operation": "READ",
 			"resource": map[string]interface{}{"id": "order-1", "ownerId": "order-reader-1"},
 		}
 		code, b := s.post("/access/v1/check/resource?tenant_id=other-tenant", h, body)
-		s.Require().Equal(200, code)
-		s.Assert().Equal("false", bodyStr(b))
+		s.Require().Equal(403, code)
+		s.Assert().Equal("", bodyStr(b))
 	})
 
 	s.Step("check_resource.tenant_id_absent", func() {

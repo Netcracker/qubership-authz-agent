@@ -45,7 +45,10 @@ _admission_ok if {
 # tokenPayload the verified claims the subject is read from: those of the
 # subject's token, or for an anonymous request those of the admission
 # token, whose roles the legacy service grants the anonymous subject ({}
-# without one). The agent decides check/resource and check/filter with the
+# without one). Beside subjectError and tokenPayload, callerClaims holds the
+# verified claims of the admission token, by which the agent limits a caller
+# that is not M2M to its tenant; a request without an admission token has
+# none. The agent decides check/resource and check/filter with the
 # generated module of the request's tenant and asks this package only who the
 # subject is.
 
@@ -58,17 +61,21 @@ admission := {"authError": {
   not _admission_validation.valid
 }
 
-admission := {"subjectError": object.get(object.get(auth, "error", {}), "reason", "unauthorized")} if {
+admission := object.union(_caller, {"subjectError": object.get(object.get(auth, "error", {}), "reason", "unauthorized")}) if {
   _admission_ok
   auth := authentication_context
   not auth.authenticated
 }
 
-admission := {"tokenPayload": _subject_claims(auth)} if {
+admission := object.union(_caller, {"tokenPayload": _subject_claims(auth)}) if {
   _admission_ok
   auth := authentication_context
   auth.authenticated
 }
+
+_caller := {"callerClaims": object.get(_admission_validation, "payload", {})} if {
+  _has_admission_token
+} else := {}
 
 _subject_claims(auth) := object.get(_admission_validation, "payload", {}) if {
   data.identity.anonymous_mode(input)

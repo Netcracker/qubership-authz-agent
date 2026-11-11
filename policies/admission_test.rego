@@ -53,3 +53,18 @@ test_refused_subject_token_is_a_subject_error if {
   got := admission({"authorizationToken": valid_token, "subject": "Bearer not-a-token"})
   is_string(got.subjectError)
 }
+
+test_admitted_request_carries_the_claims_of_the_admission_token_as_the_caller if {
+  got := admission({"authorizationToken": valid_token, "subject": valid_token})
+  got.callerClaims.sub == "user-allow"
+}
+
+test_refused_subject_token_keeps_the_claims_of_the_admission_token_as_the_caller if {
+  got := admission({"authorizationToken": valid_token, "subject": "Bearer not-a-token"})
+  got.callerClaims.sub == "user-allow"
+}
+
+test_request_without_an_admission_token_has_no_caller_claims if {
+  got := admission({"subject": "", "authorizationType": "anonymous"})
+  not "callerClaims" in object.keys(got)
+}
