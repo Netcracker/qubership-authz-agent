@@ -221,8 +221,9 @@ func (s *Server) admission(ctx context.Context, input map[string]any) (map[strin
 
 // tenant is the tenant a request is decided in: the query parameter
 // tenant_id, else the header Tenant, else the default tenant. An empty
-// source is skipped; any other value is the tenant as written, so a value
-// with a space around the name is another tenant than the name.
+// source is skipped; any other value is the tenant as received, so a query
+// parameter with a space around the name is another tenant than the name.
+// HTTP strips the spaces around a header value before it gets here.
 func (s *Server) tenant(c *fiber.Ctx) string {
 	if t := lastQuery(c, "tenant_id"); t != "" {
 		return t

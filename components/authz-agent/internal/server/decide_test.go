@@ -77,6 +77,7 @@ func TestDecide_TheTenantComesFromTheQueryThenTheHeaderThenTheDefault(t *testing
 		{"a query parameter of spaces is a tenant of its own", "?tenant_id=%20", "a", "false"},
 		{"a leading space names another tenant", "?tenant_id=%20a", "a", "false"},
 		{"a trailing space names another tenant", "?tenant_id=a%20", "a", "false"},
+		{"a header arrives without the spaces around it", "", " a ", "true"},
 		{"the default tenant", "", "", "false"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
