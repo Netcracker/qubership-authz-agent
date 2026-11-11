@@ -862,6 +862,10 @@ func TestAFailedValueDeniesUnlessAKnownOperandSettlesIt(t *testing.T) {
 			http.StatusInternalServerError, Result{Allowed: true}},
 		{"the failed PIP in a comparison false for every value", "subject.g IN resource.c",
 			http.StatusInternalServerError, Result{Allowed: true}},
+		{"two failed values under an AND with a false operand", "resource.b == 'no' AND resource.a. == 'q' AND subject.g == 'x'",
+			http.StatusInternalServerError, Result{Allowed: true}},
+		{"a path ending in a dot under an AND with a PIP that answers false", "resource.a. == 'q' AND subject.g == 'z'",
+			http.StatusOK, Result{Allowed: true}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv, _ := pipServer(t, tc.status, `["x"]`)
@@ -893,6 +897,8 @@ func TestIsEmptyOverANullPIPBodyDeniesTheResource(t *testing.T) {
 		{"IS NOT EMPTY over a null body", "subject.g IS NOT EMPTY", `null`, true, Result{Reason: "PIP resolution failed"}},
 		{"IS NOT EMPTY without url", "subject.g IS NOT EMPTY", ``, false, Result{Reason: "PIP resolution failed"}},
 		{"IS NOT EMPTY over an empty list", "subject.g IS NOT EMPTY", `[]`, true, Result{Allowed: true}},
+		{"IS EMPTY over a null body OR a true operand", "subject.g IS EMPTY OR operation == 'read'", `null`, true,
+			Result{Allowed: true}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			pip := withoutURL
