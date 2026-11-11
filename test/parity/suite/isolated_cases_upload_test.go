@@ -261,7 +261,13 @@ const brokenSetupChild = "PARITY_TEST_BROKEN_SETUP_CHILD"
 // child, where os.Getenv(brokenSetupChild) is "1".
 func childOutput(t *testing.T) string {
 	t.Helper()
-	cmd := exec.Command(os.Args[0], "-test.run=^"+t.Name()+"$", "-test.v")
+	return childOutputRun(t, "^"+t.Name()+"$")
+}
+
+// childOutputRun is childOutput with the child's -test.run pattern run.
+func childOutputRun(t *testing.T, run string) string {
+	t.Helper()
+	cmd := exec.Command(os.Args[0], "-test.run="+run, "-test.v")
 	cmd.Env = append(os.Environ(), brokenSetupChild+"=1")
 	raw, _ := cmd.CombinedOutput()
 	return string(raw)
@@ -322,6 +328,35 @@ func TestRunIsolatedCases_AnUploadLegacyRefusedThatTheAgentFailedToPullIsABroken
 		`=== RUN   `+run+`refused/setup\n.*: SETUP BROKEN: the agent did not load the policies: POST .*: HTTP 500`,
 		`--- FAIL: `+run+`refused/setup `,
 		`--- SKIP: `+run+`refused/read `)
+}
+
+// A -run pattern that selects a check and not the setup it waits on leaves the
+// setup unrun: the check is skipped with a report that names the setup, and its
+// parent fails. The setup here stops with t.Fatal, which would end the parent
+// before the check if the setup ran there. The test reads the go test output
+// from a child run of itself, since the child fails on purpose.
+func TestRunSetup_SkipsTheChecksOfASetupThatRunLeavesOut(t *testing.T) {
+	if os.Getenv(brokenSetupChild) == "1" {
+		t.Run("point", func(t *testing.T) {
+			broken := runSetup(t, func(t *testing.T) error {
+				t.Fatal("the setup ran")
+				return nil
+			})
+			t.Run("decision", func(t *testing.T) { skipIfBroken(t, broken) })
+		})
+		return
+	}
+	name := regexp.QuoteMeta(t.Name())
+	out := childOutputRun(t, "^"+t.Name()+"$/^point$/^decision$")
+	if strings.Contains(out, "the setup ran") {
+		t.Errorf("the child run ran the setup that -run leaves out:\n%s", out)
+	}
+	requireOutput(t, out,
+		`=== RUN   `+name+`/point\n.*: SETUP BROKEN: -run or -skip left out the subtest setup this check waits on; `+
+			`select it too\n`,
+		`=== RUN   `+name+`/point/decision\n.*: SETUP BROKEN: -run or -skip left out the subtest setup .*; not compared\n`,
+		`--- SKIP: `+name+`/point/decision `,
+		`--- FAIL: `+name+`/point `)
 }
 
 // runSetup reports a setup that returned an error, and one that stopped its
