@@ -18,6 +18,7 @@ package paritysuite
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"maps"
@@ -91,30 +92,25 @@ func TestExportFedLegacyAgent(t *testing.T) {
 			})
 			for _, p := range lc.points {
 				mounted++
-				canary, tenant := legacyCanaryType(mounted), valueOr(lc.tenant, stand)
+				canaries := legacyCanaries(p, mounted, valueOr(lc.tenant, stand), stand)
 				t.Run(p.step, func(t *testing.T) {
-					broken := caseBroken
-					if broken == "" {
-						broken = runSetup(t, func(t *testing.T) error {
-							s.SetT(t)
-							ps, pips, err := legacyExportDocuments(p, canary, tenant)
-							if err != nil {
-								return err
-							}
-							if err := source.Mount(ctx, ps, pips); err != nil {
-								return fmt.Errorf("mount the export of step %s: %w", p.step, err)
-							}
-							s.cfg.TenantID = tenant
-							if !s.legacyCanaryAllowed(canary) {
-								return fmt.Errorf("the agent did not load the export of step %s: the canary set %s is "+
-									"denied in tenant %s, so the agent holds another export", p.step, canary, tenant)
-							}
-							return nil
+					setup := legacyPointSetup{point: caseBroken}
+					if caseBroken == "" {
+						setup = setUpLegacyPoint(t, p, canaries, stand, legacyPointLoader{
+							mount: func(t *testing.T, ps, pips json.RawMessage) error {
+								s.SetT(t)
+								return source.Mount(ctx, ps, pips)
+							},
+							allowed: func(t *testing.T, c legacyCanary) bool {
+								s.SetT(t)
+								s.cfg.TenantID = c.tenant
+								return s.legacyCanaryAllowed(c.rt)
+							},
 						})
 					}
 					for _, d := range p.decisions {
 						t.Run(d.path, func(t *testing.T) {
-							if broken != "" {
+							if broken := setup.brokenFor(d); broken != "" {
 								all = append(all, brokenLegacyResult(lc, p, d, broken))
 								skipIfBroken(t, broken)
 							}
@@ -183,6 +179,69 @@ func caseFileNames() ([]string, error) {
 	})
 	slices.Sort(names)
 	return names, err
+}
+
+// legacyPointLoader mounts the export of a point and checks one of its
+// canaries; the run drives the stand through it.
+type legacyPointLoader struct {
+	mount   func(t *testing.T, ps, pips json.RawMessage) error
+	allowed func(t *testing.T, c legacyCanary) bool
+}
+
+// legacyPointSetup is the outcome of the setup of a point: the report of a
+// setup that broke for every decision of the point, or else the report per
+// tenant whose canary was denied.
+type legacyPointSetup struct {
+	point   string
+	tenants map[string]string
+	stand   string
+}
+
+// brokenFor returns the report of the broken setup that the decision d waits
+// on, or "" when d can be compared.
+func (b legacyPointSetup) brokenFor(d legacyDecision) string {
+	if b.point != "" {
+		return b.point
+	}
+	return b.tenants[valueOr(d.tenant, b.stand)]
+}
+
+// setUpLegacyPoint mounts the export of p with canaries through l and checks
+// them, the first, which is in the tenant of the case, in the subtest "setup"
+// and each other in a subtest "setup <tenant>". When the mount fails or the
+// first canary is denied, the agent holds another export, and every decision
+// of p is broken. When a later canary is denied, the agent loaded the export
+// without that tenant, and the decisions in that tenant are broken.
+func setUpLegacyPoint(t *testing.T, p legacyExportPoint, canaries []legacyCanary, stand string, l legacyPointLoader) legacyPointSetup {
+	t.Helper()
+	b := legacyPointSetup{tenants: map[string]string{}, stand: stand}
+	b.point = runSetup(t, func(t *testing.T) error {
+		ps, pips, err := legacyExportDocuments(p, canaries)
+		if err != nil {
+			return err
+		}
+		if err := l.mount(t, ps, pips); err != nil {
+			return fmt.Errorf("mount the export of step %s: %w", p.step, err)
+		}
+		if c := canaries[0]; !l.allowed(t, c) {
+			return fmt.Errorf("the agent did not load the export of step %s: the canary set %s is "+
+				"denied in tenant %s, so the agent holds another export", p.step, c.rt, c.tenant)
+		}
+		return nil
+	})
+	if b.point != "" {
+		return b
+	}
+	for _, c := range canaries[1:] {
+		b.tenants[c.tenant] = runNamedSetup(t, "setup "+c.tenant, func(t *testing.T) error {
+			if !l.allowed(t, c) {
+				return fmt.Errorf("the agent did not load tenant %s of the export of step %s: the canary set %s "+
+					"is denied there, so the agent holds another configuration of that tenant", c.tenant, p.step, c.rt)
+			}
+			return nil
+		})
+	}
+	return b
 }
 
 // legacyCanaryAllowed checks the canary type for parity-reader and reports

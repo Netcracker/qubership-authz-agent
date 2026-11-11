@@ -85,7 +85,7 @@ func TestExportFedOwnerDecisions(t *testing.T) {
 				}
 				s.pinRoutes(oc.pins)
 				s.pinUserManagement(oc.userManagement)
-				ps, pips, err := legacyExportDocuments(legacyExportPoint{policySets: oc.policySets, pips: oc.pips}, canary, tenant)
+				ps, pips, err := legacyExportDocuments(legacyExportPoint{policySets: oc.policySets, pips: oc.pips}, []legacyCanary{{canary, tenant}})
 				if err != nil {
 					return err
 				}

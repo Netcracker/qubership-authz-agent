@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -623,7 +624,7 @@ func TestWithUniqueGeneratedIDs_GivesEachMaskedIDItsOwnUUID(t *testing.T) {
 
 func TestLegacyExportDocuments_AppendTheCanarySet(t *testing.T) {
 	p := legacyExportPoint{policySets: []any{map[string]any{"name": "case set"}}, pips: []any{}}
-	ps, pips, err := legacyExportDocuments(p, "PARITY_EXPORT_CANARY_7", "default")
+	ps, pips, err := legacyExportDocuments(p, []legacyCanary{{"PARITY_EXPORT_CANARY_7", "default"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -645,7 +646,7 @@ func TestLegacyExportDocuments_AppendTheCanarySet(t *testing.T) {
 }
 
 func TestLegacyExportDocuments_TheCanaryNamesItsTenantOnTheSetThePolicyAndTheRule(t *testing.T) {
-	ps, _, err := legacyExportDocuments(legacyExportPoint{policySets: []any{}, pips: []any{}}, "PARITY_EXPORT_CANARY_7", "parity-tenant-a")
+	ps, _, err := legacyExportDocuments(legacyExportPoint{policySets: []any{}, pips: []any{}}, []legacyCanary{{"PARITY_EXPORT_CANARY_7", "parity-tenant-a"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -745,4 +746,63 @@ func TestAllLegacyExportCases_ReadTheRecordedRawReads(t *testing.T) {
 	if points == 0 {
 		t.Fatalf("no point with a legacy export among %d cases with raw reads", len(cases))
 	}
+}
+
+// The decisions of a point can run in tenants other than the case's: the
+// holder tenants of round 66 and round 71. A pull can load the export without
+// one of them, so each gets a canary of its own type, and a tenant the export
+// does not name gets none.
+func TestLegacyCanaries_AddOneForEachOtherTenantOfTheDecisionsThatTheExportNames(t *testing.T) {
+	p := legacyExportPoint{
+		policySets: []any{map[string]any{"tenantId": "parity-a", "policies": []any{
+			map[string]any{"tenantId": "parity-a-holder"},
+		}}},
+		pips: []any{},
+		decisions: []legacyDecision{
+			{tenant: "parity-a"}, {tenant: "parity-a-holder"}, {tenant: "parity-a-holder"}, {tenant: "parity-absent"}, {tenant: ""},
+		},
+	}
+	got := legacyCanaries(p, 3, "parity-a", "default")
+	want := []legacyCanary{{"PARITY_EXPORT_CANARY_3", "parity-a"}, {"PARITY_EXPORT_CANARY_3_1", "parity-a-holder"}}
+	if !slices.Equal(got, want) {
+		t.Errorf("legacyCanaries = %v, want %v", got, want)
+	}
+}
+
+// A point whose export the agent loaded without a holder tenant fails the
+// setup subtest of that tenant with SETUP BROKEN and skips the decisions in it;
+// the decisions in the case's tenant are compared. The test reads the go test
+// output from a child run of itself, since the child fails on purpose.
+func TestSetUpLegacyPoint_SkipsTheDecisionsOfATenantWhoseCanaryIsDenied(t *testing.T) {
+	if os.Getenv(brokenSetupChild) == "1" {
+		p := legacyExportPoint{
+			step: "h4",
+			policySets: []any{
+				map[string]any{"tenantId": "parity-a"},
+				map[string]any{"tenantId": "parity-a-holder"},
+			},
+			pips: []any{},
+			decisions: []legacyDecision{
+				{tenant: "parity-a", path: "read-a"},
+				{tenant: "parity-a-holder", path: "read-holder"},
+			},
+		}
+		setup := setUpLegacyPoint(t, p, legacyCanaries(p, 1, "parity-a", "default"), "default", legacyPointLoader{
+			mount:   func(*testing.T, json.RawMessage, json.RawMessage) error { return nil },
+			allowed: func(_ *testing.T, c legacyCanary) bool { return c.tenant != "parity-a-holder" },
+		})
+		for _, d := range p.decisions {
+			t.Run(d.path, func(t *testing.T) { skipIfBroken(t, setup.brokenFor(d)) })
+		}
+		return
+	}
+	name := regexp.QuoteMeta(t.Name())
+	requireOutput(t, childOutput(t),
+		`--- PASS: `+name+`/setup `,
+		`=== RUN   `+name+`/setup_parity-a-holder\n.*: SETUP BROKEN: the agent did not load tenant parity-a-holder `+
+			`of the export of step h4: the canary set PARITY_EXPORT_CANARY_1_1 is denied there`,
+		`--- FAIL: `+name+`/setup_parity-a-holder `,
+		`--- PASS: `+name+`/read-a `,
+		`=== RUN   `+name+`/read-holder\n.*: SETUP BROKEN: the agent did not load tenant parity-a-holder .*; not compared\n`,
+		`--- SKIP: `+name+`/read-holder `)
 }

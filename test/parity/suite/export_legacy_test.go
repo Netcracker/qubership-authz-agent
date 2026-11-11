@@ -733,11 +733,62 @@ func legacyCanarySet(rt, tenant string) map[string]any {
 	}
 }
 
+// legacyCanary is a canary set of resource type rt in tenant.
+type legacyCanary struct{ rt, tenant string }
+
+// legacyCanaries returns the canaries mounted beside the export of p, the
+// n-th point of a run, whose case runs in caseTenant: the canary of the
+// export, of type legacyCanaryType(n) in caseTenant, and then one in each
+// other tenant a decision of p runs in, each of a type of its own. A pull
+// can load the export without one of its tenants, and the canary of that
+// tenant tells it. A tenant no element of the export names gets no canary,
+// which would add that tenant to the agent's configuration. A decision with
+// no tenant runs in stand.
+func legacyCanaries(p legacyExportPoint, n int, caseTenant, stand string) []legacyCanary {
+	out := []legacyCanary{{legacyCanaryType(n), caseTenant}}
+	named := exportTenantIDs(p.policySets, p.pips)
+	for _, d := range p.decisions {
+		tenant := valueOr(d.tenant, stand)
+		if named[tenant] && !slices.ContainsFunc(out, func(c legacyCanary) bool { return c.tenant == tenant }) {
+			out = append(out, legacyCanary{fmt.Sprintf("%s_%d", legacyCanaryType(n), len(out)), tenant})
+		}
+	}
+	return out
+}
+
+// exportTenantIDs returns the tenantId values of every element of docs, at
+// any depth.
+func exportTenantIDs(docs ...any) map[string]bool {
+	out := map[string]bool{}
+	var walk func(v any)
+	walk = func(v any) {
+		switch v := v.(type) {
+		case map[string]any:
+			if id, ok := v["tenantId"].(string); ok {
+				out[id] = true
+			}
+			for _, e := range v {
+				walk(e)
+			}
+		case []any:
+			for _, e := range v {
+				walk(e)
+			}
+		}
+	}
+	for _, d := range docs {
+		walk(d)
+	}
+	return out
+}
+
 // legacyExportDocuments returns the two documents the source serves for p,
-// with the canary set of type canary appended to the policy sets. tenant is
-// the tenantId of the canary, the tenant the run checks the canary in.
-func legacyExportDocuments(p legacyExportPoint, canary, tenant string) (json.RawMessage, json.RawMessage, error) {
-	sets := append(slices.Clone(p.policySets), legacyCanarySet(canary, tenant))
+// with a canary set appended to the policy sets for each of canaries.
+func legacyExportDocuments(p legacyExportPoint, canaries []legacyCanary) (json.RawMessage, json.RawMessage, error) {
+	sets := slices.Clone(p.policySets)
+	for _, c := range canaries {
+		sets = append(sets, legacyCanarySet(c.rt, c.tenant))
+	}
 	ps, err := json.Marshal(map[string]any{exportDocSets: sets})
 	if err != nil {
 		return nil, nil, err

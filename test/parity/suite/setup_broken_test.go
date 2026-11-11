@@ -24,15 +24,21 @@ import "testing"
 // with t.Fatal is reported the same way.
 func runSetup(t *testing.T, setup func(t *testing.T) error) string {
 	t.Helper()
+	return runNamedSetup(t, "setup", setup)
+}
+
+// runNamedSetup is runSetup with a subtest named name.
+func runNamedSetup(t *testing.T, name string, setup func(t *testing.T) error) string {
+	t.Helper()
 	broken := ""
-	ok := t.Run("setup", func(t *testing.T) {
+	ok := t.Run(name, func(t *testing.T) {
 		if err := setup(t); err != nil {
 			broken = setupBroken(err)
 			t.Error(broken)
 		}
 	})
 	if !ok && broken == "" {
-		broken = setupBrokenPrefix + ": the setup subtest failed, see its output"
+		broken = setupBrokenPrefix + ": the " + name + " subtest failed, see its output"
 	}
 	return broken
 }
