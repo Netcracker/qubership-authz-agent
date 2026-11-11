@@ -87,7 +87,8 @@ follows five rules.
    the tenant of its top-level set. Where the export breaks the tenant properties above, the reader isolates the
    damaged element, and the tenant keeps the rest of its tree. A top-level set that holds an element of another tenant,
    or whose `policySetId` the tenant has more than once, becomes an isolated set: it fails every request under its
-   target and holds nothing else. A PIP name the tenant declares more than once becomes an isolated declaration, which
+   target and holds nothing else. Where every top-level set of that `policySetId` in the tenant is identical, the
+   tenant's own set is one of them, so the reader reads the first and isolates none. A PIP name the tenant declares more than once becomes an isolated declaration, which
    a condition reads as a failed PIP. Each isolation is listed in `Export.Dropped`. An element the reader cannot read,
    such as one with an unknown combining algorithm, fails the tenant's candidate snapshot (`Export.Failed`) and keeps
    the previous snapshot. The Rego generator and the evaluator rely on these invariants and carry no fallback rule
@@ -128,7 +129,8 @@ We considered four alternatives:
   the production rules that carry one. The reader of simplified policies, the policy admin stub, and the parity
   fixtures stop using `querydslPredicate`.
 - `internal/policyir` drops the field `querydslPredicate` and the unsupported finding for it. It isolates a repeated PIP
-  name and a damaged top-level set as rule 2 says, instead of dropping the second declaration or failing the tenant.
+  name and a damaged top-level set as rule 2 says, instead of dropping the second declaration or failing the tenant,
+  and reads once the identical copies rule 2 names.
   It keeps reporting a top-level set or a PIP
   declaration without a usable tenant in `Export.Orphans`; legacy never exports one, so only a hand-made input reaches
   that path. It lists every unknown key it drops in `Export.Dropped`, maps `externalId`, `cacheable`, and

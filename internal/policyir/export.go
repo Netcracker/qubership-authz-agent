@@ -37,8 +37,8 @@ type Export struct {
 	// tree.
 	Orphans []error
 	// Dropped maps a tenant ID to what its tree leaves out by the rules of
-	// [FromRegular], one line per dropped set, unknown key, isolated set, or
-	// isolated PIP name, naming it and the rule.
+	// [FromRegular], one line per dropped set, unknown key, isolated set, set
+	// read once, or isolated PIP name, naming it and the rule.
 	Dropped map[string][]string
 }
 
@@ -58,7 +58,9 @@ type Export struct {
 // failing the tenant. A top-level set becomes [PolicySet.Isolated] when another
 // top-level set of the tenant has the same policySetId, whatever the status of
 // the other, or when a policy, a rule, or a nested set in it names another
-// tenant. A PIP name the tenant declares more than once becomes one
+// tenant. Top-level sets of one tenant and policySetId that are all identical
+// are read as the first of them, since whichever is the tenant's own decides
+// alike. A PIP name the tenant declares more than once becomes one
 // declaration with [PIP.Isolated]. Each isolation is listed in
 // [Export.Dropped].
 //
@@ -103,7 +105,8 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 		pips       []*PIP
 		// pipCount counts the declarations of each PIP name.
 		pipCount map[string]int
-		// setCount counts the top-level sets of each policySetId.
+		// setCount counts the top-level sets of each policySetId, except
+		// that it is 1 for sets that are read once as identical.
 		setCount map[string]int
 		vars     int
 		err      error
@@ -126,10 +129,26 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 	}
 
 	heads := make([]*exportHead, len(*setsDoc.PolicySets))
+	type setKey struct{ tenant, id string }
+	sameID := map[setKey][]int{}
 	for i, raw := range *setsDoc.PolicySets {
 		heads[i] = readHead(raw)
 		if t := get("policy set", i, heads[i]); t != nil {
 			t.setCount[heads[i].ID]++
+			k := setKey{*heads[i].TenantID, heads[i].ID}
+			sameID[k] = append(sameID[k], i)
+		}
+	}
+	// copyOf maps a top-level set to the first set of its tenant and
+	// policySetId when every set of that tenant and policySetId is identical
+	// to the first: the tenant's own set is then one of them, whichever it is.
+	copyOf := map[int]int{}
+	for k, idx := range sameID {
+		if len(idx) > 1 && identicalSets(*setsDoc.PolicySets, idx) {
+			for _, i := range idx[1:] {
+				copyOf[i] = idx[0]
+			}
+			tenants[k.tenant].setCount[k.id] = 1
 		}
 	}
 	for i, raw := range *setsDoc.PolicySets {
@@ -144,6 +163,12 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 		if !topLevelApplies(head.Status) {
 			id := *head.TenantID
 			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: status %s", i, head.ID, head.Status))
+			continue
+		}
+		if first, ok := copyOf[i]; ok {
+			id := *head.TenantID
+			out.Dropped[id] = append(out.Dropped[id],
+				fmt.Sprintf("policy set %d %q: identical to policy set %d, read once", i, head.ID, first))
 			continue
 		}
 		var s exportSet
@@ -230,6 +255,28 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 		out.Trees[id] = tree
 	}
 	return out, nil
+}
+
+// identicalSets reports whether the sets of raws at idx read as the same set,
+// field by field, with the texts cut as [enumText] cuts them and with the same
+// unknown keys. A set that cannot be read is identical to none.
+func identicalSets(raws []json.RawMessage, idx []int) bool {
+	var first exportSet
+	var firstUnknown []string
+	for n, i := range idx {
+		var s exportSet
+		unknown, err := decodeReporting(raws[i], &s)
+		if err != nil {
+			return false
+		}
+		s.cutTexts()
+		if n == 0 {
+			first, firstUnknown = s, unknown
+		} else if !reflect.DeepEqual(first, s) || !slices.Equal(firstUnknown, unknown) {
+			return false
+		}
+	}
+	return true
 }
 
 // exportHead is what [FromRegular] reads of an element before the element
