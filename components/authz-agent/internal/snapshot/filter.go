@@ -29,12 +29,14 @@ import (
 // [Request] holds it, the resource type, and the operation, nil where the
 // request names none.
 type FilterRequest struct {
-	Tenant       string
-	Claims       *jsonvalue.Object
-	Anonymous    bool
-	Headers      map[string]string
-	ResourceType string
-	Operation    *string
+	Tenant    string
+	Claims    *jsonvalue.Object
+	Anonymous bool
+	Headers   map[string]string
+	// IncomingToken is [Request.IncomingToken].
+	IncomingToken string
+	ResourceType  string
+	Operation     *string
 }
 
 // Filter answers req with the snapshot of req.Tenant: the rows of
@@ -54,7 +56,7 @@ func (r *Registry) Filter(ctx context.Context, req FilterRequest) (regogen.Filte
 	}
 	m := s.Filter
 	in := regogen.Request{Tenant: req.Tenant, Anonymous: req.Anonymous, Claims: req.Claims, Headers: req.Headers,
-		Entitlements: r.cfg.Entitlements, Body: regogen.Body{Operation: op, ResourceType: req.ResourceType}}
+		IncomingToken: req.IncomingToken, Entitlements: r.cfg.Entitlements, Body: regogen.Body{Operation: op, ResourceType: req.ResourceType}}
 	claims := req.Claims
 	if claims == nil {
 		claims = jsonvalue.NewObject()

@@ -43,7 +43,10 @@ type Request struct {
 	// Headers holds the request's headers by lower-case name, the last
 	// value of a repeated one.
 	Headers map[string]string
-	Items   []regogen.Body
+	// IncomingToken is the Incoming-Token header as sent, which a PIP
+	// receives when its declaration names it; "" for none.
+	IncomingToken string
+	Items         []regogen.Body
 }
 
 // Result is the answer for one item. Reason says why an item is denied.
@@ -80,7 +83,7 @@ func (r *Registry) Decide(ctx context.Context, req Request) ([]Result, error) {
 	}
 	m := s.Module
 	base := regogen.Request{Tenant: req.Tenant, Anonymous: req.Anonymous, Claims: req.Claims, Headers: req.Headers,
-		Entitlements: r.cfg.Entitlements}
+		IncomingToken: req.IncomingToken, Entitlements: r.cfg.Entitlements}
 	claims := req.Claims
 	if claims == nil {
 		claims = jsonvalue.NewObject()

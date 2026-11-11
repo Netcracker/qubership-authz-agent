@@ -238,7 +238,8 @@ func TestDecide_ARefusedSubjectTokenDeniesEveryItem(t *testing.T) {
 
 // TestDecide_ThePIPsGetNoTokenOfTheCaller: the headers a PIP may forward, or
 // a HEADER PIP may read into a url or a body, leave out the caller's tokens,
-// as input.requestHeaders does; the other headers stay.
+// as input.requestHeaders does; the other headers stay. The Incoming-Token
+// travels apart, for a declaration that names it.
 func TestDecide_ThePIPsGetNoTokenOfTheCaller(t *testing.T) {
 	headers := map[string][]string{"Authorization": {"Bearer m2m"}, "Incoming-Token": {"eyJ.user.jwt"},
 		"X-Corr": {"c0", "c1"}, "Host": {"agent"}}
@@ -257,5 +258,8 @@ func TestDecide_ThePIPsGetNoTokenOfTheCaller(t *testing.T) {
 	}
 	if !maps.Equal(freq.Headers, want) {
 		t.Errorf("filterRequest headers = %v, want %v", freq.Headers, want)
+	}
+	if req.IncomingToken != "eyJ.user.jwt" || freq.IncomingToken != "eyJ.user.jwt" {
+		t.Errorf("IncomingToken = %q and %q, want eyJ.user.jwt in both", req.IncomingToken, freq.IncomingToken)
 	}
 }

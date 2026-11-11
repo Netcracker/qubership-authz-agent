@@ -67,6 +67,10 @@ type Request struct {
 	Anonymous bool
 	Claims    *jsonvalue.Object
 	Headers   map[string]string
+	// IncomingToken is the Incoming-Token header of the request as sent,
+	// which a declaration that names it forwards; "" for none. Headers
+	// leaves it out, so no HEADER PIP reads it.
+	IncomingToken string
 	// Entitlements is the base URL of the entitlements service, which
 	// subject.entitledResources calls; empty fails such an operand.
 	Entitlements string

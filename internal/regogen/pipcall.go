@@ -230,6 +230,8 @@ func pipCall(r *Ref, req *Request, pips func(string) (*policyir.PIP, bool)) *ast
 		}
 		if v, ok := req.Headers[low]; ok {
 			headers.Insert(ast.StringTerm(low), ast.StringTerm(v))
+		} else if low == "incoming-token" && req.IncomingToken != "" {
+			headers.Insert(ast.StringTerm(low), ast.StringTerm(req.IncomingToken))
 		}
 	}
 	items := [][2]*ast.Term{

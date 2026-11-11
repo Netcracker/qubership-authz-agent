@@ -431,6 +431,17 @@ func RequestHeaders(headers map[string][]string) map[string]string {
 	return out
 }
 
+// IncomingToken returns the Incoming-Token header of a request as sent, the
+// last value of a repeated one, and "" without one.
+func IncomingToken(headers map[string][]string) string {
+	for k, values := range headers {
+		if strings.EqualFold(k, "incoming-token") && len(values) > 0 {
+			return values[len(values)-1]
+		}
+	}
+	return ""
+}
+
 // Input builds the canonical authorize input of a legacy request from its
 // headers and resources. The admission token is the Authorization header.
 // The subject is Incoming-Token when present, else Authorization, and empty

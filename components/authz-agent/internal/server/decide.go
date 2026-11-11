@@ -245,7 +245,7 @@ func snapshotRequest(tenant string, input map[string]any, payload any, headers m
 		return snapshot.Request{}, err
 	}
 	req := snapshot.Request{Tenant: tenant, Headers: legacy.RequestHeaders(headers), Anonymous: input["subject"] == "",
-		Claims: claims}
+		Claims: claims, IncomingToken: legacy.IncomingToken(headers)}
 	for _, r := range resources {
 		b, err := body(r.Raw)
 		if err != nil {
@@ -265,7 +265,7 @@ func filterRequest(tenant string, input map[string]any, payload any, headers map
 		return snapshot.FilterRequest{}, err
 	}
 	req := snapshot.FilterRequest{Tenant: tenant, Headers: legacy.RequestHeaders(headers), Anonymous: input["subject"] == "",
-		Claims: claims, ResourceType: fmt.Sprint(r.ResourceType)}
+		Claims: claims, IncomingToken: legacy.IncomingToken(headers), ResourceType: fmt.Sprint(r.ResourceType)}
 	if op := fmt.Sprint(r.Operation); op != "" {
 		req.Operation = &op
 	}

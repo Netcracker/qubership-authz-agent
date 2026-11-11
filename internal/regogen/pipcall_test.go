@@ -330,6 +330,24 @@ func TestPIPFunction_SendsTheRequestOfTheDeclaration(t *testing.T) {
 	})
 }
 
+// TestPIPFunction_ForwardsTheIncomingTokenItNames: the Incoming-Token of
+// the request goes to a PIP whose headers name it, and to no other.
+func TestPIPFunction_ForwardsTheIncomingTokenItNames(t *testing.T) {
+	req := Request{Values: map[string]Resolved{}, Headers: map[string]string{}, IncomingToken: "Bearer user"}
+	t.Run("named", func(t *testing.T) {
+		checkPIPCases(t, `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g", "headers": "Incoming-Token"}`,
+			req, []pipCase{{name: "named", response: answer, state: "VALUE",
+				want: `{"method": "POST", "url": "http://g", "headers": {"incoming-token": "Bearer user"},
+					"raise_error": false, "pip": "subject.g", "body": {"requestAttributes": null}}`}})
+	})
+	t.Run("not named", func(t *testing.T) {
+		checkPIPCases(t, `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g", "headers": "x-other"}`,
+			req, []pipCase{{name: "not named", response: answer, state: "VALUE",
+				want: `{"method": "POST", "url": "http://g", "headers": {}, "raise_error": false,
+					"pip": "subject.g", "body": {"requestAttributes": null}}`}})
+	})
+}
+
 // TestPIPFunction_EncodesTheValuesOfTheURL: a value put into the url of a
 // PIP is percent-encoded as a path segment before the query and as a query
 // component after it, so the value of a subject's operand or of a caller's
