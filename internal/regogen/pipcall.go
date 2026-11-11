@@ -64,7 +64,8 @@ func pipText(r *Ref) string {
 // pipPath returns the path nc.pip.record selects from the body of the
 // response of decl, without the $: the jsonPath of a declaration of type JSON
 // (ECFG jsonpath_types JSON), where a path without $ starts at the root
-// (jsonpath_no_dollar ROOT); "" for a declaration whose body is the value. It
+// (jsonpath_no_dollar ROOT) and a leading ['key'] step reads as .key
+// ([rootBracket]); "" for a declaration whose body is the value. It
 // fails for a path outside the subset [jsonpath] accepts.
 func pipPath(decl *policyir.PIP) (string, error) {
 	jp := decl.JSONPath
@@ -76,6 +77,9 @@ func pipPath(decl *policyir.PIP) (string, error) {
 		jp = jp[1:]
 	case !strings.HasPrefix(jp, "["):
 		jp = "." + jp
+	}
+	if m := rootBracket.FindStringSubmatch(jp); m != nil {
+		jp = "." + m[1] + jp[len(m[0]):]
 	}
 	if _, err := jsonpath.Compile(jp); err != nil {
 		return "", fmt.Errorf("jsonPath %q of PIP %s: %w", decl.JSONPath, decl.Name, err)

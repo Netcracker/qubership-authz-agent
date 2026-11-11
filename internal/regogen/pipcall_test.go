@@ -211,6 +211,27 @@ func TestPIPFunction_ReadsTheJSONPathOfTheResponse(t *testing.T) {
 	})
 }
 
+// TestPIPFunction_ReadsALeadingBracketAsAMember: a jsonPath that opens with
+// ['key'], with or without $, reads the member key of the response.
+func TestPIPFunction_ReadsALeadingBracketAsAMember(t *testing.T) {
+	resp := func(body string) string {
+		return fmt.Sprintf(`{"status_code": 200, "raw_body": %q, "body": %s}`, body, body)
+	}
+	for _, jp := range []string{`$['a']`, `['a']`, `$['a'].b`} {
+		t.Run(jp, func(t *testing.T) {
+			body := `{"a": "acc-7"}`
+			if strings.HasSuffix(jp, ".b") {
+				body = `{"a": {"b": "acc-7"}}`
+			}
+			checkPIPCases(t, fmt.Sprintf(`{"name": "subject.g", "pipType": "GENERAL", "url": "http://g",
+				"type": "JSON", "jsonPath": %q}`, jp), Request{Values: map[string]Resolved{}}, []pipCase{
+				{name: "the member selected", response: resp(body), state: "VALUE", allow: "true"},
+				{name: "no such member", response: resp(`{"b": "acc-7"}`), state: "PIP_NULL"},
+			})
+		})
+	}
+}
+
 // The request a declaration sends. The mock answers ["acc-7"] only to the
 // request each case names, so the record is VALUE only for that request.
 const answer = `{"status_code": 200, "raw_body": "[\"acc-7\"]", "body": ["acc-7"]}`
