@@ -568,6 +568,22 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 		return "eq with the right side read as []", nil
 	}
 	if (op == spectables.OpEQ || op == spectables.OpNE) && lp.st == spectables.StateValue &&
+		lp.cl == spectables.ClassList && L.ref != nil && R != nil && rp.st != spectables.StateValue &&
+		len(cell.ValueRule) == 1 && cell.ValueRule[0] == spectables.RuleListEq {
+		// the same reading with a list on the left, which equals the empty
+		// list as a set only when it has no element
+		L.ref.read |= fieldBit(fieldLength)
+		eq := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field(fieldLength) + " == 0", fact: vfact(L)}})
+		ne := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field(fieldLength) + " > 0", fact: vfact(L)}})
+		if op == spectables.OpNE {
+			eq, ne = ne, eq
+		}
+		at := conj(L.at(lps[i]), rightAt(R, rps[j]))
+		rails.t = union(rails.t, prod(dnf{at}, dnf{eq}, true))
+		rails.f = union(rails.f, prod(dnf{at}, dnf{ne}, true))
+		return "list_eq with the right side read as []", nil
+	}
+	if (op == spectables.OpEQ || op == spectables.OpNE) && lp.st == spectables.StateValue &&
 		lp.cl == spectables.ClassString && L.ref == nil && L.lit != nil && R != nil && R.ref != nil &&
 		rp.st != spectables.StateValue && len(cell.ValueRule) == 1 && cell.ValueRule[0] == spectables.RuleEq {
 		// the same reading with a string literal on the left, whose text is

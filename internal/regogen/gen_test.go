@@ -531,6 +531,30 @@ func TestAStringEqualsANullOperandOnlyAsAnEmptyList(t *testing.T) {
 	}
 }
 
+// A whole resource that is a list, compared under == with a right operand in
+// state NULL, equals it only when the list is empty, since the profile reads
+// that operand as an empty list and compares two lists as sets.
+func TestAListEqualsANullOperandOnlyWhenEmpty(t *testing.T) {
+	for _, tc := range []struct {
+		name, op, resource string
+		want               bool
+	}{
+		{"an empty list equals it", "==", `[]`, true},
+		{"a list with an element does not", "==", `["x"]`, false},
+		{"an empty list does not differ from it", "!=", `[]`, false},
+		{"a list with an element differs from it", "!=", `["x"]`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource "+tc.op+" resource.a")
+			values := map[string]Resolved{keyA: resolved(t, "NULL", ""), `["res",""]`: resolved(t, "VALUE", tc.resource)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource %s resource.a, resource = %s, resource.a in NULL) = %v, want %v", tc.op,
+					tc.resource, got, tc.want)
+			}
+		})
+	}
+}
+
 // A string literal on the left of == or != compares with a resource operand
 // as a string reference there does, whatever state the operand is in.
 func TestALiteralOnTheLeftEqualsAsAReferenceDoes(t *testing.T) {
