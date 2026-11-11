@@ -127,8 +127,8 @@ func TestCheckResourceBulk(t *testing.T) {
 
 // One resource per operation, with the operation as a string whatever the
 // caller sent, the item's type and resource repeated, and an Entry per
-// resource carrying the item's id. An empty or null operation adds nothing,
-// and a null id is no id.
+// resource carrying the item's id. An empty operation is one more resource, a
+// null operation adds nothing, and a null id is no id.
 func TestCheckResourceBulkOperations_ExpandsOperations(t *testing.T) {
 	body := `[{"id":"a","type":"ORDER","operations":["READ",5,"",null],"resource":{"k":"v"}},{"id":null,"type":"DOC","operations":["WRITE"]}]`
 	resources, entries, err := CheckResourceBulkOperations([]byte(body))
@@ -139,12 +139,14 @@ func TestCheckResourceBulkOperations_ExpandsOperations(t *testing.T) {
 	wantResources := []Resource{
 		{ResourceType: "ORDER", Operation: "READ", Resource: kv},
 		{ResourceType: "ORDER", Operation: "5", Resource: kv},
+		{ResourceType: "ORDER", Operation: "", Resource: kv},
 		{ResourceType: "DOC", Operation: "WRITE", Resource: map[string]any{}},
 	}
 	if got := decoded(resources); !reflect.DeepEqual(got, wantResources) {
 		t.Errorf("resources = %#v, want %#v", got, wantResources)
 	}
-	wantEntries := []Entry{{ID: "a", Operation: "READ"}, {ID: "a", Operation: "5"}, {ID: "", Operation: "WRITE"}}
+	wantEntries := []Entry{{ID: "a", Operation: "READ"}, {ID: "a", Operation: "5"}, {ID: "a", Operation: ""},
+		{ID: "", Operation: "WRITE"}}
 	if !reflect.DeepEqual(entries, wantEntries) {
 		t.Errorf("entries = %#v, want %#v", entries, wantEntries)
 	}
@@ -157,7 +159,8 @@ func TestCheckResourceBulkOperations_Refusals(t *testing.T) {
 		n    int
 		err  string
 	}{
-		{"only empty operations leave nothing to check", `[{"type":"ORDER","operations":[""]}]`, 0, ""},
+		{"an empty operation is checked", `[{"type":"ORDER","operations":[""]}]`, 1, ""},
+		{"only null operations leave nothing to check", `[{"type":"ORDER","operations":[null]}]`, 0, ""},
 		{"an empty array has nothing to check", `[]`, 0, ""},
 		{"absent operations are missing", `[{"type":"ORDER"}]`, 0, "Missing required parameter: operations"},
 		{"operations that are not an array are missing", `[{"type":"ORDER","operations":"READ"}]`, 0, "Missing required parameter: operations"},

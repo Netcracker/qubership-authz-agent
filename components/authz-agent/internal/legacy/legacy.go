@@ -298,14 +298,15 @@ func structure(v any) bool {
 }
 
 // expand appends one Resource and Entry per operation of a bulk/operations
-// item, skipping operations that are empty strings or null. An operation
+// item, skipping operations that are null. An empty operation is decided like
+// any other, so the answer lists it, with the ids it allows. An operation
 // that is a list or an object is a bad request, as in [newResource].
 func expand(resources []Resource, entries []Entry, typ json.RawMessage, ops []json.RawMessage, res json.RawMessage, id string) ([]Resource, []Entry, *RequestError) {
 	for _, op := range ops {
-		name := text(op)
-		if name == "" {
+		if s := string(bytes.TrimSpace(op)); s == "" || s == "null" {
 			continue
 		}
+		name := text(op)
 		r, err := newResource(typ, op, res)
 		if err != nil {
 			return nil, nil, err
