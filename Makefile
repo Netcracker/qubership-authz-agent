@@ -363,7 +363,7 @@ PARITY_EXPORT_SEED = $(PARITY_KUBECTL) rollout status deploy/export-source --tim
 # export-source beside the parity stubs, and the suite Job of the profile.
 # PARITY_EXPORT_RUN reaches the Job through stdin and --set-file, which keeps
 # the commas and backslashes of a regexp that --set would split or unescape.
-PARITY_EXPORT_STAND = printf '%s' '$(subst ','\'',$(value PARITY_EXPORT_RUN))' | $(PARITY_HELM) upgrade --install authz-test-stand $(TEST_STAND_CHART) --create-namespace -f test/k8s/parity/test-stand-values.yaml -f test/k8s/parity/test-stand-values-export.yaml $(PARITY_EXPORT_EXTRA_VALUES) --set suite.env.PARITY_AC_BASE_URL=$(PARITY_AC_BASE_URL) --set-file suite.env.PARITY_EXPORT_RUN=- --wait --timeout 10m $(E2E_HELM_ARGS)
+PARITY_EXPORT_STAND = printf '%s' '$(subst ','\'',$(value PARITY_EXPORT_RUN))' | $(PARITY_HELM) upgrade --install authz-test-stand $(TEST_STAND_CHART) --create-namespace -f test/k8s/parity/test-stand-values.yaml -f test/k8s/parity/test-stand-values-export.yaml $(PARITY_EXPORT_EXTRA_VALUES) --set suite.env.PARITY_AC_BASE_URL=$(PARITY_AC_BASE_URL) $(PARITY_PULL_URL_ARGS) --set-file suite.env.PARITY_EXPORT_RUN=- --wait --timeout 10m $(E2E_HELM_ARGS)
 
 parity-export: e2e-cluster e2e-images parity-export-image parity-export-harness parity-export-install parity-export-suite
 
