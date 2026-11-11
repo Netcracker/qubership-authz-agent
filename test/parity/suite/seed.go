@@ -373,7 +373,7 @@ func pullNow(ctx context.Context) (bool, error) {
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return false, fmt.Errorf("ask the agent to load the seeded policies: %w", err)
+		return false, fmt.Errorf("ask the agent to load the policies: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 	switch resp.StatusCode {
@@ -387,9 +387,22 @@ func pullNow(ctx context.Context) (bool, error) {
 		return false, nil
 	default:
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return false, fmt.Errorf("the agent did not load the seeded policies: POST %s: HTTP %d: %s",
-			target, resp.StatusCode, strings.TrimSpace(string(body)))
+		return false, &pullStatusError{url: target, status: resp.StatusCode, body: strings.TrimSpace(string(body))}
 	}
+}
+
+// pullStatusError is an answer of the pull route other than 204 and 404. A
+// 502 says the load failed and the agent kept its previous policies: a fetch
+// from the source failed, or the agent refused what it fetched. The body
+// carries the agent's reason.
+type pullStatusError struct {
+	url    string
+	status int
+	body   string
+}
+
+func (e *pullStatusError) Error() string {
+	return fmt.Sprintf("the agent did not load the policies: POST %s: HTTP %d: %s", e.url, e.status, e.body)
 }
 
 func (ds *authzAgentInternalSeeder) WipeDomain(ctx context.Context, domain string) error {

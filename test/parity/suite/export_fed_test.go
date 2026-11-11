@@ -30,6 +30,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+
 	"authz-agent/test/parity/suite/model"
 )
 
@@ -475,7 +477,7 @@ func TestStubFor_SendsTheEntitlementsPinsToTheirStub(t *testing.T) {
 	}
 }
 
-func TestStubExportSource_MountsAndWaitsForTheNextPull(t *testing.T) {
+func TestStubExportSource_WithoutAPullRouteWaitsForTheNextPull(t *testing.T) {
 	var mu sync.Mutex
 	var configured string
 	polls := 0
@@ -497,6 +499,9 @@ func TestStubExportSource_MountsAndWaitsForTheNextPull(t *testing.T) {
 		}
 	}))
 	defer srv.Close()
+	agent := httptest.NewServer(answering(http.StatusNotFound, ""))
+	defer agent.Close()
+	t.Setenv("PARITY_AGENT_PULL_URL", agent.URL+"/internal/v1/pull")
 	src := &stubExportSource{stub: NewPipController(srv.URL), timeout: 5 * time.Second, poll: time.Millisecond}
 	if err := src.Mount(context.Background(), json.RawMessage(`{"policySets":[]}`), json.RawMessage(`{"pips":[]}`)); err != nil {
 		t.Fatalf("Mount: %v", err)
@@ -516,10 +521,75 @@ func TestStubExportSource_ReportsTheCallsItSawOnTimeout(t *testing.T) {
 		}
 	}))
 	defer srv.Close()
+	t.Setenv("PARITY_AGENT_PULL_URL", "")
 	src := &stubExportSource{stub: NewPipController(srv.URL), timeout: 20 * time.Millisecond, poll: time.Millisecond}
 	err := src.Mount(context.Background(), json.RawMessage(`{}`), json.RawMessage(`{}`))
 	if err == nil || !strings.Contains(err.Error(), exportPIPsPath) {
 		t.Errorf("Mount = %v, want a timeout that lists the calls seen", err)
+	}
+}
+
+// mountAsking mounts an empty export on a stub whose call log never shows a
+// pull, with the agent's pull route answering status, and returns the requests
+// the stub and the agent saw, in order, and what Mount returned.
+func mountAsking(t *testing.T, status int) ([]string, error) {
+	t.Helper()
+	var mu sync.Mutex
+	var seen []string
+	record := func(r *http.Request) {
+		mu.Lock()
+		defer mu.Unlock()
+		seen = append(seen, r.Method+" "+r.URL.Path)
+	}
+	stub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		record(r)
+		if r.URL.Path == "/pip-stub/calls" {
+			_, _ = io.WriteString(w, `[]`)
+		}
+	}))
+	defer stub.Close()
+	agent := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		record(r)
+		w.WriteHeader(status)
+		_, _ = io.WriteString(w, `{"error":"tenant refused"}`)
+	}))
+	defer agent.Close()
+	t.Setenv("PARITY_AGENT_PULL_URL", agent.URL+"/internal/v1/pull")
+	src := &stubExportSource{stub: NewPipController(stub.URL), timeout: 50 * time.Millisecond, poll: time.Millisecond}
+	err := src.Mount(context.Background(), json.RawMessage(`{"policySets":[]}`), json.RawMessage(`{"pips":[]}`))
+	mu.Lock()
+	defer mu.Unlock()
+	return seen, err
+}
+
+// A 502 is the agent refusing the export it fetched, which is a result the
+// canary set of the point reports, not a failure of the mount.
+func TestStubExportSource_ReturnsOnceTheAgentAnsweredThePull(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		status int
+	}{
+		{"stored", http.StatusNoContent},
+		{"refused", http.StatusBadGateway},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			seen, err := mountAsking(t, tc.status)
+			if err != nil {
+				t.Errorf("Mount with the pull route answering %d = %v, want nil", tc.status, err)
+			}
+			want := []string{"PUT /pip-stub/configure", "GET /pip-stub/reset", "POST /internal/v1/pull"}
+			if diff := cmp.Diff(want, seen); diff != "" {
+				t.Errorf("requests of Mount with the pull route answering %d (-want +got):\n%s", tc.status, diff)
+			}
+		})
+	}
+}
+
+func TestStubExportSource_FailsOnAPullAnswerOtherThanStoredRefusedOrMissing(t *testing.T) {
+	_, err := mountAsking(t, http.StatusInternalServerError)
+	var answered *pullStatusError
+	if !errors.As(err, &answered) || answered.status != http.StatusInternalServerError {
+		t.Errorf("Mount with the pull route answering 500 = %v, want a *pullStatusError with status 500", err)
 	}
 }
 

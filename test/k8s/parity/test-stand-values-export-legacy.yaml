@@ -5,10 +5,12 @@
 # case files and goldens that test reads and no export bundle.
 suite:
   imageRepository: local/authz-parity-suite
-  # Each point mounts an export and waits for one or two pulls, a second
-  # apart. The raw reads recorded so far give about 700 points; at a few
-  # seconds each the run takes under an hour, and the limits leave twice that,
-  # because the report is printed only when the test ends.
+  # Each point mounts an export and asks the agent to pull it
+  # (PARITY_AGENT_PULL_URL); an agent without the pull route is waited on for
+  # one or two pulls, a second apart. The raw reads recorded so far give about
+  # 700 points; at a few seconds each the slow way takes under an hour, and the
+  # limits leave twice that, because the report is printed only when the test
+  # ends.
   args:
     - ./parity.test
     - -test.v

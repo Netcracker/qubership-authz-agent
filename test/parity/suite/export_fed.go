@@ -409,9 +409,14 @@ type exportSource interface {
 	Mount(ctx context.Context, policySets, pips json.RawMessage) error
 }
 
-// stubExportSource serves the export from a pipstub instance and waits until
-// the agent has loaded it: a pull that fetched both documents after the mount
-// has finished, which the pull loop shows by starting the next one.
+// stubExportSource serves the export from a pipstub instance and returns once
+// the agent has pulled it. It asks the agent to pull at PARITY_AGENT_PULL_URL,
+// as [awaitPull] does. It takes a failed load (502) as pulled and prints the
+// agent's reason: the export is the case's, and the canary set reports what
+// the agent kept. Where the agent
+// has no pull route, it waits for a pull of the agent's own that fetched both
+// documents after the mount and has finished, which the pull loop shows by
+// starting the next one.
 type stubExportSource struct {
 	stub    *PipController
 	timeout time.Duration
@@ -427,6 +432,15 @@ func (s *stubExportSource) Mount(ctx context.Context, policySets, pips json.RawM
 		return err
 	}
 	if err := s.stub.ResetCalls(ctx); err != nil {
+		return err
+	}
+	loaded, err := pullNow(ctx)
+	var failed *pullStatusError
+	if errors.As(err, &failed) && failed.status == http.StatusBadGateway {
+		fmt.Printf("[paritysuite] POST %s: 502, the agent kept its previous policies: %s\n", failed.url, failed.body)
+		return nil
+	}
+	if err != nil || loaded {
 		return err
 	}
 	deadline := time.Now().Add(s.timeout)
