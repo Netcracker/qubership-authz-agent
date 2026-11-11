@@ -74,7 +74,7 @@ func TestReportNamesTheTenantsWithoutASnapshot(t *testing.T) {
 		t.Fatalf("PullNow() = %v", err)
 	}
 
-	r := report(nil, p, snapshot.New(snapshot.Config{}, nil, quiet{}))
+	r := report(nil, p, snapshot.New(snapshot.Config{}, nil, quiet{}), newDefaultTenant("default", ""))
 
 	if r.Loaded || !reflect.DeepEqual(r.Waiting, []string{"a"}) {
 		t.Errorf("report = %+v, want not loaded and waiting for [a]", r)
@@ -85,16 +85,17 @@ func TestReport(t *testing.T) {
 	eng := newEngine(t)
 	idle := pull.New(pull.Config{}, nil, quiet{})
 	snaps := snapshot.New(snapshot.Config{}, nil, quiet{})
-	if r := report(nil, idle, snaps); !r.Healthy || r.Loaded {
+	noLookup := newDefaultTenant("default", "")
+	if r := report(nil, idle, snaps, noLookup); !r.Healthy || r.Loaded {
 		t.Errorf("report before any pull = %+v, want healthy and not loaded", r)
 	}
 	idle.Run(context.Background())
-	if r := report(nil, idle, snaps); !r.Healthy || !r.Loaded || r.Message != "" {
+	if r := report(nil, idle, snaps, noLookup); !r.Healthy || !r.Loaded || r.Message != "" {
 		t.Errorf("report with the pull disabled = %+v, want healthy and loaded", r)
 	}
 	providers := authn.New(authn.Config{File: filepath.Join(t.TempDir(), "absent.json")}, eng, quiet{})
 	providers.Bootstrap(context.Background())
-	r := report(providers, idle, snaps)
+	r := report(providers, idle, snaps, noLookup)
 	if r.Healthy || r.Message != "trusted providers configuration is invalid" || r.ConfigError == "" {
 		t.Errorf("report with a broken providers file = %+v, want unhealthy with the configuration error", r)
 	}
@@ -104,8 +105,11 @@ func TestReport(t *testing.T) {
 	}
 	providers = authn.New(authn.Config{File: file}, eng, quiet{})
 	providers.Bootstrap(context.Background())
-	if r := report(providers, idle, snaps); !r.Healthy || !r.Loaded {
+	if r := report(providers, idle, snaps, noLookup); !r.Healthy || !r.Loaded {
 		t.Errorf("report with no providers and the pull disabled = %+v, want healthy and loaded", r)
+	}
+	if r := report(nil, idle, snaps, newDefaultTenant("acme", "http://tenant-manager.invalid")); r.UnresolvedTenant != "acme" {
+		t.Errorf("report before tenant-manager resolves the default tenant = %+v, want UnresolvedTenant acme", r)
 	}
 }
 

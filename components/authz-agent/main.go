@@ -113,7 +113,7 @@ func main() {
 	opts := server.Options{
 		Log:           logger,
 		PullNow:       puller.PullNow,
-		Health:        func() server.Report { return report(providers, puller, snapshots) },
+		Health:        func() server.Report { return report(providers, puller, snapshots, tenant) },
 		Snapshots:     snapshots,
 		DefaultTenant: tenant.Get,
 	}
@@ -151,7 +151,7 @@ func main() {
 	if puller != nil {
 		go puller.Run(ctx)
 	}
-	go tenant.Run(ctx, 30*time.Second)
+	go tenant.Run(ctx, 10*time.Second)
 	if providers != nil {
 		go providers.Run(ctx)
 	}
@@ -246,9 +246,11 @@ func get(key, fallback string) string {
 
 // report composes the state of the loops: the trusted providers' outcome
 // under the bootstrap rules decides Healthy, and the policies' first load
-// decides Loaded; the state of every tenant's snapshot goes along. providers
-// may be nil; puller and snapshots may not.
-func report(providers *authn.Manager, puller *pull.Puller, snapshots *snapshot.Registry) server.Report {
+// decides Loaded, and the default tenant's lookup decides UnresolvedTenant;
+// the state of every tenant's snapshot goes along. providers may be nil;
+// puller, snapshots, and tenant may not.
+func report(providers *authn.Manager, puller *pull.Puller, snapshots *snapshot.Registry,
+	tenant *defaultTenant) server.Report {
 	r := server.Report{Healthy: true}
 	if providers != nil {
 		healthy, message, configError, details := authn.Evaluate(providers.Status())
@@ -260,5 +262,6 @@ func report(providers *authn.Manager, puller *pull.Puller, snapshots *snapshot.R
 	r.Loaded, r.Waiting = status.PoliciesLoaded, status.Waiting
 	h := snapshots.Health()
 	r.Snapshots = &h
+	r.UnresolvedTenant = tenant.Unresolved()
 	return r
 }

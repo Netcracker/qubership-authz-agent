@@ -45,19 +45,22 @@ func tenantManager(t *testing.T, answers ...string) (*httptest.Server, *atomic.I
 	return srv, &n
 }
 
-// The default tenant is its display name until tenant-manager resolves it,
-// which Run retries until it does.
+// The default tenant is its display name, and Unresolved names it, until
+// tenant-manager resolves it, which Run retries until it does.
 func TestDefaultTenant_IsResolvedOnceTenantManagerAnswers(t *testing.T) {
 	srv, lookups := tenantManager(t, "", "0b9e-acme")
 	d := newDefaultTenant("acme", srv.URL+"/")
-	if got := d.Get(); got != "acme" {
-		t.Fatalf("Get before Run = %q, want the display name acme", got)
+	if got, unresolved := d.Get(), d.Unresolved(); got != "acme" || unresolved != "acme" {
+		t.Fatalf("Get, Unresolved before Run = %q, %q, want the display name acme for both", got, unresolved)
 	}
 
 	d.Run(context.Background(), time.Millisecond)
 
 	if got := d.Get(); got != "0b9e-acme" || lookups.Load() != 2 {
 		t.Errorf("Get after Run = %q after %d lookups, want 0b9e-acme after 2", got, lookups.Load())
+	}
+	if got := d.Unresolved(); got != "" {
+		t.Errorf("Unresolved after Run = %q, want \"\"", got)
 	}
 }
 
@@ -70,14 +73,18 @@ func TestDefaultTenant_RefusesAnAnswerThatIsNotAnID(t *testing.T) {
 
 	d.Run(ctx, time.Millisecond)
 
-	if got := d.Get(); got != "acme" {
-		t.Errorf("Get = %q, want the display name acme", got)
+	if got, unresolved := d.Get(), d.Unresolved(); got != "acme" || unresolved != "acme" {
+		t.Errorf("Get, Unresolved = %q, %q, want the display name acme for both", got, unresolved)
 	}
 }
 
-// Without a tenant-manager URL the display name is the ID.
+// Without a tenant-manager URL the display name is the ID, and nothing is
+// left to resolve.
 func TestDefaultTenant_WithoutTenantManagerKeepsTheName(t *testing.T) {
 	d := newDefaultTenant("acme", " ")
+	if got := d.Unresolved(); got != "" {
+		t.Errorf("Unresolved before Run = %q, want \"\"", got)
+	}
 	d.Run(context.Background(), time.Millisecond)
 	if got := d.Get(); got != "acme" {
 		t.Errorf("Get = %q, want acme", got)
