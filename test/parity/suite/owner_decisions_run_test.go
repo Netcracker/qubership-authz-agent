@@ -68,6 +68,8 @@ func TestExportFedOwnerDecisions(t *testing.T) {
 	ctx := context.Background()
 	stand := cfg.TenantID
 	ran := 0
+	var notCompared []string
+	uncomparedDecisions := 0
 	for i, oc := range cases {
 		if ecfg.Run != nil && !ecfg.Run.MatchString(oc.name) {
 			continue
@@ -102,6 +104,10 @@ func TestExportFedOwnerDecisions(t *testing.T) {
 				}
 				return nil
 			})
+			if broken != "" {
+				notCompared = append(notCompared, fmt.Sprintf("NOT COMPARED %d decisions of %s: %s", len(oc.decisions), oc.name, broken))
+				uncomparedDecisions += len(oc.decisions)
+			}
 			t.Run("health-names-failing-sets", func(t *testing.T) {
 				skipIfBroken(t, broken)
 				status, body, err := agentHealth(ctx, cfg.ACBaseURL)
@@ -129,6 +135,10 @@ func TestExportFedOwnerDecisions(t *testing.T) {
 		})
 	}
 	s.SetT(t)
+	t.Logf("%d cases, %d of them with a broken setup, %d decisions not compared", ran, len(notCompared), uncomparedDecisions)
+	for _, line := range notCompared {
+		t.Log(line)
+	}
 	if ran == 0 {
 		t.Error("no case ran: PARITY_EXPORT_RUN matched no case whose export holds a form legacy fails decisions on")
 	}
