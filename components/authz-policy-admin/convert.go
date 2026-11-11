@@ -25,34 +25,28 @@ import (
 // ── Simplified input types ────────────────────────────────────────────────────
 
 // simplifiedPolicy is an access-control simplified policy, with the fields
-// the stub uses for v3 export conversion.
-//
-// Predicate is not a field of an access-control simplified policy: it is the
-// querydsl template that access-control keeps in the predicate field of a v3
-// rule. The stub accepts it here and writes it to the v3 rule unchanged, so a
-// test can deliver a querydsl predicate without a regular policy set, which
-// the stub has no endpoint for.
+// the stub uses for v3 export conversion. Its filter predicates are the two
+// access-control reads: rsqlPredicate, and the mongodbPredicate of
+// predicates. A top-level sqlPredicate, mongodbPredicate, predicate, or
+// querydslPredicate is accepted and ignored, as access-control ignores it.
 type simplifiedPolicy struct {
 	// Tenant is the tenant that uploaded the policy, from the request.
 	Tenant string `json:"-"`
 	// Domain is the domain the policy was uploaded to, from the request.
-	Domain           string `json:"-"`
-	Component        string `json:"component"`
-	ResourceType     string `json:"resourceType"`
-	Operation        string `json:"operation"`
-	Condition        any    `json:"condition,omitempty"`
-	RSQLPredicate    string `json:"rsqlPredicate,omitempty"`
-	SQLPredicate     string `json:"sqlPredicate,omitempty"`
-	MongoDBPredicate string `json:"mongodbPredicate,omitempty"`
-	Predicate        string `json:"predicate,omitempty"`
+	Domain        string `json:"-"`
+	Component     string `json:"component"`
+	ResourceType  string `json:"resourceType"`
+	Operation     string `json:"operation"`
+	Condition     any    `json:"condition,omitempty"`
+	RSQLPredicate string `json:"rsqlPredicate,omitempty"`
 	// Predicates is the predicates object, whose mongodbPredicate is the
 	// mongodb predicate of the policy, or a text read as that predicate.
 	Predicates json.RawMessage `json:"predicates,omitempty"`
 	Roles      []any           `json:"roles,omitempty"`
 }
 
-// mongodbPredicate is the mongodb predicate of p: the one of its predicates,
-// which access-control reads, else the top-level one of the stub's superset.
+// mongodbPredicate is the mongodb predicate of p: the mongodbPredicate of its
+// predicates object, or its predicates text; "" for none.
 func (p simplifiedPolicy) mongodbPredicate() string {
 	var text string
 	if json.Unmarshal(p.Predicates, &text) == nil && text != "" {
@@ -61,10 +55,10 @@ func (p simplifiedPolicy) mongodbPredicate() string {
 	var nested struct {
 		MongoDBPredicate string `json:"mongodbPredicate"`
 	}
-	if json.Unmarshal(p.Predicates, &nested) == nil && nested.MongoDBPredicate != "" {
+	if json.Unmarshal(p.Predicates, &nested) == nil {
 		return nested.MongoDBPredicate
 	}
-	return p.MongoDBPredicate
+	return ""
 }
 
 // simplifiedPIP is an access-control simplified PIP, with the fields the
@@ -203,9 +197,7 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 		operation        string
 		condition        string
 		rsqlPredicate    string
-		sqlPredicate     string
 		mongodbPredicate string
-		predicate        string
 	}
 
 	// Collect in insertion order.
@@ -224,9 +216,7 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 			operation:        p.Operation,
 			condition:        conditionString(p.Condition),
 			rsqlPredicate:    p.RSQLPredicate,
-			sqlPredicate:     p.SQLPredicate,
 			mongodbPredicate: p.mongodbPredicate(),
-			predicate:        p.Predicate,
 		})
 	}
 
@@ -259,9 +249,7 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 					Condition:        condPtr,
 					Effect:           "ALLOW",
 					RSQLPredicate:    rule.rsqlPredicate,
-					SQLPredicate:     rule.sqlPredicate,
 					MongoDBPredicate: rule.mongodbPredicate,
-					Predicate:        rule.predicate,
 				})
 			}
 			policyTarget := rolesTarget(prk.roles)

@@ -34,7 +34,6 @@ func TestV3RoundTripThroughTheServiceReader(t *testing.T) {
 		{Tenant: "tenant-a", Component: "billing", ResourceType: "Invoice", Operation: "READ", Roles: []any{"ROLE_ADMIN"}},
 		{Tenant: "tenant-a", Component: "billing", ResourceType: "Invoice", Operation: "UPDATE", Roles: []any{"ROLE_ADMIN"}, Condition: "subject.tenantId == resource.tenantId"},
 		{Tenant: "tenant-a", Component: "billing", ResourceType: "Invoice", Operation: "READ", Roles: []any{"ROLE_USER"}, RSQLPredicate: "ownerId==${subject.id}"},
-		{Tenant: "tenant-a", Component: "billing", ResourceType: "Invoice", Operation: "LIST", Roles: []any{"ROLE_USER"}, Predicate: `Invoice.ownerId.eq("${subject.id}")`},
 	}
 	raw, err := json.Marshal(v3PolicySetsResponse{Hash: "deadbeef", PolicySets: toV3PolicySets(input, defaultTenant)})
 	if err != nil {
@@ -55,7 +54,6 @@ func TestV3RoundTripThroughTheServiceReader(t *testing.T) {
 	want := []string{
 		`subject.roles CONTAINS "ROLE_ADMIN" | operation EQ "READ" |  | rsql= | querydsl=`,
 		`subject.roles CONTAINS "ROLE_ADMIN" | operation EQ "UPDATE" | pip("subject.tenantId") EQ resource.tenantId | rsql= | querydsl=`,
-		`subject.roles CONTAINS "ROLE_USER" | operation EQ "LIST" |  | rsql= | querydsl=Invoice.ownerId.eq("${subject.id}")`,
 		`subject.roles CONTAINS "ROLE_USER" | operation EQ "READ" |  | rsql=ownerId==${subject.id} | querydsl=`,
 	}
 	if !slices.Equal(got, want) {
@@ -92,15 +90,18 @@ func TestPIPRoundTripThroughTheServiceReader(t *testing.T) {
 	}
 }
 
-// TestTheNestedMongoDBPredicateGoesToTheRule: the mongodbPredicate of the
-// predicates object, or a predicates text, is the mongodb predicate of the
-// rule, ahead of a top-level mongodbPredicate.
-func TestTheNestedMongoDBPredicateGoesToTheRule(t *testing.T) {
-	tests := []struct{ name, fields, want string }{
-		{"a predicates object", `"predicates": {"mongodbPredicate": "nested", "sqlPredicate": "s"}`, "nested"},
-		{"a predicates text", `"predicates": "as text"`, "as text"},
-		{"nested beside top-level", `"predicates": {"mongodbPredicate": "nested"}, "mongodbPredicate": "top"`, "nested"},
-		{"top-level alone", `"mongodbPredicate": "top"`, "top"},
+// TestTheRuleTakesThePredicatesAccessControlReads: a rule's filter
+// predicates are the rsqlPredicate of the policy and the mongodbPredicate of
+// its predicates object, or its predicates text; every other predicate key,
+// top-level or nested, gives the rule nothing.
+func TestTheRuleTakesThePredicatesAccessControlReads(t *testing.T) {
+	tests := []struct{ name, fields, rsql, mongodb string }{
+		{"a predicates object", `"predicates": {"mongodbPredicate": "nested", "sqlPredicate": "s"}`, "", "nested"},
+		{"a predicates text", `"predicates": "as text"`, "", "as text"},
+		{"nested beside top-level", `"predicates": {"mongodbPredicate": "nested"}, "mongodbPredicate": "top"`, "", "nested"},
+		{"a top-level mongodbPredicate", `"mongodbPredicate": "top"`, "", ""},
+		{"every top-level key", `"rsqlPredicate": "a==1", "sqlPredicate": "a = 1", "mongodbPredicate": "{}",
+			"predicate": "doc.a.eq(1)", "querydslPredicate": "doc.a.eq(1)"`, "a==1", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -109,10 +110,12 @@ func TestTheNestedMongoDBPredicateGoesToTheRule(t *testing.T) {
 				"operation": "READ", "roles": ["ROLE_A"], `+tt.fields+`}`), &p); err != nil {
 				t.Fatalf("unmarshal the policy: %v", err)
 			}
-			sets := toV3PolicySets([]simplifiedPolicy{p}, defaultTenant)
-			if got := sets[0].Policies[0].Rules[0]; got.MongoDBPredicate != tt.want || got.SQLPredicate != "" {
-				t.Errorf("rule mongodbPredicate = %q, sqlPredicate = %q; want %q and none",
-					got.MongoDBPredicate, got.SQLPredicate, tt.want)
+			r := toV3PolicySets([]simplifiedPolicy{p}, defaultTenant)[0].Policies[0].Rules[0]
+			got := fmt.Sprintf("rsql=%q mongodb=%q sql=%q querydsl=%q", r.RSQLPredicate, r.MongoDBPredicate,
+				r.SQLPredicate, r.Predicate)
+			want := fmt.Sprintf("rsql=%q mongodb=%q sql=%q querydsl=%q", tt.rsql, tt.mongodb, "", "")
+			if got != want {
+				t.Errorf("rule predicates = %s, want %s", got, want)
 			}
 		})
 	}

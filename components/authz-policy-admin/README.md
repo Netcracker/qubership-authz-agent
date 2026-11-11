@@ -86,6 +86,11 @@ uploaded it in `tenantId`; the `default` tenant is exported as
 `AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID`.  An empty store exports `"policySets": []` and
 `"pips": []`.
 
+A rule of a simplified policy carries the two filter predicates access-control reads:
+`rsqlPredicate`, and the `mongodbPredicate` of `predicates` (a `predicates` text is that
+predicate).  A top-level `sqlPredicate`, `mongodbPredicate`, `predicate`, or
+`querydslPredicate` is accepted and left out of the export, as access-control leaves it out.
+
 ### Health / status
 
 ```text
