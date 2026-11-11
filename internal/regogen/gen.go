@@ -746,6 +746,7 @@ func (g *gen) cond(c *policyir.Condition, place spectables.Place, effect policyi
 			atom := atomText(a)
 			l.t = stamp(l.t, &exprSrc{node: g.where.label, atom: atom, outcome: spectables.OutcomeT})
 			l.f = stamp(l.f, &exprSrc{node: g.where.label, atom: atom, outcome: spectables.OutcomeF})
+			l.failed = stamp(l.failed, &exprSrc{node: g.where.label, atom: atom, outcome: spectables.OutcomeU})
 			g.stats.Leaves++
 			cc.three = cc.three || l.threeValued
 			cc.failed = union(cc.failed, l.failed)
@@ -837,7 +838,8 @@ func (g *gen) access(a policyir.Access) (leafRails, error) {
 	}
 	// where a rule of the decision applies over a failed source, the
 	// decision denies the resource as a whole, so the leaf is unknown; a
-	// rule that reads it keeps its bounds there, as over any unknown value
+	// rule that reads it keeps its bounds there, unlike a comparison over a
+	// failed value, which denies the resource of its own decision
 	known := dnfTrue
 	if g.fails(g.decRoots[name]) {
 		known, three = ref(name+"_loE", true), true
