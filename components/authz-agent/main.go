@@ -111,11 +111,12 @@ func main() {
 	tenant := newDefaultTenant(cfg.DefaultTenant, cfg.Authn.TenantManagerURL)
 	puller := pull.New(cfg.Pull, source, logger)
 	opts := server.Options{
-		Log:           logger,
-		PullNow:       puller.PullNow,
-		Health:        func() server.Report { return report(providers, puller, snapshots, tenant) },
-		Snapshots:     snapshots,
-		DefaultTenant: tenant.Get,
+		Log:                   logger,
+		PullNow:               puller.PullNow,
+		Health:                func() server.Report { return report(providers, puller, snapshots, tenant) },
+		Snapshots:             snapshots,
+		DefaultTenant:         tenant.Get,
+		DefaultTenantResolved: func() bool { return tenant.Unresolved() == "" },
 	}
 
 	// Immutable: strings handed out by the request context must not alias the

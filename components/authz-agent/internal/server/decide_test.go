@@ -143,6 +143,9 @@ func TestDecide_ACallerThatIsNotM2MReachesOnlyItsOwnTenant(t *testing.T) {
 		{"role_m2m in lowercase is refused in another tenant than its claim", "PARITY_ROLE_LOWER", "?tenant_id=b", "", 403, ""},
 		{"the level m2m in any case reaches a tenant outside the default", "PARITY_LEVEL_M2M", "?tenant_id=b", "", 200, "true"},
 		{"the level key-manager in any case reaches a tenant outside the default", "PARITY_LEVEL_KEY_MANAGER", "?tenant_id=b", "", 200, "true"},
+		{"a claim reaches the default tenant the request does not name", "PARITY_A", "", "", 200, "true"},
+		{"a claim of another tenant is refused in the default tenant the request does not name", "PARITY_UNKNOWN", "", "", 403, ""},
+		{"a claim that differs from the tenant only in case is refused", "PARITY_A", "?tenant_id=A", "", 403, ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			headers := map[string]string{"Authorization": "Bearer " + tc.token}
@@ -155,6 +158,34 @@ func TestDecide_ACallerThatIsNotM2MReachesOnlyItsOwnTenant(t *testing.T) {
 				t.Errorf("POST %s with Tenant %q as %s = %d %q, want %d %q", path, tc.header, tc.token, code, got, tc.status, tc.want)
 			}
 		})
+	}
+}
+
+// Until the default tenant is resolved, a caller is matched with no default
+// tenant, so a token without a tenant-id claim is refused, and a token with
+// one is matched as before.
+func TestDecide_ACallerIsNotMatchedWithAnUnresolvedDefaultTenant(t *testing.T) {
+	reg := registry(t, `{"policySets": [`+tenantSet("a", "true")+`]}`)
+	resolved := false
+	app := newPublicAppOver(t, map[string]string{"internals.rego": callerStub}, Options{Snapshots: reg,
+		DefaultTenant: func() string { return "a" }, DefaultTenantResolved: func() bool { return resolved }})
+	const body = `{"type":"doc","operation":"read","resource":{}}`
+	for _, tc := range []struct {
+		name, token string
+		resolved    bool
+		status      int
+		want        string
+	}{
+		{"no claim, unresolved", "PARITY_NONE", false, 403, ""},
+		{"no claim, resolved", "PARITY_NONE", true, 200, "true"},
+		{"a claim, unresolved", "PARITY_A", false, 200, "true"},
+	} {
+		resolved = tc.resolved
+		code, got, _ := call(t, app, http.MethodPost, "/access/v1/check/resource?tenant_id=a", body,
+			map[string]string{"Authorization": "Bearer " + tc.token})
+		if code != tc.status || got != tc.want {
+			t.Errorf("%s: POST = %d %q, want %d %q", tc.name, code, got, tc.status, tc.want)
+		}
 	}
 }
 

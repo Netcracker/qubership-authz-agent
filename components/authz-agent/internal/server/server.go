@@ -75,6 +75,10 @@ type Options struct {
 	// DefaultTenant is the tenant of a request that names none by the
 	// query parameter tenant_id or the header Tenant.
 	DefaultTenant func() string
+	// DefaultTenantResolved reports whether DefaultTenant gives the tenant's
+	// ID rather than its display name; nil means it always does. Until it
+	// does, a caller is never matched with the default tenant.
+	DefaultTenantResolved func() bool
 }
 
 // Server owns the handlers.

@@ -132,7 +132,7 @@ func (s *Server) admit(c *fiber.Ctx, resources []legacy.Resource) (input, admiss
 		status, body, _ := legacy.AuthError(result)
 		return nil, nil, func() error { return sendJSON(c, status, body) }
 	}
-	if claims, ok := admission["callerClaims"].(map[string]any); ok && !callerMayReach(claims, tenant, s.defaultTenant()) {
+	if claims, ok := admission["callerClaims"].(map[string]any); ok && !callerMayReach(claims, tenant, s.resolvedDefaultTenant()) {
 		s.opts.Log.DebugC(ctx, "caller refused path=%s tenant=%s reason=CALLER_TENANT_MISMATCH", c.Path(), tenant)
 		return nil, nil, func() error {
 			c.Status(http.StatusForbidden)
@@ -187,6 +187,16 @@ func (s *Server) defaultTenant() string {
 		return s.opts.DefaultTenant()
 	}
 	return ""
+}
+
+// resolvedDefaultTenant is the ID of the default tenant, or "" while it is
+// not resolved or without one, so that a request is never compared with the
+// display name.
+func (s *Server) resolvedDefaultTenant() string {
+	if s.opts.DefaultTenantResolved != nil && !s.opts.DefaultTenantResolved() {
+		return ""
+	}
+	return s.defaultTenant()
 }
 
 // log reports a decision at debug. The line carries neither the input nor
