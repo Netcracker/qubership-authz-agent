@@ -841,6 +841,32 @@ func TestFromRegularCutsTheSpacesAroundATargetAndACondition(t *testing.T) {
 	}
 }
 
+// The policy service accepts a JSON boolean in a target or a condition, and
+// decides it as the expression true or false.
+func TestFromRegularReadsABooleanTargetOrConditionAsItsText(t *testing.T) {
+	t.Parallel()
+
+	e := fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "combiningAlgorithm": "DENY_OVERRIDES", "target": true,
+		"policies": [{"policyId": "p", "target": false, "rules": [
+			{"ruleId": "r1", "effect": "ALLOW", "target": true, "condition": false},
+			{"ruleId": "r2", "effect": "DENY", "target": false, "condition": true}]}]}]`, `[]`)
+
+	want := `set "s" name="" domain="" algorithm=DENY_OVERRIDES
+  target[set_target]: TRUE
+  policy "p" name="" algorithm=absent
+    target[policy_target]: FALSE
+    rule "r1" name="" effect=ALLOW
+      target[rule_target]: TRUE
+      condition[rule_condition]: FALSE
+    rule "r2" name="" effect=DENY
+      target[rule_target]: FALSE
+      condition[rule_condition]: TRUE
+`
+	if got := tree(t, e, "t").Dump(); got != want {
+		t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
+	}
+}
+
 // An iterate the legacy service never evaluates makes its set a permanent
 // failure under the set's target.
 func TestFromRegularMarksAnIterateLegacyNeverEvaluates(t *testing.T) {
@@ -901,6 +927,10 @@ func TestFromRegularFailsOnlyTheTenantOfABadElement(t *testing.T) {
 		{"an unknown effect", `[{"tenantId": "bad", "policies": [{"rules": [{"effect": "PERMIT"}]}]}]`, `[]`,
 			`effect "PERMIT" unknown`},
 		{"a target that is not a string", `[{"tenantId": "bad", "target": 5}]`, `[]`, "target"},
+		{"a policy target that is an array", `[{"tenantId": "bad", "policies": [{"target": [true]}]}]`, `[]`,
+			"policies.0.target"},
+		{"a condition that is an object", `[{"tenantId": "bad", "policies": [{"rules": [{"condition": {}}]}]}]`, `[]`,
+			"policies.0.rules.0.condition"},
 		{"an unknown pipType", `[]`, `[{"tenantId": "bad", "name": "subject.x", "pipType": "ENTITLEMENT"}]`,
 			`pipType "ENTITLEMENT" unknown`},
 		{"a PIP name shorter than subject.", `[]`, `[{"tenantId": "bad", "name": "x", "pipType": "TOKEN"}]`,

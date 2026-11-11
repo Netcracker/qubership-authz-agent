@@ -283,7 +283,7 @@ type exportSet struct {
 	Domain             string         `json:"domain"`
 	Component          *string        `json:"component"`
 	Status             string         `json:"status"`
-	Target             *string        `json:"target"`
+	Target             *stringOrBool  `json:"target"`
 	CombiningAlgorithm string         `json:"combiningAlgorithm"`
 	Iterate            *exportIterate `json:"iterate"`
 	Policies           []exportPolicy `json:"policies"`
@@ -305,12 +305,12 @@ type exportIterate struct {
 }
 
 type exportPolicy struct {
-	TenantID           *string      `json:"tenantId"`
-	PolicyID           string       `json:"policyId"`
-	Name               string       `json:"name"`
-	Target             *string      `json:"target"`
-	CombiningAlgorithm string       `json:"combiningAlgorithm"`
-	Rules              []exportRule `json:"rules"`
+	TenantID           *string       `json:"tenantId"`
+	PolicyID           string        `json:"policyId"`
+	Name               string        `json:"name"`
+	Target             *stringOrBool `json:"target"`
+	CombiningAlgorithm string        `json:"combiningAlgorithm"`
+	Rules              []exportRule  `json:"rules"`
 }
 
 func (exportPolicy) ignoredKeys() []string { return []string{"description", "deprecated", "uiTarget"} }
@@ -320,8 +320,8 @@ type exportRule struct {
 	RuleID           string        `json:"ruleId"`
 	Name             string        `json:"name"`
 	RuleType         string        `json:"ruleType"`
-	Target           *string       `json:"target"`
-	Condition        *string       `json:"condition"`
+	Target           *stringOrBool `json:"target"`
+	Condition        *stringOrBool `json:"condition"`
 	Effect           string        `json:"effect"`
 	RSQLPredicate    string        `json:"rsqlPredicate"`
 	SQLPredicate     string        `json:"sqlPredicate"`
@@ -341,15 +341,21 @@ type exportCustom struct {
 
 const ruleTypeFrontend = "APPLICABLE_FOR_FRONTEND"
 
+// stringOrBool is the text of a target or a condition. A JSON boolean in either
+// field reads as its text, true as the expression true and false as the
+// expression false, because the policy service stores a boolean written there
+// as that text. A number, an object, or an array fails the tenant.
+type stringOrBool string
+
 // condition parses text at place, and turns text the parser refuses into a
 // condition of one [Unsupported] atom of [FormSyntax].
-func condition(text *string, place Place, iterVar string) *Condition {
+func condition(text *stringOrBool, place Place, iterVar string) *Condition {
 	if text == nil {
 		return nil
 	}
-	c, err := ParseCondition(*text, place, iterVar)
+	c, err := ParseCondition(string(*text), place, iterVar)
 	if err != nil {
-		return &Condition{Place: place, Disjuncts: [][]Atom{{Unsupported{Form: FormSyntax, Text: *text}}}}
+		return &Condition{Place: place, Disjuncts: [][]Atom{{Unsupported{Form: FormSyntax, Text: string(*text)}}}}
 	}
 	return c
 }
@@ -387,9 +393,9 @@ func (s *exportSet) cutTexts() {
 }
 
 // cutExpression cuts the target or condition e, when there is one.
-func cutExpression(e *string) {
+func cutExpression(e *stringOrBool) {
 	if e != nil {
-		*e = enumText(*e)
+		*e = stringOrBool(enumText(string(*e)))
 	}
 }
 
@@ -585,8 +591,8 @@ func simplifiedGroup(s *exportSet) (*SimplifiedGroup, bool) {
 		s.CombiningAlgorithm != string(AlgorithmDenyUnlessPermit) {
 		return nil, false
 	}
-	rt, ok := onlyEquality(*s.Target, ResourceType{})
-	if !ok || *s.Target != resourceTypeTarget(rt) {
+	rt, ok := onlyEquality(string(*s.Target), ResourceType{})
+	if !ok || string(*s.Target) != resourceTypeTarget(rt) {
 		return nil, false
 	}
 	g := &SimplifiedGroup{
@@ -601,7 +607,7 @@ func simplifiedGroup(s *exportSet) (*SimplifiedGroup, bool) {
 		}
 		op := "ALL"
 		if *p.Target != "true" {
-			if op, ok = onlyEquality(*p.Target, Operation{}); !ok || *p.Target != operationTarget(op) {
+			if op, ok = onlyEquality(string(*p.Target), Operation{}); !ok || string(*p.Target) != operationTarget(op) {
 				return nil, false
 			}
 		}
@@ -611,8 +617,8 @@ func simplifiedGroup(s *exportSet) (*SimplifiedGroup, bool) {
 				r.Target == nil {
 				return nil, false
 			}
-			roles, ok := rolesOf(*r.Target)
-			if !ok || *r.Target != rolesTarget(roles) {
+			roles, ok := rolesOf(string(*r.Target))
+			if !ok || string(*r.Target) != rolesTarget(roles) {
 				return nil, false
 			}
 			preds := predicates(r)
@@ -797,8 +803,8 @@ func present(raw json.RawMessage) string {
 // object key fills a struct field only when it equals the field's JSON name:
 // json.Unmarshal also matches a key that differs in letter case. Any other key
 // is ignored, as an unknown key is, and of a key written twice in one object
-// the last value counts. The time is linear in the length of data, however
-// deep the objects nest.
+// the last value counts. A boolean fills a [stringOrBool] with its text. The
+// time is linear in the length of data, however deep the objects nest.
 func decodeExact(data []byte, v any) error {
 	_, err := decodeReporting(data, v)
 	return err
@@ -854,12 +860,16 @@ func (p *keyPath) String() string {
 	return b.String()
 }
 
-var rawMessageType = reflect.TypeFor[json.RawMessage]()
+var (
+	rawMessageType   = reflect.TypeFor[json.RawMessage]()
+	stringOrBoolType = reflect.TypeFor[stringOrBool]()
+)
 
 // exactFilter writes data, valid JSON, to out with every object key dropped
 // that no struct field of the target type, or of the types it holds, names
 // exactly. Values it keeps are written as they are, with whitespace outside
-// strings removed.
+// strings removed, except that a boolean read into a [stringOrBool] is written
+// as a string.
 type exactFilter struct {
 	data []byte
 	// ends maps the offset of each { and [ in data to the offset just past
@@ -894,6 +904,10 @@ func (f *exactFilter) value(i int, t reflect.Type, at *keyPath) {
 		f.object(i, t, at)
 	case t.Kind() == reflect.Slice && t != rawMessageType && f.data[i] == '[':
 		f.array(i, t.Elem(), at)
+	case t == stringOrBoolType && (f.data[i] == 't' || f.data[i] == 'f'):
+		f.out.WriteByte('"')
+		f.out.Write(f.data[i:f.valueEnd(i)])
+		f.out.WriteByte('"')
 	default:
 		// The value is valid JSON, so Compact cannot fail.
 		_ = json.Compact(&f.out, f.data[i:f.valueEnd(i)])
