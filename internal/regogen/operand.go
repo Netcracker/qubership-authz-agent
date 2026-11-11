@@ -60,8 +60,6 @@ type Ref struct {
 	Network bool
 	// Segments is set when a MATCH guard reads the path segments of the value.
 	Segments bool
-	// Subset is set when IS SUBSET reads the value's element tokens.
-	Subset bool
 	// Pass is set for a value an iterate's pass binds: its record is in each
 	// pass of input.scope_passes, not in the input itself.
 	Pass bool
@@ -108,10 +106,12 @@ type litVal struct {
 	text      string // the text of a string literal
 	// num is the number <, <=, >, and >= read the literal as, nil for none.
 	num *jsonvalue.Decimal
-	// subsetLeft and subsetRight are the tokens IS SUBSET reads of the
-	// literal on the left and on the right.
-	subsetLeft  [][]string
-	subsetRight []string
+	// subsetIndex is the index of the elements of a literal on the right of
+	// IS SUBSET.
+	subsetIndex deepIndex
+	// alts are the deeps of the literal's items, or of the literal as the
+	// one item, as IN, CONTAINS, and CONTAINS ANY compare them (elementAlts).
+	alts [][]deep
 }
 
 // side is one operand of a comparison: a literal, a pattern, a reference, or a
@@ -282,7 +282,8 @@ func literalSplit(o policyir.Operand, split func(raw string) ([]jsonvalue.Value,
 	case policyir.Number:
 		l.num = literalNumber(o.Text)
 	}
-	l.subsetLeft, l.subsetRight = subsetLeft(v, literalNumberValue), subsetRight(v, literalNumberValue, false)
+	l.subsetIndex = elementIndex(v, literalNumberValue, false)
+	l.alts = elementAlts(v, literalNumberValue)
 	switch kind {
 	case spectables.KindLitStr:
 		l.class = spectables.ClassString
@@ -483,7 +484,7 @@ func (g *gen) side(o policyir.Operand) (*side, error) {
 		if g.fixedOp != nil {
 			l, _ := literal(policyir.String{Value: *g.fixedOp})
 			return &side{kind: spectables.KindOperation, lit: &litVal{kind: spectables.KindOperation,
-				class: spectables.ClassString, key: l.key, keys: l.keys, own: l.own, text: l.text, num: l.num, subsetLeft: l.subsetLeft, subsetRight: l.subsetRight}}, nil
+				class: spectables.ClassString, key: l.key, keys: l.keys, own: l.own, text: l.text, num: l.num, subsetIndex: l.subsetIndex, alts: l.alts}}, nil
 		}
 	case policyir.Subject:
 		if o.Attr == policyir.SubjectPermissionScope {

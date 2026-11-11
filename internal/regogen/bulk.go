@@ -89,8 +89,9 @@ func NewBulk(m *Module, req Request) (*Bulk, error) {
 // body. The input shares the subject's part with every other item: its
 // Records hold the item's records only, and its Value reuses the shared
 // terms. The requests of its PIPs are the item's own, since a request may
-// read the resource.
-func (b *Bulk) Item(body Body) *Input {
+// read the resource. It fails where a value of the item other than the
+// answer of a source is too big to compare ([Record.TooBig]).
+func (b *Bulk) Item(body Body) (*Input, error) {
 	in := &Input{
 		Records:       make(map[string]Record, len(b.items)),
 		FoldedRoles:   b.in.FoldedRoles,
@@ -104,6 +105,9 @@ func (b *Bulk) Item(body Body) *Input {
 	}
 	if body.HasResource {
 		in.resource = body.Resource
+		if err := in.checkPaths(); err != nil {
+			return nil, err
+		}
 	}
 	for _, r := range b.items {
 		var v Resolved
@@ -115,13 +119,17 @@ func (b *Bulk) Item(body Body) *Input {
 		default:
 			v = body.resolve(r)
 		}
-		in.Records[r.ID] = record(r, v)
+		rec, err := projectRecord(r, v)
+		if err != nil {
+			return nil, err
+		}
+		in.Records[r.ID] = rec
 	}
 	req := b.req
 	req.Body = body
 	// NewBulk checked the values setCalls requires
 	_ = in.setCalls(b.m, &req)
-	return in
+	return in, nil
 }
 
 // value is the [Input.Value] of the item in: each map of a field joins the

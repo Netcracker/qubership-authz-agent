@@ -45,8 +45,8 @@ import (
 // entText returns the function of the entitlements operand of r.
 func entText(r *Ref) string {
 	as, _ := json.Marshal(r.ent.As)
-	return fmt.Sprintf("ent_%s := nc.ent.record(q, pip_send(q), {\"read\": %d, \"seg\": %t, \"subset\": %t, "+
-		"\"jp\": null, \"type\": %s, \"as\": %s}) if q := input.%s[%s]\n\n", r.Var, r.read, r.Segments, r.Subset,
+	return fmt.Sprintf("ent_%s := nc.ent.record(q, pip_send(q), {\"read\": %d, \"seg\": %t, "+
+		"\"jp\": null, \"type\": %s, \"as\": %s}) if q := input.%s[%s]\n\n", r.Var, r.read, r.Segments,
 		lit(r.ent.ResourceType), as, memberPIPRequests, lit(r.ID))
 }
 
@@ -108,7 +108,7 @@ func entRecordFunction() func(*rego.Rego) {
 				}
 				return record(r, Resolved{State: spectables.State(st)}).term(), nil
 			}
-			return record(r, entResolve(resp, string(typ), as)).term(), nil
+			return sourceRecord(r, entResolve(resp, string(typ), as)).term(), nil
 		})
 }
 

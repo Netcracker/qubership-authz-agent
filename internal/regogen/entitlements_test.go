@@ -17,10 +17,12 @@ package regogen
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 
@@ -175,5 +177,58 @@ func TestTheEntitlementsServiceIsNotCalledWithoutAToken(t *testing.T) {
 	}
 	if n, _ := calls(); n != 0 {
 		t.Errorf("calls without the agent's token = %d, want 0", n)
+	}
+}
+
+// An answer of the entitlements service too big to look up reads as a
+// failed call, in either order of an OR, rather than failing the request:
+// the true alternative allows, and alone the operand denies.
+func TestAnEntitlementsAnswerTooBigToLookUpReadsAsAFailedCall(t *testing.T) {
+	ids := make([]string, 16)
+	for i := range ids {
+		ids[i] = fmt.Sprintf(`{"resourceId": ["1", "2", "3", "0e%d"]}`, i)
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"entitlements": [{"resourceType": "order", "references": [{"name": "owner",
+			"resources": [` + strings.Join(ids, ",") + `]}]}]}`))
+	}))
+	t.Cleanup(srv.Close)
+	const ent = "resource.a CONTAINS ANY subject.entitledResources.of('order').as('owner')"
+	for _, tc := range []struct {
+		condition string
+		want      bool
+	}{
+		{"resource.x == '1' OR " + ent, true},
+		{ent + " OR resource.x == '1'", true},
+		{ent, false},
+	} {
+		m, err := Generate(tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition, ""), table(t),
+			DefaultOptions())
+		if err != nil {
+			t.Fatalf("Generate: %v", err)
+		}
+		req := Request{Entitlements: srv.URL, Body: Body{Operation: "read", ResourceType: "doc", HasResource: true,
+			Resource: mustDecode(t, `{"x": "1", "a": [["z"]]}`)},
+			Values: map[string]Resolved{keySubjID: resolved(t, "VALUE", `"u1"`)}}
+		m.Resolve(req.Body, req.Values)
+		m.ResolveSubject(&req)
+		in, err := Project(m, req)
+		if err != nil {
+			t.Fatalf("Project: %v", err)
+		}
+		pq, err := rego.New(append([]func(*rego.Rego){rego.Query("data." + DefaultOptions().Package + ".allow"),
+			rego.Module("gen.rego", m.Text)}, Builtins()...)...).PrepareForEval(context.Background())
+		if err != nil {
+			t.Fatalf("PrepareForEval: %v\n%s", err, m.Text)
+		}
+		h := &regobuiltins.HTTP{Client: &http.Client{}, Token: own}
+		rs, err := pq.Eval(in.Context(h.Context(regobuiltins.WithCalls(context.Background()))),
+			rego.EvalParsedInput(in.Value()))
+		if err != nil {
+			t.Fatalf("Eval(%s): %v", tc.condition, err)
+		}
+		if got := len(rs) == 1 && rs[0].Expressions[0].Value == true; got != tc.want {
+			t.Errorf("allow(%s) with an answer too big to look up = %v, want %v", tc.condition, got, tc.want)
+		}
 	}
 }

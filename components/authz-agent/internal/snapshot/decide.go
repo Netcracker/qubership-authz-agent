@@ -118,7 +118,9 @@ func (r *Registry) Decide(ctx context.Context, req Request) ([]Result, error) {
 		}
 		inputs = make([]*regogen.Input, len(req.Items))
 		for i, b := range req.Items {
-			inputs[i] = bulk.Item(b)
+			if inputs[i], err = bulk.Item(b); err != nil {
+				return nil, fmt.Errorf("tenant %s: project item %d of the bulk request: %w", req.Tenant, i, err)
+			}
 		}
 	}
 	errs := make([]error, len(inputs))

@@ -16,155 +16,32 @@ package regogen
 
 import (
 	"fmt"
-	"slices"
-	"strconv"
-	"strings"
 
-	"authz-agent/internal/jsonvalue"
-	"authz-agent/internal/legacyvalue"
 	"authz-agent/internal/regogen/spectables"
 )
 
 // IS SUBSET holds when the left value, read as a list, has at least one
 // element and each of its elements equals an element of the right value, read
-// as a list. Two elements are equal as == compares them, with case, except
-// that a string never equals a boolean on the right, an object on the right
-// equals nothing, and a resource attribute or a PIP on the right is one value
-// whose elements other than strings equal nothing (rule subset).
-//
-// The projection writes each left element as its tokens (subsetLeft) and the
-// right value as the tokens of all its elements (subsetRight), so that two
-// elements are equal exactly when the tokens of the left one meet those of the
-// right one. A token is a prefix and a text:
-//
-//	t:  a string or a boolean by its text, which a string and a boolean on
-//	    the left share; on the right also a list by its Java text, which a
-//	    string on the left equals
-//	b:  a boolean, which on the right only a boolean on the left meets
-//	n:  a number by its value, on the left and on the right; on the right
-//	    also a string that BigDecimal reads, by that value
-//	m:  a string that BigDecimal reads, by that value, on the left; a number
-//	    by its value on the right
-//	s:  a list or an object on the left by its Java text, which a string on the
-//	    right equals
-//	l:  a list by its elements in order, each by its own token ([caseToken])
-//	o:  an object by its members
-//
-// So a number equals a number or a string of the same value (ADR-0083), and
-// two strings compare by their texts.
-
-// subsetLeft returns the tokens of each element of v read as a list; num
-// gives the value of a number.
-func subsetLeft(v jsonvalue.Value, num numberValue) [][]string {
-	out := [][]string{}
-	for _, e := range asList(v) {
-		var ts []string
-		switch e := e.(type) {
-		case nil:
-		case bool:
-			ts = []string{"t:" + strconv.FormatBool(e), "b:" + strconv.FormatBool(e)}
-		case []jsonvalue.Value, *jsonvalue.Object:
-			ts = []string{"s:" + structureText(e)}
-			if t, ok := caseToken(e, num); ok {
-				ts = append(ts, t)
-			}
-		case jsonvalue.Number:
-			ts = []string{"n:" + num(e)}
-		case string:
-			ts = []string{"t:" + e}
-			if d, ok := jsonvalue.ParseBigDecimal(e); ok {
-				ts = append(ts, "m:"+d.String())
-			}
-		}
-		out = append(out, ts)
-	}
-	return out
-}
-
-// subsetRight returns the tokens of the elements of v read as a list; with
-// oneValue, those of its strings only.
-func subsetRight(v jsonvalue.Value, num numberValue, oneValue bool) []string {
-	out := []string{}
-	for _, e := range asList(v) {
-		switch e := e.(type) {
-		case string:
-			out = append(out, "t:"+e, "s:"+e)
-			if d, ok := jsonvalue.ParseBigDecimal(e); ok {
-				out = append(out, "n:"+d.String())
-			}
-		case nil, *jsonvalue.Object:
-		default:
-			if oneValue {
-				continue
-			}
-			switch e := e.(type) {
-			case bool:
-				out = append(out, "b:"+strconv.FormatBool(e))
-			case []jsonvalue.Value:
-				out = append(out, "t:"+structureText(e))
-				if t, ok := caseToken(e, num); ok {
-					out = append(out, t)
-				}
-			case jsonvalue.Number:
-				v := num(e)
-				out = append(out, "n:"+v, "m:"+v)
-			}
-		}
-	}
-	return out
-}
-
-func asList(v jsonvalue.Value) []jsonvalue.Value {
-	if l, ok := v.([]jsonvalue.Value); ok {
-		return l
-	}
-	return []jsonvalue.Value{v}
-}
-
-// caseToken is the token of a list or an object as an element of a list: a
-// list by the tokens of its elements in order, a number by its value (n:), a
-// string by its text with case (c:), a boolean by its text (t:), an object by
-// its members. A list that holds null equals nothing and has no token.
-func caseToken(e jsonvalue.Value, num numberValue) (string, bool) {
-	switch e := e.(type) {
-	case nil:
-		return "", false
-	case *jsonvalue.Object:
-		return "o:" + *legacyvalue.Of(e).Structure, true
-	case []jsonvalue.Value:
-		return listToken(e, func(x jsonvalue.Value) (string, bool) { return caseToken(x, num) })
-	case jsonvalue.Number:
-		return "n:" + num(e), true
-	case bool:
-		return "t:" + strconv.FormatBool(e), true
-	case string:
-		return "c:" + e, true
-	}
-	panic(fmt.Sprintf("regogen: %T is not a Value", e))
-}
-
-// subsetOneValue reports whether an operand of kind k on the right of IS
-// SUBSET is one value: a resource attribute or a PIP.
-func subsetOneValue(k spectables.Kind) bool {
-	return isRes(k) || strings.HasPrefix(string(k), "pip:")
-}
+// as a list, as the collection operators compare elements (ADR-0083 R7): the
+// left elements by their deeps (Record.ElementAlts), the right ones by their
+// index without objects, since an object on the right equals nothing
+// (Record.SubsetIndex). A resource attribute or a PIP on the right offers its
+// elements as a literal list does.
 
 // subsetTemplate is the template of IS SUBSET over any two values.
 func subsetTemplate(L, R *side, b *tb) (tpl, bool) {
 	var la, rb string
 	if L.ref != nil {
-		L.ref.Subset = true
-		b.use(L, fieldSubsetLeft)
-		la = L.field(fieldSubsetLeft)
+		b.use(L, fieldElementAlts)
+		la = L.field(fieldElementAlts)
 	} else {
-		la = setsLit(L.lit.subsetLeft)
+		la = altsTerm(L.lit.alts).String()
 	}
 	if R.ref != nil {
-		R.ref.Subset = true
-		b.use(R, fieldSubsetRight)
-		rb = R.field(fieldSubsetRight)
+		b.use(R, fieldSubsetIndex)
+		rb = R.field(fieldSubsetIndex)
 	} else {
-		rb = setLit(R.lit.subsetRight)
+		rb = R.lit.subsetIndex.term().String()
 	}
 	c := clsCheck
 	if L.ref != nil && L.ref.Network || R.ref != nil && R.ref.Network {
@@ -178,10 +55,11 @@ func subsetTemplate(L, R *side, b *tb) (tpl, bool) {
 	row := func(kind, text string) clause {
 		return conj(bind, clause{{cls: c, text: text, fact: vfact(ref), test: subsetTest(L, R, kind)}})
 	}
-	// every element of the left has a token on the right; a comprehension
-	// keeps the element variable local, so two such rows can share a clause
-	t := row("subset", fmt.Sprintf("every e in %s { some x in e; x in %s }", la, rb))
-	f := dnf{row("unmatched", fmt.Sprintf("count([e | some e in %s; every x in e { not x in %s }]) > 0", la, rb))}
+	// every element of the left has a deep in the index of the right; a
+	// comprehension keeps the element variable local, so two such rows can
+	// share a clause
+	t := row("subset", regoDeepAll(la, rb))
+	f := dnf{row("unmatched", regoDeepNotAll(la, rb))}
 	if L.ref != nil {
 		// an empty list on the left is a subset of nothing
 		t = conj(row("nonempty", fmt.Sprintf("count(%s) > 0", la)), t)
@@ -189,19 +67,6 @@ func subsetTemplate(L, R *side, b *tb) (tpl, bool) {
 	}
 	return tpl{t: dnf{t}, f: f, fields: b.fields, rules: map[spectables.ValueRule]bool{spectables.RuleSubset: true}},
 		true
-}
-
-// setsLit is the Rego text of a list of lists of strings.
-func setsLit(sets [][]string) string {
-	parts := make([]string, len(sets))
-	for i, s := range sets {
-		items := make([]string, len(s))
-		for j, x := range s {
-			items[j] = lit(x)
-		}
-		parts[i] = "[" + strings.Join(items, ", ") + "]"
-	}
-	return "[" + strings.Join(parts, ", ") + "]"
 }
 
 // subsetTest is the group test of a row of IS SUBSET: subset and unmatched
@@ -217,12 +82,12 @@ func subsetTest(L, R *side, kind string) *test {
 	if L.ref != nil {
 		t.ref = L.ref.ID
 	} else {
-		t.sets = L.lit.subsetLeft
+		t.alts = L.lit.alts
 	}
 	if R.ref != nil {
-		t.rightRef, t.rightField = R.ref.ID, fieldSubsetRight
+		t.rightRef = R.ref.ID
 	} else {
-		t.set = R.lit.subsetRight
+		t.index = R.lit.subsetIndex
 	}
 	return t
 }
@@ -230,15 +95,15 @@ func subsetTest(L, R *side, kind string) *test {
 // subsetHolds answers a test of subsetTest as its Rego row does: a missing
 // field fails it.
 func (t *test) subsetHolds(e *groupEval) bool {
-	la, okL := t.sets, t.sets != nil
+	la := t.alts
 	if t.ref != "" {
 		r, ok := e.rec(t.refIndex)
 		if !ok {
 			return false
 		}
-		la, okL = r.SubsetLeft, r.SubsetLeft != nil
+		la = r.ElementAlts
 	}
-	if !okL {
+	if la == nil {
 		return false
 	}
 	switch t.kind {
@@ -247,24 +112,16 @@ func (t *test) subsetHolds(e *groupEval) bool {
 	case "emptyleft":
 		return len(la) == 0
 	}
-	rb, okR := t.set, t.set != nil
+	rb := t.index
 	if t.rightRef != "" {
 		r, ok := e.rec(t.rightRefIndex)
 		if !ok {
 			return false
 		}
-		rb, okR = r.SubsetRight, r.SubsetRight != nil
+		rb = r.SubsetIndex
 	}
-	if !okR {
+	if rb == nil {
 		return false
 	}
-	in := func(x string) bool { return slices.Contains(rb, x) }
-	if t.rightRef != "" {
-		in = func(x string) bool { return e.contains(t.rightSlot, rb, x) }
-	}
-	unmatched := func(e []string) bool { return !slices.ContainsFunc(e, in) }
-	if t.kind == "subset" {
-		return !slices.ContainsFunc(la, unmatched)
-	}
-	return slices.ContainsFunc(la, unmatched)
+	return deepAll(la, rb) == (t.kind == "subset")
 }

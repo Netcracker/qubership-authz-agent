@@ -18,6 +18,7 @@ package regogen
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"runtime"
@@ -32,8 +33,9 @@ import (
 )
 
 // scalingCondition reads two resource lists with every operator that builds
-// a token of a list element: CONTAINS and CONTAINS ANY build the element
-// tokens, == the text keys, and IS SUBSET the subset tokens.
+// an index of a list's elements: CONTAINS reads the element keys, CONTAINS
+// ANY the element alternatives and index, == the equality alternatives and
+// index, and IS SUBSET the element alternatives and the subset index.
 const scalingCondition = "resource.a CONTAINS 'x' OR resource.a == resource.b OR " +
 	"resource.a IS SUBSET resource.b OR resource.a CONTAINS ANY resource.b"
 
@@ -103,6 +105,68 @@ func TestRequestCostIsLinearInTheResource(t *testing.T) {
 				}
 				return strings.Join(elems, ",")
 			}},
+			// every element has the shape of the number 0, and leaf x writes
+			// it as other strings than leaf y does, so the elements of a and
+			// b share a shape and differ in their texts
+			{"length of a list of spellings of one number", 8192, func(n int, leaf string) string {
+				zero := map[string]string{"x": "0e", "y": "00e"}[leaf]
+				elems := make([]string, n)
+				for i := range elems {
+					elems[i] = fmt.Sprintf(`"%s%d"`, zero, i)
+				}
+				return strings.Join(elems, ",")
+			}},
+			{"length of a list of copies of a nested number", 8192, func(n int, leaf string) string {
+				one := map[string]string{"x": `["1"]`, "y": `["01"]`}[leaf]
+				return strings.TrimSuffix(strings.Repeat(one+",", n), ",")
+			}},
+			// a pair whose first leaf x writes as a number lacks a text where
+			// the index of y has one; a group of two leaves holds the texts
+			// at each subset of them, so a lookup is a probe
+			{"length of a list of pairs with a text missing", 4096, func(n int, leaf string) string {
+				format := map[string]string{"x": `[0, "0e%d"]`, "y": `["0", "00e%d"]`}[leaf]
+				elems := make([]string, n)
+				for i := range elems {
+					elems[i] = fmt.Sprintf(format, i)
+				}
+				return strings.Join(elems, ",")
+			}},
+			// a list of four strings of numbers whose first leaf x writes as
+			// a number lacks a text where the index of y has one, so a
+			// lookup would scan the index; past 15 such lists of one shape
+			// the request fails instead. Every size holds 16 more lists, so
+			// that the request at size 1 fails too and the growth over it
+			// is the growth of a failing request. Lists on both sides of ==
+			// take about 30 KB each, so 8192 of them would exceed the budget
+			// of a request
+			{"length of a list of lists with a text missing", 4096, func(n int, leaf string) string {
+				format := map[string]string{"x": `[0, "1", "2", "0e%d"]`, "y": `["0", "1", "2", "00e%d"]`}[leaf]
+				elems := make([]string, n+16)
+				for i := range elems {
+					elems[i] = fmt.Sprintf(format, i)
+				}
+				return strings.Join(elems, ",")
+			}},
+			// lists of fourteen numbers of one shape with texts at as many
+			// sets of leaves; past 16 such sets the request fails, and every
+			// size holds 16 more lists
+			{"length of a list of lists with texts at other leaves", 4096, func(n int, leaf string) string {
+				one := map[string]string{"x": "1", "y": "01"}[leaf]
+				elems := make([]string, n+16)
+				for i := range elems {
+					// the last string tells every list of x from every list
+					// of y, where a number equals a string of its value
+					leaves := make([]string, 13, 14)
+					for j := range leaves {
+						leaves[j] = "1"
+						if (i+1)>>j&1 == 1 {
+							leaves[j] = `"` + one + `"`
+						}
+					}
+					elems[i] = "[" + strings.Join(append(leaves, `"`+one+`"`), ",") + "]"
+				}
+				return strings.Join(elems, ",")
+			}},
 			{"length of a string", 65536, func(n int, leaf string) string {
 				return `"` + strings.Repeat(leaf, n) + `"`
 			}},
@@ -135,6 +199,9 @@ func TestRequestCostIsLinearInTheSubjectLists(t *testing.T) {
 	}{
 		{"subject.roles IS SUBSET subject.scopes", "x%d", "x%d"},
 		{"subject.roles CONTAINS ANY subject.scopes", "x%d", "y%d"},
+		// spellings of the number 0, which share a shape
+		{"subject.roles IS SUBSET subject.scopes", "0e%d", "0e%d"},
+		{"subject.roles CONTAINS ANY subject.scopes", "0e%d", "00e%d"},
 	} {
 		t.Run(op.condition, func(t *testing.T) {
 			m, allow, maybe := scalingModule(t, op.condition)
@@ -185,7 +252,7 @@ func TestBulkCostIsLinearInItsItems(t *testing.T) {
 				if err != nil {
 					t.Fatalf("ReadBody(%s): %v", data, err)
 				}
-				in := bulk.Item(b)
+				in := bulkItem(t, bulk, b)
 				if _, err := pq.Eval(in.Context(context.Background()), rego.EvalParsedInput(in.Value())); err != nil {
 					t.Fatalf("Eval: %v", err)
 				}
@@ -417,15 +484,22 @@ func evalBody(t *testing.T, m *Module, allow, maybe rego.PreparedEvalQuery, body
 }
 
 // evalRequest projects the request, subject groups included, and evaluates
-// allow and, for a denial, maybe, as the agent does; it returns allow.
+// allow and, for a denial, maybe, as the agent does; it returns allow, false
+// for a request that fails on a value too big to compare.
 func evalRequest(t *testing.T, m *Module, allow, maybe rego.PreparedEvalQuery, req Request) bool {
 	t.Helper()
 	in, err := Project(m, req)
+	if errors.Is(err, errIndexTooBig) {
+		return false
+	}
 	if err != nil {
 		t.Fatalf("Project: %v", err)
 	}
 	ctx, v := in.Context(context.Background()), in.Value()
 	rs, err := allow.Eval(ctx, rego.EvalParsedInput(v))
+	if err != nil && strings.Contains(err.Error(), errIndexTooBig.Error()) {
+		return false
+	}
 	if err != nil {
 		t.Fatalf("Eval allow: %v", err)
 	}

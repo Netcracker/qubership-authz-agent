@@ -272,12 +272,12 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # of the elements, text, segments, segments_from_end, and segment_count the
 # path segments from the start, from the end, and their count, has_null
 # whether a list holds null, text_key the key of the text a string equals a
-# list or an object by, equality_key the key two lists or objects are equal
-# by, length, element_tokens the own tokens of the elements and
-# element_tokens_with_text their match tokens and the token of the text of a
-# list or an object element, number the key < and > compare a number by, a
-# list that sorts as the numbers do, subset_left and subset_right the tokens
-# IS SUBSET reads on the left and on the right, beyond_double the text
+# list or an object by, eq_alts and eq_index the deeps of the elements ==
+# reads and their index, length, element_alts and element_index the same for
+# the collection operators with the Java text of a list or an object element,
+# number the key < and > compare a number by, a list that sorts as the
+# numbers do, subset_index the index of element_index without objects that
+# IS SUBSET reads on the right, beyond_double the text
 # Infinity or -Infinity of a number beyond the range of a double, which MATCH
 # reads.
 # Two scalars are equal when the own tokens of one meet the match tokens of
@@ -285,15 +285,14 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # a number, and is both an own and a match token; value_key, an own token of
 # a string, is S<value> where BigDecimal reads the string and a bare S
 # otherwise; match_key is S<value> of a number and N<value> of a string that
-# BigDecimal reads. A token of element_tokens is a key with its kind: t: a
-# scalar by one of its own or match tokens, o: object, l:[...] list, and
-# inside a nested list n: a number by its value, c: a string with its case,
-# and t: a boolean. In the tokens of IS SUBSET, t: is a string or a boolean
-# by its text with case, and on the right also a list by its Java text; s: a
-# list or an object on the left by its Java text and a string on the right;
-# b: a boolean; n: a number by its value, also a string that BigDecimal reads
-# on the right; and m: a string that BigDecimal reads on the left and a
-# number on the right, by its value.
+# BigDecimal reads. A deep is [shape, texts]: the shape writes a number and a
+# string that BigDecimal reads as #<value>, any other scalar as t: and its
+# folded text quoted, a list in order, and an object by its member names;
+# texts holds the folded text of each such string by the ordinal of its leaf.
+# Two deeps are equal when their shapes are and their texts agree wherever
+# both have one. An index maps a shape to groups [leaves, by]: the leaves that
+# have texts in its deeps, and by mapping a subset of them to the texts of the
+# deeps there. x: is the Java text of a structure that a string equals.
 # A class is string, scalar (a number or a boolean), list, pip_list (a list
 # of several values a HEADER, GENERAL, or FILTERED PIP builds),
 # list_with_null, nested_list (a list with a list or an object element),

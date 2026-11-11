@@ -353,7 +353,11 @@ func resolveRequest(m *regogen.Module, q request, rq *regogen.Request, in *regog
 		return res, fmt.Errorf("bulk: %w", err)
 	}
 	t0 = time.Now()
-	item := bulk.Item(rq.Body).Value()
+	it, err := bulk.Item(rq.Body)
+	if err != nil {
+		return res, fmt.Errorf("bulk item: %w", err)
+	}
+	item := it.Value()
 	res.itemUs = float64(time.Since(t0).Nanoseconds()) / 1000
 	res.bulk = item.Compare(got.Value()) != 0
 	return res, nil

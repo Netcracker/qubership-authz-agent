@@ -24,7 +24,7 @@ is reviewed.
   the agent is one Go process, and this record fixes where that process reads its configuration.
 - [authz-agent-ADR-0082: Evaluate jsonPath with our own Go package instead of a third-party library](20261023-authz-agent-adr-0082-own-jsonpath-evaluator.md):
   the semantics of a jsonPath, which the reader keeps as written.
-- [authz-agent-ADR-0083: Compare operands as the Java values legacy reads, and a number by value](20261024-authz-agent-adr-0083-operands-as-java-values.md):
+- [authz-agent-ADR-0083: Compare two values by one rule in every operator: a number by value, any other scalar by its text ignoring case](20261024-authz-agent-adr-0083-operands-as-java-values.md):
   the semantics of a value, which the reader keeps as written.
 
 ## Context

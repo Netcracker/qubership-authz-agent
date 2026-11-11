@@ -99,8 +99,7 @@ func (s *side) bind() clause {
 		return nil
 	}
 	if s.ref.Path != "" {
-		return clause{{cls: clsBuiltin, text: fmt.Sprintf("p_%s := nc.resource_path(input.%s, %s)", s.ref.Var, memberResource,
-			lit(s.ref.Path))}}
+		return clause{{cls: clsBuiltin, text: fmt.Sprintf("p_%s := path_%s", s.ref.Var, s.ref.Var)}}
 	}
 	if s.ref.pip != nil {
 		return clause{{cls: clsBuiltin, text: fmt.Sprintf("p_%s := pip_%s", s.ref.Var, s.ref.Var)}}
@@ -566,6 +565,11 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 	}
 	oddL, oddR := lp.st == spectables.StateSingleOdd, rp.st == spectables.StateSingleOdd
 	lp, rp = odd(lp), odd(rp)
+	if (op == spectables.OpIsSubset || op == spectables.OpIsNotSubset) && rp.st == spectables.StateScalarOdd {
+		// a number or a boolean GENERAL body (SCALAR_ODD) is a scalar on
+		// the right of IS SUBSET, and its record carries the subset index
+		oddR, rp = true, point{spectables.StateValue, spectables.ClassScalar}
+	}
 	if oddL != oddR && (lp.st != spectables.StateValue || R != nil && rp.st != spectables.StateValue) {
 		// the other side has no value, so only a null element of the odd
 		// list decides: it fails the PIP (undefined), and any other element
@@ -845,7 +849,7 @@ func constCompare(op spectables.Operator, L, R *side) (bool, bool) {
 			return meets(L.lit.own, R.lit.keys), true
 		}
 	case spectables.OpIsSubset:
-		t := &test{kind: "subset", sets: L.lit.subsetLeft, set: R.lit.subsetRight}
+		t := &test{kind: "subset", alts: L.lit.alts, index: R.lit.subsetIndex}
 		return t.subsetHolds(nil), true
 	case spectables.OpLT, spectables.OpLE, spectables.OpGT, spectables.OpGE:
 		if isScalar(L.lit.class) && isScalar(R.lit.class) {

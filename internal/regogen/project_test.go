@@ -15,6 +15,7 @@
 package regogen
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -64,25 +65,17 @@ func TestStructureText(t *testing.T) {
 }
 
 // The record of a value carries the folded text a string compares it by
-// (TextKey), the own tokens of its elements (ElementTokens), and their match
-// tokens with the folded text of each nested list or object after the
-// element's own token (ElementTokensWithText). A number has the token of its
-// value, N1 for 1.0, and S1 among its match tokens; a string inside a nested
-// list keeps its case. A list with a number or null is not a list of strings,
-// whose text TextKey takes from the folded Java text.
-func TestRecordReadsTheTokensOfTheElements(t *testing.T) {
-	for _, tc := range []struct {
-		value, tk string
-		ea, eb    []string
-	}{
-		{`["Ab", "c"]`, `[ab, c]`, []string{"t:ab", "t:c"}, []string{"t:ab", "t:c"}},
-		{`[]`, `[]`, []string{}, []string{}},
-		{`["x", ["Y"], "Z"]`, `[x, ["y"], z]`, []string{"t:x", `l:["c:Y"]`, "t:z"},
-			[]string{"t:x", `l:["c:Y"]`, "t:[y]", "t:z"}},
-		{`[1.0, "A"]`, `[1, a]`, []string{"t:N1", "t:a"}, []string{"t:N1", "t:S1", "t:a"}},
-		{`["05", 5]`, `[05, 5]`, []string{"t:05", "t:S5", "t:N5"}, []string{"t:05", "t:N5", "t:N5", "t:S5"}},
-		{`[null, "A"]`, `[null, a]`, []string{"t:a"}, []string{"t:a"}},
-		{`"Q"`, ``, []string{"t:q"}, []string{"t:q"}},
+// (TextKey). A list with a number or null is not a list of strings, whose
+// text TextKey takes from the folded Java text.
+func TestRecordReadsTheTextKey(t *testing.T) {
+	for _, tc := range []struct{ value, tk string }{
+		{`["Ab", "c"]`, `[ab, c]`},
+		{`[]`, `[]`},
+		{`["x", ["Y"], "Z"]`, `[x, ["y"], z]`},
+		{`[1.0, "A"]`, `[1, a]`},
+		{`["05", 5]`, `[05, 5]`},
+		{`[null, "A"]`, `[null, a]`},
+		{`"Q"`, ``},
 	} {
 		t.Run(tc.value, func(t *testing.T) {
 			v, err := jsonvalue.Decode([]byte(tc.value))
@@ -94,98 +87,185 @@ func TestRecordReadsTheTokensOfTheElements(t *testing.T) {
 			if rec.TextKey != nil {
 				tk = *rec.TextKey
 			}
-			if tk != tc.tk || !slices.Equal(rec.ElementTokens, tc.ea) || !slices.Equal(rec.ElementTokensWithText, tc.eb) {
-				t.Errorf("record(%s): tk %q, ea %q, eb %q; want tk %q, ea %q, eb %q", tc.value, tk, rec.ElementTokens, rec.ElementTokensWithText,
-					tc.tk, tc.ea, tc.eb)
+			if tk != tc.tk {
+				t.Errorf("record(%s).TextKey = %q, want %q", tc.value, tk, tc.tk)
 			}
 		})
 	}
 }
 
-// The token of a nested list adds a fixed length per level of nesting: the
-// one element of a list nested 16 deep around the string `"` is 15 times
-// "l:[" and "]" around the quoted leaf "t:\"", 66 bytes in all. Quoting the
-// token of a nested list again at each level doubled its backslashes per
-// level, and the same value gave a token of 98364 bytes.
-func TestAListTokenGrowsByAFixedLengthPerLevelOfNesting(t *testing.T) {
+// The shape of a nested list adds a fixed length per level of nesting: a
+// list nested 16 deep around the string `"` is 16 times "[" and "]" around
+// the quoted leaf t:"\"", 38 bytes in all. Quoting the token of a nested
+// list again at each level doubled its backslashes per level, and the same
+// value gave a token of 98364 bytes.
+func TestAShapeGrowsByAFixedLengthPerLevelOfNesting(t *testing.T) {
 	value := `[[[[[[[[[[[[[[[["\""]]]]]]]]]]]]]]]]`
-	ea, sa := recordTokens(t, value)
-	for name, token := range map[string]string{fieldElementTokens: ea[0], fieldSubsetLeft: sa[len(sa)-1]} {
-		if len(token) != 66 {
-			t.Errorf("record(%s): the %s token is %d bytes, want 66: %.80q", value, name, len(token), token)
+	if shape := deepOf(decode(t, value), inputNumberValue).shape; len(shape) != 38 {
+		t.Errorf("deepOf(%s).shape is %d bytes, want 38: %.80q", value, len(shape), shape)
+	}
+}
+
+// An index stops adding the deeps of a shape once it has more groups than a
+// lookup may read, so building it costs the length of the list, not its
+// square, when every element of one shape has texts at its own leaves.
+func TestAnIndexStopsGrowingAShapeAtTheLimit(t *testing.T) {
+	elems := make([]string, 1000)
+	for i := range elems {
+		leaves := make([]string, 10)
+		for j := range leaves {
+			leaves[j] = "1"
+			if (i+1)>>j&1 == 1 {
+				leaves[j] = `"1"`
+			}
+		}
+		elems[i] = "[" + strings.Join(leaves, ",") + "]"
+	}
+	v, err := jsonvalue.Decode([]byte("[" + strings.Join(elems, ",") + "]"))
+	if err != nil {
+		t.Fatalf("Decode: %v", err)
+	}
+	ix := elementIndex(v, inputNumberValue, true)
+	if !ix.tooBig() {
+		t.Errorf("tooBig of 1000 groups of one shape = false, want true")
+	}
+	for shape, gs := range ix {
+		if len(gs) > maxLookup+1 {
+			t.Errorf("groups of the shape %s = %d, want at most %d", shape, len(gs), maxLookup+1)
 		}
 	}
 }
 
-// Two lists have one element token exactly when the operator reads them as
-// equal: a string inside a nested list keeps its case under the collection
-// operators (ElementTokens) and IS SUBSET (SubsetLeft) alike, and a number
-// compares by its value and never equals a string. A string that holds a quote and a comma, or a comma
-// and what follows it in the token of the next element, or that spells the
-// token of a list, stays apart from the lists it looks like.
-func TestNestedListsShareAnElementTokenOnlyWhenEqual(t *testing.T) {
+// A deep without texts, such as a string that is not a number, adds no group
+// of its own to an index: a list of 1024 such strings costs the index its
+// map and nothing per element.
+func TestADeepWithoutTextsAddsNoGroup(t *testing.T) {
+	ds := make([]deep, 1024)
+	for i := range ds {
+		ds[i] = deepOf(fmt.Sprintf("x%d", i), inputNumberValue)
+	}
+	allocs := testing.AllocsPerRun(5, func() {
+		ix := deepIndex{}
+		for _, d := range ds {
+			ix.add(d)
+		}
+	})
+	if perDeep := allocs / float64(len(ds)); perDeep > 1 {
+		t.Errorf("allocations per deep without texts = %.2f, want at most 1", perDeep)
+	}
+}
+
+// A shape that holds a deep without texts holds a deep equal to any deep of
+// the shape, whether the deep without texts came first or last, and adding a
+// deep with texts to one such shape leaves another one as it was.
+func TestAShapeWithADeepWithoutTextsHoldsEveryDeepOfIt(t *testing.T) {
+	plain := deepOf(mustDecode(t, `[1]`), inputNumberValue)
+	spelled := deepOf(mustDecode(t, `["1"]`), inputNumberValue)
+	other := deepOf(mustDecode(t, `["01"]`), inputNumberValue)
+	if plain.shape != spelled.shape || len(plain.texts) != 0 || len(spelled.texts) == 0 {
+		t.Fatalf("deeps of [1] and [\"1\"] = %v and %v, want one shape, texts for the second only", plain, spelled)
+	}
+	for name, order := range map[string][]deep{"without texts first": {plain, spelled},
+		"without texts last": {spelled, plain}} {
+		ix := deepIndex{}
+		alone := deepOf("x", inputNumberValue)
+		ix.add(alone)
+		for _, d := range order {
+			ix.add(d)
+		}
+		if !ix.has(other) {
+			t.Errorf("%s: has(%v) = false, want true", name, other)
+		}
+		if gs := ix[alone.shape]; len(gs) != 1 {
+			t.Errorf("%s: groups of %s = %d, want 1", name, alone.shape, len(gs))
+		}
+	}
+	// a deep without texts before or after more groups than a lookup may
+	// read leaves the shape a hit
+	groups := make([]deep, maxLookup+2)
+	for i := range groups {
+		leaves := make([]string, len(groups))
+		for j := range leaves {
+			leaves[j] = "1"
+			if j == i {
+				leaves[j] = `"1"`
+			}
+		}
+		groups[i] = deepOf(mustDecode(t, "["+strings.Join(leaves, ",")+"]"), inputNumberValue)
+	}
+	none := deepOf(mustDecode(t, "["+strings.Repeat("1,", len(groups)-1)+"1]"), inputNumberValue)
+	for name, order := range map[string][]deep{"first": append([]deep{none}, groups...),
+		"last": append(slices.Clone(groups), none)} {
+		many := deepIndex{}
+		for _, d := range order {
+			many.add(d)
+		}
+		if many.tooBig() {
+			t.Errorf("tooBig of a shape with %d groups and a deep without texts %s = true, want false",
+				len(groups), name)
+		}
+	}
+	ix := deepIndex{}
+	ix.add(spelled)
+	if ix.has(other) {
+		t.Errorf("has(%v) of the index of [\"1\"] alone = true, want false", other)
+	}
+}
+
+// Two values are equal exactly when the deep of one is in the index of the
+// other. A string that holds a quote and a comma, or that spells the shape of
+// a list, stays apart from the lists it looks like. The relation is not
+// transitive: "5.0" equals 5 and 5 equals "5.00", while "5.0" and "5.00"
+// differ.
+func TestADeepIsInTheIndexOfAnEqualValueOnly(t *testing.T) {
 	for _, tc := range []struct {
-		name, a, b       string
-		eaEqual, saEqual bool
+		name, a, b string
+		want       bool
 	}{
-		{"a string with a quote and a comma against two strings", `[["a\",\"b"]]`, `[["a", "b"]]`, false, false},
-		{"a string with a comma and a token against two strings", `[["a,t:b"]]`, `[["a", "b"]]`, false, false},
-		{"a string that spells a list token against the list", `[["l:[\"t:a\"]"]]`, `[[["a"]]]`, false, false},
-		{"two lists against one list of both", `[[["a"], ["b"]]]`, `[[["a", "b"]]]`, false, false},
-		{"lists that differ in case", `[[["A"]]]`, `[[["a"]]]`, false, false},
-		{"numbers of one value in two spellings", `[[[1]]]`, `[[[1.0]]]`, true, true},
-		{"a number against its text", `[[[1]]]`, `[[["1"]]]`, false, false},
-		{"equal lists", `[[["a"]]]`, `[[["a"]]]`, true, true},
+		{"a string with a quote and a comma against two strings", `["a\",\"b"]`, `["a", "b"]`, false},
+		{"a string that spells a list shape against the list", `["[t:\"a\"]"]`, `[["a"]]`, false},
+		{"two lists against one list of both", `[["a"], ["b"]]`, `[["a", "b"]]`, false},
+		{"lists in another order", `["a", "b"]`, `["b", "a"]`, false},
+		{"strings in another case", `[["A"]]`, `[["a"]]`, true},
+		{"numbers of one value in two spellings", `[[1]]`, `[[1.0]]`, true},
+		{"a number and a string of its value", `[[1]]`, `[["1.0"]]`, true},
+		{"a string of a value and a number", `[["5.0"]]`, `[[5]]`, true},
+		{"a number and a string of another value", `[[5]]`, `[["5.00"]]`, true},
+		{"two strings of one value", `[["5.0"]]`, `[["5.00"]]`, false},
+		{"a boolean and its text", `[true]`, `["TRUE"]`, true},
+		{"a boolean and a number", `[true]`, `[1]`, false},
+		{"null and null", `[null]`, `[null]`, true},
+		{"null and its text", `[null]`, `["null"]`, false},
+		{"member names in another case", `{"K": 1}`, `{"k": 1}`, false},
+		{"members in another order", `{"a": 1, "b": "x"}`, `{"b": "X", "a": "1"}`, true},
+		{"a number beside a text of the same spelling", `[1, "5.0"]`, `["1", "5.0"]`, true},
+		{"a number beside a text of another spelling", `[1, "5.0"]`, `["1", "5.00"]`, false},
+		{"a number beside three texts of the same spelling", `[1, "2", "3", "5.0"]`, `["1", "2", "3", "5.0"]`, true},
+		{"a number beside a text of another spelling of four", `[1, "2", "3", "5.0"]`, `["1", "2", "3", "5.00"]`,
+			false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			eaA, saA := recordTokens(t, tc.a)
-			eaB, saB := recordTokens(t, tc.b)
-			if got := eaA[0] == eaB[0]; got != tc.eaEqual {
-				t.Errorf("ea token of %s = %q, of %s = %q; want equal %v", tc.a, eaA[0], tc.b, eaB[0], tc.eaEqual)
-			}
-			ta, tb := saA[len(saA)-1], saB[len(saB)-1]
-			if got := ta == tb; got != tc.saEqual {
-				t.Errorf("sa token of %s = %q, of %s = %q; want equal %v", tc.a, ta, tc.b, tb, tc.saEqual)
+			a, b := deepOf(decode(t, tc.a), inputNumberValue), deepOf(decode(t, tc.b), inputNumberValue)
+			ix := deepIndex{}
+			ix.add(b)
+			if got := ix.has(a); got != tc.want {
+				t.Errorf("index of %s %+v has %s %+v = %v, want %v", tc.b, b, tc.a, a, got, tc.want)
 			}
 		})
 	}
 }
 
-// A list that holds null at any depth has no element token: its
-// ElementTokens is empty, and its SubsetLeft holds the token of its text
-// alone. The same list with a string
-// in place of the null has both.
-func TestAListWithANullAtAnyDepthHasNoElementToken(t *testing.T) {
-	for _, tc := range []struct {
-		value     string
-		ea, saLen int
-	}{
-		{`[["x", [null]]]`, 0, 1},
-		{`[["x", ["y"]]]`, 1, 2},
-	} {
-		t.Run(tc.value, func(t *testing.T) {
-			ea, sa := recordTokens(t, tc.value)
-			if len(ea) != tc.ea || len(sa) != tc.saLen {
-				t.Errorf("record(%s): ea %q, sa %q; want %d ea and %d sa tokens", tc.value, ea, sa, tc.ea, tc.saLen)
-			}
-		})
-	}
-}
-
-// recordTokens returns the ElementTokens of the list value and the
-// SubsetLeft of its first element, whose last token is the token of the element's value.
-func recordTokens(t *testing.T, value string) (ea, sa []string) {
+func decode(t *testing.T, value string) jsonvalue.Value {
 	t.Helper()
 	v, err := jsonvalue.Decode([]byte(value))
 	if err != nil {
 		t.Fatalf("jsonvalue.Decode(%s): %v", value, err)
 	}
-	rec := record(&Ref{Subset: true}, Resolved{State: spectables.StateValue, Value: v})
-	return rec.ElementTokens, rec.SubsetLeft[0]
+	return v
 }
 
-// A record holds a field that is costly to build, the keys, the text, the
-// structure key, or the element tokens of a list, where the module reads it
+// A record holds a field that is costly to build, the keys, the text, or the
+// deeps of a list, where the module reads it
 // and the record of every field holds it, and nowhere else: CONTAINS reads
 // the keys alone, as do the policies of a subject's permissions, and == with
 // a string reads the text. The value is a list of strings, an empty list, or
@@ -233,11 +313,14 @@ func TestARecordHoldsTheFieldsTheModuleReads(t *testing.T) {
 			r := *m.Refs[i]
 			s := &side{ref: &r}
 			for f, has := range map[string][2]bool{fieldElementKeys: {rec.ElementKeys != nil, whole.ElementKeys != nil},
-				fieldTextKey: {rec.TextKey != nil, whole.TextKey != nil}, fieldEqualityKey: {rec.EqualityKey != nil, whole.EqualityKey != nil},
-				fieldElementTokens: {rec.ElementTokens != nil, whole.ElementTokens != nil}} {
+				fieldTextKey: {rec.TextKey != nil, whole.TextKey != nil}, fieldEqAlts: {rec.EqAlts != nil, whole.EqAlts != nil},
+				fieldElementAlts: {rec.ElementAlts != nil, whole.ElementAlts != nil}} {
 				reads := strings.Contains(m.Text, s.field(f))
-				if f == fieldElementTokens {
-					reads = reads || strings.Contains(m.Text, s.field(fieldElementTokensWithText))
+				switch f {
+				case fieldEqAlts:
+					reads = reads || strings.Contains(m.Text, s.field(fieldEqIndex))
+				case fieldElementAlts:
+					reads = reads || strings.Contains(m.Text, s.field(fieldElementIndex))
 				}
 				if has[0] != (reads && has[1]) {
 					t.Errorf("the module reads %s of %s: %v, the record of every field holds it: %v, "+

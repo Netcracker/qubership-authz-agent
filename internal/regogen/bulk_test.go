@@ -16,6 +16,7 @@ package regogen
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"strings"
@@ -58,7 +59,7 @@ func checkBulk(t *testing.T, m *Module, shared Request, bodies ...string) {
 		if err != nil {
 			t.Fatalf("Project(%s): %v", body, err)
 		}
-		item := bulk.Item(b)
+		item := bulkItem(t, bulk, b)
 		if got, want := item.Value(), want.Value(); got.Compare(want) != 0 {
 			t.Errorf("Item(%s).Value() =\n%v\nwant\n%v", body, got, want)
 		}
@@ -142,7 +143,7 @@ func TestBulkItemsEvaluateConcurrently(t *testing.T) {
 			} else if i%4 == 1 {
 				body.Resource = object(t, `{"l": ["x"]}`)
 			}
-			in := bulk.Item(body)
+			in := bulkItem(t, bulk, body)
 			rs, err := pq.Eval(in.Context(context.Background()), rego.EvalParsedInput(in.Value()))
 			if err != nil {
 				t.Errorf("Eval of item %d: %v", i, err)
@@ -209,7 +210,7 @@ func BenchmarkBulk50(b *testing.B) {
 			b.Fatalf("NewBulk: %v", err)
 		}
 		for _, body := range bodies {
-			in := bulk.Item(body)
+			in := bulkItem(b, bulk, body)
 			if _, err := pq.Eval(in.Context(context.Background()), rego.EvalParsedInput(in.Value())); err != nil {
 				b.Fatalf("Eval: %v", err)
 			}
@@ -246,7 +247,7 @@ func TestBulkItemSendsItsOwnPIPRequest(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		q := bulk.Item(b).calls.Get(strTerm(id))
+		q := bulkItem(t, bulk, b).calls.Get(strTerm(id))
 		if got := q.Get(strTerm("body")); got == nil || !strings.Contains(got.String(), `"r": "`+a+`"`) {
 			t.Errorf("body of the PIP request of the item with resource.a %s = %v, want requestAttributes.r %s",
 				a, got, a)
@@ -286,4 +287,50 @@ func BenchmarkJSONPathOverALargeResource(b *testing.B) {
 			b.Fatalf("Eval: %v", err)
 		}
 	}
+}
+
+// An item of a bulk request with a value too big to compare fails, as the
+// request alone does, whether the module reads the value before evaluation
+// or at a path during it.
+func TestABulkItemWithAnIndexTooBigToLookUpFails(t *testing.T) {
+	for _, tc := range []struct{ condition, a, wrap string }{
+		{"resource.a CONTAINS ANY resource.b", `[["z"]]`, "%s"},
+		// the path comes second, so evaluation does not reach it
+		{"resource.x == '1' OR resource.a[0] CONTAINS ANY resource.b[0]", `[[["z"]]]`, "[%s]"},
+	} {
+		tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+		m, err := Generate(tree, table(t), DefaultOptions())
+		if err != nil {
+			t.Fatalf("Generate: %v", err)
+		}
+		bulk, err := NewBulk(m, Request{Values: map[string]Resolved{}})
+		if err != nil {
+			t.Fatalf("NewBulk: %v", err)
+		}
+		for _, n := range []int{15, 16} {
+			elems := make([]string, n)
+			for i := range elems {
+				elems[i] = fmt.Sprintf(`["1", "2", "3", "0e%d"]`, i)
+			}
+			b, err := ReadBody([]byte(`{"operation": "read", "type": "doc", "resource": {"x": "1", "a": ` + tc.a +
+				`, "b": ` + fmt.Sprintf(tc.wrap, "["+strings.Join(elems, ",")+"]") + `}}`))
+			if err != nil {
+				t.Fatalf("ReadBody: %v", err)
+			}
+			if _, err := bulk.Item(b); errors.Is(err, errIndexTooBig) != (n > 15) {
+				t.Errorf("Item of %d lists of four texts under %s: err = %v, want errIndexTooBig %v", n,
+					tc.condition, err, n > 15)
+			}
+		}
+	}
+}
+
+// bulkItem is the [Bulk.Item] of body, which must not fail.
+func bulkItem(t testing.TB, b *Bulk, body Body) *Input {
+	t.Helper()
+	in, err := b.Item(body)
+	if err != nil {
+		t.Fatalf("Item: %v", err)
+	}
+	return in
 }

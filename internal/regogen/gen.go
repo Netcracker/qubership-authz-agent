@@ -1585,6 +1585,14 @@ func (g *gen) writeRules(b *strings.Builder, cm *commenter, used map[string]bool
 		}
 		clauses += len(body)
 	}
+	for _, r := range g.refList {
+		if r.Path != "" {
+			b.WriteString(pathText(r))
+		}
+	}
+	if strings.Contains(b.String(), deepHitName+"(") {
+		b.WriteString(deepFunctions)
+	}
 	pips := false
 	for _, r := range g.refList {
 		if r.pip == nil && r.ent == nil {

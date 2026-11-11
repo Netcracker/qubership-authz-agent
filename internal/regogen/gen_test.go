@@ -339,7 +339,8 @@ func TestALongListOnTheRightOfEqualityAnswersTheSetting(t *testing.T) {
 		{"== with two scopes is false however the lists compare", "==", `["x", "y"]`, `["y", "x"]`, false},
 		{"!= with two scopes is false too", "!=", `["x"]`, `["x", "y"]`, false},
 		{"== with one scope compares the lists", "==", `["x"]`, `["x"]`, true},
-		{"!= with one scope negates the comparison", "!=", `["x"]`, `["X"]`, true},
+		{"!= with one scope negates the comparison", "!=", `["x"]`, `["y"]`, true},
+		{"!= with one scope in another case is false", "!=", `["x"]`, `["X"]`, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.roles "+tc.op+" subject.scopes")
@@ -354,8 +355,8 @@ func TestALongListOnTheRightOfEqualityAnswersTheSetting(t *testing.T) {
 }
 
 // A list operand compared with a resource attribute list under == is equal
-// as a set of its typed elements: order and repeats do not matter, case
-// does.
+// as a set of its elements: order, repeats, and case do not matter, and a
+// number equals its text (ADR-0083 R1, R2, R6).
 func TestAListEqualsAnAttributeListAsASet(t *testing.T) {
 	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.permissions == resource.a")
 	for _, tc := range []struct {
@@ -363,8 +364,9 @@ func TestAListEqualsAnAttributeListAsASet(t *testing.T) {
 		want          bool
 	}{
 		{"another order and a repeat allow", `["x", "y"]`, `["y", "x", "x"]`, true},
-		{"another case denies", `["x"]`, `["X"]`, false},
-		{"a number and its text deny", `["5"]`, `[5]`, false},
+		{"another case allows", `["x"]`, `["X"]`, true},
+		{"a number and its text allow", `["5"]`, `[5]`, true},
+		{"another element denies", `["x"]`, `["y"]`, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			values := map[string]Resolved{`["subj","permissions"]`: resolved(t, "VALUE", tc.perm),
@@ -377,7 +379,7 @@ func TestAListEqualsAnAttributeListAsASet(t *testing.T) {
 }
 
 // IN of two objects compares them member by member: the same keys and, for
-// each, a value of the same JSON type that is equal.
+// each, an equal value, a number equal to its text (ADR-0083 R6).
 func TestAnObjectIsInAnEqualObject(t *testing.T) {
 	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a IN resource.b")
 	for _, tc := range []struct {
@@ -386,7 +388,8 @@ func TestAnObjectIsInAnEqualObject(t *testing.T) {
 	}{
 		{"the same members allow", `{"k": "v", "n": 1}`, `{"n": 1, "k": "v"}`, true},
 		{"another value denies", `{"k": "v"}`, `{"k": "w"}`, false},
-		{"a number and its text deny", `{"n": 1}`, `{"n": "1"}`, false},
+		{"a number and its text allow", `{"n": 1}`, `{"n": "1"}`, true},
+		{"another key denies", `{"n": 1}`, `{"m": 1}`, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["res",".b"]`: resolved(t, "VALUE", tc.b)}
@@ -606,8 +609,9 @@ func TestALiteralOnTheLeftEqualsAsAReferenceDoes(t *testing.T) {
 }
 
 // Two lists, nested ones included, are equal as sets of their elements; a
-// list inside keeps its order. Two objects are equal by their members, a
-// number by its value, a string with its case.
+// list inside keeps its order. Two objects are equal by their members, and
+// two scalars at any depth as at the top: a number by its value, also against
+// its text, and a string ignoring case (ADR-0083 R1, R2, R6).
 func TestStructuresEqualByTheirElements(t *testing.T) {
 	for _, tc := range []struct {
 		name, a, b string
@@ -618,10 +622,12 @@ func TestStructuresEqualByTheirElements(t *testing.T) {
 		{"lists with a null in another order are equal", `[null, "x"]`, `["x", null]`, true},
 		{"a list with a null differs from one without", `[null, "x"]`, `["x"]`, false},
 		{"objects with equal numbers are equal", `{"n": 1}`, `{"n": 1.0}`, true},
-		{"objects with strings in another case differ", `{"k": "V"}`, `{"k": "v"}`, false},
-		{"an object member and its text differ", `{"n": 1}`, `{"n": "1"}`, false},
-		{"a list element and its text differ", `[1]`, `["1"]`, false},
-		{"a member of an object in a list and its text differ", `[{"n": 1}]`, `[{"n": "1"}]`, false},
+		{"objects with strings in another case are equal", `{"k": "V"}`, `{"k": "v"}`, true},
+		{"an object member and its text are equal", `{"n": 1}`, `{"n": "1"}`, true},
+		{"a list element and its text are equal", `[1]`, `["1"]`, true},
+		{"a member of an object in a list and its text are equal", `[{"n": 1}]`, `[{"n": "1"}]`, true},
+		{"two texts of one number differ", `["5.0"]`, `["5.00"]`, false},
+		{"a member name in another case differs", `{"K": 1}`, `{"k": 1}`, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a == resource.b")
@@ -958,8 +964,9 @@ func TestAStringContainsASubjectListOfOneValue(t *testing.T) {
 }
 
 // An object on the right of CONTAINS or CONTAINS ANY is one candidate: a
-// string on the left equals it by its text, an object by its members, with
-// their case, and a list element of another kind not at all.
+// string on the left equals it by its text, an object by its members,
+// ignoring the case of their values, and a list element of another kind not
+// at all.
 func TestAnObjectOnTheRightIsOneCandidate(t *testing.T) {
 	const object = `{"k": "v"}`
 	for _, tc := range []struct {
@@ -970,11 +977,13 @@ func TestAnObjectOnTheRightIsOneCandidate(t *testing.T) {
 		{"a string with another text denies", "CONTAINS", `"{k=w}"`, false},
 		{"a list of strings holds the text", "CONTAINS", `["z", "{k=v}"]`, true},
 		{"an object element with the same members allows", "CONTAINS", `[{"k": "v"}, ["q"]]`, true},
-		{"an object element in another case denies", "CONTAINS", `[{"k": "V"}, ["q"]]`, false},
+		{"an object element in another case allows", "CONTAINS", `[{"k": "V"}, ["q"]]`, true},
+		{"an object element with another value denies", "CONTAINS", `[{"k": "w"}, ["q"]]`, false},
 		{"a string element beside a list holds the text", "CONTAINS", `["{k=v}", ["q"]]`, true},
 		{"a list element with the text inside denies", "CONTAINS", `[["{k=v}"]]`, false},
 		{"an object with the same members has one in common", "CONTAINS ANY", object, true},
-		{"an object in another case has none", "CONTAINS ANY", `{"k": "V"}`, false},
+		{"an object in another case has one in common", "CONTAINS ANY", `{"k": "V"}`, true},
+		{"an object with another value has none", "CONTAINS ANY", `{"k": "w"}`, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a "+tc.op+" resource.b")
@@ -1113,7 +1122,7 @@ func TestAStringEqualsAStructureElementByItsText(t *testing.T) {
 
 // A one-element GENERAL list of an object (SINGLE_ODD) has an element in
 // common with an equal object on the right of CONTAINS ANY: the members
-// decide, with their case.
+// decide, their values ignoring case.
 func TestASingleOddObjectContainsAnEqualObject(t *testing.T) {
 	tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.g CONTAINS ANY resource.b", generalPIPs)
 	for _, tc := range []struct {
@@ -1121,7 +1130,8 @@ func TestASingleOddObjectContainsAnEqualObject(t *testing.T) {
 		want    bool
 	}{
 		{"the same members allow", `[{"k": "v"}]`, true},
-		{"a member in another case denies", `[{"k": "V"}]`, false},
+		{"a member in another case allows", `[{"k": "V"}]`, true},
+		{"another member denies", `[{"k": "w"}]`, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			values := map[string]Resolved{`["subj","g"]`: resolved(t, "SINGLE_ODD", tc.g),
@@ -1158,9 +1168,10 @@ func TestASingleOddListContainsNoEmptyAttributeList(t *testing.T) {
 
 // Two lists have an element in common under CONTAINS ANY, a list on the left
 // contains a subject list of one value, or a list is a subset of another, when
-// two elements are equal: an object by its members, with their case, and a
-// list by its elements in order, a string with its case, a number by its
-// value, and a boolean never equal to a string (ADR-0083).
+// two elements are equal: an object by its members and a list by its
+// elements in order, a number by its value, also against its text, any other
+// scalar by its text ignoring case, and null equal to null (ADR-0083 R1, R2,
+// R6, R7).
 func TestStructureElementsAreEqualByValue(t *testing.T) {
 	for _, tc := range []struct {
 		name, condition, a, b string
@@ -1169,21 +1180,28 @@ func TestStructureElementsAreEqualByValue(t *testing.T) {
 		{"an object element with the same members", "resource.a CONTAINS subject.id", `[{"k": "v"}]`,
 			`[{"k": "v"}]`, true},
 		{"an object element in another case", "resource.a CONTAINS subject.id", `[{"k": "V"}]`, `[{"k": "v"}]`,
-			false},
-		{"a list element in another case", "resource.a CONTAINS ANY subject.id", `[["A"]]`, `[["a"]]`, false},
+			true},
+		{"a list element in another case", "resource.a CONTAINS ANY subject.id", `[["A"]]`, `[["a"]]`, true},
+		{"a list element with another string", "resource.a CONTAINS ANY subject.id", `[["a"]]`, `[["b"]]`, false},
 		{"a list element with a number in another spelling", "resource.a CONTAINS ANY subject.id", `[[1]]`, `[[1.0]]`,
 			true},
-		{"a list element with a boolean and its text", "resource.a CONTAINS ANY subject.id", `[[true]]`, `[["true"]]`,
-			false},
-		{"a subset with a boolean and its text", "resource.a IS SUBSET subject.id", `[[true]]`, `[["true"]]`, false},
+		{"a list element with a boolean and its text", "resource.a CONTAINS ANY subject.id", `[[true]]`, `[["TRUE"]]`,
+			true},
+		{"a subset with a boolean and its text", "resource.a IS SUBSET subject.id", `[[true]]`, `[["TRUE"]]`, true},
 		{"a subset with an equal boolean", "resource.a IS SUBSET subject.id", `[[true]]`, `[[true]]`, true},
-		{"a subset with a string in another case", "resource.a IS SUBSET subject.id", `[["A"]]`, `[["a"]]`, false},
+		{"a subset with a string in another case", "resource.a IS SUBSET subject.id", `[["A"]]`, `[["a"]]`, true},
+		{"a subset with another string", "resource.a IS SUBSET subject.id", `[["a"]]`, `[["b"]]`, false},
 		{"a subset with a number in another spelling", "resource.a IS SUBSET subject.id", `[[1]]`, `[[1.0]]`, true},
-		{"a subset with a number and its text", "resource.a IS SUBSET subject.id", `[[1]]`, `[["1"]]`, false},
-		{"a list element with a number and its text", "resource.a CONTAINS ANY subject.id", `[[1]]`, `[["1"]]`, false},
+		{"a subset with a number and its text", "resource.a IS SUBSET subject.id", `[[1]]`, `[["1.0"]]`, true},
+		{"a subset with two texts of one number", "resource.a IS SUBSET subject.id", `[["1"]]`, `[["1.0"]]`, false},
+		{"a list element with a number and its text", "resource.a CONTAINS ANY subject.id", `[[1]]`, `[["1.0"]]`, true},
+		{"a list element with two texts of one number", "resource.a CONTAINS ANY subject.id", `[["1"]]`, `[["1.0"]]`,
+			false},
 		{"a list element in another order", "resource.a CONTAINS ANY subject.id", `[["a", "b"]]`, `[["b", "a"]]`,
 			false},
-		{"a list element with a null equals nothing", "resource.a CONTAINS ANY subject.id", `[[null]]`, `[[null]]`,
+		{"a list element with a null equals one with a null", "resource.a CONTAINS ANY subject.id", `[[null]]`,
+			`[[null]]`, true},
+		{"a list element with a null and its text", "resource.a CONTAINS ANY subject.id", `[[null]]`, `[["null"]]`,
 			false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1472,23 +1490,28 @@ func TestASubjectGroupComparesTheNumbers(t *testing.T) {
 }
 
 // IS SUBSET holds when the left value, read as a list, is not empty and each
-// of its elements equals an element on the right: with case, a number equal to
-// its text, a list equal to a string by its Java text, and null equal to
-// nothing. An object on the right equals nothing. A resource attribute on the
-// right is one value, so an element there that is not a string equals
-// nothing.
-func TestIsSubsetComparesElementsWithCase(t *testing.T) {
+// of its elements equals an element on the right as the other operators
+// compare them: ignoring case, a number equal to its text, a list equal to a
+// string by its Java text, and a null element equal to nothing. An object on
+// the right equals nothing. A resource attribute on the right offers its
+// elements as a list literal does (ADR-0083 R7).
+func TestIsSubsetComparesElementsAsTheOtherOperators(t *testing.T) {
 	const perms, b, id, g = `["subj","permissions"]`, `["res",".b"]`, `["subj","id"]`, `["subj","g"]`
 	for _, tc := range []struct {
 		name, condition, a, rightKey, right, want string
 	}{
 		{"every element on the right", "resource.a IS SUBSET subject.permissions", `["x"]`, perms, `["x", "y"]`, "T"},
-		{"an element in another case", "resource.a IS SUBSET subject.permissions", `["X"]`, perms, `["x"]`, "F"},
+		{"an element in another case", "resource.a IS SUBSET subject.permissions", `["X"]`, perms, `["x"]`, "T"},
+		{"an element not on the right", "resource.a IS SUBSET subject.permissions", `["z"]`, perms, `["x"]`, "F"},
 		{"a number and its text", "resource.a IS SUBSET subject.permissions", `[5]`, perms, `["5"]`, "T"},
+		{"two texts of one number", "resource.a IS SUBSET subject.permissions", `["5.0"]`, perms, `["5.00"]`, "F"},
 		{"a list and its text", "resource.a IS SUBSET subject.permissions", `[["abc"]]`, perms, `["[abc]"]`, "T"},
 		{"a string read as a list of one", "resource.a IS SUBSET subject.permissions", `"x"`, perms, `["x"]`, "T"},
 		{"a null element", "resource.a IS SUBSET subject.permissions", `["x", null]`, perms, `["x"]`, "F"},
-		{"a number in a resource attribute on the right", "resource.a IS SUBSET resource.b", `[5]`, b, `[5]`, "F"},
+		{"a number in a resource attribute on the right", "resource.a IS SUBSET resource.b", `[5]`, b, `[5.0]`, "T"},
+		{"a boolean in a resource attribute on the right", "resource.a IS SUBSET resource.b", `["TRUE"]`, b, `[true]`,
+			"T"},
+		{"a list in a resource attribute on the right", "resource.a IS SUBSET resource.b", `[["x"]]`, b, `[["X"]]`, "T"},
 		{"a string in a resource attribute on the right", "resource.a IS SUBSET resource.b", `[5]`, b, `["5"]`, "T"},
 		{"an object on the right", "resource.a IS SUBSET subject.id", `[{}]`, id, `[{}]`, "F"},
 		{"a string where the object was", "resource.a IS SUBSET subject.id", `["x"]`, id, `["x"]`, "T"},
@@ -1502,10 +1525,11 @@ func TestIsSubsetComparesElementsWithCase(t *testing.T) {
 	}
 }
 
-// A string on the left of IS SUBSET never equals a boolean on the right,
-// while a boolean on the left does.
-func TestAStringIsNoSubsetOfABoolean(t *testing.T) {
-	for _, tc := range []struct{ a, want string }{{`"true"`, "F"}, {`true`, "T"}} {
+// A string on the left of IS SUBSET equals a boolean on the right by its text
+// ignoring case, as a boolean on the left does (ADR-0083 R4, R7).
+func TestAStringIsASubsetOfABooleanOfItsText(t *testing.T) {
+	for _, tc := range []struct{ a, want string }{{`"true"`, "T"}, {`"TRUE"`, "T"}, {`true`, "T"}, {`"yes"`, "F"},
+		{`false`, "F"}} {
 		t.Run(tc.a, func(t *testing.T) {
 			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a)}
 			if got := leafOutcome(t, "resource.a IS SUBSET true", DefaultOptions(), values); got != tc.want {
@@ -1529,7 +1553,7 @@ func TestAnEmptyResourceIsNotASubset(t *testing.T) {
 }
 
 // IS SUBSET of subject lists joins a subject group, which Go evaluates by the
-// same tokens: against literals and between two attributes.
+// same deeps: against literals and between two attributes.
 func TestASubjectGroupComparesSubsets(t *testing.T) {
 	opt := DefaultOptions()
 	opt.Groups = true
@@ -1538,7 +1562,8 @@ func TestASubjectGroupComparesSubsets(t *testing.T) {
 	}{
 		{"every element listed", "subject.permissions IS SUBSET 'x', 'y'", `["x"]`, `[]`, "T"},
 		{"an element not listed", "subject.permissions IS SUBSET 'x', 'y'", `["x", "z"]`, `[]`, "F"},
-		{"an element in another case", "subject.permissions IS SUBSET 'x', 'y'", `["X"]`, `[]`, "F"},
+		{"an element in another case", "subject.permissions IS SUBSET 'x', 'y'", `["X"]`, `[]`, "T"},
+		{"a number and a literal of its text", "subject.permissions IS SUBSET '5.0', 'y'", `[5]`, `[]`, "T"},
 		{"every element in the roles", "subject.permissions IS SUBSET subject.roles", `["x"]`, `["x", "y"]`, "T"},
 		{"an element not in the roles", "subject.permissions IS SUBSET subject.roles", `["x", "z"]`, `["x"]`, "F"},
 		{"a literal in the permissions", "'x' IS SUBSET subject.permissions", `["x", "y"]`, `[]`, "T"},
@@ -1555,10 +1580,10 @@ func TestASubjectGroupComparesSubsets(t *testing.T) {
 	}
 }
 
-// Go compares two subject lists through a set of the right one when it holds
-// more than eight elements: IS SUBSET by tokens and CONTAINS ANY by keys.
-// IS SUBSET looks its tokens up in a set of its own, apart from the set of
-// keys that CONTAINS ANY builds of the same roles.
+// Go compares two subject lists under CONTAINS ANY through a set of the keys
+// of the right one when it holds more than eight elements, and under IS
+// SUBSET through the index of the right one, so a subset beside CONTAINS ANY
+// of the same roles reads each.
 func TestASubjectGroupComparesTwoLongLists(t *testing.T) {
 	opt := DefaultOptions()
 	opt.Groups = true
@@ -1568,7 +1593,7 @@ func TestASubjectGroupComparesTwoLongLists(t *testing.T) {
 	}{
 		{"every element in the roles", "subject.permissions IS SUBSET subject.roles", `["y", "x8"]`, "T"},
 		{"an element not in the roles", "subject.permissions IS SUBSET subject.roles", `["y", "z"]`, "F"},
-		{"an element in the roles in another case", "subject.permissions IS SUBSET subject.roles", `["x9"]`, "F"},
+		{"an element in the roles in another case", "subject.permissions IS SUBSET subject.roles", `["x9"]`, "T"},
 		{"a key and a subset in the same roles", "subject.roles CONTAINS ANY 'x9', 'r1', 'r2', 'r3', 'r4', 'r5' AND subject.permissions IS SUBSET subject.roles",
 			`["y"]`, "T"},
 		{"one element in the roles", "subject.permissions CONTAINS ANY subject.roles", `["z", "y"]`, "T"},
@@ -1797,18 +1822,55 @@ func TestInWithLiteralsDoesNotGrowWithTheirNumber(t *testing.T) {
 }
 
 // CONTAINS ANY with literals takes one clause per literal for the attribute
-// classes whose keys it reads and one for those whose element tokens it reads:
-// the classes that read one field share a clause, which checks that the class
-// is one of them.
-func TestContainsAnyWithLiteralsTakesTwoClausesPerLiteral(t *testing.T) {
+// classes whose keys it reads and one clause for all literals for those whose
+// element index it reads: the classes that read one field share a clause,
+// which checks that the class is one of them.
+func TestContainsAnyWithLiteralsTakesAClausePerLiteralAndOneForStructures(t *testing.T) {
 	const condition = "resource.a CONTAINS ANY 'a', 'b', 'c', 'd', 'e'"
 	m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", condition), table(t), DefaultOptions())
 	if err != nil {
 		t.Fatalf("Generate(%s): %v", condition, err)
 	}
-	if got := m.Stats.AllowClauses; got != 10 {
-		t.Errorf("allow clauses of %s = %d, want 10", condition, got)
+	if got := m.Stats.AllowClauses; got != 6 {
+		t.Errorf("allow clauses of %s = %d, want 6", condition, got)
 		t.Log(m.Text)
+	}
+}
+
+// Two CONTAINS ANY of literals in one clause each look the shapes of their
+// literals up in an element index of structures, where a nested list equals
+// a literal of its Java text (ADR-0083 R8), and the module compiles and
+// answers with both: the variable of one lookup is not the other's. AND puts
+// two true rows in a clause, and OR two false rows, which a DENY rule under
+// PERMIT_UNLESS_DENY reads.
+func TestTwoContainsAnyOfLiteralsShareAClause(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	const both = "resource.a CONTAINS ANY '[x]', 'y' AND subject.id CONTAINS ANY 'p', '[q]'"
+	const either = "resource.a CONTAINS ANY '[x]', 'y' OR subject.id CONTAINS ANY 'p', '[q]'"
+	for _, tc := range []struct {
+		name, alg, effect, condition, a, id string
+		want                                bool
+	}{
+		{"nested lists that hold a literal each", "DENY_UNLESS_PERMIT", "ALLOW", both, `[["X"]]`, `[["q"]]`, true},
+		{"a nested list without a literal", "DENY_UNLESS_PERMIT", "ALLOW", both, `[["X"]]`, `[["r"]]`, false},
+		{"nested lists without a literal", "PERMIT_UNLESS_DENY", "DENY", either, `[["z"]]`, `[["r"]]`, true},
+		{"a nested list that holds a literal", "PERMIT_UNLESS_DENY", "DENY", either, `[["z"]]`, `[["Q"]]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, tc.alg, tc.effect, tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a),
+				`["subj","id"]`: resolved(t, "VALUE", tc.id)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s, resource.a = %s, subject.id = %s) %s = %v, want %v", tc.condition, tc.a,
+						tc.id, form, got, tc.want)
+				}
+			}
+		})
 	}
 }
 
@@ -3074,6 +3136,27 @@ func TestTheDecisionTellsAnUnknownDenialApart(t *testing.T) {
 	}
 }
 
+// A caller of JSONPathRecord outside the projection, whose record holds
+// every field, gets the error of the limit for a selection too big to look
+// up, and a record for one at the limit.
+func TestJSONPathRecordFailsOnASelectionTooBigToLookUp(t *testing.T) {
+	list := func(n int) string {
+		elems := make([]string, n)
+		for i := range elems {
+			elems[i] = fmt.Sprintf(`["1", "2", "3", "0e%d"]`, i)
+		}
+		return "[" + strings.Join(elems, ",") + "]"
+	}
+	if _, err := JSONPathRecord(mustDecode(t, `{"b": [`+list(15)+`]}`), ".b[0]"); err != nil {
+		t.Errorf("JSONPathRecord of 15 lists of four texts: %v, want a record", err)
+	}
+	// a halt keeps the text of the error, not the error
+	if _, err := JSONPathRecord(mustDecode(t, `{"b": [`+list(16)+`]}`), ".b[0]"); err == nil ||
+		!strings.Contains(err.Error(), errIndexTooBig.Error()) {
+		t.Errorf("JSONPathRecord of 16 lists of four texts: %v, want the error of the limit", err)
+	}
+}
+
 // nc.resource_path gives a resource path the state the specification's
 // resolve_resource gives it: a missing member, a path through a missing
 // parent, a path that starts with a bracket, and no resource or a null one
@@ -3113,6 +3196,39 @@ func TestAResourcePathTakesTheStateOfItsSelection(t *testing.T) {
 				t.Errorf("state of %s over %s = %v, want %s", tc.path, tc.doc, got, tc.want)
 			}
 		})
+	}
+}
+
+// The record of a lazily read resource path holds the fields the module
+// reads of it and no other: a path under CONTAINS 'x' reads no deeps of ==.
+// A record with every field took four times the bytes of one with the
+// fields read, over a list of 8192 strings past the budget of a request.
+func TestALazyPathRecordHoldsTheFieldsTheModuleReads(t *testing.T) {
+	m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a[0] CONTAINS 'x'"), table(t),
+		DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	i := slices.IndexFunc(m.Refs, func(r *Ref) bool { return r.Path != "" })
+	if i < 0 {
+		t.Fatalf("the module reads no lazy path:\n%s", m.Text)
+	}
+	doc, err := jsonvalue.Decode([]byte(`{"a": [["x", "y"]]}`))
+	if err != nil {
+		t.Fatalf("Decode: %v", err)
+	}
+	req := Request{Body: Body{Operation: "read", ResourceType: "doc", Resource: doc, HasResource: true}}
+	rec, ok := evalRule(t, m, req, "path_"+m.Refs[i].Var).(map[string]any)
+	if !ok {
+		t.Fatalf("path_%s is no record:\n%s", m.Refs[i].Var, m.Text)
+	}
+	for _, f := range []string{fieldEqAlts, fieldEqIndex} {
+		if _, ok := rec[f]; ok {
+			t.Errorf("the record of %s holds %s, which the module does not read: %v", m.Refs[i].Path, f, rec)
+		}
+	}
+	if _, ok := rec[fieldElementKeys]; !ok {
+		t.Errorf("the record of %s lacks %s, which the module reads: %v", m.Refs[i].Path, fieldElementKeys, rec)
 	}
 }
 
@@ -3383,7 +3499,7 @@ func TestASubjectGroupReadsTheFieldsItsRecordsHold(t *testing.T) {
 			got := EvalGroups(m, mustProject(t, m, req))
 			whole := mustProject(t, m, req)
 			r := m.Refs[slices.IndexFunc(m.Refs, func(r *Ref) bool { return r.ID == "subject.permissions" })]
-			whole.Records[r.ID] = record(&Ref{Kind: r.Kind, Subset: r.Subset}, v)
+			whole.Records[r.ID] = record(&Ref{Kind: r.Kind}, v)
 			if want := EvalGroups(m, whole); !slices.Equal(got, want) {
 				t.Errorf("%s with subject.permissions = %s: groups %v, from records of every field %v", condition,
 					value, got, want)
@@ -3500,6 +3616,180 @@ func TestANarrowConditionKeepsTheTextOfAnInOrderProduct(t *testing.T) {
 	}
 }
 
+// Two lists or two objects compare their members pairwise, and two scalars at
+// any depth compare as they do at the top: a number by its value, also against
+// a string of that value, any other scalar by its text ignoring case, and null
+// equal to null (ADR-0083 R1, R2, R5, R6). A list nested in another keeps its
+// order, a member name its case, and a list or an object equals a string of
+// its Java text ignoring case (R8). A condition on the subject alone moves
+// into a group, which every form must answer alike.
+func TestStructuresCompareTheirLeavesAsScalars(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	const keyB, keyID = `["res",".b"]`, `["subj","id"]`
+	for _, tc := range []struct {
+		name, condition, a, b, id string
+		want                      bool
+	}{
+		{"nested strings in another case", "resource.a == resource.b", `[["A"]]`, `[["a"]]`, `0`, true},
+		{"not equal to nested strings in another case", "resource.a != resource.b", `[["A"]]`, `[["a"]]`, `0`, false},
+		{"a member and a string of its value", "resource.a == resource.b", `{"n": 1}`, `{"n": "1.0"}`, `0`, true},
+		{"members with two strings of one value", "resource.a == resource.b", `[{"n": "5.0"}]`, `[{"n": "5.00"}]`, `0`,
+			false},
+		{"a nested list of a string and a number", "resource.a == resource.b", `[["x", 1]]`, `[["X", "1"]]`, `0`, true},
+		{"a nested list in another order", "resource.a == resource.b", `[[1, 2]]`, `[[2, 1]]`, `0`, false},
+		{"member names in another case", "resource.a == resource.b", `{"N": 1}`, `{"n": 1}`, `0`, false},
+		{"lists of null", "resource.a == resource.b", `[[null]]`, `[[null]]`, `0`, true},
+		{"a null member and its text", "resource.a == resource.b", `{"a": null}`, `{"a": "null"}`, `0`, false},
+		{"a string of a quote and a comma and two strings", "resource.a == resource.b", `[["a\",\"b"]]`,
+			`[["a", "b"]]`, `0`, false},
+		{"contains a nested number as its text", "resource.a CONTAINS ANY resource.b", `[[1]]`, `[["1"]]`, `0`, true},
+		{"contains no nested text of another spelling", "resource.a CONTAINS ANY resource.b", `[["5.0"]]`, `[["5.00"]]`,
+			`0`, false},
+		// the texts of a nested list of two strings of numbers are looked up
+		// at the subset of its leaves the other side has texts at, and those
+		// of four strings are scanned
+		{"contains a number beside a text of the same spelling", "resource.a CONTAINS ANY resource.b", `[[1, "5.0"]]`,
+			`[["1", "5.0"]]`, `0`, true},
+		{"contains no number beside a text of another spelling", "resource.a CONTAINS ANY resource.b", `[[1, "5.0"]]`,
+			`[["1", "5.00"]]`, `0`, false},
+		{"contains a number beside three texts of the same spelling", "resource.a CONTAINS ANY resource.b",
+			`[[1, "2", "3", "5.0"]]`, `[["1", "2", "3", "5.0"]]`, `0`, true},
+		{"contains no number beside a text of another spelling of four", "resource.a CONTAINS ANY resource.b",
+			`[[1, "2", "3", "5.0"]]`, `[["1", "2", "3", "5.00"]]`, `0`, false},
+		{"contains an object in another case", "resource.a CONTAINS resource.b", `[{"k": "V"}]`, `{"k": "v"}`, `0`,
+			true},
+		{"an object is in an object in another case", "resource.a IN resource.b", `{"k": "V"}`, `{"k": "v"}`, `0`, true},
+		{"a structure contains a literal in another case", "resource.a CONTAINS 'x'", `[["q"], "X"]`, `0`, `0`, true},
+		{"a structure contains a literal of an element's value", "resource.a CONTAINS '5.0'", `[["q"], 5]`, `0`, `0`,
+			true},
+		{"a structure contains no literal of another text", "resource.a CONTAINS ANY '5.0', '6'", `[["q"], "5.00"]`, `0`,
+			`0`, false},
+		{"a structure contains its Java text", "resource.a CONTAINS '[x]'", `[["X"]]`, `0`, `0`, true},
+		{"a subject list and nested strings in another case", "subject.id == resource.b", `0`, `[["a"]]`, `[["A"]]`,
+			true},
+		{"a subject list has an element in another case", "subject.id CONTAINS ANY resource.b", `0`, `[["a"], "z"]`,
+			`[["A"]]`, true},
+		{"a subject list contains a literal of an element's value", "subject.id CONTAINS '1.0'", `0`, `0`,
+			`[["q"], 1]`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), keyB: resolved(t, "VALUE", tc.b),
+				keyID: resolved(t, "VALUE", tc.id)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s, resource.a = %s, resource.b = %s, subject.id = %s) %s = %v, want %v",
+						tc.condition, tc.a, tc.b, tc.id, form, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
+// IS SUBSET compares an element of the left with the elements of the right as
+// the other operators compare two elements, whatever operand the right is:
+// ignoring case, a number equal to a string of its value, a structure equal
+// to a string of its Java text, and a nested list leaf by leaf; IS NOT SUBSET
+// negates it. Its left is not empty, a null element equals nothing, and an
+// object on the right equals nothing (ADR-0083 R5, R7). A condition on the
+// subject alone moves into a group, which every form must answer alike.
+func TestIsSubsetComparesElementsByTheOneRule(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	const keyB, keyID = `["res",".b"]`, `["subj","id"]`
+	for _, tc := range []struct {
+		name, condition, a, b, id string
+		want                      bool
+	}{
+		{"a string in another case", "resource.a IS SUBSET resource.b", `["X"]`, `["x", "y"]`, `0`, true},
+		{"a string not on the right", "resource.a IS SUBSET resource.b", `["z"]`, `["x", "y"]`, `0`, false},
+		{"a number of a resource attribute", "resource.a IS SUBSET resource.b", `[5]`, `[5.0]`, `0`, true},
+		{"a string and a boolean of its text", "resource.a IS SUBSET resource.b", `["TRUE"]`, `[true]`, `0`, true},
+		{"a nested list in another case", "resource.a IS SUBSET resource.b", `[["A"]]`, `[["a"]]`, `0`, true},
+		{"two texts of one number", "resource.a IS SUBSET resource.b", `["5.0"]`, `["5.00"]`, `0`, false},
+		{"an object on the right", "resource.a IS SUBSET resource.b", `[{"k": "v"}]`, `[{"k": "v"}]`, `0`, false},
+		{"a null element", "resource.a IS SUBSET resource.b", `[null]`, `[null]`, `0`, false},
+		{"an empty left", "resource.a IS SUBSET resource.b", `[]`, `["x"]`, `0`, false},
+		{"a list and its text in another case", "resource.a IS SUBSET resource.b", `[["ABC"]]`, `["[abc]"]`, `0`,
+			true},
+		{"a list's text and the list in another case", "resource.a IS SUBSET resource.b", `["[abc]"]`, `[["ABC"]]`,
+			`0`, true},
+		{"an object and its text in another case", "resource.a IS SUBSET resource.b", `[{"k": "V"}]`, `["{K=v}"]`,
+			`0`, true},
+		{"lists of null", "resource.a IS SUBSET resource.b", `[[null]]`, `[[null]]`, `0`, true},
+		{"not a subset with a string in another case", "resource.a IS NOT SUBSET resource.b", `["X"]`, `["x", "y"]`,
+			`0`, false},
+		{"not a subset with a number and its text", "resource.a IS NOT SUBSET resource.b", `["5.0"]`, `[5]`, `0`,
+			false},
+		{"not a subset with a string not on the right", "resource.a IS NOT SUBSET resource.b", `["z"]`, `["x"]`, `0`,
+			true},
+		{"a literal of a number's value", "'5.0' IS SUBSET resource.b", `0`, `[5]`, `0`, true},
+		{"a literal list in another case", "resource.a IS SUBSET 'x', 'y'", `["Y", "x"]`, `0`, `0`, true},
+		{"a subject list in another case", "subject.id IS SUBSET 'x', 'y'", `0`, `0`, `["X"]`, true},
+		{"a subject number and a literal of its text", "subject.id IS SUBSET '5.0', 'y'", `0`, `0`, `[5]`, true},
+		{"a subject nested list", "subject.id IS SUBSET resource.b", `0`, `[["a"], "z"]`, `[["A"]]`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), keyB: resolved(t, "VALUE", tc.b),
+				keyID: resolved(t, "VALUE", tc.id)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s, resource.a = %s, resource.b = %s, subject.id = %s) %s = %v, want %v",
+						tc.condition, tc.a, tc.b, tc.id, form, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
+// A GENERAL body of a number or a boolean (SCALAR_ODD), or a one-element list
+// of a non-string (SINGLE_ODD), is a list of that element on the right of IS
+// SUBSET, and IS SUBSET compares with it by the one rule (ADR-0083 R7). The
+// module of such a condition builds, so an alternative under OR that holds
+// decides the rule whatever the subset gives.
+func TestIsSubsetOfAnOddGeneralBodyComparesByTheOneRule(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	for _, tc := range []struct {
+		name, condition, state, g, a string
+		want                         bool
+	}{
+		{"a string of a number body's value", "resource.a IS SUBSET subject.g", "SCALAR_ODD", `5`, `"5.0"`, true},
+		{"another string and a number body", "resource.a IS SUBSET subject.g", "SCALAR_ODD", `5`, `"v"`, false},
+		{"a boolean body's text in another case", "resource.a IS SUBSET subject.g", "SCALAR_ODD", `true`, `"TRUE"`,
+			true},
+		{"another string and a boolean body", "resource.a IS NOT SUBSET subject.g", "SCALAR_ODD", `true`, `"x"`, true},
+		{"a string of a listed number's value", "resource.a IS SUBSET subject.g", "SINGLE_ODD", `[5]`, `"5"`, true},
+		{"a listed boolean's text", "resource.a IS NOT SUBSET subject.g", "SINGLE_ODD", `[true]`, `"true"`, false},
+		{"a listed null", "resource.a IS SUBSET subject.g", "SINGLE_ODD", `[null]`, `"v"`, false},
+		{"an alternative that holds", "resource.a IS SUBSET subject.g OR resource.b == 'y'", "SCALAR_ODD", `5`,
+			`"v"`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition, generalPIPs)
+			values := map[string]Resolved{`["subj","g"]`: resolved(t, tc.state, tc.g),
+				keyA: resolved(t, "VALUE", tc.a), `["res",".b"]`: resolved(t, "VALUE", `"y"`)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s, subject.g = %s %s, resource.a = %s) %s = %v, want %v", tc.condition,
+						tc.state, tc.g, tc.a, form, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
 // line returns lines[i], or "" past the end.
 func line(lines []string, i int) string {
 	if i < len(lines) {
@@ -3573,6 +3863,216 @@ func TestANumberEqualsANumberOrAStringOfTheSameValue(t *testing.T) {
 				if got := decideValues(t, tree, opt, values); got != tc.want {
 					t.Errorf("allow(%s, resource.a = %s, resource.b = %s, subject.id = 5, subject.name = \"5.0\") %s"+
 						" = %v, want %v", tc.condition, tc.a, tc.b, form, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
+// A GENERAL or FILTERED PIP whose response is too big to look up reads as a
+// PIP that failed, in either order of an OR, rather than failing the request: the
+// decision is the one over a PIP that answered with an error, unknown where
+// the PIP decides it.
+func TestAPIPResponseTooBigToLookUpReadsAsAFailedPIP(t *testing.T) {
+	elems := make([]string, 16)
+	for i := range elems {
+		elems[i] = fmt.Sprintf(`["1", "2", "3", "0e%d"]`, i)
+	}
+	tooBig := resolved(t, "VALUE", "["+strings.Join(elems, ",")+"]")
+	for _, tc := range []struct{ condition, want string }{
+		{"resource.x == '1' OR resource.a CONTAINS ANY subject.g", "permit"},
+		{"resource.a CONTAINS ANY subject.g OR resource.x == '1'", "permit"},
+		{"resource.a CONTAINS ANY subject.g", "unknown"},
+		{"resource.a NOT CONTAINS ANY subject.g", "unknown"},
+		{"resource.a == subject.g", "unknown"},
+		{"resource.a != subject.g", "unknown"},
+		{"resource.a IS SUBSET subject.g", "unknown"},
+		{"resource.a IS NOT SUBSET subject.g", "unknown"},
+	} {
+		for _, pipType := range []string{"GENERAL", "FILTERED"} {
+			tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition,
+				`{"name": "subject.g", "pipType": "`+pipType+`", "url": "http://g"}`)
+			for _, form := range []struct {
+				name string
+				opt  func(*Options)
+			}{{"flat", func(*Options) {}}, {"without inlining", func(o *Options) { o.Flat = false }}} {
+				opt := DefaultOptions()
+				opt.Decision = true
+				form.opt(&opt)
+				m, err := Generate(tree, table(t), opt)
+				if err != nil {
+					t.Fatalf("Generate: %v", err)
+				}
+				for name, g := range map[string]Resolved{"too big to look up": tooBig,
+					"failed": resolved(t, "ERROR", "")} {
+					req := Request{Body: Body{Operation: "read", ResourceType: "doc"},
+						Values: map[string]Resolved{`["res",".x"]`: resolved(t, "VALUE", `"1"`),
+							keyA: resolved(t, "VALUE", `[["z"]]`), `["subj","g"]`: g}}
+					if got := evalRule(t, m, req, "decision"); got != tc.want {
+						t.Errorf("decision(%s) %s with the %s PIP subject.g %s = %v, want %s", tc.condition, form.name,
+							pipType, name, got, tc.want)
+					}
+				}
+			}
+		}
+	}
+}
+
+// A pass of the permission scope with a value too big to look up reads as a
+// permission scope that failed, whichever pass holds it: the decision is the
+// one over a scope that cannot be read, though another pass permits.
+func TestAScopePassTooBigToLookUpReadsAsAFailedScope(t *testing.T) {
+	const domain = `["subj","permissionScope.domain"]`
+	elems := make([]string, 16)
+	for i := range elems {
+		elems[i] = fmt.Sprintf(`["1", "2", "3", "0e%d"]`, i)
+	}
+	permits := map[string]Resolved{domain: resolved(t, "VALUE", `["z"]`)}
+	tooBig := map[string]Resolved{domain: resolved(t, "VALUE", "["+strings.Join(elems, ",")+"]")}
+	opt := DefaultOptions()
+	opt.Decision = true
+	m, err := Generate(iterateTree(t, "DENY_UNLESS_PERMIT", "resource.a CONTAINS ANY subject.permissionScope.domain"),
+		table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	decision := func(scope Scope) any {
+		return evalRule(t, m, Request{Body: Body{Operation: "read", ResourceType: "doc"}, Scope: &scope,
+			Values: map[string]Resolved{keyA: resolved(t, "VALUE", `["z"]`)}}, "decision")
+	}
+	want := decision(Scope{Failed: true})
+	if got := decision(Scope{Passes: []map[string]Resolved{permits}}); got == want {
+		t.Fatalf("decision of a permitting pass = %v, the same as of a failed scope", got)
+	}
+	for name, passes := range map[string][]map[string]Resolved{"first": {tooBig, permits},
+		"last": {permits, tooBig}} {
+		if got := decision(Scope{Passes: passes}); got != want {
+			t.Errorf("decision with the pass too big to look up %s = %v, want %v as with a failed scope", name,
+				got, want)
+		}
+	}
+}
+
+// A request with a value whose index of nested values is too big to look up
+// in linear time fails before evaluation, under every operator that reads
+// such an index: one lookup in a shape may read at most
+// 16 groups of the leaves with texts and lists of more than three such leaves
+// it scans. An index at the limit is looked up, and an index the module does
+// not read fails nothing.
+func TestARequestWithAnIndexTooBigToLookUpFails(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	// fourTexts is a list of n lists of four strings of numbers, of one shape
+	// and each with its own texts: its last string spells 0 another way.
+	fourTexts := func(n int) string {
+		elems := make([]string, n)
+		for i := range elems {
+			elems[i] = fmt.Sprintf(`["1", "2", "3", "0e%d"]`, i)
+		}
+		return "[" + strings.Join(elems, ",") + "]"
+	}
+	// leafSets is a list of n lists of twenty numbers of one shape, the i-th
+	// written as a string at leaf i, so each in a group of its own.
+	leafSets := func(n int) string {
+		elems := make([]string, n)
+		for i := range elems {
+			leaves := make([]string, 20)
+			for j := range leaves {
+				leaves[j] = "1"
+				if j == i {
+					leaves[j] = `"1"`
+				}
+			}
+			elems[i] = "[" + strings.Join(leaves, ",") + "]"
+		}
+		return "[" + strings.Join(elems, ",") + "]"
+	}
+	type row struct {
+		name, condition, a, b string
+		// fails is whether the request fails; want is allow otherwise
+		fails, want bool
+	}
+	// a matches the first list of b
+	rows := []row{
+		{"15 lists of four texts", "resource.a CONTAINS ANY resource.b", `[["1", "2", "3", "0e0"]]`, fourTexts(15),
+			false, true},
+		{"16 groups of one text", "resource.a CONTAINS ANY resource.b", `[["1"` + strings.Repeat(", 1", 19) + `]]`,
+			leafSets(16), false, true},
+		{"17 groups of one text", "resource.a CONTAINS ANY resource.b", `[["z"]]`, leafSets(17), true, false},
+		// CONTAINS ANY reads the index of its right operand only, and the
+		// Java text of the first list of a is the string in b
+		{"16 lists of four texts on the left", "resource.a CONTAINS ANY resource.b", fourTexts(16),
+			`["[1, 2, 3, 0e0]"]`, false, true},
+		{"15 lists of four texts at a path", "resource.a[0] CONTAINS ANY resource.b[0]",
+			`[[["1", "2", "3", "0e0"]]]`, "[" + fourTexts(15) + "]", false, true},
+	}
+	for _, op := range []string{"==", "!=", "IS SUBSET", "IS NOT SUBSET", "CONTAINS ANY", "NOT CONTAINS ANY",
+		"CONTAINS", "NOT CONTAINS", "IN", "NOT IN"} {
+		rows = append(rows,
+			row{"16 lists of four texts " + op, "resource.a " + op + " resource.b", `[["z"]]`, fourTexts(16), true,
+				false},
+			row{"16 lists of four texts at a path " + op, "resource.a[0] " + op + " resource.b[0]", `[[["z"]]]`,
+				"[" + fourTexts(16) + "]", true, false})
+	}
+	// the request fails whichever alternative of an OR comes first, though
+	// the other one holds
+	for _, c := range [][2]string{{"resource.a == resource.b", `[["z"]]`},
+		{"resource.a[0] == resource.b[0]", `[[["z"]]]`}} {
+		b := fourTexts(16)
+		if strings.Contains(c[0], "[0]") {
+			b = "[" + b + "]"
+		}
+		rows = append(rows,
+			row{"16 lists of four texts after a true alternative " + c[0], "resource.x == '1' OR " + c[0], c[1], b,
+				true, false},
+			row{"16 lists of four texts before a true alternative " + c[0], c[0] + " OR resource.x == '1'", c[1], b,
+				true, false})
+	}
+	for _, tc := range rows {
+		t.Run(tc.name, func(t *testing.T) {
+			// a DENY rule, which a comparison that failed silently would let
+			// through
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			if tc.fails {
+				tree = tenantWithSet(t, "PERMIT_UNLESS_DENY", "DENY", tc.condition)
+			}
+			body, err := ReadBody([]byte(`{"operation": "read", "type": "doc", "resource": {"x": "1", "a": ` +
+				tc.a + `, "b": ` + tc.b + `}}`))
+			if err != nil {
+				t.Fatalf("ReadBody: %v", err)
+			}
+			for form, opt := range forms {
+				m, err := Generate(tree, table(t), opt)
+				if err != nil {
+					t.Fatalf("Generate: %v", err)
+				}
+				req := Request{Body: body, Values: map[string]Resolved{}}
+				m.Resolve(body, req.Values)
+				in, err := Project(m, req)
+				if err == nil {
+					pq, perr := rego.New(append([]func(*rego.Rego){rego.Query("data." + opt.Package + ".allow"),
+						rego.Module("gen.rego", m.Text)}, Builtins()...)...).PrepareForEval(context.Background())
+					if perr != nil {
+						t.Fatalf("PrepareForEval: %v", perr)
+					}
+					var rs rego.ResultSet
+					if rs, err = pq.Eval(in.Context(context.Background()), rego.EvalParsedInput(in.Value())); err == nil &&
+						!tc.fails {
+						if got := len(rs) == 1 && rs[0].Expressions[0].Value == true; got != tc.want {
+							t.Errorf("allow(%s) %s = %v, want %v", tc.condition, form, got, tc.want)
+						}
+					}
+				}
+				got := errors.Is(err, errIndexTooBig)
+				if err != nil && !got {
+					t.Fatalf("the request of %s %s: %v", tc.condition, form, err)
+				}
+				if got != tc.fails {
+					t.Errorf("the request of %s %s fails with errIndexTooBig = %v, want %v; err = %v", tc.condition,
+						form, got, tc.fails, err)
 				}
 			}
 		})

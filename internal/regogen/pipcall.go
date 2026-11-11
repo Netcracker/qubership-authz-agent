@@ -57,8 +57,8 @@ func pipText(r *Ref) string {
 	if r.pipPath != "" {
 		jp = lit(r.pipPath)
 	}
-	return fmt.Sprintf("pip_%s := nc.pip.record(q, pip_send(q), {\"read\": %d, \"seg\": %t, \"subset\": %t, \"jp\": %s}) "+
-		"if q := input.%s[%s]\n\n", r.Var, r.read, r.Segments, r.Subset, jp, memberPIPRequests, lit(r.ID))
+	return fmt.Sprintf("pip_%s := nc.pip.record(q, pip_send(q), {\"read\": %d, \"seg\": %t, \"jp\": %s}) "+
+		"if q := input.%s[%s]\n\n", r.Var, r.read, r.Segments, jp, memberPIPRequests, lit(r.ID))
 }
 
 // pipPath returns the path nc.pip.record selects from the body of the
@@ -458,13 +458,13 @@ func pipRecordFunction() func(*rego.Rego) {
 			if err != nil {
 				return nil, err
 			}
-			return record(r, v).term(), nil
+			return sourceRecord(r, v).term(), nil
 		})
 }
 
-// pipOptions reads the options of nc.pip.record: the fields read, seg, and
-// subset of the reference whose record it builds, and jp, the path of
-// [pipPath] or null.
+// pipOptions reads the options of nc.pip.record: the fields read and seg of
+// the reference whose record it builds, and jp, the path of [pipPath] or
+// null.
 func pipOptions(opts *ast.Term) (*Ref, string, error) {
 	o, ok := opts.Value.(ast.Object)
 	if !ok {
@@ -480,9 +480,6 @@ func pipOptions(opts *ast.Term) (*Ref, string, error) {
 	}
 	if b, ok := o.Get(ast.StringTerm("seg")).Value.(ast.Boolean); ok {
 		r.Segments = bool(b)
-	}
-	if b, ok := o.Get(ast.StringTerm("subset")).Value.(ast.Boolean); ok {
-		r.Subset = bool(b)
 	}
 	jp, _ := o.Get(ast.StringTerm("jp")).Value.(ast.String)
 	return r, string(jp), nil

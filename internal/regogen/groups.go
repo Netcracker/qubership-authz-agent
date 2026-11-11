@@ -31,22 +31,24 @@ type test struct {
 	kind string // a case of test.holds
 	ref  string // folded_roles for the roles a simplified policy matches
 	val  string
-	set  []string // a literal's keys; for IS SUBSET, the tokens of a literal on the right; for clsin, the classes
+	set  []string // a literal's keys; for clsin, the classes
 	// rightRef is the reference on the right of a comparison of two
 	// references, empty for a comparison with a literal.
 	rightRef string
 	// field and rightField name the list of the record of ref and of rightRef
 	// that has, nothas, none, overlap, and disjoint read: element_keys when
-	// empty, or element_own_keys, element_tokens, or
-	// element_tokens_with_text; rightField is subset_right for the right of
-	// IS SUBSET. For a test of a scalar they name its field: key when empty,
-	// or value_key or match_key.
+	// empty, or element_own_keys. For a test of a scalar they name its field:
+	// key when empty, or value_key or match_key.
 	field, rightField string
 	// num is the literal number rel compares with.
 	num *jsonvalue.Decimal
-	// sets are the tokens of the elements of a literal on the left of IS
-	// SUBSET.
-	sets [][]string
+	// alts are the deeps of the items of a literal that deepany, deepnone,
+	// and the tests of IS SUBSET read, where ref is empty: they read the
+	// ElementAlts of ref otherwise.
+	alts [][]deep
+	// index is the index of a literal on the right of IS SUBSET, where
+	// rightRef is empty: it reads the SubsetIndex of rightRef otherwise.
+	index deepIndex
 	// refIndex and rightRefIndex number ref and rightRef among the references
 	// of the module's groups, -1 for none and for folded_roles, and slot and
 	// rightSlot number the lists of ref and rightRef that field and rightField
@@ -511,20 +513,14 @@ func listSlot(refIndex int, field string) int {
 	switch {
 	case refIndex < 0:
 		return 0
-	case field == fieldElementTokens:
-		return slotsPerRef*refIndex + 2
-	case field == fieldElementTokensWithText:
-		return slotsPerRef*refIndex + 3
-	case field == fieldSubsetRight:
-		return slotsPerRef*refIndex + 4
 	case field == fieldElementOwnKeys:
-		return slotsPerRef*refIndex + 5
+		return slotsPerRef*refIndex + 2
 	}
 	return slotsPerRef*refIndex + 1
 }
 
 // slotsPerRef is the number of lists of a record listSlot numbers.
-const slotsPerRef = 5
+const slotsPerRef = 2
 
 func (e *groupEval) groupHolds(fs []int) bool {
 	for _, f := range fs {
@@ -639,6 +635,8 @@ func (t *test) holds(e *groupEval) bool {
 	case "overlap":
 		rightKeys, _ := right()
 		return keys != nil && rightKeys != nil && slices.ContainsFunc(keys, func(x string) bool { return e.contains(t.rightSlot, rightKeys, x) })
+	case "deepany", "deepnone":
+		return t.deepHolds(e)
 	case "disjoint":
 		rightKeys, _ := right()
 		return keys != nil && !(rightKeys != nil && slices.ContainsFunc(keys, func(x string) bool { return e.contains(t.rightSlot, rightKeys, x) }))
@@ -647,18 +645,30 @@ func (t *test) holds(e *groupEval) bool {
 }
 
 // list returns the list field f of the record: ElementKeys when f is empty,
-// ElementOwnKeys for element_own_keys, ElementTokens for element_tokens, or
-// ElementTokensWithText for element_tokens_with_text.
+// or ElementOwnKeys for element_own_keys.
 func (r Record) list(f string) []string {
-	switch f {
-	case fieldElementOwnKeys:
+	if f == fieldElementOwnKeys {
 		return r.ElementOwnKeys
-	case fieldElementTokens:
-		return r.ElementTokens
-	case fieldElementTokensWithText:
-		return r.ElementTokensWithText
 	}
 	return r.ElementKeys
+}
+
+// deepHolds answers deepany and deepnone as their Rego rows do: a missing
+// field fails both.
+func (t *test) deepHolds(e *groupEval) bool {
+	alts := t.alts
+	if t.ref != "" {
+		r, ok := e.rec(t.refIndex)
+		if !ok || r.ElementAlts == nil {
+			return false
+		}
+		alts = r.ElementAlts
+	}
+	r, ok := e.rec(t.rightRefIndex)
+	if !ok || r.ElementIndex == nil {
+		return false
+	}
+	return deepAny(alts, r.ElementIndex) == (t.kind == "deepany")
 }
 
 // scalar returns the scalar field f of the record: Key when f is empty,

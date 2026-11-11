@@ -58,7 +58,8 @@ func (t tpl) fieldClasses(s *side) []spectables.Class {
 // fieldOf reports whether [record] writes field f, which the module reads,
 // for a value of class cl: key, match_key, and number for s and n; value_key
 // for s; element_keys and element_own_keys for every class but z; text and
-// the segments for s; text_key and equality_key for the lists and the object.
+// the segments for s; text_key, eq_alts, and eq_index for the lists and the
+// object.
 // Any other field, such as has_null, keeps the check of the class.
 func fieldOf(f string, cl spectables.Class) bool {
 	switch f {
@@ -70,7 +71,7 @@ func fieldOf(f string, cl spectables.Class) bool {
 		return cl != spectables.ClassNull
 	case fieldText, fieldSegments:
 		return cl == spectables.ClassString
-	case fieldTextKey, fieldEqualityKey:
+	case fieldTextKey, fieldEqAlts, fieldEqIndex:
 		return cl == spectables.ClassList || cl == spectables.ClassPIPList || isStructure(cl)
 	}
 	return false
@@ -307,20 +308,12 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 	}
 	if (op == spectables.OpIn || op == spectables.OpContains || op == spectables.OpEQ) &&
 		cl == spectables.ClassObject && cr == spectables.ClassObject && lref && rref {
-		// two objects are equal by their members: the same keys, each value
-		// of the same JSON type and equal, a list inside in order
-		b.use(L, fieldEqualityKey)
-		b.use(R, fieldEqualityKey)
-		c := clsCheck
-		if net {
-			c = clsAfterBuilt
-		}
-		bind := conj(L.bind(), R.bind())
-		t := conj(bind, clause{{cls: c, text: L.field(fieldEqualityKey) + " == " + R.field(fieldEqualityKey), fact: vfact(L)}})
-		f := conj(bind, clause{{cls: c, text: L.field(fieldEqualityKey) + " != " + R.field(fieldEqualityKey), fact: vfact(L)}})
+		// two objects are equal by their members: the same names, each value
+		// equal, a list inside in order (ADR-0083 R6)
+		t, f := b.eqStructures(L, R, net)
 		// IN and CONTAINS reach the comparison through object_eq, == through
 		// eq
-		tp, _ := out(spectables.RuleObjectEq, dnf{t}, dnf{f})
+		tp, _ := out(spectables.RuleObjectEq, t, f)
 		tp.rules[spectables.RuleEq] = true
 		return tp, true
 	}
@@ -359,18 +352,10 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 			return c == spectables.ClassList || c == spectables.ClassNested || c == spectables.ClassNullElement
 		}
 		if listOrNested(cl) && listOrNested(cr) && lref && rref {
-			// two lists are equal as sets of typed elements, a number by its
-			// text and a string with its case
-			b.use(L, fieldEqualityKey)
-			b.use(R, fieldEqualityKey)
-			c := clsCheck
-			if net {
-				c = clsAfterBuilt
-			}
-			bind := conj(L.bind(), R.bind())
-			t := conj(bind, clause{{cls: c, text: L.field(fieldEqualityKey) + " == " + R.field(fieldEqualityKey), fact: vfact(L)}})
-			f := conj(bind, clause{{cls: c, text: L.field(fieldEqualityKey) + " != " + R.field(fieldEqualityKey), fact: vfact(L)}})
-			return out(spectables.RuleListEq, dnf{t}, dnf{f})
+			// two lists are equal as sets of elements, each compared by
+			// value (ADR-0083 R6)
+			t, f := b.eqStructures(L, R, net)
+			return out(spectables.RuleListEq, t, f)
 		}
 		if (cl == spectables.ClassScalar || cl == spectables.ClassObject || cl == spectables.ClassNull) &&
 			isListClass(cr) && rref {
@@ -492,54 +477,36 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		}
 		if structured(cl) || structured(cr) {
 			// a list or an object takes part, so elements are equal as eq
-			// says, which the tokens of the records give (Record.ElementTokens)
+			// says, which their deeps give (Record.ElementAlts)
 			c := clsCheck
 			if net {
 				c = clsAfterBuilt
 			}
 			if !lref || !rref {
-				// the own tokens of the literal meet the match tokens in the
-				// other side's element_tokens_with_text exactly where two
-				// elements are equal
+				// a literal is a scalar or a list of scalars, equal to an
+				// element exactly where one of its deeps is in that
+				// element's index
 				lits, other := L, R
 				if lref {
 					lits, other = R, L
 				}
-				b.use(other, fieldElementTokensWithText)
-				eb := other.field(fieldElementTokensWithText)
-				toks := make([]string, len(lits.lit.own))
-				var ts dnf
-				for i, k := range lits.lit.own {
-					toks[i] = "t:" + k
-					ts = append(ts, conj(other.bind(), clause{{cls: other.cls(c), text: lit(toks[i]) + " in " + eb,
-						fact: vfact(other), test: refTest(other, &test{kind: "has", val: toks[i], field: fieldElementTokensWithText})}}))
-				}
-				f := conj(other.bind(), clause{{cls: other.cls(c), fact: vfact(other),
-					test: refTest(other, &test{kind: "none", set: toks, field: fieldElementTokensWithText}),
-					text: fmt.Sprintf("every x in %s { not x in %s }", eb, setLit(toks))}})
-				return out(spectables.RuleContainsAny, union(ts), dnf{f})
+				b.use(other, fieldElementIndex)
+				ix := other.field(fieldElementIndex)
+				anyText, noneText := literalDeepAny(lits.lit.alts, ix)
+				test := func(kind string) *test { return refTest(other, &test{kind: kind, alts: lits.lit.alts}) }
+				t := conj(other.bind(), clause{{cls: other.cls(c), text: anyText, fact: vfact(other),
+					test: rightTest(test("deepany"))}})
+				f := conj(other.bind(), clause{{cls: other.cls(c), text: noneText, fact: vfact(other),
+					test: rightTest(test("deepnone"))}})
+				return out(spectables.RuleContainsAny, dnf{t}, dnf{f})
 			}
-			v := "e_" + L.ref.Var + "_" + R.ref.Var
+			b.use(L, fieldElementAlts)
+			b.use(R, fieldElementIndex)
 			bind := conj(L.bind(), R.bind())
-			var t dnf
-			var f clause
-			for _, p := range [][2]string{{fieldElementTokens, fieldElementTokensWithText}, {fieldElementTokensWithText, fieldElementTokens}} {
-				b.use(L, p[0])
-				b.use(R, p[1])
-				pair := func(kind string) *test {
-					if t := pairTest(kind, L, R); t != nil {
-						t.field, t.rightField = p[0], p[1]
-						return t
-					}
-					return nil
-				}
-				t = append(t, conj(bind, clause{
-					{cls: c, text: fmt.Sprintf("some %s in %s", v, L.field(p[0])), fact: vfact(L), test: pair("overlap")},
-					{cls: c, text: fmt.Sprintf("%s in %s", v, R.field(p[1])), fact: vfact(R), test: pair("noop")}}))
-				f = append(f, expr{cls: c, fact: vfact(L), test: pair("disjoint"),
-					text: fmt.Sprintf("every %s in %s { not %s in %s }", v, L.field(p[0]), v, R.field(p[1]))})
-			}
-			return out(spectables.RuleContainsAny, t, dnf{conj(bind, f)})
+			alts, ix := L.field(fieldElementAlts), R.field(fieldElementIndex)
+			t := conj(bind, clause{{cls: c, text: regoDeepAny(alts, ix), fact: vfact(L), test: pairTest("deepany", L, R)}})
+			f := conj(bind, clause{{cls: c, text: regoDeepNone(alts, ix), fact: vfact(L), test: pairTest("deepnone", L, R)}})
+			return out(spectables.RuleContainsAny, dnf{t}, dnf{f})
 		}
 		rks := ""
 		if rref {
@@ -777,6 +744,37 @@ func scalarField(f string) string {
 		return ""
 	}
 	return f
+}
+
+// eqStructures returns the rows where two references are equal as == compares
+// two lists or two objects, each element of one equal to some element of the
+// other, and the rows where they are not; net marks a side from the network.
+func (b *tb) eqStructures(L, R *side, net bool) (dnf, dnf) {
+	for _, s := range []*side{L, R} {
+		b.use(s, fieldEqAlts)
+		b.use(s, fieldEqIndex)
+	}
+	c := clsCheck
+	if net {
+		c = clsAfterBuilt
+	}
+	bind := conj(L.bind(), R.bind())
+	la, li, ra, ri := L.field(fieldEqAlts), L.field(fieldEqIndex), R.field(fieldEqAlts), R.field(fieldEqIndex)
+	t := conj(bind, clause{{cls: c, text: regoEqAll(la, ri), fact: vfact(L)}, {cls: c, text: regoEqAll(ra, li), fact: vfact(R)}})
+	return dnf{t}, dnf{
+		conj(bind, clause{{cls: c, text: regoEqNotAll(la, ri), fact: vfact(L)}}),
+		conj(bind, clause{{cls: c, text: regoEqNotAll(ra, li), fact: vfact(R)}}),
+	}
+}
+
+// rightTest moves the reference of a test of refTest to the right: a test
+// of deepany or deepnone reads the alternatives of a literal and the index of
+// the reference.
+func rightTest(t *test) *test {
+	if t != nil {
+		t.rightRef, t.ref = t.ref, ""
+	}
+	return t
 }
 
 // pairTest is a test over two references.

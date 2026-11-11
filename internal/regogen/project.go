@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
 
 	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/legacyvalue"
@@ -91,9 +92,8 @@ type Scope struct {
 }
 
 // Record is the value record of a reference, as the module reads it.
-// ElementKeys, ElementOwnKeys, TextKey, EqualityKey, ElementTokens, and
-// ElementTokensWithText are set only where the module reads them
-// ([Ref.read]).
+// ElementKeys, ElementOwnKeys, TextKey, EqAlts, EqIndex, ElementAlts, and
+// ElementIndex are set only where the module reads them ([Ref.read]).
 type Record struct {
 	State string
 	Class string
@@ -119,17 +119,18 @@ type Record struct {
 	TextKey *string
 	// Length is the number of elements of a list, null elements included.
 	Length *int
-	// EqualityKey is the key two lists are equal by, their typed elements as
-	// a set, and the key two objects are equal by, member by member.
-	EqualityKey *string
-	// ElementTokens and ElementTokensWithText hold the tokens of the
-	// elements of a list, or of a value read as a list of one, such that two
-	// elements are equal under the collection operators exactly when the
-	// ElementTokens of one meets the ElementTokensWithText of the other:
-	// ElementTokens holds the token of the element's value (eqToken), and
-	// ElementTokensWithText adds, for a list or an object, the token of its
-	// text, which a string equals it by.
-	ElementTokens, ElementTokensWithText []string
+	// EqAlts and EqIndex are what == compares two lists or two objects by
+	// (eqElements): the deeps of the elements of a list, null included, or
+	// of an object as the one element, and their index.
+	EqAlts  []deep
+	EqIndex deepIndex
+	// ElementAlts and ElementIndex are what IN, CONTAINS, and CONTAINS ANY
+	// compare the elements of a list, or of a value read as a list of one,
+	// by when a list or an object takes part: two elements are equal exactly
+	// when a deep of one in ElementAlts is in the ElementIndex of the other
+	// (elementAlts, elementIndex).
+	ElementAlts  [][]deep
+	ElementIndex deepIndex
 	// Number is the number <, <=, >, and >= compare a string or a scalar by,
 	// nil for a value they read as no number.
 	Number *jsonvalue.Decimal
@@ -137,12 +138,15 @@ type Record struct {
 	// Infinity or -Infinity, which MATCH reads (matchBeyondDouble); nil for
 	// any other value.
 	BeyondDouble *string
-	// SubsetLeft holds the tokens of each element of the value read as a
-	// list, and SubsetRight those of all its elements, as IS SUBSET compares
-	// them on the left and on the right (subsetLeft, subsetRight); set when
-	// the module reads them.
-	SubsetLeft  [][]string
-	SubsetRight []string
+	// SubsetIndex is the index IS SUBSET compares the ElementAlts of its
+	// left operand with: the ElementIndex of the value without objects.
+	SubsetIndex deepIndex
+	// TooBig is set where an index of the value the module reads is too big
+	// to look up in linear time ([deepIndex.tooBig]); the record holds its
+	// state alone, and the request fails ([Record.err]) unless the value is
+	// the answer of a source, which then reads as failed ([sourceRecord], and
+	// [Input.ScopeFailed] for a pass of the permission scope).
+	TooBig bool
 }
 
 // Input is the projection of a request into the input of a module.
@@ -161,6 +165,10 @@ type Input struct {
 	resource    jsonvalue.Value
 	docs        *regobuiltins.Documents
 	refs        []*Ref
+	// paths holds the record terms of the lazily read paths of resource
+	// whose index the module reads, which [Input.checkPaths] built and
+	// nc.resource_path returns.
+	paths map[pathKey]*ast.Term
 	// calls holds the q of each GENERAL or FILTERED PIP by reference ID,
 	// the member pip_requests of the input; nil for a module without one.
 	// pipValues holds the values [Request.Values] gave those PIPs, by
@@ -195,7 +203,99 @@ func class(v jsonvalue.Value, lv legacyvalue.Record) spectables.Class {
 	return spectables.ClassNested
 }
 
+// errIndexTooBig fails a request with a value whose index is too big to look
+// up in linear time: a request is untrusted input, and its cost has to stay
+// linear in its size.
+var errIndexTooBig = fmt.Errorf("a list holds elements of one shape that write their numbers in too many ways: "+
+	"a lookup among them would read more than %d groups and scanned elements", maxLookup)
+
+// record returns the record of v as r reads it, or a [Record.TooBig] one.
 func record(r *Ref, v Resolved) Record {
+	rec := buildRecord(r, v)
+	if r.reads(fieldEqIndex) && rec.EqIndex.tooBig() || r.reads(fieldElementIndex) && rec.ElementIndex.tooBig() ||
+		r.reads(fieldSubsetIndex) && rec.SubsetIndex.tooBig() {
+		return Record{State: rec.State, TooBig: true}
+	}
+	return rec
+}
+
+// err is the error of a request that holds rec, read as name: nil, or
+// errIndexTooBig where rec is TooBig.
+func (rec Record) err(name string) error {
+	if rec.TooBig {
+		return fmt.Errorf("the value of %s: %w", name, errIndexTooBig)
+	}
+	return nil
+}
+
+// pathKey is a lazily read path and the fields the module reads of it.
+type pathKey struct {
+	path string
+	read fieldSet
+}
+
+// checkPaths fails where the value at a lazily read path of the resource has
+// an index the module reads that is too big to look up, and keeps the record
+// of each such path for nc.resource_path. The module builds the record of a
+// path only where evaluation reaches it, so without the check an alternative
+// of an OR ahead of it would decide whether the request fails.
+func (in *Input) checkPaths() error {
+	for _, r := range in.refs {
+		if r.Path == "" || !r.reads(fieldEqIndex, fieldElementIndex, fieldSubsetIndex) {
+			continue
+		}
+		p, err := regobuiltins.CompilePath(r.Path)
+		if err != nil {
+			// nc.resource_path fails on it the same way
+			continue
+		}
+		rec := record(&Ref{Kind: spectables.KindResJSONPath, read: r.read}, selection(in.resource, p))
+		if err := rec.err(r.ID); err != nil {
+			return err
+		}
+		if in.paths == nil {
+			in.paths = map[pathKey]*ast.Term{}
+		}
+		in.paths[pathKey{r.Path, r.read}] = rec.term()
+	}
+	return nil
+}
+
+// sourceRecord is the record of a value a GENERAL or FILTERED PIP or the
+// entitlements service answered. Such a value too big to compare reads as the
+// source's failure, the ERROR state of a call that failed, so the answer does
+// not depend on whether evaluation reaches the call.
+func sourceRecord(r *Ref, v Resolved) Record {
+	rec := record(r, v)
+	if rec.TooBig {
+		return record(r, Resolved{State: spectables.StateError})
+	}
+	return rec
+}
+
+// projectRecord is the record of r the projection builds before evaluation,
+// or the error of a request with a value too big to compare.
+func projectRecord(r *Ref, v Resolved) (Record, error) {
+	if r.pip != nil || r.ent != nil {
+		return sourceRecord(r, v), nil
+	}
+	rec := record(r, v)
+	return rec, rec.err(r.ID)
+}
+
+// pathRecord is the term of the record nc.resource_path returns where the
+// projection has not built it, as for a caller of [JSONPathRecord]. A
+// builtin's plain error leaves its call undefined, which a negation would
+// read as false, so a record that fails the request halts the evaluation.
+func pathRecord(r *Ref, name string, v Resolved) (*ast.Term, error) {
+	rec := record(r, v)
+	if err := rec.err(name); err != nil {
+		return nil, rego.NewHaltError(err)
+	}
+	return rec.term(), nil
+}
+
+func buildRecord(r *Ref, v Resolved) Record {
 	rec := Record{State: string(v.State)}
 	if v.State == spectables.StateSingleOdd {
 		// a one-element GENERAL list of null, a boolean, or an object: the
@@ -203,9 +303,13 @@ func record(r *Ref, v Resolved) Record {
 		lv := legacyvalue.OfParts(v.Value, r.parts())
 		rec.elementKeys(r, v.Value, lv)
 		rec.HasNull = lv.State == legacyvalue.StateNullElement
-		if r.reads(fieldElementTokens, fieldElementTokensWithText) {
-			rec.ElementTokens, rec.ElementTokensWithText = elementTokens(v.Value, lv)
-		}
+		rec.elements(r, v.Value)
+		rec.subset(r, v.Value)
+		return rec
+	}
+	if v.State == spectables.StateScalarOdd {
+		// a number or a boolean GENERAL body: IS SUBSET reads it on the
+		// right as a list of one element
 		rec.subset(r, v.Value)
 		return rec
 	}
@@ -214,6 +318,9 @@ func record(r *Ref, v Resolved) Record {
 	}
 	if v.Value == nil {
 		rec.Class = string(spectables.ClassNull)
+		// IS SUBSET reads null on the left as a list of one element that
+		// equals nothing
+		rec.elements(r, nil)
 		rec.subset(r, nil)
 		return rec
 	}
@@ -223,9 +330,7 @@ func record(r *Ref, v Resolved) Record {
 		cl = spectables.ClassPIPList
 	}
 	rec.Class = string(cl)
-	if r.reads(fieldElementTokens, fieldElementTokensWithText) {
-		rec.ElementTokens, rec.ElementTokensWithText = elementTokens(v.Value, lv)
-	}
+	rec.elements(r, v.Value)
 	rec.subset(r, v.Value)
 	switch cl {
 	case spectables.ClassString, spectables.ClassScalar:
@@ -267,17 +372,12 @@ func record(r *Ref, v Resolved) Record {
 			textKey := legacyvalue.Fold(structureText(v.Value))
 			rec.TextKey = &textKey
 		}
-		if r.reads(fieldEqualityKey) {
-			rec.EqualityKey = lv.Structure
+		if r.reads(fieldEqAlts, fieldEqIndex) {
+			rec.EqAlts, rec.EqIndex = eqElements(v.Value, inputNumberValue)
 		}
 		if l, ok := v.Value.([]jsonvalue.Value); ok {
 			n := len(l)
 			rec.Length = &n
-		}
-		if lv.State == legacyvalue.StateEmptyColl && r.reads(fieldEqualityKey) {
-			// the record of an empty list carries no structure key; it is []
-			empty := "[]"
-			rec.EqualityKey = &empty
 		}
 	}
 	if s, ok := v.Value.(string); ok {
@@ -308,113 +408,20 @@ func (rec *Record) elementKeys(r *Ref, v jsonvalue.Value, lv legacyvalue.Record)
 	}
 }
 
-// subset sets SubsetLeft and SubsetRight for a reference that IS SUBSET reads.
+// subset sets SubsetIndex, where the module reads it.
 func (rec *Record) subset(r *Ref, v jsonvalue.Value) {
-	if !r.Subset {
+	if r.reads(fieldSubsetIndex) {
+		rec.SubsetIndex = elementIndex(v, inputNumberValue, false)
+	}
+}
+
+// elements sets ElementAlts and ElementIndex, where the module reads them.
+func (rec *Record) elements(r *Ref, v jsonvalue.Value) {
+	if !r.reads(fieldElementAlts, fieldElementIndex) {
 		return
 	}
-	rec.SubsetLeft = subsetLeft(v, inputNumberValue)
-	rec.SubsetRight = subsetRight(v, inputNumberValue, subsetOneValue(r.Kind))
-}
-
-// elementTokens returns the ElementTokens and ElementTokensWithText of a
-// value, a list or a value read as a list of one; lv is its legacyvalue.Of.
-// A scalar element contributes its own tokens to tokens and its match tokens
-// to withText (scalarTokens), each behind t:. Where every element has the
-// same tokens in both, withText is tokens itself.
-func elementTokens(v jsonvalue.Value, lv legacyvalue.Record) (tokens, withText []string) {
-	l, ok := v.([]jsonvalue.Value)
-	elems := lv.Elements
-	if !ok {
-		l, elems = []jsonvalue.Value{v}, []legacyvalue.Record{lv}
-	}
-	tokens, withText = []string{}, []string{}
-	same := true
-	for i, e := range l {
-		switch e.(type) {
-		case string, jsonvalue.Number, bool:
-			t := scalarTokensOfRecord(e, elems[i])
-			for _, x := range t.own() {
-				tokens = append(tokens, "t:"+x)
-			}
-			for _, x := range t.match() {
-				withText = append(withText, "t:"+x)
-			}
-			same = same && t.valueKey == "" && t.matchKey == ""
-			continue
-		}
-		if t, ok := eqToken(e); ok {
-			tokens = append(tokens, t)
-			withText = append(withText, t)
-		}
-		switch e.(type) {
-		case []jsonvalue.Value, *jsonvalue.Object:
-			withText = append(withText, "t:"+legacyvalue.Fold(structureText(e)))
-			same = false
-		}
-	}
-	if same {
-		withText = tokens
-	}
-	return tokens, withText
-}
-
-// eqToken returns the token two elements that are not scalars are equal by,
-// and the token of a scalar inside a nested list: a number by its value, a string by
-// its text with case, a boolean by its text; an object by its members, with
-// their case; a list by its elements in order, each by its token. Null equals
-// nothing, so null and a list that holds one have no token.
-func eqToken(e jsonvalue.Value) (string, bool) {
-	switch e := e.(type) {
-	case nil:
-		return "", false
-	case *jsonvalue.Object:
-		return "o:" + *legacyvalue.Of(e).Structure, true
-	case []jsonvalue.Value:
-		return listToken(e, eqToken)
-	case jsonvalue.Number:
-		return "n:" + inputNumberValue(e), true
-	case string:
-		return "c:" + e, true
-	case bool:
-		return "t:" + strconv.FormatBool(e), true
-	}
-	panic("regogen: not a Value")
-}
-
-// listToken returns the token of a list by the tokens of its elements in
-// order: leaf gives the token of an element other than a list, and the list
-// has no token where leaf gives none for an element at any depth. Each leaf
-// token is quoted once and each level of nesting adds "l:[" and "]", so the
-// length of the token is linear in the size of the list.
-func listToken(l []jsonvalue.Value, leaf func(jsonvalue.Value) (string, bool)) (string, bool) {
-	var b strings.Builder
-	if !writeListToken(&b, l, leaf) {
-		return "", false
-	}
-	return b.String(), true
-}
-
-func writeListToken(b *strings.Builder, l []jsonvalue.Value, leaf func(jsonvalue.Value) (string, bool)) bool {
-	b.WriteString("l:[")
-	for i, e := range l {
-		if i > 0 {
-			b.WriteByte(',')
-		}
-		if nested, ok := e.([]jsonvalue.Value); ok {
-			if !writeListToken(b, nested, leaf) {
-				return false
-			}
-			continue
-		}
-		t, ok := leaf(e)
-		if !ok {
-			return false
-		}
-		b.WriteString(strconv.Quote(t))
-	}
-	b.WriteByte(']')
-	return true
+	rec.ElementAlts = elementAlts(v, inputNumberValue)
+	rec.ElementIndex = elementIndex(v, inputNumberValue, true)
 }
 
 // Project builds the input of the module for a request. It fails when the
@@ -449,13 +456,23 @@ func Project(m *Module, req Request) (*Input, error) {
 				return nil, fmt.Errorf("no resolved value of %s (%s)", r.Key, r.ID)
 			}
 		}
-		in.Records[r.ID] = record(r, v)
+		rec, err := projectRecord(r, v)
+		if err != nil {
+			return nil, err
+		}
+		in.Records[r.ID] = rec
+	}
+	if req.Body.HasResource {
+		if err := in.checkPaths(); err != nil {
+			return nil, err
+		}
 	}
 	if m.Iterates {
 		if req.Scope == nil {
 			return nil, fmt.Errorf("no permission scope for the iterate of the module")
 		}
 		in.ScopeFailed = req.Scope.Failed
+	passes:
 		for i, values := range req.Scope.Passes {
 			pass := map[string]Record{}
 			for _, r := range m.Refs {
@@ -466,7 +483,14 @@ func Project(m *Module, req Request) (*Input, error) {
 				if !ok {
 					return nil, fmt.Errorf("no resolved value of %s (%s) in pass %d", r.Key, r.ID, i)
 				}
-				pass[r.ID] = record(r, v)
+				rec := record(r, v)
+				if rec.TooBig {
+					// the permission scope is a source too, and an answer
+					// too big to compare reads as one that failed
+					in.ScopeFailed, in.Passes = true, nil
+					break passes
+				}
+				pass[r.ID] = rec
 			}
 			in.Passes = append(in.Passes, pass)
 		}
@@ -523,23 +547,14 @@ func strsTerm(ss []string) *ast.Term {
 }
 
 // keysTerm is the term of a list the module only tests membership in or
-// iterates, element_keys, element_tokens, element_tokens_with_text, or
-// subset_right: a Rego set, so that x in it costs one lookup
-// and not a scan of the list.
+// iterates, element_keys or element_own_keys: a Rego set, so that x in it
+// costs one lookup and not a scan of the list.
 func keysTerm(ss []string) *ast.Term {
 	ts := make([]*ast.Term, len(ss))
 	for i, s := range ss {
 		ts[i] = ast.StringTerm(s)
 	}
 	return ast.SetTerm(ts...)
-}
-
-func setsTerm(sets [][]string) *ast.Term {
-	ts := make([]*ast.Term, len(sets))
-	for i, s := range sets {
-		ts[i] = strsTerm(s)
-	}
-	return ast.ArrayTerm(ts...)
 }
 
 func (r Record) term() *ast.Term {
@@ -571,16 +586,16 @@ func (r Record) term() *ast.Term {
 	if r.TextKey != nil {
 		o.Insert(strTerm(fieldTextKey), strTerm(*r.TextKey))
 	}
-	if r.EqualityKey != nil {
-		o.Insert(strTerm(fieldEqualityKey), strTerm(*r.EqualityKey))
+	if r.EqAlts != nil {
+		o.Insert(strTerm(fieldEqAlts), deepsTerm(r.EqAlts))
+		o.Insert(strTerm(fieldEqIndex), r.EqIndex.term())
 	}
 	if r.Length != nil {
 		o.Insert(strTerm(fieldLength), ast.IntNumberTerm(*r.Length))
 	}
-	if r.ElementTokens != nil {
-		tokens := keysTerm(r.ElementTokens)
-		o.Insert(strTerm(fieldElementTokens), tokens)
-		o.Insert(strTerm(fieldElementTokensWithText), r.withTextTerm(tokens))
+	if r.ElementAlts != nil {
+		o.Insert(strTerm(fieldElementAlts), altsTerm(r.ElementAlts))
+		o.Insert(strTerm(fieldElementIndex), r.ElementIndex.term())
 	}
 	if r.Number != nil {
 		o.Insert(strTerm(fieldNumber), orderKey(*r.Number))
@@ -588,9 +603,8 @@ func (r Record) term() *ast.Term {
 	if r.BeyondDouble != nil {
 		o.Insert(strTerm(fieldBeyondDouble), strTerm(*r.BeyondDouble))
 	}
-	if r.SubsetLeft != nil {
-		o.Insert(strTerm(fieldSubsetLeft), setsTerm(r.SubsetLeft))
-		o.Insert(strTerm(fieldSubsetRight), keysTerm(r.SubsetRight))
+	if r.SubsetIndex != nil {
+		o.Insert(strTerm(fieldSubsetIndex), r.SubsetIndex.term())
 	}
 	return ast.NewTerm(o)
 }
@@ -666,27 +680,27 @@ func fieldMaps(refs []*Ref, rec func(*Ref) (Record, bool)) ast.Object {
 // [fieldMaps] from a reference ID to that field of its record. A module reads
 // them as input.<field>, p.<field> in a pass, or p_<Var>.<field>.
 const (
-	fieldState                 = "state"
-	fieldClass                 = "class"
-	fieldKey                   = "key"
-	fieldValueKey              = "value_key"
-	fieldMatchKey              = "match_key"
-	fieldElementKeys           = "element_keys"
-	fieldElementOwnKeys        = "element_own_keys"
-	fieldText                  = "text"
-	fieldSegments              = "segments"
-	fieldSegmentsFromEnd       = "segments_from_end"
-	fieldSegmentCount          = "segment_count"
-	fieldHasNull               = "has_null"
-	fieldTextKey               = "text_key"
-	fieldEqualityKey           = "equality_key"
-	fieldLength                = "length"
-	fieldElementTokens         = "element_tokens"
-	fieldElementTokensWithText = "element_tokens_with_text"
-	fieldNumber                = "number"
-	fieldSubsetLeft            = "subset_left"
-	fieldSubsetRight           = "subset_right"
-	fieldBeyondDouble          = "beyond_double"
+	fieldState           = "state"
+	fieldClass           = "class"
+	fieldKey             = "key"
+	fieldValueKey        = "value_key"
+	fieldMatchKey        = "match_key"
+	fieldElementKeys     = "element_keys"
+	fieldElementOwnKeys  = "element_own_keys"
+	fieldText            = "text"
+	fieldSegments        = "segments"
+	fieldSegmentsFromEnd = "segments_from_end"
+	fieldSegmentCount    = "segment_count"
+	fieldHasNull         = "has_null"
+	fieldTextKey         = "text_key"
+	fieldEqAlts          = "eq_alts"
+	fieldEqIndex         = "eq_index"
+	fieldLength          = "length"
+	fieldElementAlts     = "element_alts"
+	fieldElementIndex    = "element_index"
+	fieldNumber          = "number"
+	fieldSubsetIndex     = "subset_index"
+	fieldBeyondDouble    = "beyond_double"
 )
 
 // The names of the members of the input besides the maps of [fieldMaps].
@@ -702,9 +716,9 @@ const (
 
 // recordFields names the maps of [fieldMaps].
 var recordFields = []string{fieldState, fieldClass, fieldKey, fieldElementKeys, fieldText, fieldSegments,
-	fieldSegmentsFromEnd, fieldSegmentCount, fieldHasNull, fieldTextKey, fieldEqualityKey, fieldLength,
-	fieldElementTokens, fieldElementTokensWithText, fieldNumber, fieldSubsetLeft, fieldSubsetRight,
-	fieldBeyondDouble, fieldValueKey, fieldMatchKey, fieldElementOwnKeys}
+	fieldSegmentsFromEnd, fieldSegmentCount, fieldHasNull, fieldTextKey, fieldEqAlts, fieldLength,
+	fieldElementAlts, fieldElementIndex, fieldNumber, fieldSubsetIndex,
+	fieldBeyondDouble, fieldValueKey, fieldMatchKey, fieldElementOwnKeys, fieldEqIndex}
 
 // fieldSet holds names of recordFields, one bit each, and fieldsKnown.
 type fieldSet uint32
@@ -782,12 +796,6 @@ func (r *Ref) parts() legacyvalue.Parts {
 	if r.reads(fieldElementKeys, fieldElementOwnKeys) {
 		p |= legacyvalue.PartKeys
 	}
-	if r.reads(fieldEqualityKey) {
-		p |= legacyvalue.PartStructure
-	}
-	if r.reads(fieldElementTokens, fieldElementTokensWithText) {
-		p |= legacyvalue.PartElements
-	}
 	return p
 }
 
@@ -804,16 +812,6 @@ func fieldObjects(refs []*Ref, rec func(*Ref) (Record, bool)) map[string]ast.Obj
 		}
 	}
 	return fields
-}
-
-// withTextTerm returns the term of ElementTokensWithText, which is tokens,
-// the term of ElementTokens, where the two are one slice (elementTokens).
-func (rec Record) withTextTerm(tokens *ast.Term) *ast.Term {
-	toks, withText := rec.ElementTokens, rec.ElementTokensWithText
-	if len(withText) == len(toks) && (len(toks) == 0 || &withText[0] == &toks[0]) {
-		return tokens
-	}
-	return keysTerm(rec.ElementTokensWithText)
 }
 
 // fields gives put each entry of the record in the maps of [fieldMaps] that
@@ -849,19 +847,23 @@ func (rec Record) fields(emit fieldSet, put func(field string, v *ast.Term)) {
 	if rec.TextKey != nil && emit.has(fieldTextKey) {
 		put(fieldTextKey, strTerm(*rec.TextKey))
 	}
-	if rec.EqualityKey != nil && emit.has(fieldEqualityKey) {
-		put(fieldEqualityKey, strTerm(*rec.EqualityKey))
+	if rec.EqAlts != nil {
+		if emit.has(fieldEqAlts) {
+			put(fieldEqAlts, deepsTerm(rec.EqAlts))
+		}
+		if emit.has(fieldEqIndex) {
+			put(fieldEqIndex, rec.EqIndex.term())
+		}
 	}
 	if rec.Length != nil && emit.has(fieldLength) {
 		put(fieldLength, ast.IntNumberTerm(*rec.Length))
 	}
-	if rec.ElementTokens != nil && emit.has(fieldElementTokens, fieldElementTokensWithText) {
-		tokens := keysTerm(rec.ElementTokens)
-		if emit.has(fieldElementTokens) {
-			put(fieldElementTokens, tokens)
+	if rec.ElementAlts != nil {
+		if emit.has(fieldElementAlts) {
+			put(fieldElementAlts, altsTerm(rec.ElementAlts))
 		}
-		if emit.has(fieldElementTokensWithText) {
-			put(fieldElementTokensWithText, rec.withTextTerm(tokens))
+		if emit.has(fieldElementIndex) {
+			put(fieldElementIndex, rec.ElementIndex.term())
 		}
 	}
 	if rec.Number != nil && emit.has(fieldNumber) {
@@ -870,13 +872,8 @@ func (rec Record) fields(emit fieldSet, put func(field string, v *ast.Term)) {
 	if rec.BeyondDouble != nil && emit.has(fieldBeyondDouble) {
 		put(fieldBeyondDouble, strTerm(*rec.BeyondDouble))
 	}
-	if rec.SubsetLeft != nil {
-		if emit.has(fieldSubsetLeft) {
-			put(fieldSubsetLeft, setsTerm(rec.SubsetLeft))
-		}
-		if emit.has(fieldSubsetRight) {
-			put(fieldSubsetRight, keysTerm(rec.SubsetRight))
-		}
+	if rec.SubsetIndex != nil && emit.has(fieldSubsetIndex) {
+		put(fieldSubsetIndex, rec.SubsetIndex.term())
 	}
 	if rec.Segments != nil {
 		if emit.has(fieldSegments) {

@@ -14,13 +14,7 @@
 
 package legacyvalue
 
-import (
-	"slices"
-	"strconv"
-	"strings"
-
-	"authz-agent/internal/jsonvalue"
-)
+import "authz-agent/internal/jsonvalue"
 
 // State is the state an operand resolves to.
 type State string
@@ -100,19 +94,9 @@ type Record struct {
 	CaseKey *string
 	// ks: the keys of the elements that are not null, for a list; the record's
 	// own Key for any other value, which a collection operator reads as a list
-	// of one. A number element compares with a number or a string by the
-	// Number of its record in e instead.
+	// of one. A number element compares with a number or a string by its value
+	// instead.
 	Keys []string
-	// o: for a list or an object, the key two lists or two objects are equal
-	// by: object members in key order, keys and strings with their case, and
-	// each value typed, so {"a": 1} and {"a": "1"} have two keys, and so do
-	// ["X"] and ["x"]. The list that [Of] reads is a set, as legacy reads a
-	// list operand into a java.util.HashSet: its key lists the keys of its
-	// elements sorted and without repeats, so [1, 2], [2, 1], and [1, 2, 2]
-	// share one. A list inside an element or a member keeps its order. A
-	// number is keyed by its Number, or by its [NumberText] where it has none,
-	// so {"a": 1}, {"a": 1.0}, and {"a": 1e0} share one (ADR-0083).
-	Structure *string
 	// n: the number new BigDecimal(ck) reads, set for a number and for
 	// a string that BigDecimal reads; <, <=, >, and >= compare it, and so does
 	// == between a number and a number or a string. A fraction or an exponent
@@ -120,11 +104,6 @@ type Record struct {
 	// Infinity, has none. It is normalized, so two equal numbers have the same
 	// Number.
 	Number *jsonvalue.Decimal
-	// e: the records of the elements of a list, null elements included. An
-	// element record has no e of its own: a list nested in an element compares
-	// by the o and the ks of the element record. So the records of a value
-	// hold its text a fixed number of times, however deep its lists nest.
-	Elements []Record
 }
 
 // WithState returns the record of an operand in state s, which carries no
@@ -142,12 +121,8 @@ const (
 	PartKey Parts = 1 << iota
 	// PartKeys is ks.
 	PartKeys
-	// PartStructure is o.
-	PartStructure
-	// PartElements is e.
-	PartElements
 	// AllParts is every part, the record [Of] returns.
-	AllParts = PartKey | PartKeys | PartStructure | PartElements
+	AllParts = PartKey | PartKeys
 )
 
 // Of returns the record of v as the operand's value: state NULL for nil,
@@ -162,13 +137,12 @@ func Of(v jsonvalue.Value) Record {
 // other value, are whole.
 func OfParts(v jsonvalue.Value, p Parts) Record {
 	if l, ok := v.([]jsonvalue.Value); ok && len(l) > 0 {
-		return listWithElements(l, p)
+		return listRecord(l, p)
 	}
-	return of(v, false)
+	return of(v)
 }
 
-// of returns the record of v, and leaves out e when elements is false.
-func of(v jsonvalue.Value, elements bool) Record {
+func of(v jsonvalue.Value) Record {
 	switch x := v.(type) {
 	case nil:
 		return Record{State: StateNull}
@@ -179,13 +153,15 @@ func of(v jsonvalue.Value, elements bool) Record {
 	case bool:
 		return scalar(TypeBoolean, ClassScalar, Text(x))
 	case []jsonvalue.Value:
-		return listRecord(x, elements)
+		if len(x) == 0 {
+			return Record{State: StateEmptyColl}
+		}
+		return listRecord(x, AllParts)
 	case *jsonvalue.Object:
 		ck := Text(x)
 		k := Fold(ck)
-		sk := structureKey(x)
 		return Record{State: StateValue, Class: ClassOther, Type: TypeObject, Key: &k, CaseKey: &ck,
-			Keys: []string{k}, Structure: &sk}
+			Keys: []string{k}}
 	}
 	panic("legacyvalue: not a Value")
 }
@@ -199,99 +175,23 @@ func scalar(t Type, c Class, text string) Record {
 	return r
 }
 
-func listRecord(list []jsonvalue.Value, elements bool) Record {
-	if len(list) == 0 {
-		return Record{State: StateEmptyColl}
-	}
-	if elements {
-		return listWithElements(list, AllParts)
-	}
-	ck := Text(list)
-	k := Fold(ck)
-	sk := structureKey(list)
-	r := Record{State: StateValue, Class: ClassList, Type: TypeArray, Key: &k, CaseKey: &ck,
-		Keys: []string{}, Structure: &sk}
-	for _, e := range list {
-		if !classify(&r, e) {
-			r.Keys = append(r.Keys, Fold(Text(e)))
-		}
-	}
-	return r
-}
-
-// listWithElements returns the record of a non-empty list with the parts p,
-// e among them where p has PartElements. It builds
-// the list's ck, k, and ks from the records of its elements, which hold the
-// same texts, instead of reading the elements again, and its o as the key of
-// a set. The element records
-// come from of(e, false), which reads each element directly: joining at every
-// level would copy each byte once per level of nesting.
-func listWithElements(list []jsonvalue.Value, p Parts) Record {
+// listRecord returns the record of a non-empty list with the parts p. It
+// writes the Java text of the list once and that of each element once, so
+// its cost is linear in the size of the list however deep its lists nest.
+func listRecord(list []jsonvalue.Value, p Parts) Record {
 	r := Record{State: StateValue, Class: ClassList, Type: TypeArray}
+	if p&PartKey != 0 {
+		ck := Text(list)
+		k := Fold(ck)
+		r.CaseKey, r.Key = &ck, &k
+	}
 	if p&PartKeys != 0 {
 		r.Keys = []string{}
 	}
-	if p&PartElements != 0 {
-		r.Elements = make([]Record, len(list))
-	}
-	var ck, k strings.Builder
-	ck.WriteByte('[')
-	k.WriteByte('[')
-	var elementKeys []string
-	if p&PartStructure != 0 {
-		elementKeys = make([]string, len(list))
-	}
-	for i, e := range list {
-		null := classify(&r, e)
-		if p&^PartStructure == 0 {
-			// o alone reads the element, not its record
-			if elementKeys != nil {
-				elementKeys[i] = structureKey(e)
-			}
-			continue
+	for _, e := range list {
+		if !classify(&r, e) && r.Keys != nil {
+			r.Keys = append(r.Keys, Fold(Text(e)))
 		}
-		er := of(e, false)
-		if r.Elements != nil {
-			r.Elements[i] = er
-		}
-		// A null element and an empty list have a record without ck or o.
-		var text, ek string
-		if er.Key != nil {
-			text, ek = *er.CaseKey, *er.Key
-		} else {
-			text = Text(e)
-			ek = Fold(text)
-		}
-		if p&PartKey != 0 {
-			if i > 0 {
-				ck.WriteString(", ")
-				k.WriteString(", ")
-			}
-			ck.WriteString(text)
-			k.WriteString(ek)
-		}
-		if elementKeys != nil {
-			if er.Structure != nil {
-				elementKeys[i] = *er.Structure
-			} else {
-				elementKeys[i] = structureKey(e)
-			}
-		}
-		if !null && r.Keys != nil {
-			r.Keys = append(r.Keys, ek)
-		}
-	}
-	if p&PartKey != 0 {
-		ck.WriteByte(']')
-		k.WriteByte(']')
-		cks, ks := ck.String(), k.String()
-		r.CaseKey, r.Key = &cks, &ks
-	}
-	if elementKeys != nil {
-		slices.Sort(elementKeys)
-		elementKeys = slices.Compact(elementKeys)
-		os := "[" + strings.Join(elementKeys, ",") + "]"
-		r.Structure = &os
 	}
 	return r
 }
@@ -309,69 +209,4 @@ func classify(r *Record, e jsonvalue.Value) bool {
 		r.Class = ClassOther
 	}
 	return false
-}
-
-// structureKey returns a text of v in which every object lists its members in
-// key order, a string is quoted with its case, and a number is unquoted as its
-// Number prints it, or as [NumberText] where it has none, so a number and a string
-// of the same digits differ.
-func structureKey(v jsonvalue.Value) string {
-	var b strings.Builder
-	writeStructureKey(&b, v)
-	return b.String()
-}
-
-func writeStructureKey(b *strings.Builder, v jsonvalue.Value) {
-	switch x := v.(type) {
-	case nil:
-		b.WriteString("null")
-	case bool:
-		b.WriteString(strconv.FormatBool(x))
-	case jsonvalue.Number:
-		if d, ok := jsonvalue.ParseBigDecimal(NumberText(x)); ok {
-			b.WriteString(d.String())
-		} else {
-			b.WriteString(NumberText(x))
-		}
-	case string:
-		writeQuoted(b, x)
-	case []jsonvalue.Value:
-		b.WriteByte('[')
-		for i, e := range x {
-			if i > 0 {
-				b.WriteByte(',')
-			}
-			writeStructureKey(b, e)
-		}
-		b.WriteByte(']')
-	case *jsonvalue.Object:
-		keys := slices.Sorted(slices.Values(x.Keys()))
-		b.WriteByte('{')
-		for i, k := range keys {
-			if i > 0 {
-				b.WriteByte(',')
-			}
-			writeQuoted(b, k)
-			b.WriteByte(':')
-			e, _ := x.Get(k)
-			writeStructureKey(b, e)
-		}
-		b.WriteByte('}')
-	}
-}
-
-// writeQuoted writes s as strconv.Quote does. A string of printable ASCII
-// without a quote or a backslash, which Quote only surrounds with quotes, is
-// written without escaping it.
-func writeQuoted(b *strings.Builder, s string) {
-	for i := 0; i < len(s); i++ {
-		if c := s[i]; c < ' ' || c > '~' || c == '"' || c == '\\' {
-			var buf [64]byte
-			b.Write(strconv.AppendQuote(buf[:0], s))
-			return
-		}
-	}
-	b.WriteByte('"')
-	b.WriteString(s)
-	b.WriteByte('"')
 }
