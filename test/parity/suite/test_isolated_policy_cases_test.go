@@ -355,7 +355,7 @@ func (s *ParitySuite) endUnloadedCase(subCase string, status int, err *agentLoad
 // subtest "setup" fails with it, and every request of requests is a subtest
 // skipped with it.
 func (s *ParitySuite) endBrokenCase(broken string, requests []isolatedRequest) {
-	s.Run("setup", func() { s.T().Error(broken) })
+	failSetup(s.T(), broken)
 	for _, req := range requests {
 		s.Run(req.name, func() { skipIfBroken(s.T(), broken) })
 	}

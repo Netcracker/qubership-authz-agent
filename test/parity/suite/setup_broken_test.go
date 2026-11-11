@@ -24,9 +24,9 @@ import (
 // runSetup runs setup as the subtest "setup" of t and returns the report of its
 // failure, or "" when it succeeded. A failure fails that subtest, with a message
 // that starts with setupBrokenPrefix; a setup that stops its subtest with
-// t.Fatal is reported the same way. When -run leaves the subtest out, setup does
-// not run and the report says so: the checks after it wait on a stand nobody
-// set up.
+// t.Fatal is reported the same way. When -run or -skip leaves the subtest out,
+// setup does not run and the report says so: the checks after it wait on a
+// stand nobody set up.
 func runSetup(t *testing.T, setup func(t *testing.T) error) string {
 	t.Helper()
 	return runNamedSetup(t, "setup", setup)
@@ -57,6 +57,20 @@ func runNamedSetup(t *testing.T, name string, setup func(t *testing.T) error) st
 		broken = setupBrokenPrefix + ": the " + name + " subtest failed, see its output"
 	}
 	return broken
+}
+
+// failSetup fails the subtest "setup" of t with report, or t itself when -run
+// or -skip leaves that subtest out, so the failure is not filtered away with it.
+func failSetup(t *testing.T, report string) {
+	t.Helper()
+	ran := false
+	t.Run("setup", func(t *testing.T) {
+		ran = true
+		t.Error(report)
+	})
+	if !ran {
+		t.Error(report)
+	}
 }
 
 // skipIfBroken skips t, a check that waited on a setup, when that setup broke.
