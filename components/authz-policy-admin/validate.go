@@ -97,7 +97,7 @@ var (
 		"name", "pipType", "url", "httpMethod", "header", "claim", "beanName", "domain", "type", "jsonPath",
 	}
 	policyTexts = []string{
-		"component", "resourceType", "operation", "rsqlPredicate", "sqlPredicate", "mongodbPredicate", "predicate",
+		"component", "resourceType", "operation", "rsqlPredicate",
 	}
 )
 
