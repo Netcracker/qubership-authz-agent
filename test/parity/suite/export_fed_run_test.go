@@ -27,9 +27,10 @@ import (
 // stub pins of its log, each export mounted before the decisions that follow
 // it, and every compared golden. A golden fails when the agent's answer
 // matches neither the golden nor, for an accepted class, the answer the bundle
-// predicts. An export the agent did not load fails the function once, with
-// setupBrokenPrefix, and the goldens after it are not compared. It runs only under PARITY_PROFILE=authz-agent-export, and needs the
-// kind stand with the agent's AUTHZ_PAP_CLIENT_SOURCE_URL pointing at the
+// predicts. An export the agent did not load fails a subtest "setup" of the
+// function, with setupBrokenPrefix, and the goldens after it are not
+// compared. It runs only under PARITY_PROFILE=authz-agent-export, and needs
+// the kind stand with the agent's AUTHZ_PAP_CLIENT_SOURCE_URL pointing at the
 // export source (make parity-export).
 func TestExportFedAgent(t *testing.T) {
 	cfg := LoadConfig()
@@ -85,7 +86,7 @@ func TestExportFedAgent(t *testing.T) {
 				case verdictBroken:
 					if !reported[res.Detail] {
 						reported[res.Detail] = true
-						t.Error(res.Detail)
+						t.Run("setup", func(t *testing.T) { t.Error(res.Detail) })
 					}
 					t.Logf("NOT COMPARED %s: %s", res.Path, res.Detail)
 				case verdictDiffers:
