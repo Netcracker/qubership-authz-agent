@@ -769,10 +769,11 @@ func TestLegacyCanaries_AddOneForEachOtherTenantOfTheDecisionsThatTheExportNames
 	}
 }
 
-// A point whose export the agent loaded without a holder tenant fails the
-// setup subtest of that tenant with SETUP BROKEN and skips the decisions in it;
-// the decisions in the case's tenant are compared. The test reads the go test
-// output from a child run of itself, since the child fails on purpose.
+// A denied canary breaks the decisions of its tenant alone: with the holder's
+// canary denied, or the case tenant's, the other tenant and a tenant without a
+// canary are compared. With every canary denied, the agent holds none of the
+// export, and every decision is skipped. The test reads the go test output from
+// a child run of itself, since the child fails on purpose.
 func TestSetUpLegacyPoint_SkipsTheDecisionsOfATenantWhoseCanaryIsDenied(t *testing.T) {
 	if os.Getenv(brokenSetupChild) == "1" {
 		p := legacyExportPoint{
@@ -785,24 +786,51 @@ func TestSetUpLegacyPoint_SkipsTheDecisionsOfATenantWhoseCanaryIsDenied(t *testi
 			decisions: []legacyDecision{
 				{tenant: "parity-a", path: "read-a"},
 				{tenant: "parity-a-holder", path: "read-holder"},
+				{tenant: "parity-unnamed", path: "read-unnamed"},
 			},
 		}
-		setup := setUpLegacyPoint(t, p, legacyCanaries(p, 1, "parity-a", "default"), "default", legacyPointLoader{
-			mount:   func(*testing.T, json.RawMessage, json.RawMessage) error { return nil },
-			allowed: func(_ *testing.T, c legacyCanary) bool { return c.tenant != "parity-a-holder" },
-		})
-		for _, d := range p.decisions {
-			t.Run(d.path, func(t *testing.T) { skipIfBroken(t, setup.brokenFor(d)) })
+		for _, tc := range []struct {
+			name   string
+			denied []string
+		}{
+			{"holder-denied", []string{"parity-a-holder"}},
+			{"case-denied", []string{"parity-a"}},
+			{"all-denied", []string{"parity-a", "parity-a-holder"}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				setup := setUpLegacyPoint(t, p, legacyCanaries(p, 1, "parity-a", "default"), "default", legacyPointLoader{
+					mount:   func(*testing.T, json.RawMessage, json.RawMessage) error { return nil },
+					allowed: func(_ *testing.T, c legacyCanary) bool { return !slices.Contains(tc.denied, c.tenant) },
+				})
+				for _, d := range p.decisions {
+					t.Run(d.path, func(t *testing.T) { skipIfBroken(t, setup.brokenFor(d)) })
+				}
+			})
 		}
 		return
 	}
 	name := regexp.QuoteMeta(t.Name())
+	denied := func(tenant, rt string) string {
+		return `SETUP BROKEN: the agent did not load tenant ` + tenant + ` of the export of step h4: the canary set ` +
+			rt + ` is denied there`
+	}
 	requireOutput(t, childOutput(t),
-		`--- PASS: `+name+`/setup `,
-		`=== RUN   `+name+`/setup_parity-a-holder\n.*: SETUP BROKEN: the agent did not load tenant parity-a-holder `+
-			`of the export of step h4: the canary set PARITY_EXPORT_CANARY_1_1 is denied there`,
-		`--- FAIL: `+name+`/setup_parity-a-holder `,
-		`--- PASS: `+name+`/read-a `,
-		`=== RUN   `+name+`/read-holder\n.*: SETUP BROKEN: the agent did not load tenant parity-a-holder .*; not compared\n`,
-		`--- SKIP: `+name+`/read-holder `)
+		`--- PASS: `+name+`/holder-denied/setup `,
+		`=== RUN   `+name+`/holder-denied/setup_parity-a-holder\n.*: `+denied("parity-a-holder", "PARITY_EXPORT_CANARY_1_1"),
+		`--- PASS: `+name+`/holder-denied/read-a `,
+		`=== RUN   `+name+`/holder-denied/read-holder\n.*: `+denied("parity-a-holder", "PARITY_EXPORT_CANARY_1_1")+`.*; not compared\n`,
+		`--- SKIP: `+name+`/holder-denied/read-holder `,
+		`--- PASS: `+name+`/holder-denied/read-unnamed `,
+
+		`=== RUN   `+name+`/case-denied/setup\n.*: `+denied("parity-a", "PARITY_EXPORT_CANARY_1"),
+		`--- PASS: `+name+`/case-denied/setup_parity-a-holder `,
+		`--- SKIP: `+name+`/case-denied/read-a `,
+		`--- PASS: `+name+`/case-denied/read-holder `,
+		`--- PASS: `+name+`/case-denied/read-unnamed `,
+
+		`--- FAIL: `+name+`/all-denied/setup `,
+		`--- FAIL: `+name+`/all-denied/setup_parity-a-holder `,
+		`--- SKIP: `+name+`/all-denied/read-a `,
+		`--- SKIP: `+name+`/all-denied/read-holder `,
+		`=== RUN   `+name+`/all-denied/read-unnamed\n.*: `+denied("parity-a", "PARITY_EXPORT_CANARY_1")+`.*; not compared\n`)
 }

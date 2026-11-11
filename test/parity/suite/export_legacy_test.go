@@ -741,9 +741,11 @@ type legacyCanary struct{ rt, tenant string }
 // export, of type legacyCanaryType(n) in caseTenant, and then one in each
 // other tenant a decision of p runs in, each of a type of its own. A pull
 // can load the export without one of its tenants, and the canary of that
-// tenant tells it. A tenant no element of the export names gets no canary,
-// which would add that tenant to the agent's configuration. A decision with
-// no tenant runs in stand.
+// tenant tells it. The canary of caseTenant is mounted even when the export
+// names no element of that tenant: an empty export is told from the previous
+// one by that canary alone, and its set admits no resource type but its own.
+// Another tenant no element of the export names gets no canary, since nothing
+// of that tenant can be refused. A decision with no tenant runs in stand.
 func legacyCanaries(p legacyExportPoint, n int, caseTenant, stand string) []legacyCanary {
 	out := []legacyCanary{{legacyCanaryType(n), caseTenant}}
 	named := exportTenantIDs(p.policySets, p.pips)
