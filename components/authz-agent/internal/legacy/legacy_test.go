@@ -285,7 +285,8 @@ func TestInput(t *testing.T) {
 			},
 			map[string]any{
 				"authorizationToken": "Bearer m2m", "subject": "Bearer user", "authorizationType": "",
-				"requestHeaders": map[string]any{"authorization-type": "", "x-tenant": "acme"}, "requestId": "r1",
+				"requestHeaders": map[string]any{"authorization-type": "", "x-tenant": "acme", "host": "agent",
+					"content-type": "application/json"}, "requestId": "r1",
 				"resources": wantResources,
 			}},
 		{"the subject falls back to the admission token",

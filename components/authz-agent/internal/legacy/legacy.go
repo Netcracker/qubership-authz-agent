@@ -404,19 +404,20 @@ func uniqueIDs(ids []json.RawMessage) *RequestError {
 }
 
 // skipHeaders are the request headers left out of input.requestHeaders: the
-// transport's own, the tokens the input carries in their own fields, and
-// the one the agent itself uses for the request id.
+// pseudo-headers of HTTP/2, the framing and proxy headers, the tokens the
+// input carries in their own fields, and the one the agent itself uses for
+// the request id. Host, Content-Type, and Accept-Encoding stay, because a
+// HEADER PIP over them reads them in legacy as any other header.
 var skipHeaders = map[string]bool{
 	":authority": true, ":path": true, ":method": true, ":scheme": true, ":status": true, ":protocol": true,
-	"content-type": true, "content-length": true, "accept-encoding": true, "host": true,
-	"transfer-encoding": true, "connection": true, "x-forwarded-for": true, "x-forwarded-proto": true,
+	"content-length": true, "transfer-encoding": true, "connection": true, "x-forwarded-for": true, "x-forwarded-proto": true,
 	"x-request-id": true, "x-envoy-expected-rq-timeout-ms": true, "authorization": true,
 	"incoming-token": true,
 }
 
 // RequestHeaders returns the headers of a request that policies and PIPs
 // may read, under their lowercase names: every header but [skipHeaders],
-// which leaves out the transport's own headers, the caller's admission
+// which leaves out the framing and proxy headers, the caller's admission
 // token, and the subject's token. A repeated header has its last value.
 func RequestHeaders(headers map[string][]string) map[string]string {
 	out := map[string]string{}
