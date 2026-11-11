@@ -315,6 +315,23 @@ func TestFromRegularIsolatesAPIPNameDeclaredMoreThanOnce(t *testing.T) {
 	}
 }
 
+func TestFromRegularReadsOnceAPIPNameDeclaredMoreThanOnceIdentically(t *testing.T) {
+	t.Parallel()
+
+	e := fromRegular(t, `[]`, `[
+		{"name": "subject.x", "pipType": "TOKEN", "claim": "c", "domain": "D1", "tenantId": "t"},
+		{"name": "subject.x", "pipType": "TOKEN", "claim": "c", "domain": "D1", "tenantId": "t"}]`)
+
+	want := `pip "subject.x" type=TOKEN claim="c" domain="D1"` + "\n"
+	if got := tree(t, e, "t").Dump(); got != want {
+		t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
+	}
+	wantDropped := []string{`pip "subject.x": declared 2 times identically, read once`}
+	if got := e.Dropped["t"]; !slices.Equal(got, wantDropped) {
+		t.Errorf("Dropped[t] = %q, want %q", got, wantDropped)
+	}
+}
+
 // The export can show a tenant's set holding a policy of another tenant, which
 // the legacy service moved there while it served an earlier export. Such a set
 // is isolated with its target, and the tenant keeps its other sets. A policy
