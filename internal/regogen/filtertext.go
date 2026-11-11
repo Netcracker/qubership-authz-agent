@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 
@@ -508,16 +509,24 @@ func negateMongoText(s string) string {
 	} else {
 		edits = []mongoEdit{{0, 0, `{ "$nor": [ `}, {len(s), len(s), " ] }"}}
 	}
+	// the specification applies the edits from the right; in one pass from
+	// the left, two insertions at one point keep the order that gives
 	sort.SliceStable(edits, func(i, j int) bool {
 		if edits[i].start != edits[j].start {
 			return edits[i].start > edits[j].start
 		}
 		return edits[i].end > edits[j].end
 	})
+	slices.Reverse(edits)
+	var b strings.Builder
+	at := 0
 	for _, e := range edits {
-		s = s[:e.start] + e.text + s[e.end:]
+		b.WriteString(s[at:e.start])
+		b.WriteString(e.text)
+		at = e.end
 	}
-	return s
+	b.WriteString(s[at:])
+	return b.String()
 }
 
 // mongoNegations is the edits that negate the node n.
