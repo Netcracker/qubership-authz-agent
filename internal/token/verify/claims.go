@@ -32,8 +32,8 @@ import (
 const maxNumericDate = 1<<53 - 1
 
 // serviceAccountPrefix starts the sub of every token that a Kubernetes API
-// server issues for a service account.
-const serviceAccountPrefix = "system:serviceaccount"
+// server issues for a service account, system:serviceaccount:<namespace>:<name>.
+const serviceAccountPrefix = "system:serviceaccount:"
 
 // checkTimes checks exp, nbf, and iat, and returns the time exp names. exp
 // and iat are required; nbf is optional. exp and nbf are compared with now,

@@ -620,7 +620,9 @@ func TestVerify_RefusesAKubernetesTokenWhoseSubNamesNoServiceAccount(t *testing.
 		want     Code
 	}{
 		{"service account", marked, serviceAccountSub, ""},
-		{"the prefix alone", marked, "system:serviceaccount", ""},
+		{"the prefix alone", marked, "system:serviceaccount:", ""},
+		{"the prefix without its colon", marked, "system:serviceaccount", CodeSubjectInvalid},
+		{"the group of the service accounts of a namespace", marked, "system:serviceaccounts:ns", CodeSubjectInvalid},
 		{"another name", marked, "user-1", CodeSubjectInvalid},
 		{"the prefix after other text", marked, "user:system:serviceaccount:ns:app", CodeSubjectInvalid},
 		{"the prefix in another case", marked, "System:ServiceAccount:ns:app", CodeSubjectInvalid},

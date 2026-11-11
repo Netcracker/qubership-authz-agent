@@ -93,7 +93,7 @@ const (
 	// provider's audiences, or is neither a string nor an array of strings.
 	CodeAudienceInvalid Code = "TOKEN_AUDIENCE_INVALID"
 	// CodeSubjectInvalid marks a Kubernetes token whose sub does not start
-	// with system:serviceaccount.
+	// with system:serviceaccount:.
 	CodeSubjectInvalid Code = "TOKEN_SUBJECT_INVALID"
 	// CodeNamespaceNotAllowed marks a Kubernetes token from a namespace the
 	// service does not accept, one that names no namespace, and one that a
