@@ -210,13 +210,14 @@ func (s *Server) admission(ctx context.Context, input map[string]any) (map[strin
 }
 
 // tenant is the tenant a request is decided in: the query parameter
-// tenant_id, else the header Tenant, else the default tenant. A blank
-// source is skipped.
+// tenant_id, else the header Tenant, else the default tenant. An empty
+// source is skipped; any other value is the tenant as written, so a value
+// with a space around the name is another tenant than the name.
 func (s *Server) tenant(c *fiber.Ctx) string {
-	if t := strings.TrimSpace(lastQuery(c, "tenant_id")); t != "" {
+	if t := lastQuery(c, "tenant_id"); t != "" {
 		return t
 	}
-	if t := strings.TrimSpace(c.Get(tenantHeader)); t != "" {
+	if t := c.Get(tenantHeader); t != "" {
 		return t
 	}
 	return s.defaultTenant()

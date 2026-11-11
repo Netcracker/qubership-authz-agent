@@ -73,7 +73,10 @@ func TestDecide_TheTenantComesFromTheQueryThenTheHeaderThenTheDefault(t *testing
 		{"the query parameter", "?tenant_id=a", "", "true"},
 		{"the query parameter over the header", "?tenant_id=b", "a", "false"},
 		{"the header", "", "a", "true"},
-		{"a blank query parameter falls through to the header", "?tenant_id=%20", "a", "true"},
+		{"an empty query parameter falls through to the header", "?tenant_id=", "a", "true"},
+		{"a query parameter of spaces is a tenant of its own", "?tenant_id=%20", "a", "false"},
+		{"a leading space names another tenant", "?tenant_id=%20a", "a", "false"},
+		{"a trailing space names another tenant", "?tenant_id=a%20", "a", "false"},
 		{"the default tenant", "", "", "false"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -129,6 +132,7 @@ func TestDecide_ACallerThatIsNotM2MReachesOnlyItsOwnTenant(t *testing.T) {
 		{"a claim of a tenant without data is refused in the default tenant", "PARITY_UNKNOWN", "?tenant_id=a", "", 403, ""},
 		{"a claim is refused in another tenant", "PARITY_A", "?tenant_id=b", "", 403, ""},
 		{"a claim is refused in another tenant named by the header", "PARITY_A", "", "b", 403, ""},
+		{"a claim is refused in its tenant spelled with a trailing space", "PARITY_A", "?tenant_id=a%20", "", 403, ""},
 		{"no claim reaches the default tenant", "PARITY_NONE", "?tenant_id=a", "", 200, "true"},
 		{"no claim is refused outside the default tenant", "PARITY_NONE", "?tenant_id=b", "", 403, ""},
 		{"an empty claim reaches the default tenant", "PARITY_EMPTY", "?tenant_id=a", "", 200, "true"},
