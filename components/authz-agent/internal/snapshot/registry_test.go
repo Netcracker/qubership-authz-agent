@@ -22,6 +22,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -53,11 +54,17 @@ func tab(t *testing.T) *spectables.Table {
 // set is a policy set of tenant whose one rule allows the operation read on
 // the resource type doc where condition holds.
 func set(tenant, condition string) string {
+	return setWithConditionJSON(tenant, strconv.Quote(condition))
+}
+
+// setWithConditionJSON is [set] with the condition written as the JSON value
+// condition.
+func setWithConditionJSON(tenant, condition string) string {
 	return fmt.Sprintf(`{"policySetId": "s-%[1]s", "name": "s", "status": "ACTIVE", "tenantId": %[1]q,
 		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
 		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
 			"tenantId": %[1]q, "rules": [{"ruleId": "r", "target": "operation == 'read'",
-				"condition": %[2]q, "effect": "ALLOW", "tenantId": %[1]q}]}]}`, tenant, condition)
+				"condition": %[2]s, "effect": "ALLOW", "tenantId": %[1]q}]}]}`, tenant, condition)
 }
 
 // documents are the v3 policy-sets and PIPs documents of sets and pips.
@@ -148,6 +155,25 @@ func TestEachTenantIsDecidedByItsOwnPolicies(t *testing.T) {
 	} {
 		if got := decide(t, r, readDoc(t, tc.tenant, tc.a, 1)); got[0] != tc.want {
 			t.Errorf("Decide(tenant %s, a=%s) = %+v, want %+v", tc.tenant, tc.a, got[0], tc.want)
+		}
+	}
+}
+
+// A rule condition written as the JSON boolean true allows, and false denies,
+// as the policy service decides them.
+func TestABooleanConditionDecidesAsItsText(t *testing.T) {
+	r := New(Config{}, tab(t), quiet{})
+	load(t, r, ``, setWithConditionJSON("a", "true"), setWithConditionJSON("b", "false"))
+
+	for _, tc := range []struct {
+		tenant string
+		want   Result
+	}{
+		{"a", Result{Allowed: true}},
+		{"b", Result{Reason: ReasonDenied}},
+	} {
+		if got := decide(t, r, readDoc(t, tc.tenant, "x", 1)); got[0] != tc.want {
+			t.Errorf("Decide(tenant %s) = %+v, want %+v", tc.tenant, got[0], tc.want)
 		}
 	}
 }
