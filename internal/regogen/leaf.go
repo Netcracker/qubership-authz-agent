@@ -140,7 +140,9 @@ func (s *side) at(p point) clause {
 // the values becomes the template of the operator. The ERROR point of a source
 // that failed gets the outcome [failedCells] gives it instead. A cell that is
 // unsupported, a bad request, or value-dependent without a template is a
-// generation error.
+// generation error. In check/filter a comparison over the resource is a leaf
+// over the rows, failed where a source fails or where every row on which the
+// path holds a value gives it no outcome.
 func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, error) {
 	leafText := func() string {
 		leaf := policyir.FormatOperand(c.Left) + " " + opText(spectables.Operator(c.Op))
@@ -154,15 +156,62 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 		// row by row is the predicate's part of the answer
 		g.reportLeaf(leafText(), nil)
 		rails := leafRails{threeValued: true, row: rowAtomOf(c)}
-		other := c.Left
-		if readsResource(c.Left) {
-			other = c.Right
+		res, other, resRight := c.Left, c.Right, !readsResource(c.Left)
+		if resRight {
+			res, other = c.Right, c.Left
+		}
+		rs, err := g.rowPoints(res.(policyir.Resource))
+		if err != nil {
+			return leafRails{}, err
+		}
+		// unknownOnRows reports whether the leaf is unknown on every row
+		// where the path holds a value, with the other operand at one of
+		// ops. The filter has no leaf for the rows where the path holds
+		// nothing, null, or an empty collection, so it denies them too,
+		// whatever the check answers there.
+		unknownOnRows := func(ops []point, kind spectables.Kind) (bool, error) {
+			for _, rp := range rs.present() {
+				for _, op := range ops {
+					key := spectables.Key{Op: spectables.Operator(c.Op), Left: rp.spec(rs.kind), Context: ctx}
+					if other != nil {
+						key.Right = op.spec(kind)
+						if resRight {
+							key.Left, key.Right = key.Right, key.Left
+						}
+					}
+					cell, err := g.tab.Lookup(key)
+					if err != nil {
+						return false, err
+					}
+					if cell.Outcome != spectables.OutcomeU {
+						return false, nil
+					}
+				}
+			}
+			return true, nil
+		}
+		var u bool
+		switch {
+		case other == nil:
+			u, err = unknownOnRows([]point{{}}, "")
+		case readsResource(other):
+			var ors rowSide
+			if ors, err = g.rowPoints(other.(policyir.Resource)); err == nil {
+				u, err = unknownOnRows(ors.present(), ors.kind)
+			}
+		}
+		if err != nil {
+			return leafRails{}, err
 		}
 		if other == nil || readsResource(other) {
+			if u {
+				rails.failed = dnfTrue
+			}
 			return rails, nil
 		}
 		// a source the resource is compared with leaves the leaf unknown on
-		// every row where it fails
+		// every row where it fails, and so does any of its points where
+		// every row gives the comparison no value
 		S, err := g.side(other)
 		switch {
 		case errors.Is(err, errUndeclared):
@@ -172,7 +221,11 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 		}
 		if S != nil {
 			for _, p := range S.points() {
-				if S.failed(p) {
+				u, err := unknownOnRows([]point{p}, S.kind)
+				if err != nil {
+					return leafRails{}, err
+				}
+				if S.failed(p) || u {
 					rails.failed = union(rails.failed, dnf{S.at(p)})
 				}
 			}
@@ -884,6 +937,65 @@ func (g *gen) rightListScalarOps(tp *tpl, R *side, rp point) error {
 // list of two or more values of the subject or a PIP on the right.
 var rightListOp = map[spectables.Operator]bool{spectables.OpEQ: true, spectables.OpNE: true,
 	spectables.OpContains: true, spectables.OpNotContains: true}
+
+// rowSide is what a resource operand can be on a row of check/filter: its
+// kind, and the points of the kind a row can hold.
+type rowSide struct {
+	kind   spectables.Kind
+	points []point
+}
+
+// present returns the points of s where its path holds a value on a row,
+// rather than nothing, null, or an empty collection: all of them where it
+// has one point.
+func (s rowSide) present() []point {
+	if len(s.points) == 1 {
+		return s.points
+	}
+	return slices.DeleteFunc(slices.Clone(s.points), func(p point) bool { return p.st != spectables.StateValue })
+}
+
+// rowPoints returns what resource operand o can be on a row of check/filter.
+// Every row is a resource, so the whole resource is never ABSENT, and a path
+// that ends in a dot is on every row in the state the knob trailing_dot_path
+// gives it. A path the package stops as too large is left out: that ERROR is
+// a failure of the row, not of the comparison.
+func (g *gen) rowPoints(o policyir.Resource) (rowSide, error) {
+	if o.TrailingDot {
+		v, err := g.stringKnob("trailing_dot_path")
+		if err != nil {
+			return rowSide{}, err
+		}
+		if v == "DROP" {
+			o.TrailingDot = false
+		} else {
+			return rowSide{kind: resourceKind(specPath(o)), points: []point{{spectables.State(v), ""}}}, nil
+		}
+	}
+	kind, _, _, err := g.operandKind(o)
+	if err != nil {
+		return rowSide{}, err
+	}
+	dom, ok := g.tab.Domain(kind)
+	if !ok {
+		return rowSide{}, fmt.Errorf("kind %s has no domain", kind)
+	}
+	var out []point
+	for _, st := range dom.States {
+		switch {
+		case st == spectables.StateAbsent && kind == spectables.KindResource,
+			st == spectables.StateError:
+			continue
+		case st != spectables.StateValue:
+			out = append(out, point{st, ""})
+			continue
+		}
+		for _, cl := range dom.Classes {
+			out = append(out, point{st, cl})
+		}
+	}
+	return rowSide{kind: kind, points: out}, nil
+}
 
 // readsResource reports whether operand o reads the resource of the request.
 func readsResource(o policyir.Operand) bool {

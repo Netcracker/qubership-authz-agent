@@ -23,12 +23,14 @@ import (
 
 // A condition the filter reads without the resource has a value per row. A
 // leaf over the resource is true on the rows it matches; a leaf a failed
-// source leaves unknown is unknown on every row; any other leaf is true or
-// false on every row. Kleene's AND and OR over these give the rows where the
-// condition is true and the rows where it is unknown. The check denies a
-// resource whole where the condition of an applicable rule is unknown, so the
-// filter denies exactly those rows, whatever the rule's effect and whatever
-// its neighbors allow.
+// source leaves unknown is unknown on every row, and so is a leaf unknown on
+// every row where its path holds a value; any other leaf is true or false on
+// every row. Kleene's AND and OR over these give the rows where the condition is
+// true and the rows where it is unknown. The check denies a resource whole
+// where the condition of an applicable rule is unknown, so the filter denies
+// those rows, whatever the rule's effect and whatever its neighbors allow,
+// and with them the rows where the path of a leaf unknown on the others
+// holds nothing, null, or an empty collection.
 
 // rowsF is a set of rows as a formula of the leaves over the resource: true
 // (every row), false (none), a leaf, or a NOT, AND, or OR of formulas.

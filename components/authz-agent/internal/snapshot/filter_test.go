@@ -846,6 +846,51 @@ func TestAFailedConditionDeniesTheRowsWhereItIsUnknown(t *testing.T) {
 	}
 }
 
+// A comparison over the resource that the check finds unknown on every row
+// where the path holds a value, though no source failed, denies the rows
+// where its condition is unknown, as a failed source does, and with them the
+// rows where the path holds nothing, null, or an empty collection: a path that ends
+// in a dot, permissionScope outside an iterate, and a PIP that answers a list
+// of one number. A PIP that answers a number is unknown against some classes
+// of the row value only; the filter has no leaf for those rows and leaves
+// them to the rule. A PIP that answers a list of strings leaves no row
+// unknown.
+func TestAComparisonUnknownOnEveryRowDeniesTheRowsOfItsCondition(t *testing.T) {
+	open := answerOf("doc.allowed.eq(1)", `{"allowed": 1}`, "allowed==1", "allowed=1")
+	notNo := answerOf("", `{ "$and": [ {"allowed": 1}, {"b": { "$ne": "no" }} ] }`, `allowed==1;b!="no"`,
+		`allowed=1 AND b <> 'no'`)
+	for _, tc := range []struct {
+		name, condition, body, want string
+	}{
+		{"a path ending in a dot", "resource.a. == 'x'", `["x"]`, deny},
+		{"a path ending in a dot on the right", "'x' == resource.a.", `["x"]`, deny},
+		{"IS EMPTY over a path ending in a dot", "resource.a. IS EMPTY", `["x"]`, deny},
+		{"a path ending in a dot and another path", "resource.a. == resource.b", `["x"]`, deny},
+		{"another path and a path ending in a dot", "resource.b == resource.a.", `["x"]`, deny},
+		{"two paths", "resource.a == resource.b", `["x"]`, open},
+		{"permissionScope outside an iterate", "resource.a == subject.permissionScope.k", `["x"]`, deny},
+		{"a PIP that answers a number, on the left", "subject.g == resource.a", `5`, deny},
+		{"a PIP that answers a number, on the right", "resource.a == subject.g", `5`, open},
+		{"a path ending in a dot AND a leaf over the resource", "resource.b == 'no' AND resource.a. == 'x'", `["x"]`,
+			notNo},
+		{"a PIP that answers a list of one number", "resource.a == subject.g", `[5]`, deny},
+		{"a PIP that answers a list of strings", "resource.a == subject.g", `["x"]`, open},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := pipServer(t, http.StatusOK, tc.body)
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE",
+				"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+				"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+					"rules": [{"ruleId": "probe", "target": "true", "condition": %q, "effect": "ALLOW", "tenantId": "a"},
+					%s]}]}`, tc.condition, openRule))
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) with %s, body %s = %s, want %s", tc.condition, tc.body, got, tc.want)
+			}
+		})
+	}
+}
+
 // A PIP that answers leaves no row unknown, and the filter is the one it
 // gives without a failed source: the condition is false, so only the rule
 // beside it allows.
