@@ -234,7 +234,7 @@ func replayFunctions(t *testing.T, fns []exportFunction, goldens map[string]stri
 }
 
 // replayRefusing replays fns as replayFunctions does, against a stand whose
-// agent does not load the exports refused names by id.
+// agent does not load the exports refused names by id, "" for the empty export.
 func replayRefusing(t *testing.T, fns []exportFunction, goldens map[string]string, refused []string) ([][]exportResult, *fakeStand) {
 	t.Helper()
 	dir := t.TempDir()
@@ -253,6 +253,10 @@ func replayRefusing(t *testing.T, fns []exportFunction, goldens map[string]strin
 		`{"policySets":[{"name":"allows"}]}`: "true", `{"policySets":[{"name":"denies"}]}`: "false",
 		string(emptyExportPolicySets): "false"}, refused: map[string]bool{}}
 	for _, id := range refused {
+		if id == "" {
+			stand.refused[string(emptyExportPolicySets)] = true
+			continue
+		}
 		ps, _, err := exports.documents(id)
 		if err != nil {
 			t.Fatal(err)
@@ -362,6 +366,27 @@ func TestExportReplayer_NeitherSendsNorJudgesTheRequestsOfAnExportTheAgentDidNot
 	}
 	if len(stand.sent) != 2 {
 		t.Errorf("requests sent = %d, want 2: none after the refused export", len(stand.sent))
+	}
+}
+
+// A function whose empty export the agent does not load sends no request
+// before its first export that loads.
+func TestExportReplayer_NeitherSendsNorJudgesTheRequestsBeforeTheFirstExportWhenTheEmptyOneFails(t *testing.T) {
+	allowed, denied := `{"status":200,"decision":true}`, `{"status":200,"decision":false}`
+	fn := exportFunction{Test: "TestX", Events: []exportEvent{
+		check("parity/m2m:parity-m2m"), golden(outcomePath+"d.json", "agree", ""),
+		{Ev: "export", ID: "allows"}, check("parity/m2m:parity-m2m"), golden(outcomePath+"a.json", "agree", "")}}
+	all, stand := replayRefusing(t, []exportFunction{fn}, map[string]string{
+		outcomePath + "d.json": denied, outcomePath + "a.json": allowed}, []string{""})
+	results := all[0]
+	if len(results) != 2 || results[0].Verdict != verdictBroken || results[1].Verdict != verdictMatch {
+		t.Fatalf("results = %+v, want broken, then match", results)
+	}
+	if want := setupBrokenPrefix + ": the empty export: "; !strings.HasPrefix(results[0].Detail, want) {
+		t.Errorf("detail of the golden before the first export = %q, want it to start with %q", results[0].Detail, want)
+	}
+	if len(stand.sent) != 1 {
+		t.Errorf("requests sent = %d, want 1: none before the first export", len(stand.sent))
 	}
 }
 

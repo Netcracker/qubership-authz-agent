@@ -17,6 +17,7 @@
 package paritysuite
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -164,9 +165,30 @@ func TestRunIsolatedCases_AnUploadLegacyRefusedAndTheAgentDidNotLoadMatches(t *t
 	}
 }
 
-// brokenSetupChild selects the child run of
-// TestRunIsolatedCases_AnUploadLegacyAcceptedAndTheAgentDidNotLoadIsABrokenSetup.
+// brokenSetupChild selects the child run of a test that reads the go test
+// output of a run that fails on purpose (childOutput).
 const brokenSetupChild = "PARITY_TEST_BROKEN_SETUP_CHILD"
+
+// childOutput runs the test t again in a child process with brokenSetupChild
+// set, and returns its verbose output. The test does its work only in the
+// child, where os.Getenv(brokenSetupChild) is "1".
+func childOutput(t *testing.T) string {
+	t.Helper()
+	cmd := exec.Command(os.Args[0], "-test.run=^"+t.Name()+"$", "-test.v")
+	cmd.Env = append(os.Environ(), brokenSetupChild+"=1")
+	raw, _ := cmd.CombinedOutput()
+	return string(raw)
+}
+
+// requireOutput reports each pattern of wants that out does not match.
+func requireOutput(t *testing.T, out string, wants ...string) {
+	t.Helper()
+	for _, want := range wants {
+		if !regexp.MustCompile(want).MatchString(out) {
+			t.Errorf("the child run's output does not match %q:\n%s", want, out)
+		}
+	}
+}
 
 // An upload legacy accepted, which the agent does not load, fails the subtest
 // "setup" of its case with SETUP BROKEN and skips its requests with the same
@@ -184,22 +206,66 @@ func TestRunIsolatedCases_AnUploadLegacyAcceptedAndTheAgentDidNotLoadIsABrokenSe
 		t.Logf("checks sent: %d", strings.Count(strings.Join(sent, "\n"), "/access/v1/check/resource"))
 		return
 	}
-	cmd := exec.Command(os.Args[0], "-test.run=^"+t.Name()+"$", "-test.v")
-	cmd.Env = append(os.Environ(), brokenSetupChild+"=1")
-	raw, _ := cmd.CombinedOutput()
-	out := string(raw)
 	run := regexp.QuoteMeta(t.Name() + "/run/")
-	for _, want := range []string{
-		`--- PASS: ` + run + `accepted/upload `,
-		`=== RUN   ` + run + `accepted/setup\n.*: SETUP BROKEN: the agent did not load the policies: POST .*: HTTP 502`,
-		`--- FAIL: ` + run + `accepted/setup `,
-		`=== RUN   ` + run + `accepted/read\n.*: SETUP BROKEN: .*; not compared`,
-		`--- SKIP: ` + run + `accepted/read `,
-		`--- PASS: ` + run + `next/upload `,
-		`checks sent: 1\n`,
-	} {
-		if !regexp.MustCompile(want).MatchString(out) {
-			t.Errorf("the child run's output does not match %q:\n%s", want, out)
-		}
+	requireOutput(t, childOutput(t),
+		`--- PASS: `+run+`accepted/upload `,
+		`=== RUN   `+run+`accepted/setup\n.*: SETUP BROKEN: the agent did not load the policies: POST .*: HTTP 502`,
+		`--- FAIL: `+run+`accepted/setup `,
+		`=== RUN   `+run+`accepted/read\n.*: SETUP BROKEN: .*; not compared`,
+		`--- SKIP: `+run+`accepted/read `,
+		`--- PASS: `+run+`next/upload `,
+		`checks sent: 1\n`)
+}
+
+// Only a pull the agent refused (502) is a refusal that can match a refused
+// upload of legacy. A pull that failed otherwise, here with 500, says nothing
+// about the upload, so the case is a broken setup even where the golden
+// records a refusal.
+func TestRunIsolatedCases_AnUploadLegacyRefusedThatTheAgentFailedToPullIsABrokenSetup(t *testing.T) {
+	if os.Getenv(brokenSetupChild) == "1" {
+		refused := isolatedCase{id: "refused", resourceType: "RT", condition: "x", requests: []isolatedRequest{{name: "read", m2mOnly: true}}}
+		runIsolatedCasesAgainstStub(t, nil,
+			map[int]int{1: http.StatusInternalServerError},
+			map[string]int{"refused": http.StatusBadRequest},
+			refused)
+		return
 	}
+	run := regexp.QuoteMeta(t.Name() + "/run/")
+	requireOutput(t, childOutput(t),
+		`=== RUN   `+run+`refused/setup\n.*: SETUP BROKEN: the agent did not load the policies: POST .*: HTTP 500`,
+		`--- FAIL: `+run+`refused/setup `,
+		`--- SKIP: `+run+`refused/read `)
+}
+
+// runSetup reports a setup that returned an error, and one that stopped its
+// subtest with t.Fatal, both as a broken setup, and the check after it is
+// skipped with that report.
+func TestRunSetup_BreaksTheChecksAfterAFailedSetup(t *testing.T) {
+	if os.Getenv(brokenSetupChild) == "1" {
+		t.Run("returned", func(t *testing.T) {
+			broken := runSetup(t, func(*testing.T) error { return errors.New("HTTP 502") })
+			t.Run("decision", func(t *testing.T) { skipIfBroken(t, broken) })
+		})
+		t.Run("fatal", func(t *testing.T) {
+			broken := runSetup(t, func(t *testing.T) error {
+				t.Fatal("pip-mock is unreachable")
+				return nil
+			})
+			t.Run("decision", func(t *testing.T) { skipIfBroken(t, broken) })
+		})
+		t.Run("loaded", func(t *testing.T) {
+			broken := runSetup(t, func(*testing.T) error { return nil })
+			t.Run("decision", func(t *testing.T) { skipIfBroken(t, broken) })
+		})
+		return
+	}
+	name := regexp.QuoteMeta(t.Name())
+	requireOutput(t, childOutput(t),
+		`=== RUN   `+name+`/returned/setup\n.*: SETUP BROKEN: HTTP 502\n`,
+		`=== RUN   `+name+`/returned/decision\n.*: SETUP BROKEN: HTTP 502; not compared\n`,
+		`--- SKIP: `+name+`/returned/decision `,
+		`--- FAIL: `+name+`/fatal/setup `,
+		`=== RUN   `+name+`/fatal/decision\n.*: SETUP BROKEN: the setup subtest failed, see its output; not compared\n`,
+		`--- PASS: `+name+`/loaded/setup `,
+		`--- PASS: `+name+`/loaded/decision `)
 }

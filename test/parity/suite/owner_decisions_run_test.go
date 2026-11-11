@@ -42,8 +42,9 @@ import (
 // export is mounted with the canary set of part A. Each of the three checks is a subtest of the case: "setup", which
 // fails with setupBrokenPrefix when the agent does not load the export (the
 // pull fails, or the canary is denied); "health-names-failing-sets"; and one
-// per decision, named by its golden path. The last two are skipped when the
-// setup broke, since the agent then holds another export.
+// per decision, named by its golden path. When the setup broke, the agent
+// holds another export, and health-names-failing-sets and the decision
+// subtests are skipped.
 // It runs only under PARITY_PROFILE=authz-agent-export
 // (make parity-export-owner-decisions); PARITY_EXPORT_RUN selects the cases
 // whose name it matches.

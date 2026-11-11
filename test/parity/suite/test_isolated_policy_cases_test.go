@@ -212,10 +212,11 @@ func (s *ParitySuite) subjectToken(req isolatedRequest) (string, error) {
 // rather than a failed case. On the authz-agent profile the upload goes to
 // authz-policy-admin, whose status is compared the same way, and a case it
 // refuses ends there too. A case whose upload authz-policy-admin accepts and the
-// agent does not load also ends there: where the golden records a refusal, the
-// agent refused as legacy did and the upload passes; otherwise the subtest
-// "setup" fails with setupBrokenPrefix and every request is skipped, since the
-// agent holds the policies of the case before.
+// agent does not load also ends there: where the agent refused it (the pull
+// answered 502) and the golden records a refusal, the agent refused as legacy
+// did and the upload passes; otherwise the subtest "setup" fails with
+// setupBrokenPrefix and every request is skipped, since the agent holds the
+// policies of the case before.
 //
 // When it ends, it empties every domain its cases uploaded into.
 func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
@@ -308,13 +309,15 @@ func valueOr(value, fallback string) string {
 }
 
 // endUnloadedCase ends a case whose upload authz-policy-admin accepted with
-// status and the agent did not load (err). Where the upload golden subCase
-// records a refusal, the agent refused as legacy did, and the subtest "upload"
-// passes. Otherwise the upload is compared with its golden, the subtest
+// status and the agent did not load (err). Where the agent refused the upload
+// (the pull answered 502) and the upload golden subCase records a refusal, the
+// agent refused as legacy did, and the subtest "upload" passes. Otherwise the upload is compared with its golden, the subtest
 // "setup" fails with setupBrokenPrefix, and every request of requests is a
 // subtest skipped with that report.
 func (s *ParitySuite) endUnloadedCase(subCase string, status int, err *agentLoadError, requests []isolatedRequest) {
-	if s.goldenRecordsRefusal(PSUITE_LOAD_SIMPLIFIED_POLICIES, subCase) {
+	var answered *pullStatusError
+	refused := errors.As(err, &answered) && answered.status == http.StatusBadGateway
+	if refused && s.goldenRecordsRefusal(PSUITE_LOAD_SIMPLIFIED_POLICIES, subCase) {
 		s.Run("upload", func() {
 			s.T().Logf("legacy refused the upload, and the agent did not load it: %v", err)
 		})
