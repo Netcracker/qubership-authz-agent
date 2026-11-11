@@ -16,12 +16,17 @@
 
 package paritysuite
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // runSetup runs setup as the subtest "setup" of t and returns the report of its
-// failure, or "" when it succeeded. A failure fails that subtest alone, with a
-// message that starts with setupBrokenPrefix; a setup that stops its subtest
-// with t.Fatal is reported the same way.
+// failure, or "" when it succeeded. A failure fails that subtest, with a message
+// that starts with setupBrokenPrefix; a setup that stops its subtest with
+// t.Fatal is reported the same way. When -run leaves the subtest out, setup does
+// not run and the report says so: the checks after it wait on a stand nobody
+// set up.
 func runSetup(t *testing.T, setup func(t *testing.T) error) string {
 	t.Helper()
 	return runNamedSetup(t, "setup", setup)
@@ -31,12 +36,23 @@ func runSetup(t *testing.T, setup func(t *testing.T) error) string {
 func runNamedSetup(t *testing.T, name string, setup func(t *testing.T) error) string {
 	t.Helper()
 	broken := ""
+	ran := false
 	ok := t.Run(name, func(t *testing.T) {
+		ran = true
 		if err := setup(t); err != nil {
 			broken = setupBroken(err)
 			t.Error(broken)
 		}
 	})
+	if !ran {
+		// Running setup in t instead would let its t.Fatal stop t before the
+		// checks are skipped and counted.
+		match := strings.ReplaceAll(name, " ", "_")
+		broken = setupBrokenPrefix + ": -run or -skip left out the subtest " + match +
+			" this check waits on; select it too"
+		t.Error(broken)
+		return broken
+	}
 	if !ok && broken == "" {
 		broken = setupBrokenPrefix + ": the " + name + " subtest failed, see its output"
 	}
