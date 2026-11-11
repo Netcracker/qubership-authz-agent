@@ -384,7 +384,7 @@ func TestAPIPWithAJSONPathOutsideTheSubsetRejectsTheTenantThatReadsIt(t *testing
 // customPredicate parameter, rejects its tenant whole, naming the PIP and the
 // predicate; the tenant beside it is served. An escaped placeholder, a
 // parameter whose first word is empty, and a PIP of another type or declared
-// twice read no such path, and reject nothing.
+// twice differently read no such path, and reject nothing.
 func TestAPredicateOverAPIPWithAJSONPathOutsideTheSubsetRejectsTheTenant(t *testing.T) {
 	rule := func(predicate string) string {
 		return `{"ruleId": "r", "target": "true", "effect": "ALLOW", "tenantId": "a", ` + predicate + `}`
@@ -448,7 +448,7 @@ func TestAPredicateOverAPIPWithAJSONPathOutsideTheSubsetRejectsTheTenant(t *test
 			case "":
 				pips = pip("a", "GENERAL")
 			case "twice":
-				pips = pip("a", "GENERAL") + `, ` + pip("a", "GENERAL")
+				pips = pip("a", "GENERAL") + `, ` + pip("a", "FILTERED")
 			}
 			r := New(Config{}, tab(t), quiet{})
 			load(t, r, pips, tc.set)
@@ -843,19 +843,28 @@ func TestARuleWhoseConditionReadsAFailedPIPDeniesTheResource(t *testing.T) {
 	}
 }
 
-// A PIP the tenant declares twice has no usable declaration, and a rule that
-// reads it denies the resource as one over a PIP whose call failed does,
-// beside a policy that allows; the filter denies every row.
+// A PIP the tenant declares twice, differently, has no usable declaration,
+// and a rule that reads it denies the resource as one over a PIP whose call
+// failed does, beside a policy that allows; the filter denies every row.
 func TestARuleOverAPIPDeclaredTwiceDeniesTheResource(t *testing.T) {
 	srv, _ := pipServer(t, http.StatusOK, `["y"]`)
 	r := pipRegistry(t)
-	load(t, r, generalPIP(srv.URL, "")+", "+generalPIP(srv.URL, ""),
+	load(t, r, generalPIP(srv.URL, "")+", "+generalPIP(srv.URL, `, "cacheable": true`),
 		besideAllow("PERMIT_OVERRIDES", "true", "true", "ALLOW", "subject.g == 'y'"))
 	if got, want := decide(t, r, readDoc(t, "a", "x", 1))[0], (Result{Reason: "PIP resolution failed: subject.g"}); got != want {
 		t.Errorf("Decide(read doc) = %+v, want %+v", got, want)
 	}
 	if got := filterOf(t, r, "a", "read"); got != deny {
 		t.Errorf("Filter(doc, read) = %s, want %s", got, deny)
+	}
+}
+
+func TestARuleOverAPIPDeclaredTwiceIdenticallyReadsTheDeclaration(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusOK, `["y"]`)
+	r := pipRegistry(t)
+	load(t, r, generalPIP(srv.URL, "")+", "+generalPIP(srv.URL, ""), set("a", "subject.g == 'y'"))
+	if got, want := decide(t, r, readDoc(t, "a", "x", 1))[0], (Result{Allowed: true}); got != want {
+		t.Errorf("Decide(read doc) = %+v, want %+v", got, want)
 	}
 }
 

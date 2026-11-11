@@ -38,7 +38,8 @@ type Export struct {
 	Orphans []error
 	// Dropped maps a tenant ID to what its tree leaves out by the rules of
 	// [FromRegular], one line per dropped set, unknown key, isolated set, set
-	// read once, or isolated PIP name, naming it and the rule.
+	// read once, isolated PIP name, or PIP name read once, naming it and the
+	// rule.
 	Dropped map[string][]string
 }
 
@@ -61,7 +62,8 @@ type Export struct {
 // tenant. Top-level sets of one tenant and policySetId that are all identical
 // are read as the first of them, since whichever is the tenant's own decides
 // alike. A PIP name the tenant declares more than once becomes one
-// declaration with [PIP.Isolated]. Each isolation is listed in
+// declaration with [PIP.Isolated], unless every declaration of it is
+// identical, which is then read once. Each isolation is listed in
 // [Export.Dropped].
 //
 // Every top-level set applies except one whose status is INACTIVE, DRAFT, or
@@ -234,11 +236,28 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 			delete(out.Dropped, id)
 			continue
 		}
+		// identical maps a name the tenant declares more than once to whether
+		// every declaration of it equals the first: the tenant's own
+		// declaration is then one of them, whichever it is.
+		identical := map[string]bool{}
+		firstPIP := map[string]*PIP{}
+		for _, p := range t.pips {
+			if f, ok := firstPIP[p.Name]; !ok {
+				firstPIP[p.Name], identical[p.Name] = p, true
+			} else if !reflect.DeepEqual(*f, *p) {
+				identical[p.Name] = false
+			}
+		}
 		pips := t.pips[:0:0]
 		for _, p := range t.pips {
 			switch n := t.pipCount[p.Name]; {
 			case n == 1:
 				pips = append(pips, p)
+			case n > 1 && identical[p.Name]:
+				out.Dropped[id] = append(out.Dropped[id],
+					fmt.Sprintf("pip %q: declared %d times identically, read once", p.Name, n))
+				pips = append(pips, p)
+				t.pipCount[p.Name] = 0
 			case n > 1:
 				reason := fmt.Sprintf("declared %d times", n)
 				out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("pip %q: isolated: %s", p.Name, reason))

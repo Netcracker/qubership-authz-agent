@@ -2465,10 +2465,10 @@ func TestAnIsolatedSetFailsUnderItsTargetOnly(t *testing.T) {
 	}
 }
 
-// A condition that reads a PIP the tenant declares more than once, or not at
-// all, reads a failed source: the comparison is undefined, so an ALLOW rule
-// does not permit, and the module lists the PIP as a failure. With one
-// declaration the same rule permits.
+// A condition that reads a PIP the tenant declares more than once
+// differently, or not at all, reads a failed source: the comparison is
+// undefined, so an ALLOW rule does not permit, and the module lists the PIP
+// as a failure. With one declaration the same rule permits.
 func TestAnIsolatedOrUndeclaredPIPFails(t *testing.T) {
 	const tok = `{"name": "subject.x", "pipType": "TOKEN", "claim": "c"}`
 	for _, tc := range []struct {
@@ -2477,7 +2477,7 @@ func TestAnIsolatedOrUndeclaredPIPFails(t *testing.T) {
 		failures   []Failure
 	}{
 		{"one declaration", tok, true, nil},
-		{"two declarations", tok + ", " + tok, false,
+		{"two different declarations", tok + `, {"name": "subject.x", "pipType": "TOKEN", "claim": "d"}`, false,
 			[]Failure{{Set: "s1", PIP: "subject.x", Reason: "isolated: declared 2 times"}}},
 		{"no declaration", "", false, []Failure{{Set: "s1", PIP: "subject.x", Reason: "not declared"}}},
 	} {
