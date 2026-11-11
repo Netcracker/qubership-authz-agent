@@ -122,7 +122,8 @@ var (
 
 // pipPlaceholders returns the keys of the subject's operands that the url or
 // the requestAttributes of decl put into its request, which [Project] needs
-// in [Request.Values]: a HEADER PIP is read from [Request.Headers] instead.
+// in [Request.Values]: a HEADER PIP is read from [Request.Headers] instead,
+// and a TOKEN PIP from [Request.Claims].
 func pipPlaceholders(decl *policyir.PIP, pips func(string) (*policyir.PIP, bool)) []string {
 	texts := []string{decl.URL}
 	for _, v := range decl.RequestAttributes {
@@ -135,7 +136,7 @@ func pipPlaceholders(decl *policyir.PIP, pips func(string) (*policyir.PIP, bool)
 			if !ok || attr == "isM2M" {
 				continue
 			}
-			if p, ok := pips(m[1]); ok && p.Type == policyir.PIPHeader {
+			if p, ok := pips(m[1]); ok && (p.Type == policyir.PIPHeader || p.Type == policyir.PIPToken) {
 				continue
 			}
 			if k := specKey("subj", attr); !slices.Contains(keys, k) {
@@ -349,6 +350,18 @@ func placeholderValue(expr string, req *Request, pips func(string) (*policyir.PI
 				return nil, true
 			}
 			return d, true
+		}
+		if p, ok := pips(expr); ok && p.Type == policyir.PIPToken {
+			// the claim, whether or not a condition reads the PIP; a
+			// claim path that selects no element, without a default, is []
+			// (request_attr_token_empty_selection=empty)
+			v = tokenPIP(p, req.Claims)
+			if v.State == spectables.StatePIPEmpty && !hasDefault(p) {
+				if sel, ok := tokenSelect(p, req.Claims); ok && sel.Kind == jsonpath.KindMany {
+					return []jsonvalue.Value{}, true
+				}
+			}
+			break
 		}
 		var ok bool
 		if v, ok = req.Values[specKey("subj", strings.TrimPrefix(expr, "subject."))]; !ok {

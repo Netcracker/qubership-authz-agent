@@ -330,6 +330,27 @@ func TestPIPFunction_SendsTheRequestOfTheDeclaration(t *testing.T) {
 	})
 }
 
+// TestPIPFunction_ReadsATokenPlaceholderFromTheClaims: a TOKEN PIP that only
+// a placeholder reads takes its value from the subject's claims: the claim,
+// the default value split at commas, and [] for a claim path that selects no
+// element.
+func TestPIPFunction_ReadsATokenPlaceholderFromTheClaims(t *testing.T) {
+	claims, ok := mustDecode(t, `{"department": "finance", "groups": []}`).(*jsonvalue.Object)
+	if !ok {
+		t.Fatal("the claims are not an object")
+	}
+	const decl = `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g", "requestAttributes":
+			{"v": "${subject.dept}", "x": "${subject.listed}", "d": "${subject.none}", "e": "${subject.lacking}"}},
+		{"name": "subject.dept", "pipType": "TOKEN", "claim": "department"},
+		{"name": "subject.listed", "pipType": "TOKEN", "claim": "absent", "defaultValue": "d1,d2"},
+		{"name": "subject.none", "pipType": "TOKEN", "claim": "$..x"},
+		{"name": "subject.lacking", "pipType": "TOKEN", "claim": "absent"}`
+	checkPIPCases(t, decl, Request{Values: map[string]Resolved{}, Claims: claims}, []pipCase{{
+		name: "the claims", response: answer, state: "VALUE",
+		want: `{"method": "POST", "url": "http://g", "headers": {}, "raise_error": false, "pip": "subject.g",
+			"body": {"requestAttributes": {"v": "finance", "x": ["d1", "d2"], "d": [], "e": null}}}`}})
+}
+
 // TestPIPFunction_ForwardsTheIncomingTokenItNames: the Incoming-Token of
 // the request goes to a PIP whose headers name it, and to no other.
 func TestPIPFunction_ForwardsTheIncomingTokenItNames(t *testing.T) {

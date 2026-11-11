@@ -158,26 +158,10 @@ var rootBracket = regexp.MustCompile(`^\['([^']*)'\]`)
 // default value split at commas. A claim that is blank or outside the
 // jsonPath subset is ERROR.
 func tokenPIP(decl *policyir.PIP, claims *jsonvalue.Object) Resolved {
-	claim := decl.Claim
-	if strings.TrimSpace(claim) == "" {
+	sel, ok := tokenSelect(decl, claims)
+	if !ok {
 		return Resolved{State: spectables.StateError}
 	}
-	path := "." + claim
-	if strings.HasPrefix(claim, "$") {
-		path = claim[1:]
-	}
-	if m := rootBracket.FindStringSubmatch(path); m != nil {
-		path = "." + m[1] + path[len(m[0]):]
-	}
-	p, err := jsonpath.Compile(path)
-	if err != nil {
-		return Resolved{State: spectables.StateError}
-	}
-	var doc jsonvalue.Value = jsonvalue.NewObject()
-	if claims != nil {
-		doc = claims
-	}
-	sel := p.Select(doc)
 	missing := false
 	switch sel.Kind {
 	case jsonpath.KindMissing, jsonpath.KindNullParent, jsonpath.KindIndexOutOfBounds, jsonpath.KindBracket:
@@ -201,6 +185,38 @@ func tokenPIP(decl *policyir.PIP, claims *jsonvalue.Object) Resolved {
 		return pipList(l)
 	}
 	return Resolved{State: spectables.StateValue, Value: sel.Value}
+}
+
+// tokenSelect selects the claim of TOKEN PIP decl over claims, nil for none;
+// ok is false for a claim that is blank or outside the jsonPath subset.
+func tokenSelect(decl *policyir.PIP, claims *jsonvalue.Object) (sel jsonpath.Result, ok bool) {
+	claim := decl.Claim
+	if strings.TrimSpace(claim) == "" {
+		return sel, false
+	}
+	path := "." + claim
+	if strings.HasPrefix(claim, "$") {
+		path = claim[1:]
+	}
+	if m := rootBracket.FindStringSubmatch(path); m != nil {
+		path = "." + m[1] + path[len(m[0]):]
+	}
+	p, err := jsonpath.Compile(path)
+	if err != nil {
+		return sel, false
+	}
+	var doc jsonvalue.Value = jsonvalue.NewObject()
+	if claims != nil {
+		doc = claims
+	}
+	return p.Select(doc), true
+}
+
+// hasDefault reports whether decl has a defaultValue whose text is not
+// empty.
+func hasDefault(decl *policyir.PIP) bool {
+	dv, ok := defaultText(decl.DefaultValue)
+	return ok && dv != ""
 }
 
 // defaultText is the text of a declaration's defaultValue, the compacted
