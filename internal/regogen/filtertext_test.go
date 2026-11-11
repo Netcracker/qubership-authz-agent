@@ -17,6 +17,8 @@ package regogen
 import (
 	"strings"
 	"testing"
+
+	"authz-agent/internal/jsonvalue"
 )
 
 func TestRSQLMayBeOr(t *testing.T) {
@@ -51,5 +53,35 @@ func TestRSQLMayBeOrDoesNotBuildTheGroups(t *testing.T) {
 	s := "a==x;" + strings.Repeat("(a==x;", n) + "a==1" + strings.Repeat(")", n)
 	if allocs := testing.AllocsPerRun(1, func() { rsqlMayBeOr(s) }); allocs > 100 {
 		t.Errorf("rsqlMayBeOr over %d nested groups made %v allocations, want at most 100", n, allocs)
+	}
+}
+
+// A MongoDB text nested deeper than a JSON document may be is negated whole,
+// as text whose brackets do not pair, rather than by a walk as deep as the
+// text. At the limit the walk reaches the innermost object, and a scalar in
+// it does not count as a level.
+func TestAMongoDBTextNestedTooDeeplyIsWrappedInNorWhole(t *testing.T) {
+	for _, tc := range []struct {
+		name, inner string
+		depth       int
+		want        func(s string) string
+	}{
+		{"at the limit", "", jsonvalue.MaxDepth, func(s string) string {
+			d := jsonvalue.MaxDepth
+			return strings.Repeat("{", d-1) + `{ "$nor": [ {} ] }` + strings.Repeat("}", d-1)
+		}},
+		{"a scalar at the limit", `"a": 1`, jsonvalue.MaxDepth, func(s string) string {
+			d := jsonvalue.MaxDepth
+			return strings.Repeat("{", d-1) + `{ "$nor": [ {"a": 1} ] }` + strings.Repeat("}", d-1)
+		}},
+		{"past the limit", "", jsonvalue.MaxDepth + 1, func(s string) string { return `{ "$nor": [ ` + s + " ] }" }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := strings.Repeat("{", tc.depth) + tc.inner + strings.Repeat("}", tc.depth)
+			if got, want := negateMongoText(s), tc.want(s); got != want {
+				t.Errorf("negateMongoText(%d nested objects) has $nor at %d of %d bytes, want at %d of %d",
+					tc.depth, strings.Index(got, "$nor"), len(got), strings.Index(want, "$nor"), len(want))
+			}
+		})
 	}
 }

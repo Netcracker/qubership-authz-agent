@@ -86,8 +86,9 @@ const deny = `{"calculationResult":"DENY","filterCondition":null,"mongodbFilterC
 // A DENY rule with a predicate leaves the rows where the predicate does not
 // hold: its negation, in the dialect of the predicate. The pairs legacy
 // negates correctly stay as legacy writes them; $gt and <= get their true
-// opposites; a MongoDB field matched by a bare value has no opposite
-// operator and is wrapped in $nor.
+// opposites. In MongoDB $and and $or swap and negate each element, and what
+// has no opposite operator, such as a field matched by a bare value, is
+// wrapped in $nor.
 func TestADenyPredicateIsNegatedInItsDialect(t *testing.T) {
 	for _, tc := range []struct {
 		name, predicate, field, want string
@@ -102,6 +103,32 @@ func TestADenyPredicateIsNegatedInItsDialect(t *testing.T) {
 			"mongodbFilterCondition", `{{"a": {"$lte": 5}}}`},
 		{"a mongodb bare value is wrapped in $nor", `"mongodbPredicate": "{\"a\": 5}"`,
 			"mongodbFilterCondition", `{{ "$nor": [ {"a": 5} ] }}`},
+		{"a mongodb fragment is wrapped in $nor inside its braces", `"mongodbPredicate": "\"a\": 5"`,
+			"mongodbFilterCondition", `{ "$nor": [ {"a": 5} ] }`},
+		{"a mongodb $or becomes an $and of each negated element", `"mongodbPredicate": "{\"$or\": [{\"a\": 5}, {\"b\": {\"$lt\": 1}}]}"`,
+			"mongodbFilterCondition", `{{"$and": [{ "$nor": [ {"a": 5} ] }, {"b": {"$gte": 1}}]}}`},
+		{"a mongodb operand that reads as an operator stays", `"mongodbPredicate": "{\"a\": {\"$eq\": \"$lt\"}}"`,
+			"mongodbFilterCondition", `{{"a": {"$ne": "$lt"}}}`},
+		{"a mongodb field with two operators is wrapped in $nor", `"mongodbPredicate": "{\"a\": {\"$gt\": 0, \"$lt\": 5}}"`,
+			"mongodbFilterCondition", `{{ "$nor": [ {"a": {"$gt": 0, "$lt": 5}} ] }}`},
+		{"a mongodb $and becomes an $or of each negated element", `"mongodbPredicate": "{\"$and\": [{\"a\": {\"$gt\": 1}}, {\"b\": 2}]}"`,
+			"mongodbFilterCondition", `{{"$or": [{"a": {"$lte": 1}}, { "$nor": [ {"b": 2} ] }]}}`},
+		{"a mongodb $uuid operand stays", `"mongodbPredicate": "{\"a\": {\"$in\": [{\"$uuid\": \"x\"}]}}"`,
+			"mongodbFilterCondition", `{{"a": {"$nin": [{"$uuid": "x"}]}}}`},
+		{"a mongodb operator without an opposite is wrapped in $nor", `"mongodbPredicate": "{\"a\": {\"$regex\": \"x\"}}"`,
+			"mongodbFilterCondition", `{{ "$nor": [ {"a": {"$regex": "x"}} ] }}`},
+		{"a mongodb $and over a non-object is wrapped in $nor", `"mongodbPredicate": "{\"$and\": [1]}"`,
+			"mongodbFilterCondition", `{{ "$nor": [ {"$and": [1]} ] }}`},
+		{"a mongodb $and over an object is wrapped in $nor", `"mongodbPredicate": "{\"$and\": {\"a\": 1}}"`,
+			"mongodbFilterCondition", `{{ "$nor": [ {"$and": {"a": 1}} ] }}`},
+		{"an unquoted mongodb operand keeps its operator flipped", `"mongodbPredicate": "{\"a\": {\"$lt\": x}}"`,
+			"mongodbFilterCondition", `{{"a": {"$gte": x}}}`},
+		{"an empty mongodb $and is wrapped in $nor", `"mongodbPredicate": "{\"$and\": []}"`,
+			"mongodbFilterCondition", `{{ "$nor": [ {"$and": []} ] }}`},
+		{"mongodb text whose brackets do not pair is wrapped in $nor whole", `"mongodbPredicate": "{\"a\": [1}"`,
+			"mongodbFilterCondition", `{ "$nor": [ {{"a": [1}} ] }`},
+		{"a no-break space between mongodb tokens is white space", `"mongodbPredicate": "{\"a\"\u00a0: {\"$lt\": 1}}"`,
+			"mongodbFilterCondition", "{{\"a\"\u00a0: {\"$gte\": 1}}}"},
 		{"rsql =in= becomes =out=", `"rsqlPredicate": "a=in=(1,2)"`, "rsqlFilterCondition", `a=out=(1,2)`},
 		{"rsql < becomes >=", `"rsqlPredicate": "a<5"`, "rsqlFilterCondition", `a>=5`},
 		{"rsql <= becomes >", `"rsqlPredicate": "a<=5"`, "rsqlFilterCondition", `a>5`},
@@ -121,26 +148,36 @@ func TestADenyPredicateIsNegatedInItsDialect(t *testing.T) {
 
 // A MongoDB predicate whose template substitutes a value keeps the braces
 // legacy puts around such a template, "{ " and " }", outside the $nor that
-// negates it.
+// negates it. The template is negated before the value goes in: a field
+// named by a placeholder starts with $ and has no opposite operator, whatever
+// name it becomes.
 func TestANegatedMongoDBPredicateWithAPlaceholderKeepsItsBracesOutsideNor(t *testing.T) {
-	r := New(Config{}, tab(t), quiet{})
-	load(t, r, "", denySet("s", `"mongodbPredicate": "{\"a\": \"${subject.name}\"}"`))
-	claims, err := jsonvalue.Decode([]byte(`{"sub": "u1", "preferred_username": "PARITY_N", "realm_access": {"roles": ["R"]}}`))
-	if err != nil {
-		t.Fatal(err)
-	}
-	op := "read"
-	a, err := r.Filter(context.Background(), FilterRequest{Tenant: "t", Claims: claims.(*jsonvalue.Object),
-		ResourceType: "doc", Operation: &op})
-	if err != nil {
-		t.Fatalf("Filter(doc, read): %v", err)
-	}
-	raw, err := json.Marshal(a)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got, want := string(raw), condition("mongodbFilterCondition", `{ { "$nor": [ {"a": "PARITY_N"} ] } }`); got != want {
-		t.Errorf("Filter(doc, read) = %s, want %s", got, want)
+	for _, tc := range []struct{ name, predicate, want string }{
+		{"a value", `{\"a\": \"${subject.name}\"}`, `{ { "$nor": [ {"a": "PARITY_N"} ] } }`},
+		{"a field name", `{\"${subject.name}\": {\"$lt\": 1}}`, `{ { "$nor": [ {"PARITY_N": {"$lt": 1}} ] } }`},
+		{"an unquoted operand", `{\"a\": {\"$lt\": ${subject.name}}}`, `{ {"a": {"$gte": PARITY_N}} }`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, "", denySet("s", `"mongodbPredicate": "`+tc.predicate+`"`))
+			claims, err := jsonvalue.Decode([]byte(`{"sub": "u1", "preferred_username": "PARITY_N", "realm_access": {"roles": ["R"]}}`))
+			if err != nil {
+				t.Fatal(err)
+			}
+			op := "read"
+			a, err := r.Filter(context.Background(), FilterRequest{Tenant: "t", Claims: claims.(*jsonvalue.Object),
+				ResourceType: "doc", Operation: &op})
+			if err != nil {
+				t.Fatalf("Filter(doc, read): %v", err)
+			}
+			raw, err := json.Marshal(a)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got, want := string(raw), condition("mongodbFilterCondition", tc.want); got != want {
+				t.Errorf("Filter(doc, read) = %s, want %s", got, want)
+			}
+		})
 	}
 }
 

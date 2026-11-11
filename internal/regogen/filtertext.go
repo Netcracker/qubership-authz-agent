@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"authz-agent/internal/jsonvalue"
@@ -221,7 +222,7 @@ func render(x *fexpr, d policyir.Dialect) (string, bool) {
 		case policyir.DialectQueryDSL:
 			return "(" + inner + ").not()", true
 		}
-		return braceMongo(leaf.term, negateMongo(leaf.term.text[d])), true
+		return negateMongoLeaf(leaf.term), true
 	}
 	type part struct {
 		x    *fexpr
@@ -344,11 +345,15 @@ func negateRSQLTerm(t *fterm) (string, bool) {
 	}), true
 }
 
-// mongoOps maps each MongoDB operator to its opposite.
-var mongoOps = map[string]string{"$eq": "$ne", "$ne": "$eq", "$in": "$nin", "$nin": "$in", "$lt": "$gte",
-	"$gte": "$lt", "$gt": "$lte", "$lte": "$gt", "$and": "$or", "$or": "$and"}
+// mongoNegate maps each MongoDB comparison operator to its opposite.
+var mongoNegate = map[string]string{"$eq": "$ne", "$ne": "$eq", "$in": "$nin", "$nin": "$in", "$lt": "$gte",
+	"$gte": "$lt", "$gt": "$lte", "$lte": "$gt"}
 
-var mongoOpRE = regexp.MustCompile(`"(\$[a-z]+)"`)
+// mongoTokenRE splits a MongoDB text into strings, placeholders, brackets and
+// separators, bare words, and whitespace: the characters isPySpace accepts,
+// as in the specification the negation follows.
+var mongoTokenRE = regexp.MustCompile(`"(?:[^"\\]|\\.)*"|\$\{[^}]*\}|[{}\[\],:]|` +
+	`[^\t\n\v\f\r\x{1c}-\x{1f}\x{85}\p{Z}{}\[\],:"]+|[\t\n\v\f\r\x{1c}-\x{1f}\x{85}\p{Z}]+`)
 
 // braceMongo wraps the MongoDB text t of a predicate of term, or of its
 // negation, in the braces legacy puts around a predicate: "{ " and " }" where
@@ -360,76 +365,198 @@ func braceMongo(term *fterm, t string) string {
 	return "{" + t + "}"
 }
 
-// negateMongo is the MongoDB text of the negation of the predicate text t: t
-// with each operator replaced by its opposite where that negates t, and
-// { "$nor": [ t ] } where it does not, such as for a field matched by a bare
-// value, a field with two operators, or an operator without an opposite.
-func negateMongo(t string) string {
-	if v, err := jsonvalue.Decode([]byte(t)); err == nil && mongoInvertible(v) {
-		return mongoOpRE.ReplaceAllStringFunc(t, func(m string) string {
-			if op, ok := mongoOps[m[1:len(m)-1]]; ok {
-				return `"` + op + `"`
-			}
-			return m
-		})
+// negateMongoLeaf is the MongoDB text of the negation of the predicate of
+// term, braces included: its template in the legacy braces, negated by
+// negateMongoText, and then each placeholder replaced by the text it became,
+// as negateRSQLTerm does. A term without a MongoDB template negates its text.
+func negateMongoLeaf(term *fterm) string {
+	tmpl, ok := term.template[policyir.DialectMongoDB]
+	if !ok {
+		return negateMongoText(braceMongo(term, term.text[policyir.DialectMongoDB]))
 	}
-	return `{ "$nor": [ ` + t + " ] }"
+	subst := term.subst[policyir.DialectMongoDB]
+	return placeholderRE.ReplaceAllStringFunc(negateMongoText(braceMongo(term, tmpl)), func(m string) string {
+		if v, ok := subst[m[2:len(m)-1]]; ok {
+			return v
+		}
+		return m
+	})
 }
 
-// mongoInvertible reports whether swapping each operator of the filter
-// document v for its opposite negates it: v names one field, or is one $and
-// or $or of such documents, and the field holds one operator that has an
-// opposite.
-func mongoInvertible(v jsonvalue.Value) bool {
-	o, ok := v.(*jsonvalue.Object)
-	if !ok || o.Len() != 1 {
-		return false
+// mongoNode is a node of the tolerant tree of a MongoDB text: an object, an
+// array, or a scalar, with the byte span [start, end) of its text. Legacy's
+// texts are not always JSON: an object may hold a bare object ({ { "a": 1 } })
+// and a value may be a placeholder or an unquoted word.
+type mongoNode struct {
+	kind       byte // 'o' object, 'a' array, 's' scalar
+	start, end int
+	// members of an object, values of an array (with an empty key)
+	items []mongoItem
+}
+
+// mongoItem is a member of an object, with the span of its quoted key and
+// the key as written between the quotes, or a bare value when member is
+// false.
+type mongoItem struct {
+	member           bool
+	keyStart, keyEnd int
+	key              string
+	val              *mongoNode
+}
+
+type mongoToken struct {
+	at   int
+	text string
+}
+
+// mongoTree is the tolerant tree of s, nil where s is empty, its brackets do
+// not pair, a separator or a member's value is missing or out of place, a
+// token is left over, or the brackets nest deeper than [jsonvalue.MaxDepth],
+// the limit of a JSON document: the text comes from a policy and is not
+// bounded by the decoder of the policy around it.
+func mongoTree(s string) *mongoNode {
+	var toks []mongoToken
+	for _, ix := range mongoTokenRE.FindAllStringIndex(s, -1) {
+		t := s[ix[0]:ix[1]]
+		if strings.TrimFunc(t, isPySpace) != "" {
+			toks = append(toks, mongoToken{ix[0], t})
+		}
 	}
-	k := o.Keys()[0]
-	x, _ := o.Get(k)
-	if k == "$and" || k == "$or" {
-		l, ok := x.([]jsonvalue.Value)
-		if !ok || len(l) == 0 {
+	pos := 0
+	peek := func() string {
+		if pos < len(toks) {
+			return toks[pos].text
+		}
+		return ""
+	}
+	var value func(depth int) *mongoNode
+	value = func(depth int) *mongoNode {
+		if pos >= len(toks) {
+			return nil
+		}
+		at, t := toks[pos].at, toks[pos].text
+		switch t {
+		case "{", "[":
+			if depth > jsonvalue.MaxDepth {
+				return nil
+			}
+			pos++
+			n := &mongoNode{kind: 'o', start: at}
+			closing := "}"
+			if t == "[" {
+				n.kind, closing = 'a', "]"
+			}
+			for peek() != closing {
+				switch peek() {
+				case "", ",", ":", "}", "]":
+					return nil
+				}
+				kat, key := toks[pos].at, toks[pos].text
+				if t == "{" && strings.HasPrefix(key, `"`) && pos+1 < len(toks) && toks[pos+1].text == ":" {
+					pos += 2
+					switch peek() {
+					case "", ",", ":", "}", "]":
+						return nil
+					}
+					v := value(depth + 1)
+					if v == nil {
+						return nil
+					}
+					n.items = append(n.items, mongoItem{member: true, keyStart: kat, keyEnd: kat + len(key),
+						key: key[1 : len(key)-1], val: v})
+				} else {
+					v := value(depth + 1)
+					if v == nil {
+						return nil
+					}
+					n.items = append(n.items, mongoItem{val: v})
+				}
+				if peek() == "," {
+					pos++
+				}
+			}
+			n.end = toks[pos].at + 1
+			pos++
+			return n
+		case "}", "]", ",", ":":
+			return nil
+		}
+		pos++
+		return &mongoNode{kind: 's', start: at, end: at + len(t)}
+	}
+	n := value(1)
+	if n == nil || pos != len(toks) {
+		return nil
+	}
+	return n
+}
+
+// mongoEdit replaces the bytes [start, end) of a text with text.
+type mongoEdit struct {
+	start, end int
+	text       string
+}
+
+// negateMongoText is the negation of the MongoDB text s: an operator with an
+// opposite replaced by it, $and and $or swapped with each element negated, a
+// bare object inside braces negated in place, and anything else, or a text
+// that has no tree ([mongoTree]), wrapped in { "$nor": [ ... ] }.
+func negateMongoText(s string) string {
+	var edits []mongoEdit
+	if n := mongoTree(s); n != nil {
+		edits = mongoNegations(n)
+	} else {
+		edits = []mongoEdit{{0, 0, `{ "$nor": [ `}, {len(s), len(s), " ] }"}}
+	}
+	sort.SliceStable(edits, func(i, j int) bool {
+		if edits[i].start != edits[j].start {
+			return edits[i].start > edits[j].start
+		}
+		return edits[i].end > edits[j].end
+	})
+	for _, e := range edits {
+		s = s[:e.start] + e.text + s[e.end:]
+	}
+	return s
+}
+
+// mongoNegations is the edits that negate the node n.
+func mongoNegations(n *mongoNode) []mongoEdit {
+	wrap := []mongoEdit{{n.start, n.start, `{ "$nor": [ `}, {n.end, n.end, " ] }"}}
+	if n.kind != 'o' || len(n.items) != 1 {
+		return wrap
+	}
+	it := n.items[0]
+	if !it.member {
+		if it.val.kind == 'o' {
+			return mongoNegations(it.val)
+		}
+		return wrap
+	}
+	v := it.val
+	if (it.key == "$and" || it.key == "$or") && v.kind == 'a' && len(v.items) > 0 && allObjects(v.items) {
+		swapped := "$or"
+		if it.key == "$or" {
+			swapped = "$and"
+		}
+		edits := []mongoEdit{{it.keyStart + 1, it.keyEnd - 1, swapped}}
+		for _, e := range v.items {
+			edits = append(edits, mongoNegations(e.val)...)
+		}
+		return edits
+	}
+	if !strings.HasPrefix(it.key, "$") && v.kind == 'o' && len(v.items) == 1 && v.items[0].member {
+		if op, ok := mongoNegate[v.items[0].key]; ok {
+			return []mongoEdit{{v.items[0].keyStart + 1, v.items[0].keyEnd - 1, op}}
+		}
+	}
+	return wrap
+}
+
+func allObjects(items []mongoItem) bool {
+	for _, e := range items {
+		if e.val.kind != 'o' {
 			return false
-		}
-		for _, e := range l {
-			if !mongoInvertible(e) {
-				return false
-			}
-		}
-		return true
-	}
-	if strings.HasPrefix(k, "$") {
-		return false
-	}
-	f, ok := x.(*jsonvalue.Object)
-	if !ok || f.Len() != 1 {
-		return false
-	}
-	_, ok = mongoOps[f.Keys()[0]]
-	if !ok || f.Keys()[0] == "$and" || f.Keys()[0] == "$or" {
-		return false
-	}
-	// an operator inside the value would be swapped too
-	y, _ := f.Get(f.Keys()[0])
-	return !strings.Contains(jsonText(y), `"$`) || onlyUUIDs(y)
-}
-
-// onlyUUIDs reports whether v, an operand of a field's operator, holds no
-// operator but $uuid, which names a value.
-func onlyUUIDs(v jsonvalue.Value) bool {
-	switch x := v.(type) {
-	case *jsonvalue.Object:
-		for _, k := range x.Keys() {
-			if k != "$uuid" {
-				return false
-			}
-		}
-	case []jsonvalue.Value:
-		for _, e := range x {
-			if !onlyUUIDs(e) {
-				return false
-			}
 		}
 	}
 	return true
