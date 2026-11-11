@@ -831,9 +831,9 @@ func allStrings(l []jsonvalue.Value) bool {
 
 // structureText is the text a string compares a list or an object by, as the
 // agent profile prints it: the members in document order, a scalar member as
-// its Java text with a number stripped of trailing zeros in plain notation,
-// and a member that is itself a list or an object as compact JSON with its
-// numbers as written.
+// its Java text with a number as structureNumberText prints it, and a member
+// that is itself a list or an object as compact JSON with its numbers as
+// written.
 func structureText(v jsonvalue.Value) string {
 	member := func(x jsonvalue.Value) string {
 		switch x := x.(type) {
@@ -844,7 +844,7 @@ func structureText(v jsonvalue.Value) string {
 		case bool:
 			return strconv.FormatBool(x)
 		case jsonvalue.Number:
-			return plainStripped(string(x))
+			return structureNumberText(string(x))
 		case string:
 			return x
 		}
@@ -917,6 +917,25 @@ func jsonString(s string) string {
 }
 
 var numberRE = regexp.MustCompile(`^(-?)(\d*)(?:\.(\d*))?(?:[eE]([-+]?\d+))?$`)
+
+// structureNumberText is the text of a number that is a member of a list or
+// an object in structureText: Double.toString of a number with an exponent
+// and no digits after the point that the exponent leaves, such as 1e3, 1.5e1,
+// or 5e0, which print 1000.0, 15.0, and 5.0; plainStripped of any other.
+func structureNumberText(text string) string {
+	m := numberRE.FindStringSubmatch(text)
+	if m == nil || m[4] == "" || strings.HasPrefix(m[4], "-") {
+		return plainStripped(text)
+	}
+	// an exponent too long for an int64 leaves no digits after the point
+	if exp, err := strconv.ParseInt(m[4], 10, 64); err == nil && int64(len(m[3])) > exp {
+		return plainStripped(text)
+	}
+	// a number beyond the range of a float64 parses as an infinity with
+	// ErrRange, and DoubleText prints it as Infinity
+	f, _ := strconv.ParseFloat(text, 64)
+	return jsonvalue.DoubleText(f)
+}
 
 // plainZeroLimit is the most zeros plainStripped adds to the digits of a
 // number to write it in plain notation: 1e999999999 would take a gigabyte.

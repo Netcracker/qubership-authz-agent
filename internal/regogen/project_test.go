@@ -26,19 +26,26 @@ import (
 )
 
 // The text a string compares a structure by prints a scalar member as Java
-// text with numbers stripped of trailing zeros, and a nested member as
-// compact JSON with its numbers as written. The expected texts are what the
-// specification's agent profile prints.
+// text, and a nested member as compact JSON with its numbers as written. A
+// number with an exponent that leaves no digits after the point prints as
+// Double.toString, any other with its trailing zeros stripped. The expected
+// texts are what the specification's agent profile prints.
 func TestStructureText(t *testing.T) {
 	for _, tc := range []struct{ value, want string }{
 		{`["x", null]`, `[x, null]`},
 		{`[1.0, true]`, `[1, true]`},
 		{`[1.50e1, -0.0, 100]`, `[15, 0, 100]`},
-		{`[1e64, 1e65]`, `[1` + strings.Repeat("0", 64) + `, 1e65]`},
+		{`[1e3, 1E3, -1e3]`, `[1000.0, 1000.0, -1000.0]`},
+		{`{"k": 1e7}`, `{k=1.0E7}`},
+		{`[5e0, 0e5, -0e0]`, `[5.0, 0.0, -0.0]`},
+		{`[1.5e1, 1.50e1, 1.2345678912345679E8]`, `[15.0, 15, 123456789.12345679]`},
+		{`[1e64, 1e65, 1e400]`, `[1.0E64, 1.0E65, Infinity]`},
+		{`[1` + strings.Repeat("0", 64) + `, 1` + strings.Repeat("0", 65) + `]`,
+			`[1` + strings.Repeat("0", 64) + `, 1` + strings.Repeat("0", 65) + `]`},
 		{`[1e-65, 1e-66]`, `[0.` + strings.Repeat("0", 64) + `1, 1e-66]`},
-		{`[1e9223372036854775807, 10e9223372036854775807]`, `[1e9223372036854775807, 10e9223372036854775807]`},
+		{`[1e9223372036854775807, 10e9223372036854775807]`, `[Infinity, Infinity]`},
 		{`[1e-9223372036854775808, 0.1e-9223372036854775808]`, `[1e-9223372036854775808, 0.1e-9223372036854775808]`},
-		{`[1e99999999999999999999]`, `[1e99999999999999999999]`},
+		{`[1e99999999999999999999]`, `[Infinity]`},
 		{`[["a"], "b"]`, `[["a"], b]`},
 		{`{"k": {"b": "c"}}`, `{k={"b":"c"}}`},
 		{`{"a": [1.0]}`, `{a=[1.0]}`},
