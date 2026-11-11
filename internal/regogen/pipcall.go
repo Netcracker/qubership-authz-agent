@@ -388,7 +388,8 @@ func placeholderValue(expr string, req *Request, pips func(string) (*policyir.PI
 }
 
 // resourcePlaceholder returns the value of the resource path p over the
-// resource of b, ABSENT for a path outside the subset [jsonpath] accepts.
+// resource of b, read as [readPath] reads it, ABSENT for a path outside the
+// subset [jsonpath] accepts.
 func resourcePlaceholder(p string, b Body) Resolved {
 	if !b.HasResource {
 		return Resolved{State: spectables.StateAbsent}
@@ -396,7 +397,7 @@ func resourcePlaceholder(p string, b Body) Resolved {
 	if p == "" {
 		return Resolved{State: spectables.StateValue, Value: b.Resource}
 	}
-	c, err := regobuiltins.CompilePath(p)
+	c, err := regobuiltins.CompilePath(readPath(p))
 	if err != nil {
 		return Resolved{State: spectables.StateAbsent}
 	}

@@ -351,6 +351,26 @@ func TestPIPFunction_ReadsATokenPlaceholderFromTheClaims(t *testing.T) {
 			"body": {"requestAttributes": {"v": "finance", "x": ["d1", "d2"], "d": [], "e": null}}}`}})
 }
 
+// TestPIPFunction_ReadsABracketPlaceholderFromTheMemberResource: a
+// placeholder ${resource['x']} reads x of the member resource of the
+// resource, as a condition's resource['x'] does.
+func TestPIPFunction_ReadsABracketPlaceholderFromTheMemberResource(t *testing.T) {
+	const decl = `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g", "requestAttributes":
+		{"v": "${resource['x']}"}}`
+	for name, tc := range map[string]struct{ resource, want string }{
+		"in the member resource": {`{"resource": {"x": "m"}, "x": "top"}`, `"m"`},
+		"only at the top":        {`{"x": "top"}`, `null`},
+	} {
+		t.Run(name, func(t *testing.T) {
+			req := Request{Values: map[string]Resolved{},
+				Body: Body{Resource: mustDecode(t, tc.resource), HasResource: true}}
+			checkPIPCases(t, decl, req, []pipCase{{name: name, response: answer, state: "VALUE",
+				want: `{"method": "POST", "url": "http://g", "headers": {}, "raise_error": false, "pip": "subject.g",
+					"body": {"requestAttributes": {"v": ` + tc.want + `}}}`}})
+		})
+	}
+}
+
 // TestPIPFunction_ForwardsTheIncomingTokenItNames: the Incoming-Token of
 // the request goes to a PIP whose headers name it, and to no other.
 func TestPIPFunction_ForwardsTheIncomingTokenItNames(t *testing.T) {
