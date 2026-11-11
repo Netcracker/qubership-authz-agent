@@ -18,6 +18,7 @@ package paritysuite
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -769,6 +770,21 @@ func TestLegacyCanaries_AddOneForEachOtherTenantOfTheDecisionsThatTheExportNames
 	}
 }
 
+// An export that names no tenant still gets the canary of the case tenant: it
+// is the only sign the agent holds that export and not the previous one.
+func TestLegacyCanaries_KeepTheCaseCanaryForAnExportThatNamesNoTenant(t *testing.T) {
+	p := legacyExportPoint{
+		policySets: []any{},
+		pips:       []any{},
+		decisions:  []legacyDecision{{tenant: "parity-a"}, {tenant: "parity-a-holder"}},
+	}
+	got := legacyCanaries(p, 3, "parity-a", "default")
+	want := []legacyCanary{{"PARITY_EXPORT_CANARY_3", "parity-a"}}
+	if !slices.Equal(got, want) {
+		t.Errorf("legacyCanaries = %v, want %v", got, want)
+	}
+}
+
 // A denied canary breaks the decisions of its tenant alone: with the holder's
 // canary denied, or the case tenant's, the other tenant and a tenant without a
 // canary are compared. With every canary denied, the agent holds none of the
@@ -790,16 +806,18 @@ func TestSetUpLegacyPoint_SkipsTheDecisionsOfATenantWhoseCanaryIsDenied(t *testi
 			},
 		}
 		for _, tc := range []struct {
-			name   string
-			denied []string
+			name     string
+			mountErr error
+			denied   []string
 		}{
-			{"holder-denied", []string{"parity-a-holder"}},
-			{"case-denied", []string{"parity-a"}},
-			{"all-denied", []string{"parity-a", "parity-a-holder"}},
+			{"holder-denied", nil, []string{"parity-a-holder"}},
+			{"case-denied", nil, []string{"parity-a"}},
+			{"all-denied", nil, []string{"parity-a", "parity-a-holder"}},
+			{"mount-fails", errors.New("HTTP 502"), nil},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				setup := setUpLegacyPoint(t, p, legacyCanaries(p, 1, "parity-a", "default"), "default", legacyPointLoader{
-					mount:   func(*testing.T, json.RawMessage, json.RawMessage) error { return nil },
+					mount:   func(*testing.T, json.RawMessage, json.RawMessage) error { return tc.mountErr },
 					allowed: func(_ *testing.T, c legacyCanary) bool { return !slices.Contains(tc.denied, c.tenant) },
 				})
 				for _, d := range p.decisions {
@@ -814,7 +832,8 @@ func TestSetUpLegacyPoint_SkipsTheDecisionsOfATenantWhoseCanaryIsDenied(t *testi
 		return `SETUP BROKEN: the agent did not load tenant ` + tenant + ` of the export of step h4: the canary set ` +
 			rt + ` is denied there`
 	}
-	requireOutput(t, childOutput(t),
+	out := childOutput(t)
+	requireOutput(t, out,
 		`--- PASS: `+name+`/holder-denied/setup `,
 		`=== RUN   `+name+`/holder-denied/setup_parity-a-holder\n.*: `+denied("parity-a-holder", "PARITY_EXPORT_CANARY_1_1"),
 		`--- PASS: `+name+`/holder-denied/read-a `,
@@ -832,5 +851,13 @@ func TestSetUpLegacyPoint_SkipsTheDecisionsOfATenantWhoseCanaryIsDenied(t *testi
 		`--- FAIL: `+name+`/all-denied/setup_parity-a-holder `,
 		`--- SKIP: `+name+`/all-denied/read-a `,
 		`--- SKIP: `+name+`/all-denied/read-holder `,
-		`=== RUN   `+name+`/all-denied/read-unnamed\n.*: `+denied("parity-a", "PARITY_EXPORT_CANARY_1")+`.*; not compared\n`)
+		`=== RUN   `+name+`/all-denied/read-unnamed\n.*: SETUP BROKEN: the agent did not load the export of step h4: `+
+			`the canary of each of its 2 tenants is denied; not compared\n`,
+
+		`=== RUN   `+name+`/mount-fails/setup\n.*: SETUP BROKEN: mount the export of step h4: HTTP 502\n`,
+		`=== RUN   `+name+`/mount-fails/read-holder\n.*: SETUP BROKEN: mount the export of step h4: HTTP 502; not compared\n`,
+		`--- SKIP: `+name+`/mount-fails/read-unnamed `)
+	if strings.Contains(out, t.Name()+"/mount-fails/setup_") {
+		t.Errorf("the child run checked a holder canary after the mount failed:\n%s", out)
+	}
 }
