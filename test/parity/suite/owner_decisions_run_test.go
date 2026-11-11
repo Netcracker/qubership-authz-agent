@@ -78,8 +78,8 @@ func TestExportFedOwnerDecisions(t *testing.T) {
 			}
 			s.pinRoutes(oc.pins)
 			s.pinUserManagement(oc.userManagement)
-			canary := legacyCanaryType(i + 1)
-			ps, pips, err := legacyExportDocuments(legacyExportPoint{policySets: oc.policySets, pips: oc.pips}, canary)
+			canary, tenant := legacyCanaryType(i+1), valueOr(oc.tenant, stand)
+			ps, pips, err := legacyExportDocuments(legacyExportPoint{policySets: oc.policySets, pips: oc.pips}, canary, tenant)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -89,7 +89,7 @@ func TestExportFedOwnerDecisions(t *testing.T) {
 			for _, f := range oc.forms {
 				t.Logf("form %s: %s, in set %s", f.kind, f.what, strings.Join(f.sets, " / "))
 			}
-			s.cfg.TenantID = valueOr(oc.tenant, stand)
+			s.cfg.TenantID = tenant
 			if !s.legacyCanaryAllowed(canary) {
 				t.Errorf("the agent refused the export: the canary set %s is denied, so the agent kept its previous "+
 					"snapshot; want the export accepted with the set as a failed source", canary)

@@ -592,7 +592,7 @@ func TestWithUniqueGeneratedIDs_GivesEachMaskedIDItsOwnUUID(t *testing.T) {
 
 func TestLegacyExportDocuments_AppendTheCanarySet(t *testing.T) {
 	p := legacyExportPoint{policySets: []any{map[string]any{"name": "case set"}}, pips: []any{}}
-	ps, pips, err := legacyExportDocuments(p, "PARITY_EXPORT_CANARY_7")
+	ps, pips, err := legacyExportDocuments(p, "PARITY_EXPORT_CANARY_7", "default")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -610,6 +610,39 @@ func TestLegacyExportDocuments_AppendTheCanarySet(t *testing.T) {
 	}
 	if len(p.policySets) != 1 {
 		t.Errorf("the point's policy sets = %v, want the case set alone", p.policySets)
+	}
+}
+
+func TestLegacyExportDocuments_TheCanaryNamesItsTenantOnTheSetThePolicyAndTheRule(t *testing.T) {
+	ps, _, err := legacyExportDocuments(legacyExportPoint{policySets: []any{}, pips: []any{}}, "PARITY_EXPORT_CANARY_7", "parity-tenant-a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc struct {
+		PolicySets []struct {
+			TenantID any `json:"tenantId"`
+			Policies []struct {
+				TenantID any `json:"tenantId"`
+				Rules    []struct {
+					TenantID any `json:"tenantId"`
+				} `json:"rules"`
+			} `json:"policies"`
+		} `json:"policySets"`
+	}
+	if err := json.Unmarshal(ps, &doc); err != nil {
+		t.Fatal(err)
+	}
+	if len(doc.PolicySets) != 1 || len(doc.PolicySets[0].Policies) != 1 || len(doc.PolicySets[0].Policies[0].Rules) != 1 {
+		t.Fatalf("policySets = %s, want one set with one policy and one rule", ps)
+	}
+	set := doc.PolicySets[0]
+	for _, got := range []struct {
+		level string
+		id    any
+	}{{"set", set.TenantID}, {"policy", set.Policies[0].TenantID}, {"rule", set.Policies[0].Rules[0].TenantID}} {
+		if got.id != "parity-tenant-a" {
+			t.Errorf("tenantId of the canary %s = %v, want parity-tenant-a", got.level, got.id)
+		}
 	}
 }
 

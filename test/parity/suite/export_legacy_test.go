@@ -713,30 +713,34 @@ func acceptedLegacyDifference(class string, wrongAllow bool) (AcceptedDivergence
 // export of the n-th point of a run.
 func legacyCanaryType(n int) string { return fmt.Sprintf("PARITY_EXPORT_CANARY_%d", n) }
 
-// legacyCanarySet is a SIMPLIFIED set that allows ROLE_PARITY_READER to READ
-// the resource type rt. The run mounts one with a type of its own beside each
-// export and checks it before the decisions: a pull that failed keeps the
-// previous export, whose canary has another type, so the check denies.
-func legacyCanarySet(rt string) map[string]any {
+// legacyCanarySet is a SIMPLIFIED set in tenant that allows
+// ROLE_PARITY_READER to READ the resource type rt. The run mounts one with a
+// type of its own beside each export and checks it before the decisions: a
+// pull that failed keeps the previous export, whose canary has another type,
+// so the check denies. The set, its policy, and its rule carry tenantId, as
+// every element of a legacy export does; the agent assigns an element without
+// one to no tenant.
+func legacyCanarySet(rt, tenant string) map[string]any {
 	return map[string]any{
-		"type": "SIMPLIFIED", "status": "ACTIVE", "domain": "PARITY", "component": "PARITY",
+		"type": "SIMPLIFIED", "status": "ACTIVE", "domain": "PARITY", "component": "PARITY", "tenantId": tenant,
 		"name": rt + "_PolicySet", "policySetId": seededUUID(rt), "combiningAlgorithm": "DENY_UNLESS_PERMIT",
 		"target": "resourceType == '" + rt + "'", "policySets": []any{},
 		"policies": []any{map[string]any{
 			"name": rt + "_READ_Policy", "policyId": seededUUID(rt + "/policy"), "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-			"target": "operation == 'READ'",
+			"target": "operation == 'READ'", "tenantId": tenant,
 			"rules": []any{map[string]any{
 				"name": rt + " canary", "ruleId": seededUUID(rt + "/rule"), "effect": "ALLOW", "ruleType": "DEFAULT",
-				"target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+				"target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'", "tenantId": tenant,
 			}},
 		}},
 	}
 }
 
 // legacyExportDocuments returns the two documents the source serves for p,
-// with the canary set of type canary appended to the policy sets.
-func legacyExportDocuments(p legacyExportPoint, canary string) (json.RawMessage, json.RawMessage, error) {
-	sets := append(slices.Clone(p.policySets), legacyCanarySet(canary))
+// with the canary set of type canary appended to the policy sets. tenant is
+// the tenantId of the canary, the tenant the run checks the canary in.
+func legacyExportDocuments(p legacyExportPoint, canary, tenant string) (json.RawMessage, json.RawMessage, error) {
+	sets := append(slices.Clone(p.policySets), legacyCanarySet(canary, tenant))
 	ps, err := json.Marshal(map[string]any{exportDocSets: sets})
 	if err != nil {
 		return nil, nil, err

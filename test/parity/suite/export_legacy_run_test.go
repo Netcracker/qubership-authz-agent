@@ -85,15 +85,15 @@ func TestExportFedLegacyAgent(t *testing.T) {
 			s.pinUserManagement(lc.userManagement)
 			for _, p := range lc.points {
 				mounted++
-				canary := legacyCanaryType(mounted)
-				ps, pips, err := legacyExportDocuments(p, canary)
+				canary, tenant := legacyCanaryType(mounted), valueOr(lc.tenant, stand)
+				ps, pips, err := legacyExportDocuments(p, canary, tenant)
 				if err != nil {
 					t.Fatal(err)
 				}
 				if err := source.Mount(ctx, ps, pips); err != nil {
 					t.Fatalf("mount the export of step %s: %v", p.step, err)
 				}
-				s.cfg.TenantID = lc.tenant
+				s.cfg.TenantID = tenant
 				loaded := s.legacyCanaryAllowed(canary)
 				for _, d := range p.decisions {
 					s.cfg.TenantID = d.tenant
