@@ -60,7 +60,8 @@ const (
 	// ReasonDenied denies an item that no policy allows.
 	ReasonDenied = "no policy of the tenant allows the operation on the resource"
 	// ReasonUnknown prefixes a denial that depends on a value the agent
-	// could not read.
+	// could not read or that failed a comparison, such as IS EMPTY over a
+	// null PIP body.
 	ReasonUnknown = "PIP resolution failed"
 )
 

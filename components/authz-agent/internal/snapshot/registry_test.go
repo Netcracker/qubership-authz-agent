@@ -842,23 +842,25 @@ func TestARuleOverAPIPDeclaredTwiceIdenticallyReadsTheDeclaration(t *testing.T) 
 	}
 }
 
-// A condition that is unknown for a value alone keeps its bounds beside a
-// policy that allows: resource.a. is undefined on the doc, and the PIP the
-// condition also reads answers. With the PIP failed, the same rule denies
-// the resource, unless a known operand settles the failed one: an AND with a
-// false operand, or a comparison that is false for every value of the PIP.
-func TestAnUnknownConditionWithoutAFailedSourceDoesNotDeny(t *testing.T) {
+// A condition unknown because of a failed value denies the resource beside a
+// policy that allows, unless a known operand settles the failed one: an AND
+// with a false operand, or a comparison that is false for every value of the
+// PIP. A resource path that ends in a dot is such a value, as the PIP whose
+// call failed is.
+func TestAFailedValueDeniesUnlessAKnownOperandSettlesIt(t *testing.T) {
 	for _, tc := range []struct {
 		name, condition string
 		status          int
 		want            Result
 	}{
-		{"the PIP answers", "resource.a. == 'q' AND subject.g == 'x'", http.StatusOK, Result{Allowed: true}},
-		{"the PIP failed", "resource.a. == 'q' AND subject.g == 'x'", http.StatusInternalServerError,
+		{"the PIP answers", "resource.b == 'yes' AND subject.g == 'x'", http.StatusOK, Result{Allowed: true}},
+		{"the PIP failed", "resource.b == 'yes' AND subject.g == 'x'", http.StatusInternalServerError,
 			Result{Reason: "PIP resolution failed: subject.g"}},
-		{"the failed PIP under an AND with a false operand", "resource.a. == 'q' OR resource.b == 'no' AND subject.g == 'x'",
+		{"a path ending in a dot beside a PIP that answers", "resource.a. == 'q' AND subject.g == 'x'", http.StatusOK,
+			Result{Reason: "PIP resolution failed"}},
+		{"the failed PIP under an AND with a false operand", "resource.b == 'no' AND subject.g == 'x'",
 			http.StatusInternalServerError, Result{Allowed: true}},
-		{"the failed PIP in a comparison false for every value", "resource.a. == 'q' OR subject.g IN resource.c",
+		{"the failed PIP in a comparison false for every value", "subject.g IN resource.c",
 			http.StatusInternalServerError, Result{Allowed: true}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -869,6 +871,39 @@ func TestAnUnknownConditionWithoutAFailedSourceDoesNotDeny(t *testing.T) {
 			req.Items[0].Resource = mustObject(t, `{"a": "x", "b": "yes"}`)
 			if got := decide(t, r, req); got[0] != tc.want {
 				t.Errorf("Decide(%s, PIP status %d) = %+v, want %+v", tc.condition, tc.status, got[0], tc.want)
+			}
+		})
+	}
+}
+
+// IS EMPTY and IS NOT EMPTY over a GENERAL PIP whose body is null, or that
+// declares no url and so has no body, are failed values: they deny the
+// resource beside a policy that allows. Over an empty list they are true and
+// false.
+func TestIsEmptyOverANullPIPBodyDeniesTheResource(t *testing.T) {
+	const withoutURL = `{"tenantId": "a", "name": "subject.g", "pipType": "GENERAL", "httpMethod": "POST", "beanName": "g"}`
+	for _, tc := range []struct {
+		name, condition, body string
+		withURL               bool
+		want                  Result
+	}{
+		{"IS EMPTY over a null body", "subject.g IS EMPTY", `null`, true, Result{Reason: "PIP resolution failed"}},
+		{"IS EMPTY without url", "subject.g IS EMPTY", ``, false, Result{Reason: "PIP resolution failed"}},
+		{"IS EMPTY over an empty list", "subject.g IS EMPTY", `[]`, true, Result{Allowed: true}},
+		{"IS NOT EMPTY over a null body", "subject.g IS NOT EMPTY", `null`, true, Result{Reason: "PIP resolution failed"}},
+		{"IS NOT EMPTY without url", "subject.g IS NOT EMPTY", ``, false, Result{Reason: "PIP resolution failed"}},
+		{"IS NOT EMPTY over an empty list", "subject.g IS NOT EMPTY", `[]`, true, Result{Allowed: true}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pip := withoutURL
+			if tc.withURL {
+				srv, _ := pipServer(t, http.StatusOK, tc.body)
+				pip = generalPIP(srv.URL, "")
+			}
+			r := pipRegistry(t)
+			load(t, r, pip, besideAllow("DENY_OVERRIDES", "true", "true", "ALLOW", tc.condition))
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0] != tc.want {
+				t.Errorf("Decide(%s, body %q, url %v) = %+v, want %+v", tc.condition, tc.body, tc.withURL, got[0], tc.want)
 			}
 		})
 	}

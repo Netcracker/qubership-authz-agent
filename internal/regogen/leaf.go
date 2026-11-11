@@ -36,10 +36,12 @@ type leafRails struct {
 	// subjectOnly is set when every expression reads only the subject's
 	// projected attributes, so that the leaf can join a subject group.
 	subjectOnly bool
-	// failed holds where the leaf is unknown because a source it reads
+	// failed holds where the leaf is unknown because a value it reads
 	// failed on the request: a point of a side at the failure of its source
-	// whose outcome depends on the source's value, or a PIP that is not
-	// declared. It is false for a leaf that reads no such source.
+	// whose outcome depends on the source's value, a PIP that is not
+	// declared, or a point whose cell is unknown for every value, such as
+	// IS EMPTY over a null PIP body, where legacy fails the decision though
+	// the source answered. It is false for a leaf that reads no such value.
 	failed dnf
 	// row is set on a leaf over the resource in check/filter, which is true
 	// on the rows it matches.
@@ -250,6 +252,7 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 			rails.f = union(rails.f, dnf{c})
 		case spectables.OutcomeU:
 			rails.threeValued = true
+			rails.failed = union(rails.failed, dnf{c})
 		}
 	}
 	constant := func(cs []spectables.Cell) (spectables.Outcome, bool) {

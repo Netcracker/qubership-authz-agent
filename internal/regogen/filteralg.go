@@ -38,7 +38,7 @@ import (
 // The answer is A of the root, the union of the top-level nodes' A: empty is
 // DENY, all rows ALLOW, anything else USE_FILTER_CONDITION with its text.
 // Where the condition of a rule that applies is unknown on some row because a
-// source it reads failed, the check denies that resource whole, so the answer
+// value it reads failed, the check denies that resource whole, so the answer
 // is ANDed with the rows where no such condition is unknown ([rowsVal]),
 // whatever the algorithms give: a veto. A veto no dialect can write, such as
 // over every row, makes the answer DENY.

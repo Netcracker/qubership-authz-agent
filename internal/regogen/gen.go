@@ -263,7 +263,7 @@ func Generate(tree *policyir.Tree, tab *spectables.Table, opt Options) (*Module,
 		}
 		failed[i] = d
 	}
-	// a rule that applies with a condition over a failed source denies the
+	// a rule that applies with a condition over a failed value denies the
 	// resource whatever the other rules give
 	// allow reads the rule even where it has no clause, so that an edit of
 	// one set that makes it fail changes no line of another
@@ -852,7 +852,7 @@ func (g *gen) access(a policyir.Access) (leafRails, error) {
 		threeValued: three}, nil
 }
 
-// fails reports whether a rule condition at or below n reads a source that
+// fails reports whether a rule condition at or below n reads a value that
 // may fail ([cond.fails]).
 func (g *gen) fails(n *node) bool {
 	if f, ok := g.failsMemo[n]; ok {
@@ -986,9 +986,10 @@ func (c *cond) railRule(d dnf, o spectables.Outcome) dnf {
 }
 
 // failedU holds where the condition is unknown and its value depends on a
-// source that failed: some disjunct is unknown at a failed source and has no
-// false leaf, and no disjunct is true. The agent denies the resource there.
-// A condition unknown for a value alone, or whose failed operand a known
+// value that failed ([leafRails.failed]): some disjunct is unknown at a
+// failed value and has no false leaf, and no disjunct is true. The agent
+// denies the resource there. A condition unknown only where a cell's
+// outcome depends on the operand values, or whose failed operand a known
 // operand settles, keeps its bounds.
 func (c *cond) failedU() dnf {
 	if !c.fails {
@@ -1005,25 +1006,32 @@ func (c *cond) failedU() dnf {
 	}
 	var parts []dnf
 	for _, grp := range c.groups {
-		for i, l := range grp {
-			if l.failed.isFalse() {
-				continue
+		var failed []dnf
+		for _, l := range grp {
+			if !l.failed.isFalse() {
+				failed = append(failed, l.failed)
 			}
-			// a disjunct is unknown at l where no other leaf is false: a
-			// two-valued leaf is then true, which its true rail says
-			// without a negation
-			fs := []dnf{one(l.failed)}
-			for j, k := range grp {
-				switch {
-				case j == i:
-				case k.threeValued:
-					fs = append(fs, g.refRule(k.f, prefixAnd, true))
-				default:
-					fs = append(fs, one(k.t))
-				}
-			}
-			parts = append(parts, g.productAll(fs))
 		}
+		if len(failed) == 0 {
+			continue
+		}
+		// a disjunct is unknown at a failed leaf where no other leaf is
+		// false: a two-valued leaf is then true, which its true rail says
+		// without a negation. A failed leaf is not false where it failed, so
+		// with several failed leaves the disjunct reads their union once and
+		// every leaf's rail, and grows with the number of leaves, not with
+		// its square.
+		fs := []dnf{one(union(failed...))}
+		for _, k := range grp {
+			switch {
+			case len(failed) == 1 && !k.failed.isFalse():
+			case k.threeValued:
+				fs = append(fs, g.refRule(k.f, prefixAnd, true))
+			default:
+				fs = append(fs, one(k.t))
+			}
+		}
+		parts = append(parts, g.productAll(fs))
 	}
 	d := one(union(parts...))
 	if len(c.groups) > 1 {
@@ -1062,7 +1070,7 @@ func (g *gen) call(name string) string {
 }
 
 // ruleFailed holds where a rule applies and its condition is unknown because
-// a source it reads failed ([cond.failedU]), which denies the resource. allow
+// a value it reads failed ([cond.failedU]), which denies the resource. allow
 // reads it once, beside rulePermit, which holds the clauses where the
 // policies permit: a reference in each of those clauses would cost the
 // compiler of OPA a walk of the rules of failed per clause.
@@ -1176,7 +1184,7 @@ var sequentialFactors = 16
 
 // flag returns the clauses that hold exactly when bound b (lo, hi) of node n
 // is x (P permit, D deny), or, for x E and bound lo, when a rule at or below n
-// applies and its condition is unknown because a source it reads failed,
+// applies and its condition is unknown because a value it reads failed,
 // which denies the resource. A rule applies under a target that is not
 // false: an undefined target makes it a node that can deny. The hi
 // bound of a node no unknown value reaches (uncertain) is its lo bound, and

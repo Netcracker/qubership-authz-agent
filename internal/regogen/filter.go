@@ -466,7 +466,7 @@ func (m *Module) Filter(ctx context.Context, st *Statuses, req *Request) (Filter
 
 // leafStatus is the status of one leaf of a condition: a leaf over the
 // resource (row), or keys of the module that hold where the leaf is true,
-// false, and unknown because a source it reads failed.
+// false, and unknown because a value it reads failed.
 type leafStatus struct {
 	row          *rowAtom
 	key          string
@@ -479,7 +479,7 @@ type leafStatus struct {
 // leaves records what the filter reads of condition c on the rows, under
 // key. A condition that reads the resource gets the status of each leaf; one
 // that does not has the same value on every row, and gets one leaf, whole,
-// unknown where the check denies over a failed source and false elsewhere:
+// unknown where the check denies over a failed value and false elsewhere:
 // where it is not unknown, the filter reads its status alone.
 func (fg *filterGen) leaves(key string, c *cond) [][]leafStatus {
 	if !slices.ContainsFunc(c.groups, func(grp []leafRails) bool {

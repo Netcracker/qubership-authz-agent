@@ -1982,7 +1982,8 @@ func TestTheModuleListsTheSetsByLabel(t *testing.T) {
 // block that moves goes unseen here; TestTheModuleListsTheSetsByLabel covers
 // the positions. The edit gives a condition over a
 // PIP to the DENY rule of set b, which then reads a shared rule; sets a and c
-// read shared rules of their own.
+// read shared rules of their own, over subject.h, since every comparison of
+// one PIP reads one rule of the states where the PIP fails it.
 func TestAnEditOfOneSetChangesNoLineOfTheOthers(t *testing.T) {
 	regular := func(id, condition string) string {
 		return fmt.Sprintf(`{"policySetId": %q, "status": "ACTIVE", "target": "resourceType == 'doc'",
@@ -1994,7 +1995,8 @@ func TestAnEditOfOneSetChangesNoLineOfTheOthers(t *testing.T) {
 	lines := func(sets ...string) map[string]int {
 		t.Helper()
 		exp, err := policyir.FromRegular([]byte(`{"policySets": [`+strings.Join(sets, ", ")+`]}`),
-			[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`))
+			[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"},
+				{"tenantId": "t1", "name": "subject.h", "pipType": "GENERAL", "url": "http://h"}]}`))
 		if err != nil {
 			t.Fatalf("FromRegular: %v", err)
 		}
@@ -2027,7 +2029,7 @@ func TestAnEditOfOneSetChangesNoLineOfTheOthers(t *testing.T) {
 		maps.DeleteFunc(d, func(_ string, n int) bool { return n == 0 })
 		return d
 	}
-	a, c := regular("a", "subject.g == 'x'"), regular("c", "subject.g == 'z'")
+	a, c := regular("a", "subject.h == 'x'"), regular("c", "subject.h == 'z'")
 	b0, b1 := regular("b", "resource.b == 'y'"), regular("b", "resource.b == 'y' AND subject.g == 'y'")
 	own := change(lines(b0), lines(b1))
 	if len(own) == 0 {
