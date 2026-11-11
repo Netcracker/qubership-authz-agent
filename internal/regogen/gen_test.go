@@ -1066,10 +1066,11 @@ func TestASingleOddListContainsNoEmptyAttributeList(t *testing.T) {
 	}
 }
 
-// Two lists have an element in common under CONTAINS ANY, or a list on the
-// left contains a subject list of one value, when two elements are equal: an
-// object by its members, with their case, and a list by its elements in
-// order, a string with its case and a number by its value (ADR-0083).
+// Two lists have an element in common under CONTAINS ANY, a list on the left
+// contains a subject list of one value, or a list is a subset of another, when
+// two elements are equal: an object by its members, with their case, and a
+// list by its elements in order, a string with its case, a number by its
+// value, and a boolean never equal to a string (ADR-0083).
 func TestStructureElementsAreEqualByValue(t *testing.T) {
 	for _, tc := range []struct {
 		name, condition, a, b string
@@ -1082,6 +1083,14 @@ func TestStructureElementsAreEqualByValue(t *testing.T) {
 		{"a list element in another case", "resource.a CONTAINS ANY subject.id", `[["A"]]`, `[["a"]]`, false},
 		{"a list element with a number in another spelling", "resource.a CONTAINS ANY subject.id", `[[1]]`, `[[1.0]]`,
 			true},
+		{"a list element with a boolean and its text", "resource.a CONTAINS ANY subject.id", `[[true]]`, `[["true"]]`,
+			false},
+		{"a subset with a boolean and its text", "resource.a IS SUBSET subject.id", `[[true]]`, `[["true"]]`, false},
+		{"a subset with an equal boolean", "resource.a IS SUBSET subject.id", `[[true]]`, `[[true]]`, true},
+		{"a subset with a string in another case", "resource.a IS SUBSET subject.id", `[["A"]]`, `[["a"]]`, false},
+		{"a subset with a number in another spelling", "resource.a IS SUBSET subject.id", `[[1]]`, `[[1.0]]`, true},
+		{"a subset with a number and its text", "resource.a IS SUBSET subject.id", `[[1]]`, `[["1"]]`, false},
+		{"a list element with a number and its text", "resource.a CONTAINS ANY subject.id", `[[1]]`, `[["1"]]`, false},
 		{"a list element in another order", "resource.a CONTAINS ANY subject.id", `[["a", "b"]]`, `[["b", "a"]]`,
 			false},
 		{"a list element with a null equals nothing", "resource.a CONTAINS ANY subject.id", `[[null]]`, `[[null]]`,

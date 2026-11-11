@@ -47,7 +47,7 @@ import (
 //	    by its value on the right
 //	s:  a list or an object on the left by its Java text, which a string on the
 //	    right equals
-//	l:  a list by its elements in order, each by its own token
+//	l:  a list by its elements in order, each by its own token ([caseToken])
 //	o:  an object by its members
 //
 // So a number equals a number or a string of the same value (ADR-0083), and
@@ -122,9 +122,9 @@ func asList(v jsonvalue.Value) []jsonvalue.Value {
 }
 
 // caseToken is the token of a list or an object as an element of a list: a
-// list by the tokens of its elements in order, a number by its value, a string
-// or a boolean by its text with case, an object by its members. A list that
-// holds null equals nothing and has no token.
+// list by the tokens of its elements in order, a number by its value (n:), a
+// string by its text with case (c:), a boolean by its text (t:), an object by
+// its members. A list that holds null equals nothing and has no token.
 func caseToken(e jsonvalue.Value, num numberValue) (string, bool) {
 	switch e := e.(type) {
 	case nil:
@@ -138,7 +138,7 @@ func caseToken(e jsonvalue.Value, num numberValue) (string, bool) {
 	case bool:
 		return "t:" + strconv.FormatBool(e), true
 	case string:
-		return "t:" + e, true
+		return "c:" + e, true
 	}
 	panic(fmt.Sprintf("regogen: %T is not a Value", e))
 }
