@@ -44,7 +44,26 @@ type simplifiedPolicy struct {
 	SQLPredicate     string `json:"sqlPredicate,omitempty"`
 	MongoDBPredicate string `json:"mongodbPredicate,omitempty"`
 	Predicate        string `json:"predicate,omitempty"`
-	Roles            []any  `json:"roles,omitempty"`
+	// Predicates is the predicates object, whose mongodbPredicate is the
+	// mongodb predicate of the policy, or a text read as that predicate.
+	Predicates json.RawMessage `json:"predicates,omitempty"`
+	Roles      []any           `json:"roles,omitempty"`
+}
+
+// mongodbPredicate is the mongodb predicate of p: the one of its predicates,
+// which access-control reads, else the top-level one of the stub's superset.
+func (p simplifiedPolicy) mongodbPredicate() string {
+	var text string
+	if json.Unmarshal(p.Predicates, &text) == nil && text != "" {
+		return text
+	}
+	var nested struct {
+		MongoDBPredicate string `json:"mongodbPredicate"`
+	}
+	if json.Unmarshal(p.Predicates, &nested) == nil && nested.MongoDBPredicate != "" {
+		return nested.MongoDBPredicate
+	}
+	return p.MongoDBPredicate
 }
 
 // simplifiedPIP is an access-control simplified PIP, with the fields the
@@ -205,7 +224,7 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 			condition:        conditionString(p.Condition),
 			rsqlPredicate:    p.RSQLPredicate,
 			sqlPredicate:     p.SQLPredicate,
-			mongodbPredicate: p.MongoDBPredicate,
+			mongodbPredicate: p.mongodbPredicate(),
 			predicate:        p.Predicate,
 		})
 	}

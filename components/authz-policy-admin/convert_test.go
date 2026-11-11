@@ -92,6 +92,32 @@ func TestPIPRoundTripThroughTheServiceReader(t *testing.T) {
 	}
 }
 
+// TestTheNestedMongoDBPredicateGoesToTheRule: the mongodbPredicate of the
+// predicates object, or a predicates text, is the mongodb predicate of the
+// rule, ahead of a top-level mongodbPredicate.
+func TestTheNestedMongoDBPredicateGoesToTheRule(t *testing.T) {
+	tests := []struct{ name, fields, want string }{
+		{"a predicates object", `"predicates": {"mongodbPredicate": "nested", "sqlPredicate": "s"}`, "nested"},
+		{"a predicates text", `"predicates": "as text"`, "as text"},
+		{"nested beside top-level", `"predicates": {"mongodbPredicate": "nested"}, "mongodbPredicate": "top"`, "nested"},
+		{"top-level alone", `"mongodbPredicate": "top"`, "top"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var p simplifiedPolicy
+			if err := json.Unmarshal([]byte(`{"component": "PARITY", "resourceType": "PARITY_DOC",
+				"operation": "READ", "roles": ["ROLE_A"], `+tt.fields+`}`), &p); err != nil {
+				t.Fatalf("unmarshal the policy: %v", err)
+			}
+			sets := toV3PolicySets([]simplifiedPolicy{p}, defaultTenant)
+			if got := sets[0].Policies[0].Rules[0]; got.MongoDBPredicate != tt.want || got.SQLPredicate != "" {
+				t.Errorf("rule mongodbPredicate = %q, sqlPredicate = %q; want %q and none",
+					got.MongoDBPredicate, got.SQLPredicate, tt.want)
+			}
+		})
+	}
+}
+
 // TestPIPExportKeepsTheMappingAndCacheFields: the tables of a MAPPING PIP,
 // the cache settings, and the resource type of a FILTERED PIP reach the
 // service reader as uploaded.
