@@ -332,6 +332,90 @@ func TestFromRegularReadsOnceAPIPNameDeclaredMoreThanOnceIdentically(t *testing.
 	}
 }
 
+// Two declarations of one name read as identical when a request attribute or
+// the default value holds a JSON object with its members in another order, and
+// as different when the value differs. A mapping with its members in another
+// order keeps them isolated, since the permissions come in the mapping's
+// order, and so does a mapping value that differs.
+func TestFromRegularComparesThePIPsOfANameInAnyMemberOrder(t *testing.T) {
+	t.Parallel()
+
+	mapping := func(roles string) string {
+		return `{"name": "subject.x", "pipType": "MAPPING", "tenantId": "t",
+			"productMapping": {"subject.roles": ` + roles + `}}`
+	}
+	attributes := func(a string) string {
+		return `{"name": "subject.x", "pipType": "MAPPING", "tenantId": "t", "requestAttributes": {"a": ` + a + `}}`
+	}
+	custom := func(roles string) string {
+		return `{"name": "subject.x", "pipType": "MAPPING", "tenantId": "t",
+			"customMapping": {"subject.roles": ` + roles + `}}`
+	}
+	defaultValue := func(v string) string {
+		return `{"name": "subject.x", "pipType": "TOKEN", "claim": "c", "tenantId": "t", "defaultValue": ` + v + `}`
+	}
+	const identical = `pip "subject.x": declared 2 times identically, read once`
+	cases := []struct {
+		name, first, second, wantDropped string
+	}{
+		{"mapping members in another order", mapping(`{"ROLE_A": ["p"], "ROLE_B": ["q"]}`),
+			mapping(`{"ROLE_B": ["q"], "ROLE_A": ["p"]}`), `pip "subject.x": isolated: declared 2 times`},
+		{"a mapping value that differs", mapping(`{"ROLE_A": ["p"], "ROLE_B": ["q"]}`),
+			mapping(`{"ROLE_B": ["q"], "ROLE_A": ["r"]}`), `pip "subject.x": isolated: declared 2 times`},
+		{"request attribute members in another order", attributes(`{"x": 1, "y": 2}`), attributes(`{"y": 2, "x": 1}`),
+			identical},
+		{"a request attribute that differs", attributes(`{"x": 1, "y": 2}`), attributes(`{"x": 1, "y": 3}`),
+			`pip "subject.x": isolated: declared 2 times`},
+		{"custom mapping members in another order", custom(`{"ROLE_A": ["p"], "ROLE_B": ["q"]}`),
+			custom(`{"ROLE_B": ["q"], "ROLE_A": ["p"]}`), `pip "subject.x": isolated: declared 2 times`},
+		{"default value members in another order", defaultValue(`{"x": 1, "y": 2}`), defaultValue(`{"y": 2, "x": 1}`),
+			identical},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := fromRegular(t, `[]`, `[`+tc.first+`, `+tc.second+`]`)
+			if got := e.Dropped["t"]; !slices.Equal(got, []string{tc.wantDropped}) {
+				t.Errorf("Dropped[t] = %q, want [%q]", got, tc.wantDropped)
+			}
+		})
+	}
+}
+
+// Two top-level sets of one policySetId read as identical when a JSON object
+// they hold has its members in another order: the unknown keys of the set, or
+// the value of a custom predicate's parameter. A parameter value that differs
+// keeps them isolated.
+func TestFromRegularComparesTheSetsOfAPolicySetIdInAnyMemberOrder(t *testing.T) {
+	t.Parallel()
+
+	const identical = `policy set 1 "s": identical to policy set 0, read once`
+	const isolated = `policy set 0 "s": isolated: the tenant has 2 top-level sets with this policySetId`
+	set := func(rest string) string {
+		return `{"tenantId": "t", "policySetId": "s", "target": "resourceType == 'R'"` + rest + `}`
+	}
+	custom := func(param string) string {
+		return `, "policies": [{"rules": [{"effect": "ALLOW",
+			"customPredicate": {"predicate": "own", "params": {"p": ` + param + `}}}]}]`
+	}
+	cases := []struct {
+		name, first, second, want string
+	}{
+		{"unknown keys in another order", set(`, "PARITY_x": 1, "PARITY_y": 2`), set(`, "PARITY_y": 2, "PARITY_x": 1`), identical},
+		{"a parameter's members in another order", set(custom(`{"x": 1, "y": 2}`)), set(custom(`{"y": 2, "x": 1}`)), identical},
+		{"a parameter that differs", set(custom(`{"x": 1, "y": 2}`)), set(custom(`{"y": 2, "x": 3}`)), isolated},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := fromRegular(t, `[`+tc.first+`, `+tc.second+`]`, `[]`)
+			if got := e.Dropped["t"]; !slices.Contains(got, tc.want) {
+				t.Errorf("Dropped[t] = %q, want it to hold %q", got, tc.want)
+			}
+		})
+	}
+}
+
 // The export can show a tenant's set holding a policy of another tenant, which
 // the legacy service moved there while it served an earlier export. Such a set
 // is isolated with its target, and the tenant keeps its other sets. A policy

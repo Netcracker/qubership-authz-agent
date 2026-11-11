@@ -244,7 +244,7 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 		for _, p := range t.pips {
 			if f, ok := firstPIP[p.Name]; !ok {
 				firstPIP[p.Name], identical[p.Name] = p, true
-			} else if !reflect.DeepEqual(*f, *p) {
+			} else if !samePIP(f, p) {
 				identical[p.Name] = false
 			}
 		}
@@ -278,9 +278,11 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 
 // identicalSets reports whether the sets of raws at idx read as the same set,
 // field by field, with the texts cut as [enumText] cuts them and with the same
-// unknown keys. A set that cannot be read is identical to none.
+// unknown keys. The members of a JSON object compare in any order, here and in
+// a value the set holds as raw JSON, such as a parameter of a custom
+// predicate. A set that cannot be read is identical to none.
 func identicalSets(raws []json.RawMessage, idx []int) bool {
-	var first exportSet
+	var first string
 	var firstUnknown []string
 	for n, i := range idx {
 		var s exportSet
@@ -289,13 +291,61 @@ func identicalSets(raws []json.RawMessage, idx []int) bool {
 			return false
 		}
 		s.cutTexts()
+		text, err := json.Marshal(s)
+		if err != nil {
+			return false
+		}
+		canonical, unknown := canonicalJSON(string(text)), slices.Sorted(slices.Values(unknown))
 		if n == 0 {
-			first, firstUnknown = s, unknown
-		} else if !reflect.DeepEqual(first, s) || !slices.Equal(firstUnknown, unknown) {
+			first, firstUnknown = canonical, unknown
+		} else if canonical != first || !slices.Equal(firstUnknown, unknown) {
 			return false
 		}
 	}
 	return true
+}
+
+// canonicalJSON returns the JSON value text with the members of every object
+// sorted by key and no spaces, so that two texts of one value compare equal.
+// A number keeps its text, so 1 and 1.0 differ. A text that is not one JSON
+// value is returned as is.
+func canonicalJSON(text string) string {
+	d := json.NewDecoder(strings.NewReader(text))
+	d.UseNumber()
+	var v any
+	if err := d.Decode(&v); err != nil || d.More() {
+		return text
+	}
+	out, err := json.Marshal(v)
+	if err != nil {
+		return text
+	}
+	return string(out)
+}
+
+// samePIP reports whether a and b are the same declaration, with the members
+// of a JSON object in a field that holds JSON text compared in any order,
+// except in productMapping and customMapping: the permissions of a MAPPING
+// PIP come in the order of those tables' members.
+func samePIP(a, b *PIP) bool {
+	ca, cb := canonicalPIP(*a), canonicalPIP(*b)
+	return reflect.DeepEqual(ca, cb)
+}
+
+// canonicalPIP returns p with every field that holds JSON text, except the
+// two mappings, in the form of [canonicalJSON].
+func canonicalPIP(p PIP) PIP {
+	for _, f := range []*string{&p.DefaultValue, &p.Cacheable, &p.CachePeriod} {
+		*f = canonicalJSON(*f)
+	}
+	if p.RequestAttributes != nil {
+		attrs := make(map[string]string, len(p.RequestAttributes))
+		for k, v := range p.RequestAttributes {
+			attrs[k] = canonicalJSON(v)
+		}
+		p.RequestAttributes = attrs
+	}
+	return p
 }
 
 // exportHead is what [FromRegular] reads of an element before the element
