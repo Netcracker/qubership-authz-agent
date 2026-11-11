@@ -285,6 +285,10 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 				if err == nil && (status < http.StatusOK || status >= http.StatusMultipleChoices) {
 					err = fmt.Errorf("HTTP %d", status)
 				}
+				var emptyNotLoaded *agentLoadError
+				if errors.As(err, &emptyNotLoaded) {
+					err = emptyNotLoaded.err
+				}
 				if err != nil {
 					stale = setupBroken(fmt.Errorf("empty domain %s after case %s, which the agent did not load: %w", domain, tc.id, err))
 				}

@@ -235,7 +235,11 @@ func TestRunIsolatedCases_AfterADomainTheAgentDidNotEmptyTheLaterCasesAreABroken
 		return
 	}
 	name := regexp.QuoteMeta(t.Name())
-	requireOutput(t, childOutput(t),
+	out := childOutput(t)
+	if strings.Contains(out, "did not load: "+setupBrokenPrefix) {
+		t.Errorf("the child run's output repeats %s inside a report:\n%s", setupBrokenPrefix, out)
+	}
+	requireOutput(t, out,
 		`--- PASS: `+name+`/pull-refused/run/refused/upload `,
 		`=== RUN   `+name+`/pull-refused/run/next/setup\n.*: SETUP BROKEN: empty domain PARITY_ISOLATED after case refused, `+
 			`which the agent did not load: .*HTTP 502`,
