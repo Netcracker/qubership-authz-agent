@@ -139,9 +139,33 @@ func TestTwoDomainsKeepTheirPoliciesInTwoSets(t *testing.T) {
 		}
 		got = append(got, ps.PolicySetID+" "+strings.Join(preds, ","))
 	}
-	want := []string{"ps-domain1-PARITY-PARITY_DOC domain1==1", "ps-domain2-PARITY-PARITY_DOC domain2==1"}
+	want := []string{"ps-domain1/PARITY/PARITY_DOC domain1==1", "ps-domain2/PARITY/PARITY_DOC domain2==1"}
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Errorf("policy sets =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// TestPolicySetIDsTellTheKeysApart: keys whose parts differ only in where a
+// hyphen falls get two ids, since the agent isolates every set whose id
+// another set repeats.
+func TestPolicySetIDsTellTheKeysApart(t *testing.T) {
+	mux := newTestServer(t, t.TempDir())
+	for domain, component := range map[string]string{"a-b": "c", "a": "b-c"} {
+		body := `[{"component":"` + component + `","resourceType":"PARITY_DOC","operation":"READ","roles":["ROLE_A"]}]`
+		if rec := do(t, mux, http.MethodPut, policiesPath+domain, body); rec.Code != http.StatusOK {
+			t.Fatalf("%s upload: got %d, body %s", domain, rec.Code, rec.Body.String())
+		}
+	}
+
+	var resp v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
+	var got []string
+	for _, ps := range resp.PolicySets {
+		got = append(got, ps.PolicySetID)
+	}
+	want := []string{"ps-a/b-c/PARITY_DOC", "ps-a-b/c/PARITY_DOC"}
+	if strings.Join(got, " ") != strings.Join(want, " ") {
+		t.Errorf("policy set ids = %q, want %q", got, want)
 	}
 }
 

@@ -17,6 +17,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
 )
@@ -272,10 +273,9 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 			})
 		}
 
-		id := fmt.Sprintf("ps-%s-%s", pk.domain, pk.resourceType)
-		if pk.upload != "" {
-			id = fmt.Sprintf("ps-%s-%s-%s", pk.upload, pk.domain, pk.resourceType)
-		}
+		// each part escaped, so that no two keys share an id: the agent
+		// isolates every set whose id another set repeats
+		id := "ps-" + url.PathEscape(pk.upload) + "/" + url.PathEscape(pk.domain) + "/" + url.PathEscape(pk.resourceType)
 		result = append(result, v3PolicySet{
 			PolicySetID:        id,
 			Name:               fmt.Sprintf("%s-%s policy set", pk.domain, pk.resourceType),
