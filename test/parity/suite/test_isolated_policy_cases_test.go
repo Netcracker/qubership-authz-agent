@@ -18,8 +18,11 @@ package paritysuite
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"slices"
 	"time"
 
@@ -208,7 +211,11 @@ func (s *ParitySuite) subjectToken(req isolatedRequest) (string, error) {
 // status is a golden of its own, so a form the PAP refuses is a recorded result
 // rather than a failed case. On the authz-agent profile the upload goes to
 // authz-policy-admin, whose status is compared the same way, and a case it
-// refuses ends there too.
+// refuses ends there too. A case whose upload authz-policy-admin accepts and the
+// agent does not load also ends there: where the golden records a refusal, the
+// agent refused as legacy did and the upload passes; otherwise the subtest
+// "setup" fails with setupBrokenPrefix and every request is skipped, since the
+// agent holds the policies of the case before.
 //
 // When it ends, it empties every domain its cases uploaded into.
 func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
@@ -260,6 +267,11 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 			}
 			mergeFields(policy, tc.policy, tc.resourceType)
 			status, body, err := UploadIsolatedPoliciesWithQuery(ctx, s.cfg, s.tokens, valueOr(tc.domain, isolatedCaseDomain), tc.pips, []any{policy}, tc.policiesQuery)
+			var notLoaded *agentLoadError
+			if errors.As(err, &notLoaded) {
+				s.endUnloadedCase("isolated/"+tc.id, status, notLoaded, tc.requests)
+				return
+			}
 			s.Require().NoError(err)
 
 			s.Run("upload", func() {
@@ -293,4 +305,42 @@ func valueOr(value, fallback string) string {
 		return fallback
 	}
 	return value
+}
+
+// endUnloadedCase ends a case whose upload authz-policy-admin accepted with
+// status and the agent did not load (err). Where the upload golden subCase
+// records a refusal, the agent refused as legacy did, and the subtest "upload"
+// passes. Otherwise the upload is compared with its golden, the subtest
+// "setup" fails with setupBrokenPrefix, and every request of requests is a
+// subtest skipped with that report.
+func (s *ParitySuite) endUnloadedCase(subCase string, status int, err *agentLoadError, requests []isolatedRequest) {
+	if s.goldenRecordsRefusal(PSUITE_LOAD_SIMPLIFIED_POLICIES, subCase) {
+		s.Run("upload", func() {
+			s.T().Logf("legacy refused the upload, and the agent did not load it: %v", err)
+		})
+		return
+	}
+	s.Run("upload", func() {
+		s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, subCase, &model.PolicyLoadOutcome{Status: status})
+	})
+	broken := err.Error()
+	s.Run("setup", func() { s.T().Error(broken) })
+	for _, req := range requests {
+		s.Run(req.name, func() { skipIfBroken(s.T(), broken) })
+	}
+}
+
+// goldenRecordsRefusal reports whether the golden of row id under subCase
+// records an upload that was refused: a status outside 2xx. A golden that is
+// not recorded or not readable records none.
+func (s *ParitySuite) goldenRecordsRefusal(id ParityEndpointID, subCase string) bool {
+	raw, err := os.ReadFile(s.comparator.GoldenPath(id, subCase))
+	if err != nil {
+		return false
+	}
+	var golden model.PolicyLoadOutcome
+	if json.Unmarshal(raw, &golden) != nil {
+		return false
+	}
+	return golden.Status < http.StatusOK || golden.Status >= http.StatusMultipleChoices
 }

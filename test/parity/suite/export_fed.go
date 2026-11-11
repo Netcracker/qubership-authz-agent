@@ -21,11 +21,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -411,12 +413,12 @@ type exportSource interface {
 
 // stubExportSource serves the export from a pipstub instance and returns once
 // the agent has pulled it. It asks the agent to pull at PARITY_AGENT_PULL_URL,
-// as [awaitPull] does. It takes a failed load (502) as pulled and prints the
-// agent's reason: the export is the case's, and the canary set reports what
-// the agent kept. Where the agent
-// has no pull route, it waits for a pull of the agent's own that fetched both
-// documents after the mount and has finished, which the pull loop shows by
-// starting the next one.
+// as [awaitPull] does, and returns the *[pullStatusError] of a load that
+// failed (502 when the agent refused the export or could not fetch it), since
+// the agent then keeps its previous policies. Where the agent has no pull
+// route, it waits for a pull of the agent's own that fetched both documents
+// after the mount and has finished, which the pull loop shows by starting the
+// next one; only the canary set of the export then tells a refused export.
 type stubExportSource struct {
 	stub    *PipController
 	timeout time.Duration
@@ -435,11 +437,6 @@ func (s *stubExportSource) Mount(ctx context.Context, policySets, pips json.RawM
 		return err
 	}
 	loaded, err := pullNow(ctx)
-	var failed *pullStatusError
-	if errors.As(err, &failed) && failed.status == http.StatusBadGateway {
-		fmt.Printf("[paritysuite] POST %s: 502, the agent kept its previous policies: %s\n", failed.url, failed.body)
-		return nil
-	}
 	if err != nil || loaded {
 		return err
 	}
@@ -498,7 +495,26 @@ const (
 	verdictAccepted exportVerdict = "accepted"
 	verdictDiffers  exportVerdict = "differs"
 	verdictSkipped  exportVerdict = "skipped"
+	// verdictBroken is a golden whose request was never sent, because the
+	// agent did not load the export the golden was recorded with.
+	verdictBroken exportVerdict = "broken"
 )
+
+// setupBrokenPrefix starts every report of a configuration the agent did not
+// load: the failure of a setup subtest, the reason a decision that waited on it
+// was skipped, and the error of a seed or an upload. A grep for it in the
+// go test output separates a broken setup from a wrong answer.
+const setupBrokenPrefix = "SETUP BROKEN"
+
+// setupBroken returns the report of a setup that failed with err, with
+// setupBrokenPrefix in front unless err already starts with it.
+func setupBroken(err error) string {
+	msg := err.Error()
+	if strings.HasPrefix(msg, setupBrokenPrefix) {
+		return msg
+	}
+	return setupBrokenPrefix + ": " + msg
+}
 
 // exportResult is the verdict of one golden, with what the report needs.
 type exportResult struct {
@@ -521,19 +537,23 @@ type exportReplayer struct {
 
 // replay runs one function and returns a verdict per golden. The caller resets
 // the stubs' pinned routes between functions; every route an event pins is
-// recorded for that reset. The function starts from the empty export, so the
-// agent never decides on the policies of the function before: a pull that
-// fails on the function's first export keeps the empty one, as on a fresh
-// stand, whatever ran before and whatever PARITY_EXPORT_RUN selected.
+// recorded for that reset. The function starts from the empty export. From a
+// mount that fails until the next one that loads, the agent holds an export
+// other than the one the goldens were recorded with, so replay sends none of
+// the requests in between and gives their goldens [verdictBroken], with the
+// failed mount as the detail.
 func (r *exportReplayer) replay(ctx context.Context, fn exportFunction) ([]exportResult, error) {
 	var out []exportResult
+	broken := ""
 	if err := r.source.Mount(ctx, emptyExportPolicySets, emptyExportPIPs); err != nil {
-		return out, fmt.Errorf("the empty export: %w", err)
+		broken = setupBroken(fmt.Errorf("the empty export: %w", err))
 	}
 	var status int
 	var body []byte
 	var sendErr error
 	sent := false
+	// unsent is why the last request was not sent, "" when it was.
+	unsent := ""
 	for i := 0; i < len(fn.Events); i++ {
 		ev := fn.Events[i]
 		switch ev.Ev {
@@ -560,12 +580,15 @@ func (r *exportReplayer) replay(ctx context.Context, fn exportFunction) ([]expor
 			if err != nil {
 				return out, err
 			}
+			broken = ""
 			if err := r.source.Mount(ctx, ps, pips); err != nil {
-				return out, fmt.Errorf("export %s: %w", ev.ID, err)
+				broken = setupBroken(fmt.Errorf("export %s: %w", ev.ID, err))
 			}
 		case "http":
-			status, body, sendErr = r.send(ctx, ev)
-			sent = true
+			sent, unsent = true, broken
+			if broken == "" {
+				status, body, sendErr = r.send(ctx, ev)
+			}
 		case "golden":
 			// The variants of a golden the stand recorded by order class follow
 			// each other; the agent's answer has to match one of them.
@@ -574,7 +597,13 @@ func (r *exportReplayer) replay(ctx context.Context, fn exportFunction) ([]expor
 				i++
 				group = append(group, fn.Events[i])
 			}
-			res := r.judge(group, sent, status, body, sendErr)
+			var res exportResult
+			if unsent != "" {
+				res = exportResult{Path: ev.Path, Class: ev.Class, Status: ev.Status, Families: ev.Families,
+					Verdict: verdictBroken, Detail: unsent}
+			} else {
+				res = r.judge(group, sent, status, body, sendErr)
+			}
 			res.Test = fn.Test
 			out = append(out, res)
 		default:
@@ -812,12 +841,12 @@ func opsSubset(a, b map[string][]string) bool {
 // of the bundle, or a stand that skipped every golden.
 func exportRunProblem(results []exportResult) string {
 	for _, res := range results {
-		if res.Verdict != verdictSkipped {
+		if res.Verdict != verdictSkipped && res.Verdict != verdictBroken {
 			return ""
 		}
 	}
 	return fmt.Sprintf("%d goldens selected, none compared: PARITY_EXPORT_RUN matched no function of the bundle, or "+
-		"the stand skipped every golden", len(results))
+		"the stand skipped every golden, or the agent loaded none of the exports", len(results))
 }
 
 // checkKnownUser mints the token of a user the parity realm always seeds, so
@@ -852,7 +881,11 @@ func exportReport(results []exportResult) string {
 	counts := map[key]int{}
 	families := map[string]bool{}
 	var differs []exportResult
+	broken := map[string]int{}
 	for _, r := range results {
+		if r.Verdict == verdictBroken {
+			broken[r.Test+": "+r.Detail]++
+		}
 		fams := r.Families
 		if len(fams) == 0 {
 			fams = []string{"none"}
@@ -873,9 +906,13 @@ func exportReport(results []exportResult) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "export-fed agent: %d goldens\n", len(results))
 	for _, f := range names {
-		fmt.Fprintf(&b, "  family %-14s match %d, accepted %d, differs %d, skipped %d\n", f,
+		fmt.Fprintf(&b, "  family %-14s match %d, accepted %d, differs %d, skipped %d, setup broken %d\n", f,
 			counts[key{f, string(verdictMatch)}], counts[key{f, string(verdictAccepted)}],
-			counts[key{f, string(verdictDiffers)}], counts[key{f, string(verdictSkipped)}])
+			counts[key{f, string(verdictDiffers)}], counts[key{f, string(verdictSkipped)}],
+			counts[key{f, string(verdictBroken)}])
+	}
+	for _, why := range slices.Sorted(maps.Keys(broken)) {
+		fmt.Fprintf(&b, "NOT COMPARED %d goldens of %s\n", broken[why], why)
 	}
 	first := func(c string) bool { return c == "tenant" || c == "conversion" }
 	sort.SliceStable(differs, func(i, j int) bool { return first(differs[i].Class) && !first(differs[j].Class) })

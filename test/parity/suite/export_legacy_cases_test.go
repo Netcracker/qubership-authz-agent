@@ -536,23 +536,54 @@ func TestExportFeatures_UndeclaredPIPReadsOfPoliciesAndNestedSimplifiedSets(t *t
 }
 
 func TestLegacyClass(t *testing.T) {
-	p := legacyExportPoint{features: []string{"set-type:DEFAULT", "tenant"}}
 	for _, tc := range []struct {
-		name   string
-		p      legacyExportPoint
-		loaded bool
-		want   string
+		name string
+		p    legacyExportPoint
+		want string
 	}{
-		{"an export the agent did not load", p, false, "pull-failure"},
-		{"a loaded export with features", p, true, "set-type:DEFAULT"},
-		{"a loaded export without features", legacyExportPoint{}, true, "agent"},
-		{"a tenant feature before an undeclared PIP", legacyExportPoint{features: []string{"tenant", "undeclared-pip:x"}}, true, "tenant"},
+		{"an export with features", legacyExportPoint{features: []string{"set-type:DEFAULT", "tenant"}}, "set-type:DEFAULT"},
+		{"an export without features", legacyExportPoint{}, "agent"},
+		{"a tenant feature before an undeclared PIP", legacyExportPoint{features: []string{"tenant", "undeclared-pip:x"}}, "tenant"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := legacyClass(tc.p, tc.loaded); got != tc.want {
-				t.Errorf("legacyClass(loaded=%v) = %q, want %q", tc.loaded, got, tc.want)
+			if got := legacyClass(tc.p); got != tc.want {
+				t.Errorf("legacyClass(features %v) = %q, want %q", tc.p.features, got, tc.want)
 			}
 		})
+	}
+}
+
+// A decision whose export the agent did not load is reported apart from the
+// differences: it gets no class, its own count per family, and a line that
+// names the case and the reason, so the class counts hold only answers the
+// agent gave on the case's own export.
+func TestLegacyExportReport_CountsADecisionOfABrokenSetupApartFromTheDifferences(t *testing.T) {
+	lc := legacyExportCase{file: "round70/bool.json", id: "o70-bool-true"}
+	p := legacyExportPoint{step: "s1", features: []string{"set-type:DEFAULT"}}
+	broken := "SETUP BROKEN: mount the export of step s1: the agent did not load the policies: HTTP 502"
+	results := []legacyResult{
+		brokenLegacyResult(lc, p, legacyDecision{path: "check/o70-bool-true/a"}, broken),
+		brokenLegacyResult(lc, p, legacyDecision{path: "check/o70-bool-true/b"}, broken),
+		{exportResult: exportResult{Test: "round70/bool.json/o70-other", Path: "check/o70-other/a", Class: "agent",
+			Families: []string{"simplified"}, Verdict: verdictDiffers}},
+	}
+	got := legacyExportReport(results, nil)
+	// The columns are padded; compare with single spaces.
+	flat := strings.Join(strings.Fields(got), " ")
+	for _, want := range []string{
+		"3 goldens, 2 of them not compared because the setup broke",
+		"family policy-set match 0, accepted 0, differs 0, skipped 0, setup broken 2",
+		"family simplified match 0, accepted 0, differs 1, skipped 0, setup broken 0",
+		"NOT COMPARED 2 decisions of round70/bool.json/o70-bool-true: " + broken,
+		"class agent differs 1, wrong allows 0",
+		"DIFFERS check/o70-other/a",
+	} {
+		if !strings.Contains(flat, want) {
+			t.Errorf("legacyExportReport lacks %q:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "DIFFERS check/o70-bool-true") || strings.Count(got, "  class ") != 1 {
+		t.Errorf("legacyExportReport lists a decision of the broken setup as a difference:\n%s", got)
 	}
 }
 
@@ -680,7 +711,7 @@ func TestLegacyExportReport_ListsWrongAllowsFirstAndCountsPerFamilyAndClass(t *t
 	// The columns are padded; compare with single spaces.
 	flat := strings.Join(strings.Fields(report), " ")
 	for _, want := range []string{
-		"4 goldens compared, 1 decisions without a legacy export",
+		"4 goldens, 0 of them not compared because the setup broke; 1 decisions without a legacy export",
 		"family simplified match 1, accepted 1, differs 1, skipped 0",
 		"class undeclared-pip:x differs 1, wrong allows 1",
 		"class agent differs 1, wrong allows 0",

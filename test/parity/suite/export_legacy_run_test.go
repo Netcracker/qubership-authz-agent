@@ -18,6 +18,7 @@ package paritysuite
 
 import (
 	"context"
+	"fmt"
 	"io/fs"
 	"maps"
 	"net/http"
@@ -34,9 +35,11 @@ import (
 // agent the v3 exports legacy access-control held, as the raw reads of the
 // sequence cases recorded them, and compares the agent's decisions with the
 // legacy goldens recorded at the same point (legacyExportCases). Each point's
-// export is mounted on the export source with a canary set beside it, and a
-// check of the canary tells a loaded export from a failed pull. A golden
-// fails when the agent's answer differs from it, unless the kind of its
+// export is mounted on the export source with a canary set beside it. The
+// point's setup subtest fails, with setupBrokenPrefix, when the agent does not
+// load the export: the pull fails, or the canary is denied. The decisions of
+// that point are then skipped and counted apart, because the agent holds
+// another export. A golden fails when the agent's answer differs from it, unless the kind of its
 // class (set-type for set-type:DEFAULT) is listed in
 // acceptedExportDivergences and the answer allows nothing the golden denies,
 // or the entry covers such an answer too (AllowsMore). It runs only under
@@ -74,42 +77,64 @@ func TestExportFedLegacyAgent(t *testing.T) {
 			continue
 		}
 		t.Run(name, func(t *testing.T) {
-			s.SetT(t)
 			defer func() { s.cfg.TenantID = stand }()
-			for _, c := range []*PipController{s.pipMock, s.eaMock, s.umMock} {
-				if err := c.ResetPinnedRoutes(ctx); err != nil {
-					t.Fatalf("reset the stubs: %v", err)
+			caseBroken := runSetup(t, func(t *testing.T) error {
+				s.SetT(t)
+				for _, c := range []*PipController{s.pipMock, s.eaMock, s.umMock} {
+					if err := c.ResetPinnedRoutes(ctx); err != nil {
+						return fmt.Errorf("reset the stubs: %w", err)
+					}
 				}
-			}
-			s.pinRoutes(lc.pins)
-			s.pinUserManagement(lc.userManagement)
+				s.pinRoutes(lc.pins)
+				s.pinUserManagement(lc.userManagement)
+				return nil
+			})
 			for _, p := range lc.points {
 				mounted++
 				canary, tenant := legacyCanaryType(mounted), valueOr(lc.tenant, stand)
-				ps, pips, err := legacyExportDocuments(p, canary, tenant)
-				if err != nil {
-					t.Fatal(err)
-				}
-				if err := source.Mount(ctx, ps, pips); err != nil {
-					t.Fatalf("mount the export of step %s: %v", p.step, err)
-				}
-				s.cfg.TenantID = tenant
-				loaded := s.legacyCanaryAllowed(canary)
-				for _, d := range p.decisions {
-					s.cfg.TenantID = d.tenant
-					res := s.judgeLegacyDecision(lc, p, d, loaded)
-					all = append(all, res)
-					switch {
-					case res.WrongAllow && res.Verdict == verdictDiffers:
-						t.Errorf("WRONG ALLOW %s (class %s): %s", res.Path, res.Class, res.Detail)
-					case res.Verdict == verdictDiffers:
-						t.Errorf("%s (class %s): %s", res.Path, res.Class, res.Detail)
-					case res.Verdict == verdictAccepted:
-						t.Logf("ACCEPTED DIVERGENCE %s: %s", res.Path, res.Detail)
-					case res.Verdict == verdictSkipped:
-						t.Logf("SKIPPED %s: %s", res.Path, res.Detail)
+				t.Run(p.step, func(t *testing.T) {
+					broken := caseBroken
+					if broken == "" {
+						broken = runSetup(t, func(t *testing.T) error {
+							s.SetT(t)
+							ps, pips, err := legacyExportDocuments(p, canary, tenant)
+							if err != nil {
+								return err
+							}
+							if err := source.Mount(ctx, ps, pips); err != nil {
+								return fmt.Errorf("mount the export of step %s: %w", p.step, err)
+							}
+							s.cfg.TenantID = tenant
+							if !s.legacyCanaryAllowed(canary) {
+								return fmt.Errorf("the agent did not load the export of step %s: the canary set %s is "+
+									"denied in tenant %s, so the agent holds another export", p.step, canary, tenant)
+							}
+							return nil
+						})
 					}
-				}
+					for _, d := range p.decisions {
+						t.Run(d.path, func(t *testing.T) {
+							if broken != "" {
+								all = append(all, brokenLegacyResult(lc, p, d, broken))
+								skipIfBroken(t, broken)
+							}
+							s.SetT(t)
+							s.cfg.TenantID = d.tenant
+							res := s.judgeLegacyDecision(lc, p, d)
+							all = append(all, res)
+							switch {
+							case res.WrongAllow && res.Verdict == verdictDiffers:
+								t.Errorf("WRONG ALLOW %s (class %s): %s", res.Path, res.Class, res.Detail)
+							case res.Verdict == verdictDiffers:
+								t.Errorf("%s (class %s): %s", res.Path, res.Class, res.Detail)
+							case res.Verdict == verdictAccepted:
+								t.Logf("ACCEPTED DIVERGENCE %s: %s", res.Path, res.Detail)
+							case res.Verdict == verdictSkipped:
+								t.Skipf("SKIPPED %s: %s", res.Path, res.Detail)
+							}
+						})
+					}
+				})
 			}
 		})
 	}
@@ -172,10 +197,10 @@ func (s *ParitySuite) legacyCanaryAllowed(canary string) bool {
 // judgeLegacyDecision sends the decision d at point p of case lc and compares
 // the answer with its golden, or with the recorded variants of its order
 // class.
-func (s *ParitySuite) judgeLegacyDecision(lc legacyExportCase, p legacyExportPoint, d legacyDecision, loaded bool) legacyResult {
+func (s *ParitySuite) judgeLegacyDecision(lc legacyExportCase, p legacyExportPoint, d legacyDecision) legacyResult {
 	req := d.request
 	res := legacyResult{exportResult: exportResult{Test: lc.file + "/" + lc.id, Path: d.path, Status: "legacy",
-		Families: featureFamilies(p.features), Class: legacyClass(p, loaded)}, Features: p.features}
+		Families: featureFamilies(p.features), Class: legacyClass(p)}, Features: p.features}
 	s.pinRoutes(req.pins)
 	s.pinUserManagement(req.userManagement)
 	time.Sleep(req.pause)

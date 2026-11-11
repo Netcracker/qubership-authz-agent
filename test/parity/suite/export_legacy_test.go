@@ -682,14 +682,11 @@ func featureFamilies(features []string) []string {
 	return slices.Sorted(maps.Keys(set))
 }
 
-// legacyClass is the difference class of a golden at point p: pull-failure
-// when the agent did not load the point's export, else the first feature of
-// the point, else "agent": nothing the conversion is known to drop explains
-// the difference.
-func legacyClass(p legacyExportPoint, loaded bool) string {
-	if !loaded {
-		return "pull-failure"
-	}
+// legacyClass is the difference class of a golden at point p: the first
+// feature of the point, else "agent": nothing the conversion is known to drop
+// explains the difference. A point whose export the agent did not load has no
+// class; its goldens are [verdictBroken] (brokenLegacyResult).
+func legacyClass(p legacyExportPoint) string {
 	if len(p.features) > 0 {
 		return p.features[0]
 	}
@@ -781,17 +778,31 @@ type legacyResult struct {
 	WrongAllow bool
 }
 
+// brokenLegacyResult is the result of decision d at point p of case lc when
+// the setup it waited on broke: the agent did not load the point's export, so
+// the decision is not sent. broken is the report of that setup.
+func brokenLegacyResult(lc legacyExportCase, p legacyExportPoint, d legacyDecision, broken string) legacyResult {
+	return legacyResult{exportResult: exportResult{Test: lc.file + "/" + lc.id, Path: d.path, Status: "legacy",
+		Families: featureFamilies(p.features), Verdict: verdictBroken, Detail: broken}, Features: p.features}
+}
+
 // legacyExportReport counts, per family, the decisions compared with legacy
 // exports and their verdicts, and the decisions no raw read covers by reason;
-// counts the differences per class; and lists the wrong allows first, then
-// the other differences, each with the features of its point.
+// counts the differences per class; counts the decisions not compared because
+// the agent did not load their export, per case and reason; and lists the
+// wrong allows first, then the other differences, each with the features of
+// its point.
 func legacyExportReport(results []legacyResult, uncompared map[string]string) string {
 	type key struct{ family, verdict string }
 	counts := map[key]int{}
 	families := map[string]bool{}
 	classes := map[string][2]int{}
 	var differs []legacyResult
+	broken := map[string]int{}
 	for _, r := range results {
+		if r.Verdict == verdictBroken {
+			broken[r.Test+": "+r.Detail]++
+		}
 		for _, f := range r.Families {
 			counts[key{f, string(r.Verdict)}]++
 			families[f] = true
@@ -809,12 +820,13 @@ func legacyExportReport(results []legacyResult, uncompared map[string]string) st
 		}
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "export-fed agent, legacy exports: %d goldens compared, %d decisions without a legacy export\n",
-		len(results), len(uncompared))
+	fmt.Fprintf(&b, "export-fed agent, legacy exports: %d goldens, %d of them not compared because the setup broke; "+
+		"%d decisions without a legacy export\n", len(results), sumValues(broken), len(uncompared))
 	for _, f := range slices.Sorted(maps.Keys(families)) {
-		fmt.Fprintf(&b, "  family %-14s match %d, accepted %d, differs %d, skipped %d\n", f,
+		fmt.Fprintf(&b, "  family %-14s match %d, accepted %d, differs %d, skipped %d, setup broken %d\n", f,
 			counts[key{f, string(verdictMatch)}], counts[key{f, string(verdictAccepted)}],
-			counts[key{f, string(verdictDiffers)}], counts[key{f, string(verdictSkipped)}])
+			counts[key{f, string(verdictDiffers)}], counts[key{f, string(verdictSkipped)}],
+			counts[key{f, string(verdictBroken)}])
 	}
 	for _, c := range slices.Sorted(maps.Keys(classes)) {
 		fmt.Fprintf(&b, "  class %-30s differs %d, wrong allows %d\n", c, classes[c][0], classes[c][1])
@@ -835,6 +847,9 @@ func legacyExportReport(results []legacyResult, uncompared map[string]string) st
 	for _, r := range rs {
 		fmt.Fprintf(&b, "  uncompared %d: %s\n", r.v, r.k)
 	}
+	for _, why := range slices.Sorted(maps.Keys(broken)) {
+		fmt.Fprintf(&b, "NOT COMPARED %d decisions of %s\n", broken[why], why)
+	}
 	sort.SliceStable(differs, func(i, j int) bool { return differs[i].WrongAllow && !differs[j].WrongAllow })
 	for _, r := range differs {
 		label := "DIFFERS"
@@ -844,4 +859,12 @@ func legacyExportReport(results []legacyResult, uncompared map[string]string) st
 		fmt.Fprintf(&b, "%s %s (%s, class %s, features [%s])\n", label, r.Path, r.Test, r.Class, strings.Join(r.Features, " "))
 	}
 	return b.String()
+}
+
+func sumValues(m map[string]int) int {
+	n := 0
+	for _, v := range m {
+		n += v
+	}
+	return n
 }
