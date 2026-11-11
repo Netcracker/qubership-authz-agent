@@ -26,6 +26,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"authz-agent/test/parity/suite/model"
@@ -344,11 +345,15 @@ func acceptedUpload(root, group string, declaresPIPs bool) (bool, error) {
 }
 
 // asLegacyExportSet returns the uploaded regular set as the v3 export of
-// legacy carries it: type DEFAULT on the set and every nested one, and
-// tenantId on every set, policy, and rule.
+// legacy carries it: type DEFAULT on the set and every nested one, tenantId
+// on every set, policy, and rule, and a JSON boolean in a target, a
+// condition, or a description as its text, "true" or "false". Legacy stores
+// these members as strings, so a raw read returns the text of a boolean the
+// upload sent.
 func asLegacyExportSet(set map[string]any, tenant string) map[string]any {
 	out := maps.Clone(set)
 	out["type"], out["tenantId"] = "DEFAULT", tenant
+	booleansAsText(out, "target", "description")
 	var policies []any
 	for _, pv := range asList(set["policies"]) {
 		policy, _ := pv.(map[string]any)
@@ -358,9 +363,11 @@ func asLegacyExportSet(set map[string]any, tenant string) map[string]any {
 			rule, _ := rv.(map[string]any)
 			rule = maps.Clone(rule)
 			rule["tenantId"] = tenant
+			booleansAsText(rule, "target", "condition", "description")
 			rules = append(rules, rule)
 		}
 		policy["rules"], policy["tenantId"] = emptyIfNil(rules), tenant
+		booleansAsText(policy, "target", "description")
 		policies = append(policies, policy)
 	}
 	out["policies"] = emptyIfNil(policies)
@@ -371,6 +378,16 @@ func asLegacyExportSet(set map[string]any, tenant string) map[string]any {
 	}
 	out["policySets"] = emptyIfNil(nested)
 	return out
+}
+
+// booleansAsText replaces each member of object named in names that holds a
+// bool with its text.
+func booleansAsText(object map[string]any, names ...string) {
+	for _, name := range names {
+		if b, ok := object[name].(bool); ok {
+			object[name] = strconv.FormatBool(b)
+		}
+	}
 }
 
 // decisionStatus returns the status of the decision golden recorded under

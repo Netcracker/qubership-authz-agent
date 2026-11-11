@@ -268,6 +268,35 @@ func TestRegularOwnerDecisionCases_TheExportCarriesTheSetAsLegacyExportsIt(t *te
 	}
 }
 
+// A boolean upload member reaches the export as its text, as a raw read of
+// legacy returns it.
+func TestRegularOwnerDecisionCases_TheExportCarriesABooleanAsItsText(t *testing.T) {
+	fx := ownerFixture{t, t.TempDir()}
+	fx.write("load-policy-sets-v1", "upload-1", model.PolicyLoadOutcome{Status: 200})
+	cases := fx.cases(`[{"key":"s","iterate":{"foreach":"subject.permissionScope"},"fields":{"target":true,"description":false},"policies":[
+		{"key":"p","fields":{"target":false,"description":true},"rules":[
+			{"key":"r","effect":"ALLOW","fields":{"target":true,"condition":false,"description":true}}]}]}]`, `[]`)
+	if len(cases) != 1 {
+		t.Fatalf("regularOwnerDecisionCases returned %d cases, want 1", len(cases))
+	}
+	type members struct{ Target, Condition, Description any }
+	pick := func(object any) members {
+		m, _ := object.(map[string]any)
+		return members{m["target"], m["condition"], m["description"]}
+	}
+	set, _ := cases[0].policySets[0].(map[string]any)
+	policy, _ := set["policies"].([]any)[0].(map[string]any)
+	rule := policy["rules"].([]any)[0]
+	want := []members{
+		{Target: "true", Description: "false"},
+		{Target: "false", Description: "true"},
+		{Target: "true", Condition: "false", Description: "true"},
+	}
+	if diff := cmp.Diff(want, []members{pick(set), pick(policy), pick(rule)}); diff != "" {
+		t.Errorf("target, condition, and description of the set, its policy, and its rule (-want +got):\n%s", diff)
+	}
+}
+
 // readsX is a set of tenant whose rule reads subject.x, which no PIP declares.
 func readsX(id, tenant string) any {
 	return map[string]any{"policySetId": id, "tenantId": tenant, "policies": []any{map[string]any{
