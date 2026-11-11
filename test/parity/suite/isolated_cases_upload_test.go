@@ -145,6 +145,11 @@ func TestRunIsolatedCases_AnUploadLegacyRefusedAndTheAgentDidNotLoadMatches(t *t
 		"PUT " + domainPIPsPath,
 		"PUT " + domainPoliciesPath,
 		"POST " + agentPullPath,
+		// the domain emptied after the upload the agent did not load
+		"PUT " + domainPoliciesPath,
+		"PUT " + domainPIPsPath,
+		"PUT " + domainPoliciesPath,
+		"POST " + agentPullPath,
 		"PUT " + domainPoliciesPath,
 		"PUT " + domainPIPsPath,
 		"PUT " + domainPoliciesPath,
@@ -163,6 +168,84 @@ func TestRunIsolatedCases_AnUploadLegacyRefusedAndTheAgentDidNotLoadMatches(t *t
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("requests with the first upload not loaded mismatch (-want +got):\n%s", diff)
 	}
+}
+
+// An upload the agent did not load would otherwise stay in the configuration
+// every later pull reads, whatever domain the later case uploads into. The
+// domain of that upload is therefore emptied before the next case, which here
+// uploads into a domain of its own.
+func TestRunIsolatedCases_EmptiesTheDomainOfAnUploadTheAgentDidNotLoad(t *testing.T) {
+	refused := isolatedCase{id: "refused", resourceType: "RT", condition: "x", requests: []isolatedRequest{{name: "read", m2mOnly: true}}}
+	next := isolatedCase{id: "next", domain: "PARITY_OWN", resourceType: "RT", requests: []isolatedRequest{{name: "read", m2mOnly: true}}}
+	own := []string{
+		"PUT /access/v1/simplifiedPolicies/domainPolicies/PARITY_OWN",
+		"PUT /access/v1/simplifiedPolicies/domainPIPs/PARITY_OWN",
+		"PUT /access/v1/simplifiedPolicies/domainPolicies/PARITY_OWN",
+		"POST " + agentPullPath,
+	}
+	want := []string{
+		"PUT " + domainPoliciesPath,
+		"PUT " + domainPIPsPath,
+		"PUT " + domainPoliciesPath,
+		"POST " + agentPullPath,
+		// the domain emptied after the upload the agent did not load
+		"PUT " + domainPoliciesPath,
+		"PUT " + domainPIPsPath,
+		"PUT " + domainPoliciesPath,
+		"POST " + agentPullPath,
+	}
+	want = append(want, own...)
+	want = append(want, "POST /access/v1/check/resource")
+	// the cleanup of the test
+	want = append(want, "PUT "+domainPoliciesPath, "PUT "+domainPIPsPath, "PUT "+domainPoliciesPath, "POST "+agentPullPath)
+	want = append(want, own...)
+	got := runIsolatedCasesAgainstStub(t, nil,
+		map[int]int{1: http.StatusBadGateway},
+		map[string]int{"refused": http.StatusBadRequest, "next": http.StatusOK},
+		refused, next)
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("requests mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// When emptying the domain fails, the upload the agent did not load stays in
+// the stand, so a later case uploads nothing: its subtest "setup" fails with
+// SETUP BROKEN and its requests are skipped. Emptying fails when its pull is
+// refused, or when authz-policy-admin refuses one of its uploads. The test
+// reads that output from a child run of itself, since the child fails on
+// purpose.
+func TestRunIsolatedCases_AfterADomainTheAgentDidNotEmptyTheLaterCasesAreABrokenSetup(t *testing.T) {
+	if os.Getenv(brokenSetupChild) == "1" {
+		refused := isolatedCase{id: "refused", resourceType: "RT", condition: "x", requests: []isolatedRequest{{name: "read", m2mOnly: true}}}
+		next := isolatedCase{id: "next", domain: "PARITY_OWN", resourceType: "RT", requests: []isolatedRequest{{name: "read", m2mOnly: true}}}
+		goldens := map[string]int{"refused": http.StatusBadRequest, "next": http.StatusOK}
+		for _, tc := range []struct {
+			name          string
+			refuse, pulls map[int]int
+		}{
+			{"pull-refused", nil, map[int]int{1: http.StatusBadGateway, 2: http.StatusBadGateway}},
+			// the uploads 1 to 3 are the case's, 4 to 6 empty the domain
+			{"upload-refused", map[int]int{5: http.StatusInternalServerError}, map[int]int{1: http.StatusBadGateway}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				sent := runIsolatedCasesAgainstStub(t, tc.refuse, tc.pulls, goldens, refused, next)
+				t.Logf("uploads into PARITY_OWN: %d", strings.Count(strings.Join(sent, "\n"), "/PARITY_OWN"))
+			})
+		}
+		return
+	}
+	name := regexp.QuoteMeta(t.Name())
+	requireOutput(t, childOutput(t),
+		`--- PASS: `+name+`/pull-refused/run/refused/upload `,
+		`=== RUN   `+name+`/pull-refused/run/next/setup\n.*: SETUP BROKEN: empty domain PARITY_ISOLATED after case refused, `+
+			`which the agent did not load: .*HTTP 502`,
+		`--- FAIL: `+name+`/pull-refused/run/next/setup `,
+		`--- SKIP: `+name+`/pull-refused/run/next/read `,
+		`=== RUN   `+name+`/upload-refused/run/next/setup\n.*: SETUP BROKEN: empty domain PARITY_ISOLATED after case refused, `+
+			`which the agent did not load: HTTP 500\n`,
+		`--- SKIP: `+name+`/upload-refused/run/next/read `,
+		// the cleanup of the test empties PARITY_OWN; the case uploaded nothing
+		`(?s)pull-refused.*uploads into PARITY_OWN: 3\n.*upload-refused.*uploads into PARITY_OWN: 3\n`)
 }
 
 // brokenSetupChild selects the child run of a test that reads the go test

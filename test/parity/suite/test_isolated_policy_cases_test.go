@@ -216,7 +216,11 @@ func (s *ParitySuite) subjectToken(req isolatedRequest) (string, error) {
 // answered 502) and the golden records a refusal, the agent refused as legacy
 // did and the upload passes; otherwise the subtest "setup" fails with
 // setupBrokenPrefix and every request is skipped, since the agent holds the
-// policies of the case before.
+// policies of the case before. Either way the domain of that case is emptied
+// at once: otherwise the upload the agent did not load stays in the
+// configuration every later pull reads, until the run ends. When emptying the
+// domain fails, or the agent does not load it either, every later case reports
+// a broken setup and uploads nothing.
 //
 // When it ends, it empties every domain its cases uploaded into.
 func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
@@ -236,8 +240,13 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 			}
 		}
 	})
+	stale := ""
 	for _, tc := range cases {
 		s.Run(tc.id, func() {
+			if stale != "" {
+				s.endBrokenCase(stale, tc.requests)
+				return
+			}
 			s.pinRoutes(tc.pins)
 			s.pinUserManagement(tc.userManagement)
 			s.resetCallsFor(append(slices.Clone(tc.readsRoutes), tc.pipCalls))
@@ -267,10 +276,18 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 				delete(policy, name)
 			}
 			mergeFields(policy, tc.policy, tc.resourceType)
-			status, body, err := UploadIsolatedPoliciesWithQuery(ctx, s.cfg, s.tokens, valueOr(tc.domain, isolatedCaseDomain), tc.pips, []any{policy}, tc.policiesQuery)
+			domain := valueOr(tc.domain, isolatedCaseDomain)
+			status, body, err := UploadIsolatedPoliciesWithQuery(ctx, s.cfg, s.tokens, domain, tc.pips, []any{policy}, tc.policiesQuery)
 			var notLoaded *agentLoadError
 			if errors.As(err, &notLoaded) {
 				s.endUnloadedCase("isolated/"+tc.id, status, notLoaded, tc.requests)
+				status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, domain, nil, nil)
+				if err == nil && (status < http.StatusOK || status >= http.StatusMultipleChoices) {
+					err = fmt.Errorf("HTTP %d", status)
+				}
+				if err != nil {
+					stale = setupBroken(fmt.Errorf("empty domain %s after case %s, which the agent did not load: %w", domain, tc.id, err))
+				}
 				return
 			}
 			s.Require().NoError(err)
@@ -311,9 +328,10 @@ func valueOr(value, fallback string) string {
 // endUnloadedCase ends a case whose upload authz-policy-admin accepted with
 // status and the agent did not load (err). Where the agent refused the upload
 // (the pull answered 502) and the upload golden subCase records a refusal, the
-// agent refused as legacy did, and the subtest "upload" passes. Otherwise the upload is compared with its golden, the subtest
-// "setup" fails with setupBrokenPrefix, and every request of requests is a
-// subtest skipped with that report.
+// agent refused as legacy did, and the subtest "upload" passes. Otherwise the
+// upload is compared with its golden, the subtest "setup" fails with
+// setupBrokenPrefix, and every request of requests is a subtest skipped with
+// that report.
 func (s *ParitySuite) endUnloadedCase(subCase string, status int, err *agentLoadError, requests []isolatedRequest) {
 	var answered *pullStatusError
 	refused := errors.As(err, &answered) && answered.status == http.StatusBadGateway
@@ -326,7 +344,13 @@ func (s *ParitySuite) endUnloadedCase(subCase string, status int, err *agentLoad
 	s.Run("upload", func() {
 		s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, subCase, &model.PolicyLoadOutcome{Status: status})
 	})
-	broken := err.Error()
+	s.endBrokenCase(err.Error(), requests)
+}
+
+// endBrokenCase ends a case whose setup broke with the report broken: the
+// subtest "setup" fails with it, and every request of requests is a subtest
+// skipped with it.
+func (s *ParitySuite) endBrokenCase(broken string, requests []isolatedRequest) {
 	s.Run("setup", func() { s.T().Error(broken) })
 	for _, req := range requests {
 		s.Run(req.name, func() { skipIfBroken(s.T(), broken) })
