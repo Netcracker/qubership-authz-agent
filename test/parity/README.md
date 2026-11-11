@@ -93,11 +93,15 @@ profile again, run `make parity-harness parity-install parity-suite`. After `mak
 `make parity-export-restart` restarts the export-fed stand's Deployments that run a local image, `export-source` among
 them, and configures the empty export on the new `export-source` before it waits for the agent.
 
-Each test function starts from the empty export. From an export the agent does not load until the next one it loads,
-the suite sends no request: the function fails once with `SETUP BROKEN: <reason>`, and the report counts those goldens
-as `setup broken` and lists them as `NOT COMPARED`. Before the decisions that follow an export, the suite pins that
-export on `export-source` and waits until a pull that started after the pin has fetched both documents and the agent
-has started its next pull.
+Each test function starts from the empty export. Before the decisions that follow an export, the suite pins that export
+on `export-source` and asks the agent to pull it now at `PARITY_AGENT_PULL_URL` (`POST /internal/v1/pull`). An answer of
+204 means the agent stored the export; 502 means it refused the export or could not fetch it. From an export the agent
+does not load until the next one it loads, the suite sends no request: the function's subtest `setup` fails with
+`SETUP BROKEN: <reason>`, and the report counts those goldens as `setup broken` and lists them as `NOT COMPARED`. Where
+the agent has no pull route (404, or the variable is unset), the suite waits until a pull that started after the pin has
+fetched both documents and the agent has started its next pull; this test mounts no canary, so it then cannot tell a
+refused export from a loaded one. Nor can it tell a partial load, where the agent rejects one tenant of the export and
+still answers 204.
 `PARITY_EXPORT_PULL_TIMEOUT_SECONDS` bounds the wait (30 by default). A whole bundle mounts several thousand exports and
 takes hours; `PARITY_EXPORT_RUN=<regexp>` limits the run to the test functions whose name matches. A golden whose token
 comes from a realm the stand lacks, or whose user the realm refuses with `invalid_grant` (such as a user of the second
@@ -120,15 +124,18 @@ case's own, when no accepted write changed it yet; a write whose status golden i
 decision for which one document is not known is not compared, and the report counts such decisions by the document
 that is missing.
 
-Each point's export is mounted with a canary policy set of a resource type of its own, in the tenant of the case, and
-the point's subtest `setup` checks that type before the decisions. When the pull fails or the canary is denied, the
-agent holds another export: `setup` fails with `SETUP BROKEN: <reason>`, each decision of the point, a subtest named
-by its golden path, is skipped with that reason, and the report counts those decisions as `setup broken` per family
-and lists them as `NOT COMPARED` per case and reason. A difference gets the first feature of its point that the agent's
-conversion drops or ignores (`set-type`, `status`, `rule-effect`, `customization`, `tenant`, `pip-kind`), or `agent`
-when the point has none. The report counts the verdicts per family and the differences per class, and lists the wrong
-allows, where the agent allows what the golden denies, before the other differences. `PARITY_EXPORT_RUN` selects the
-cases whose `<case file>/<case id>` it matches.
+Each point's export is mounted with a canary policy set of a resource type of its own in the tenant of the case, and one
+in each other tenant the point's decisions run in that an element of the export names. The point's subtest `setup`
+checks the canary of the case's tenant, and a subtest `setup <tenant>` checks each other one, before the decisions. A
+denied canary means the agent holds another configuration of that tenant (a pull answers 204 when it rejects one tenant
+of the export and loads the others): its subtest fails with `SETUP BROKEN: <reason>`, and the decisions in that tenant,
+each a subtest named by its golden path, are skipped with that reason. When the pull fails, or every canary of the point
+is denied, the agent holds none of the export, and every decision of the point is skipped. The report counts the skipped
+decisions as `setup broken` per family and lists them as `NOT COMPARED` per case and reason. A difference gets the first
+feature of its point that the agent's conversion drops or ignores (`set-type`, `status`, `rule-effect`, `customization`,
+`tenant`, `pip-kind`), or `agent` when the point has none. The report counts the verdicts per family and the differences
+per class, and lists the wrong allows, where the agent allows what the golden denies, before the other differences.
+`PARITY_EXPORT_RUN` selects the cases whose `<case file>/<case id>` it matches.
 
 ### Forms legacy accepts and fails every decision on
 
@@ -147,7 +154,9 @@ with the canary of the legacy exports. Each case has three kinds of subtests, an
 with `SETUP BROKEN: <reason>` when the pull fails or the canary is denied (the agent refused the export);
 `health-names-failing-sets` fails when `/health` does not name the set; and a subtest per decision, named by its golden
 path, fails when the agent does not answer with 200 and nothing allowed. When `setup` fails, the other subtests are
-skipped. `PARITY_EXPORT_RUN` selects the cases whose `<case file>/<case id>` it matches.
+skipped, and the test logs the number of such cases and of their decisions, with a `NOT COMPARED` line per case. The
+canary sits in the case's tenant only, so a decision in another tenant the agent rejected is compared against that
+tenant's previous configuration. `PARITY_EXPORT_RUN` selects the cases whose `<case file>/<case id>` it matches.
 
 The bundle also checks the specification's model of the agent's conversion. Without a stand, from the repository
 root:

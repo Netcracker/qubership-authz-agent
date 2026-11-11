@@ -418,7 +418,9 @@ type exportSource interface {
 // the agent then keeps its previous policies. Where the agent has no pull
 // route, it waits for a pull of the agent's own that fetched both documents
 // after the mount and has finished, which the pull loop shows by starting the
-// next one; only the canary set of the export then tells a refused export.
+// next one. A refused export is then told only by a canary set mounted beside
+// it, which TestExportFedLegacyAgent and TestExportFedOwnerDecisions mount and
+// TestExportFedAgent does not.
 type stubExportSource struct {
 	stub    *PipController
 	timeout time.Duration
