@@ -10,7 +10,7 @@ the subject's token.
 1. `admission_test.rego`
    - Validates `authorize_internals.admission`, the caller and subject checks the service runs before a decision:
      `authError` for a refused admission token, `subjectError` for a refused subject token, and `tokenPayload`
-     otherwise.
+     otherwise. Beside the last two, `callerClaims` carries the claims of the admission token.
 2. `token_auth_contract_test.rego`
    - Validates authentication and subject normalization behavior for bearer-token inputs.
    - Covers:

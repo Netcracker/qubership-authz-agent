@@ -112,7 +112,8 @@ func (s *Server) filter(c *fiber.Ctx, r legacy.Resource) error {
 // admit builds the input of the embedded policies for resources, with the
 // tenant of the request, and evaluates their checks of the caller and the
 // subject's token. answered is non-nil when the request is answered
-// already: a refused admission token, with its authError, or a failed
+// already: a refused admission token, with its authError; a caller outside
+// its tenant ([callerMayReach]), with 403 and an empty body; or a failed
 // evaluation, with 500.
 func (s *Server) admit(c *fiber.Ctx, resources []legacy.Resource) (input, admission map[string]any,
 	answered func() error) {
@@ -123,14 +124,69 @@ func (s *Server) admit(c *fiber.Ctx, resources []legacy.Resource) (input, admiss
 		s.opts.Log.ErrorC(ctx, "admission failed: %v", err)
 		return nil, nil, func() error { return opaError(c, http.StatusInternalServerError, "internal_error", err.Error()) }
 	}
-	input["tenant"] = s.tenant(c)
+	tenant := s.tenant(c)
+	input["tenant"] = tenant
 	if raw, refused := admission["authError"]; refused {
 		result := map[string]any{"authError": raw}
 		s.log(c, input, result)
 		status, body, _ := legacy.AuthError(result)
 		return nil, nil, func() error { return sendJSON(c, status, body) }
 	}
+	if claims, ok := admission["callerClaims"].(map[string]any); ok && !callerMayReach(claims, tenant, s.defaultTenant()) {
+		s.opts.Log.DebugC(ctx, "caller refused path=%s tenant=%s reason=CALLER_TENANT_MISMATCH", c.Path(), tenant)
+		return nil, nil, func() error {
+			c.Status(http.StatusForbidden)
+			return nil
+		}
+	}
 	return input, admission, nil
+}
+
+// callerMayReach reports whether the caller whose verified token carries
+// claims may ask about tenant. An M2M token ([m2mToken]) may name any tenant.
+// Any other token may name only the tenant of its tenant-id claim, compared
+// byte for byte, or the default tenant when the claim is absent, null, or
+// empty; a claim that is not a string matches no tenant.
+func callerMayReach(claims map[string]any, tenant, defaultTenant string) bool {
+	if m2mToken(claims) {
+		return true
+	}
+	switch claim := claims["tenant-id"].(type) {
+	case nil:
+		return tenant == defaultTenant
+	case string:
+		if claim == "" {
+			return tenant == defaultTenant
+		}
+		return claim == tenant
+	default:
+		return false
+	}
+}
+
+// m2mToken reports whether a token with claims is an M2M token: its
+// realm_access.roles holds ROLE_M2M, compared byte for byte, or its level is
+// m2m or key-manager, compared without regard to case.
+func m2mToken(claims map[string]any) bool {
+	if level, ok := claims["level"].(string); ok && (strings.EqualFold(level, "m2m") || strings.EqualFold(level, "key-manager")) {
+		return true
+	}
+	access, _ := claims["realm_access"].(map[string]any)
+	roles, _ := access["roles"].([]any)
+	for _, r := range roles {
+		if r == "ROLE_M2M" {
+			return true
+		}
+	}
+	return false
+}
+
+// defaultTenant is the default tenant, or "" without one.
+func (s *Server) defaultTenant() string {
+	if s.opts.DefaultTenant != nil {
+		return s.opts.DefaultTenant()
+	}
+	return ""
 }
 
 // log reports a decision at debug. The line carries neither the input nor
@@ -163,10 +219,7 @@ func (s *Server) tenant(c *fiber.Ctx) string {
 	if t := strings.TrimSpace(c.Get(tenantHeader)); t != "" {
 		return t
 	}
-	if s.opts.DefaultTenant != nil {
-		return s.opts.DefaultTenant()
-	}
-	return ""
+	return s.defaultTenant()
 }
 
 // snapshotRequest builds the request of the registry from the verified

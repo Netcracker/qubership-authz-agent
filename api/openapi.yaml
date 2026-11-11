@@ -97,6 +97,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /access/v1/check/resource/bulk:
     post:
       operationId: access_v1_check_resource_bulk
@@ -159,6 +161,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /access/v1/check/resource/bulk/operations:
     post:
       operationId: access_v1_check_resource_bulk_operations
@@ -220,6 +224,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /preview/v1/check/resource/bulk/operations:
     post:
       operationId: preview_v1_check_resource_bulk_operations
@@ -276,6 +282,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /access/v1/check/filter:
     post:
       operationId: access_v1_check_filter
@@ -346,6 +354,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /access/v2/check/resource:
     post:
       operationId: access_v2_check_resource
@@ -406,6 +416,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /access/v2/check/resource/bulk/operations:
     post:
       operationId: access_v2_check_resource_bulk_operations
@@ -461,6 +473,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /preview/v2/check/resource/bulk/operations:
     post:
       operationId: preview_v2_check_resource_bulk_operations
@@ -513,6 +527,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /access/v2/check/filter:
     post:
       operationId: access_v2_check_filter
@@ -579,6 +595,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /api-version:
     get:
       operationId: api_version_get
@@ -633,6 +651,15 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  responses:
+    CallerTenantMismatch:
+      description: |
+        The token in `Authorization` is not an M2M token, and it may not ask
+        about the tenant of the request. Such a token may ask only about the
+        tenant of its `tenant-id` claim, or about the default tenant when it
+        has no such claim or an empty one. An M2M token, one whose
+        `realm_access.roles` holds `ROLE_M2M` or whose `level` is `m2m` or
+        `key-manager`, may name any tenant. The response has no body.
   parameters:
     IncomingTokenHeader:
       name: Incoming-Token

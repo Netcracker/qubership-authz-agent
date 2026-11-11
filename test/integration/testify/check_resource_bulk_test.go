@@ -134,14 +134,14 @@ func (s *RuntimeSuite) TestCheckResourceBulk() {
 			"expected duplicate-id validation message, got: %s", msg)
 	})
 
-	s.Step("check_resource_bulk.unknown_tenant_id.denied", func() {
+	s.Step("check_resource_bulk.unknown_tenant_id.403", func() {
 		h := incomingTokenHeader(s.validOrderReaderToken)
 		body := []map[string]interface{}{
 			{"id": "item-1", "type": "ORDER", "operation": "READ", "resource": map[string]interface{}{"ownerId": "no-match"}},
 		}
 		code, b := s.post("/access/v1/check/resource/bulk?tenant_id=some-other-tenant", h, body)
-		s.Require().Equal(200, code)
-		s.Assert().Equal("[]", bodyStr(b))
+		s.Require().Equal(403, code)
+		s.Assert().Equal("", bodyStr(b))
 	})
 
 	s.Step("check_resource_bulk.wrong_address.404", func() {

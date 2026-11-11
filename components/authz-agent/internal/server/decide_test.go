@@ -93,6 +93,67 @@ func TestDecide_TheTenantComesFromTheQueryThenTheHeaderThenTheDefault(t *testing
 	}
 }
 
+// callerStub admits every request and gives as callerClaims the claims of
+// the token in Authorization, by the token's text.
+const callerStub = `package authorize_internals
+
+import rego.v1
+
+callers := {
+	"Bearer PARITY_A": {"tenant-id": "a"},
+	"Bearer PARITY_UNKNOWN": {"tenant-id": "PARITY_UNKNOWN"},
+	"Bearer PARITY_NONE": {},
+	"Bearer PARITY_EMPTY": {"tenant-id": ""},
+	"Bearer PARITY_NUMBER": {"tenant-id": 1},
+	"Bearer PARITY_NULL": {"tenant-id": null},
+	"Bearer PARITY_ROLE_M2M": {"tenant-id": "a", "realm_access": {"roles": ["ROLE_M2M"]}},
+	"Bearer PARITY_ROLE_LOWER": {"tenant-id": "a", "realm_access": {"roles": ["role_m2m"]}},
+	"Bearer PARITY_LEVEL_M2M": {"level": "M2M"},
+	"Bearer PARITY_LEVEL_KEY_MANAGER": {"level": "Key-Manager"},
+}
+
+admission := {"tokenPayload": {"sub": "u1"}, "callerClaims": callers[input.authorizationToken]}
+`
+
+func TestDecide_ACallerThatIsNotM2MReachesOnlyItsOwnTenant(t *testing.T) {
+	reg := registry(t, `{"policySets": [`+tenantSet("a", "true")+`,`+tenantSet("b", "true")+`]}`)
+	app := newPublicAppOver(t, map[string]string{"internals.rego": callerStub},
+		Options{Snapshots: reg, DefaultTenant: func() string { return "a" }})
+	const body = `{"type":"doc","operation":"read","resource":{}}`
+	for _, tc := range []struct {
+		name, token, query, header string
+		status                     int
+		want                       string
+	}{
+		{"a claim reaches its tenant", "PARITY_A", "?tenant_id=a", "", 200, "true"},
+		{"a claim of a tenant without data is refused in the default tenant", "PARITY_UNKNOWN", "?tenant_id=a", "", 403, ""},
+		{"a claim is refused in another tenant", "PARITY_A", "?tenant_id=b", "", 403, ""},
+		{"a claim is refused in another tenant named by the header", "PARITY_A", "", "b", 403, ""},
+		{"no claim reaches the default tenant", "PARITY_NONE", "?tenant_id=a", "", 200, "true"},
+		{"no claim is refused outside the default tenant", "PARITY_NONE", "?tenant_id=b", "", 403, ""},
+		{"an empty claim reaches the default tenant", "PARITY_EMPTY", "?tenant_id=a", "", 200, "true"},
+		{"an empty claim is refused outside the default tenant", "PARITY_EMPTY", "?tenant_id=b", "", 403, ""},
+		{"a claim that is not a string is refused", "PARITY_NUMBER", "?tenant_id=a", "", 403, ""},
+		{"a null claim reaches the default tenant", "PARITY_NULL", "?tenant_id=a", "", 200, "true"},
+		{"ROLE_M2M reaches another tenant than its claim", "PARITY_ROLE_M2M", "?tenant_id=b", "", 200, "true"},
+		{"role_m2m in lowercase is refused in another tenant than its claim", "PARITY_ROLE_LOWER", "?tenant_id=b", "", 403, ""},
+		{"the level m2m in any case reaches a tenant outside the default", "PARITY_LEVEL_M2M", "?tenant_id=b", "", 200, "true"},
+		{"the level key-manager in any case reaches a tenant outside the default", "PARITY_LEVEL_KEY_MANAGER", "?tenant_id=b", "", 200, "true"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			headers := map[string]string{"Authorization": "Bearer " + tc.token}
+			if tc.header != "" {
+				headers["Tenant"] = tc.header
+			}
+			path := "/access/v1/check/resource" + tc.query
+			code, got, _ := call(t, app, http.MethodPost, path, body, headers)
+			if code != tc.status || got != tc.want {
+				t.Errorf("POST %s with Tenant %q as %s = %d %q, want %d %q", path, tc.header, tc.token, code, got, tc.status, tc.want)
+			}
+		})
+	}
+}
+
 func TestDecide_ARefusedAdmissionAnswersWithItsAuthError(t *testing.T) {
 	app := newDecideApp(t)
 	code, got, _ := call(t, app, http.MethodPost, "/access/v1/check/resource?tenant_id=a",
