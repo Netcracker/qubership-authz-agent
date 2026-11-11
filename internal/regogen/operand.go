@@ -156,6 +156,17 @@ func specPath(o policyir.Resource) string {
 	return o.Path
 }
 
+// readPath returns the path the profile reads for a resource operand written
+// with path: one that opens with a bracket, such as resource['x'], is a path
+// from the member resource of the resource, resource.resource['x']
+// (root_bracket=NESTED).
+func readPath(path string) string {
+	if strings.HasPrefix(path, "[") {
+		return ".resource" + path
+	}
+	return path
+}
+
 func specKey(parts ...any) string {
 	b, err := json.Marshal(parts)
 	if err != nil {
@@ -445,9 +456,10 @@ func (g *gen) ref(o policyir.Operand, kind spectables.Kind, network bool) (*Ref,
 	_, pass := o.(policyir.PassValue)
 	r := &Ref{ID: id, Var: v, Key: key, Kind: kind, Network: network, Pass: pass, read: fieldsKnown, domain: dom}
 	if res, ok := o.(policyir.Resource); ok {
+		path := readPath(res.Path)
 		if kind == spectables.KindResJSONPath && !res.TrailingDot {
-			r.Network, r.Path = true, res.Path
-		} else if err := g.compileResourcePath(r, res.Path, res.TrailingDot); err != nil {
+			r.Network, r.Path = true, path
+		} else if err := g.compileResourcePath(r, path, res.TrailingDot); err != nil {
 			return nil, err
 		}
 	}

@@ -253,6 +253,33 @@ func TestAWholeResourceStringComparesByValue(t *testing.T) {
 	}
 }
 
+// A path that opens with a bracket reads from the member resource of the
+// resource: resource['x'] is resource.resource['x'], so neither a member x
+// nor a member named resource['x'] is read.
+func TestARootBracketReadsTheMemberResource(t *testing.T) {
+	m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource['x'] == 'v'"), table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	for _, tc := range []struct {
+		name, resource string
+		want           bool
+	}{
+		{"a member resource holding x allows", `{"resource": {"x": "v"}}`, true},
+		{"a member x denies", `{"x": "v"}`, false},
+		{"a member named resource['x'] denies", `{"resource['x']": "v"}`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := Request{Body: Body{Operation: "read", ResourceType: "doc", Resource: mustDecode(t, tc.resource),
+				HasResource: true}, Values: map[string]Resolved{}}
+			m.Resolve(req.Body, req.Values)
+			if got := evalModule(t, m, req); got != tc.want {
+				t.Errorf("allow(resource['x'] == 'v', resource = %s) = %v, want %v", tc.resource, got, tc.want)
+			}
+		})
+	}
+}
+
 // A null element on the left of CONTAINS ends the rule in legacy, and the
 // agent reads the end as an undefined leaf. Under PERMIT_UNLESS_DENY a DENY
 // rule permits only when its condition is false, so the null element denies
