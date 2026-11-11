@@ -273,8 +273,9 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 			})
 		}
 
-		// each part escaped, so that no two keys share an id: the agent
-		// isolates every set whose id another set repeats
+		// each part escaped, so that no two keys of one tenant share an id:
+		// the agent isolates every set whose id another set of the tenant
+		// repeats
 		id := "ps-" + url.PathEscape(pk.upload) + "/" + url.PathEscape(pk.domain) + "/" + url.PathEscape(pk.resourceType)
 		result = append(result, v3PolicySet{
 			PolicySetID:        id,
