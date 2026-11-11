@@ -717,30 +717,45 @@ func TestMatchAPathPattern(t *testing.T) {
 // Infinity or -Infinity, against a pattern written in the condition and
 // against the text of a resource path on the right of MATCH. A number in the
 // range, up to the largest double, takes the outcome the tables give every
-// number on the left of MATCH.
+// number on the left of MATCH. Under an ALLOW rule a miss and a failed leaf
+// both deny; the DENY rule of a PERMIT_UNLESS_DENY set tells them apart, since
+// a miss allows there and a failed leaf denies.
 func TestANumberBeyondTheDoubleRangeMatchesAsItsText(t *testing.T) {
 	for _, tc := range []struct {
 		name, condition, a, b string
+		deny                  bool
 		want                  bool
 	}{
-		{"1e400 matches Inf.*", "resource.a MATCH Inf.*", `1e400`, `"n"`, true},
-		{"1e400 does not match 1.*", "resource.a MATCH 1.*", `1e400`, `"n"`, false},
-		{"-1e400 matches -Inf.*", "resource.a MATCH -Inf.*", `-1e400`, `"n"`, true},
-		{"-1e400 does not match Inf.*", "resource.a MATCH Inf.*", `-1e400`, `"n"`, false},
-		{"1e400 is not NOT MATCH Inf.*", "resource.a NOT MATCH Inf.*", `1e400`, `"n"`, false},
-		{"a number in range ends the rule under NOT MATCH", "resource.a NOT MATCH Inf.*", `5`, `"n"`, false},
-		{"the largest double does not match Inf.*", "resource.a MATCH Inf.*", `1.7976931348623157e308`, `"n"`, false},
-		{"1.8e308, just past the largest double, matches Inf.*", "resource.a MATCH Inf.*", `1.8e308`, `"n"`, true},
-		{"1e400 decides MATCH in an OR", "resource.a MATCH Inf.* OR resource.b == 'y'", `1e400`, `"n"`, true},
-		{"1e400 is NOT MATCH the text of a resource path", "resource.a NOT MATCH resource.q", `1e400`, `"n"`, true},
-		{"the string Infinity is NOT MATCH the text of a resource path", "resource.a NOT MATCH resource.q", `"Infinity"`, `"n"`, true},
-		{"the text of the path itself matches it", "resource.a NOT MATCH resource.q", `"resource.q"`, `"n"`, false},
+		{"1e400 matches Inf.*", "resource.a MATCH Inf.*", `1e400`, `"n"`, false, true},
+		{"1e400 does not match 1.*", "resource.a MATCH 1.*", `1e400`, `"n"`, false, false},
+		{"-1e400 matches -Inf.*", "resource.a MATCH -Inf.*", `-1e400`, `"n"`, false, true},
+		{"-1e400 does not match Inf.*", "resource.a MATCH Inf.*", `-1e400`, `"n"`, false, false},
+		{"1e400 is not NOT MATCH Inf.*", "resource.a NOT MATCH Inf.*", `1e400`, `"n"`, false, false},
+		{"a number in range ends the rule under NOT MATCH", "resource.a NOT MATCH Inf.*", `5`, `"n"`, false, false},
+		{"the largest double does not match Inf.*", "resource.a MATCH Inf.*", `1.7976931348623157e308`, `"n"`, false, false},
+		{"1.8e308, just past the largest double, matches Inf.*", "resource.a MATCH Inf.*", `1.8e308`, `"n"`, false, true},
+		{"1e400 decides MATCH in an OR", "resource.a MATCH Inf.* OR resource.b == 'y'", `1e400`, `"n"`, false, true},
+		{"1e400 is NOT MATCH the text of a resource path", "resource.a NOT MATCH resource.q", `1e400`, `"n"`, false, true},
+		{"the string Infinity is NOT MATCH the text of a resource path", "resource.a NOT MATCH resource.q", `"Infinity"`, `"n"`, false, true},
+		{"the text of the path itself matches it", "resource.a NOT MATCH resource.q", `"resource.q"`, `"n"`, false, false},
+		{"a DENY rule denies 1e400 MATCH Inf.*", "resource.a MATCH Inf.*", `1e400`, `"n"`, true, false},
+		{"a DENY rule allows -1e400 that misses Inf.*", "resource.a MATCH Inf.*", `-1e400`, `"n"`, true, true},
+		{"a DENY rule allows 1e400 that is not NOT MATCH Inf.*", "resource.a NOT MATCH Inf.*", `1e400`, `"n"`, true, true},
+		{"a DENY rule denies -1e400 NOT MATCH Inf.*", "resource.a NOT MATCH Inf.*", `-1e400`, `"n"`, true, false},
+		{"a DENY rule allows the largest double under MATCH Inf.*", "resource.a MATCH Inf.*", `1.7976931348623157e308`, `"n"`, true, true},
+		{"a DENY rule denies 1.8e308 MATCH Inf.*", "resource.a MATCH Inf.*", `1.8e308`, `"n"`, true, false},
+		{"-1e400 is NOT MATCH Inf.*", "resource.a NOT MATCH Inf.*", `-1e400`, `"n"`, false, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			algorithm, effect := "DENY_UNLESS_PERMIT", "ALLOW"
+			if tc.deny {
+				algorithm, effect = "PERMIT_UNLESS_DENY", "DENY"
+			}
+			tree := tenantWithSet(t, algorithm, effect, tc.condition)
 			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["res",".b"]`: resolved(t, "VALUE", tc.b)}
 			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
-				t.Errorf("allow(%s, resource.a = %s, resource.b = %s) = %v, want %v", tc.condition, tc.a, tc.b, got, tc.want)
+				t.Errorf("allow(%s %s, resource.a = %s, resource.b = %s) = %v, want %v",
+					effect, tc.condition, tc.a, tc.b, got, tc.want)
 			}
 		})
 	}
