@@ -133,11 +133,12 @@ make e2e-down     # delete the cluster
 - Changed a realm file: `make e2e-harness e2e-suite`. The harness replaces the Keycloak Pod, and a dev-mode Keycloak
   mints new realm keys on every start, so the harness also restarts the agent, whose JWKS bootstrap holds the old keys,
   and waits until it is Ready.
-- Another agent URL: `make e2e-suite E2E_BASE_URL=<url>` (`PARITY_AC_BASE_URL` for `parity-suite`) writes the URL into
-  the installed test-stand release, together with any realm edit not yet applied, and runs the suite against it. The URL
-  stays in the release for later runs until `make e2e-harness` restores the default. The same run clears
-  `AGENT_PULL_URL` (`PARITY_AGENT_PULL_URL`), so the suite waits a pull interval after each upload instead of asking
-  the local agent to pull; `make e2e-harness` (`make parity-harness`) without the URL restores it too.
+- Another agent URL: `make e2e-suite E2E_BASE_URL=<url>` (`PARITY_AC_BASE_URL` for `parity-suite` and the
+  `parity-export*` suites) writes the URL into the installed test-stand release, together with any realm edit not yet
+  applied, and runs the suite against it. The URL stays in the release for later runs until `make e2e-harness` restores
+  the default. The same run clears `AGENT_PULL_URL` (`PARITY_AGENT_PULL_URL`), so the suite waits a pull interval after
+  each upload instead of asking the local agent to pull; `make e2e-harness` (`make parity-harness`) without the URL
+  restores it too.
 
 - A subset: set `RUNTIME_SUITE_RUN` (a `-test.run` regular expression) on the test-stand release, with
   `FULL_RUNTIME_SUITE` set to `false` so the coverage checks do not fail on a filtered run, then run `make e2e-suite`:

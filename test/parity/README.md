@@ -485,7 +485,7 @@ Optional fields change one part of the upload or the request; without them a cas
 | Field | On | Effect |
 | --- | --- | --- |
 | `roles` | A case without `sets` | The roles of the simplified policy instead of `ROLE_PARITY_READER`; `[]` uploads the policy with no role |
-| `domain` | A case without `sets` | The domain the case uploads its PIPs and policy into instead of `PARITY_ISOLATED`. The function empties every domain its cases named when it ends |
+| `domain` | A case without `sets` | The domain the case uploads its PIPs and policy into instead of `PARITY_ISOLATED`. The function empties every domain its cases named when it ends, and the domain of a case the agent did not load before the next case |
 | `ruleIdsOf` | A case with `sets` | The id of an earlier case with `sets` in the same file. Rule ids are derived from that case's id, so a rule whose key an earlier rule also has uploads with that rule's id; set and policy ids stay the case's own |
 | `status` | A set | The set's status instead of `ACTIVE`, such as `INACTIVE` |
 | `tenantId` | A request | The value of the `tenant_id` query parameter instead of the stand's tenant; `""` sends the parameter with an empty value |
