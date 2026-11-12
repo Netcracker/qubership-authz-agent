@@ -1,0 +1,1228 @@
+{
+ "about": "Round 75: answers the specification gives and no golden shows: a GENERAL body that is not JSON, a list compared with the text of a list, MATCH with parentheses and |, a number compared with its texts. Default tenant. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_",
+ "standVersion": true,
+ "pips": {
+  "text": {
+   "name": "subject.parityG75Text",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/g75-text-body",
+   "requestAttributes": {
+    "case": "g75-text-body"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "g75-values-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_G75_VALUES_CONTROL_FIRST",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_VALUES_CONTROL_FIRST'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-body-text",
+   "about": "A GENERAL PIP answers 200 with a body that is not JSON (text, Content-Type text/plain) during a check: `subject.parityG75Text == 'blocked'` and `subject.parityG75Text IS NULL`, each with OR resource.a == 'y' and the DENY twin. A value, null, or a failed source?",
+   "resourceType": "PARITY_SUITE_G75_BODY_TEXT",
+   "pips": [
+    "text"
+   ],
+   "pins": {
+    "/api/v1/pip/g75-text-body": {
+     "statusCode": 200,
+     "bodyRaw": "blocked",
+     "headers": {
+      "Content-Type": "text/plain"
+     }
+    }
+   },
+   "sets": [
+    {
+     "key": "eq",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_TEXT_EQ'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-eq",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-eq",
+         "target": "true",
+         "condition": "subject.parityG75Text == 'blocked' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "eq-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_TEXT_EQ_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-eq-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-eq-d",
+         "target": "true",
+         "condition": "subject.parityG75Text == 'blocked'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "null",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_TEXT_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-null",
+         "target": "true",
+         "condition": "subject.parityG75Text IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "null-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_TEXT_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-null-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-null-d",
+         "target": "true",
+         "condition": "subject.parityG75Text IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "eq-a-n",
+     "type": "PARITY_SUITE_G75_BODY_TEXT_EQ",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "eq-a-y",
+     "type": "PARITY_SUITE_G75_BODY_TEXT_EQ",
+     "resource": {
+      "id": "r75",
+      "a": "y"
+     }
+    },
+    {
+     "name": "eq-deny",
+     "type": "PARITY_SUITE_G75_BODY_TEXT_EQ_D",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "null-a-n",
+     "type": "PARITY_SUITE_G75_BODY_TEXT_NULL",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "null-a-y",
+     "type": "PARITY_SUITE_G75_BODY_TEXT_NULL",
+     "resource": {
+      "id": "r75",
+      "a": "y"
+     }
+    },
+    {
+     "name": "null-deny",
+     "type": "PARITY_SUITE_G75_BODY_TEXT_NULL_D",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-body-html",
+   "about": "A GENERAL PIP answers 200 with a body that is not JSON (html, Content-Type text/html) during a check: `subject.parityG75Text == 'blocked'` and `subject.parityG75Text IS NULL`, each with OR resource.a == 'y' and the DENY twin. A value, null, or a failed source?",
+   "resourceType": "PARITY_SUITE_G75_BODY_HTML",
+   "pips": [
+    "text"
+   ],
+   "pins": {
+    "/api/v1/pip/g75-text-body": {
+     "statusCode": 200,
+     "bodyRaw": "<html><body>blocked</body></html>",
+     "headers": {
+      "Content-Type": "text/html"
+     }
+    }
+   },
+   "sets": [
+    {
+     "key": "eq",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_HTML_EQ'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-eq",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-eq",
+         "target": "true",
+         "condition": "subject.parityG75Text == 'blocked' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "eq-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_HTML_EQ_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-eq-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-eq-d",
+         "target": "true",
+         "condition": "subject.parityG75Text == 'blocked'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "null",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_HTML_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-null",
+         "target": "true",
+         "condition": "subject.parityG75Text IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "null-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_HTML_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-null-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-null-d",
+         "target": "true",
+         "condition": "subject.parityG75Text IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "eq-a-n",
+     "type": "PARITY_SUITE_G75_BODY_HTML_EQ",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "eq-a-y",
+     "type": "PARITY_SUITE_G75_BODY_HTML_EQ",
+     "resource": {
+      "id": "r75",
+      "a": "y"
+     }
+    },
+    {
+     "name": "eq-deny",
+     "type": "PARITY_SUITE_G75_BODY_HTML_EQ_D",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "null-a-n",
+     "type": "PARITY_SUITE_G75_BODY_HTML_NULL",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "null-a-y",
+     "type": "PARITY_SUITE_G75_BODY_HTML_NULL",
+     "resource": {
+      "id": "r75",
+      "a": "y"
+     }
+    },
+    {
+     "name": "null-deny",
+     "type": "PARITY_SUITE_G75_BODY_HTML_NULL_D",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-body-truncated",
+   "about": "A GENERAL PIP answers 200 with a body that is not JSON (truncated, Content-Type application/json) during a check: `subject.parityG75Text == 'blocked'` and `subject.parityG75Text IS NULL`, each with OR resource.a == 'y' and the DENY twin. A value, null, or a failed source?",
+   "resourceType": "PARITY_SUITE_G75_BODY_TRUNCATED",
+   "pips": [
+    "text"
+   ],
+   "pins": {
+    "/api/v1/pip/g75-text-body": {
+     "statusCode": 200,
+     "bodyRaw": "[\"blocked\"",
+     "headers": {
+      "Content-Type": "application/json"
+     }
+    }
+   },
+   "sets": [
+    {
+     "key": "eq",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_TRUNCATED_EQ'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-eq",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-eq",
+         "target": "true",
+         "condition": "subject.parityG75Text == 'blocked' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "eq-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_TRUNCATED_EQ_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-eq-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-eq-d",
+         "target": "true",
+         "condition": "subject.parityG75Text == 'blocked'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "null",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_TRUNCATED_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-null",
+         "target": "true",
+         "condition": "subject.parityG75Text IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "null-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_TRUNCATED_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-null-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-null-d",
+         "target": "true",
+         "condition": "subject.parityG75Text IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "eq-a-n",
+     "type": "PARITY_SUITE_G75_BODY_TRUNCATED_EQ",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "eq-a-y",
+     "type": "PARITY_SUITE_G75_BODY_TRUNCATED_EQ",
+     "resource": {
+      "id": "r75",
+      "a": "y"
+     }
+    },
+    {
+     "name": "eq-deny",
+     "type": "PARITY_SUITE_G75_BODY_TRUNCATED_EQ_D",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "null-a-n",
+     "type": "PARITY_SUITE_G75_BODY_TRUNCATED_NULL",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "null-a-y",
+     "type": "PARITY_SUITE_G75_BODY_TRUNCATED_NULL",
+     "resource": {
+      "id": "r75",
+      "a": "y"
+     }
+    },
+    {
+     "name": "null-deny",
+     "type": "PARITY_SUITE_G75_BODY_TRUNCATED_NULL_D",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-list-text-eq",
+   "about": "resource.b is the list [1.0]: `resource.b == '[1.0]'` and `== '[1]'`, each with OR resource.a == 'y' and the DENY twin. Which text does the list take?",
+   "resourceType": "PARITY_SUITE_G75_LIST_TEXT_EQ",
+   "sets": [
+    {
+     "key": "dec",
+     "target": "resourceType == 'PARITY_SUITE_G75_LIST_TEXT_EQ_DEC'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-dec",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-dec",
+         "target": "true",
+         "condition": "resource.b == '[1.0]' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "dec-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_LIST_TEXT_EQ_DEC_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-dec-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-dec-d",
+         "target": "true",
+         "condition": "resource.b == '[1.0]'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "int",
+     "target": "resourceType == 'PARITY_SUITE_G75_LIST_TEXT_EQ_INT'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-int",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-int",
+         "target": "true",
+         "condition": "resource.b == '[1]' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "int-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_LIST_TEXT_EQ_INT_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-int-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-int-d",
+         "target": "true",
+         "condition": "resource.b == '[1]'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "dec-a-n",
+     "type": "PARITY_SUITE_G75_LIST_TEXT_EQ_DEC",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "b": [
+       1.0
+      ]
+     }
+    },
+    {
+     "name": "dec-a-y",
+     "type": "PARITY_SUITE_G75_LIST_TEXT_EQ_DEC",
+     "resource": {
+      "id": "r75",
+      "a": "y",
+      "b": [
+       1.0
+      ]
+     }
+    },
+    {
+     "name": "dec-deny",
+     "type": "PARITY_SUITE_G75_LIST_TEXT_EQ_DEC_D",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "b": [
+       1.0
+      ]
+     }
+    },
+    {
+     "name": "int-a-n",
+     "type": "PARITY_SUITE_G75_LIST_TEXT_EQ_INT",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "b": [
+       1.0
+      ]
+     }
+    },
+    {
+     "name": "int-a-y",
+     "type": "PARITY_SUITE_G75_LIST_TEXT_EQ_INT",
+     "resource": {
+      "id": "r75",
+      "a": "y",
+      "b": [
+       1.0
+      ]
+     }
+    },
+    {
+     "name": "int-deny",
+     "type": "PARITY_SUITE_G75_LIST_TEXT_EQ_INT_D",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "b": [
+       1.0
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-list-text-subset",
+   "about": "resource.b is [[1.0]] and resource.c is [\"[1]\"] (a literal left of IS SUBSET the PAP refuses): `resource.c IS SUBSET resource.b` with OR resource.a == 'y' and the DENY twin, and the DENY rule `resource.c IS NOT SUBSET resource.b`. Is the text [1] an element of [[1.0]]?",
+   "resourceType": "PARITY_SUITE_G75_LIST_TEXT_SUBSET",
+   "sets": [
+    {
+     "key": "subset",
+     "target": "resourceType == 'PARITY_SUITE_G75_LIST_TEXT_SUBSET_SUBSET'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-subset",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-subset",
+         "target": "true",
+         "condition": "resource.c IS SUBSET resource.b OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "subset-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_LIST_TEXT_SUBSET_SUBSET_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-subset-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-subset-d",
+         "target": "true",
+         "condition": "resource.c IS SUBSET resource.b",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "not-subset",
+     "target": "resourceType == 'PARITY_SUITE_G75_LIST_TEXT_SUBSET_NOT_SUBSET'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-not-subset",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-not-subset",
+         "target": "true",
+         "condition": "resource.c IS NOT SUBSET resource.b",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "subset-a-n",
+     "type": "PARITY_SUITE_G75_LIST_TEXT_SUBSET_SUBSET",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "b": [
+       [
+        1.0
+       ]
+      ],
+      "c": [
+       "[1]"
+      ]
+     }
+    },
+    {
+     "name": "subset-a-y",
+     "type": "PARITY_SUITE_G75_LIST_TEXT_SUBSET_SUBSET",
+     "resource": {
+      "id": "r75",
+      "a": "y",
+      "b": [
+       [
+        1.0
+       ]
+      ],
+      "c": [
+       "[1]"
+      ]
+     }
+    },
+    {
+     "name": "subset-deny",
+     "type": "PARITY_SUITE_G75_LIST_TEXT_SUBSET_SUBSET_D",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "b": [
+       [
+        1.0
+       ]
+      ],
+      "c": [
+       "[1]"
+      ]
+     }
+    },
+    {
+     "name": "not-subset-deny",
+     "type": "PARITY_SUITE_G75_LIST_TEXT_SUBSET_NOT_SUBSET",
+     "resource": {
+      "id": "r75",
+      "b": [
+       [
+        1.0
+       ]
+      ],
+      "c": [
+       "[1]"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-match-unbalanced",
+   "about": "`resource.v MATCH a)|(b` with OR resource.a == 'y' and the DENY twin, over v = a and v = ab: is the pattern a regex, anchored at both ends or found anywhere, and does an unbalanced parenthesis fail the rule or answer false?",
+   "resourceType": "PARITY_SUITE_G75_MATCH_UNBALANCED",
+   "sets": [
+    {
+     "key": "m",
+     "target": "resourceType == 'PARITY_SUITE_G75_MATCH_UNBALANCED_M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-m",
+         "target": "true",
+         "condition": "resource.v MATCH a)|(b OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "m-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_MATCH_UNBALANCED_M_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-m-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-m-d",
+         "target": "true",
+         "condition": "resource.v MATCH a)|(b",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "v-a-a-n",
+     "type": "PARITY_SUITE_G75_MATCH_UNBALANCED_M",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "v": "a"
+     }
+    },
+    {
+     "name": "v-a-a-y",
+     "type": "PARITY_SUITE_G75_MATCH_UNBALANCED_M",
+     "resource": {
+      "id": "r75",
+      "a": "y",
+      "v": "a"
+     }
+    },
+    {
+     "name": "v-a-deny",
+     "type": "PARITY_SUITE_G75_MATCH_UNBALANCED_M_D",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "v": "a"
+     }
+    },
+    {
+     "name": "v-ab-a-n",
+     "type": "PARITY_SUITE_G75_MATCH_UNBALANCED_M",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "v": "ab"
+     }
+    },
+    {
+     "name": "v-ab-a-y",
+     "type": "PARITY_SUITE_G75_MATCH_UNBALANCED_M",
+     "resource": {
+      "id": "r75",
+      "a": "y",
+      "v": "ab"
+     }
+    },
+    {
+     "name": "v-ab-deny",
+     "type": "PARITY_SUITE_G75_MATCH_UNBALANCED_M_D",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "v": "ab"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-match-bar",
+   "about": "`resource.v MATCH a|b` with OR resource.a == 'y' and the DENY twin, over v = a and v = ab: is the pattern a regex, anchored at both ends or found anywhere, and does an unbalanced parenthesis fail the rule or answer false?",
+   "resourceType": "PARITY_SUITE_G75_MATCH_BAR",
+   "sets": [
+    {
+     "key": "m",
+     "target": "resourceType == 'PARITY_SUITE_G75_MATCH_BAR_M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-m",
+         "target": "true",
+         "condition": "resource.v MATCH a|b OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "m-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_MATCH_BAR_M_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-m-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-m-d",
+         "target": "true",
+         "condition": "resource.v MATCH a|b",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "v-a-a-n",
+     "type": "PARITY_SUITE_G75_MATCH_BAR_M",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "v": "a"
+     }
+    },
+    {
+     "name": "v-a-a-y",
+     "type": "PARITY_SUITE_G75_MATCH_BAR_M",
+     "resource": {
+      "id": "r75",
+      "a": "y",
+      "v": "a"
+     }
+    },
+    {
+     "name": "v-a-deny",
+     "type": "PARITY_SUITE_G75_MATCH_BAR_M_D",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "v": "a"
+     }
+    },
+    {
+     "name": "v-ab-a-n",
+     "type": "PARITY_SUITE_G75_MATCH_BAR_M",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "v": "ab"
+     }
+    },
+    {
+     "name": "v-ab-a-y",
+     "type": "PARITY_SUITE_G75_MATCH_BAR_M",
+     "resource": {
+      "id": "r75",
+      "a": "y",
+      "v": "ab"
+     }
+    },
+    {
+     "name": "v-ab-deny",
+     "type": "PARITY_SUITE_G75_MATCH_BAR_M_D",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "v": "ab"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-number-eq",
+   "about": "`resource.n == 1` over n = \"01\", \"1\" and 1.0, and `resource.n == '1'` over n = 1, each with OR resource.a == 'y' and the DENY twin.",
+   "resourceType": "PARITY_SUITE_G75_NUMBER_EQ",
+   "sets": [
+    {
+     "key": "num",
+     "target": "resourceType == 'PARITY_SUITE_G75_NUMBER_EQ_NUM'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-num",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-num",
+         "target": "true",
+         "condition": "resource.n == 1 OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "num-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_NUMBER_EQ_NUM_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-num-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-num-d",
+         "target": "true",
+         "condition": "resource.n == 1",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "text",
+     "target": "resourceType == 'PARITY_SUITE_G75_NUMBER_EQ_TEXT'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-text",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-text",
+         "target": "true",
+         "condition": "resource.n == '1' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "text-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_NUMBER_EQ_TEXT_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-text-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-text-d",
+         "target": "true",
+         "condition": "resource.n == '1'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "num-s01-a-n",
+     "type": "PARITY_SUITE_G75_NUMBER_EQ_NUM",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "n": "01"
+     }
+    },
+    {
+     "name": "num-s01-a-y",
+     "type": "PARITY_SUITE_G75_NUMBER_EQ_NUM",
+     "resource": {
+      "id": "r75",
+      "a": "y",
+      "n": "01"
+     }
+    },
+    {
+     "name": "num-s01-deny",
+     "type": "PARITY_SUITE_G75_NUMBER_EQ_NUM_D",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "n": "01"
+     }
+    },
+    {
+     "name": "num-s1-a-n",
+     "type": "PARITY_SUITE_G75_NUMBER_EQ_NUM",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "n": "1"
+     }
+    },
+    {
+     "name": "num-s1-a-y",
+     "type": "PARITY_SUITE_G75_NUMBER_EQ_NUM",
+     "resource": {
+      "id": "r75",
+      "a": "y",
+      "n": "1"
+     }
+    },
+    {
+     "name": "num-s1-deny",
+     "type": "PARITY_SUITE_G75_NUMBER_EQ_NUM_D",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "n": "1"
+     }
+    },
+    {
+     "name": "num-d1-a-n",
+     "type": "PARITY_SUITE_G75_NUMBER_EQ_NUM",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "n": 1.0
+     }
+    },
+    {
+     "name": "num-d1-a-y",
+     "type": "PARITY_SUITE_G75_NUMBER_EQ_NUM",
+     "resource": {
+      "id": "r75",
+      "a": "y",
+      "n": 1.0
+     }
+    },
+    {
+     "name": "num-d1-deny",
+     "type": "PARITY_SUITE_G75_NUMBER_EQ_NUM_D",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "n": 1.0
+     }
+    },
+    {
+     "name": "text-i1-a-n",
+     "type": "PARITY_SUITE_G75_NUMBER_EQ_TEXT",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "n": 1
+     }
+    },
+    {
+     "name": "text-i1-a-y",
+     "type": "PARITY_SUITE_G75_NUMBER_EQ_TEXT",
+     "resource": {
+      "id": "r75",
+      "a": "y",
+      "n": 1
+     }
+    },
+    {
+     "name": "text-i1-deny",
+     "type": "PARITY_SUITE_G75_NUMBER_EQ_TEXT_D",
+     "resource": {
+      "id": "r75",
+      "a": "n",
+      "n": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-values-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_G75_VALUES_CONTROL_LAST",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_VALUES_CONTROL_LAST'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

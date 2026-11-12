@@ -1,0 +1,270 @@
+{
+ "about": "Round 75: ${subject.roles} in a filter predicate for a token whose realm_access.roles is a string (client parity-ts-scalar-roles, users of token-subject-users.json), beside the reader. Default tenant. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "g75-roles-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_G75_ROLES_CONTROL_FIRST",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_ROLES_CONTROL_FIRST'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-roles-allow",
+   "about": "DENY_UNLESS_PERMIT: one ALLOW rule, condition true, whose predicate in each dialect is role in ${subject.roles}. check/filter for parity-ts-one of the client parity-ts-scalar-roles, whose token carries realm_access.roles as the string ROLE_PARITY_READER (round 69: a check reads such roles as a failure), and for parity-reader, whose roles are a list. The empty list, DENY, the string as a one-element list, or a refusal? Two rows of check/resource for the same user answer true (the condition does not read roles).",
+   "resourceType": "PARITY_SUITE_G75_ROLES_ALLOW",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_ROLES_ALLOW'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "role=in=(${subject.roles})",
+          "sqlPredicate": "role IN (${subject.roles})",
+          "predicate": "${resourceType}.role.in(${subject.roles})",
+          "mongodbPredicate": "{ \"role\": { \"$in\": ${subject.roles} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter-as-scalar-roles",
+     "filter": true,
+     "operation": "READ",
+     "subject": "user:parity-ts-one@parity-ts-scalar-roles",
+     "subjectClaims": {
+      "realm_access": {
+       "roles": "ROLE_PARITY_READER"
+      }
+     }
+    },
+    {
+     "name": "filter-as-reader",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-ROLE_PARITY_READER-as-scalar-roles",
+     "resource": {
+      "id": "r75-ROLE_PARITY_READER",
+      "role": "ROLE_PARITY_READER"
+     },
+     "subject": "user:parity-ts-one@parity-ts-scalar-roles",
+     "subjectClaims": {
+      "realm_access": {
+       "roles": "ROLE_PARITY_READER"
+      }
+     }
+    },
+    {
+     "name": "row-ROLE_PARITY_NONE-as-scalar-roles",
+     "resource": {
+      "id": "r75-ROLE_PARITY_NONE",
+      "role": "ROLE_PARITY_NONE"
+     },
+     "subject": "user:parity-ts-one@parity-ts-scalar-roles",
+     "subjectClaims": {
+      "realm_access": {
+       "roles": "ROLE_PARITY_READER"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-roles-beside-open",
+   "about": "As g75-roles-allow, beside a second ALLOW rule whose predicate is open==1: an empty list leaves open==1 in the filter, DENY of the whole answer does not.",
+   "resourceType": "PARITY_SUITE_G75_ROLES_BESIDE_OPEN",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_ROLES_BESIDE_OPEN'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "role=in=(${subject.roles})",
+          "sqlPredicate": "role IN (${subject.roles})",
+          "predicate": "${resourceType}.role.in(${subject.roles})",
+          "mongodbPredicate": "{ \"role\": { \"$in\": ${subject.roles} } }"
+         }
+        },
+        {
+         "key": "open",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "open==1",
+          "sqlPredicate": "open=1",
+          "predicate": "${resourceType}.open.eq(1)",
+          "mongodbPredicate": "{ \"open\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter-as-scalar-roles",
+     "filter": true,
+     "operation": "READ",
+     "subject": "user:parity-ts-one@parity-ts-scalar-roles",
+     "subjectClaims": {
+      "realm_access": {
+       "roles": "ROLE_PARITY_READER"
+      }
+     }
+    },
+    {
+     "name": "filter-as-reader",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "g75-roles-deny",
+   "about": "PERMIT_UNLESS_DENY: one DENY rule, condition true, whose predicate in each dialect is role in ${subject.roles}, for the scalar-roles user and the reader. The negation of an empty list is every row.",
+   "resourceType": "PARITY_SUITE_G75_ROLES_DENY",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_ROLES_DENY'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "role=in=(${subject.roles})",
+          "sqlPredicate": "role IN (${subject.roles})",
+          "predicate": "${resourceType}.role.in(${subject.roles})",
+          "mongodbPredicate": "{ \"role\": { \"$in\": ${subject.roles} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter-as-scalar-roles",
+     "filter": true,
+     "operation": "READ",
+     "subject": "user:parity-ts-one@parity-ts-scalar-roles",
+     "subjectClaims": {
+      "realm_access": {
+       "roles": "ROLE_PARITY_READER"
+      }
+     }
+    },
+    {
+     "name": "filter-as-reader",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "g75-roles-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_G75_ROLES_CONTROL_LAST",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_ROLES_CONTROL_LAST'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

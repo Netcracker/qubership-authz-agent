@@ -1,0 +1,1163 @@
+{
+ "about": "tasks/09 phase 2: the request's headers, the members of the user's answer in other forms, the empty user, TOKEN and isM2M in the decision for the user, other answers of User Management, userId values (spaces only, dot segments, an escaped slash) and the check of VIEW_AS_ANOTHER_USER per bulk item. Each case runs in a tenant of its own. Needs the stand of round 63, whose INTERNAL_APIGATEWAY_URL points at user-management-mock.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ob75-should-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_OB75_SHOULD_CONTROL_FIRST",
+   "tenant": "parity-ob75-should-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-should-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "b236b604-834f-2ab6-d839-50ac6440b61d",
+       "name": "ob75-should-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_SHOULD_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "619be714-b615-f475-54f1-cc44d38fccef",
+         "name": "ob75-should-control-first reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "6b5dd300-0a89-1d9a-27be-21e9894b8161",
+           "name": "ob75-should-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r75",
+        "c": "n"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-headers",
+   "about": "The request carries the header X-Parity-Ob75: h75. A HEADER PIP over it decides one rule (CONTAINS 'h75'); a GENERAL PIP that declares it in headers decides another, and its pip-call golden records whether the call carried it. On behalf of a user: the request's header, or none, as TOKEN reads no claim.",
+   "resourceType": "PARITY_SUITE_OB75_HEADERS",
+   "tenant": "parity-ob75-headers",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityOb75Header",
+       "pipType": "HEADER",
+       "header": "X-Parity-Ob75",
+       "cacheable": false
+      },
+      {
+       "name": "subject.parityOb75Forward",
+       "url": "http://pip-mock:8090/api/v1/pip/ob75-forward",
+       "pipType": "GENERAL",
+       "type": "JSON",
+       "jsonPath": "$",
+       "cacheable": false,
+       "headers": "X-Parity-Ob75"
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-headers"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:header-as-a-user",
+      "decide:forward-as-a-user",
+      "decide:header-as-self"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "cd899f27-6ccf-888b-3705-83c46342861a",
+       "name": "ob75-headers header",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_HEADERS_HEADER'",
+       "policies": [
+        {
+         "policyId": "b8f52d57-fbce-2331-02e0-8fdfe0930221",
+         "name": "ob75-headers anyone-header",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "65b63195-fa5e-9cec-e131-064f2d8c5b46",
+           "name": "ob75-headers read-header",
+           "target": "operation == 'READ'",
+           "condition": "subject.parityOb75Header CONTAINS 'h75'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "d9d82745-9e98-17f5-df6b-a8083ff4ec70",
+       "name": "ob75-headers forward",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_HEADERS_FORWARD'",
+       "policies": [
+        {
+         "policyId": "7a7c7e47-ec09-4c66-3192-bf5393305876",
+         "name": "ob75-headers anyone-forward",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "2ff0ae46-3659-9d7b-1a86-c181927c77b1",
+           "name": "ob75-headers read-forward",
+           "target": "operation == 'READ'",
+           "condition": "subject.parityOb75Forward CONTAINS 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "1bdc97f2-e0bb-1ebc-b44b-147c410681c2",
+       "name": "ob75-headers authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "3dc29318-a3f8-a736-8a7f-aeba81992089",
+         "name": "ob75-headers view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "ea8a29fd-70c7-2131-769b-fea272b08fc6",
+           "name": "ob75-headers view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "header-as-a-user",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007511",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "type": "PARITY_SUITE_OB75_HEADERS_HEADER",
+       "headers": {
+        "X-Parity-Ob75": "h75"
+       }
+      },
+      {
+       "name": "forward-as-a-user",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007512",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "type": "PARITY_SUITE_OB75_HEADERS_FORWARD",
+       "headers": {
+        "X-Parity-Ob75": "h75"
+       },
+       "pins": {
+        "/api/v1/pip/ob75-forward": {
+         "statusCode": 200,
+         "body": [
+          "y"
+         ]
+        }
+       },
+       "pipCalls": "/api/v1/pip/ob75-forward",
+       "pipHeaders": [
+        "x-parity-ob75"
+       ]
+      },
+      {
+       "name": "header-as-self",
+       "resource": {
+        "id": "r75"
+       },
+       "type": "PARITY_SUITE_OB75_HEADERS_HEADER",
+       "headers": {
+        "X-Parity-Ob75": "h75"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-subject",
+   "about": "One request per condition over the subject, each under its own resource type and with its own answer of User Management: userName for the name, realmroles in lower case, realmRoles as a string, an answer without id (subject.id == the request's userId), the empty user {} (name IS NULL, roles IS EMPTY), and a policy whose target is subject.isM2M on behalf of a user with the M2M token.",
+   "resourceType": "PARITY_SUITE_OB75_SUBJECT",
+   "tenant": "parity-ob75-subject",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityOb75Department",
+       "type": "UUID",
+       "pipType": "TOKEN",
+       "claim": "department",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-subject"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-name-camel",
+      "decide:read-roles-lower",
+      "decide:read-roles-text",
+      "decide:read-id-absent",
+      "decide:read-empty-name",
+      "decide:read-empty-roles",
+      "decide:m2m-read-is-m2m"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "f4a2ed5c-2ae3-7bbc-4ed7-19527057636f",
+       "name": "ob75-subject name-camel",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_SUBJECT_NAME_CAMEL'",
+       "policies": [
+        {
+         "policyId": "2d27e3a2-9bcd-6ac4-52ae-fac8da257ace",
+         "name": "ob75-subject anyone-name-camel",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "a175fb5b-d2b8-94d7-fa3e-33a1fe287a59",
+           "name": "ob75-subject read-name-camel",
+           "target": "operation == 'READ'",
+           "condition": "subject.name == 'parity-ob75-camel'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "d44a8f1a-8989-835c-d537-acc9d021f19a",
+       "name": "ob75-subject roles-lower",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_SUBJECT_ROLES_LOWER'",
+       "policies": [
+        {
+         "policyId": "5d55bcfe-9ef1-9706-b413-262ae5fd1282",
+         "name": "ob75-subject anyone-roles-lower",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "c33eec9c-c16d-97ad-265d-2748b51bf868",
+           "name": "ob75-subject read-roles-lower",
+           "target": "operation == 'READ'",
+           "condition": "subject.roles CONTAINS 'ROLE_PARITY_OB75_LOWER'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "dde15e5f-bed6-4e86-b3f9-1e760876174a",
+       "name": "ob75-subject roles-text",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_SUBJECT_ROLES_TEXT'",
+       "policies": [
+        {
+         "policyId": "8133802d-f569-683b-34f4-dcf15e3c7190",
+         "name": "ob75-subject anyone-roles-text",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "3da45d74-94ee-a033-17d4-c0da49dffb5c",
+           "name": "ob75-subject read-roles-text",
+           "target": "operation == 'READ'",
+           "condition": "subject.roles CONTAINS 'ROLE_PARITY_OB75_TEXT'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "b900a3cf-cfe5-2d0e-ed50-ef9a4756e6da",
+       "name": "ob75-subject id-absent",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_SUBJECT_ID_ABSENT'",
+       "policies": [
+        {
+         "policyId": "96f21d58-153f-30dc-66d1-f32aee7e3cd2",
+         "name": "ob75-subject anyone-id-absent",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "71942e45-bec0-85fe-326b-41ea7bf6ea71",
+           "name": "ob75-subject read-id-absent",
+           "target": "operation == 'READ'",
+           "condition": "subject.id == '00000000-0000-0000-0000-000000007516'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "d21634e5-db06-3464-1e8f-363beb1937a4",
+       "name": "ob75-subject empty-name",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_SUBJECT_EMPTY_NAME'",
+       "policies": [
+        {
+         "policyId": "a1195be4-65e4-c860-a325-644ea8366625",
+         "name": "ob75-subject anyone-empty-name",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "8fe2b4e6-78e4-57bc-b0f6-d84d1c8c476e",
+           "name": "ob75-subject read-empty-name",
+           "target": "operation == 'READ'",
+           "condition": "subject.name IS NULL",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "9c4b711d-a0f8-cb1e-3bf9-dbe2f3aa4dc1",
+       "name": "ob75-subject empty-roles",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_SUBJECT_EMPTY_ROLES'",
+       "policies": [
+        {
+         "policyId": "46b5f178-b0f1-1486-4dc7-c368f937910e",
+         "name": "ob75-subject anyone-empty-roles",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "1ad4e3a7-9e8c-899b-235e-eb0bf8b6d538",
+           "name": "ob75-subject read-empty-roles",
+           "target": "operation == 'READ'",
+           "condition": "subject.roles IS EMPTY",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "b57f4675-f3a7-7158-dd39-8e30350b27ed",
+       "name": "ob75-subject is-m2m",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_SUBJECT_IS_M2M'",
+       "policies": [
+        {
+         "policyId": "a5d1eb2c-e84c-b4ff-27ee-6ea151e85cff",
+         "name": "ob75-subject anyone-is-m2m",
+         "target": "subject.isM2M",
+         "rules": [
+          {
+           "ruleId": "c7f25f89-413c-9fe9-b569-c208bd37dd85",
+           "name": "ob75-subject read-is-m2m",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "243f7ce4-e984-ab3d-854e-1588d075774d",
+       "name": "ob75-subject authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "8211261f-d7a0-3d52-f8cd-69744a95c493",
+         "name": "ob75-subject view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "0d975a0b-5a19-1f65-2774-be37f132734c",
+           "name": "ob75-subject view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-name-camel",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007513",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "userName": "parity-ob75-camel",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "type": "PARITY_SUITE_OB75_SUBJECT_NAME_CAMEL"
+      },
+      {
+       "name": "read-roles-lower",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007514",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmroles": [
+           "ROLE_PARITY_OB75_LOWER"
+          ]
+         }
+        }
+       },
+       "type": "PARITY_SUITE_OB75_SUBJECT_ROLES_LOWER"
+      },
+      {
+       "name": "read-roles-text",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007515",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": "ROLE_PARITY_OB75_TEXT"
+         }
+        }
+       },
+       "type": "PARITY_SUITE_OB75_SUBJECT_ROLES_TEXT"
+      },
+      {
+       "name": "read-id-absent",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007516",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "username": "parity-ob75-name"
+         }
+        }
+       },
+       "type": "PARITY_SUITE_OB75_SUBJECT_ID_ABSENT"
+      },
+      {
+       "name": "read-empty-name",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007517",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {}
+        }
+       },
+       "type": "PARITY_SUITE_OB75_SUBJECT_EMPTY_NAME"
+      },
+      {
+       "name": "read-empty-roles",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007518",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {}
+        }
+       },
+       "type": "PARITY_SUITE_OB75_SUBJECT_EMPTY_ROLES"
+      },
+      {
+       "name": "m2m-read-is-m2m",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007519",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "subject": "m2m",
+       "type": "PARITY_SUITE_OB75_SUBJECT_IS_M2M"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-lookup-answers",
+   "about": "User Management answers 400, 401, 204 with no body, and 200 with a body of one space: which fail the request and with which status (round 63 asked 403, 404, 500, 503, and bodies with content).",
+   "resourceType": "PARITY_SUITE_OB75_LOOKUP_ANSWERS",
+   "tenant": "parity-ob75-lookup-answers",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-lookup-answers"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-when-user-management-answers-400",
+      "decide:read-when-user-management-answers-401",
+      "decide:read-when-user-management-answers-204",
+      "decide:read-when-the-body-is-blank"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "805e2d4d-c9ed-6046-fa81-9a747d465a88",
+       "name": "ob75-lookup-answers set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_LOOKUP_ANSWERS'",
+       "policies": [
+        {
+         "policyId": "2d8bf0b2-2e19-df77-b947-5fe24c9fe03e",
+         "name": "ob75-lookup-answers anyone-set",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "8e75bebd-931a-ee9a-1517-5eaee967ff52",
+           "name": "ob75-lookup-answers read-set",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "8bd35f43-3697-8a3f-ea36-cb82b193388e",
+       "name": "ob75-lookup-answers authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "259ccc7d-0cfa-9c11-5a1f-0c5ff8de359c",
+         "name": "ob75-lookup-answers view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "23e34f7f-6b15-3d9b-1fe4-5bd96d4c0360",
+           "name": "ob75-lookup-answers view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-when-user-management-answers-400",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007520",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 400,
+         "body": {
+          "error": "parity"
+         }
+        }
+       }
+      },
+      {
+       "name": "read-when-user-management-answers-401",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007521",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 401,
+         "body": {
+          "error": "parity"
+         }
+        }
+       }
+      },
+      {
+       "name": "read-when-user-management-answers-204",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007522",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 204
+        }
+       }
+      },
+      {
+       "name": "read-when-the-body-is-blank",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007523",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "bodyRaw": " "
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-lookup-ids",
+   "about": "userId of three spaces (400 as a URI with a space, or the decision for the caller as an empty userId); parity-ob75/../ob75-dots (whether the call's path keeps the dot segments, LI-26); parity-ob75%2Fslash, an escaped slash the call's URI keeps or decodes.",
+   "resourceType": "PARITY_SUITE_OB75_LOOKUP_IDS",
+   "tenant": "parity-ob75-lookup-ids",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-lookup-ids"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-as-spaces",
+      "decide:read-as-dot-segments",
+      "decide:read-as-an-escaped-slash"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "e6b38849-b4a1-ecc4-2933-394b44fe75e8",
+       "name": "ob75-lookup-ids set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_LOOKUP_IDS'",
+       "policies": [
+        {
+         "policyId": "fced59a1-78b6-9f64-dab3-e3cf32240d23",
+         "name": "ob75-lookup-ids anyone-set",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "7e970f67-c47e-100c-5af4-2a9e204765ed",
+           "name": "ob75-lookup-ids read-set",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "74db3b90-9214-cefc-8423-34cef4e82342",
+       "name": "ob75-lookup-ids authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "02d46cce-62f8-9987-e705-458472e0085a",
+         "name": "ob75-lookup-ids view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "7ce8d386-4c74-4ecc-e0c2-8a54f8a9c623",
+           "name": "ob75-lookup-ids view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-as-spaces",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "   ",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       }
+      },
+      {
+       "name": "read-as-dot-segments",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "parity-ob75/../ob75-dots",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       }
+      },
+      {
+       "name": "read-as-an-escaped-slash",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "parity-ob75%2Fslash",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-bulk-check",
+   "about": "The rule that allows VIEW_AS_ANOTHER_USER reads the GENERAL PIP subject.parityOb75Gate (CONTAINS 'y'). A bulk of two READ items and a bulk/operations of two items on behalf of a user record its calls: two if the check repeats with each item's lookup, one if it runs once.",
+   "resourceType": "PARITY_SUITE_OB75_BULK_CHECK",
+   "tenant": "parity-ob75-bulk-check",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityOb75Gate",
+       "url": "http://pip-mock:8090/api/v1/pip/ob75-gate",
+       "pipType": "GENERAL",
+       "type": "JSON",
+       "jsonPath": "$",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-bulk-check"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:bulk-as-a-user",
+      "decide:operations-as-a-user"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "900bcf47-4f32-8394-15c3-90901fb98f82",
+       "name": "ob75-bulk-check set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_BULK_CHECK'",
+       "policies": [
+        {
+         "policyId": "58519cef-2ff4-8d10-80de-0677d84a93ae",
+         "name": "ob75-bulk-check anyone-set",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "327d2ef6-07a3-ac4b-f0c2-3a87f1414ca3",
+           "name": "ob75-bulk-check read-set",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "eb16d4c8-9e97-56bf-ea86-b839e0f41741",
+       "name": "ob75-bulk-check authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "0680f391-5fa5-6486-caeb-110219800862",
+         "name": "ob75-bulk-check view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "1c63b3d0-6e7d-1cbf-a2e7-709923c2b4eb",
+           "name": "ob75-bulk-check view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "subject.parityOb75Gate CONTAINS 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "bulk-as-a-user",
+       "userId": "00000000-0000-0000-0000-000000007524",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "pins": {
+        "/api/v1/pip/ob75-gate": {
+         "statusCode": 200,
+         "body": [
+          "y"
+         ]
+        }
+       },
+       "pipCalls": "/api/v1/pip/ob75-gate",
+       "bulk": [
+        {
+         "id": "r75a",
+         "operation": "READ",
+         "resource": {
+          "id": "r75a"
+         }
+        },
+        {
+         "id": "r75b",
+         "operation": "READ",
+         "resource": {
+          "id": "r75b"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-as-a-user",
+       "userId": "00000000-0000-0000-0000-000000007525",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "pins": {
+        "/api/v1/pip/ob75-gate": {
+         "statusCode": 200,
+         "body": [
+          "y"
+         ]
+        }
+       },
+       "pipCalls": "/api/v1/pip/ob75-gate",
+       "bulkOperations": [
+        {
+         "id": "r75a",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "r75a"
+         }
+        },
+        {
+         "id": "r75b",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "r75b"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-should-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_OB75_SHOULD_CONTROL_LAST",
+   "tenant": "parity-ob75-should-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-should-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "c0342a93-3378-9767-5abd-31d07473aec5",
+       "name": "ob75-should-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_SHOULD_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "f28c753e-dd93-a102-cae7-f6773e7db069",
+         "name": "ob75-should-control-last reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "d30b3526-65c0-a3f5-8636-4997546f1ae6",
+           "name": "ob75-should-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r75",
+        "c": "n"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
