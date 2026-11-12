@@ -254,14 +254,19 @@ func checkCutAfter(t *testing.T, err error, prefix string) {
 }
 
 func TestWriter_TakesTheLifetimeFromExpWithoutExpiresIn(t *testing.T) {
-	e := newTokenEndpoint(t, `{"access_token": "`+jwtExpiringAt(t, time.Now().Add(10*time.Minute))+`"}`)
-	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	token := jwtExpiringAt(t, time.Now().Add(10*time.Minute))
+	e := newTokenEndpoint(t, `{"access_token": "`+token+`"}`)
+	path := inTempDir(t, "token")
+	w, _ := newTestWriter(t, e, path)
 	lifetime, err := w.Refresh(context.Background())
 	if err != nil {
 		t.Fatalf("Refresh() error = %v", err)
 	}
 	if lifetime <= 9*time.Minute || lifetime > 10*time.Minute {
 		t.Errorf("Refresh() lifetime = %s, want just under 10m0s", lifetime)
+	}
+	if got := readFile(t, path); got != token {
+		t.Errorf("token file = %q, want %q", got, token)
 	}
 }
 
