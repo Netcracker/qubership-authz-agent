@@ -74,8 +74,7 @@ token that is not M2M to its own tenant.
 - **R6** (`verify`). A realm token is an M2M token when `realm_access.roles` holds `ROLE_M2M`, compared byte for byte.
 - **R21** (`verify`). A realm token is an M2M token when `level` is `m2m` or `key-manager`, compared without regard to
   case.
-- **R7** (`verify`). A Kubernetes token is an M2M token. ADR-0094 R16 refuses one whose `sub` does not start with
-  `system:serviceaccount`.
+- **R7** (`verify`). A Kubernetes token is an M2M token.
 - **R8** (`verify`). A file token is not an M2M token, because its claims are whatever that provider signs.
 - **R9** (`verify`). The token verification computes this test once and returns the result, as ADR-0091 R54 states.
 - **R10** (`handler`, `policy`). Every reader, `subject.isM2M` among them, reads that result.
