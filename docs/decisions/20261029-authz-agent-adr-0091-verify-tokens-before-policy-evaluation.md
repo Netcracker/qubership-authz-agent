@@ -25,7 +25,7 @@ kichasov
   "In-process supporting logic": the JWKS bootstrap no longer writes keys into the store (R67), and the reload of the
   trusted providers file goes away (R12).
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
-  ADR-0092 R6 to R9 and R21, the M2M test whose result the verification returns.
+  ADR-0092 R6 to R8 and R21, the M2M test whose result the verification returns.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
   ADR-0093 R10 to R14, the default tenant, and ADR-0093 R17, the policy snapshots that readiness waits for.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
@@ -69,8 +69,7 @@ We will verify every token in Go against the keys of the trusted issuers before 
 - **Realm token**: a token whose `iss` contains `/auth/realms/` and matches no provider.
 - **File token**: a token of a provider that is not marked.
 - **Kubernetes token**: a token that a key of a marked provider verifies.
-- **Issuer**: the value in the `iss` of a token. A provider holds it in `issuer`, and a marked provider takes it from
-  the token for the API server.
+- **Issuer**: the value in the `iss` of a token. A provider holds it in `issuer`.
 - **Stops the start**: the agent exits with an error before it serves a request. A package below `startup` reports this
   by returning an error from its constructor or parser.
 
@@ -97,8 +96,8 @@ These records use no wider word for a realm token and a file token together. The
   `tokenFile`, and `kubernetes`.
 - **R7** (`keys`). The `iss` of a token matches the `issuer` of a provider byte for byte. A match takes precedence over
   the realm rule, so a token that also contains `/auth/realms/` in `iss` is then not a realm token.
-- **R8** (`keys`). A marked provider does not set `issuer`. It takes its issuer from the token for the API server, as
-  ADR-0094 R4 states. A marked provider that sets `issuer` stops the start.
+- **R8** (`keys`). A marked provider does not set `issuer`, because ADR-0094 R4 gives it one. A marked provider that
+  sets `issuer` stops the start.
 - **R9** (`keys`). A provider with `jwksUri` reads its keys at that address without discovery.
 - **R10** (`keys`). The token at a provider's `tokenFile` is sent only with the requests for that provider's keys.
   ADR-0094 R12 limits where the token for the API server goes.
@@ -221,8 +220,8 @@ These records use no wider word for a realm token and a file token together. The
 #### The verified-token cache
 
 - **R59** (`verify`). A verified token is cached under the SHA-256 of its compact form until `exp`.
-- **R60** (`verify`). A token that a check of this record or ADR-0094 R16 refuses is not cached. The check of ADR-0094
-  R17 runs on a cached token, so a token refused for its namespace stays in the cache.
+- **R60** (`verify`). A token that a check of this record or ADR-0094 R16 refuses is not cached. A token refused for its
+  namespace stays in the cache, because ADR-0094 R22 checks it again.
 - **R61** (`verify`). A cached token is returned only while the key that verified it is still loaded for its source, so
   a withdrawn key stops a cached token at once.
 - **R62** (`verify`). The cache holds the result of the verification and the claims, and nothing computed for a request.

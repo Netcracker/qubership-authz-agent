@@ -20,7 +20,7 @@ kichasov
 
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   the trusted providers file, the reloads of the keys, the verifier in which the namespace check of this record runs,
-  and the terms marked provider and Kubernetes token.
+  the terms marked provider and Kubernetes token, and ADR-0091 R48, the future `iat` of a Kubernetes token.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
   ADR-0092 R11, the M2M modes, and ADR-0092 R7, a Kubernetes token as an M2M token.
 - [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
@@ -39,7 +39,7 @@ cloud that address cannot be reached from inside the cluster. A standard cluster
 request gets 401 or 403 unless the cluster allows it. The keys are also at
 `https://kubernetes.default.svc/openid/v1/jwks`, where any service account of the cluster may read them with a token
 issued for the API server, and the server's certificate is signed by the cluster CA from the ConfigMap
-`kube-root-ca.crt`. The agent's Pod sets `automountServiceAccountToken: false`.
+`kube-root-ca.crt`.
 
 ADR-0092 R11 defines the M2M modes of `M2M_AUTH_MODE` and which tokens each accepts.
 
@@ -108,14 +108,13 @@ agent's own cluster verifies it, it passes the checks of this record, and its na
   http `jwksUri` stops the start.
 - **R13** (`keys`). In every mode a provider that is not marked but has the id `kubernetes` or an in-cluster address in
   `issuer` or `jwksUri` stops the start, since its tokens would get no namespace check.
-- **R26** (`chart`). A Pod holds up to two projected tokens: the token for the API server and the token for
-  `netcracker`.
+- **R26** (`chart`). The chart mounts up to two projected tokens in the agent's Pod: the token for the API server and
+  the token for `netcracker`.
 
 #### The checks
 
 - **R14** (`verify`). The `aud` of a Kubernetes token contains `netcracker`. The codes are `TOKEN_AUDIENCE_MISSING` and
   `TOKEN_AUDIENCE_INVALID` of ADR-0091 R50.
-- **R15** (`verify`). ADR-0091 R7, R46, and R48 apply to a Kubernetes token.
 - **R16** (`verify`). The `sub` of a Kubernetes token starts with `system:serviceaccount:`, or the token gets
   `TOKEN_SUBJECT_INVALID`. Its parts are not parsed: the namespace comes from R18.
 
@@ -131,15 +130,14 @@ agent's own cluster verifies it, it passes the checks of this record, and its na
 - **R22** (`verify`). The check of R17 runs on a verified token taken from the cache too.
 - **R23** (`namespaces`). A namespace that leaves the topology is refused once the kubelet has updated the mounted file
   and the next read has run, with no restart.
-- **R24** (`verify`). A Kubernetes token is never accepted without the check of R17.
 - **R25** (`namespaces`). A token that R17 or R18 refuses gets the code `TOKEN_NAMESPACE_NOT_ALLOWED`.
 
 ### Justification
 
 The namespace check is what limits who gets in (R17). The audience keeps out the tokens that the API server issues for
 other purposes, the default token of every Pod among them, but it does not limit who holds an accepted token: anyone who
-can create a Pod can request a projected token for any audience, `netcracker` included. For the same reason a Kubernetes
-token never passes without the namespace check (R24).
+can create a Pod can request a projected token for any audience, `netcracker` included. For the same reason, the
+namespace check runs on every Kubernetes token, a cached one included (R17, R22).
 
 The signature cannot tell the services of one installation from those of another, because the API server signs both
 with the same keys. The topology file is the platform's own description of the installation, kept in every namespace,
