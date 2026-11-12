@@ -389,8 +389,7 @@ func TestHandlePIP_RouteSendsItsHeaders(t *testing.T) {
 			Headers: map[string]string{"Content-Type": "text/plain", "Content-Encoding": "identity"}}, 200,
 			map[string]string{"Content-Type": "text/plain", "Content-Encoding": "identity"}},
 		{"no headers keep application/json", pipResponse{StatusCode: 200, Body: []string{"x"}}, 200,
-			map[string]string{"Content-Type": "application/json", "Location": ""}},
-	}
+			map[string]string{"Content-Type": "application/json", "Location": ""}},	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			resetState()
@@ -404,6 +403,27 @@ func TestHandlePIP_RouteSendsItsHeaders(t *testing.T) {
 				if got := rr.Header().Get(name); got != want {
 					t.Errorf("header %s = %q, want %q", name, got, want)
 				}
+			}
+		})
+	}
+}
+
+// A route with noBody answers an empty body, where a route without a body
+// answers the text null.
+func TestHandlePIP_NoBodySendsNothing(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		response pipResponse
+		want     string
+	}{
+		{"noBody", pipResponse{StatusCode: 302, NoBody: true, Body: []string{"x"}}, ""},
+		{"no body member", pipResponse{StatusCode: 302}, "null"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resetState()
+			routes["/r"] = &pipRoute{Path: "/r", Responses: []pipResponse{tc.response}}
+			if _, body := serve(http.MethodPost, "/r"); body != tc.want {
+				t.Errorf("body = %q, want %q", body, tc.want)
 			}
 		})
 	}

@@ -68,6 +68,9 @@ type pipResponse struct {
 	// Headers are set on the answer after Content-Type, so a route can
 	// replace it and can send Location or Content-Encoding.
 	Headers map[string]string `json:"headers,omitempty"`
+	// NoBody sends the answer without a body, where a null Body sends the
+	// text null.
+	NoBody bool `json:"noBody,omitempty"`
 }
 
 type pipRoute struct {
@@ -315,6 +318,9 @@ func handlePIP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(name, value)
 	}
 	w.WriteHeader(status)
+	if resp.NoBody {
+		return
+	}
 	if resp.BodyRaw != "" {
 		_, _ = fmt.Fprint(w, resp.BodyRaw)
 		return
