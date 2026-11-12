@@ -123,6 +123,14 @@ spec:
             secretName: '{{ .Values.SERVICE_NAME }}-client-credentials'
             defaultMode: 292
         {{- end }}
+        {{- if .Values.CA_CERTIFICATES_SECRET }}
+        # The CA certificates the agent trusts besides the image's own; the
+        # base image's entrypoint reads them from /tmp/cert.
+        - name: ca-certificates-secret
+          secret:
+            secretName: '{{ .Values.CA_CERTIFICATES_SECRET }}'
+            defaultMode: 292
+        {{- end }}
         {{- if $readOnlyRoot }}
         # The base image's entrypoint writes to these at every start: the CA
         # certificates of /tmp/cert to /usr/local/share/ca-certificates, the
@@ -202,6 +210,11 @@ spec:
             {{- else }}
             - name: client-credentials
               mountPath: /etc/secret
+              readOnly: true
+            {{- end }}
+            {{- if .Values.CA_CERTIFICATES_SECRET }}
+            - name: ca-certificates-secret
+              mountPath: /tmp/cert
               readOnly: true
             {{- end }}
             {{- if $readOnlyRoot }}
