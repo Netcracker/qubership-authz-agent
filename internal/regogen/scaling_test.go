@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"math"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"testing"
@@ -386,15 +387,24 @@ type cost struct {
 // stops at the first failure, so a cost that grows exponentially fails at a
 // size the machine can still afford. act builds the input of size n and
 // returns the act, so that building the input is not measured. Each size
-// counts the fewest bytes and the least CPU time of runs runs.
+// counts the fewest bytes and the least CPU time of runs runs; a timed size
+// is measured in turns with the size it is compared with, so that both meet
+// the same load from the other processes of the machine.
 func checkGrowth(t *testing.T, maxN, runs int, budget uint64, timed bool, act func(n int) func()) {
 	t.Helper()
 	// the first run fills the caches of OPA and of the tables
 	act(1)()
-	base := measure(act(1), runs)
+	base := measure(act(1), runs, timed)
 	costs := map[int]cost{}
 	for n := 8; n <= maxN; n *= 2 {
-		c := measure(act(n), runs)
+		var c cost
+		q, compared := costs[n/4]
+		if compared && timed {
+			q, c = measureInTurns(act(n/4), act(n), runs)
+			q.time -= min(q.time, base.time)
+		} else {
+			c = measure(act(n), runs, timed)
+		}
 		if c.bytes > budget {
 			t.Fatalf("size %d allocates %d bytes, over the budget of %d", n, c.bytes, budget)
 		}
@@ -407,9 +417,9 @@ func checkGrowth(t *testing.T, maxN, runs int, budget uint64, timed bool, act fu
 					n, c.bytes, n/2, p.bytes, float64(c.bytes)/float64(p.bytes), byteRatio)
 			}
 		}
-		if q, ok := costs[n/4]; ok && timed {
+		if compared && timed {
 			if limit := time.Duration(timeRatio*float64(q.time)) + timeSlack; c.time > limit {
-				t.Fatalf("size %d takes %v of CPU over size 1, while size %d takes %v: %.2f times for four times the size, want at most %.1f",
+				t.Fatalf("size %d takes %v of CPU over size 1, while size %d, measured in turns with it, takes %v: %.2f times for four times the size, want at most %.1f",
 					n, c.time, n/4, q.time, float64(c.time)/float64(q.time), timeRatio)
 			}
 		}
@@ -421,23 +431,54 @@ func checkGrowth(t *testing.T, maxN, runs int, budget uint64, timed bool, act fu
 // the process spends on it in runs runs. When go test ./... runs other
 // packages' tests beside this one, CPU time grows far less than wall time. The
 // test must not run in parallel with another, since both counts are of the
-// whole process.
-func measure(act func(), runs int) cost {
+// whole process. A timed act runs with the garbage collector off. The
+// collector starts running within an act once it allocates a few megabytes,
+// so the CPU time jumps at that size by more than linear growth would, and
+// the load of other processes stretches the jump past timeRatio. The bytes
+// bound the collector's work instead.
+func measure(act func(), runs int, timed bool) cost {
 	least := cost{math.MaxUint64, math.MaxInt64}
 	for range runs {
-		// sync.Pool keeps its victim through one cycle, so two leave every
-		// run with the same pools
-		runtime.GC()
-		runtime.GC()
-		var before, after runtime.MemStats
-		runtime.ReadMemStats(&before)
-		start := cpuTime()
-		act()
-		elapsed := cpuTime() - start
-		runtime.ReadMemStats(&after)
-		least = cost{min(least.bytes, after.TotalAlloc-before.TotalAlloc), min(least.time, elapsed)}
+		c := measureOnce(act, timed)
+		least = cost{min(least.bytes, c.bytes), min(least.time, c.time)}
 	}
 	return least
+}
+
+// measureOnce returns the bytes the act allocates and the CPU time the
+// process spends on it in one run.
+func measureOnce(act func(), timed bool) cost {
+	// sync.Pool keeps its victim through one cycle, so two leave every run
+	// with the same pools
+	runtime.GC()
+	runtime.GC()
+	var before, after runtime.MemStats
+	runtime.ReadMemStats(&before)
+	if timed {
+		// the deferred calls restore the collector also when act fails the
+		// test. The collector still runs once the act allocates four times
+		// requestBudget, so an act far over the budget fails the test rather
+		// than run the process out of memory.
+		defer debug.SetGCPercent(debug.SetGCPercent(-1))
+		defer debug.SetMemoryLimit(debug.SetMemoryLimit(int64(before.Sys) + 4*requestBudget))
+	}
+	start := cpuTime()
+	act()
+	elapsed := cpuTime() - start
+	runtime.ReadMemStats(&after)
+	return cost{after.TotalAlloc - before.TotalAlloc, elapsed}
+}
+
+// measureInTurns measures small and large, timed, in runs turns of one run
+// each, and returns the cost of each as measure does.
+func measureInTurns(small, large func(), runs int) (s, l cost) {
+	s, l = cost{math.MaxUint64, math.MaxInt64}, cost{math.MaxUint64, math.MaxInt64}
+	for range runs {
+		cs, cl := measureOnce(small, true), measureOnce(large, true)
+		s = cost{min(s.bytes, cs.bytes), min(s.time, cs.time)}
+		l = cost{min(l.bytes, cl.bytes), min(l.time, cl.time)}
+	}
+	return s, l
 }
 
 // scalingModule generates the module of tenantWithSet with the condition and
