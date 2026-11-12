@@ -77,7 +77,9 @@ type Options struct {
 	DefaultTenant func() string
 	// DefaultTenantResolved reports whether DefaultTenant gives the tenant's
 	// ID rather than its display name; nil means it always does. Until it
-	// does, a caller is never matched with the default tenant.
+	// does, a caller is never matched with the default tenant, and a
+	// request in the default tenant is denied as in a tenant without
+	// policies.
 	DefaultTenantResolved func() bool
 }
 

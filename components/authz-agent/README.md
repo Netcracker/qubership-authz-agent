@@ -75,7 +75,11 @@ rejected on its first load holds readiness back, and `policies not loaded yet` b
 `AUTHZ_TENANT_MANAGER_URL` set, `/ready` also waits until tenant-manager resolves `AUTHZ_DEFAULT_TENANT` to its tenant
 ID, with the reason `default tenant "<name>" not resolved via tenant-manager yet`; the agent retries the lookup after 1,
 2, 4, 8, and then every 10 seconds, and logs a warning for each failed attempt. The reason names each unmet condition,
-separated by semicolons. `GET /health` does not wait for tenant-manager. Once ready, the service
+separated by semicolons. `GET /health` does not wait for tenant-manager. Until tenant-manager resolves the name, a check
+request that names no tenant is denied with the reason `no policies are published for tenant <name>`, whatever the
+policy data holds under the name: `check/resource` answers `false`, a bulk route allows no id, and `check/filter`
+answers `DENY`. A caller whose token is not an M2M token gets that answer only when the `tenant-id` claim of its token
+equals the name, and 403 otherwise. Once ready, the service
 stays ready: a pull that fails later, or a later load that rejects a tenant, keeps the published snapshots and both
 verdicts. An empty `AUTHZ_PAP_CLIENT_SOURCE_URL` or an `AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and
 `/ready` then answers 200 as soon as the trusted providers meet the bootstrap rules and the default tenant is resolved,

@@ -18,10 +18,12 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"reflect"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
 
+	"authz-agent/components/authz-agent/internal/engine"
 	"authz-agent/components/authz-agent/internal/legacy"
 )
 
@@ -262,5 +264,90 @@ func TestDecide_ThePIPsGetNoTokenOfTheCaller(t *testing.T) {
 	}
 	if req.IncomingToken != "eyJ.user.jwt" || freq.IncomingToken != "eyJ.user.jwt" {
 		t.Errorf("IncomingToken = %q and %q, want eyJ.user.jwt in both", req.IncomingToken, freq.IncomingToken)
+	}
+}
+
+// While the name of the default tenant is not translated, the policy data
+// held under that name may be another tenant's: a request that names no
+// tenant is denied on every route as in a tenant without policies, although
+// tenant default allows the read. Only an M2M caller reaches that denial; a
+// caller whose token has no tenant-id is refused before it, as it was. A
+// request that names the tenant, and a request after the translation, are
+// decided by its policies.
+func TestDecide_TheDefaultTenantIsDeniedUntilItsNameIsTranslated(t *testing.T) {
+	reg := registry(t, `{"policySets": [`+tenantSet("default", "true")+`]}`)
+	translated := false
+	eng, err := engine.New(engine.Options{Modules: map[string]string{"internals.rego": callerStub}})
+	if err != nil {
+		t.Fatalf("engine: %v", err)
+	}
+	srv := Register(fiber.New(fiber.Config{DisableStartupMessage: true}), eng, Options{Snapshots: reg,
+		DefaultTenant: func() string { return "default" }, DefaultTenantResolved: func() bool { return translated }})
+	app := fiber.New(fiber.Config{Immutable: true, StrictRouting: true, CaseSensitive: true, DisableStartupMessage: true})
+	app.Use(platformContext)
+	// The reason of a denial reaches no response, so this route keeps the
+	// result decide hands to the response builder. It goes ahead of the
+	// public routes, which answer every other path.
+	var result any
+	app.Post("/test/result", func(c *fiber.Ctx) error {
+		return srv.decide(c, []legacy.Resource{{ResourceType: "doc", Operation: "read"}}, func(r any) []byte {
+			result = r
+			return nil
+		})
+	})
+	srv.RegisterPublic(app)
+	m2m := map[string]string{"Authorization": "Bearer PARITY_ROLE_M2M"}
+	const (
+		check  = "/access/v1/check/resource"
+		read   = `{"type":"doc","operation":"read"}`
+		filter = "/access/v1/check/filter?resourceType=doc&operation=read"
+		deny   = `{"calculationResult":"DENY","filterCondition":null,"mongodbFilterCondition":null,` +
+			`"rsqlFilterCondition":null,"sqlFilterCondition":null,"customFilterCondition":null}`
+	)
+	for _, r := range []struct{ path, body, denied string }{
+		{check, read, "false"},
+		{"/access/v1/check/resource/bulk", `[{"id":"x","type":"doc","operation":"read"}]`, "[]"},
+		{"/access/v1/check/resource/bulk/operations", `[{"id":"x","type":"doc","operations":["read"]}]`, `{"read":[]}`},
+		{filter, "", deny},
+	} {
+		code, got, _ := call(t, app, http.MethodPost, r.path, r.body, m2m)
+		if code != 200 || got != r.denied {
+			t.Errorf("untranslated: POST %s = %d %s, want 200 %s", r.path, code, got, r.denied)
+		}
+	}
+	if code, _, _ := call(t, app, http.MethodPost, "/test/result", "", m2m); code != 200 {
+		t.Fatalf("POST /test/result = %d, want 200", code)
+	}
+	want := map[string]any{"rlsIgnored": false, "results": []any{map[string]any{"resourceType": "doc",
+		"operation": "read", "isAllowed": false, "reason": "no policies are published for tenant default"}}}
+	if !reflect.DeepEqual(result, want) {
+		t.Errorf("untranslated: the result of a request without a tenant = %v, want %v", result, want)
+	}
+
+	for _, tc := range []struct {
+		name, token string
+		translated  bool
+		query       string
+		header      map[string]string
+		status      int
+		want        string
+	}{
+		{"untranslated, a token without tenant-id", "PARITY_NONE", false, "", nil, 403, ""},
+		{"untranslated, the query parameter names it", "PARITY_ROLE_M2M", false, "?tenant_id=default", nil, 200, "true"},
+		{"untranslated, the header names it", "PARITY_ROLE_M2M", false, "", map[string]string{"Tenant": "default"}, 200, "true"},
+		{"translated", "PARITY_ROLE_M2M", true, "", nil, 200, "true"},
+		{"translated, a token without tenant-id", "PARITY_NONE", true, "", nil, 200, "true"},
+	} {
+		translated = tc.translated
+		headers := map[string]string{"Authorization": "Bearer " + tc.token}
+		maps.Copy(headers, tc.header)
+		path := check + tc.query
+		if code, got, _ := call(t, app, http.MethodPost, path, read, headers); code != tc.status || got != tc.want {
+			t.Errorf("%s: POST %s = %d %q, want %d %q", tc.name, path, code, got, tc.status, tc.want)
+		}
+	}
+	translated = true
+	if code, got, _ := call(t, app, http.MethodPost, filter, "", m2m); code != 200 || got == deny {
+		t.Errorf("translated: POST %s = %d %s, want 200 and not DENY", filter, code, got)
 	}
 }

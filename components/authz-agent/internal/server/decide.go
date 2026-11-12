@@ -38,9 +38,10 @@ const tenantHeader = "Tenant"
 // shape of the route. The embedded policies check the caller and the
 // subject's token first: a refused admission token is answered with its
 // authError, and a refused subject token denies every item with its reason.
-// Without a registry every item is denied as in a tenant without policies.
+// Without a registry, and for a request of the default tenant while its name
+// is not translated, every item is denied as in a tenant without policies.
 func (s *Server) decide(c *fiber.Ctx, resources []legacy.Resource, shape func(result any) []byte) error {
-	input, admission, answered := s.admit(c, resources)
+	input, admission, untranslated, answered := s.admit(c, resources)
 	if answered != nil {
 		return answered()
 	}
@@ -53,7 +54,7 @@ func (s *Server) decide(c *fiber.Ctx, resources []legacy.Resource, shape func(re
 		for i := range results {
 			results[i].Reason = fmt.Sprint(reason)
 		}
-	case s.opts.Snapshots == nil:
+	case s.opts.Snapshots == nil || untranslated:
 		results = make([]snapshot.Result, len(resources))
 		for i := range results {
 			results[i].Reason = fmt.Sprintf(snapshot.ReasonNoTenant, tenant)
@@ -76,17 +77,18 @@ func (s *Server) decide(c *fiber.Ctx, resources []legacy.Resource, shape func(re
 
 // filter answers a check/filter request with the generated filter of the
 // request's tenant, after the same checks of the caller and the subject's
-// token as decide: a refused subject token, and a service without a
-// registry, get DENY.
+// token as decide: a refused subject token, a service without a registry,
+// and a request of the default tenant while its name is not translated get
+// DENY.
 func (s *Server) filter(c *fiber.Ctx, r legacy.Resource) error {
-	input, admission, answered := s.admit(c, []legacy.Resource{r})
+	input, admission, untranslated, answered := s.admit(c, []legacy.Resource{r})
 	if answered != nil {
 		return answered()
 	}
 	ctx := c.UserContext()
 	tenant := input["tenant"].(string)
 	answer := regogen.FilterAnswer{Result: regogen.FilterDeny}
-	if _, refused := admission["subjectError"]; !refused && s.opts.Snapshots != nil {
+	if _, refused := admission["subjectError"]; !refused && s.opts.Snapshots != nil && !untranslated {
 		req, err := filterRequest(tenant, input, admission["tokenPayload"], c.GetReqHeaders(), r)
 		if err != nil {
 			s.opts.Log.DebugC(ctx, "legacy request rejected path=%s: %v", c.Path(), err)
@@ -111,35 +113,36 @@ func (s *Server) filter(c *fiber.Ctx, r legacy.Resource) error {
 
 // admit builds the input of the embedded policies for resources, with the
 // tenant of the request, and evaluates their checks of the caller and the
-// subject's token. answered is non-nil when the request is answered
-// already: a refused admission token, with its authError; a caller outside
-// its tenant ([callerMayReach]), with 403 and an empty body; or a failed
-// evaluation, with 500.
+// subject's token. untranslated reports what [Server.tenant] reports.
+// answered is non-nil when the request is answered already: a refused
+// admission token, with its authError; a caller outside its tenant
+// ([callerMayReach]), with 403 and an empty body; or a failed evaluation,
+// with 500.
 func (s *Server) admit(c *fiber.Ctx, resources []legacy.Resource) (input, admission map[string]any,
-	answered func() error) {
+	untranslated bool, answered func() error) {
 	ctx := c.UserContext()
 	input = legacy.Input(c.GetReqHeaders(), resources)
 	admission, err := s.admission(ctx, input)
 	if err != nil {
 		s.opts.Log.ErrorC(ctx, "admission failed: %v", err)
-		return nil, nil, func() error { return opaError(c, http.StatusInternalServerError, "internal_error", err.Error()) }
+		return nil, nil, false, func() error { return opaError(c, http.StatusInternalServerError, "internal_error", err.Error()) }
 	}
-	tenant := s.tenant(c)
+	tenant, untranslated := s.tenant(c)
 	input["tenant"] = tenant
 	if raw, refused := admission["authError"]; refused {
 		result := map[string]any{"authError": raw}
 		s.log(c, input, result)
 		status, body, _ := legacy.AuthError(result)
-		return nil, nil, func() error { return sendJSON(c, status, body) }
+		return nil, nil, false, func() error { return sendJSON(c, status, body) }
 	}
 	if claims, ok := admission["callerClaims"].(map[string]any); ok && !callerMayReach(claims, tenant, s.resolvedDefaultTenant()) {
 		s.opts.Log.DebugC(ctx, "caller refused path=%s tenant=%s reason=CALLER_TENANT_MISMATCH", c.Path(), tenant)
-		return nil, nil, func() error {
+		return nil, nil, false, func() error {
 			c.Status(http.StatusForbidden)
 			return nil
 		}
 	}
-	return input, admission, nil
+	return input, admission, untranslated, nil
 }
 
 // callerMayReach reports whether the caller whose verified token carries
@@ -224,14 +227,20 @@ func (s *Server) admission(ctx context.Context, input map[string]any) (map[strin
 // source is skipped; any other value is the tenant as received, so a query
 // parameter with a space around the name is another tenant than the name.
 // HTTP strips the spaces around a header value before it gets here.
-func (s *Server) tenant(c *fiber.Ctx) string {
+//
+// untranslated reports that the tenant is the default tenant and its name
+// was not translated when the request arrived, so the tenant is a name whose
+// policy data, if any, is another tenant's. The flag is read before the
+// tenant, so a translation in between leaves it set.
+func (s *Server) tenant(c *fiber.Ctx) (tenant string, untranslated bool) {
 	if t := lastQuery(c, "tenant_id"); t != "" {
-		return t
+		return t, false
 	}
 	if t := c.Get(tenantHeader); t != "" {
-		return t
+		return t, false
 	}
-	return s.defaultTenant()
+	untranslated = s.opts.DefaultTenantResolved != nil && !s.opts.DefaultTenantResolved()
+	return s.defaultTenant(), untranslated
 }
 
 // snapshotRequest builds the request of the registry from the verified

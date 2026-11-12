@@ -36,8 +36,8 @@ var tenantID = regexp.MustCompile(`^[A-Za-z0-9._-]{1,128}$`)
 // defaultTenant is the tenant a check request that names none is decided
 // in. It starts as the configured display name and becomes the tenant's ID
 // once tenant-manager resolves the name; until then a request without a
-// tenant is decided in a tenant named by the display name, which the
-// export normally does not carry, and is denied, and /ready answers 503.
+// tenant is denied whatever the policy data holds under the display name,
+// and /ready answers 503.
 type defaultTenant struct {
 	name     string
 	baseURL  string
