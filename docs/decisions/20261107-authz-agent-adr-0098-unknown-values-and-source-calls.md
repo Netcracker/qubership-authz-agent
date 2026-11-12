@@ -79,7 +79,8 @@ it, answer 200, and read each value from its source at most once per request and
   unknown, `AND` is false when any operand is false, and `OR` is true when any operand is true.
 - **R2** (`translate`). A resource is allowed only if it is allowed for every value that each unknown value could take.
   Otherwise it is denied. R11 denies some resources that this rule alone would allow.
-- **R3** (`handler`). A source failure never makes a check route answer 500. The answer is 200, and each resource gets
+- **R3** (`handler`). A source failure, and a policy set of item 5 or 7 of the unknown values that a request reaches,
+  never make a check route answer 500. The answer is 200, and each resource gets
   its decision under R2. The exception is a subject whose token has no roles at all in a request with
   `obligations=true`, which gets 500 as in legacy.
 - **R11** (`translate`). A rule whose condition is unknown under R1 because of a failed value denies, whatever
@@ -91,22 +92,25 @@ it, answer 200, and read each value from its source at most once per request and
   2. `check/filter` denies exactly the rows on which the rule can apply and its condition is unknown under R1, with the
      failed value unknown and each attribute of the resource taken from the row, and admits the rows the tree allows
      minus those rows. `subject.x == 'v' OR resource.a == 'y'` with a failed `subject.x` denies the rows where `a` is
-     not `y`, and keeps the rows where `a` is `y`. Where a dialect cannot write the denied rows, that dialect gets
-     `null`, and the answer follows ADR-0099 R5.
-- **R4** (`translate`). A resource denied under R2 because of an unknown value, or under R11, gets the denial reason
-  `PIP resolution failed`, with the names of the sources that failed, of the policy sets of item 5 or 7 whose
-  decision it depends on, or of the operator and the operand of item 8.
+     not `y`, and leaves the rows where `a` is `y` to the rest of the tree, which admits them only where another rule
+     allows them. Where a dialect cannot write the denied rows, that dialect gets `null`, and the answer follows
+     ADR-0099 R5. ADR-0099 R14 states that no dialect writes rows that depend on a comparison of a condition or a target
+     with an attribute of the resource.
+- **R4** (`translate`). A resource denied under R2 because of an unknown value, under R11, or under ADR-0099 R10
+  because a target is an unknown target through a failed value, gets the denial reason `PIP resolution failed`, with
+  the names of the sources that failed, of the policy sets of item 5 or 7 whose decision it depends on, or of the
+  operator and the operand of item 8.
 - **R12** (`translate`). These departures can allow a resource that legacy denies, and they are departures that allow
   more under ADR-0097 R5:
   1. a condition whose value R1 settles without the failed value, such as `subject.x == 'v' OR resource.a == 'y'` with a
      failed `subject.x` and `a` equal to `y`, allows where legacy stops at the failed operand and denies (R11);
   2. a request that legacy fails with 500 because the User Management lookup or the permission scope service failed,
      or because it reaches a policy set that legacy never evaluates, gets 200, and each resource that does not depend
-     on the failed source or the set gets its decision (R3 for a source failure, R2 for a set);
+     on the failed source or the set gets its decision (R3);
   3. a PIP value read afresh for each request can allow where legacy denies from a value it kept from an earlier
      request (R10);
   4. a request that legacy refuses with 400 because a loaded policy set reads a PIP that the domain does not declare,
-     as the parity case `failed-pip-beside-allow-permit-unless-deny` describes, gets 200, and each resource whose
+     as the description of the parity case `failed-pip-beside-allow` states without a golden that records it, gets 200, and each resource whose
      conditions do not read that PIP gets its decision (R8).
 
 #### Telemetry
@@ -219,7 +223,8 @@ Negative:
 
 Follow-ups:
 
-- #205 reads a 404 from the permission scope service as an empty scope, which R6 makes a source failure.
+- #205 denies a resource whose failure was read only in a target with the reason `no policy of the tenant allows the
+  operation on the resource`, where R4 names the failed source.
 
 ## Open points
 

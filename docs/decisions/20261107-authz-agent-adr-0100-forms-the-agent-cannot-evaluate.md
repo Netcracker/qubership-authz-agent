@@ -77,8 +77,9 @@ and keep a policy set that legacy itself never evaluates in the snapshot as a pe
 - **R5** (`docs`). The documentation of each release lists the forms the agent cannot evaluate.
 - **R6** (`handler`). The `/health` of the public listener returns the status and counts only. It names no tenant, no
   policy set, no reason, and no form.
-- **R7** (`snapshot`). A tenant that keeps its previous snapshot because a candidate was rejected, under R1, under
-  ADR-0090 rule 2, under ADR-0102 R4, or under ADR-0093 R21, keeps the grants that the rejected candidate revokes.
+- **R7** (`snapshot`). A tenant that keeps its previous snapshot under ADR-0093 R21 because a candidate was rejected,
+  under R1, under ADR-0090 rule 2, under ADR-0102 R4, or for any other reason, keeps the grants that the rejected
+  candidate revokes.
   This is a departure that allows more under ADR-0097 R5: legacy evaluates the new policy data and denies where the
   agent allows.
 - **R8** (`snapshot`). For each tenant, the agent exports the time it last accepted a snapshot, whether its latest
@@ -127,9 +128,3 @@ Negative:
 - At the first pull after a start, that tenant has no snapshot, so ADR-0103 R1 denies its requests, and the agent
   stays not ready under ADR-0093 R19. An installation is therefore checked for forms the agent cannot evaluate before
   the agent replaces legacy there (R5).
-
-Follow-ups:
-
-- #205 serves the body of the internal `/health` on the public listener, which R6 forbids.
-- #205 turns a jsonPath outside the supported subset into an unknown value, which A1 rejects. Under R3 it fails the
-  translation of the candidate.
