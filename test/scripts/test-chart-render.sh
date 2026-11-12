@@ -501,6 +501,22 @@ for volume in "authz-agent-trusted-providers" "authz-agent-client-credentials"; 
   fi
 done
 
+# The base image's entrypoint can write to each of these paths when the
+# container starts. Each path is summarized as the type of the volume mounted
+# there, or none.
+read_only_deployment="$(deployment_of --set PAAS_PLATFORM=KUBERNETES --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=true)"
+entrypoint_mounts=""
+for mount_path in /usr/local/share/ca-certificates /etc/ssl/certs /app/nss; do
+  volume_name="$(grep -B1 -E "^ +mountPath: ${mount_path}\$" <<<"${read_only_deployment}" | awk '$1 == "-" && $2 == "name:" {print $3}' || true)"
+  volume_type="$(grep -A1 -E "^ +- name: ${volume_name:-none}\$" <<<"${read_only_deployment}" | grep -oE 'emptyDir|configMap|secret|projected' | head -1 || true)"
+  entrypoint_mounts+="${mount_path}=${volume_type:-none} "
+done
+if [[ "${entrypoint_mounts}" == "/usr/local/share/ca-certificates=emptyDir /etc/ssl/certs=emptyDir /app/nss=emptyDir " ]]; then
+  pass "under a read-only root file system the paths the base entrypoint writes are emptyDir volumes"
+else
+  fail "under a read-only root file system the paths the base entrypoint writes are mounted as ${entrypoint_mounts}, expected emptyDir at each"
+fi
+
 # Every gateway route ends on the public port and reaches it under the path the
 # caller sent: a gateway publishes nothing on the internal port.
 mesh="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set MESH_ROUTES_ENABLED=true --show-only templates/mesh-routes.yaml 2>&1 || true)"

@@ -66,6 +66,21 @@ rules, and 503 with the reason and its details until then. `GET /ready`, on the 
 `AUTHZ_PAP_CLIENT_SOURCE_URL` or an `AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and `/ready` then
 answers 200 as soon as the trusted providers meet the bootstrap rules, with no policies loaded.
 
+## Trusting a private CA
+
+Put the CA certificate in a `.crt`, `.cer`, or `.pem` file under `/tmp/cert` in the container. The image runs the
+agent as the command of the [entrypoint](https://github.com/Netcracker/qubership-core-base-images/blob/main/images/entrypoint.sh)
+of its base image, `qubership-core-base`. At every start, the entrypoint adds those certificates to the system trust
+store, and the agent verifies every HTTPS server it calls against that store, the PIPs included. The agent's chart
+mounts nothing at `/tmp/cert`; on Kubernetes, add a volume there to the Deployment, such as a Secret that holds the
+certificate.
+
+The entrypoint also runs the `*.sh` scripts in `/app/init.d` before the agent starts. On `SIGTERM` it waits
+`SIGTERM_EXIT_DELAY` seconds, 10 by default, before it passes the signal on, and the agent then takes up to 10 seconds
+to finish the requests in flight. A stop therefore needs a grace period longer than `SIGTERM_EXIT_DELAY` plus 10
+seconds. The 30 seconds Kubernetes gives a Pod by default are enough; with Docker, run `docker stop --timeout 30` or
+set `stop_grace_period: 30s` in Compose.
+
 ## Running it
 
 On a kind cluster:

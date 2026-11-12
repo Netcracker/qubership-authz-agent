@@ -1,4 +1,6 @@
 {{- include "authz-agent.validateValues" . }}
+{{- /* Read-only on Kubernetes only, as on the platform's charts. */}}
+{{- $readOnlyRoot := and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}
 # The agent as one container: the policy engine, the HTTP surface the clients
 # call, and the loops that feed the engine with the trusted providers' keys,
 # the policies and PIPs, and the agent's own token, all in one process
@@ -121,6 +123,20 @@ spec:
             secretName: '{{ .Values.SERVICE_NAME }}-client-credentials'
             defaultMode: 292
         {{- end }}
+        {{- if $readOnlyRoot }}
+        # The base image's entrypoint writes to these at every start: the CA
+        # certificates of /tmp/cert to /usr/local/share/ca-certificates, the
+        # rebuilt trust store to /etc/ssl/certs, and, for a uid with no passwd
+        # entry, a passwd file to /app/nss. The image declares them as VOLUMEs,
+        # but not every container runtime makes those writable under a
+        # read-only root file system.
+        - name: ca-certificates
+          emptyDir: {}
+        - name: certs
+          emptyDir: {}
+        - name: nss
+          emptyDir: {}
+        {{- end }}
       containers:
         - name: '{{ .Values.SERVICE_NAME }}'
           image: '{{ .Values.IMAGE_REPOSITORY }}:{{ .Values.TAG }}'
@@ -188,6 +204,14 @@ spec:
               mountPath: /etc/secret
               readOnly: true
             {{- end }}
+            {{- if $readOnlyRoot }}
+            - name: ca-certificates
+              mountPath: /usr/local/share/ca-certificates
+            - name: certs
+              mountPath: /etc/ssl/certs
+            - name: nss
+              mountPath: /app/nss
+            {{- end }}
           # /health answers once the trusted providers meet the bootstrap
           # rules, and /ready once the policies have loaded as well, so a Pod
           # waiting for its policy source is held out of the Service instead
@@ -218,9 +242,9 @@ spec:
               ephemeral-storage: '{{ .Values.AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT }}'
           securityContext:
             allowPrivilegeEscalation: false
-            # Read-only on Kubernetes only, as on the platform's charts: the
-            # container writes nothing to its file system.
-            readOnlyRootFilesystem: {{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}
+            # The base image's entrypoint writes only to the ca-certificates,
+            # certs, and nss volumes, and the agent writes nothing.
+            readOnlyRootFilesystem: {{ $readOnlyRoot }}
             seccompProfile:
               type: RuntimeDefault
             capabilities:
