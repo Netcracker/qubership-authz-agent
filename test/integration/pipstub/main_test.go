@@ -371,3 +371,40 @@ func TestHandleConfigure_KeepsNumbersAsWritten(t *testing.T) {
 		})
 	}
 }
+
+// A route's headers are set on its answer after Content-Type, so a route can
+// send a redirect with Location and can replace Content-Type; a route without
+// headers still answers application/json.
+func TestHandlePIP_RouteSendsItsHeaders(t *testing.T) {
+	cases := []struct {
+		name        string
+		response    pipResponse
+		wantStatus  int
+		wantHeaders map[string]string
+	}{
+		{"a redirect carries Location", pipResponse{StatusCode: 302, Body: []string{"x"},
+			Headers: map[string]string{"Location": "/guard"}}, 302,
+			map[string]string{"Location": "/guard", "Content-Type": "application/json"}},
+		{"a header replaces Content-Type", pipResponse{StatusCode: 200, BodyRaw: "x",
+			Headers: map[string]string{"Content-Type": "text/plain", "Content-Encoding": "identity"}}, 200,
+			map[string]string{"Content-Type": "text/plain", "Content-Encoding": "identity"}},
+		{"no headers keep application/json", pipResponse{StatusCode: 200, Body: []string{"x"}}, 200,
+			map[string]string{"Content-Type": "application/json", "Location": ""}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resetState()
+			routes["/r"] = &pipRoute{Path: "/r", Responses: []pipResponse{tc.response}}
+			rr := httptest.NewRecorder()
+			handlePIP(rr, httptest.NewRequest(http.MethodPost, "/r", nil))
+			if rr.Code != tc.wantStatus {
+				t.Errorf("status = %d, want %d", rr.Code, tc.wantStatus)
+			}
+			for name, want := range tc.wantHeaders {
+				if got := rr.Header().Get(name); got != want {
+					t.Errorf("header %s = %q, want %q", name, got, want)
+				}
+			}
+		})
+	}
+}

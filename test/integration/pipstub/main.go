@@ -65,6 +65,9 @@ type pipResponse struct {
 	StatusCode int    `json:"statusCode"`
 	Body       any    `json:"body"`
 	BodyRaw    string `json:"bodyRaw,omitempty"`
+	// Headers are set on the answer after Content-Type, so a route can
+	// replace it and can send Location or Content-Encoding.
+	Headers map[string]string `json:"headers,omitempty"`
 }
 
 type pipRoute struct {
@@ -308,6 +311,9 @@ func handlePIP(w http.ResponseWriter, r *http.Request) {
 		status = http.StatusOK
 	}
 	w.Header().Set("Content-Type", "application/json")
+	for name, value := range resp.Headers {
+		w.Header().Set(name, value)
+	}
 	w.WriteHeader(status)
 	if resp.BodyRaw != "" {
 		_, _ = fmt.Fprint(w, resp.BodyRaw)
