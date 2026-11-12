@@ -323,7 +323,8 @@ type requestSpec struct {
 	// on the route the pip-call golden records; see forwardedHeaders. The names
 	// authorization:subject and authorization:issuer, which no header can have,
 	// record whose token the call's Authorization is and who issued it; see
-	// tokenSubject and tokenIssuer.
+	// tokenSubject and tokenIssuer. The name request:method records the
+	// call's HTTP method.
 	PIPHeaders []string `json:"pipHeaders"`
 	// UserID is sent as the userId query parameter of the check, the filter,
 	// or the bulk request; "" sends it with an empty value.
@@ -721,6 +722,17 @@ const authorizationSubject = "authorization:subject"
 // Authorization of a call; see tokenIssuer.
 const authorizationIssuer = "authorization:issuer"
 
+// requestMethod is the name in pipHeaders that records the HTTP method of the
+// first call to the route, such as GET for a redirect a client followed.
+const requestMethod = "request:method"
+
+// pseudoHeader reports whether name, in lower case, is one of the names in
+// pipHeaders that no header has: authorizationSubject, authorizationIssuer,
+// or requestMethod.
+func pseudoHeader(name string) bool {
+	return name == authorizationSubject || name == authorizationIssuer || name == requestMethod
+}
+
 // forwardedHeaders returns the headers named in names that the first call to
 // route in calls carried, keyed by lower-case name, as a pip-call golden
 // records them. sent holds the headers of the request that caused the call,
@@ -730,8 +742,8 @@ const authorizationIssuer = "authorization:issuer"
 // or <user token>; any other authorization value is <other token>; a tenant
 // value is <tenant_id> when it equals tenant and <other> otherwise. The names
 // authorizationSubject and authorizationIssuer record the call's Authorization
-// as tokenSubject and tokenIssuer class it. Any other value is recorded as it
-// is.
+// as tokenSubject and tokenIssuer class it, and requestMethod records the
+// call's method. Any other value is recorded as it is.
 func forwardedHeaders(calls []PipStubCall, route string, names []string, sent map[string]string, tenant string) map[string]any {
 	var first *PipStubCall
 	for i := range calls {
@@ -748,7 +760,11 @@ func forwardedHeaders(calls []PipStubCall, route string, names []string, sent ma
 			header = "authorization"
 		}
 		value, carried := "", false
-		if first != nil {
+		switch {
+		case first == nil:
+		case name == requestMethod:
+			value, carried = first.Method, true
+		default:
 			value, carried = first.Headers[header]
 		}
 		switch {
@@ -758,6 +774,8 @@ func forwardedHeaders(calls []PipStubCall, route string, names []string, sent ma
 			out[name] = tokenSubject(value, sent["incoming-token"])
 		case name == authorizationIssuer:
 			out[name] = tokenIssuer(value)
+		case name == requestMethod:
+			out[name] = value
 		case sent["authorization"] != "" && withoutBearer(value) == withoutBearer(sent["authorization"]):
 			out[name] = "<m2m token>"
 		case sent["incoming-token"] != "" && withoutBearer(value) == withoutBearer(sent["incoming-token"]):
@@ -1297,9 +1315,9 @@ func requestProblems(c caseSpec, r requestSpec, pinned map[string]bool, rt strin
 		report("sets pipHeaders without pipCalls, whose golden records them")
 	}
 	for _, name := range r.PIPHeaders {
-		if lower := strings.ToLower(name); strings.Contains(name, ":") && lower != authorizationSubject && lower != authorizationIssuer {
-			report("names %q in pipHeaders, which no header has, and which is neither %s nor %s", name, authorizationSubject,
-				authorizationIssuer)
+		if strings.Contains(name, ":") && !pseudoHeader(strings.ToLower(name)) {
+			report("names %q in pipHeaders, which no header has, and which is none of %s, %s, %s", name,
+				authorizationSubject, authorizationIssuer, requestMethod)
 		}
 	}
 	if r.ClassifyBy != "" {

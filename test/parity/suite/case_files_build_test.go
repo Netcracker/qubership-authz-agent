@@ -403,6 +403,20 @@ func TestForwardedHeaders_ClassesTheSubjectOfTheToken(t *testing.T) {
 	}
 }
 
+// The pseudo-header request:method records the method of the first call to
+// the route, whatever the later calls use, and null when nothing called it.
+func TestForwardedHeadersRecordTheMethod(t *testing.T) {
+	calls := []PipStubCall{{Path: "/other", Method: "POST"}, {Path: "/pip", Method: "GET"}, {Path: "/pip", Method: "POST"}}
+	got := forwardedHeaders(calls, "/pip", []string{"Request:Method"}, map[string]string{}, "default")
+	if diff := cmp.Diff(map[string]any{"request:method": "GET"}, got); diff != "" {
+		t.Errorf("forwardedHeaders mismatch (-want +got):\n%s", diff)
+	}
+	got = forwardedHeaders(calls, "/none", []string{requestMethod}, map[string]string{}, "default")
+	if diff := cmp.Diff(map[string]any{"request:method": nil}, got); diff != "" {
+		t.Errorf("forwardedHeaders of a route nothing called mismatch (-want +got):\n%s", diff)
+	}
+}
+
 // A case names its subject as m2m, user:<username>, or bearer:<username>, each
 // optionally followed by @<client> with a client of
 // testdata/realm-clients/token-subject-clients.json; any
@@ -629,10 +643,14 @@ func TestCaseFileProblems(t *testing.T) {
 			f.Cases[0].Requests[0].PIPCalls = "/pip"
 			f.Cases[0].Requests[0].PIPHeaders = []string{"Authorization:Issuer"}
 		}, ""},
+		{"pipHeaders with request:method", func(f *caseFile) {
+			f.Cases[0].Requests[0].PIPCalls = "/pip"
+			f.Cases[0].Requests[0].PIPHeaders = []string{"Request:Method"}
+		}, ""},
 		{"pipHeaders with another name holding a colon", func(f *caseFile) {
 			f.Cases[0].Requests[0].PIPCalls = "/pip"
 			f.Cases[0].Requests[0].PIPHeaders = []string{"authorization:claims"}
-		}, `case iso request read names "authorization:claims" in pipHeaders, which no header has, and which is neither authorization:subject nor authorization:issuer`},
+		}, `case iso request read names "authorization:claims" in pipHeaders, which no header has, and which is none of authorization:subject, authorization:issuer, request:method`},
 		{"emptyOperation beside operation", func(f *caseFile) {
 			f.Cases[0].Requests[0].EmptyOperation = true
 			f.Cases[0].Requests[0].Operation = "READ"
