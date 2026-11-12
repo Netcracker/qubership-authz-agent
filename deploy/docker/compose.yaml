@@ -1,0 +1,50 @@
+---
+# Runs authz-agent under Docker Compose, without Kubernetes. README.md in this
+# directory lists the steps and the files an installation fills in.
+name: authz-agent
+
+services:
+  authz-agent:
+    image: ghcr.io/netcracker/qubership-authz-agent:0.1.0@sha256:3b2d73f18b9322e8c174baa4281e026476bc74cad6dd289f3f459ec834cbc984
+    restart: unless-stopped
+    # The entrypoint of the image passes SIGTERM on after SIGTERM_EXIT_DELAY
+    # seconds, 0 in agent.env and 10 by default, and the agent then takes up
+    # to 10 seconds to finish the requests in flight.
+    stop_grace_period: 30s
+    env_file:
+      - agent.env
+    # Both ports repeat the ports of AUTHZ_PUBLIC_ADDR and AUTHZ_HTTP_ADDR in
+    # agent.env, as does the healthcheck URL, so change them together. Both
+    # are published on the loopback interface of the host alone. A proxy that
+    # terminates TLS reaches the public surface there from the host, or over
+    # the Compose network from a container; the internal surface serves the
+    # probes and the metrics.
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8181:8181"
+    volumes:
+      - ./authz:/etc/authz:ro
+      - ./secret:/etc/secret:ro
+    # The entrypoint of the image builds the trust store in these directories
+    # at each start, from the CAs of the image and the certificates under
+    # /tmp/cert, so a restart applies any change to those certificates. Mode
+    # 1777 lets the entrypoint write them under any uid.
+    tmpfs:
+      - /usr/local/share/ca-certificates:mode=1777
+      - /etc/ssl/certs:mode=1777
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # The start period covers the start of the agent: it fetches the keys of
+    # every provider before it opens its ports, up to 30 seconds per provider
+    # with the timeout and the attempts of agent.env, and /ready then waits for
+    # the first pull. Raise it for several providers, a longer timeout, or
+    # more attempts.
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--show-error", "--fail-with-body", "http://127.0.0.1:8181/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s

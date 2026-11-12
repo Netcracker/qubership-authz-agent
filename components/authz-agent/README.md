@@ -68,6 +68,9 @@ answers 200 as soon as the trusted providers meet the bootstrap rules, with no p
 
 ## Running it
 
+Without Kubernetes, the agent runs under Docker: [`deploy/docker`](../../deploy/docker/README.md) holds a Compose
+example and its steps.
+
 On a kind cluster:
 
 ```bash
