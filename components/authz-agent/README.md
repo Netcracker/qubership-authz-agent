@@ -40,7 +40,7 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_JWKS_HTTP_TIMEOUT` | `5` | Seconds per discovery or JWKS request |
 | `AUTHZ_JWKS_HTTP_RETRIES` | `3` | Attempts per request |
 | `AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL` | `30` | Seconds between checks of the file for a change; `0` never reloads |
-| `AUTHZ_TENANT_MANAGER_URL` | `http://tenant-manager:8080` | Resolves a realm written by its tenant display name; empty disables the lookup |
+| `AUTHZ_TENANT_MANAGER_URL` | empty | Base URL of tenant-manager, which resolves a realm written by its tenant display name; empty disables the lookup. The chart sets it from its `AUTHZ_TENANT_MANAGER_URL` value, `http://tenant-manager:8080` by default |
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
 | `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
 | `AUTHZ_ENTITLEMENTS_URL`, `AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT`, `AUTHZ_ENTITLEMENTS_HTTP_RETRIES` | empty, `5`, `3` | The entitlements PIP pinned by the deployment; an empty URL adds none |

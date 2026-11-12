@@ -54,7 +54,7 @@ func TestLoadConfig_EnvironmentOnly(t *testing.T) {
 func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	cfg := loadConfig(fromMap(map[string]string{}))
 	wantAuthn := authn.Config{File: "/etc/authz/trusted-providers.json", Required: true, HTTPTimeout: 5 * time.Second, HTTPRetries: 3,
-		TenantManagerURL: "http://tenant-manager:8080", ReloadInterval: 30 * time.Second}
+		TenantManagerURL: "", ReloadInterval: 30 * time.Second}
 	if cfg.Authn != wantAuthn {
 		t.Errorf("default trusted providers = %+v, want %+v", cfg.Authn, wantAuthn)
 	}
@@ -73,7 +73,7 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		"authz.jwks.http.timeout":                 "2",
 		"authz.jwks.http.retries":                 "20",
 		"authz.trusted.providers.reload.interval": "0",
-		"authz.tenant.manager.url":                "",
+		"authz.tenant.manager.url":                "http://tm:8080",
 		"authz.pap.client.source.url":             "http://policy-admin:18090/",
 		"authz.pap.client.pull.interval":          "2",
 		"authz.pap.client.token.file":             "/t",
@@ -83,7 +83,7 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		"authz.m2m.renew.before.seconds":          "30",
 	}))
 	if cfg.Authn.File != "/p.json" || cfg.Authn.Required || cfg.Authn.HTTPTimeout != 2*time.Second || cfg.Authn.HTTPRetries != 20 ||
-		cfg.Authn.ReloadInterval != 0 || cfg.Authn.TenantManagerURL != "" {
+		cfg.Authn.ReloadInterval != 0 || cfg.Authn.TenantManagerURL != "http://tm:8080" {
 		t.Errorf("trusted providers from env = %+v", cfg.Authn)
 	}
 	if cfg.Pull.SourceURL != "http://policy-admin:18090" || cfg.Pull.Interval != 2*time.Second {

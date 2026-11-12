@@ -214,8 +214,9 @@ func serveUntilShutdown(ctx context.Context, stop func(), surfaces []surface) bo
 
 // get reads one key through configloader, except that an environment
 // variable set to the empty string is returned as the empty string:
-// configloader falls back to the default there, and the chart sets a URL to
-// "" to switch it off.
+// configloader falls back to the default there, and an empty value switches
+// off the feature of a setting whose default is not empty, such as the
+// trusted providers file.
 func get(key, fallback string) string {
 	if value, ok := os.LookupEnv(strings.ToUpper(strings.ReplaceAll(key, ".", "_"))); ok && value == "" {
 		return ""
