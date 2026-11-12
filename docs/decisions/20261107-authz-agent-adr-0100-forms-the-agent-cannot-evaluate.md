@@ -20,12 +20,14 @@ vlsi
   the configuration that fails to load because legacy would not store it, and its rule 2, the sets it isolates, which
   ADR-0098 treats like a policy set that legacy never evaluates.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
-  ADR-0093 R18, R19, and R21, what happens to a tenant whose snapshot the agent rejected.
+  ADR-0093 R19 and R21, readiness and the snapshot a tenant keeps after its candidate is rejected.
 - [authz-agent-ADR-0097: Answer as legacy access-control, and depart from it only to narrow access or by a recorded decision](20261107-authz-agent-adr-0097-departures-from-legacy.md):
   ADR-0097 R1, the legacy answer that a partial evaluation would break, and ADR-0097 R5, under which R7 names a
   departure that allows more.
 - [authz-agent-ADR-0098: Treat a value the agent could not read as unknown, and read each value once per request](20261107-authz-agent-adr-0098-unknown-values-and-source-calls.md):
   the unknown values that a policy set legacy never evaluates gives.
+- [authz-agent-ADR-0103: Deny every request of a tenant without a published snapshot, and keep readiness on /ready](20261112-authz-agent-adr-0103-tenant-without-a-snapshot.md):
+  ADR-0103 R1, the answer to a tenant whose candidate was rejected at the first pull.
 
 ## Context
 
@@ -121,9 +123,9 @@ Negative:
 
 - A tenant whose policy data gains a form the agent cannot evaluate keeps its previous policies until the agent
   supports the form, including grants that the new data revokes (R7).
-- At the first pull after a start, that tenant is not served, as ADR-0093 R18 states, and the agent stays not ready
-  under ADR-0093 R19. An installation is therefore checked for forms the agent cannot evaluate before the agent replaces
-  legacy there (R5).
+- At the first pull after a start, that tenant has no snapshot, so ADR-0103 R1 denies its requests, and the agent
+  stays not ready under ADR-0093 R19. An installation is therefore checked for forms the agent cannot evaluate before
+  the agent replaces legacy there (R5).
 
 Follow-ups:
 
