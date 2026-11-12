@@ -78,8 +78,9 @@ and keep a policy set that legacy itself never evaluates in the snapshot as a pe
 - **R6** (`handler`). The `/health` of the public listener returns the status and counts only. It names no tenant, no
   policy set, no reason, and no form.
 - **R7** (`snapshot`). A tenant that keeps its previous snapshot because a candidate was rejected, under R1, under
-  ADR-0090 rule 2, or under ADR-0093 R21, keeps the grants that the rejected candidate revokes. This is a departure that
-  allows more under ADR-0097 R5: legacy evaluates the new policy data and denies where the agent allows.
+  ADR-0090 rule 2, under ADR-0102 R4, or under ADR-0093 R21, keeps the grants that the rejected candidate revokes.
+  This is a departure that allows more under ADR-0097 R5: legacy evaluates the new policy data and denies where the
+  agent allows.
 - **R8** (`snapshot`). For each tenant, the agent exports the time it last accepted a snapshot, whether its latest
   candidate was rejected, and the time the first of the current run of rejections arrived. The measurements answer how
   long a tenant has served a snapshot that its policy data has moved past.
