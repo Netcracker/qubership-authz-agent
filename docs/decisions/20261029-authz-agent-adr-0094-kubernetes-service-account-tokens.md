@@ -116,7 +116,7 @@ agent's own cluster verifies it, it passes the checks of this record, and its na
 - **R14** (`verify`). The `aud` of a Kubernetes token contains `netcracker`. The codes are `TOKEN_AUDIENCE_MISSING` and
   `TOKEN_AUDIENCE_INVALID` of ADR-0091 R50.
 - **R15** (`verify`). ADR-0091 R7, R46, and R48 apply to a Kubernetes token.
-- **R16** (`verify`). The `sub` of a Kubernetes token starts with `system:serviceaccount`, or the token gets
+- **R16** (`verify`). The `sub` of a Kubernetes token starts with `system:serviceaccount:`, or the token gets
   `TOKEN_SUBJECT_INVALID`. Its parts are not parsed: the namespace comes from R18.
 
 #### The namespaces
