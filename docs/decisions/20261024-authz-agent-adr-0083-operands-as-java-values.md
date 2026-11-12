@@ -180,7 +180,8 @@ operand stays as legacy reads it.
 Negative:
 
 - The condition language has no equality with case. `MATCH` is the only test with case, and it compares a string
-  exactly only when the pattern holds none of `*`, `?`, `(`, `)`, and `.`, which match more than themselves.
+  exactly only when the pattern holds none of `*`, `?`, `(`, `)`, and `.`, which match more than themselves, and none
+  of `[`, `]`, `{`, `}`, `+`, `^`, `$`, `|`, and `\`, which keep their meaning in a regular expression.
 - Equality is not transitive. `"5.0"` equals `5` and `5` equals `"5.00"`, but `"5.0"` does not equal `"5.00"`.
   `"5.0" <= "5"` and `"5.0" >= "5"` hold while `"5.0" == "5"` does not. `[5]` equals `[5.0]` and `[5.0]` equals the
   string `"[5.0]"`, but `[5]` does not, because a list compares with a string by its Java text. Likewise `[1, 1]`

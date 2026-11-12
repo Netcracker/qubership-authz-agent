@@ -89,6 +89,39 @@ with no policies loaded.
 instead of naming them: `tenants`, `served` (with a published snapshot), `rejected` (whose latest candidate was
 refused), and `failing` (whose snapshot has a part that answers as failed). It names no tenant and no reason.
 
+## Comparisons in conditions
+
+The rules by which a condition compares two values are
+[ADR-0083](../../docs/decisions/20261024-authz-agent-adr-0083-operands-as-java-values.md). Two of them change what a
+policy author can write and what a client can receive.
+
+### Case
+
+No comparing operator of a condition keeps case. `==`, `!=`, `IN`, `NOT IN`, `CONTAINS`, `NOT CONTAINS`,
+`CONTAINS ANY`, `NOT CONTAINS ANY`, `IS SUBSET`, and `IS NOT SUBSET` compare two strings ignoring case, at any depth of
+a list or an object: `"abc"` equals `"ABC"`, and `["X"]` equals `["x"]`. The names of the members of an object keep
+their case.
+
+`MATCH` and `NOT MATCH` are the only tests with case. A pattern compares a string exactly only when it holds none of
+`*`, `?`, `.`, and the pair `()`, which match more than themselves, and none of `(`, `)`, `[`, `]`, `{`, `}`, `+`, `^`,
+`$`, `|`, and `\`, which keep their meaning in a regular expression.
+
+### The limit on looking up nested values
+
+A request fails when a value a comparison reads is a list of nested lists or objects whose elements hold numbers as
+strings in too many ways, such as `"1"`, `"1.0"`, and `"01"` at differing positions, so that looking a value up among
+them would read more than 16 groups and scanned elements. The agent answers such a `check/resource` or
+`check/filter` request, or a bulk request with such an item, with 500, and its `message` ends with:
+
+```text
+a list holds elements of one shape that write their numbers in too many ways: a lookup among them would read more than 16 groups and scanned elements
+```
+
+A list whose elements write their numbers alike stays far below the limit.
+
+An answer over the limit from a GENERAL or FILTERED PIP, the entitlements service, or the permission scope does not
+fail the request: the condition reads that source as failed, as it reads a call that failed.
+
 ## Running it
 
 On a kind cluster:
