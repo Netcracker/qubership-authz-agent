@@ -78,7 +78,9 @@ type Export struct {
 // with no customPredicate and no predicate field. Each target is
 // the exact text the PAP writes, so a policy target operation == 'ALL' or
 // operation EQUALS 'O' is another shape. A SIMPLIFIED set of any other shape is
-// read as a regular set. A rule keeps its querydsl template in the field
+// read as a regular set, except that a set with the target true, which holds
+// simplified policies of resourceType ALL, fails its tenant when one of them
+// is not a global policy. A rule keeps its querydsl template in the field
 // predicate; the export has no field querydslPredicate. A PIP without a
 // pipType is GENERAL. A dropped set is listed in [Export.Dropped].
 func FromRegular(policySets, pips []byte) (*Export, error) {
@@ -197,6 +199,10 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 				ID: s.PolicySetID, Name: s.Name, Domain: s.Domain, ExternalID: s.ExternalID,
 				Target: condition(s.Target, PlaceSetTarget, ""), Isolated: reason,
 			})
+			continue
+		}
+		if why := notGlobal(&s); why != "" {
+			t.err = fmt.Errorf("policy set %q: %s", s.PolicySetID, why)
 			continue
 		}
 		if g, ok := simplifiedGroup(&s); ok {
@@ -692,6 +698,72 @@ func compact(raw json.RawMessage) string {
 		return string(raw)
 	}
 	return b.String()
+}
+
+// notGlobal names the first simplified policy of resourceType ALL in s that
+// is not a global policy, and why, and returns empty when there is none. A
+// set of type SIMPLIFIED with the target true holds the simplified policies
+// of resourceType ALL, one per rule. Such a policy is global when the set's
+// component is ALL, the targets of its policy and its rule read nothing but
+// the roles, so its operation is ALL, and the rule has no condition and no
+// predicate in any dialect.
+func notGlobal(s *exportSet) string {
+	if s.Type != "SIMPLIFIED" || s.Target == nil || *s.Target != "true" {
+		return ""
+	}
+	for i := range s.Policies {
+		p := &s.Policies[i]
+		policyRoles := onlyRoles(p.Target)
+		for j := range p.Rules {
+			r := &p.Rules[j]
+			pr := predicates(r)
+			var why string
+			switch {
+			case s.Component == nil || *s.Component != "ALL":
+				why = "its component is not ALL"
+			case !policyRoles || !onlyRoles(r.Target):
+				why = "a target of its policy or its rule reads more than the roles"
+			case r.Condition != nil && *r.Condition != "":
+				why = "it has a condition"
+			case len(pr.Text) > 0 || pr.Custom != nil:
+				why = "it has a predicate"
+			default:
+				continue
+			}
+			name := fmt.Sprintf("rule %d of policy %d", j, i)
+			if r.RuleID != "" {
+				name = fmt.Sprintf("%q", r.RuleID)
+			}
+			return fmt.Sprintf("simplified policy %s has resourceType ALL and is not a global policy: %s", name, why)
+		}
+	}
+	return ""
+}
+
+// onlyRoles reports whether the target text is absent, true, or compares
+// subject.roles with literals alone.
+func onlyRoles(text *string) bool {
+	if text == nil || *text == "true" {
+		return true
+	}
+	c, err := ParseCondition(*text, PlaceRuleTarget, "")
+	if err != nil {
+		return false
+	}
+	for _, d := range c.Disjuncts {
+		for _, a := range d {
+			cmp, ok := a.(Compare)
+			if !ok || cmp.Left != Operand(Subject{Attr: SubjectRoles}) {
+				return false
+			}
+			switch cmp.Right.(type) {
+			case String, List:
+			default:
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // simplifiedGroup returns the simplified policies s holds, and false when s is

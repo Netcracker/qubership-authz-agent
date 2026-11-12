@@ -61,6 +61,23 @@ func TestV3RoundTripThroughTheServiceReader(t *testing.T) {
 	}
 }
 
+// A global policy, of component, resourceType, and operation ALL, reaches
+// the service as a set the reader accepts, so it carries its component.
+func TestAGlobalPolicyRoundTripsThroughTheServiceReader(t *testing.T) {
+	input := []simplifiedPolicy{
+		{Tenant: "tenant-a", Component: "ALL", ResourceType: "ALL", Operation: "ALL", Roles: []any{"ROLE_ADMIN"}},
+	}
+	raw, err := json.Marshal(v3PolicySetsResponse{Hash: "deadbeef", PolicySets: toV3PolicySets(input, defaultTenant)})
+	if err != nil {
+		t.Fatalf("marshal v3 envelope: %v", err)
+	}
+
+	tree := readTree(t, raw, []byte(`{"pips": []}`), "tenant-a")
+	if len(tree.Sets) != 1 {
+		t.Errorf("sets read back = %d, want 1; dump:\n%s", len(tree.Sets), tree.Dump())
+	}
+}
+
 // format is the condition c as the reader parsed it, "" for none.
 func format(c *policyir.Condition) string {
 	if c == nil {

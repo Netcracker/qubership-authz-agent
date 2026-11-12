@@ -120,6 +120,7 @@ type v3PolicySet struct {
 	Name               string     `json:"name"`
 	Type               string     `json:"type"`
 	Domain             string     `json:"domain"`
+	Component          string     `json:"component"`
 	Status             string     `json:"status"`
 	Target             string     `json:"target"`
 	CombiningAlgorithm string     `json:"combiningAlgorithm"`
@@ -270,6 +271,7 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 			Name:               fmt.Sprintf("%s-%s policy set", pk.domain, pk.resourceType),
 			Type:               "SIMPLIFIED",
 			Domain:             pk.domain,
+			Component:          pk.domain,
 			Status:             "ACTIVE",
 			Target:             resourceTypeTarget(pk.resourceType),
 			CombiningAlgorithm: "DENY_UNLESS_PERMIT",

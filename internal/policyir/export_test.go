@@ -164,8 +164,6 @@ func TestFromRegularReadsASimplifiedSetOfAnotherShapeAsARegularSet(t *testing.T)
 		policies  string
 	}{
 		{"a set target spelled with EQUALS", "resourceType EQUALS 'R'", readPolicy},
-		{"the set target true of a global policy", "true", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
-			"target": "true", "rules": [{"effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`},
 		{"a policy target of operation ALL", "", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
 			"target": "operation == 'ALL'", "rules": [{"effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`},
 		{"a policy target spelled with EQUALS", "", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
@@ -194,6 +192,76 @@ func TestFromRegularReadsASimplifiedSetOfAnotherShapeAsARegularSet(t *testing.T)
 			tr := tree(t, fromRegular(t, `[`+simplifiedSetWithTarget("t", setTarget, tc.policies)+`]`, `[]`), "t")
 			if len(tr.Simplified) != 0 || len(tr.Sets) != 1 {
 				t.Errorf("simplified groups %d, sets %d, want 0 and 1; dump:\n%s", len(tr.Simplified), len(tr.Sets), tr.Dump())
+			}
+		})
+	}
+}
+
+// resourceTypeAllSet is a set of type SIMPLIFIED of resourceType ALL, as the
+// PAP writes it with the set target true, of component and with policies the
+// JSON of its policies.
+func resourceTypeAllSet(component, policies string) string {
+	return `{"type": "SIMPLIFIED", "tenantId": "t", "domain": "D", "component": "` + component + `",
+		"status": "ACTIVE", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "policySetId": "s",
+		"target": "true", "policySets": [], "policies": ` + policies + `}`
+}
+
+// A global policy, of component, resourceType, and operation ALL with no
+// condition and no predicate, is read as the regular set it is written as.
+func TestFromRegularReadsAGlobalPolicyAsARegularSet(t *testing.T) {
+	t.Parallel()
+
+	e := fromRegular(t, `[`+resourceTypeAllSet("ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		"target": "true", "rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`)+`]`, `[]`)
+
+	tr := tree(t, e, "t")
+	if len(tr.Simplified) != 0 || len(tr.Sets) != 1 {
+		t.Errorf("simplified groups %d, sets %d, want 0 and 1; dump:\n%s", len(tr.Simplified), len(tr.Sets), tr.Dump())
+	}
+}
+
+// A simplified policy of resourceType ALL that is not a global policy fails
+// its tenant, and the error names the policy (ADR-0102 R4). The PAP writes
+// the operation into the policy target; the test PAP writes it into the rule
+// target.
+func TestFromRegularRejectsAPolicyOfResourceTypeAllThatIsNotGlobal(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name, component, policies, why string
+	}{
+		{"another component", "C", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`,
+			"its component is not ALL"},
+		{"an operation in the policy target", "ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "operation == 'READ'",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`,
+			"a target of its policy or its rule reads more than the roles"},
+		{"an operation in the rule target", "ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "subject.roles CONTAINS 'A'",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "operation == 'READ'"}]}]`,
+			"a target of its policy or its rule reads more than the roles"},
+		{"a resource attribute in the policy target", "ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "resource.a == 'y'",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`,
+			"a target of its policy or its rule reads more than the roles"},
+		{"a condition", "ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'",
+			"condition": "resource.a == 'y'"}]}]`, "it has a condition"},
+		{"an rsql predicate", "ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'",
+			"rsqlPredicate": "a==1"}]}]`, "it has a predicate"},
+		{"a custom predicate", "ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'",
+			"customPredicate": {"predicate": "p", "params": {}}}]}]`, "it has a predicate"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := fromRegular(t, `[`+resourceTypeAllSet(tc.component, tc.policies)+`]`, `[]`)
+
+			want := `policy set "s": simplified policy "r1" has resourceType ALL and is not a global policy: ` + tc.why
+			if err := e.Failed["t"]; err == nil || err.Error() != want {
+				t.Errorf("Failed[t] = %v, want %s", err, want)
 			}
 		})
 	}

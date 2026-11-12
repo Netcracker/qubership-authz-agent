@@ -276,6 +276,32 @@ func TestARefusedCandidateKeepsThePreviousSnapshot(t *testing.T) {
 	}
 }
 
+// A candidate that holds a simplified policy of resourceType ALL that is not
+// a global policy is refused, and the tenant keeps its previous snapshot
+// (ADR-0102 R4, ADR-0100 R7).
+func TestAPolicyOfResourceTypeAllThatIsNotGlobalKeepsThePreviousSnapshot(t *testing.T) {
+	r := New(Config{}, tab(t), quiet{})
+	load(t, r, ``, set("a", "true"))
+	notGlobal := `{"type": "SIMPLIFIED", "tenantId": "a", "component": "C", "status": "ACTIVE",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "policySetId": "s-all", "target": "true",
+		"policies": [{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true", "tenantId": "a",
+			"rules": [{"ruleId": "r-all", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'",
+				"tenantId": "a"}]}]}`
+	sum := load(t, r, ``, set("a", "false"), notGlobal)
+
+	if sum.Rejected != 1 {
+		t.Errorf("Load summary = %+v, want 1 refused", sum)
+	}
+	if got := decide(t, r, readDoc(t, "a", "y", 1)); !got[0].Allowed {
+		t.Errorf("Decide(tenant a) = %+v, want allowed by the previous snapshot", got[0])
+	}
+	th, _ := tenantHealth(r, "a")
+	if !th.Ready || th.Rejected == nil || th.Rejected.Stage != "export" ||
+		!strings.Contains(th.Rejected.Reason, `simplified policy "r-all"`) {
+		t.Errorf("health of a = %+v, want ready with a refusal at stage export naming simplified policy r-all", th)
+	}
+}
+
 // warnings records the warnings a registry writes, formatted.
 type warnings struct {
 	quiet
