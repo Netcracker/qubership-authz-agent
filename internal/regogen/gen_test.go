@@ -1075,6 +1075,78 @@ func TestASingleOddListOnTheLeftOfNotContainsAny(t *testing.T) {
 	}
 }
 
+// CONTAINS and NOT CONTAINS compare a GENERAL PIP with a GENERAL or a HEADER
+// PIP. With a one-element list of a non-string (SINGLE_ODD) on the left and a
+// list of several values on the right, both operators are false, and a null
+// in the left list fails the PIP. ALLOW under DENY_UNLESS_PERMIT tells true
+// from the rest, and DENY under PERMIT_UNLESS_DENY tells false from the rest.
+func TestContainsBetweenTwoPIPs(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	pips := generalPIPs + `, {"name": "subject.r", "pipType": "HEADER", "header": "X-R"}`
+	five := resolved(t, "SCALAR_ODD", `5`)
+	// a GENERAL or a HEADER PIP answers a list of several values so
+	ab := resolved(t, "VALUE", `["a", "b"]`)
+	ab.PIPList = true
+	for _, tc := range []struct {
+		name, alg, effect, condition, gState, g string
+		right                                   Resolved
+		a                                       string
+		want                                    bool
+	}{
+		{"a text body contains no number body", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g CONTAINS subject.h OR resource.a == 'y'", "VALUE", `"v"`, five, `"n"`, false},
+		{"an alternative that holds beside CONTAINS", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g CONTAINS subject.h OR resource.a == 'y'", "VALUE", `"v"`, five, `"y"`, true},
+		{"a text body does not contain a number body", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g NOT CONTAINS subject.h OR resource.a == 'y'", "VALUE", `"v"`, five, `"n"`, true},
+		{"an alternative that holds beside NOT CONTAINS", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g NOT CONTAINS subject.h OR resource.a == 'y'", "VALUE", `"v"`, five, `"y"`, true},
+		{"CONTAINS of a listed boolean and a GENERAL list is not true", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g CONTAINS subject.h", "SINGLE_ODD", `[true]`, ab, `"n"`, false},
+		{"CONTAINS of a listed boolean and a GENERAL list is false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g CONTAINS subject.h", "SINGLE_ODD", `[true]`, ab, `"n"`, true},
+		{"CONTAINS of a listed object and a GENERAL list is false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g CONTAINS subject.h", "SINGLE_ODD", `[{"k": "a"}]`, ab, `"n"`, true},
+		{"CONTAINS of a listed null and a GENERAL list is not true", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g CONTAINS subject.h", "SINGLE_ODD", `[null]`, ab, `"n"`, false},
+		{"CONTAINS of a listed null and a GENERAL list is not false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g CONTAINS subject.h", "SINGLE_ODD", `[null]`, ab, `"n"`, false},
+		{"NOT CONTAINS of a listed boolean and a GENERAL list is not true", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g NOT CONTAINS subject.h", "SINGLE_ODD", `[true]`, ab, `"n"`, false},
+		{"NOT CONTAINS of a listed boolean and a GENERAL list is false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g NOT CONTAINS subject.h", "SINGLE_ODD", `[true]`, ab, `"n"`, true},
+		{"NOT CONTAINS of a listed null and a GENERAL list is not true", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g NOT CONTAINS subject.h", "SINGLE_ODD", `[null]`, ab, `"n"`, false},
+		{"NOT CONTAINS of a listed null and a GENERAL list is not false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g NOT CONTAINS subject.h", "SINGLE_ODD", `[null]`, ab, `"n"`, false},
+		{"CONTAINS of a listed boolean and a HEADER list is false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g CONTAINS subject.r", "SINGLE_ODD", `[true]`, ab, `"n"`, true},
+		{"CONTAINS of a listed null and a HEADER list is not false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g CONTAINS subject.r", "SINGLE_ODD", `[null]`, ab, `"n"`, false},
+		{"NOT CONTAINS of a listed boolean and a HEADER list is false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g NOT CONTAINS subject.r", "SINGLE_ODD", `[true]`, ab, `"n"`, true},
+		{"NOT CONTAINS of a listed null and a HEADER list is not false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g NOT CONTAINS subject.r", "SINGLE_ODD", `[null]`, ab, `"n"`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSetAndPIPs(t, tc.alg, tc.effect, tc.condition, pips)
+			// the condition reads one of subject.h and subject.r
+			values := map[string]Resolved{`["subj","g"]`: resolved(t, tc.gState, tc.g),
+				`["subj","h"]`: tc.right, keyR: tc.right, keyA: resolved(t, "VALUE", tc.a)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s %s, %s, subject.g = %s %s, right = %+v, resource.a = %s) %s = %v, want %v",
+						tc.alg, tc.effect, tc.condition, tc.gState, tc.g, tc.right, tc.a, form, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
 // A null whole resource is in no list, and a one-element GENERAL list of null
 // on the right of IN ends the rule, which the agent reads as undefined.
 func TestANullResourceIsInNoSingleOddList(t *testing.T) {

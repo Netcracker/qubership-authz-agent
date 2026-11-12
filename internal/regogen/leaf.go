@@ -570,10 +570,15 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 		// the right of IS SUBSET, and its record carries the subset index
 		oddR, rp = true, point{spectables.StateValue, spectables.ClassScalar}
 	}
-	if oddL != oddR && (lp.st != spectables.StateValue || R != nil && rp.st != spectables.StateValue) {
-		// the other side has no value, so only a null element of the odd
-		// list decides: it fails the PIP (undefined), and any other element
-		// gives the cell's one remaining outcome
+	// a PIP list of several values on the right of CONTAINS or NOT CONTAINS
+	// gives the outcome of right_list_scalar_ops whatever its elements are
+	pipListR := oddL && (op == spectables.OpContains || op == spectables.OpNotContains) &&
+		rp == point{spectables.StateValue, spectables.ClassPIPList}
+	if oddL != oddR && (lp.st != spectables.StateValue || R != nil && rp.st != spectables.StateValue || pipListR) {
+		// the other side has no value, or one whose elements do not take
+		// part, so only a null element of the odd list decides: it fails
+		// the PIP (undefined), and any other element gives the cell's one
+		// remaining outcome
 		oddSide := L
 		if oddR {
 			oddSide = R
@@ -590,9 +595,14 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 		}
 		// the other side reads as an empty list, so a collection rule
 		// compares the odd list with nothing, or with a resource list no
-		// element equals, and gives that one outcome
-		if r, ok := uncovered(cell.ValueRule, spectables.RuleSingleOdd, spectables.RuleNullElementEnds,
-			spectables.RuleContainsAny, spectables.RuleInAny, spectables.RuleContainsRightAttributeList); ok {
+		// element equals, and gives that one outcome; a PIP list of several
+		// values gives the outcome of right_list_scalar_ops
+		have := []spectables.ValueRule{spectables.RuleSingleOdd, spectables.RuleNullElementEnds,
+			spectables.RuleContainsAny, spectables.RuleInAny, spectables.RuleContainsRightAttributeList}
+		if pipListR {
+			have = append(have, spectables.RuleRightListScalarOps)
+		}
+		if r, ok := uncovered(cell.ValueRule, have...); ok {
 			g.stats.NoTemplate[fmt.Sprintf("%s(%s %s, %s %s) rule %s", op, L.kind, lps[i].st, kindOf(R), rps[j].st, r)]++
 			return "", gap(FormGenerator, fmt.Errorf("%s: value rule %s of a SINGLE_ODD cell has no template", op, r))
 		}
@@ -607,6 +617,9 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 			rails.f = union(rails.f, dnf{c})
 		}
 		rails.threeValued = true
+		if pipListR {
+			return "single_odd against a PIP list", nil
+		}
 		return "single_odd against no value", nil
 	}
 	if (op == spectables.OpEQ || op == spectables.OpNE) && lp.st == spectables.StateValue &&
