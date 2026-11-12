@@ -16,12 +16,15 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -77,6 +80,37 @@ func TestReport(t *testing.T) {
 	providers.Bootstrap(context.Background())
 	if r := report(providers, idle); !r.Healthy || !r.Loaded {
 		t.Errorf("report with no providers and the pull disabled = %+v, want healthy and loaded", r)
+	}
+}
+
+// The agent runs as a child process of this test binary, which calls main
+// when AUTHZ_AGENT_TEST_RUN_MAIN is set.
+func TestStart_StopsOnAnInvalidValueAndNamesIt(t *testing.T) {
+	if os.Getenv("AUTHZ_AGENT_TEST_RUN_MAIN") == "1" {
+		main()
+		return
+	}
+	for _, tt := range []struct{ name, level string }{
+		{"at the default log level", ""},
+		{"at the log level fatal", "fatal"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			agent := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestStart_StopsOnAnInvalidValueAndNamesIt$")
+			agent.Env = append(os.Environ(), "AUTHZ_AGENT_TEST_RUN_MAIN=1", "LOGGING_LEVEL_ROOT="+tt.level,
+				"AUTHZ_PAP_CLIENT_PULL_INTERVAL=2s", "AUTHZ_HTTP_ADDR=127.0.0.1:0", "AUTHZ_PUBLIC_ADDR=127.0.0.1:0",
+				"AUTHZ_TRUSTED_PROVIDERS_FILE=")
+			out, err := agent.CombinedOutput()
+			var exit *exec.ExitError
+			if !errors.As(err, &exit) || exit.ExitCode() != 1 {
+				t.Errorf("the agent with AUTHZ_PAP_CLIENT_PULL_INTERVAL=2s ended with %v, want exit status 1", err)
+			}
+			want := `configuration: AUTHZ_PAP_CLIENT_PULL_INTERVAL="2s": expected an integer number of seconds from 0 to 9223372036`
+			if !strings.Contains(string(out), want) {
+				t.Errorf("the agent's output lacks %q:\n%s", want, out)
+			}
+		})
 	}
 }
 

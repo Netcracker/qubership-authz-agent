@@ -23,7 +23,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -44,7 +43,6 @@ import (
 	"authz-agent/components/authz-agent/internal/m2m"
 	"authz-agent/components/authz-agent/internal/pull"
 	"authz-agent/components/authz-agent/internal/server"
-	"authz-agent/internal/pips"
 	"authz-agent/policies"
 )
 
@@ -60,7 +58,16 @@ func init() {
 }
 
 func main() {
-	cfg := loadConfig(get)
+	cfg, err := loadConfig(get)
+	if err != nil {
+		// At the level fatal the logger drops errors, and this one is the
+		// only report of why the agent stops.
+		if logger.GetLevel() < logging.LvlError {
+			logger.SetLevel(logging.LvlError)
+		}
+		logger.Errorf("configuration: %v", err)
+		os.Exit(1)
+	}
 	modules, err := policies.Modules()
 	if err != nil {
 		logger.Errorf("policies: %v", err)
@@ -86,7 +93,6 @@ func main() {
 	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != "" {
 		tokens = m2m.New(cfg.M2M, eng, logger)
 	}
-	cfg.Pull.Entitlements = pips.LoadEntitlementsConfigFromEnv()
 	var source pull.Tokens
 	if tokens != nil {
 		source = tokens
@@ -218,7 +224,7 @@ func serveUntilShutdown(ctx context.Context, stop func(), surfaces []surface) bo
 // off the feature of a setting whose default is not empty, such as the
 // trusted providers file.
 func get(key, fallback string) string {
-	if value, ok := os.LookupEnv(strings.ToUpper(strings.ReplaceAll(key, ".", "_"))); ok && value == "" {
+	if value, ok := os.LookupEnv(variable(key)); ok && value == "" {
 		return ""
 	}
 	return configloader.GetOrDefaultString(key, fallback)
