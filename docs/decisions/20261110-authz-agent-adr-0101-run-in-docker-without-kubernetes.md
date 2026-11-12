@@ -19,8 +19,9 @@ kichasov
 - [authz-agent-ADR-0080: Replace Envoy, the Lua filters, and the OPA container with one Go service that embeds OPA](20260907-authz-agent-adr-0080-single-go-service-with-embedded-opa.md):
   the one image of the agent that this record runs outside Kubernetes.
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
-  the term stops the start, ADR-0091 R14 and R18, readiness and liveness, ADR-0091 R44, the leeway against the clock,
-  and ADR-0091 R72 and R78, `IDENTITY_PROVIDER_URL` read by the chart alone.
+  the term stops the start; ADR-0091 R14 and R18, readiness and liveness; ADR-0091 R44, the leeway against the clock;
+  ADR-0091 R64, the removal of `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`; and ADR-0091 R72 and R78, `IDENTITY_PROVIDER_URL` read
+  by the chart alone.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
   ADR-0092 R16, `legacy` as the only M2M mode outside Kubernetes.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
@@ -66,6 +67,13 @@ The chart does part of the work, and the agent does not repeat it:
   because only the chart reads `KUBERNETES_M2M_ENABLED`.
 - The agent's default for `AUTHZ_TENANT_MANAGER_URL` is `http://tenant-manager:8080`, the name of a Service.
 
+The one boolean setting the agent reads is `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`. Besides `true` and `false`, the agent
+accepts `1`, `yes`, and `on` as true and `0`, `no`, and `off` as false, without regard to case. ADR-0096 R3 reads
+`KUBERNETES_M2M_ENABLED` as `true` or `false` alone. With `AUTHZ_JWKS_BOOTSTRAP_REQUIRED=false` the agent becomes ready
+once one provider and every provider marked `required` have keys, so a provider not marked `required` is optional.
+ADR-0091 R14 requires a key of every provider, and ADR-0091 R64 removes the setting. The architect confirmed the
+removal in issue #242.
+
 Kubernetes tokens and the topology file of ADR-0094 exist only in a cluster, and ADR-0092 R16 leaves `legacy` as the
 only M2M mode outside Kubernetes. The architect decided that TLS is not the agent's job.
 
@@ -107,9 +115,9 @@ configured by environment variables and mounted files alone. The repository ship
   topology file.
 - **R6** (`startup`, `client`). A value of an environment variable stops the start when its chart check refuses it,
   with a message that names the variable and the values that the chart check accepts. The agent reads the value as the
-  type the chart check names: an integer as decimal digits with an optional sign, a boolean as `true` or `false` without
-  regard to case, and a value from a list without regard to case. An empty integer, boolean, or value from a list
-  means the default, as an unset one does.
+  type the chart check names: an integer as decimal digits with an optional sign, a boolean as `true` or `false` alone,
+  without regard to case, and a value from a list without regard to case. An empty integer, boolean, or value from a
+  list means the default, as an unset one does.
 - **R7** (`startup`, `client`). The default of every setting whose value the agent uses in `legacy`, with
   `KUBERNETES_M2M_ENABLED` set to `false`, names no Kubernetes Service, no host inside a cluster, and no path that only
   Kubernetes mounts.
@@ -143,8 +151,9 @@ Adds no requirement.
 
 - R6: let the parsers in `components/authz-agent/config.go` and `internal/pips/entitlements.go` return an error instead
   of the fallback, collect the errors of every setting, and report them together before the agent listens. A table test
-  over each chart check, with its boundary values and a value such as `2s`, can then confirm R6. `boolean` in
-  `config.go` accepts `1`, `yes`, and `on` today, and R6 refuses them.
+  over each chart check, with its boundary values, a value such as `2s`, and `1` and `yes` for a boolean, can then
+  confirm R6. `boolean` in `config.go` accepts `1`, `yes`, and `on` today, and R6 refuses them. The one caller of
+  `boolean` reads `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, which ADR-0091 R64 removes.
 - R9: a test that compares the keys of the environment file with the variables the agent reads, through `loadConfig`
   and through `os.Getenv` in `internal/pips/entitlements.go`, keeps R9 true as settings are added.
 - R4 and R5: the override of R17 can run the agent with `read_only: true`, `cap_drop: [ALL]`, and a uid such as
@@ -167,11 +176,12 @@ a writable root file system, and the rule keeps it so (R4).
 Outside the chart nobody else checks the configuration. Kubernetes tokens and the topology file exist only in a cluster,
 so `legacy` is the mode on the Docker target (R5). An operator who mistypes a value has to learn it at the start, as
 ADR-0092 R15 does for the mode, rather than run with a default they did not choose (R6). R6 reads a boolean as ADR-0096
-R3 reads `KUBERNETES_M2M_ENABLED`, so that no setting accepts a spelling another one refuses. A default that names a
-Service, such as `http://tenant-manager:8080`, cannot resolve on a Docker network that has no such container, and with
-that address the agent would stay not ready (ADR-0093 R11). An empty address uses the default tenant as given, as
-ADR-0093 R14 states, so R7 keeps such names out of the defaults. The agent's token on the Docker target follows from
-ADR-0096 R1 to R8, which the agent reads without the chart.
+R3 reads `KUBERNETES_M2M_ENABLED`, so that no setting accepts a spelling another one refuses. ADR-0091 R64 removes
+`AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, the one setting that accepts more spellings, so those spellings would serve no setting
+that stays (R6). A default that names a Service, such as `http://tenant-manager:8080`, cannot resolve on a Docker
+network that has no such container, and with that address the agent would stay not ready (ADR-0093 R11). An empty
+address uses the default tenant as given, as ADR-0093 R14 states, so R7 keeps such names out of the defaults. The
+agent's token on the Docker target follows from ADR-0096 R1 to R8, which the agent reads without the chart.
 
 The Compose example replaces the Pod specification for an operator, and CI runs the same file, so a change that breaks
 the Docker target fails a check (R8, R9, R17). The trusted providers file and `AUTHZ_M2M_TOKEN_URL` stay in the example,
@@ -196,12 +206,14 @@ paths, apart from the cases that read what only a cluster has (R17).
 - **A3. Let the agent build the trusted providers file and `AUTHZ_M2M_TOKEN_URL` from `IDENTITY_PROVIDER_URL`.**
   ADR-0091 R78 keeps that setting in the chart, and the same logic would live in two places.
 - **A4. Log a warning and keep the default for an invalid value.** Rejected by R6: the warning is easy to miss, and the
-  agent would run, for example, in a bootstrap mode the operator did not choose.
+  agent would run, for example, with a pull interval the operator did not choose.
 - **A5. Put the healthcheck into the Dockerfile.** The kubelet ignores it, and the address would be fixed in the image
   while `AUTHZ_HTTP_ADDR` can move the internal port.
 - **A6. Check only readiness and one decision in CI.** Rejected by R17: a regression on the Docker target outside that
   path would pass.
 - **A7. Publish the internal port on every interface.** Rejected by R13: anyone on the network could read the metrics.
+- **A8. Accept `1`, `yes`, `on`, `0`, `no`, and `off` for every boolean.** Rejected by R6: ADR-0096 R3 would have to
+  accept them as well, and ADR-0091 R64 removes `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, the one setting that accepts them.
 
 ## Consequences
 
@@ -218,7 +230,8 @@ Negative:
 - On the Docker target the operator writes the trusted providers file and `AUTHZ_M2M_TOKEN_URL`, which the chart builds
   in Kubernetes.
 - Values that the agent uses today and the chart checks refuse now stop the start, such as `AUTHZ_JWKS_HTTP_TIMEOUT=0`
-  and the booleans `yes`, `on`, and `1` (R6).
+  (R6). While the agent reads `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, `yes`, `on`, and `1` stop the start for that setting as
+  well (R6).
 - On the Docker target only `legacy` works, so services that call with Kubernetes tokens cannot use such an agent
   (ADR-0092 R16).
 - With an empty default address, which R7 allows, an agent run without the chart and without
@@ -229,9 +242,3 @@ Follow-ups:
 
 - The top-level README and `components/authz-agent/README.md` link the Docker page instead of stating that the
   deployment assumes Kubernetes.
-
-## Open points
-
-- **O1.** R6 reads a boolean as `true` or `false` alone, as ADR-0096 R3 does, so `1`, `yes`, and `on`, which the agent
-  accepts today, stop the start. The other answer keeps those spellings for every boolean, the one of ADR-0096
-  included. The architect decides. It affects R6.
