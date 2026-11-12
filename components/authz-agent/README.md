@@ -69,18 +69,31 @@ answers 200 as soon as the trusted providers meet the bootstrap rules, with no p
 ## Trusting a private CA
 
 The agent trusts every CA certificate it finds in a `.crt`, `.cer`, or `.pem` file under `/tmp/cert` when its
-container starts. To make it trust a private CA:
+container starts. To have the agent's chart put a private CA there:
 
-1. Put the CA certificate under `/tmp/cert` in the container. The agent's chart cannot mount it there: add a volume at
-   `/tmp/cert` to the Deployment yourself, with a Helm post-renderer or kustomize, for example from a Secret that holds
-   the certificate under a key that ends in `.crt`. With Docker, mount the file with `--volume`.
-2. Restart the container after you add or replace the certificate. The trust store is built only when the container
-   starts, and the agent reads it once.
+1. Create a Secret in the agent's namespace that holds the CA certificate under a key that ends in `.crt`, `.cer`, or
+   `.pem`:
+
+   ```bash
+   kubectl create secret generic corporate-ca --from-file=corporate-ca.crt=<path to the CA certificate>
+   ```
+
+2. Set the chart value `CA_CERTIFICATES_SECRET` to the name of that Secret, `corporate-ca` here. The Pod mounts the
+   Secret at `/tmp/cert`. If the Secret does not exist, the new Pod stays in `ContainerCreating` with the event
+   `MountVolume.SetUp failed for volume "ca-certificates-secret" : secret "<name>" not found`.
+3. After you replace the certificate in the Secret, restart the Pod, for example with
+   `kubectl rollout restart deployment/authz-agent`. The trust store is built only when the container starts, and the
+   agent reads it once.
+
+With Docker, mount the certificate file under `/tmp/cert` with `--volume`, and restart the container after you replace
+it.
 
 The image runs the agent behind the
 [entrypoint](https://github.com/Netcracker/qubership-core-base-images/blob/main/images/entrypoint.sh) of its base image,
 `qubership-core-base`. Before the agent starts, the entrypoint adds the certificates under `/tmp/cert` to the system
-trust store. The agent verifies every HTTPS server it calls against that store, the PIPs included.
+trust store. The agent verifies every HTTPS server it calls against that store, the PIPs included. A file with one of
+those suffixes that holds no PEM certificate is skipped, and the entrypoint logs
+`Error process certificates file <path>: invalid certificates file data format.`
 
 ## Stopping the agent
 

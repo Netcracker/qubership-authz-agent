@@ -501,6 +501,17 @@ for volume in "authz-agent-trusted-providers" "authz-agent-client-credentials"; 
   fi
 done
 
+# CA_CERTIFICATES_SECRET names the Secret the agent Pod mounts read-only at
+# /tmp/cert, and the default leaves /tmp/cert unmounted.
+ca_deployment="$(deployment_of --set CA_CERTIFICATES_SECRET=corporate-ca)"
+ca_volume="$(grep -B1 -E '^ +mountPath: /tmp/cert$' <<<"${ca_deployment}" | awk '$1 == "-" && $2 == "name:" {print $3}' || true)"
+ca_entries="$(grep -A2 -E "^ +- name: ${ca_volume:-none}\$" <<<"${ca_deployment}" || true)"
+ca_summary="secret=$(awk '$1 == "secretName:" {print $2}' <<<"${ca_entries}") readOnly=$(awk '$1 == "readOnly:" {print $2}' <<<"${ca_entries}") default=$(grep -c 'mountPath: /tmp/cert' <<<"$(deployment_of)" || true)"
+if [[ "${ca_summary}" == "secret='corporate-ca' readOnly=true default=0" ]]; then
+  pass "CA_CERTIFICATES_SECRET mounts the named Secret read-only at /tmp/cert, and the default mounts nothing there"
+else
+  fail "CA_CERTIFICATES_SECRET renders ${ca_summary}, expected secret='corporate-ca' readOnly=true default=0"
+fi
 
 # Every gateway route ends on the public port and reaches it under the path the
 # caller sent: a gateway publishes nothing on the internal port.
