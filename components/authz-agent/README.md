@@ -48,6 +48,7 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials |
 | `AUTHZ_M2M_RENEW_BEFORE_SECONDS` | `60` | How long before its expiry the token is refreshed |
 | `AUTHZ_PAP_CLIENT_TOKEN_FILE` | `/var/run/secrets/tokens/netcracker/token` | The token file, read every 15 seconds, when there is no token endpoint; the default is where the platform's charts mount the netcracker-audience projected token |
+| `SIGTERM_EXIT_DELAY` | `10` | Read by the entrypoint of the image, not by the agent: seconds between `SIGTERM` and its delivery to the agent; see [Stopping the agent](#stopping-the-agent) |
 
 A variable set to the empty string switches its feature off where the table says so; an unset variable takes the
 default.
@@ -68,8 +69,9 @@ answers 200 as soon as the trusted providers meet the bootstrap rules, with no p
 
 ## Trusting a private CA
 
-The agent trusts every CA certificate it finds in a `.crt`, `.cer`, or `.pem` file under `/tmp/cert` when its
-container starts. To have the agent's chart put a private CA there:
+The agent trusts the CA certificates in `.crt`, `.cer`, and `.pem` files under `/tmp/cert` in its container, in
+addition to the public CAs of its image, for every HTTPS server it calls, such as the identity provider, the policy
+source, and the PIPs. It reads them when the container starts. To give the agent a private CA through its chart:
 
 1. Create a Secret in the agent's namespace that holds the CA certificate under a key that ends in `.crt`, `.cer`, or
    `.pem`:
@@ -78,32 +80,32 @@ container starts. To have the agent's chart put a private CA there:
    kubectl create secret generic corporate-ca --from-file=corporate-ca.crt=<path to the CA certificate>
    ```
 
-2. Set the chart value `CA_CERTIFICATES_SECRET` to the name of that Secret, `corporate-ca` here. The Pod mounts the
-   Secret at `/tmp/cert`. If the Secret does not exist, the new Pod stays in `ContainerCreating` with the event
-   `MountVolume.SetUp failed for volume "ca-certificates-secret" : secret "<name>" not found`.
+2. Set the chart value [`CA_CERTIFICATES_SECRET`](../../helm-templates/authz-agent/values.yaml) to the name of that
+   Secret, `corporate-ca` here. The Pod mounts the Secret at `/tmp/cert`.
 3. After you replace the certificate in the Secret, restart the Pod, for example with
-   `kubectl rollout restart deployment/authz-agent`. The trust store is built only when the container starts, and the
-   agent reads it once.
+   `kubectl rollout restart deployment/authz-agent`.
 
 With Docker, mount the certificate file under `/tmp/cert` with `--volume`, and restart the container after you replace
 it.
 
-The image runs the agent behind the
-[entrypoint](https://github.com/Netcracker/qubership-core-base-images/blob/main/images/entrypoint.sh) of its base image,
-`qubership-core-base`. Before the agent starts, the entrypoint adds the certificates under `/tmp/cert` to the system
-trust store. The agent verifies every HTTPS server it calls against that store, the PIPs included. A file with one of
-those suffixes that holds no PEM certificate is skipped, and the entrypoint logs
-`Error process certificates file <path>: invalid certificates file data format.`
+A file under `/tmp/cert` with one of those suffixes that holds no PEM certificate is skipped, and the agent starts
+without it. The entrypoint logs `Error process certificates file <path>: invalid certificates file data format.`
+
+The path and the behavior come from the
+[entrypoint](https://github.com/Netcracker/qubership-core-base-images/blob/main/images/entrypoint.sh) of the base image,
+`qubership-core-base`, which builds the system trust store before it starts the agent.
 
 ## Stopping the agent
 
-A stop takes up to `SIGTERM_EXIT_DELAY` plus 10 seconds, so its grace period has to be longer than that. The 30 seconds
-Kubernetes gives a Pod by default are enough. `docker stop` and Docker Compose wait 10 seconds by default and then send
-`SIGKILL`, which ends the container with exit code 137 before the agent receives `SIGTERM`: run
-`docker stop --timeout 30`, or set `stop_grace_period: 30s` in Compose.
+A stop takes up to `SIGTERM_EXIT_DELAY` seconds, 10 by default, plus 10 seconds, so its grace period has to be longer
+than that. The 30 seconds Kubernetes gives a Pod by default are enough. With their default timeouts, `docker stop` and
+Docker Compose send `SIGKILL` before the delay ends, and the container exits with code 137 before the agent receives
+`SIGTERM`: run `docker stop --timeout 30`, or set `stop_grace_period: 30s` in Compose.
 
-The entrypoint of the base image holds `SIGTERM` back for `SIGTERM_EXIT_DELAY` seconds, 10 by default, before it passes
-the signal on, and the agent then takes up to 10 seconds to finish the requests in flight.
+On `SIGTERM`, the entrypoint of the base image waits `SIGTERM_EXIT_DELAY` seconds before it passes the signal on, which
+gives a Kubernetes Service time to stop sending requests to the Pod. The agent then takes up to 10 seconds to finish the
+requests in flight. Where nothing has to stop routing requests to the agent first, such as a single container in
+Docker, set `SIGTERM_EXIT_DELAY` to `0`.
 
 ## Running it
 
