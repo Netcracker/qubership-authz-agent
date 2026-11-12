@@ -85,8 +85,8 @@ meaning and only toward less access, and record every other departure in an ADR 
 #### The text of an answer
 
 - **R7** (`translate`). The body of an answer matches the legacy answer byte for byte, including the escaping, the
-  quotation marks, the URL encoding, and a mongodb predicate that is not valid JSON. A value from the policy data or the
-  request is substituted into a predicate as legacy substitutes it, with no escaping of the agent's own. A departure
+  quotation marks, the URL encoding, and a mongodb predicate that is not valid JSON. ADR-0099 R13 states how a value
+  from the policy data or the request is substituted into a predicate. A departure
   under R2 or R4 changes the bytes that its change of meaning needs and no others. Where legacy writes the elements of
   a list or the terms of a predicate in an order that changes from one run of legacy to the next, that order is not
   part of the legacy answer, and any order matches it.
@@ -121,9 +121,8 @@ is recorded, including when it follows from a rule about unknown values (R5, R9)
 policy that works only on the agent cannot move back to legacy (R6).
 
 Applications append the predicate text to their queries and parse it as legacy writes it. Escaping a value, adding
-brackets, or turning a mongodb predicate into valid JSON would change what the query matches, so the bytes stay. A
-value with special characters that changes the structure of a predicate is the responsibility of the policy author, and
-`customPredicate` is the safe form for such a value (R7).
+brackets, or turning a mongodb predicate into valid JSON would change what the query matches, so the bytes stay (R7).
+ADR-0099 states why a substituted value is not escaped either.
 
 The parity suite runs every case, including a departed one, and compares the agent with the recorded entry. Naming a
 rule in each entry turns the list of entries into a list of decisions, and a reviewer of a new entry checks the rule
@@ -137,8 +136,8 @@ the agent (R10).
   to.
 - **A2. Reproduce the order in which legacy evaluates a condition.** Rejected by R3: the answer would depend on the
   order of clauses in the generated module.
-- **A3. Escape substituted values, or write a mongodb predicate as valid JSON.** Rejected by R7: an application that
-  appends or parses the predicate would get a different query.
+- **A3. Write a mongodb predicate as valid JSON.** Rejected by R7: an application that appends or parses the predicate
+  would get a different query. ADR-0099 A12 rejects escaping a substituted value.
 - **A4. Accept a divergence with a free-text reason or a design note outside the ADRs.** Rejected by R8: the reason
   cannot be checked against a rule, and a note outside the records drifts from the code.
 
@@ -147,7 +146,8 @@ the agent (R10).
 Negative:
 
 - Legacy defects that allow access stay in the agent until an ADR names each of them.
-- A predicate value with special characters can still change the structure of the predicate, as it does in legacy.
+- A predicate value with special characters can still change the structure of the predicate, as it does in legacy
+  (ADR-0099 R13).
 - A parity case whose legacy answer depends on the order of operands or on which source failed gets a different answer
   from the agent. Its entry in `accepted_divergences.go` names `ADR-0097 R3` for a narrowing departure in the order of
   operands, `ADR-0097 R2` for another narrowing departure, and the rule under R5 that names it otherwise, such as
