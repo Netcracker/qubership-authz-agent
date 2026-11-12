@@ -1,0 +1,451 @@
+{
+ "about": "Round 75 candidates (LI-2-resource, LI-50) inside an iterate: a rule whose condition a failed GENERAL source leaves unknown, or a DENY rule whose target is undefined on a row, in each pass over two assignments (regions r1 and r2), beside the rule that allows the region of each. check/resource of rows in r1, r2 and r3 and check/filter. The scope service answers two assignments for the whole file. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R75_FAILED_ITERATE_",
+ "pins": {
+  "/api/v1/pip/r75-iter-failed": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 75 failed source"
+   }
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "failed": {
+   "name": "subject.parityR75IterFailed",
+   "url": "http://pip-mock:8090/api/v1/pip/r75-iter-failed",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r75-iter-failed"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "v75i-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, no iterate. True unless the stand fails every check.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v75i-allow-failed-beside-granted",
+   "about": "An ALLOW rule whose condition reads only the failed source, beside the rule that allows the region of each assignment, inside every pass of the iterate (node DENY_UNLESS_PERMIT, set PERMIT_UNLESS_DENY). Legacy fails the decision; does the failure deny every row, and the filter?",
+   "pips": [
+    "scope",
+    "failed"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "failed",
+         "target": "true",
+         "condition": "subject.parityR75IterFailed == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "granted",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS resource.region",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})",
+          "sqlPredicate": "region IN (${subject.permissionScope.region})",
+          "predicate": "${resourceType}.region.in(${subject.permissionScope.region})",
+          "mongodbPredicate": "{ \"region\": { \"$in\": ${subject.permissionScope.region} } }"
+         }
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "resource": {
+      "id": "row-1",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "row-2",
+     "resource": {
+      "id": "row-2",
+      "region": "r2"
+     }
+    },
+    {
+     "name": "row-3",
+     "resource": {
+      "id": "row-3",
+      "region": "r3"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v75i-deny-failed-beside-granted",
+   "about": "As allow-failed-beside-granted with a DENY rule over the failed source, node DENY_OVERRIDES.",
+   "pips": [
+    "scope",
+    "failed"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "failed",
+         "target": "true",
+         "condition": "subject.parityR75IterFailed == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "granted",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS resource.region",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})",
+          "sqlPredicate": "region IN (${subject.permissionScope.region})",
+          "predicate": "${resourceType}.region.in(${subject.permissionScope.region})",
+          "mongodbPredicate": "{ \"region\": { \"$in\": ${subject.permissionScope.region} } }"
+         }
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "resource": {
+      "id": "row-1",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "row-2",
+     "resource": {
+      "id": "row-2",
+      "region": "r2"
+     }
+    },
+    {
+     "name": "row-3",
+     "resource": {
+      "id": "row-3",
+      "region": "r3"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v75i-failed-and-row-beside-granted",
+   "about": "The failed source AND resource.a == 'y' in an ALLOW rule inside the passes: unknown on rows with a = y, false on the others. Does the failure deny only rows with a = y?",
+   "pips": [
+    "scope",
+    "failed"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "failed",
+         "target": "true",
+         "condition": "subject.parityR75IterFailed == 'v' AND resource.a == 'y'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "granted",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS resource.region",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})",
+          "sqlPredicate": "region IN (${subject.permissionScope.region})",
+          "predicate": "${resourceType}.region.in(${subject.permissionScope.region})",
+          "mongodbPredicate": "{ \"region\": { \"$in\": ${subject.permissionScope.region} } }"
+         }
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "resource": {
+      "id": "row-1",
+      "region": "r1",
+      "a": "y"
+     }
+    },
+    {
+     "name": "row-2",
+     "resource": {
+      "id": "row-2",
+      "region": "r1",
+      "a": "n"
+     }
+    },
+    {
+     "name": "row-3",
+     "resource": {
+      "id": "row-3",
+      "region": "r3",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v75i-deny-undefined-target-beside-granted",
+   "about": "A DENY rule, condition true, whose target resource.t == 'y' reads an attribute rows r1 and r2 lack, beside the rule that allows the region of each assignment, node DENY_OVERRIDES. In legacy's check an aborted target makes the rule not apply; the agent (LI-50) denies the rows where a DENY rule's target is unknown. Row r1 with t = n is the twin.",
+   "pips": [
+    "scope",
+    "failed"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "undefined",
+         "target": "resource.t == 'y'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "granted",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS resource.region",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})",
+          "sqlPredicate": "region IN (${subject.permissionScope.region})",
+          "predicate": "${resourceType}.region.in(${subject.permissionScope.region})",
+          "mongodbPredicate": "{ \"region\": { \"$in\": ${subject.permissionScope.region} } }"
+         }
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "resource": {
+      "id": "row-1",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "row-2",
+     "resource": {
+      "id": "row-2",
+      "region": "r2"
+     }
+    },
+    {
+     "name": "row-3",
+     "resource": {
+      "id": "row-3",
+      "region": "r1",
+      "t": "n"
+     }
+    },
+    {
+     "name": "row-4",
+     "resource": {
+      "id": "row-4",
+      "region": "r1",
+      "t": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v75i-control-last",
+   "about": "Control: as v75i-control-first, at the end of the function.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}
