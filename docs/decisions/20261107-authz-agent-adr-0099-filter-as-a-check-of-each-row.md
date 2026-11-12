@@ -92,9 +92,12 @@ predicate of each rule as its condition on the row, and narrow that set where a 
 - **R9** (`translate`). In `check/filter`, a rule, a policy, or a set whose target is an unknown target gets its rows
   as follows, whatever made the target unknown:
   1. a DENY rule with a predicate, whose condition is not false for the subject, keeps its predicate: it gets the rows
-     of its predicate as denied rows and no allowed rows;
-  2. any other node that can deny gets denied rows that are unknown and no allowed rows;
-  3. a node that cannot deny is not applicable to any row.
+     of its predicate as denied rows and no allowed rows, also where its condition depends on a failed value, and
+     ADR-0098 R11 item 2 does not give it rows;
+  2. a node that item 1 does not cover, and that can deny only through rules whose condition depends on a failed
+     value, gets, as denied rows, the rows that ADR-0098 R11 item 2 denies through those rules, and no allowed rows;
+  3. any other node that can deny gets denied rows that are unknown and no allowed rows;
+  4. a node that cannot deny is not applicable to any row.
 
   An ALLOW rule whose condition depends on a failed value denies under ADR-0098 R11. Such a rule, and a node with
   such a rule below it, are therefore nodes that can deny, in `check/filter` under this rule and in `check/resource`
@@ -146,8 +149,13 @@ predicate of each rule as its condition on the row, and narrow that set where a 
   stays in the text. The quotes and the form that surround a value, or stand for a value that is empty or that legacy
   does not substitute, are those legacy writes under ADR-0097 R7; `${subject.id}`, for one, is written without
   quotes. A value that holds a placeholder is substituted again, at most four more times, a bound of the agent's own,
-  and `$${name}` in a template is written as the text `${name}`. In `customPredicate` the agent returns `predicate` as
+  and a placeholder still left after the fourth of those substitutions stays in the text as written. `$${name}` in a
+  template is written as the text `${name}`. In `customPredicate` the agent returns `predicate` as
   the template states it and puts each value only into `params`.
+- **R14** (`translate`). The agent writes no text that it derives from the condition or the target of a rule, or from
+  the target of a policy or a set above it. Where the rows that ADR-0098 R11 item 2 denies depend on a comparison of
+  such a condition or target with an attribute of the resource, every dialect gets `null` for that subtraction, and the
+  answer follows R5.
 
 #### Departures that allow more
 
@@ -207,6 +215,14 @@ such as `LOWER(...)` or `IS NOT NULL` would guess at the store, could keep the d
 cannot be written in an RSQL dialect whose parser has no such operator. The author knows the store, so keeping the
 template in step with the condition is the author's task (R11).
 
+The rows that ADR-0098 R11 denies through a failed value are described by the condition, not by a template. A text
+that the agent derives from the condition compares by the rules of the store, where `==` in the condition ignores case
+and converts types. With `subject.x == 'v' AND resource.a == 'y'` and a failed `subject.x`, ADR-0098 R11 denies every
+row whose `a` equals `y` ignoring case. The derived text `a=="y"` misses `{"a":"Y"}` in a store that compares
+case-sensitively, so the filter would admit that row where another rule allows it, and `check/resource` denies it. R11 accepts that cost for a template
+only because its author knows the store; the agent does not, so it writes no such text and narrows the answer under R5
+(R14).
+
 Policy authors already write quotes around a placeholder in their templates, such as `t='${subject.id}'`, and some
 templates substitute a list that forms part of the syntax of the predicate. Escaping a value for its dialect would
 change the predicates those templates produce today, so the agent writes the value as it is (R13). `customPredicate`
@@ -246,6 +262,9 @@ legacy filter, so each is named as allowing more (R8).
 - **A12. Escape each value for its dialect before substitution.** Rejected by R13: existing templates already write
   quotes around the placeholder, and some substitute a list that forms part of the syntax, so escaping would change
   the predicates they produce today.
+- **A13. Derive the text of the rows that ADR-0098 R11 denies from the condition, such as `a=="y"` for
+  `resource.a == 'y'`.** Rejected by R14: the text compares by the rules of the store, and where another rule allows a
+  row, admits it although `check/resource` denies it.
 
 ## Consequences
 
@@ -272,6 +291,9 @@ Negative:
   the predicate. The policy author decides which values a template substitutes: a value whose characters a caller or
   a user controls, such as a token claim or a PIP answer built from the request, belongs in `customPredicate` instead,
   where the application binds it as a parameter.
+- While a source fails, a filter in which ADR-0098 R11 denies the rows of a condition that compares an attribute of
+  the resource answers `null` in every dialect for that subtraction, and `DENY` where no dialect is left (R14). The
+  rows that `check/resource` allows there are not admitted.
 
 Follow-ups:
 
@@ -280,6 +302,9 @@ Follow-ups:
 
 - `combine` in #205 keeps the denied rows of a node whole, where R2 subtracts its allowed rows. The answer is narrower
   than R1 states, which is safe, and the code changes to match R2.
+- #205 writes a text derived from the condition for the rows that ADR-0098 R11 item 2 denies, such as `a!="y"` for
+  `subject.x == 'v' OR resource.a == 'y'`, and a text derived from the targets above the rule (`e.path` in
+  `internal/regogen/filteralg.go`), where R14 gives `null`.
 - A page for policy authors that states how a value is substituted into each dialect, and that `customPredicate` is the
   form for a value a caller controls (R13).
 - An option of a policy set that turns on escaping of substituted values, off by default, is a compatible way to fix
@@ -292,5 +317,9 @@ Follow-ups:
   `check/filter` calls for resource types that use deny lists. The point affects R3 and R5.
 - **O2.** Whether the agent fails the request instead of substituting a value that contains the quote character of the
   surrounding template, or, for a placeholder without quotes, a separator or an operator of the dialect, and whether a
-  value that holds a placeholder is substituted again or fails the request too. The owner of
-  the policy decision code (`vlsi`) decides. The point affects R13.
+  value that holds a placeholder is substituted again or fails the request too. Legacy sets no bound on the repeated
+  substitution, so the placeholder that R13 leaves in the text after the bound is a departure whose direction this
+  point settles as well. The owner of the policy decision code (`vlsi`) decides. The point affects R13.
+- **O3.** Whether the agent writes no text for the rows that ADR-0098 R11 item 2 denies, as R14 states, or writes a
+  text derived from the condition and names the rows it admits as a departure that allows more. The owner of the
+  policy decision code (`vlsi`) decides. The point affects R14.
