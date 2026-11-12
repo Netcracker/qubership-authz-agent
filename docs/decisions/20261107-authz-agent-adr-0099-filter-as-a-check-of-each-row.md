@@ -138,9 +138,16 @@ predicate of each rule as its condition on the row, and narrow that set where a 
      wrapping, `NOT (...)` and `(...).not()`.
   3. A mongodb fragment that has no opposite operator, such as a bare value, is negated by wrapping it in `$nor`.
 - **R11** (`translate`). The text of a predicate depends only on the rule's template in that dialect and on the values
-  substituted into it under R7, not on the rule's condition. The agent does not check that a template selects the rows
+  substituted into it under R13, not on the rule's condition. The agent does not check that a template selects the rows
   on which the condition holds, and adds no guard to a negated predicate for a case where the two can differ, such as
   a comparison that ignores case, a missing attribute, or a value of another type.
+- **R13** (`translate`). The agent substitutes the value of a placeholder into the text of a predicate in every
+  dialect without escaping any character of it: a quote, a separator, or an operator of the dialect inside the value
+  stays in the text. The quotes and the form that surround a value, or stand for a value that is empty or that legacy
+  does not substitute, are those legacy writes under ADR-0097 R7; `${subject.id}`, for one, is written without
+  quotes. A value that holds a placeholder is substituted again, at most four more times, a bound of the agent's own,
+  and `$${name}` in a template is written as the text `${name}`. In `customPredicate` the agent returns `predicate` as
+  the template states it and puts each value only into `params`.
 
 #### Departures that allow more
 
@@ -200,6 +207,11 @@ such as `LOWER(...)` or `IS NOT NULL` would guess at the store, could keep the d
 cannot be written in an RSQL dialect whose parser has no such operator. The author knows the store, so keeping the
 template in step with the condition is the author's task (R11).
 
+Policy authors already write quotes around a placeholder in their templates, such as `t='${subject.id}'`, and some
+templates substitute a list that forms part of the syntax of the predicate. Escaping a value for its dialect would
+change the predicates those templates produce today, so the agent writes the value as it is (R13). `customPredicate`
+keeps the values out of the text, and the application binds them itself (R13).
+
 Each of these departures agrees with `check/resource`, and still admits rows that a project may never have seen in a
 legacy filter, so each is named as allowing more (R8).
 
@@ -231,6 +243,9 @@ legacy filter, so each is named as allowing more (R8).
   mongodb have no way to name a part of a predicate and refer to it again.
 - **A11. Build the exact text at any depth and size.** Rejected by R12: the text and the time to build it grow
   exponentially with the depth of alternating sets.
+- **A12. Escape each value for its dialect before substitution.** Rejected by R13: existing templates already write
+  quotes around the placeholder, and some substitute a list that forms part of the syntax, so escaping would change
+  the predicates they produce today.
 
 ## Consequences
 
@@ -251,6 +266,12 @@ Negative:
   `segment = 'VIP'`, a row with `segment = 'vip'` appears in the list, and `check/resource` denies it because `==`
   ignores case. A value of another type, such as `5` against `"5"`, and, in mongodb, a document without the attribute
   differ in the same way.
+- A predicate is only as safe as the values substituted into it (R13). A value that holds a quote, a separator, or an
+  operator of the dialect changes the structure of the predicate, and the predicate can then select rows the policy
+  does not allow. A value that holds a placeholder, such as `${subject.id}`, pulls another value of the subject into
+  the predicate. The policy author decides which values a template substitutes: a value whose characters a caller or
+  a user controls, such as a token claim or a PIP answer built from the request, belongs in `customPredicate` instead,
+  where the application binds it as a parameter.
 
 Follow-ups:
 
@@ -259,9 +280,17 @@ Follow-ups:
 
 - `combine` in #205 keeps the denied rows of a node whole, where R2 subtracts its allowed rows. The answer is narrower
   than R1 states, which is safe, and the code changes to match R2.
+- A page for policy authors that states how a value is substituted into each dialect, and that `customPredicate` is the
+  form for a value a caller controls (R13).
+- An option of a policy set that turns on escaping of substituted values, off by default, is a compatible way to fix
+  R13 later. It needs an issue.
 
 ## Open points
 
 - **O1.** Whether R5 may make the answer `DENY` for a DENY rule without a predicate next to a condition on the resource,
   as the second negative consequence states. The owner of the policy decision code (`vlsi`) confirms it against data on
   `check/filter` calls for resource types that use deny lists. The point affects R3 and R5.
+- **O2.** Whether the agent fails the request instead of substituting a value that contains the quote character of the
+  surrounding template, or, for a placeholder without quotes, a separator or an operator of the dialect, and whether a
+  value that holds a placeholder is substituted again or fails the request too. The owner of
+  the policy decision code (`vlsi`) decides. The point affects R13.
