@@ -33,7 +33,8 @@ STUB_CHART_DIR="${ROOT_DIR}/helm-templates/authz-policy-admin"
 # the renders that go without it.
 SIZING="$(mktemp)"
 sentinel="$(mktemp)"
-trap 'rm -f "${SIZING}" "${sentinel}"' EXIT
+large="$(mktemp)"
+trap 'rm -f "${SIZING}" "${sentinel}" "${large}"' EXIT
 printf 'CPU_REQUEST: 350m\nCPU_LIMIT: 400m\nMEMORY_REQUEST: 364Mi\nMEMORY_LIMIT: 700Mi\n' >"${SIZING}"
 
 require_cmd() {
@@ -976,6 +977,51 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
       pass "${name} refuses LOG_LEVEL '${bad_level}'"
     fi
   done
+done
+
+# ── Integers reach the agent in decimal digits ───────────────────────────
+
+# Helm reads a number in a values file as a float and prints 1000000 as 1e+06,
+# which the agent cannot read as an integer.
+integer_settings=(
+  AUTHZ_JWKS_HTTP_TIMEOUT
+  AUTHZ_JWKS_HTTP_RETRIES
+  AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL
+  AUTHZ_PAP_CLIENT_PULL_INTERVAL
+  AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT
+  AUTHZ_ENTITLEMENTS_HTTP_RETRIES
+)
+printf '%s: 1000000\n' "${integer_settings[@]}" >"${large}"
+for name in "${integer_settings[@]}"; do
+  rendered="$(env_value "${name}" -f "${large}")"
+  if [[ "${rendered}" == "1000000" ]]; then
+    pass "${name}: 1000000 from a values file renders as 1000000"
+  else
+    fail "${name}: 1000000 from a values file rendered as '${rendered}', expected 1000000"
+  fi
+done
+
+# A value that --skip-schema-validation lets through reaches the agent as
+# written, rather than as a number the operator did not set: 2s from --set is a
+# string, 1.5 from a values file a float that is not whole, and 9007199254740993
+# a whole number that Helm's float holds only as 9007199254740992.
+for name in "${integer_settings[@]}"; do
+  rendered="$(env_value "${name}" --skip-schema-validation --set "${name}=2s")"
+  if [[ "${rendered}" == "2s" ]]; then
+    pass "${name}: 2s renders as given"
+  else
+    fail "${name}: 2s rendered as '${rendered}', expected 2s"
+  fi
+done
+for case in "1.5:1.5" "9007199254740991:9007199254740991" "9007199254740993:9.007199254740992e+15"; do
+  given="${case%%:*}" expected="${case#*:}"
+  printf 'AUTHZ_JWKS_HTTP_RETRIES: %s\n' "${given}" >"${large}"
+  rendered="$(env_value AUTHZ_JWKS_HTTP_RETRIES --skip-schema-validation -f "${large}")"
+  if [[ "${rendered}" == "${expected}" ]]; then
+    pass "AUTHZ_JWKS_HTTP_RETRIES: ${given} from a values file renders as ${expected}"
+  else
+    fail "AUTHZ_JWKS_HTTP_RETRIES: ${given} from a values file rendered as '${rendered}', expected ${expected}"
+  fi
 done
 
 echo
