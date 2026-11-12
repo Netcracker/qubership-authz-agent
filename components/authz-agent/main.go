@@ -212,10 +212,11 @@ func serveUntilShutdown(ctx context.Context, stop func(), surfaces []surface) bo
 	return failed.Load()
 }
 
-// get reads one key through configloader, except that an environment
-// variable set to the empty string is returned as the empty string:
-// configloader falls back to the default there, and the chart sets a URL to
-// "" to switch it off.
+// get reads one key through configloader, except that it returns the empty
+// string for an environment variable set to the empty string, where
+// configloader returns fallback. The caller decides what an empty value
+// means: an empty AUTHZ_TRUSTED_PROVIDERS_FILE runs the service without
+// trusted providers.
 func get(key, fallback string) string {
 	if value, ok := os.LookupEnv(strings.ToUpper(strings.ReplaceAll(key, ".", "_"))); ok && value == "" {
 		return ""
