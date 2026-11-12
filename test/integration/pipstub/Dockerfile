@@ -7,7 +7,7 @@ RUN go mod download
 COPY *.go ./
 RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" go build -o /pip-stub .
 
-FROM ghcr.io/netcracker/qubership-core-base:alpine-2.5.12@sha256:2eaad09b552eca2d10d65570f66425322235898ac8d7299eddbad8fdfa81b66b
+FROM ghcr.io/netcracker/qubership-core-base:alpine-2.5.13@sha256:891386ea91d90a1376e12f30b458fc23eb9793afd35f82817c90e4911cddd633
 COPY --chmod=555 --from=builder /pip-stub /usr/local/bin/pip-stub
 USER 10001:10001
 EXPOSE 8090
