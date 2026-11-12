@@ -139,8 +139,13 @@ func providersFile(t *testing.T, content string) string {
 
 func newManager(t *testing.T, file string, required bool, tenantManager string) (*Manager, *store) {
 	t.Helper()
+	return newManagerLogging(t, file, required, tenantManager, quiet{})
+}
+
+func newManagerLogging(t *testing.T, file string, required bool, tenantManager string, log Logger) (*Manager, *store) {
+	t.Helper()
 	st := &store{}
-	m := New(Config{File: file, Required: required, HTTPTimeout: 2 * time.Second, HTTPRetries: 1, TenantManagerURL: tenantManager}, st, quiet{})
+	m := New(Config{File: file, Required: required, HTTPTimeout: 2 * time.Second, HTTPRetries: 1, TenantManagerURL: tenantManager}, st, log)
 	return m, st
 }
 
@@ -347,6 +352,98 @@ func TestBootstrap_ResolvesTheRealmDisplayName(t *testing.T) {
 	}
 	if kids := keysOf(st.last(t).JwksByKid); !reflect.DeepEqual(kids, []string{"k1"}) {
 		t.Errorf("jwksByKid kids = %v, want [k1]", kids)
+	}
+}
+
+// TestNewRealmResolver_LooksUpOnlyWithAnAddress: an empty or blank address
+// gives no resolver, and any other address gives one.
+func TestNewRealmResolver_LooksUpOnlyWithAnAddress(t *testing.T) {
+	for _, tt := range []struct {
+		name, address string
+		want          bool
+	}{
+		{"empty", "", false},
+		{"blank", "  ", false},
+		{"an address", "http://tm:8080", true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := newRealmResolver(tt.address, http.DefaultClient, quiet{}) != nil; got != tt.want {
+				t.Errorf("newRealmResolver(%q) returned a resolver: %t, want %t", tt.address, got, tt.want)
+			}
+		})
+	}
+}
+
+// infos keeps the text of every info record it receives.
+type infos []string
+
+func (l *infos) Infof(format string, args ...any) { *l = append(*l, fmt.Sprintf(format, args...)) }
+func (*infos) Warnf(string, ...any)               {}
+
+// lookupOff counts the records that say the realm lookup is off.
+func (l infos) lookupOff() int {
+	n := 0
+	for _, r := range l {
+		if strings.Contains(r, "AUTHZ_TENANT_MANAGER_URL is empty") {
+			n++
+		}
+	}
+	return n
+}
+
+// TestBootstrap_LogsThatTheRealmLookupIsOff: a start with providers and no
+// tenant-manager address logs that a realm written by its tenant display
+// name is not resolved; a start with an address, or with no providers,
+// does not.
+func TestBootstrap_LogsThatTheRealmLookupIsOff(t *testing.T) {
+	srv := idp(t)
+	oneProvider := fmt.Sprintf(`{"providers":[{"id":"a","issuer":"%s/realms/a"}]}`, srv.URL)
+	for _, tt := range []struct {
+		name, address, providers string
+		want                     int
+	}{
+		{"no address", "", oneProvider, 1},
+		{"a blank address", "  ", oneProvider, 1},
+		{"an address", "http://tm:8080", oneProvider, 0},
+		{"no address and no providers", "", `{"providers":[]}`, 0},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var log infos
+			m, _ := newManagerLogging(t, providersFile(t, tt.providers), true, tt.address, &log)
+			m.Bootstrap(context.Background())
+			if got := log.lookupOff(); got != tt.want {
+				t.Errorf("Bootstrap() with the address %q and %s logged the lookup off %d times, want %d; info records: %q", tt.address, tt.providers, got, tt.want, log)
+			}
+		})
+	}
+}
+
+// TestReload_LogsThatTheRealmLookupIsOffOnce: without a tenant-manager
+// address, the first reload that brings providers logs that the realm
+// lookup is off, and a later one does not log it again.
+func TestReload_LogsThatTheRealmLookupIsOffOnce(t *testing.T) {
+	srv := idp(t)
+	file := providersFile(t, `{"providers":[]}`)
+	var log infos
+	m, _ := newManagerLogging(t, file, false, "", &log)
+	m.Bootstrap(context.Background())
+	for _, step := range []struct {
+		name, providers string
+		want            int
+	}{
+		{"another empty list", `{"providers": []}`, 0},
+		{"one provider", fmt.Sprintf(`{"providers":[{"id":"a","issuer":"%s/realms/a"}]}`, srv.URL), 1},
+		{"two providers", fmt.Sprintf(`{"providers":[{"id":"a","issuer":"%s/realms/a"},{"id":"b","issuer":"%s/realms/b"}]}`, srv.URL, srv.URL), 1},
+	} {
+		if err := os.WriteFile(file, []byte(step.providers), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if changed, err := m.Reload(context.Background()); !changed || err != nil {
+			t.Fatalf("Reload() after writing %s = %v, %v; want true, nil", step.name, changed, err)
+		}
+		if got := log.lookupOff(); got != step.want {
+			t.Errorf("after the reload with %s the lookup off was logged %d times, want %d; info records: %q", step.name, got, step.want, log)
+		}
 	}
 }
 
