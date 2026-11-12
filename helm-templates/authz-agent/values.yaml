@@ -46,7 +46,8 @@ APPLICATION_NAME: 'Platform-Core-Security'
 MONITORING_ENABLED: true
 # Read-only root file system for the container, on Kubernetes; on OpenShift the
 # template leaves it writable, as the platform's charts do. The agent writes
-# nothing to its file system.
+# nothing to its file system, and where it is read-only the template mounts
+# emptyDir volumes at the paths the base image's entrypoint writes to.
 READONLY_CONTAINER_FILE_SYSTEM_ENABLED: true
 # The app.kubernetes.io/managed-by label of every object but the Pod template.
 # Cloud-Deployer overrides it (argocd installs set `argocd`).
