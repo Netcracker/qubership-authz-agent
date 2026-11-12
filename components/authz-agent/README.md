@@ -32,25 +32,34 @@ The chart assembles the agent Pod as this one container.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger; the chart sets it from its `LOG_LEVEL` value |
+| `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger: `debug`, `info`, `warn`, `error`, or `fatal`; the chart sets it from its `LOG_LEVEL` value |
 | `AUTHZ_PUBLIC_ADDR` | `0.0.0.0:8080` | Listen address of the public surface |
 | `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the internal surface: the probes, the metrics, and `/api-version` |
 | `AUTHZ_TRUSTED_PROVIDERS_FILE` | `/etc/authz/trusted-providers.json` | The trusted providers; empty runs without them |
 | `AUTHZ_JWKS_BOOTSTRAP_REQUIRED` | `true` | Strict mode: every provider has to bootstrap; `false` wants one |
-| `AUTHZ_JWKS_HTTP_TIMEOUT` | `5` | Seconds per discovery or JWKS request |
-| `AUTHZ_JWKS_HTTP_RETRIES` | `3` | Attempts per request |
+| `AUTHZ_JWKS_HTTP_TIMEOUT` | `5` | Seconds per discovery or JWKS request, at least `1` |
+| `AUTHZ_JWKS_HTTP_RETRIES` | `3` | Attempts per request, at least `1` |
 | `AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL` | `30` | Seconds between checks of the file for a change; `0` never reloads |
 | `AUTHZ_TENANT_MANAGER_URL` | empty | Base URL of tenant-manager, which resolves a realm written by its tenant display name; empty disables the lookup. The chart sets it from its `AUTHZ_TENANT_MANAGER_URL` value, `http://tenant-manager:8080` by default |
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
 | `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
-| `AUTHZ_ENTITLEMENTS_URL`, `AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT`, `AUTHZ_ENTITLEMENTS_HTTP_RETRIES` | empty, `5`, `3` | The entitlements PIP pinned by the deployment; an empty URL adds none |
+| `AUTHZ_ENTITLEMENTS_URL`, `AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT`, `AUTHZ_ENTITLEMENTS_HTTP_RETRIES` | empty, `5`, `3` | The entitlements PIP pinned by the deployment, with its timeout in seconds and its attempts per request, each at least `1`; an empty URL adds none |
 | `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; empty reads the token from `AUTHZ_PAP_CLIENT_TOKEN_FILE` instead |
 | `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials |
-| `AUTHZ_M2M_RENEW_BEFORE_SECONDS` | `60` | How long before its expiry the token is refreshed |
+| `AUTHZ_M2M_RENEW_BEFORE_SECONDS` | `60` | Seconds before its expiry at which the token is refreshed, at least `0` |
 | `AUTHZ_PAP_CLIENT_TOKEN_FILE` | `/var/run/secrets/tokens/netcracker/token` | The token file, read every 15 seconds, when there is no token endpoint; the default is where the platform's charts mount the netcracker-audience projected token |
 
-A variable set to the empty string switches its feature off where the table says so; an unset variable takes the
-default.
+A variable set to the empty string switches its feature off where the table says so. An unset variable takes the
+default, and so does an empty number, an empty `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, and an empty `LOGGING_LEVEL_ROOT`.
+
+A number is an integer in decimal digits with an optional sign, and a number of seconds is at most `9223372036`.
+`AUTHZ_JWKS_BOOTSTRAP_REQUIRED` and `LOGGING_LEVEL_ROOT` are read without regard to case. A value of another form or
+outside its range stops the start: the agent logs one line, at any log level, that names each such variable with the
+values it accepts, and exits with status 1 before it listens. For example:
+
+```text
+configuration: AUTHZ_PAP_CLIENT_PULL_INTERVAL="2s": expected an integer number of seconds from 0 to 9223372036
+```
 
 The policy source is the only way policies reach the agent.
 
