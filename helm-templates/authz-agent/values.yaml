@@ -49,12 +49,17 @@ MONITORING_ENABLED: true
 # nothing to its file system, and where it is read-only the template mounts
 # emptyDir volumes at the paths the base image's entrypoint writes to.
 READONLY_CONTAINER_FILE_SYSTEM_ENABLED: true
-# Name of a Secret in the release namespace that holds CA certificates for the
-# agent to trust, under keys that end in .crt, .cer, or .pem. The Pod mounts it
-# at /tmp/cert, and when the container starts the base image's entrypoint adds
-# those certificates to the system trust store, against which the agent verifies
-# every HTTPS server it calls. A certificate replaced in the Secret is trusted
-# after the next restart of the Pod. Empty (default) mounts nothing.
+# Name of a Secret in the release namespace whose keys that end in .crt, .cer, or
+# .pem hold CA certificates the agent trusts, in addition to the public CAs of
+# its image, for every HTTPS server it calls, such as the identity provider, the
+# policy source, and the PIPs. Empty (default) mounts nothing. Set it when one of
+# those servers presents a certificate that a private CA signed.
+#
+# The Pod mounts the Secret read-only at /tmp/cert, and the certificates are read
+# when the container starts, so a certificate replaced in the Secret is trusted
+# after the next restart of the Pod. A name with no Secret behind it keeps the
+# new Pod in ContainerCreating with the event:
+#   MountVolume.SetUp failed for volume "ca-certificates-secret" : secret "<name>" not found
 CA_CERTIFICATES_SECRET: ''
 # The app.kubernetes.io/managed-by label of every object but the Pod template.
 # Cloud-Deployer overrides it (argocd installs set `argocd`).
