@@ -251,6 +251,42 @@ func TestLoadConfig_PinsTheEntitlementsPIPOnlyWithAURL(t *testing.T) {
 // AUTHZ_ value under its own name. A keyword of the schema that this test
 // does not compare with the agent fails it.
 func TestLoadConfig_AgreesWithTheChartSchemaAtEachBound(t *testing.T) {
+	checks := chartChecks(t)
+	if len(checks) == 0 {
+		t.Fatal("the chart schema has no checked AUTHZ_ value and no LOG_LEVEL")
+	}
+	for _, check := range checks {
+		key := strings.ToLower(strings.ReplaceAll(check.variable, "_", "."))
+		for _, value := range check.accepted {
+			if _, err := loadConfig(fromMap(map[string]string{key: value})); err != nil {
+				t.Errorf("loadConfig() with %s=%q, which the chart schema accepts, refused it: %v", check.variable, value, err)
+			}
+		}
+		for _, value := range check.refused {
+			if _, err := loadConfig(fromMap(map[string]string{key: value})); err == nil || !strings.Contains(err.Error(), check.variable+"=") {
+				t.Errorf("loadConfig() with %s=%q, which the chart schema refuses, returned %v, want an error that names %s", check.variable, value, err, check.variable)
+			}
+		}
+	}
+}
+
+// chartCheck is one variable whose value the chart's values schema checks,
+// with values on both sides of each bound of the check.
+type chartCheck struct {
+	variable          string
+	accepted, refused []string
+}
+
+// comparedKeywords are the keywords of a schema property that
+// [TestLoadConfig_AgreesWithTheChartSchemaAtEachBound] compares with the
+// agent, or that check nothing.
+var comparedKeywords = map[string]bool{
+	"$id": true, "title": true, "description": true, "default": true, "examples": true, "envSpecific": true, "internal": true,
+	"type": true, "minimum": true, "maximum": true, "enum": true,
+}
+
+func chartChecks(t *testing.T) []chartCheck {
+	t.Helper()
 	raw, err := os.ReadFile(filepath.Join("..", "..", "helm-templates", "authz-agent", "values.schema.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -261,74 +297,80 @@ func TestLoadConfig_AgreesWithTheChartSchemaAtEachBound(t *testing.T) {
 	if err := json.Unmarshal(raw, &schema); err != nil {
 		t.Fatal(err)
 	}
-	compared := map[string]bool{
-		"$id": true, "title": true, "description": true, "default": true, "examples": true, "envSpecific": true, "internal": true,
-		"type": true, "minimum": true, "maximum": true, "enum": true,
-	}
-	checked := 0
+	var checks []chartCheck
 	for name, property := range schema.Properties {
-		variable := name
-		switch {
-		case name == "LOG_LEVEL":
-			variable = "LOGGING_LEVEL_ROOT"
-		case !strings.HasPrefix(name, "AUTHZ_"):
+		variable, passed := chartVariable(name)
+		if !passed {
 			continue
 		}
-		decode := func(keyword string, into any) {
-			if value, ok := property[keyword]; ok {
-				if err := json.Unmarshal(value, into); err != nil {
-					t.Fatalf("%s: %s: %v", name, keyword, err)
-				}
-			}
+		if check, checked := boundValues(t, name, property); checked {
+			check.variable = variable
+			checks = append(checks, check)
 		}
-		var kind string
-		var minimum, maximum *int64
-		var enum []string
-		decode("type", &kind)
-		decode("minimum", &minimum)
-		decode("maximum", &maximum)
-		decode("enum", &enum)
-		if kind != "integer" && kind != "boolean" && kind != "string" {
-			continue
-		}
-		for keyword := range property {
-			if !compared[keyword] {
-				t.Errorf("%s: the chart schema checks it with %q, which this test does not compare with the agent", name, keyword)
-			}
-		}
-		var accepted, refused []string
-		switch {
-		case kind == "integer":
-			refused = append(refused, "1.5")
-			if minimum != nil {
-				accepted, refused = append(accepted, strconv.FormatInt(*minimum, 10)), append(refused, strconv.FormatInt(*minimum-1, 10))
-			} else {
-				accepted = append(accepted, "-1")
-			}
-			if maximum != nil {
-				accepted, refused = append(accepted, strconv.FormatInt(*maximum, 10)), append(refused, strconv.FormatInt(*maximum+1, 10))
-			}
-		case kind == "boolean":
-			accepted, refused = []string{"true", "false"}, []string{"yes"}
-		case len(enum) > 0:
-			accepted, refused = enum, []string{enum[0] + "x"}
-		default:
-			continue
-		}
-		checked++
-		key := strings.ToLower(strings.ReplaceAll(variable, "_", "."))
-		for _, value := range accepted {
-			if _, err := loadConfig(fromMap(map[string]string{key: value})); err != nil {
-				t.Errorf("loadConfig() with %s=%q, which the chart schema accepts, refused it: %v", variable, value, err)
-			}
-		}
-		for _, value := range refused {
-			if _, err := loadConfig(fromMap(map[string]string{key: value})); err == nil || !strings.Contains(err.Error(), variable+"=") {
-				t.Errorf("loadConfig() with %s=%q, which the chart schema refuses, returned %v, want an error that names %s", variable, value, err, variable)
+	}
+	return checks
+}
+
+// chartVariable is the environment variable to which the chart passes the
+// value name; passed is false for a value the chart passes to no variable
+// of the agent.
+func chartVariable(name string) (variable string, passed bool) {
+	switch {
+	case name == "LOG_LEVEL":
+		return "LOGGING_LEVEL_ROOT", true
+	case strings.HasPrefix(name, "AUTHZ_"):
+		return name, true
+	}
+	return "", false
+}
+
+// boundValues are the values on both sides of each bound of property;
+// checked is false for a property that is not a scalar or that a string
+// type alone describes.
+func boundValues(t *testing.T, name string, property map[string]json.RawMessage) (check chartCheck, checked bool) {
+	t.Helper()
+	var kind string
+	var minimum, maximum *int64
+	var enum []string
+	for keyword, into := range map[string]any{"type": &kind, "minimum": &minimum, "maximum": &maximum, "enum": &enum} {
+		if value, ok := property[keyword]; ok {
+			if err := json.Unmarshal(value, into); err != nil {
+				t.Fatalf("%s: %s: %v", name, keyword, err)
 			}
 		}
 	}
-	if checked == 0 {
-		t.Fatal("the chart schema has no checked AUTHZ_ value and no LOG_LEVEL")
+	if kind != "integer" && kind != "boolean" && kind != "string" {
+		return chartCheck{}, false
 	}
+	for keyword := range property {
+		if !comparedKeywords[keyword] {
+			t.Errorf("%s: the chart schema checks it with %q, which this test does not compare with the agent", name, keyword)
+		}
+	}
+	switch {
+	case kind == "integer":
+		return integerBounds(minimum, maximum), true
+	case kind == "boolean":
+		return chartCheck{accepted: []string{"true", "false"}, refused: []string{"yes"}}, true
+	case len(enum) > 0:
+		return chartCheck{accepted: enum, refused: []string{enum[0] + "x"}}, true
+	}
+	return chartCheck{}, false
+}
+
+// integerBounds are the values on both sides of minimum and maximum, either
+// of which may be absent, and a fraction, which no integer check accepts.
+func integerBounds(minimum, maximum *int64) chartCheck {
+	check := chartCheck{refused: []string{"1.5"}}
+	if minimum != nil {
+		check.accepted = append(check.accepted, strconv.FormatInt(*minimum, 10))
+		check.refused = append(check.refused, strconv.FormatInt(*minimum-1, 10))
+	} else {
+		check.accepted = append(check.accepted, "-1")
+	}
+	if maximum != nil {
+		check.accepted = append(check.accepted, strconv.FormatInt(*maximum, 10))
+		check.refused = append(check.refused, strconv.FormatInt(*maximum+1, 10))
+	}
+	return check
 }
