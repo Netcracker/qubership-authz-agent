@@ -16,6 +16,7 @@ package regobuiltins
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"errors"
 	"io"
@@ -375,23 +376,48 @@ func TestHTTPSend_AFailedCallIsAnAnswer(t *testing.T) {
 	}
 }
 
+// gzipped returns b compressed with gzip.
+func gzipped(b []byte) []byte {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	_, _ = zw.Write(b)
+	_ = zw.Close()
+	return buf.Bytes()
+}
+
 // TestHTTPSend_AResponseOverTheLimitFails: a body of 8 MiB is a response,
-// and one byte more is a transport failure.
+// and one byte more is a transport failure. The limit applies to a gzip body
+// once decompressed.
 func TestHTTPSend_AResponseOverTheLimitFails(t *testing.T) {
 	for _, tc := range []struct {
 		name string
 		size int
+		// gzip sends the body compressed, with Content-Encoding: gzip, to a
+		// request that names Accept-Encoding: gzip
+		gzip bool
 		want string
 	}{
-		{"a body at the limit", maxResponseBody, "200"},
-		{"a body over the limit", maxResponseBody + 1, `"transport"`},
+		{"a body at the limit", maxResponseBody, false, "200"},
+		{"a body over the limit", maxResponseBody + 1, false, `"transport"`},
+		{"a gzip body at the limit once decompressed", maxResponseBody, true, "200"},
+		{"a gzip body over the limit once decompressed", maxResponseBody + 1, true, `"transport"`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv, _ := pipServer(t, func(w http.ResponseWriter, _ *http.Request) {
-				_, _ = w.Write(bytes.Repeat([]byte("a"), tc.size))
+				body := bytes.Repeat([]byte("a"), tc.size)
+				if tc.gzip {
+					w.Header().Set("Content-Encoding", "gzip")
+					body = gzipped(body)
+				}
+				_, _ = w.Write(body)
 			})
 			ctx := (&HTTP{Token: ownToken}).Context(context.Background())
-			resp, err := sendEval(t, ctx, `nc.http.send({"url": "`+srv.URL+`", "raise_error": false})`)
+			headers := `{}`
+			if tc.gzip {
+				headers = `{"Accept-Encoding": "gzip"}`
+			}
+			resp, err := sendEval(t, ctx, `nc.http.send({"url": "`+srv.URL+`", "headers": `+headers+`,
+				"raise_error": false})`)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -401,6 +427,59 @@ func TestHTTPSend_AResponseOverTheLimitFails(t *testing.T) {
 			}
 			if got != tc.want {
 				t.Errorf("a body of %d bytes: status_code or error code = %s, want %s", tc.size, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestHTTPSend_ReadsAGzipBodyDecompressed: a response is [status_code,
+// raw_body, content-encoding, content-length], each header null where the
+// response has none, or the code of a failed call. The service answers every
+// request with the body and Content-Encoding of the row, whatever
+// Accept-Encoding the request carries.
+func TestHTTPSend_ReadsAGzipBodyDecompressed(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		// headers are the headers of the request, as Rego
+		headers  string
+		encoding string
+		body     []byte
+		want     string
+	}{
+		{"gzip to the request's Accept-Encoding", `{"Accept-Encoding": "gzip"}`, "gzip", gzipped([]byte(`["acc-7"]`)),
+			`[200, "[\"acc-7\"]", null, null]`},
+		{"gzip to the transport's own Accept-Encoding", `{}`, "gzip", gzipped([]byte(`["acc-7"]`)),
+			`[200, "[\"acc-7\"]", null, null]`},
+		{"an empty gzip body", `{"Accept-Encoding": "gzip"}`, "gzip", nil, `[200, "", null, null]`},
+		{"a body that is not gzip", `{"Accept-Encoding": "gzip"}`, "gzip", []byte(`["acc-7"]`), `"transport"`},
+		{"an encoding other than gzip", `{"Accept-Encoding": "br"}`, "br", []byte("x"), `[200, "x", ["br"], ["1"]]`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := pipServer(t, func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Encoding", tc.encoding)
+				_, _ = w.Write(tc.body)
+			})
+			ctx := (&HTTP{Token: ownToken}).Context(context.Background())
+			resp, err := sendEval(t, ctx, `nc.http.send({"url": "`+srv.URL+`", "headers": `+tc.headers+`,
+				"raise_error": false})`)
+			if err != nil {
+				t.Fatal(err)
+			}
+			header := func(name string) *ast.Term {
+				if h := resp.Get(ast.StringTerm("headers")).Get(ast.StringTerm(name)); h != nil {
+					return h
+				}
+				return ast.NullTerm()
+			}
+			var got *ast.Term
+			if e := resp.Get(ast.StringTerm("error")); e != nil {
+				got = e.Get(ast.StringTerm("code"))
+			} else {
+				got = ast.ArrayTerm(resp.Get(ast.StringTerm("status_code")), resp.Get(ast.StringTerm("raw_body")),
+					header("content-encoding"), header("content-length"))
+			}
+			if got.String() != tc.want {
+				t.Errorf("response = %v, want %s", got, tc.want)
 			}
 		})
 	}

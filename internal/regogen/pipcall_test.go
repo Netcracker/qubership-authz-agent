@@ -15,9 +15,11 @@
 package regogen
 
 import (
+	"compress/gzip"
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -387,6 +389,55 @@ func TestPIPFunction_ForwardsTheIncomingTokenItNames(t *testing.T) {
 				want: `{"method": "POST", "url": "http://g", "headers": {}, "raise_error": false,
 					"pip": "subject.g", "body": {"requestAttributes": null}}`}})
 	})
+}
+
+// TestPIPCall_ReadsAGzipResponseToTheCallersAcceptEncoding: the caller's
+// Accept-Encoding goes to the service, so Go's transport leaves a gzip
+// response to the agent to decompress.
+func TestPIPCall_ReadsAGzipResponseToTheCallersAcceptEncoding(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("Accept-Encoding"); got != "gzip" {
+			http.Error(w, "Accept-Encoding is "+got+", want gzip", http.StatusBadRequest)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Encoding", "gzip")
+		zw := gzip.NewWriter(w)
+		_, _ = zw.Write([]byte(`["acc-7"]`))
+		_ = zw.Close()
+	}))
+	defer srv.Close()
+	tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.g == 'acc-7'", fmt.Sprintf(
+		`{"name": "subject.g", "pipType": "GENERAL", "url": %q, "httpMethod": "GET", "headers": "Accept-Encoding"}`,
+		srv.URL))
+	m, err := Generate(tree, table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	var fn string
+	for _, r := range m.Refs {
+		if r.pip != nil {
+			fn = "pip_" + r.Var
+		}
+	}
+	in, err := Project(m, Request{Body: Body{Operation: "read", ResourceType: "doc"},
+		Headers: map[string]string{"accept-encoding": "gzip"},
+		// the record comes from the call; the projection still wants a value
+		Values: map[string]Resolved{`["subj","g"]`: resolved(t, "VALUE", `"acc-7"`)}})
+	if err != nil {
+		t.Fatalf("Project: %v", err)
+	}
+	h := &regobuiltins.HTTP{Token: func() (string, error) { return "own", nil }}
+	ctx := in.Context(regobuiltins.WithCalls(h.Context(context.Background())))
+	query := fmt.Sprintf("[data.%[1]s.%[2]s.state, data.%[1]s.allow]", DefaultOptions().Package, fn)
+	rs, err := rego.New(append(Builtins(), rego.Query(query), rego.Module("gen.rego", m.Text),
+		rego.ParsedInput(in.Value()))...).Eval(ctx)
+	if err != nil || len(rs) != 1 {
+		t.Fatalf("Eval(%s) = %v, %v", query, rs, err)
+	}
+	if got, want := fmt.Sprint(rs[0].Expressions[0].Value), "[VALUE true]"; got != want {
+		t.Errorf("[state of subject.g, allow] = %s, want %s for the gzip body [\"acc-7\"]", got, want)
+	}
 }
 
 // TestPIPFunction_EncodesTheValuesOfTheURL: a value put into the url of a

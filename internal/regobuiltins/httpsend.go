@@ -16,6 +16,7 @@ package regobuiltins
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"errors"
@@ -364,7 +365,7 @@ func do(ctx context.Context, req sendRequest, timeout time.Duration) (*ast.Term,
 		return nil, codeTransport, err
 	}
 	defer func() { _ = resp.Body.Close() }()
-	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody+1))
+	raw, err := readBody(resp)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			return nil, codeTimeout, fmt.Errorf("no complete response within %s", timeout)
@@ -375,6 +376,30 @@ func do(ctx context.Context, req sendRequest, timeout time.Duration) (*ast.Term,
 		return nil, codeTransport, fmt.Errorf("the response body exceeds %d bytes (8 MiB), the limit of a PIP response", maxResponseBody)
 	}
 	return response(resp, raw), "", nil
+}
+
+// readBody reads the body of resp, up to one byte over maxResponseBody after
+// decompression. The transport decompresses gzip only where it set
+// Accept-Encoding itself; where the request named the header, as a PIP that
+// forwards the caller's does, readBody decompresses a gzip body and drops
+// Content-Encoding and Content-Length from resp, as the transport does.
+// A body in any other encoding stays as sent.
+func readBody(resp *http.Response) ([]byte, error) {
+	var body io.Reader = resp.Body
+	if !resp.Uncompressed && strings.EqualFold(strings.TrimSpace(resp.Header.Get("Content-Encoding")), "gzip") {
+		resp.Header.Del("Content-Encoding")
+		resp.Header.Del("Content-Length")
+		zr, err := gzip.NewReader(resp.Body)
+		if errors.Is(err, io.EOF) {
+			// an empty body
+			return nil, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		body = zr
+	}
+	return io.ReadAll(io.LimitReader(body, maxResponseBody+1))
 }
 
 func response(resp *http.Response, raw []byte) *ast.Term {
