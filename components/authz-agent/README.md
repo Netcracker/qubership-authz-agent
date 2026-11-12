@@ -68,18 +68,29 @@ answers 200 as soon as the trusted providers meet the bootstrap rules, with no p
 
 ## Trusting a private CA
 
-Put the CA certificate in a `.crt`, `.cer`, or `.pem` file under `/tmp/cert` in the container. The image runs the
-agent as the command of the [entrypoint](https://github.com/Netcracker/qubership-core-base-images/blob/main/images/entrypoint.sh)
-of its base image, `qubership-core-base`. At every start, the entrypoint adds those certificates to the system trust
-store, and the agent verifies every HTTPS server it calls against that store, the PIPs included. The agent's chart
-mounts nothing at `/tmp/cert`; on Kubernetes, add a volume there to the Deployment, such as a Secret that holds the
-certificate.
+The agent trusts every CA certificate it finds in a `.crt`, `.cer`, or `.pem` file under `/tmp/cert` when its
+container starts. To make it trust a private CA:
 
-The entrypoint also runs the `*.sh` scripts in `/app/init.d` before the agent starts. On `SIGTERM` it waits
-`SIGTERM_EXIT_DELAY` seconds, 10 by default, before it passes the signal on, and the agent then takes up to 10 seconds
-to finish the requests in flight. A stop therefore needs a grace period longer than `SIGTERM_EXIT_DELAY` plus 10
-seconds. The 30 seconds Kubernetes gives a Pod by default are enough; with Docker, run `docker stop --timeout 30` or
-set `stop_grace_period: 30s` in Compose.
+1. Put the CA certificate under `/tmp/cert` in the container. The agent's chart cannot mount it there: add a volume at
+   `/tmp/cert` to the Deployment yourself, with a Helm post-renderer or kustomize, for example from a Secret that holds
+   the certificate under a key that ends in `.crt`. With Docker, mount the file with `--volume`.
+2. Restart the container after you add or replace the certificate. The trust store is built only when the container
+   starts, and the agent reads it once.
+
+The image runs the agent behind the
+[entrypoint](https://github.com/Netcracker/qubership-core-base-images/blob/main/images/entrypoint.sh) of its base image,
+`qubership-core-base`. Before the agent starts, the entrypoint adds the certificates under `/tmp/cert` to the system
+trust store. The agent verifies every HTTPS server it calls against that store, the PIPs included.
+
+## Stopping the agent
+
+A stop takes up to `SIGTERM_EXIT_DELAY` plus 10 seconds, so its grace period has to be longer than that. The 30 seconds
+Kubernetes gives a Pod by default are enough. `docker stop` and Docker Compose wait 10 seconds by default and then send
+`SIGKILL`, which ends the container with exit code 137 before the agent receives `SIGTERM`: run
+`docker stop --timeout 30`, or set `stop_grace_period: 30s` in Compose.
+
+The entrypoint of the base image holds `SIGTERM` back for `SIGTERM_EXIT_DELAY` seconds, 10 by default, before it passes
+the signal on, and the agent then takes up to 10 seconds to finish the requests in flight.
 
 ## Running it
 
