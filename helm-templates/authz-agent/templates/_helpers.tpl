@@ -12,6 +12,24 @@ empty, which leaves the pull loop off.
 {{- end -}}
 
 {{/*
+The value of an integer setting of the agent: a whole number in decimal
+digits, and any other value as given. Helm reads a number in a values file as
+a float and prints a float of 1000000 or more in exponent form, such as 1e+06,
+which the agent cannot read as an integer. A float holds a whole number
+exactly only below 2^53 (9007199254740992) in magnitude, so a larger one is
+rendered as given rather than as a number the operator did not set. A value
+that --skip-schema-validation lets through, such as 2s or 1.5, reaches the
+agent as written; int64 alone would render 2s as 0.
+*/}}
+{{- define "authz-agent.integer" -}}
+{{- if and (kindIs "float64" .) (lt . 9007199254740992.0) (gt . -9007199254740992.0) (eq . (float64 (int64 .))) -}}
+{{- int64 . -}}
+{{- else -}}
+{{- . -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Trusted providers (authz-agent-ADR-0075).
 
 When AUTHZ_TRUSTED_PROVIDERS is set it wins outright — an operator naming their
