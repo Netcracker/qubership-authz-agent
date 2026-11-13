@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_R75_FILTER_RULE_TARGET_PREDICATES_V75R_DENY_PRED_PO.allowed.eq(1)",
+    "mongodbFilterCondition": "{ { \"allowed\": 1 } }",
+    "rsqlFilterCondition": "allowed==1",
+    "sqlFilterCondition": "allowed=1",
+    "customFilterCondition": null
+  }
+}
