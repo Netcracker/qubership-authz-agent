@@ -419,7 +419,8 @@
       "examples": [
         3
       ],
-      "minimum": 1
+      "minimum": 1,
+      "maximum": 100
     },
     "AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL": {
       "$id": "#/properties/AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL",
@@ -461,7 +462,7 @@
       "$id": "#/properties/AUTHZ_PAP_CLIENT_TOKEN_FILE",
       "type": "string",
       "title": "The AUTHZ_PAP_CLIENT_TOKEN_FILE schema",
-      "description": "Path of the Bearer token the pull loop sends, written by the kubelet when KUBERNETES_M2M_ENABLED is true and by the agent's own token loop otherwise",
+      "description": "File the agent reads its token from when KUBERNETES_M2M_ENABLED is true. The chart mounts the projected token at the default path alone, so keep the default",
       "default": "/var/run/secrets/tokens/netcracker/token",
       "examples": [
         "/var/run/secrets/tokens/netcracker/token"
@@ -498,7 +499,8 @@
       "examples": [
         3
       ],
-      "minimum": 1
+      "minimum": 1,
+      "maximum": 100
     },
     "HPA_ENABLED": {
       "$id": "#/properties/HPA_ENABLED",

@@ -86,7 +86,8 @@ func TestReport(t *testing.T) {
 
 // The agent runs as a child process of this test binary, which calls main
 // when AUTHZ_AGENT_TEST_RUN_MAIN is 1. The child reads no trusted providers
-// file and no token file, so that only the value under test stops it.
+// file and has a token endpoint, the one value the agent requires, so that
+// only the value under test stops it.
 func TestStart_StopsAndNamesTheVariable(t *testing.T) {
 	if os.Getenv("AUTHZ_AGENT_TEST_RUN_MAIN") == "1" {
 		main()
@@ -121,7 +122,7 @@ func TestStart_StopsAndNamesTheVariable(t *testing.T) {
 			agent := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestStart_StopsAndNamesTheVariable$")
 			agent.Env = append(childEnvironment(), "AUTHZ_AGENT_TEST_RUN_MAIN=1", "LOGGING_LEVEL_ROOT="+tt.level,
 				"AUTHZ_HTTP_ADDR=127.0.0.1:0", "AUTHZ_PUBLIC_ADDR=127.0.0.1:0",
-				"AUTHZ_TRUSTED_PROVIDERS_FILE=", "AUTHZ_PAP_CLIENT_TOKEN_FILE=")
+				"AUTHZ_TRUSTED_PROVIDERS_FILE=", "AUTHZ_M2M_TOKEN_URL=http://127.0.0.1:1/token")
 			agent.Env = append(agent.Env, tt.env...)
 			out, err := agent.CombinedOutput()
 			var exit *exec.ExitError
