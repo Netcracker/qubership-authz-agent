@@ -663,7 +663,7 @@ func TestRun_LoadsARequiredRealmAndReadinessWaitsForEveryRequiredSource(t *testi
 		transport.setStatus("idp.test", http.StatusServiceUnavailable)
 		cfg := Config{
 			Keycloak:  &Keycloak{URL: "http://keycloak.test", RequiredRealms: []string{"cloud-common"}},
-			Providers: []Provider{providerOf("kubernetes")},
+			Providers: []Provider{providerOf("trusted")},
 		}
 		set := bubbleSetOf(t, cfg, Options{}, transport)
 		stop := runSet(t, set)

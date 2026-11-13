@@ -346,6 +346,17 @@ func (r *warnRecorder) count(part string) int {
 	return matched
 }
 
+// infoRecorder keeps the informational messages too.
+type infoRecorder struct {
+	warnRecorder
+	infos []string
+}
+
+// Infof records an informational message.
+func (r *infoRecorder) Infof(format string, args ...any) {
+	r.infos = append(r.infos, fmt.Sprintf(format, args...))
+}
+
 // containsAll reports whether s contains every one of parts.
 func containsAll(s string, parts ...string) bool {
 	for _, part := range parts {
