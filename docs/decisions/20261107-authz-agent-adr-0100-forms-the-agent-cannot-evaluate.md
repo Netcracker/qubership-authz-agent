@@ -26,7 +26,7 @@ vlsi
   departure that allows more.
 - [authz-agent-ADR-0098: Treat a value the agent could not read as unknown, and read each value once per request](20261107-authz-agent-adr-0098-unknown-values-and-source-calls.md):
   the unknown values that a policy set legacy never evaluates gives.
-- [authz-agent-ADR-0103: Deny every request of a tenant without a published snapshot, and keep readiness on /ready](20261112-authz-agent-adr-0103-tenant-without-a-snapshot.md):
+- [authz-agent-ADR-0103: Deny every request of a tenant without a published snapshot, refuse the untranslated default tenant with 503, and keep readiness on /ready](20261112-authz-agent-adr-0103-tenant-without-a-snapshot.md):
   ADR-0103 R1, the answer to a tenant whose candidate was rejected at the first pull.
 
 ## Context
