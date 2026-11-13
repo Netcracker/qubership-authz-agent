@@ -17,8 +17,10 @@ package verify
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -42,9 +44,6 @@ func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
 	if got := string(tok.Payload()); got != payload {
 		t.Errorf("Payload() = %s, want %s", got, payload)
 	}
-	if got := tok.Raw(); got != raw {
-		t.Errorf("Raw() = %q, want the token Verify received, %q", got, raw)
-	}
 	if got := tok.ProviderID(); got != "realm" {
 		t.Errorf("ProviderID() = %q, want %q", got, "realm")
 	}
@@ -56,6 +55,129 @@ func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
 	}
 	if got, want := tok.Expiry(), time.Unix(1792069200, 0); !got.Equal(want) {
 		t.Errorf("Expiry() = %s, want %s", got, want)
+	}
+}
+
+// The result reaches the code that builds a policy input, and a compact token is
+// a credential that anyone who reads it can present.
+func TestVerify_ReturnsAResultThatHoldsNoCompactToken(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm/r"})
+	v, _ := newVerifier(newFakeKeys(s))
+	raw := s.sign(t, claimsAt(start, nil))
+	tok := mustVerify(t, v, raw)
+	if at := pathOfText(reflect.ValueOf(tok), "Token", raw, map[uintptr]bool{}); at != "" {
+		t.Errorf("Verify() result holds the compact token in %s", at)
+	}
+}
+
+// pathOfText returns the path to the first string or byte slice inside v that
+// contains text, and "" when there is none. The path starts with path, the name
+// of v, and goes through fields (unexported ones too), elements, map keys and
+// values, pointers, and interfaces. seen holds the pointers already followed.
+func pathOfText(v reflect.Value, path, text string, seen map[uintptr]bool) string {
+	switch v.Kind() {
+	case reflect.String:
+		return pathIfContains(v.String(), path, text)
+	case reflect.Slice:
+		if v.Type().Elem().Kind() == reflect.Uint8 {
+			return pathIfContains(string(v.Bytes()), path, text)
+		}
+		return pathOfElement(v, path, text, seen)
+	case reflect.Array:
+		return pathOfElement(v, path, text, seen)
+	case reflect.Pointer:
+		if v.IsNil() || seen[v.Pointer()] {
+			return ""
+		}
+		seen[v.Pointer()] = true
+		return pathOfText(v.Elem(), path, text, seen)
+	case reflect.Interface:
+		if v.IsNil() {
+			return ""
+		}
+		return pathOfText(v.Elem(), path, text, seen)
+	case reflect.Map:
+		return pathOfEntry(v, path, text, seen)
+	case reflect.Struct:
+		return pathOfField(v, path, text, seen)
+	}
+	return ""
+}
+
+// pathIfContains returns path when s contains text, and "" otherwise.
+func pathIfContains(s, path, text string) string {
+	if strings.Contains(s, text) {
+		return path
+	}
+	return ""
+}
+
+// pathOfEntry returns the path to the first key or value of the map v that
+// contains text, searched as in [pathOfText].
+func pathOfEntry(v reflect.Value, path, text string, seen map[uintptr]bool) string {
+	for it := v.MapRange(); it.Next(); {
+		if at := pathOfText(it.Key(), path+" key", text, seen); at != "" {
+			return at
+		}
+		if at := pathOfText(it.Value(), fmt.Sprintf("%s[%v]", path, it.Key()), text, seen); at != "" {
+			return at
+		}
+	}
+	return ""
+}
+
+// pathOfField returns the path to the first field of the struct v that
+// contains text, searched as in [pathOfText].
+func pathOfField(v reflect.Value, path, text string, seen map[uintptr]bool) string {
+	for i := range v.NumField() {
+		if at := pathOfText(v.Field(i), path+"."+v.Type().Field(i).Name, text, seen); at != "" {
+			return at
+		}
+	}
+	return ""
+}
+
+// pathOfElement returns the path to the first element of v that contains text.
+// v is a slice or an array, and each element is searched as in [pathOfText].
+func pathOfElement(v reflect.Value, path, text string, seen map[uintptr]bool) string {
+	for i := range v.Len() {
+		if at := pathOfText(v.Index(i), fmt.Sprintf("%s[%d]", path, i), text, seen); at != "" {
+			return at
+		}
+	}
+	return ""
+}
+
+func TestPathOfText_FindsTheTextInEachKindOfValue(t *testing.T) {
+	type holder struct {
+		s string
+		b []byte
+		p *string
+		i any
+		m map[string]string
+		a []string
+	}
+	text := "secret"
+	tests := []struct {
+		name  string
+		value holder
+		want  string
+	}{
+		{"unexported string", holder{s: "a secret here"}, "h.s"},
+		{"byte slice", holder{b: []byte("secret")}, "h.b"},
+		{"pointer", holder{p: &text}, "h.p"},
+		{"interface", holder{i: "secret"}, "h.i"},
+		{"map key", holder{m: map[string]string{"secret": ""}}, "h.m key"},
+		{"map value", holder{m: map[string]string{"k": "secret"}}, "h.m[k]"},
+		{"slice element", holder{a: []string{"x", "secret"}}, "h.a[1]"},
+		{"no value that contains it", holder{s: "secre", b: []byte("t"), m: map[string]string{"sec": "ret"}}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := pathOfText(reflect.ValueOf(&tt.value), "h", text, map[uintptr]bool{}); got != tt.want {
+				t.Errorf("pathOfText(%+v, %q) = %q, want %q", tt.value, text, got, tt.want)
+			}
+		})
 	}
 }
 
@@ -77,6 +199,86 @@ func TestToken_KubernetesReportsTheMarkOfTheVerifyingProvider(t *testing.T) {
 			tok := mustVerify(t, v, s.sign(t, claimsAt(start, map[string]any{"sub": serviceAccountSub})))
 			if got := tok.Kubernetes(); got != tt.want {
 				t.Errorf("Kubernetes() = %t, want %t", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestToken_IsM2MFollowsTheLevelTheRolesAndTheProvider(t *testing.T) {
+	roles := func(values ...any) map[string]any {
+		return map[string]any{"realm_access": map[string]any{"roles": values}}
+	}
+	realm := keys.Source{Realm: "r"}
+	file := keys.Source{Provider: &keys.Provider{ID: "idp"}}
+	tests := []struct {
+		name   string
+		source keys.Source
+		fields map[string]any
+		want   bool
+	}{
+		{"neither a level nor roles", realm, nil, false},
+		{"level m2m", realm, map[string]any{"level": "m2m"}, true},
+		{"level m2m in upper case", realm, map[string]any{"level": "M2M"}, true},
+		{"level key-manager", realm, map[string]any{"level": "key-manager"}, true},
+		{"level key-manager in mixed case", realm, map[string]any{"level": "Key-Manager"}, true},
+		{"level of a user", realm, map[string]any{"level": "user"}, false},
+		{"level external", realm, map[string]any{"level": "external"}, false},
+		{"level with a trailing space", realm, map[string]any{"level": "m2m "}, false},
+		{"empty level", realm, map[string]any{"level": ""}, false},
+		{"level that is a number", realm, map[string]any{"level": 2}, false},
+		{"level that is an array", realm, map[string]any{"level": []string{"m2m"}}, false},
+		{"the role among others", realm, roles("offline_access", "ROLE_M2M"), true},
+		{"the role beside a value that is not a string", realm, roles(1, "ROLE_M2M"), true},
+		{"the role inside an array", realm, roles([]any{"ROLE_M2M"}), false},
+		{"the role in lower case", realm, roles("role_m2m"), false},
+		{"a longer role that starts with it", realm, roles("ROLE_M2M_ADMIN"), false},
+		{"the role beside the level of a user", realm, map[string]any{"level": "user", "realm_access": map[string]any{"roles": []string{"ROLE_M2M"}}}, true},
+		{"the role beside a level that is a number", realm, map[string]any{"level": 2, "realm_access": map[string]any{"roles": []string{"ROLE_M2M"}}}, true},
+		{"level m2m beside other roles", realm, map[string]any{"level": "m2m", "realm_access": map[string]any{"roles": []string{"offline_access"}}}, true},
+		{"no roles in the array", realm, roles([]any{}...), false},
+		{"roles that are null", realm, roles(), false},
+		{"roles that are a string", realm, map[string]any{"realm_access": map[string]any{"roles": "ROLE_M2M"}}, false},
+		{"realm_access that is not an object", realm, map[string]any{"realm_access": "ROLE_M2M"}, false},
+		{"the role at the top level", realm, map[string]any{"roles": []string{"ROLE_M2M"}}, false},
+		{"service account sub on a realm token", realm, map[string]any{"sub": serviceAccountSub}, false},
+		{"file token with level m2m", file, map[string]any{"level": "m2m"}, false},
+		{"file token with the role", file, roles("ROLE_M2M"), false},
+		{"file token with a service account sub", file, map[string]any{"sub": serviceAccountSub}, false},
+		{"Kubernetes token", keys.Source{Provider: &keys.Provider{ID: "k8s", Kubernetes: true}}, map[string]any{"sub": serviceAccountSub}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSignerFrom(t, "k1", tt.source)
+			v := newAdmittingVerifier(newFakeKeys(s))
+			tok := mustVerify(t, v, s.sign(t, claimsAt(start, tt.fields)))
+			if got := tok.IsM2M(); got != tt.want {
+				t.Errorf("IsM2M() = %t, want %t", got, tt.want)
+			}
+		})
+	}
+}
+
+// The source decides the kind, and no id does: a provider whose id has the
+// form of the id of a realm stays a provider, and the marked provider and the
+// file provider share an id.
+func TestToken_KindFollowsTheSourceOfTheKeyThatVerifiedIt(t *testing.T) {
+	tests := []struct {
+		name   string
+		source keys.Source
+		want   Kind
+	}{
+		{"key of a realm", keys.Source{Realm: "r"}, KindRealm},
+		{"key of a provider of the file", keys.Source{Provider: &keys.Provider{ID: "idp"}}, KindFile},
+		{"key of a provider whose id has the form of a realm id", keys.Source{Provider: &keys.Provider{ID: "realm/r"}}, KindFile},
+		{"key of a marked provider", keys.Source{Provider: &keys.Provider{ID: "idp", Kubernetes: true}}, KindKubernetes},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSignerFrom(t, "k1", tt.source)
+			v := newAdmittingVerifier(newFakeKeys(s))
+			tok := mustVerify(t, v, s.sign(t, claimsAt(start, map[string]any{"sub": serviceAccountSub})))
+			if got := tok.Kind(); got != tt.want {
+				t.Errorf("Kind() = %q, want %q", got, tt.want)
 			}
 		})
 	}
@@ -967,6 +1169,112 @@ func TestVerify_RunsNoAdmitForARefusedToken(t *testing.T) {
 	}
 	if calls != 0 {
 		t.Errorf("Admit calls = %d, want 0", calls)
+	}
+}
+
+// A token whose signature has not verified only claims to come from a provider,
+// so its refusal names none. The verifier has no Admit, so a token that passes
+// every check reaches the refusal of a Kubernetes token.
+func TestError_NamesTheProviderOnceTheSignatureVerifies(t *testing.T) {
+	provider := &keys.Provider{ID: "k8s", Kubernetes: true, Audiences: []string{"netcracker"}}
+	s := newSigner(t, "k1", provider)
+	attacker := newSigner(t, "k1", provider)
+	valid := func(fields map[string]any) map[string]any {
+		claims := claimsAt(start, map[string]any{"sub": serviceAccountSub, "aud": "netcracker"})
+		for name, value := range fields {
+			claims[name] = value
+		}
+		return claims
+	}
+	tests := []struct {
+		name         string
+		raw          string
+		wantCode     Code
+		wantProvider string
+	}{
+		{"format of the token", "not-a-token", CodeFormatInvalid, ""},
+		{"alg nothing accepts", unsigned(t, map[string]any{"alg": "HS256", "kid": "k1"}, valid(nil)), CodeAlgNotAllowed, ""},
+		{"issuer", s.sign(t, valid(map[string]any{"iss": "https://other.example"})), CodeIssuerUnknown, ""},
+		{"kid", unsigned(t, map[string]any{"alg": "ES256", "kid": "k2"}, valid(nil)), CodeKIDUnknown, ""},
+		{"no kid", unsigned(t, map[string]any{"alg": "ES256"}, valid(nil)), CodeKIDMissing, ""},
+		{"alg the found key does not accept", unsigned(t, map[string]any{"alg": "RS256", "kid": "k1"}, valid(nil)), CodeAlgNotAllowed, ""},
+		{"signature", attacker.sign(t, valid(nil)), CodeSignatureInvalid, ""},
+		{"aud", s.sign(t, valid(map[string]any{"aud": "other"})), CodeAudienceInvalid, "k8s"},
+		{"exp that is not a number", s.sign(t, valid(map[string]any{"exp": "soon"})), CodeFormatInvalid, "k8s"},
+		{"exp in the past", s.sign(t, valid(map[string]any{"iat": start.Add(-2 * time.Hour).Unix(), "exp": start.Add(-time.Hour).Unix()})), CodeExpired, "k8s"},
+		{"nbf in the future", s.sign(t, valid(map[string]any{"nbf": start.Add(time.Minute).Unix()})), CodeNotYetValid, "k8s"},
+		{"iat in the future", s.sign(t, valid(map[string]any{"iat": start.Add(time.Minute).Unix()})), CodeIATInvalid, "k8s"},
+		{"sub", s.sign(t, valid(map[string]any{"sub": "user-1"})), CodeSubjectInvalid, "k8s"},
+		{"no namespace check", s.sign(t, valid(nil)), CodeNamespaceNotAllowed, "k8s"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), tt.raw)
+			var refused *Error
+			if !errors.As(err, &refused) {
+				t.Fatalf("Verify() error = %v, want an *Error", err)
+			}
+			if refused.Code != tt.wantCode {
+				t.Errorf("Verify() code = %s, want %s", refused.Code, tt.wantCode)
+			}
+			if refused.ProviderID != tt.wantProvider {
+				t.Errorf("Verify() ProviderID = %q, want %q", refused.ProviderID, tt.wantProvider)
+			}
+		})
+	}
+}
+
+// The detail reaches a log line, so it quotes the iss, which is text from the
+// token, and names no provider, as the field does.
+func TestError_DetailOfARefusalByTheSelectedKeyQuotesTheIssNotTheProvider(t *testing.T) {
+	provider := &keys.Provider{ID: "named-provider"}
+	s := newSigner(t, "k1", provider)
+	attacker := newSigner(t, "k1", provider)
+	tests := []struct {
+		name string
+		raw  string
+		want Code
+	}{
+		{"alg the found key does not accept", unsigned(t, map[string]any{"alg": "RS256", "kid": "k1"}, claimsAt(start, nil)), CodeAlgNotAllowed},
+		{"signature", attacker.sign(t, claimsAt(start, nil)), CodeSignatureInvalid},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), tt.raw)
+			if codeOf(err) != tt.want {
+				t.Fatalf("Verify() error = %v, want code %s", err, tt.want)
+			}
+			if strings.Contains(err.Error(), provider.ID) {
+				t.Errorf("Verify() error = %q, want it to name no provider", err)
+			}
+			if !strings.Contains(err.Error(), strconv.Quote(testIssuer)) {
+				t.Errorf("Verify() error = %q, want it to quote the iss %q", err, testIssuer)
+			}
+		})
+	}
+}
+
+// Admit may return one *Error for many tokens, and the tokens may come from
+// different providers, so Verify leaves that value as it is.
+func TestVerify_NamesTheProviderOnACopyOfTheRefusalOfAdmit(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
+	refusal := &Error{Code: CodeNamespaceNotAllowed, Detail: "refused", ProviderID: "set-by-admit"}
+	v := New(newFakeKeys(s), Options{now: func() time.Time { return start }, Admit: func(*Token) *Error { return refusal }})
+	raw := s.sign(t, claimsAt(start, nil))
+	for _, call := range []string{"first", "second, from the cache"} {
+		_, err := v.Verify(t.Context(), raw)
+		var refused *Error
+		if !errors.As(err, &refused) {
+			t.Fatalf("Verify(), %s call: error = %v, want an *Error", call, err)
+		}
+		if refused.ProviderID != "realm" {
+			t.Errorf("Verify(), %s call: ProviderID = %q, want %q", call, refused.ProviderID, "realm")
+		}
+	}
+	if refusal.ProviderID != "set-by-admit" {
+		t.Errorf("the value Admit returned has ProviderID %q, want it unchanged, %q", refusal.ProviderID, "set-by-admit")
 	}
 }
 
