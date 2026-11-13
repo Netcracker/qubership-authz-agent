@@ -1,0 +1,155 @@
+{
+  "f72-cnum-beyond-double": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": {
+          "logic": {
+            "path": "931ac645-ba4a-4314-87fa-6a97ce8736f8"
+          },
+          "data": {
+            "931ac645-ba4a-4314-87fa-6a97ce8736f8": {
+              "predicate": "[{\"value\":${p},\"property\":\"f8\",\"operator\":\"in\"}]",
+              "params": {
+                "p": [
+                  "Infinity"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "f72-cnum-big": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": {
+          "logic": {
+            "path": "e11633b0-1270-ea3b-0932-b2d06b8c63a5"
+          },
+          "data": {
+            "e11633b0-1270-ea3b-0932-b2d06b8c63a5": {
+              "predicate": "[{\"value\":${p},\"property\":\"f8\",\"operator\":\"in\"}]",
+              "params": {
+                "p": [
+                  9007199254740993
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "f72-cnum-big-negative": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": {
+          "logic": {
+            "path": "ff8977ee-e9e9-da97-bc24-0dcbbe0935b7"
+          },
+          "data": {
+            "ff8977ee-e9e9-da97-bc24-0dcbbe0935b7": {
+              "predicate": "[{\"value\":${p},\"property\":\"f8\",\"operator\":\"in\"}]",
+              "params": {
+                "p": [
+                  -9007199254740993
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "f72-cnum-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "f72-cnum-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "f72-cnum-exponent": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": {
+          "logic": {
+            "path": "0a73b790-4e85-03b4-6848-85f9110f3c62"
+          },
+          "data": {
+            "0a73b790-4e85-03b4-6848-85f9110f3c62": {
+              "predicate": "[{\"value\":${p},\"property\":\"f8\",\"operator\":\"in\"}]",
+              "params": {
+                "p": [
+                  1000.0
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "f72-cnum-fraction": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": {
+          "logic": {
+            "path": "db4c372a-8d6d-9fa0-a5dc-d7de8aa1e613"
+          },
+          "data": {
+            "db4c372a-8d6d-9fa0-a5dc-d7de8aa1e613": {
+              "predicate": "[{\"value\":${p},\"property\":\"f8\",\"operator\":\"in\"}]",
+              "params": {
+                "p": [
+                  0.1
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

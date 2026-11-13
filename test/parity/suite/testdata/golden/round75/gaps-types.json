@@ -1,0 +1,79 @@
+{
+  "g75-types-bulk": {
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-element-boolean": {"status":200,"decision":{"READ":["odd","plain"],"true":["odd"]}},
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-element-list": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+    },
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-element-null": {
+      "status": 400,
+      "message": "Null key for a Map not allowed in JSON (use a converting NullKeySerializer?)"
+    },
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-element-number": {"status":200,"decision":{"7501":["odd"],"READ":["odd","plain"]}},
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-element-object": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-not-a-list": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('READ')"
+    },
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-type-boolean": {"status":200,"decision":{"READ":["odd","plain"]}},
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-type-list": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+    },
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-type-null": {"status":400,"message":{"message":"The request 'type' cannot be empty"}},
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-type-number": {"status":200,"decision":{"READ":["odd","plain"]}},
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-type-object": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "check-resource-bulk-operations-v2-outcome/sequence/operations-v2-element-boolean": {"status":200,"decision":{"READ":["odd","plain"],"true":["odd"]}},
+    "check-resource-bulk-operations-v2-outcome/sequence/operations-v2-element-list": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+    },
+    "check-resource-bulk-operations-v2-outcome/sequence/operations-v2-element-null": {
+      "status": 400,
+      "message": "Null key for a Map not allowed in JSON (use a converting NullKeySerializer?)"
+    },
+    "check-resource-bulk-operations-v2-outcome/sequence/operations-v2-element-number": {"status":200,"decision":{"7501":["odd"],"READ":["odd","plain"]}},
+    "check-resource-bulk-operations-v2-outcome/sequence/operations-v2-element-object": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "check-resource-bulk-v1-outcome/sequence/bulk-operation-boolean": {"status":200,"allowed":["odd","plain"]},
+    "check-resource-bulk-v1-outcome/sequence/bulk-operation-list": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+    },
+    "check-resource-bulk-v1-outcome/sequence/bulk-operation-null": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/sequence/bulk-operation-number": {"status":200,"allowed":["odd","plain"]},
+    "check-resource-bulk-v1-outcome/sequence/bulk-operation-object": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "check-resource-bulk-v1-outcome/sequence/bulk-type-boolean": {"status":200,"allowed":["odd","plain"]},
+    "check-resource-bulk-v1-outcome/sequence/bulk-type-list": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+    },
+    "check-resource-bulk-v1-outcome/sequence/bulk-type-null": {"status":400,"message":{"message":"The request 'type' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/sequence/bulk-type-number": {"status":200,"allowed":["odd","plain"]},
+    "check-resource-bulk-v1-outcome/sequence/bulk-type-object": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null}
+  },
+  "g75-types-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "g75-types-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

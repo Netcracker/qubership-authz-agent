@@ -1,0 +1,87 @@
+{
+  "g75-roles-allow": {
+    "check-filter-v1-outcome/regular/filter-as-reader": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_G75_ROLES_ALLOW.role.in(\"ROLE_PARITY_READER\")",
+        "mongodbFilterCondition": "{ { \"role\": { \"$in\": [ \"ROLE_PARITY_READER\" ] } } }",
+        "rsqlFilterCondition": "role=in=(\"ROLE_PARITY_READER\")",
+        "sqlFilterCondition": "role IN ('ROLE_PARITY_READER')",
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/filter-as-scalar-roles": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-ROLE_PARITY_NONE-as-scalar-roles": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-ROLE_PARITY_READER-as-scalar-roles": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "g75-roles-beside-open": {
+    "check-filter-v1-outcome/regular/filter-as-reader": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_G75_ROLES_BESIDE_OPEN.open.eq(1)).or(PARITY_SUITE_G75_ROLES_BESIDE_OPEN.role.in(\"ROLE_PARITY_READER\"))",
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"open\": 1 }}, {{ \"role\": { \"$in\": [ \"ROLE_PARITY_READER\" ] } }} ] }",
+        "rsqlFilterCondition": "open==1,role=in=(\"ROLE_PARITY_READER\")",
+        "sqlFilterCondition": "open=1 OR role IN ('ROLE_PARITY_READER')",
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/filter-as-scalar-roles": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "g75-roles-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "g75-roles-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "g75-roles-deny": {
+    "check-filter-v1-outcome/regular/filter-as-reader": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_G75_ROLES_DENY.role.in(\"ROLE_PARITY_READER\")).not()",
+        "mongodbFilterCondition": "{ { \"role\": { \"$nin\": [ \"ROLE_PARITY_READER\" ] } } }",
+        "rsqlFilterCondition": "role=out=(\"ROLE_PARITY_READER\")",
+        "sqlFilterCondition": "NOT (role IN ('ROLE_PARITY_READER'))",
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/filter-as-scalar-roles": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
