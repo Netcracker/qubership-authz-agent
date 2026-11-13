@@ -196,8 +196,9 @@ compare `exp` and `nbf` with the host clock, with a leeway of 30 seconds (ADR-00
 makes the agent refuse valid tokens or accept expired ones (R15). TLS stays outside the agent, as the architect decided
 (R16).
 
-A job pinned to `ubuntu-26.04` keeps the runner the same until a change moves it, while `ubuntu-latest` moves on
-GitHub's schedule (R17). The suite already exercises the agent on kind over HTTP alone, so in Docker it covers the same
+A job on `ubuntu-26.04` stays on Ubuntu 26.04 until a change to the workflow moves it, while `ubuntu-latest` moves to
+the next Ubuntu release on GitHub's schedule (R17). GitHub still updates the tools of either image every week, Docker
+and Compose among them. The suite already exercises the agent on kind over HTTP alone, so in Docker it covers the same
 paths, apart from the cases that read what only a cluster has (R17).
 
 ### Alternatives considered
