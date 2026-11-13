@@ -38,30 +38,33 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_TRUSTED_PROVIDERS_FILE` | `/etc/authz/trusted-providers.json` | The trusted providers; empty runs without them |
 | `AUTHZ_JWKS_BOOTSTRAP_REQUIRED` | `true` | Strict mode: every provider has to bootstrap; `false` wants one |
 | `AUTHZ_JWKS_HTTP_TIMEOUT` | `5` | Seconds per discovery or JWKS request, at least `1` |
-| `AUTHZ_JWKS_HTTP_RETRIES` | `3` | Attempts per request, at least `1` |
-| `AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL` | `30` | Seconds between checks of the file for a change; `0` never reloads |
+| `AUTHZ_JWKS_HTTP_RETRIES` | `3` | Attempts per request, from `1` to `100` |
+| `AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL` | `30` | Seconds between checks of the file for a change, at least `0`; `0` never reloads |
 | `AUTHZ_TENANT_MANAGER_URL` | empty | Base URL of tenant-manager. When discovery for a trusted provider fails, the agent looks up the last path segment of its issuer as a tenant display name and retries discovery under the realm name that tenant-manager returns. Empty disables the lookup, so a provider whose issuer ends in a tenant display name does not bootstrap. The chart sets it from its `AUTHZ_TENANT_MANAGER_URL` value, `http://tenant-manager:8080` by default |
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
-| `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
-| `AUTHZ_ENTITLEMENTS_URL`, `AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT`, `AUTHZ_ENTITLEMENTS_HTTP_RETRIES` | empty, `5`, `3` | The entitlements PIP pinned by the deployment, with its timeout in seconds, at least `1`; an empty URL adds none. `AUTHZ_ENTITLEMENTS_HTTP_RETRIES` takes an integer of at least `1` and has no effect: each call to the aggregator is one attempt |
-| `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; empty reads the token from `AUTHZ_PAP_CLIENT_TOKEN_FILE` instead |
-| `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The files that hold the client id and the client secret; empty takes the default |
-| `AUTHZ_M2M_RENEW_BEFORE_SECONDS` | `60` | Seconds before its expiry at which the token is refreshed, at least `0`; the refresh comes no earlier than half the token's lifetime |
-| `AUTHZ_PAP_CLIENT_TOKEN_FILE` | `/var/run/secrets/tokens/netcracker/token` | The token file, read every 15 seconds, when there is no token endpoint; the default is where the platform's charts mount the netcracker-audience projected token. Empty, with an empty `AUTHZ_M2M_TOKEN_URL`, sends no token |
+| `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls, at least `0`; `0` disables the pull |
+| `AUTHZ_ENTITLEMENTS_URL`, `AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT`, `AUTHZ_ENTITLEMENTS_HTTP_RETRIES` | empty, `5`, `3` | The entitlements PIP pinned by the deployment, with its timeout in seconds, at least `1`; an empty URL adds none. `AUTHZ_ENTITLEMENTS_HTTP_RETRIES` takes an integer from `1` to `100` and has no effect: each call to the aggregator is one attempt |
+| `KUBERNETES_M2M_ENABLED` | `false` | Chooses the token the agent sends: `true` sends the projected token in `AUTHZ_PAP_CLIENT_TOKEN_FILE`, and `false` sends the token of the realm `cloud-common` from `AUTHZ_M2M_TOKEN_URL`; the chart sets it from its value of the same name |
+| `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint of the realm `cloud-common` for the client-credentials grant; required while `KUBERNETES_M2M_ENABLED` is `false`, its default, so an unset or empty endpoint then stops the start. With `KUBERNETES_M2M_ENABLED` `false`, the chart sets it to `<IDENTITY_PROVIDER_URL>/auth/realms/cloud-common/protocol/openid-connect/token` |
+| `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The files that hold the client id and the client secret, read with `KUBERNETES_M2M_ENABLED=false`; empty takes the default |
+| `AUTHZ_M2M_RENEW_BEFORE_SECONDS` | `60` | Seconds before its expiry at which the token from `AUTHZ_M2M_TOKEN_URL` is refreshed, at least `0`; the refresh comes no earlier than half the token's lifetime |
+| `AUTHZ_PAP_CLIENT_TOKEN_FILE` | `/var/run/secrets/tokens/netcracker/token` | The token file, read every 15 seconds with `KUBERNETES_M2M_ENABLED=true`; an empty path takes the default. A path that names no file, a file the agent cannot read, anything but a regular file, or a file that is empty or holds white space alone then stops the start. The default is where the platform's charts mount the netcracker-audience projected token |
 
-A variable set to the empty string switches its feature off where the table says so. An unset variable takes the
-default, and so does an empty number, an empty listen address, an empty `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, and an empty
-`LOGGING_LEVEL_ROOT`.
+A variable is required only where its row says so. A variable set to the empty string switches its feature off where
+the table says so. An unset variable takes the default, and so does an empty number, an empty listen address, an
+empty `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, an empty `KUBERNETES_M2M_ENABLED`, and an empty `LOGGING_LEVEL_ROOT`.
 
-A number is an integer in decimal digits with an optional sign. A number of seconds is at most `9223372036`, and a count
-of attempts at most `9223372036854775807`. A listen address is `<host>:<port>`, where the host is empty, an IP address,
-or a host name, and the port is from `0` to `65535`; `0` picks a free port. A URL is an `http` or `https` URL with a
-host, a port from `1` to `65535` if it has one, and no user, query, or fragment, written in the characters a URL allows
-without escaping, so a space is written as `%20`. `AUTHZ_JWKS_BOOTSTRAP_REQUIRED` is `true` or `false`. The scheme of a
-URL, `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, and `LOGGING_LEVEL_ROOT` are read without regard to case. A value of another form
-or outside its range stops the start: the agent logs one line, at any log level, that names each such variable with the
-values it accepts, and exits with status 1 before it listens. For a URL, the line names the rule the value breaks in
-place of the value, which can hold a password. For example:
+A number is an integer in decimal digits with an optional sign, and a number of seconds is at most `9223372036`. A
+listen address is `<host>:<port>`, where the host is empty, an IP address, or a host name, and the port is from `0` to
+`65535`; `0` picks a free port. A URL is an `http` or `https` URL with a host, a port from `1` to `65535` if it has one,
+and no user, query, or fragment, written in the characters a URL allows without escaping, so a space is written as
+`%20`. `AUTHZ_JWKS_BOOTSTRAP_REQUIRED` and `KUBERNETES_M2M_ENABLED` are `true` or `false`. The scheme of a URL,
+`AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, `KUBERNETES_M2M_ENABLED`, and `LOGGING_LEVEL_ROOT` are read without regard to case. A
+value of another form or outside its range stops the start, and so does a required variable that is unset or empty,
+or, with `KUBERNETES_M2M_ENABLED=true`, a token file that holds no token: the agent logs one line, at any log level,
+that names each such variable with the values it accepts, the setting that requires it, or why the file holds no token,
+and exits with status 1 before it listens. For a URL, the line names the rule the value breaks in place of the value,
+which can hold a password. For example:
 
 ```text
 configuration: AUTHZ_PAP_CLIENT_PULL_INTERVAL="2s": expected an integer number of seconds from 0 to 9223372036
