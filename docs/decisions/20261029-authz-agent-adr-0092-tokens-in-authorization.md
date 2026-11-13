@@ -74,11 +74,10 @@ token that is not M2M to its own tenant.
 - **R6** (`verify`). A realm token is an M2M token when `realm_access.roles` holds `ROLE_M2M`, compared byte for byte.
 - **R21** (`verify`). A realm token is an M2M token when `level` is `m2m` or `key-manager`, compared without regard to
   case.
-- **R7** (`verify`). A Kubernetes token is an M2M token. ADR-0094 R16 refuses one whose `sub` does not start with
-  `system:serviceaccount`.
+- **R7** (`verify`). A Kubernetes token is an M2M token.
 - **R8** (`verify`). A file token is not an M2M token, because its claims are whatever that provider signs.
-- **R9** (`verify`). The token verification computes this test once and returns the result, as ADR-0091 R54 states.
-- **R10** (`handler`, `policy`). Every reader, `subject.isM2M` among them, reads that result.
+- **R10** (`handler`, `policy`). Every reader of the M2M test, `subject.isM2M` among them, reads the result that the
+  token verification returns under ADR-0091 R54.
 
 #### M2M modes
 
@@ -91,16 +90,12 @@ token that is not M2M to its own tenant.
   | `hybrid` | Realm tokens, file tokens, and Kubernetes tokens |
   | `k8s` | Kubernetes tokens |
 
-- **R12** (`keys`). In `legacy` the agent has no marked provider, so a token that the API server signed is refused with
-  `TOKEN_ISSUER_UNKNOWN`, and no key is loaded for it.
 - **R13** (`handler`). In `k8s` a realm token or a file token in `Authorization` that passes verification gets 401 with
   `TOKEN_KIND_NOT_ALLOWED`. One that fails gets the code of that check.
 - **R14** (`keys`). The agent loads the keys of realms and of providers in every mode, because `Incoming-Token` may
   still hold a realm token or a file token in `k8s`.
 - **R15** (`startup`). The value of `M2M_AUTH_MODE` is compared without regard to case, and an empty value means
   `legacy`, as an unset one does. Any other value stops the start, with or without the chart.
-- **R16** (`startup`). Outside Kubernetes the only mode is `legacy`, because there is no API server. In the other modes
-  ADR-0094 R5 stops the start when the token for the API server is missing.
 
 #### Other routes
 
@@ -115,8 +110,8 @@ token that is not M2M to its own tenant.
 
 A check route needs a verified caller, not a caller of a particular kind. The M2M test decides what a caller may reach
 instead of whether it may call (R3, R4), so a service whose Keycloak client issues neither `ROLE_M2M` nor a `level`
-keeps working and stays inside its own tenant. Computing the test once keeps the check of a caller and the policies from
-disagreeing about one token (R9, R10).
+keeps working and stays inside its own tenant. Reading the one result that the verification returns keeps the check of a
+caller and the policies from disagreeing about one token (R10).
 
 `k8s` exists to check a migration: an installation switches it on and sees which services still call with a realm token
 or a file token (R13). It is not planned for production.
@@ -144,6 +139,7 @@ Negative:
 
 - A client-credentials token without `ROLE_M2M` and without `level` is treated as a user token, so it reaches only its
   own or the default tenant.
+- Outside Kubernetes the agent starts only in `legacy`, because there is no token for the API server (ADR-0094 R5).
 - The decisions of a request cannot be downloaded from the agent. Issue #223 tracks how they are read.
 - Comparing with the tenant of the decision changes the answer of two requests that no golden covers:
   - A caller that is not M2M and has no `tenant-id`, such as a client-credentials token without `ROLE_M2M`, forwards the
