@@ -34,7 +34,8 @@ import (
 // was uploaded for OSS. Each file holds the raw bytes of the last successful
 // upload for its domain, so `cat policies-BSS.json` in a running Pod returns
 // exactly what the caller sent, and a restart re-parses it through the same code
-// path as the original request.
+// path as the original request. The PIP name check runs on the request only, so
+// a file holding a name that check refuses loads at a restart as it is.
 // unreadableFile reports a file the store found and could not read, which
 // leaves the domain it holds out of what the stub serves.
 const unreadableFile = "cannot read %s: %v"

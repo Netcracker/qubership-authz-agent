@@ -30,6 +30,16 @@ PUT  /access/v1/simplifiedPolicies/domainPIPs/{domainName}
 PUT body for policies: a JSON array of simplified-policy objects.
 PUT body for PIPs:     a JSON array of simplified-PIP objects.
 
+The `name` of each PIP is `subject.` followed by an alias with no space, tab,
+or line break, such as `subject.tenant`, because a condition reads the PIP by
+that alias and ends a word at those characters. A PIP upload with any other
+name is refused whole with 400, the domain keeps the PIPs it held, and the
+error names the PIP by its zero-based index in the array:
+
+```json
+{"error":"pip 1: name must be 'subject.' followed by an alias with no space, tab, or line break (got \"tenant\"), because a condition reads a PIP by that alias; the PIPs of domain \"BSS\" are unchanged"}
+```
+
 The API is **unauthenticated**.  Deploy `authz-policy-admin` only in
 development and test namespaces, never in a namespace that is reachable by
 untrusted callers.
