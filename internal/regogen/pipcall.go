@@ -487,8 +487,8 @@ func pipOptions(opts *ast.Term) (*Ref, string, error) {
 
 // pipResolve returns the value of a GENERAL or FILTERED PIP whose call
 // answered resp, an object of nc.http.send: ERROR for a failed call or a
-// status of 400 or more; otherwise the value the body or its path jp
-// selects, read as the specification's resolve_pip reads it. A response
+// status other than 200 and 204 ([regobuiltins.StatusRead]); otherwise the
+// value the body or its path jp selects, read as the specification's resolve_pip reads it. A response
 // without raw_body, which a mock gives, reads its body.
 func pipResolve(bctx rego.BuiltinContext, resp *ast.Term, jp string) (Resolved, error) {
 	o, ok := resp.Value.(ast.Object)
@@ -499,7 +499,7 @@ func pipResolve(bctx rego.BuiltinContext, resp *ast.Term, jp string) (Resolved, 
 		return Resolved{State: spectables.StateError}, nil
 	}
 	status, _ := o.Get(ast.StringTerm("status_code")).Value.(ast.Number)
-	if code, ok := status.Int(); !ok || code >= 400 || code <= 0 {
+	if code, ok := status.Int(); !ok || !regobuiltins.StatusRead(code) {
 		return Resolved{State: spectables.StateError}, nil
 	}
 	var body jsonvalue.Value

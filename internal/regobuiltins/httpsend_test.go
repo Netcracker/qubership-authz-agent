@@ -558,8 +558,17 @@ func TestHTTPSend_AQueryThatEndsLeavesNoAnswer(t *testing.T) {
 // status each name their PIP; an answered call does not.
 func TestFailedPIPs_NamesThePIPsWhoseCallFailed(t *testing.T) {
 	srv, _ := pipServer(t, func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/fail" {
+		switch r.URL.Path {
+		case "/fail":
 			w.WriteHeader(http.StatusInternalServerError)
+		case "/created":
+			w.WriteHeader(http.StatusCreated)
+		case "/found":
+			w.Header().Set("Location", "/")
+			w.WriteHeader(http.StatusFound)
+		case "/empty":
+			w.WriteHeader(http.StatusNoContent)
+			return
 		}
 		_, _ = w.Write([]byte(`1`))
 	})
@@ -572,7 +581,10 @@ func TestFailedPIPs_NamesThePIPsWhoseCallFailed(t *testing.T) {
 		{"an error of the function", `{"url": "` + srv.URL + `", "pip": "subject.a"}`, noToken, []string{"subject.a"}},
 		{"no response", `{"url": "` + srv.URL + `", "pip": "subject.a", "raise_error": false}`, noToken, []string{"subject.a"}},
 		{"a failure status", `{"url": "` + srv.URL + `/fail", "pip": "subject.a", "raise_error": false}`, ownToken, []string{"subject.a"}},
+		{"status 201", `{"url": "` + srv.URL + `/created", "pip": "subject.a", "raise_error": false}`, ownToken, []string{"subject.a"}},
+		{"status 302", `{"url": "` + srv.URL + `/found", "pip": "subject.a", "raise_error": false}`, ownToken, []string{"subject.a"}},
 		{"an answer", `{"url": "` + srv.URL + `", "pip": "subject.a", "raise_error": false}`, ownToken, nil},
+		{"status 204", `{"url": "` + srv.URL + `/empty", "pip": "subject.a", "raise_error": false}`, ownToken, nil},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := WithCalls((&HTTP{Token: tt.token}).Context(context.Background()))

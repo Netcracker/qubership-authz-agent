@@ -62,7 +62,10 @@ func TestScopeAnswer_ReadsOneGrantPerPolicy(t *testing.T) {
 		{"400", entAnswer(400, `{}`), nil, false},
 		{"403", entAnswer(403, `{"permissionScope": []}`), nil, false},
 		{"405", entAnswer(405, `{"permissionScope": []}`), nil, false},
-		{"a status below 400", entAnswer(399, `{"permissionScope": []}`), nil, true},
+		{"204", entAnswer(204, `{"permissionScope": []}`), nil, true},
+		{"204 without a body", entAnswer(204, ``), nil, false},
+		{"201", entAnswer(201, `{"permissionScope": []}`), nil, false},
+		{"302", entAnswer(302, `{"permissionScope": []}`), nil, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, ok := scopeAnswer(tc.resp)

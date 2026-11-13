@@ -40,9 +40,10 @@ const ScopePIP = "subject.permissionScope"
 // is one pass, which reads the ids under each key of its scopeItems.
 //
 // The scope fails without a PERMISSION_SCOPE PIP, without a subject.id
-// value, on a failed call, on a status of 400 or more, 404 included, and on
-// a body the specification cannot walk, such as no body or one without
-// permissionScope; it is empty on the body null. Read as the
+// value, on a failed call, on a status other than 200 and 204, 404 and a
+// redirect included, and on a body the specification cannot walk, such as
+// no body, which a 204 has, or one without permissionScope; it is empty on
+// the body null. Read as the
 // specification's _scope_call reads it under the agent profile:
 // scope_without_pip=http500, scope_error_empty=none,
 // scope_blank_body=json_null, scope_empty_list=empty,
@@ -117,11 +118,7 @@ func scopeAnswer(resp *ast.Term) ([]map[string][]jsonvalue.Value, bool) {
 		return nil, false
 	}
 	status, _ := o.Get(ast.StringTerm("status_code")).Value.(ast.Number)
-	code, ok := status.Int()
-	switch {
-	case !ok || code <= 0:
-		return nil, false
-	case code >= 400:
+	if code, ok := status.Int(); !ok || !regobuiltins.StatusRead(code) {
 		return nil, false
 	}
 	raw, _ := o.Get(ast.StringTerm("raw_body")).Value.(ast.String)

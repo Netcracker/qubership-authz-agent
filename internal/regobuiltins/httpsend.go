@@ -78,7 +78,7 @@ type calls struct {
 	// sent counts the requests that went to the network.
 	sent int
 	// failed holds the PIPs whose call failed or was answered with a status
-	// of 400 or above, for the reason of a decision.
+	// other than 200 and 204 ([StatusRead]), for the reason of a decision.
 	failed map[string]bool
 }
 
@@ -104,8 +104,14 @@ func WithCalls(ctx context.Context) context.Context {
 	return context.WithValue(ctx, callsKey{}, &calls{m: map[string]*call{}})
 }
 
+// StatusRead reports whether a source's answer of status code is read for
+// its body: 200 and 204 alone, as the legacy service reads them. Any other
+// status fails the source, a redirect included, since a call follows none.
+func StatusRead(code int) bool { return code == http.StatusOK || code == http.StatusNoContent }
+
 // FailedPIPs returns the PIPs whose call under the cache of ctx failed, or
-// was answered with a status of 400 or above, in lexical order.
+// was answered with a status other than 200 and 204 ([StatusRead]), in
+// lexical order.
 func FailedPIPs(ctx context.Context) []string {
 	c, ok := ctx.Value(callsKey{}).(*calls)
 	if !ok {
@@ -236,7 +242,7 @@ func (c *calls) note(a, resp *ast.Term, err error) {
 			if t := r.Get(ast.InternedTerm("status_code")); t != nil {
 				code, _ := t.Value.(ast.Number)
 				n, _ := code.Int()
-				failed = n == 0 || n >= 400
+				failed = !StatusRead(n)
 			}
 		}
 	}

@@ -27,6 +27,7 @@ import (
 
 	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/legacyvalue"
+	"authz-agent/internal/regobuiltins"
 	"authz-agent/internal/regogen/spectables"
 )
 
@@ -114,10 +115,10 @@ func entRecordFunction() func(*rego.Rego) {
 
 // entResolve returns the value of subject.entitledResources.of(typ).as(as)
 // that the entitlements service answered resp with: ERROR for a failed call
-// or a status of 400 or more; otherwise the resourceId of each resource
-// under a reference named in as of an entitlement whose resourceType equals
-// typ ignoring case, each once in the order of the answer, or EMPTY_COLL
-// for none. A body the specification cannot walk, such as a list where it
+// or a status other than 200 and 204 ([regobuiltins.StatusRead]); otherwise
+// the resourceId of each resource under a reference named in as of an
+// entitlement whose resourceType equals typ ignoring case, each once in the
+// order of the answer, or EMPTY_COLL for none. A body the specification cannot walk, such as a list where it
 // reads an object, is ERROR: the legacy service fails on it.
 func entResolve(resp *ast.Term, typ string, as []string) Resolved {
 	errorState := Resolved{State: spectables.StateError}
@@ -126,7 +127,7 @@ func entResolve(resp *ast.Term, typ string, as []string) Resolved {
 		return errorState
 	}
 	status, _ := o.Get(ast.StringTerm("status_code")).Value.(ast.Number)
-	if code, ok := status.Int(); !ok || code >= 400 || code <= 0 {
+	if code, ok := status.Int(); !ok || !regobuiltins.StatusRead(code) {
 		return errorState
 	}
 	var body jsonvalue.Value

@@ -163,7 +163,7 @@ func subjectValues(t *testing.T, id string) map[string]Resolved {
 
 // TestPIPFunction_ReadsTheResponse: the function of a GENERAL PIP reads the
 // response of its call as the agent profile does: a failed call and a
-// status of an error are ERROR, a body that is no list is PIP_NULL, a scalar
+// status other than 200 and 204 are ERROR, a body that is no list is PIP_NULL, a scalar
 // or a list of one value other than a string is odd, and a list of strings
 // is the value, its duplicates dropped.
 func TestPIPFunction_ReadsTheResponse(t *testing.T) {
@@ -192,6 +192,11 @@ func TestPIPFunction_ReadsTheResponse(t *testing.T) {
 			{name: "status 503", response: `{"status_code": 503, "raw_body": "[\"acc-7\"]", "body": ["acc-7"]}`,
 				state: "ERROR"},
 			{name: "status 404", response: `{"status_code": 404, "raw_body": ""}`, state: "ERROR"},
+			{name: "status 204 without a body", response: `{"status_code": 204, "raw_body": ""}`, state: "PIP_NULL"},
+			{name: "status 201", response: `{"status_code": 201, "raw_body": "[\"acc-7\"]", "body": ["acc-7"]}`,
+				state: "ERROR"},
+			{name: "status 302", response: `{"status_code": 302, "raw_body": "[\"acc-7\"]", "body": ["acc-7"]}`,
+				state: "ERROR"},
 			{name: "a timeout", response: `{"status_code": 0, "error": {"code": "timeout", "message": "m"}}`,
 				state: "ERROR"},
 			{name: "no token of the agent", response: `{"status_code": 0, "error": {"code": "no_token", "message": "m"}}`,

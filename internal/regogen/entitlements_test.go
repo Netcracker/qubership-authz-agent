@@ -63,7 +63,9 @@ func TestEntResolve_ReadsTheIDsOfTheNamedReferences(t *testing.T) {
 		{"a body that is a list", entAnswer(200, `[{"resourceType": "order"}]`), Resolved{State: "ERROR"}},
 		{"a body that is not JSON", entAnswer(200, `<html>`), Resolved{State: "ERROR"}},
 		{"a status of 400 or more", entAnswer(400, ordersAndInvoice), Resolved{State: "ERROR"}},
-		{"a status below 400", entAnswer(399, ordersAndInvoice), resolved(t, "VALUE", `["o1", "o2", "o3"]`)},
+		{"status 204 without a body", entAnswer(204, ``), Resolved{State: "EMPTY_COLL"}},
+		{"status 201", entAnswer(201, ordersAndInvoice), Resolved{State: "ERROR"}},
+		{"status 302", entAnswer(302, ordersAndInvoice), Resolved{State: "ERROR"}},
 		{"a failed call", ast.ObjectTerm(ast.Item(ast.StringTerm("status_code"), ast.IntNumberTerm(0)),
 			ast.Item(ast.StringTerm("error"), ast.ObjectTerm())), Resolved{State: "ERROR"}},
 	} {
