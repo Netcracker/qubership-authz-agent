@@ -152,10 +152,11 @@ type PolicySet struct {
 	// permanent source failure under its target and holds no policies, no sets,
 	// and no iterate.
 	AlwaysFails string
-	// Isolated is the reason the agent does not evaluate this set,
-	// although the legacy service does: the export shows it damaged, and which
-	// of its elements belong to it cannot be told. Empty for a set the agent
-	// evaluates. Like a set with AlwaysFails, an isolated set is a permanent
+	// Isolated is the reason the agent does not evaluate this set: the export
+	// shows it damaged, and which of its elements belong to it cannot be told,
+	// or its target, or for a set of simplified policies one of their
+	// conditions, holds a MATCH pattern the agent refuses. Empty for a set
+	// the agent evaluates. Like a set with AlwaysFails, an isolated set is a permanent
 	// source failure under its target, holds no policies, no sets, and no
 	// iterate, and fails no other set of the tenant.
 	Isolated string
@@ -183,6 +184,12 @@ type Policy struct {
 	// Target is at [PlacePolicyTarget], or nil.
 	Target *Condition
 	Rules  []*Rule
+	// Isolated is the reason the agent does not evaluate this policy: its
+	// target or one of its rules holds a MATCH pattern the agent refuses.
+	// Empty for a policy the agent evaluates. An isolated policy holds no
+	// rules and, like an isolated set, is a permanent source failure under its
+	// target that fails no other policy of the tenant.
+	Isolated string
 }
 
 // Rule is a rule of a policy.
@@ -297,6 +304,7 @@ func (t *Tree) PIP(name string) (*PIP, bool) {
 //     [PassValue] reads there;
 //   - a set with [PolicySet.AlwaysFails] or [PolicySet.Isolated] has no
 //     policies, sets, or iterate, and no set has both;
+//   - a policy with [Policy.Isolated] has no rules;
 //   - PIP names start with "subject." and are unique, and a declaration with
 //     [PIP.Isolated] has no other field set;
 //   - every field that holds JSON as written holds one compacted JSON value.
@@ -453,6 +461,9 @@ func (c *checker) policy(here *node, p *Policy) error {
 	}
 	if err := c.condition(here.child("target"), p.Target, PlacePolicyTarget); err != nil {
 		return err
+	}
+	if p.Isolated != "" && len(p.Rules) > 0 {
+		return fmt.Errorf("%s: an isolated policy has rules", here)
 	}
 	if i := slices.Index(p.Rules, nil); i >= 0 {
 		return fmt.Errorf("%s: rule %d: nil", here, i)

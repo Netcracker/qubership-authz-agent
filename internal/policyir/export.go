@@ -63,8 +63,13 @@ type Export struct {
 // are read as the first of them, since whichever is the tenant's own decides
 // alike. A PIP name the tenant declares more than once becomes one
 // declaration with [PIP.Isolated], unless every declaration of it is
-// identical, which is then read once. Each isolation is listed in
-// [Export.Dropped].
+// identical, which is then read once. A MATCH or NOT MATCH pattern whose
+// [Pattern.Regexp] package regexp does not compile isolates the node it
+// stands in:
+// a policy, by its target or a rule, becomes [Policy.Isolated]; a set, by its
+// target, and a set of simplified policies, by a condition, become
+// [PolicySet.Isolated]. A node isolated by its own target gets the target
+// true. Each isolation is listed in [Export.Dropped].
 //
 // Every top-level set applies except one whose status is INACTIVE, DRAFT, or
 // ARCHIVED, whatever its type; a nested set applies in any status. A set of
@@ -197,7 +202,7 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: isolated: %s", i, head.ID, reason))
 			t.sets = append(t.sets, &PolicySet{
 				ID: s.PolicySetID, Name: s.Name, Domain: s.Domain, ExternalID: s.ExternalID,
-				Target: condition(s.Target, PlaceSetTarget, ""), Isolated: reason,
+				Target: isolatedTarget(condition(s.Target, PlaceSetTarget, "")), Isolated: reason,
 			})
 			continue
 		}
@@ -206,14 +211,28 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 			continue
 		}
 		if g, ok := simplifiedGroup(&s); ok {
+			if why := groupRefused(g); why != "" {
+				id := *head.TenantID
+				out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: isolated: %s", i, head.ID, why))
+				t.sets = append(t.sets, &PolicySet{
+					ID: s.PolicySetID, Name: s.Name, Domain: s.Domain, ExternalID: s.ExternalID,
+					Target: isolatedTarget(condition(s.Target, PlaceSetTarget, "")), Isolated: why,
+				})
+				continue
+			}
 			t.simplified = append(t.simplified, g)
 			continue
 		}
-		b := setBuilder{vars: &t.vars}
+		var notes []string
+		b := setBuilder{vars: &t.vars, notes: &notes}
 		ps, err := b.set(&s, "")
 		if err != nil {
 			t.err = fmt.Errorf("policy set %q: %w", s.PolicySetID, err)
 			continue
+		}
+		for _, n := range notes {
+			id := *head.TenantID
+			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: %s", i, head.ID, n))
 		}
 		t.sets = append(t.sets, ps)
 	}
@@ -525,6 +544,29 @@ func algorithmOf(a string) (Algorithm, error) {
 
 type setBuilder struct {
 	vars *int
+	// notes collects a line per policy or set the builder isolates, starting
+	// with path.
+	notes *[]string
+	// path names the nested sets between the top-level set and the node being
+	// built, each followed by ": ", and is empty at the top-level set.
+	path string
+}
+
+// isolate records that the builder isolates the node named by label, which is
+// empty for the set being built, for the reason why.
+func (b setBuilder) isolate(label, why string) {
+	*b.notes = append(*b.notes, b.path+label+"isolated: "+why)
+}
+
+// groupRefused returns the reason [patternRefused] gives for
+// the first condition of g that it refuses, or "" when there is none.
+func groupRefused(g *SimplifiedGroup) string {
+	for _, p := range g.Policies {
+		if why := conditionRefused(p.Condition); why != "" {
+			return why
+		}
+	}
+	return ""
 }
 
 // foreignElement names the first policy, rule, or nested set in s whose
@@ -566,6 +608,11 @@ func (b setBuilder) set(s *exportSet, iterVar string) (*PolicySet, error) {
 		ID: s.PolicySetID, Name: s.Name, Domain: s.Domain, ExternalID: s.ExternalID, Algorithm: alg,
 		Target: condition(s.Target, PlaceSetTarget, iterVar),
 	}
+	if why := conditionRefused(ps.Target); why != "" {
+		b.isolate("", why)
+		ps.Target, ps.Isolated = trueCondition(PlaceSetTarget), why
+		return ps, nil
+	}
 	inner := iterVar
 	if it := s.Iterate; it != nil {
 		ia, err := algorithmOf(it.CombiningAlgorithm)
@@ -593,7 +640,9 @@ func (b setBuilder) set(s *exportSet, iterVar string) (*PolicySet, error) {
 		ps.Policies = append(ps.Policies, p)
 	}
 	for i := range s.PolicySets {
-		k, err := b.set(&s.PolicySets[i], inner)
+		kb := b
+		kb.path += fmt.Sprintf("policy set %q: ", s.PolicySets[i].PolicySetID)
+		k, err := kb.set(&s.PolicySets[i], inner)
 		if err != nil {
 			return nil, within(fmt.Sprintf("policy set %q", s.PolicySets[i].PolicySetID), err)
 		}
@@ -656,6 +705,20 @@ func (b setBuilder) policy(p *exportPolicy, iterVar string) (*Policy, error) {
 			Condition:  condition(r.Condition, PlaceRuleCondition, iterVar),
 			Predicates: preds,
 		})
+	}
+	why := conditionRefused(out.Target)
+	target := out.Target
+	if why != "" {
+		target = trueCondition(PlacePolicyTarget)
+	}
+	for i := 0; why == "" && i < len(out.Rules); i++ {
+		if why = conditionRefused(out.Rules[i].Target); why == "" {
+			why = conditionRefused(out.Rules[i].Condition)
+		}
+	}
+	if why != "" {
+		b.isolate(fmt.Sprintf("policy %q: ", out.ID), why)
+		return &Policy{ID: out.ID, Name: out.Name, Algorithm: out.Algorithm, Target: target, Isolated: why}, nil
 	}
 	return out, nil
 }

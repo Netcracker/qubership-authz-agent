@@ -82,14 +82,17 @@ func (e *RejectedError) Error() string {
 // failure of its source: a set the legacy service never evaluates
 // ([policyir.PolicySet.AlwaysFails]), a set or a PIP declaration a damaged
 // export leaves unusable ([policyir.PolicySet.Isolated],
-// [policyir.PIP.Isolated]), or a PIP a condition reads and the tenant does not
-// declare. The module answers such a part as a failed source does, and the
+// [policyir.PIP.Isolated]), a set or a policy with a MATCH pattern the agent
+// refuses ([policyir.Policy.Isolated]), or a PIP a condition reads and the
+// tenant does not declare. The module answers such a part as a failed source does, and the
 // tenant stays in service; the list is what a health check reports.
 type Failure struct {
-	// Set is the ID of the failing set, or of the innermost set whose
-	// condition reads the failing PIP.
+	// Set is the ID of the failing set, of the set that holds the failing
+	// policy, or of the innermost set whose condition reads the failing PIP.
 	Set string
-	// PIP is the name of the failing PIP, empty for a failing set.
+	// Policy is the ID of the failing policy, empty for a failing set or PIP.
+	Policy string
+	// PIP is the name of the failing PIP, empty for a failing set or policy.
 	PIP string
 	// Reason says why the part fails.
 	Reason string

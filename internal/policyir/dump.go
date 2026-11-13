@@ -64,6 +64,9 @@ func (t *Tree) Dump() string {
 		}
 		for _, p := range s.Policies {
 			line(depth+1, "policy %q name=%q algorithm=%s", p.ID, p.Name, algorithm(p.Algorithm))
+			if p.Isolated != "" {
+				line(depth+2, "isolated: %q", p.Isolated)
+			}
 			dumpCondition(line, depth+2, "target", p.Target)
 			for _, r := range p.Rules {
 				effect := string(r.Effect)

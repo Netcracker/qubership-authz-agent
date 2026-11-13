@@ -210,6 +210,8 @@ func unknownReason(ctx context.Context, s *Snapshot, unread []string) string {
 		switch {
 		case f.PIP != "":
 			names = append(names, f.PIP)
+		case f.Policy != "":
+			names = append(names, "policy "+f.Policy)
 		case f.Set != "":
 			names = append(names, "set "+f.Set)
 		}

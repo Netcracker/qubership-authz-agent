@@ -17,10 +17,10 @@ package regogen
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"slices"
 	"strings"
 
+	"authz-agent/internal/policyir"
 	"authz-agent/internal/regogen/spectables"
 )
 
@@ -571,38 +571,9 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 	return tpl{}, false
 }
 
-// matchRegex is the regular expression of a MATCH pattern: ** any characters, * and ? characters other than
-// /, () one or more such characters, . any character, and every other
-// character as itself in a regular expression, so a metacharacter keeps its
-// meaning; anchored at both ends.
+// matchRegex is the [policyir.Pattern.Anchored] of a MATCH pattern.
 func matchRegex(pattern string) (string, error) {
-	const any = `[A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]`
-	const noSlash = `[A-Za-z0-9\-._~:?#\[\]@!$&'()*+,;=%]`
-	var b strings.Builder
-	for i := 0; i < len(pattern); {
-		switch {
-		case strings.HasPrefix(pattern[i:], "**"):
-			b.WriteString(any + "*")
-			i += 2
-		case pattern[i] == '*':
-			b.WriteString(noSlash + "*")
-			i++
-		case strings.HasPrefix(pattern[i:], "()"):
-			b.WriteString(noSlash + "+")
-			i += 2
-		case pattern[i] == '?':
-			b.WriteString(noSlash)
-			i++
-		default:
-			b.WriteByte(pattern[i])
-			i++
-		}
-	}
-	rx := "^(?:" + b.String() + ")$"
-	if _, err := regexp.Compile(rx); err != nil {
-		return "", err
-	}
-	return rx, nil
+	return policyir.Pattern{Text: pattern}.Anchored()
 }
 
 // segmentGuards are equalities a value must satisfy to match the pattern: its

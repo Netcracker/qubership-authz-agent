@@ -141,7 +141,7 @@ const (
 	kindPolicy
 	kindSet
 	kindSimplified
-	kindUnknown // a set the agent evaluates to [deny, permit] under its target
+	kindUnknown // a set or a policy the agent evaluates to [deny, permit] under its target
 	kindIterate // an iterate set: its only kid is the set evaluated in one pass
 )
 
@@ -663,6 +663,10 @@ func (g *gen) policy(p *policyir.Policy, label, parent string) (*node, error) {
 	tgt, err := g.cond(p.Target, spectables.PlacePolicyTarget, "")
 	if err != nil {
 		return nil, err
+	}
+	if p.Isolated != "" {
+		g.fail(Failure{Set: set, Policy: p.ID, Reason: "isolated: " + p.Isolated})
+		return &node{kind: kindUnknown, id: g.nodeID(label), tgt: tgt}, nil
 	}
 	n := &node{kind: kindPolicy, id: g.nodeID(label), alg: g.alg(p.Algorithm), tgt: tgt}
 	for j, r := range p.Rules {

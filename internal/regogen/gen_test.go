@@ -2716,6 +2716,58 @@ func TestAnIsolatedSetFailsUnderItsTargetOnly(t *testing.T) {
 	}
 }
 
+// A policy whose MATCH pattern package regexp does not compile fails as a
+// source does under its target, and the module lists it as a failure of its
+// set. Under DENY_OVERRIDES the failure denies read, which the policy beside
+// it permits, and leaves write, outside the target, to that policy. The
+// policy is PERMIT_UNLESS_DENY, so without its rule it would permit too, and
+// with a pattern that compiles it permits a value the pattern matches.
+func TestAPolicyWithAPatternRegexpRefusesFailsUnderItsTargetOnly(t *testing.T) {
+	for _, tc := range []struct {
+		pattern  string
+		failures []Failure
+		wantRead bool
+	}{
+		{"a)|(b", []Failure{{Set: "s", Policy: "p1", Reason: "isolated: " +
+			"MATCH pattern \"a)|(b\" is not a valid regular expression: error parsing regexp: unexpected ): `a)|(b`"}},
+			false},
+		{"a|b", nil, true},
+		{`\\Qa`, nil, true},
+	} {
+		t.Run(tc.pattern, func(t *testing.T) {
+			sets := `{"policySets": [{"policySetId": "s", "status": "ACTIVE", "target": "resourceType == 'doc'",
+				"tenantId": "t1", "combiningAlgorithm": "DENY_OVERRIDES", "policies": [
+				{"policyId": "p1", "target": "operation == 'read'", "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+				 "tenantId": "t1", "rules": [{"ruleId": "r1", "target": "true", "effect": "ALLOW", "tenantId": "t1",
+					"condition": "resource.p MATCH ` + tc.pattern + `"}]},
+				{"policyId": "p2", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+				 "tenantId": "t1", "rules": [{"ruleId": "r2", "target": "true", "effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+			exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+			if err != nil {
+				t.Fatalf("FromRegular: %v", err)
+			}
+			m, err := Generate(exp.Trees["t1"], table(t), DefaultOptions())
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			if !reflect.DeepEqual(m.Failures, tc.failures) {
+				t.Errorf("Failures = %+v, want %+v", m.Failures, tc.failures)
+			}
+			for _, op := range []struct {
+				name string
+				want bool
+			}{{"read", tc.wantRead}, {"write", true}} {
+				req := Request{Body: Body{Operation: op.name, ResourceType: "doc", Resource: mustDecode(t, `{"p": "a"}`),
+					HasResource: true}, Values: map[string]Resolved{}}
+				m.Resolve(req.Body, req.Values)
+				if got := evalModule(t, m, req); got != op.want {
+					t.Errorf("allow(%s, resource.p = a) = %v, want %v", op.name, got, op.want)
+				}
+			}
+		})
+	}
+}
+
 // A condition that reads a PIP the tenant declares more than once
 // differently, or not at all, reads a failed source: the comparison is
 // undefined, so an ALLOW rule does not permit, and the module lists the PIP

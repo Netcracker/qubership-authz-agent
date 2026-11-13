@@ -302,6 +302,9 @@ func (fg *filterGen) setKids(n *node, s *policyir.PolicySet, prefix dnf) *fnode 
 
 // policy returns the node of policy n, translated from p.
 func (fg *filterGen) policy(n *node, p *policyir.Policy, prefix dnf) *fnode {
+	if n.kind == kindUnknown {
+		return &fnode{kind: kindUnknown, tgt: fg.status(n.id+".t", prefix, n.tgt)}
+	}
 	f := &fnode{kind: kindPolicy, alg: n.alg, tgt: fg.status(n.id+".t", prefix, n.tgt)}
 	inner := fg.g.product(prefix, n.tgt.notF())
 	for j, k := range n.kids {

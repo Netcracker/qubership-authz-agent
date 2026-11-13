@@ -302,6 +302,51 @@ func TestAPolicyOfResourceTypeAllThatIsNotGlobalKeepsThePreviousSnapshot(t *test
 	}
 }
 
+// A policy whose MATCH pattern package regexp does not compile is a failure
+// the health check lists with its set and its policy, and the candidate is
+// generated: the policy denies with a reason that names it, the tenant
+// serves its other policies, and the load warns that the policy is left out
+// and answers as failed.
+func TestAPolicyWithAPatternRegexpRefusesIsAFailureOfTheTenant(t *testing.T) {
+	const refused = "MATCH pattern \"a)|(b\" is not a valid regular expression: " +
+		"error parsing regexp: unexpected ): `a)|(b`"
+	for _, tc := range []struct {
+		name, pattern string
+		wantFailures  []Failure
+		wantAllowed   bool
+		wantReason    string
+		wantWarnings  []string
+	}{
+		{"a pattern regexp refuses", "a)|(b", []Failure{{Set: "s-a", Policy: "p", Reason: "isolated: " + refused}},
+			false, "PIP resolution failed: policy p", []string{
+				`policies: tenant a: left out of the policies: policy set 0 "s-a": policy "p": isolated: ` + refused,
+				`policies: tenant a: answers as a failed source: policy set s-a: policy p: isolated: ` + refused,
+			}},
+		{"a pattern that compiles", "y|z", nil, true, "", nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w := &warnings{}
+			r := New(Config{}, tab(t), w)
+			sum := load(t, r, ``, set("a", "resource.a MATCH "+tc.pattern))
+			if sum.Rejected != 0 || sum.Generated != 1 {
+				t.Errorf("Load summary = %+v, want 1 generated and none refused", sum)
+			}
+			th, _ := tenantHealth(r, "a")
+			if !th.Ready || th.Rejected != nil || !reflect.DeepEqual(th.Failures, tc.wantFailures) {
+				t.Errorf("health of a = %+v, want ready with no refusal and failures %+v", th, tc.wantFailures)
+			}
+			if got := decide(t, r, readDoc(t, "a", "y", 1)); got[0].Allowed != tc.wantAllowed || got[0].Reason != tc.wantReason {
+				t.Errorf("Decide(read doc with a = y) = %+v, want allowed %v with reason %q", got[0], tc.wantAllowed,
+					tc.wantReason)
+			}
+			if !slices.Equal(w.lines, tc.wantWarnings) {
+				t.Errorf("warnings of the load:\n%s\nwant:\n%s", strings.Join(w.lines, "\n"),
+					strings.Join(tc.wantWarnings, "\n"))
+			}
+		})
+	}
+}
+
 // warnings records the warnings a registry writes, formatted.
 type warnings struct {
 	quiet

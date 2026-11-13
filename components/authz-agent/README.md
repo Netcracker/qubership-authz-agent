@@ -63,8 +63,9 @@ Every line carries the request id under `request_id`, the same id the response c
 
 `GET /health` is 200 once the trusted providers meet the bootstrap rules, and 503 with the reason and its details until
 then. On the internal port, its `snapshots` member lists each tenant of the last policy load: whether it is `ready`, the
-snapshot it answers from, the sets and PIPs that answer as failed, what the load left out, and the `rejected` reason of
-a candidate that was not published. A load also writes a warning for each element it leaves out and each set or PIP that answers as failed,
+snapshot it answers from, the sets, policies, and PIPs that answer as failed, what the load left out, and the
+`rejected` reason of a candidate that was not published. A load also writes a warning for each element it leaves out
+and each set, policy, or PIP that answers as failed,
 unless the previous load reported the same text; the text names an element by its position in the document. A tenant
 keeps its previous snapshot when a new candidate is rejected; a tenant rejected on its first load is not ready and
 denies every check request. The gauge `authz_agent_policy_tenants` on `/prometheus` counts the tenants by the snapshot
@@ -105,6 +106,13 @@ their case.
 `MATCH` and `NOT MATCH` are the only tests with case. A pattern compares a string exactly only when it holds none of
 `*`, `?`, `.`, and the pair `()`, which match more than themselves, and none of `(`, `)`, `[`, `]`, `{`, `}`, `+`, `^`,
 `$`, `|`, and `\`, which keep their meaning in a regular expression.
+
+The regular expression a pattern stands for follows the RE2 syntax of the Go `regexp` package, not that of Java. A
+pattern that this syntax refuses, such as `a)|(b` or the backreference `(a)\1`, leaves its policy out of
+the evaluation: the policy, or the set whose target holds the pattern, answers as failed under its target, and the
+tenant's other policies answer as usual. A set of simplified policies with such a pattern in a condition answers as
+failed as a whole. The tenant then counts as `failing`, and the internal `/health` names the set, the policy, and the
+pattern.
 
 ### The limit on looking up nested values
 

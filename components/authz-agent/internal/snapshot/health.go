@@ -56,15 +56,19 @@ type TenantHealth struct {
 // Failure is a part of a tenant that answers as a failed source.
 type Failure struct {
 	Set    string `json:"set,omitempty"`
+	Policy string `json:"policy,omitempty"`
 	PIP    string `json:"pip,omitempty"`
 	Reason string `json:"reason"`
 }
 
-// String names the set or the PIP of f and the reason.
+// String names the set, the policy, or the PIP of f and the reason.
 func (f Failure) String() string {
 	s := f.Reason
 	if f.PIP != "" {
 		s = "PIP " + f.PIP + ": " + s
+	}
+	if f.Policy != "" {
+		s = "policy " + f.Policy + ": " + s
 	}
 	if f.Set != "" {
 		s = "policy set " + f.Set + ": " + s
@@ -106,7 +110,7 @@ func (r *Registry) Health() Health {
 func failuresOf(m *regogen.Module) []Failure {
 	var out []Failure
 	for _, f := range m.Failures {
-		out = append(out, Failure{Set: f.Set, PIP: f.PIP, Reason: f.Reason})
+		out = append(out, Failure{Set: f.Set, Policy: f.Policy, PIP: f.PIP, Reason: f.Reason})
 	}
 	return out
 }

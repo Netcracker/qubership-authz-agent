@@ -461,6 +461,24 @@ func TestATargetTheFilterCannotEvaluateDeniesWhereItsNodeDenies(t *testing.T) {
 	}
 }
 
+// A policy whose MATCH pattern package regexp does not compile fails as a
+// source does, and under DENY_OVERRIDES the filter denies every row, as the
+// check does, whatever the effect of its rule.
+func TestAPolicyWithAPatternRegexpRefusesDeniesEveryRow(t *testing.T) {
+	for _, tc := range []struct{ pattern, want string }{
+		{"a)|(b", deny},
+		{"y|z", allow},
+	} {
+		t.Run(tc.pattern, func(t *testing.T) {
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, ``, policySetBeside("true", "true", "resource.a MATCH "+tc.pattern, "ALLOW"))
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
+			}
+		})
+	}
+}
+
 // A policy whose target reads the resource denies rows the filter cannot
 // name only where it denies some row once its target holds. One that denies
 // none does not apply, and the policy beside it allows. A policy of ALLOW

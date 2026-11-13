@@ -611,6 +611,157 @@ func TestFromRegularIsolatesTheSetsOfAPolicySetIdATenantHasTwice(t *testing.T) {
 	}
 }
 
+// refusedPattern is the reason FromRegular gives for the MATCH pattern a)|(b,
+// which package regexp does not compile: the parenthesis closes before one
+// opens.
+const refusedPattern = "MATCH pattern \"a)|(b\" is not a valid regular expression: " +
+	"error parsing regexp: unexpected ): `a)|(b`"
+
+// A MATCH or NOT MATCH pattern that package regexp does not compile isolates
+// the policy that holds it, in its target or in a rule: the policy keeps no
+// rules, and gets the target true when its own target holds the pattern. The
+// set keeps its other policy, whose pattern a|b compiles.
+func TestFromRegularIsolatesAPolicyWithAPatternRegexpRefuses(t *testing.T) {
+	t.Parallel()
+
+	const control = `{"policyId": "p2", "rules": [{"ruleId": "r2", "effect": "ALLOW",
+		"condition": "resource.uri MATCH a|b"}]}`
+	const controlDump = "  policy \"p2\" name=\"\" algorithm=absent\n" +
+		"    rule \"r2\" name=\"\" effect=ALLOW\n" +
+		"      condition[rule_condition]: resource.uri MATCH pattern(\"a|b\")\n"
+	isolated := fmt.Sprintf("    isolated: %q\n", refusedPattern)
+	cases := []struct {
+		name, policy, wantDump string
+	}{
+		{"a rule condition", `{"policyId": "p1", "target": "resourceType == 'R'",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "condition": "resource.uri MATCH a)|(b"}]}`,
+			"  policy \"p1\" name=\"\" algorithm=absent\n" + isolated +
+				"    target[policy_target]: resourceType EQ \"R\"\n"},
+		{"a rule target under NOT MATCH", `{"policyId": "p1", "target": "resourceType == 'R'",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "resource.uri NOT MATCH a)|(b"}]}`,
+			"  policy \"p1\" name=\"\" algorithm=absent\n" + isolated +
+				"    target[policy_target]: resourceType EQ \"R\"\n"},
+		{"the policy target", `{"policyId": "p1", "name": "N1", "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+			"target": "resource.uri MATCH a)|(b", "rules": [{"ruleId": "r1", "effect": "ALLOW"}]}`,
+			"  policy \"p1\" name=\"N1\" algorithm=PERMIT_UNLESS_DENY\n" + isolated +
+				"    target[policy_target]: TRUE\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "policies": [`+tc.policy+`, `+control+`]}]`, `[]`)
+			want := "set \"s\" name=\"\" domain=\"\" algorithm=absent\n" + tc.wantDump + controlDump
+			if got := tree(t, e, "t").Dump(); got != want {
+				t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
+			}
+			wantDropped := []string{`policy set 0 "s": policy "p1": isolated: ` + refusedPattern}
+			if got := e.Dropped["t"]; !slices.Equal(got, wantDropped) {
+				t.Errorf("Dropped[t] = %q, want %q", got, wantDropped)
+			}
+		})
+	}
+}
+
+// A pattern that package regexp does not compile isolates a set whose target
+// holds it, top-level or nested, with the target true, and a set of
+// simplified policies whose condition holds it. The tenant keeps its other
+// set, whose pattern /api/*/items compiles.
+func TestFromRegularIsolatesASetWithAPatternRegexpRefuses(t *testing.T) {
+	t.Parallel()
+
+	const control = `{"tenantId": "t", "policySetId": "ok", "policies": [{"policyId": "p",
+		"rules": [{"ruleId": "r", "effect": "ALLOW", "condition": "resource.uri MATCH /api/*/items"}]}]}`
+	const controlDump = "set \"ok\" name=\"\" domain=\"\" algorithm=absent\n" +
+		"  policy \"p\" name=\"\" algorithm=absent\n" +
+		"    rule \"r\" name=\"\" effect=ALLOW\n" +
+		"      condition[rule_condition]: resource.uri MATCH pattern(\"/api/*/items\")\n"
+	cases := []struct {
+		name, set, wantDump, wantDropped string
+	}{
+		{"a top-level set target", `{"tenantId": "t", "policySetId": "s", "target": "resource.uri MATCH a)|(b",
+			"policies": [{"policyId": "p1"}]}`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n" +
+				fmt.Sprintf("  isolated: %q\n", refusedPattern) +
+				"  target[set_target]: TRUE\n",
+			`policy set 0 "s": isolated: ` + refusedPattern},
+		{"a nested set target", `{"tenantId": "t", "policySetId": "s", "target": "resourceType == 'R'",
+			"policySets": [{"policySetId": "m", "policySets": [{"policySetId": "n", "target": "resource.uri MATCH a)|(b"}]}]}`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n" +
+				"  target[set_target]: resourceType EQ \"R\"\n" +
+				"  set \"m\" name=\"\" domain=\"\" algorithm=absent\n" +
+				"    set \"n\" name=\"\" domain=\"\" algorithm=absent\n" +
+				fmt.Sprintf("      isolated: %q\n", refusedPattern) +
+				"      target[set_target]: TRUE\n",
+			`policy set 0 "s": policy set "m": policy set "n": isolated: ` + refusedPattern},
+		{"a condition of a simplified set", strings.Replace(simplifiedSet("t", "R", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "true", "rules": [{"ruleId": "r", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'",
+			"condition": "resource.uri MATCH a)|(b"}]}]`), `"domain": "D",`, `"domain": "D", "name": "N", "externalId": "X",`, 1),
+			"set \"s\" name=\"N\" domain=\"D\" algorithm=absent externalId=\"X\"\n" +
+				fmt.Sprintf("  isolated: %q\n", refusedPattern) +
+				"  target[set_target]: resourceType EQ \"R\"\n",
+			`policy set 0 "s": isolated: ` + refusedPattern},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := fromRegular(t, "["+tc.set+", "+control+"]", `[]`)
+			if got, want := tree(t, e, "t").Dump(), tc.wantDump+controlDump; got != want {
+				t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
+			}
+			if got := e.Dropped["t"]; !slices.Equal(got, []string{tc.wantDropped}) {
+				t.Errorf("Dropped[t] = %q, want [%q]", got, tc.wantDropped)
+			}
+		})
+	}
+}
+
+// A set isolated for another reason keeps its target, unless the target
+// holds a pattern that package regexp does not compile: then the target is
+// true, as for a set that pattern isolates, and the reason stays the first.
+func TestFromRegularGivesASetIsolatedForAnotherReasonTheTargetTrueForAPatternRegexpRefuses(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name, sets, wantDump string
+		wantDropped          []string
+	}{
+		{"two sets of one policySetId", `[{"tenantId": "t", "policySetId": "s", "target": "resource.uri MATCH a)|(b"},
+			{"tenantId": "t", "policySetId": "s", "name": "n", "target": "resource.uri MATCH a)|(b"}]`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n" +
+				"  isolated: \"the tenant has 2 top-level sets with this policySetId\"\n" +
+				"  target[set_target]: TRUE\n" +
+				"set \"s\" name=\"n\" domain=\"\" algorithm=absent\n" +
+				"  isolated: \"the tenant has 2 top-level sets with this policySetId\"\n" +
+				"  target[set_target]: TRUE\n",
+			[]string{`policy set 0 "s": isolated: the tenant has 2 top-level sets with this policySetId`,
+				`policy set 1 "s": isolated: the tenant has 2 top-level sets with this policySetId`}},
+		{"a policy of another tenant", `[{"tenantId": "t", "policySetId": "s", "target": "resource.uri MATCH a)|(b",
+			"policies": [{"policyId": "p", "tenantId": "u"}]}]`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n" +
+				"  isolated: \"policy \\\"p\\\" has tenantId \\\"u\\\"\"\n" +
+				"  target[set_target]: TRUE\n",
+			[]string{`policy set 0 "s": isolated: policy "p" has tenantId "u"`}},
+		{"a policy of another tenant under a pattern that compiles", `[{"tenantId": "t", "policySetId": "s",
+			"target": "resource.uri MATCH a|b", "policies": [{"policyId": "p", "tenantId": "u"}]}]`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n" +
+				"  isolated: \"policy \\\"p\\\" has tenantId \\\"u\\\"\"\n" +
+				"  target[set_target]: resource.uri MATCH pattern(\"a|b\")\n",
+			[]string{`policy set 0 "s": isolated: policy "p" has tenantId "u"`}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := fromRegular(t, tc.sets, `[]`)
+			if got := tree(t, e, "t").Dump(); got != tc.wantDump {
+				t.Errorf("Dump() =\n%s\nwant\n%s", got, tc.wantDump)
+			}
+			if got := e.Dropped["t"]; !slices.Equal(got, tc.wantDropped) {
+				t.Errorf("Dropped[t] = %q, want %q", got, tc.wantDropped)
+			}
+		})
+	}
+}
+
 // An unknown key of a set or of a PIP declaration is listed with its path
 // inside the element, however deep it stands, in the order of the document.
 func TestFromRegularListsEveryUnknownKey(t *testing.T) {
