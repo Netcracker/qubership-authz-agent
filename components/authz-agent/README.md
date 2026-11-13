@@ -26,7 +26,8 @@ in ADR 0080 under `docs/decisions`.
   the loops in the process write the store.
 - `main.go` and `config.go`: configuration from the environment through configloader.
 
-The chart assembles the agent Pod as this one container.
+The chart assembles the agent Pod as this one container. Without Kubernetes, the agent runs under Docker:
+[`deploy/docker`](../../deploy/docker/README.md) holds a Compose example and its steps.
 
 ## Configuration
 

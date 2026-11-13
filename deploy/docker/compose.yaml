@@ -1,0 +1,37 @@
+---
+# Runs authz-agent under Docker Compose, without Kubernetes. README.md in this
+# directory lists the steps and the files an installation fills in.
+name: authz-agent
+
+services:
+  authz-agent:
+    image: ghcr.io/netcracker/qubership-authz-agent:0.1.0@sha256:3b2d73f18b9322e8c174baa4281e026476bc74cad6dd289f3f459ec834cbc984
+    restart: unless-stopped
+    # The entrypoint of the image passes SIGTERM on after SIGTERM_EXIT_DELAY
+    # seconds, 0 in agent.env and 10 by default, and the agent then takes up
+    # to 10 seconds to finish the requests in flight.
+    stop_grace_period: 30s
+    env_file:
+      - agent.env
+    # Both ports follow AUTHZ_PUBLIC_ADDR and AUTHZ_HTTP_ADDR in agent.env, as
+    # does the healthcheck URL. Both are published on the loopback interface
+    # of the host alone: a proxy on the host terminates TLS in front of the
+    # public surface, and the internal surface serves the probes and the
+    # metrics.
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8181:8181"
+    volumes:
+      - ./authz:/etc/authz:ro
+      - ./secret:/etc/secret:ro
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "--silent", "--show-error", "--fail-with-body", "http://127.0.0.1:8181/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
