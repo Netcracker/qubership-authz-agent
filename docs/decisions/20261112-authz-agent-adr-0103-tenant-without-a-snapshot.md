@@ -13,9 +13,14 @@ vlsi
 
 - The owner of the policy decision code (`vlsi`) approves this record.
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
+- The project architect (`mr-joom`) answers O2 and O4, which concern ADR-0092 R4.
 
 #### Related ADRs
 
+- [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
+  ADR-0091 R17, the conditions that the 503 of `/ready` names, and ADR-0091 R18, liveness, which R4 and R5 build on.
+- [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
+  ADR-0092 R4, the tenants that a token in `Authorization` that is not M2M may reach, which O2 concerns.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
   the tenant of the decision, the default tenant and its translation (ADR-0093 R11), and readiness (ADR-0093 R17, R19,
   R21). R1 here replaces ADR-0093 R16 and R18.
@@ -76,12 +81,11 @@ status of `/health`.
 
 #### Readiness and health
 
-- **R4** (`startup`). A tenant without a snapshot, and a default tenant whose name is not translated yet, do not change
-  the status of `/health` on either listener. ADR-0093 R11, R17, and R19 decide when either makes the agent not ready,
-  and `/ready` alone reports it.
-- **R5** (`startup`). While `/ready` answers 503, its message names each reason that holds: no pull after the start has
-  finished, the tenants that keep the agent not ready under ADR-0093 R17 and R19, and the default tenant whose name is
-  not translated yet. `/ready` is served on the internal listener only.
+- **R4** (`startup`). The `/health` of the internal listener, like the public `/health`, is liveness under ADR-0091
+  R18: its status does not change for a tenant without a snapshot or for a default tenant whose name is not translated
+  yet, and it lists the tenants only in its body under R6.
+- **R5** (`startup`). While no pull after the start has finished, the 503 of `/ready` names that reason, besides the
+  conditions of ADR-0091 R17. `/ready` is served on the internal listener only.
 - **R6** (`snapshot`). The `/health` of the internal listener lists each tenant that the policy source names, with
   whether it has a published snapshot. ADR-0100 R2 adds the reason of a rejected candidate.
 - **R7** (`snapshot`). The agent exports the number of tenants that the policy source names and that have no published
@@ -100,8 +104,8 @@ equal the untranslated name is a different tenant, and deciding with its snapsho
 tenant's policies deny (R3).
 
 `/health` is the liveness probe. A restart does not give a tenant a snapshot, and with one broken tenant a liveness
-probe that failed would restart every Pod and stop the other tenants as well. Readiness is where a rollout waits, and
-ADR-0093 decides when it waits (R4). The message of `/ready` tells the operator what it waits for, and it names tenants,
+probe that failed would restart every Pod and stop the other tenants as well (R4). Readiness is where a rollout waits,
+and ADR-0093 decides when it waits. The message of `/ready` tells the operator what it waits for, and it names tenants,
 so it stays on the internal listener, as ADR-0100 R6 keeps the public `/health` free of names (R5). The internal
 `/health` shows the state of every tenant after the agent becomes ready, when `/ready` no longer reports it (R6), and a
 measurement lets an operator alert on a tenant that is denied everything (R7).
@@ -124,8 +128,12 @@ Negative:
 - A request in the window between the start and the first accepted pull is denied, where a request after it can be
   allowed. A client that calls the agent before it is ready, such as through a Service that does not wait for
   readiness, gets denials during that window.
-- During the translation of the default tenant, a caller whose user token has no `tenant-id` gets 403, because
-  ADR-0092 R4 compares it with the translated default tenant (ADR-0093 R5), while an M2M caller gets the denial of R3.
+- During the translation of the default tenant, a request whose token in `Authorization` is not M2M and has no
+  `tenant-id`, and whose tenant of the decision comes from ADR-0093 R1 items 1 to 3, gets 403 under ADR-0092 R4 and
+  R5: ADR-0093 R5 compares that tenant only with the translated default tenant, so the agent cannot tell that the
+  request stays in the default tenant. The same request whose tenant of the decision is the default tenant under
+  ADR-0093 R1 item 4 gets the denial of R3, as does a request with an M2M token in `Authorization` whose tenant of the
+  decision is the default tenant.
 
 Follow-ups:
 
@@ -143,8 +151,14 @@ Follow-ups:
 
 - **O1.** Whether a tenant without a snapshot gets the denial of R1 or 503, so that a client retries while the first
   pull runs. The owner of the policy decision code (`vlsi`) decides. The point affects R1.
-- **O2.** Whether a caller whose user token has no `tenant-id` gets 403 while the default tenant is not translated, as
-  the second Negative bullet states, or the denial of R3. The owner of the policy decision code (`vlsi`) decides. The
-  point affects R3 and ADR-0092 R4.
+- **O2.** Whether a request whose token in `Authorization` is not M2M and has no `tenant-id`, and whose tenant of the
+  decision comes from ADR-0093 R1 items 1 to 3, gets 403 while the default tenant is not translated, as the second
+  Negative bullet states, or the denial of R3. The owner of the policy decision code (`vlsi`) and the project architect
+  (`mr-joom`), who approves ADR-0092, decide. The point affects R3 and ADR-0092 R4.
 - **O3.** Whether the agent needs a readiness endpoint for each tenant, and which members of the internal `/health`
   describe a tenant. The owner of the policy decision code (`vlsi`) decides. The point affects R5 and R6.
+- **O4.** What a request gets while the default tenant is not translated when its token in `Authorization` is not M2M
+  and has a `tenant-id`, and its tenant of the decision is the default tenant under ADR-0093 R1 item 4: ADR-0092 R4
+  compares the claim with a default tenant whose key the agent does not know yet. The answer is 403 or the denial of
+  R3. The owner of the policy decision code (`vlsi`) and the project architect (`mr-joom`), who approves ADR-0092,
+  decide. The point affects R3 and ADR-0092 R4.

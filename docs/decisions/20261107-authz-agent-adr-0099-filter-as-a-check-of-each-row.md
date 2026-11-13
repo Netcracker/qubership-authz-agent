@@ -121,12 +121,14 @@ predicate of each rule as its condition on the row, and narrow that set where a 
      level 1. A set counts when the filter evaluates its children: its target is true, or it is an unknown target that
      R9 evaluates. A set whose target is false does not count. A set with `iterate` counts as any other set. A tree of
      8 nested sets gets its text; a tree of 9 gets `DENY`.
-  2. Size: the text of any dialect, or the compact JSON of `customFilterCondition`, is longer than 1 MiB, that is,
-     1 048 576 bytes in UTF-8. Each text is measured on its own and in bytes, so a text in Cyrillic can pass the bound
-     with fewer characters than that, and one dialect, such as mongodb, can pass it alone. Compact JSON has no space
-     after `,` or `:`, and escaping that the JSON encoder adds to `<`, `>`, and `&` is not counted. A text of exactly
-     1 MiB is returned; one byte more gives `DENY`. The agent may stop building a text as soon as a part of it passes
-     the bound.
+  2. Size: the text of any dialect, the text of a predicate after any pass of the substitution of R13, or the compact
+     JSON of `customFilterCondition`, is longer than 1 MiB, that is, 1 048 576 bytes in UTF-8. Each text is measured on
+     its own and in bytes, so a text in Cyrillic can pass the bound with fewer characters than that, and one dialect,
+     such as mongodb, can pass it alone. A pass whose text of a predicate passes the bound gives `DENY` even where a
+     later pass would shorten that text, such as by substituting an empty value. Compact JSON has no space after `,`
+     or `:`, and escaping that the JSON encoder adds to `<`, `>`, and `&` is not counted. A text of exactly 1 MiB is
+     returned; one byte more gives `DENY`. The agent stops building a text, and stops a pass of the substitution, as
+     soon as the part it has written passes the bound.
 
 #### The text of a predicate
 
@@ -193,6 +195,11 @@ they can be shared, but no dialect can write a shared part once, so the exact te
 2026-11-10 to answer `DENY` past 8 levels and past 1 MiB of text. `DENY` admits fewer rows than R1 states, in the
 direction R5 allows, and legacy has neither bound (R12).
 
+A value that holds placeholders is substituted up to four more times under R13, and each pass can multiply the length
+of the text, so a short value from a token claim or a PIP can build a text far longer than anything the caller sent.
+Checking the size during each pass, and not only on the finished text, limits the substitution to five passes of at
+most 1 MiB each, whatever the values hold, and an oversized value fails its request with `DENY` (R12).
+
 A node whose target is unknown either applies or does not, and ADR-0098 R2 allows a resource only if it is allowed
 both ways. A node that can deny may deny when its target holds, so `check/resource` denies, and the filter gives the
 node denied rows it cannot name, which R5 turns into a narrower answer (R9, R10). A node that cannot deny only allows or
@@ -219,9 +226,9 @@ The rows that ADR-0098 R11 denies through a failed value are described by the co
 that the agent derives from the condition compares by the rules of the store, where `==` in the condition ignores case
 and converts types. With `subject.x == 'v' AND resource.a == 'y'` and a failed `subject.x`, ADR-0098 R11 denies every
 row whose `a` equals `y` ignoring case. The derived text `a=="y"` misses `{"a":"Y"}` in a store that compares
-case-sensitively, so the filter would admit that row where another rule allows it, and `check/resource` denies it. R11 accepts that cost for a template
-only because its author knows the store; the agent does not, so it writes no such text and narrows the answer under R5
-(R14).
+case-sensitively, so the filter would admit that row where another rule allows it, and `check/resource` denies it.
+R11 accepts that cost for a template only because its author knows the store; the agent does not, so it writes no such
+text and narrows the answer under R5 (R14).
 
 Policy authors already write quotes around a placeholder in their templates, such as `t='${subject.id}'`, and some
 templates substitute a list that forms part of the syntax of the predicate. Escaping a value for its dialect would
@@ -278,8 +285,9 @@ Negative:
   `null` (R8).
 - A node that can deny and whose target reads the resource makes the answer `DENY` under a `DENY_OVERRIDES` or
   `PERMIT_UNLESS_DENY` parent (R9, R5), where legacy leaves the node out and returns the predicates of its siblings.
-- A tree that evaluates sets deeper than 8 levels, or whose text in any dialect passes 1 MiB, gets `DENY` (R12), where
-  legacy, which has neither bound, answers with a predicate.
+- A tree that evaluates sets deeper than 8 levels, whose text in any dialect passes 1 MiB, or in which a pass of the
+  substitution makes the text of a predicate longer than 1 MiB, even where the finished text would be shorter, gets
+  `DENY` (R12), where legacy, which has neither bound, answers with a predicate.
 - Where the template of a DENY rule selects fewer rows than its condition denies, `check/filter` admits rows that
   `check/resource` denies, as legacy does (R11). With the condition `resource.segment == "VIP"` and the SQL template
   `segment = 'VIP'`, a row with `segment = 'vip'` appears in the list, and `check/resource` denies it because `==`
@@ -305,6 +313,8 @@ Follow-ups:
 - #205 writes a text derived from the condition for the rows that ADR-0098 R11 item 2 denies, such as `a!="y"` for
   `subject.x == 'v' OR resource.a == 'y'`, and a text derived from the targets above the rule (`e.path` in
   `internal/regogen/filteralg.go`), where R14 gives `null`.
+- `substitute` in `internal/regogen/filtersub.go` of #205 runs each pass of R13 over the whole text of a predicate and
+  checks no size, where R12 item 2 stops the pass at 1 MiB.
 - A page for policy authors that states how a value is substituted into each dialect, and that `customPredicate` is the
   form for a value a caller controls (R13).
 - An option of a policy set that turns on escaping of substituted values, off by default, is a compatible way to fix
