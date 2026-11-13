@@ -218,6 +218,7 @@ The minimum CI gate for compatibility-sensitive changes should run:
 2. `test/scripts/test-chart-render.sh`
 3. `make e2e` (the Testify suite on kind)
 4. `make parity` (the parity replay on kind)
+5. `make stand-images docker-e2e-up docker-e2e-suite` (the Testify suite under Docker)
 
 For running the runtime suite locally on a clean machine — prerequisites, the
 images the stack needs, ports, target platform, and troubleshooting — see

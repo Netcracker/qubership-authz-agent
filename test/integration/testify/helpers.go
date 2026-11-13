@@ -74,16 +74,18 @@ type RuntimeConfig struct {
 	// with 204 once it has stored the policies. Empty, waitForACPull sleeps.
 	AgentPullURL string
 	// M2MKeycloakProfile is true when the agent under test fetches its M2M
-	// token from Keycloak (M2M_KEYCLOAK_PROFILE=true), as the kind harness
-	// configures it. When false, m2m_keycloak catalog steps are skipped.
+	// token from Keycloak (M2M_KEYCLOAK_PROFILE=true), as the kind and the
+	// Docker stands configure it. When false, m2m_keycloak catalog steps are
+	// skipped.
 	M2MKeycloakProfile bool
 }
 
 // LoadConfig builds RuntimeConfig from environment variables. The kind Job
 // sets every address to a Service name (suite.env in
-// test/k8s/test-stand-values.yaml). The defaults only keep the config
-// well-formed: the suite runs inside the cluster, where every target is
-// reachable by Service name.
+// test/k8s/test-stand-values.yaml), and the Docker stand to a service name of
+// test/docker/compose.yaml. The defaults only keep the config well-formed:
+// the suite runs on the network of its stand, where every target is reachable
+// by name.
 func LoadConfig() RuntimeConfig {
 	waitSec := 6
 	if v := os.Getenv("KC_EXPIRED_WAIT_SECONDS"); v != "" {

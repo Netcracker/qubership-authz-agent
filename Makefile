@@ -178,16 +178,20 @@ e2e: e2e-cluster e2e-images e2e-harness e2e-install e2e-suite
 e2e-cluster:
 	kind get clusters | grep -qx $(KIND_CLUSTER) || kind create cluster --name $(KIND_CLUSTER) --wait 2m
 
-# The images the charts reference as local/<name>:ci. Keycloak is the public
-# image and is not built here. The agent is built with the paritytest tag, so
-# the parity suite can ask it to load the policies instead of waiting a pull
-# interval; the runtime suite does the same.
-e2e-images:
+# The images of the runtime stand as local/<name>:ci, which the e2e and the
+# docker-e2e targets share. Keycloak is the public image and is not built here.
+# The agent is built with the paritytest tag, so the parity suite can ask it to
+# load the policies instead of waiting a pull interval; the runtime suite does
+# the same.
+stand-images:
 	docker build -t local/authz-agent:ci               --build-arg GO_BUILD_TAGS=paritytest -f build/authz-agent/Dockerfile .
 	docker build -t local/authz-policy-admin:ci        -f build/authz-policy-admin/Dockerfile .
 	docker build -t local/pip-stub:ci                  -f test/integration/pipstub/Dockerfile test/integration/pipstub
 	docker build -t local/tenant-manager:ci            -f test/integration/tenantmanager/Dockerfile test/integration/tenantmanager
 	docker build -t local/authz-runtime-suite:ci       -f test/integration/testify/Dockerfile .
+
+# Adds the image of the parity suite and loads all six into the kind cluster.
+e2e-images: stand-images
 	docker build -t local/authz-parity-suite:ci        -f test/parity/suite/Dockerfile test/parity/suite
 	kind load docker-image --name $(KIND_CLUSTER) $(addprefix local/,$(addsuffix :ci,$(E2E_IMAGES)))
 
@@ -350,4 +354,49 @@ parity-logs:
 	kind export logs --name $(KIND_CLUSTER) $(E2E_ARTIFACTS)/parity/cluster
 	$(PARITY_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/parity/events.txt
 
-.PHONY: lint install-hooks test-jayway jayway-suite-calls mutation-diff e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs
+# ── The Docker target (ADR-0101 R17) ─────────────────────────────────────
+
+# The docker-e2e targets run the Compose example of deploy/docker with
+# test/docker/compose.yaml over it. The second file replaces the release image
+# with the agent of `make stand-images`, and adds Keycloak, the policy source,
+# the PIP stubs, and tenant-manager.
+DOCKER_E2E := docker compose -p authz-docker-e2e -f deploy/docker/compose.yaml -f test/docker/compose.yaml
+DOCKER_E2E_ARTIFACTS ?= test/artifacts/docker
+
+# Starts the stand and waits until the agent is ready, which it is only once it
+# has pulled its policies. The wait ends with an error that names the service
+# whose healthcheck fails, Keycloak after about five minutes. The credentials
+# are those of the client of the cloud-common realm in test/k8s/authn. The
+# agent runs as a uid that owns neither the files nor their directory, so every
+# uid can read them.
+docker-e2e-up:
+	mkdir -p test/docker/secret
+	printf test-app-client >test/docker/secret/username
+	printf test-app-secret >test/docker/secret/password
+	chmod 0755 test/docker/secret
+	chmod 0644 test/docker/secret/username test/docker/secret/password
+	$(DOCKER_E2E) up --detach --wait
+
+# Runs TestRuntimeSuite and keeps its log in $(DOCKER_E2E_ARTIFACTS)/suite.log.
+# kind runs every case of the suite, so a case skipped here means the stand
+# lacks a setting the case reads, and the target fails.
+docker-e2e-suite:
+	mkdir -p $(DOCKER_E2E_ARTIFACTS)
+	$(DOCKER_E2E) run --rm runtime-suite >$(DOCKER_E2E_ARTIFACTS)/suite.log 2>&1; status=$$?; \
+	cat $(DOCKER_E2E_ARTIFACTS)/suite.log; \
+	if [ $$status -ne 0 ]; then exit $$status; fi; \
+	if grep -q -- '--- SKIP' $(DOCKER_E2E_ARTIFACTS)/suite.log; then \
+		echo "The runtime suite skipped these cases under Docker, which kind runs; give test/docker/compose.yaml the settings they read:"; \
+		grep -- '--- SKIP' $(DOCKER_E2E_ARTIFACTS)/suite.log; \
+		exit 1; \
+	fi
+
+docker-e2e-logs:
+	mkdir -p $(DOCKER_E2E_ARTIFACTS)
+	$(DOCKER_E2E) ps --all >$(DOCKER_E2E_ARTIFACTS)/ps.txt
+	$(DOCKER_E2E) logs --no-color --timestamps >$(DOCKER_E2E_ARTIFACTS)/compose.log
+
+docker-e2e-down:
+	$(DOCKER_E2E) down --volumes --remove-orphans
+
+.PHONY: lint install-hooks test-jayway jayway-suite-calls mutation-diff stand-images docker-e2e-up docker-e2e-suite docker-e2e-logs docker-e2e-down e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs

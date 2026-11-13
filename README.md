@@ -88,7 +88,7 @@ verified from a clean clone on public images.
 - Go 1.24+
 - [OPA CLI](https://www.openpolicyagent.org/docs/latest/#1-download-opa) (for Rego tests; `mise install` installs the version `mise.toml` pins)
 - Docker, `kind`, and `kubectl` (for the integration and parity suites, which run on kind)
-- Docker Compose (for the load suite only)
+- Docker Compose (for the load suite, and for the runtime suite under Docker)
 - `helm` 3.19 or later, or 4.x (for the chart render test, and to install the test stand and run the suites on kind); see
   [docs/local-integration-tests.md](docs/local-integration-tests.md#2-prerequisites) for the versions the kind targets
   need
@@ -216,7 +216,9 @@ bash test/scripts/test-chart-render.sh
 
 Runs the Testify suite as a Job inside a kind cluster, against the Helm chart.
 This is the check CI runs (`.github/workflows/integration-tests.yaml`).
-Requires Docker, `kind`, `kubectl`, and `helm`.
+Requires Docker, `kind`, `kubectl`, and `helm`.  CI also runs the suite under
+Docker, against the Compose example of `deploy/docker`; see
+[docs/local-integration-tests.md](docs/local-integration-tests.md#under-docker-without-kubernetes).
 
 ```sh
 make e2e          # cluster, images, harness, chart, suite

@@ -12,7 +12,8 @@ executed as a Job inside that cluster. CI runs the same Makefile targets
 
 ## 1. What these tests are
 
-- Orchestrator: the `e2e-*` targets in the [Makefile](../Makefile). `make e2e` runs them in order.
+- Orchestrator: the `e2e-*` targets in the [Makefile](../Makefile). `make e2e` runs them in order. The `docker-e2e-*`
+  targets run the same suite under Docker; see [Under Docker, without Kubernetes](#under-docker-without-kubernetes).
 - The harness: the test-stand chart in `helm-templates/authz-test-stand`, installed with
   [test/k8s/test-stand-values.yaml](../test/k8s/test-stand-values.yaml). It runs Keycloak, which imports the realms of
   `test/k8s/authn/` at start, the `pip-stub` the uploaded PIP definitions call, a second stub instance as
@@ -34,6 +35,7 @@ executed as a Job inside that cluster. CI runs the same Makefile targets
 | --- | --- | --- |
 | **Docker** 23.0 or later, where BuildKit is the default builder | builds the images, writes the test-stand files with `docker build --output`, and runs the kind node | `docker info` |
 | **kind** | the cluster | `kind version` |
+| **Docker Compose** v2, whose `up` takes `--wait` | runs the stand of the `docker-e2e-*` targets | `docker compose version` |
 | **kubectl** | streams the Job log, restarts Deployments | `kubectl version --client` |
 | **helm** 3.19 or later, or 4.x | installs the charts, runs the suite Job | `helm version` |
 | **Go 1.24+** (the version `test/integration/testify/go.mod` declares) | the structural tests and `go vet`; the suite itself is compiled inside its image | `go version` |
@@ -75,7 +77,8 @@ minutes on a slow network; later runs reuse it.
 
 ## 4. Building the images
 
-`make e2e-images` builds and loads everything the cluster needs:
+`make e2e-images` builds and loads everything the cluster needs. `make stand-images` builds the same images except the
+parity suite and loads none of them; the Docker stand runs them as built:
 
 | Image | Dockerfile |
 | --- | --- |
@@ -118,6 +121,23 @@ Artifacts:
 make e2e-logs     # every container log on the node and the namespace events, into test/artifacts/kind/
 make e2e-down     # delete the cluster
 ```
+
+### Under Docker, without Kubernetes
+
+The same suite also runs under Docker. `test/docker/compose.yaml` goes over the Compose example of
+[`deploy/docker`](../deploy/docker/README.md). It replaces the release image with the agent of `make stand-images`, runs
+the agent as a uid in group 0 that the image does not know, and adds Keycloak, the policy source, the PIP stubs, and the
+tenant-manager emulator. CI runs it in the job `Docker end-to-end`.
+
+```bash
+make stand-images
+make docker-e2e-up      # starts the stand and waits until the agent is ready
+make docker-e2e-suite   # runs TestRuntimeSuite on the stand's network; its log goes to test/artifacts/docker/suite.log
+make docker-e2e-logs    # docker compose ps and the logs of the stand's services, into test/artifacts/docker/
+make docker-e2e-down    # removes the containers and their volumes
+```
+
+The stand publishes the agent's ports on `127.0.0.1:8080` and `127.0.0.1:8181`, so stop anything else on them first.
 
 ---
 
@@ -196,7 +216,7 @@ The minimum CI gate for compatibility-sensitive changes is listed in [test/readm
 | `make e2e-suite` prints `The runtime-suite container did not start within 180 seconds:`, or `make parity-suite` the same for `parity-suite`, and a Pod in `ErrImageNeverPull` | The images are not in the cluster; run `make e2e-images`. On a slow node whose container does start, raise `SUITE_START_SECONDS` (180). |
 | `make e2e-harness` or `make parity-harness` fails with `exists and cannot be imported into the current release: invalid ownership metadata` | The cluster still holds the harness objects an older `make e2e` or `make parity` created with `kubectl apply`. Run `make e2e-down` once, then rerun `make e2e` or `make parity`. |
 | `make e2e-harness` or `make parity-harness` runs out of its 10-minute wait | Check `kubectl -n authz-e2e get pods` (or `-n authz-parity`). A stub or tenant-manager Pod in `ErrImageNeverPull`: the images are not in the cluster, run `make e2e-images`. Keycloak still starting on the first run: the node is still pulling it, rerun the harness target. |
-| `setup.wait_for_agent` fails after Keycloak restarted outside `make e2e-harness` | Keycloak has new realm keys and the agent holds the old ones: `kubectl --context kind-authz-e2e -n authz-e2e rollout restart deploy/authz-agent` (namespace `authz-parity` for the parity stand). |
-| A long suite stops at 10 minutes with `panic: test timed out after 10m0s`, or `make e2e-suite` or `make parity-suite` fails after 15 minutes while the Job still runs | Three limits bound a suite run: `-test.timeout` in `suite.args` (600s), `suite.activeDeadlineSeconds` of the Job (900), and the `helm test` wait, `E2E_SUITE_TIMEOUT` or `PARITY_SUITE_TIMEOUT` (15m). Raise them together, each no lower than the one before: the first two in the stand's values file, which `make e2e-harness` or `make parity-harness` applies, and the third on the suite target, for example `make parity-suite PARITY_SUITE_TIMEOUT=5h30m`. |
+| `setup.wait_for_agent` fails after Keycloak restarted outside `make e2e-harness` | Keycloak has new realm keys and the agent holds the old ones: `kubectl --context kind-authz-e2e -n authz-e2e rollout restart deploy/authz-agent` (namespace `authz-parity` for the parity stand). Under Docker, `make docker-e2e-down docker-e2e-up`. |
+| A long suite stops at 10 minutes with `panic: test timed out after 10m0s`, or `make e2e-suite` or `make parity-suite` fails after 15 minutes while the Job still runs | Three limits bound a suite run: `-test.timeout` in `suite.args` (600s), `suite.activeDeadlineSeconds` of the Job (900), and the `helm test` wait, `E2E_SUITE_TIMEOUT` or `PARITY_SUITE_TIMEOUT` (15m). Raise them together, each no lower than the one before: the first two in the stand's values file, which `make e2e-harness` or `make parity-harness` applies, and the third on the suite target, for example `make parity-suite PARITY_SUITE_TIMEOUT=5h30m`. Under Docker, `-test.timeout` is in the `runtime-suite` command of `test/docker/compose.yaml`. |
 | Need logs after a run | `make e2e-logs`, then look under `test/artifacts/kind/`. |
 | Cluster left behind | `make e2e-down`. |
