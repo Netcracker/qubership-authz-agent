@@ -22,7 +22,7 @@ A rule names the layer where its check runs, or two layers, in parentheses:
 | `verify` | The check of one token and its result | `internal/token/verify` |
 | `namespaces` | The topology file and the allowed namespaces | `internal/token/namespaces` |
 | `handler` | Each request before policy evaluation, and the responses of the check routes | `components/authz-agent/internal/server`, `api/openapi.yaml` |
-| `startup` | Settings read at start, readiness, and liveness | `components/authz-agent/internal/` packages and `main.go` |
+| `startup` | Settings read at start, readiness, and liveness | `components/authz-agent/internal/` packages, `main.go`, `config.go`, and the settings table under `## Configuration` in `components/authz-agent/README.md` |
 | `client` | Outgoing calls, the policy pull, and the agent's token | `components/authz-agent/internal/{m2m,pull}`, `internal/pips` |
 | `policy` | The policies and the input they read | `policies/` |
 | `chart` | The Helm chart and its values schema | `helm-templates/authz-agent` |
