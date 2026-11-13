@@ -157,6 +157,8 @@ spec:
               value: '{{ .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL }}'
             - name: AUTHZ_PAP_CLIENT_TOKEN_FILE
               value: '{{ .Values.AUTHZ_PAP_CLIENT_TOKEN_FILE }}'
+            - name: KUBERNETES_M2M_ENABLED
+              value: '{{ .Values.KUBERNETES_M2M_ENABLED }}'
             {{- if not .Values.KUBERNETES_M2M_ENABLED }}
             # Client credentials: the service obtains its M2M token itself
             # and refreshes it before it expires.

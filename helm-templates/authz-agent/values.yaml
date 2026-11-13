@@ -246,15 +246,20 @@ AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL: 30
 #     them outside Helm-managed resources for exactly this reason.
 #
 #   See docs/architecture.md § "M2M Identity and Token Delivery".
+#
+# The chart passes the value to the agent under the same name. With true the
+# agent sends the token in AUTHZ_PAP_CLIENT_TOKEN_FILE, and a missing file
+# stops the start; with false it gets its token from AUTHZ_M2M_TOKEN_URL, which
+# the chart builds from IDENTITY_PROVIDER_URL, and reads no token file.
 KUBERNETES_M2M_ENABLED: false
 
 # Policy delivery configuration (authz-agent-ADR-0071).
 #
 # The agent fetches policies and PIPs from access-control's v3 config API on a
 # configurable interval and publishes them into OPA without a Pod restart.  The
-# Bearer token comes from AUTHZ_PAP_CLIENT_TOKEN_FILE (written by the kubelet in
-# KUBERNETES_M2M_ENABLED=true mode, or by the agent itself in
-# KUBERNETES_M2M_ENABLED=false mode).
+# Bearer token is the agent's own token that KUBERNETES_M2M_ENABLED chooses: the
+# projected token in AUTHZ_PAP_CLIENT_TOKEN_FILE, or the token of the agent's
+# realm from AUTHZ_M2M_TOKEN_URL.
 #
 # PAP is the Policy Administration Point, the service the policies come from;
 # the AUTHZ_PAP_CLIENT_* settings configure the agent as its client.
@@ -268,8 +273,8 @@ AUTHZ_PAP_CLIENT_SOURCE_URL: ''
 # AUTHZ_PAP_CLIENT_PULL_INTERVAL: seconds between polls.  0 disables the pull.
 #   Same semantic as AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL.
 AUTHZ_PAP_CLIENT_PULL_INTERVAL: 30
-# AUTHZ_PAP_CLIENT_TOKEN_FILE: path to the Bearer token written by the kubelet
-#   (KUBERNETES_M2M_ENABLED=true) or the agent's own token loop (false). The
+# AUTHZ_PAP_CLIENT_TOKEN_FILE: path to the projected token that the kubelet
+#   writes, which the agent reads with KUBERNETES_M2M_ENABLED=true alone. The
 #   default is where the platform's charts mount the netcracker-audience token.
 AUTHZ_PAP_CLIENT_TOKEN_FILE: /var/run/secrets/tokens/netcracker/token
 
