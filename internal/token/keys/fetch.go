@@ -26,7 +26,9 @@ import (
 	"io"
 	"math/big"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -185,7 +187,7 @@ func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 	}
 	resp, err := f.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, &requestError{err: err}
 	}
 	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes+1))
@@ -199,6 +201,43 @@ func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 		return nil, fmt.Errorf("GET %s: response is longer than %d bytes", url, maxResponseBytes)
 	}
 	return body, nil
+}
+
+// requestError is err from [http.Client.Do] with the text of its cause cut:
+// the method and the URL as [url.Error] prints them, then the text of the
+// cause quoted and cut to its first 200 runes. The provider decides how long
+// that text is: net/http parses the Location header of a 3xx before
+// CheckRedirect stops the redirect, quotes an unparsable header twice, and
+// by default accepts response headers up to 10 MiB. Unwrap returns err, so
+// errors.Is and errors.As reach the *url.Error and its cause.
+type requestError struct {
+	err error
+}
+
+func (e *requestError) Error() string {
+	var unsent *url.Error
+	if !errors.As(e.err, &unsent) {
+		// Do documents a *url.Error for every error it returns; an error of
+		// any other type is cut whole.
+		return quoted(e.err.Error(), 200)
+	}
+	return fmt.Sprintf("%s %q: %s", unsent.Op, unsent.URL, quoted(unsent.Err.Error(), 200))
+}
+
+func (e *requestError) Unwrap() error { return e.err }
+
+// quoted quotes s, cut to its first limit runes with "..." after the cut.
+func quoted(s string, limit int) string {
+	// s can run to tens of megabytes, and []rune(s) would take four bytes
+	// for each of them.
+	n := 0
+	for i := range s {
+		if n == limit {
+			return strconv.Quote(s[:i]) + "..."
+		}
+		n++
+	}
+	return strconv.Quote(s)
 }
 
 func readToken(path string) (string, error) {

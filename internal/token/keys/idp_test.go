@@ -50,8 +50,10 @@ type fakeIdP struct {
 	// discovery and jwks replace the documents served, when non-nil.
 	discovery []byte
 	jwks      []byte
-	// status, when non-zero, answers every request.
-	status int
+	// status, when non-zero, answers every request, with location as its
+	// Location header when location is set.
+	status   int
+	location string
 	// failures is how many of the next requests get 503.
 	failures int
 	// token, when set, is the bearer token a request has to carry.
@@ -83,8 +85,12 @@ func (idp *fakeIdP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	idp.lastAuth = r.Header.Get("Authorization")
 	switch {
 	case idp.status != 0:
+		status, location := idp.status, idp.location
 		idp.mu.Unlock()
-		w.WriteHeader(idp.status)
+		if location != "" {
+			w.Header().Set("Location", location)
+		}
+		w.WriteHeader(status)
 		return
 	case idp.failures > 0:
 		idp.failures--
@@ -140,6 +146,15 @@ func (idp *fakeIdP) setStatus(status int) {
 	idp.mu.Lock()
 	defer idp.mu.Unlock()
 	idp.status = status
+}
+
+// redirect answers every request with 302 Found and location as its
+// Location header.
+func (idp *fakeIdP) redirect(location string) {
+	idp.mu.Lock()
+	defer idp.mu.Unlock()
+	idp.status = http.StatusFound
+	idp.location = location
 }
 
 func (idp *fakeIdP) setGate(gate chan struct{}) {
