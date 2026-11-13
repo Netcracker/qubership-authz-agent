@@ -25,7 +25,7 @@ vlsi
   the rows that the predicate of a rule gives in `check/filter`.
 - [authz-agent-ADR-0100: Reject a tenant's candidate snapshot whole when it holds a form the agent cannot evaluate](20261107-authz-agent-adr-0100-forms-the-agent-cannot-evaluate.md):
   the candidate snapshot that R4 rejects, and ADR-0100 R7, the grants a tenant keeps after such a rejection.
-- [authz-agent-ADR-0103: Deny every request of a tenant without a published snapshot, refuse the untranslated default tenant with 503, and keep readiness on /ready](20261112-authz-agent-adr-0103-tenant-without-a-snapshot.md):
+- [authz-agent-ADR-0103: Deny every request of a tenant without a published snapshot, and keep readiness on /ready](20261112-authz-agent-adr-0103-tenant-without-a-snapshot.md):
   ADR-0103 R1, the answer to a tenant whose candidate was rejected at the first pull.
 
 ## Context
