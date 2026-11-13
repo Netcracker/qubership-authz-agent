@@ -1,0 +1,21 @@
+{
+  "providers": [
+    {
+      "id": "cloud-common",
+      "issuer": "http://keycloak:8080/auth/realms/cloud-common",
+      "required": true
+    },
+    {
+      "id": "authz-test",
+      "issuer": "http://keycloak:8080/auth/realms/authz-test"
+    },
+    {
+      "id": "default",
+      "issuer": "http://keycloak:8080/auth/realms/default"
+    },
+    {
+      "id": "unregistered",
+      "issuer": "http://keycloak:8080/auth/realms/unregistered"
+    }
+  ]
+}

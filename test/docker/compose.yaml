@@ -1,0 +1,133 @@
+---
+# The stand that CI runs the runtime suite in under Docker, without Kubernetes
+# (ADR-0101 R17). It goes over the Compose example as a second file:
+#
+#   docker compose -f deploy/docker/compose.yaml -f test/docker/compose.yaml
+#
+# Relative paths resolve against deploy/docker, the directory of the first
+# file. `make docker-e2e-up` builds nothing; `make stand-images` builds the
+# local images first. The services repeat what the kind job installs: the
+# agent chart with test/k8s/values.yaml, the stub chart with
+# test/k8s/policy-admin-values.yaml, here without a volume, and the test stand
+# of helm-templates/authz-test-stand with test/k8s/test-stand-values.yaml.
+services:
+  # The image of the commit replaces the release image. A uid in group 0 that
+  # the image does not know shows the agent needs no entry in /etc/passwd.
+  authz-agent:
+    image: local/authz-agent:ci
+    user: "12345:0"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      authz-policy-admin:
+        condition: service_healthy
+      pip-stub:
+        condition: service_healthy
+      entitlements-mock:
+        condition: service_healthy
+      tenant-manager:
+        condition: service_healthy
+    # The values that the chart sets on kind from test/k8s/values.yaml.
+    # test/docker/authz/trusted-providers.json is the providers file that the
+    # chart builds there from IDENTITY_PROVIDER_URL and AUTHZ_IDP_REALMS, and
+    # with such a generated list the chart turns strict bootstrap off.
+    environment:
+      AUTHZ_JWKS_BOOTSTRAP_REQUIRED: "false"
+      AUTHZ_TENANT_MANAGER_URL: http://tenant-manager:8080
+      AUTHZ_PAP_CLIENT_SOURCE_URL: http://authz-policy-admin:18090
+      AUTHZ_PAP_CLIENT_PULL_INTERVAL: "2"
+      AUTHZ_ENTITLEMENTS_URL: http://entitlements-mock:8090
+      AUTHZ_M2M_TOKEN_URL: http://keycloak:8080/auth/realms/cloud-common/protocol/openid-connect/token
+    volumes:
+      - ../../test/docker/authz:/etc/authz:ro
+      # make docker-e2e-up writes the credentials of the realm's client here.
+      - ../../test/docker/secret:/etc/secret:ro
+
+  # Keycloak in dev mode with the realms of test/k8s/authn, under /auth, as
+  # the test stand runs it.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.1@sha256:3f3c5f8e03c614774b4bd9173b88391fefa4153bfc010d8012d59ad825377332
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_HOSTNAME: http://keycloak:8080/auth
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ../../test/k8s/authn/cloud-common-realm.json:/opt/keycloak/data/import/cloud-common-realm.json:ro
+      - ../../test/k8s/authn/authz-test-realm.json:/opt/keycloak/data/import/authz-test-realm.json:ro
+      - ../../test/k8s/authn/6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b-realm.json:/opt/keycloak/data/import/6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b-realm.json:ro
+      - ../../test/k8s/authn/0d9e8f7a-6b5c-4d3e-2f1a-0b9c8d7e6f5a-realm.json:/opt/keycloak/data/import/0d9e8f7a-6b5c-4d3e-2f1a-0b9c8d7e6f5a-realm.json:ro
+    # The image has no curl; bash reads the management port directly.
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /auth/health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  authz-policy-admin:
+    image: local/authz-policy-admin:ci
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--output", "/dev/null", "http://127.0.0.1:18090/authz-policy-admin/hash"]
+      interval: 2s
+      retries: 30
+
+  pip-stub:
+    image: local/pip-stub:ci
+    environment:
+      PIP_STUB_PORT: "8090"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--output", "/dev/null", "http://127.0.0.1:8090/pip-stub/calls"]
+      interval: 2s
+      retries: 30
+
+  entitlements-mock:
+    image: local/pip-stub:ci
+    environment:
+      PIP_STUB_PORT: "8090"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--output", "/dev/null", "http://127.0.0.1:8090/pip-stub/calls"]
+      interval: 2s
+      retries: 30
+
+  # The agent asks the emulator for the identifier of the realm of the default
+  # tenant, which Keycloak names by that identifier.
+  tenant-manager:
+    image: local/tenant-manager:ci
+    environment:
+      TENANT_MANAGER_TENANTS: default=6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--output", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 2s
+      retries: 30
+
+  # make docker-e2e-suite runs it; up does not start it.
+  runtime-suite:
+    image: local/authz-runtime-suite:ci
+    profiles: ["suite"]
+    depends_on:
+      authz-agent:
+        condition: service_healthy
+    command: ["./runtime.test", "-test.v", "-test.timeout", "600s", "-test.run", "^TestRuntimeSuite$$"]
+    environment:
+      FULL_RUNTIME_SUITE: "true"
+      M2M_KEYCLOAK_PROFILE: "true"
+      BASE_URL: http://authz-agent:8080
+      OPA_DIRECT_URL: http://authz-agent:8181
+      AGENT_PULL_URL: http://authz-agent:8181/internal/v1/pull
+      AUTHZ_POLICY_ADMIN_URL: http://authz-policy-admin:18090
+      AUTHZ_PAP_CLIENT_PULL_INTERVAL: "2"
+      KC_BASE_URL: http://keycloak:8080/auth/realms/authz-test
+      KC_CLIENT_ID: authz-agent
+      KC_CLIENT_SECRET: authz-agent-secret
+      KC_EXPIRED_CLIENT_ID: authz-agent-expired
+      KC_EXPIRED_CLIENT_SECRET: authz-agent-expired-secret
+      KC_USERNAME: order-reader
+      KC_ADMIN_USERNAME: admin
+      KC_PASSWORD: password
+      KC_TENANT_BASE_URL: http://keycloak:8080/auth/realms/6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b
+      KC_UNREGISTERED_TENANT_BASE_URL: http://keycloak:8080/auth/realms/0d9e8f7a-6b5c-4d3e-2f1a-0b9c8d7e6f5a
+      KC_TOKEN_SCOPE: openid
+      KC_EXPIRED_WAIT_SECONDS: "6"
+      PIP_STUB_URL: http://pip-stub:8090
+      PIP_STUB_INTERNAL_URL: http://pip-stub:8090
+      ENTITLEMENTS_MOCK_URL: http://entitlements-mock:8090

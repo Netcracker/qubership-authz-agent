@@ -76,5 +76,5 @@ make e2e           # cluster, images, test stand, charts, runtime suite
 make parity        # the parity replay in its own namespace
 ```
 
-Both suites gate the service in CI: the runtime suite in `Kind end-to-end`, the
-parity replay in `Parity on kind`.
+Both suites gate the service in CI: the runtime suite in `Kind end-to-end` and
+`Docker end-to-end`, the parity replay in `Parity on kind`.
