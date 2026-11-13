@@ -350,6 +350,28 @@ func TestBootstrap_ResolvesTheRealmDisplayName(t *testing.T) {
 	}
 }
 
+// A nil resolver sends no request, so an issuer that names a tenant display
+// name is fetched as written.
+func TestNewRealmResolver_LooksUpOnlyWithAnAddress(t *testing.T) {
+	for _, tt := range []struct {
+		name, address, want string
+	}{
+		{"empty", "", "no resolver"},
+		{"blank", "  ", "no resolver"},
+		{"an address with a trailing slash", "http://tm:8080/", "http://tm:8080"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got := "no resolver"
+			if r := newRealmResolver(tt.address, http.DefaultClient, quiet{}); r != nil {
+				got = r.baseURL
+			}
+			if got != tt.want {
+				t.Errorf("newRealmResolver(%q) = %s, want %s", tt.address, got, tt.want)
+			}
+		})
+	}
+}
+
 // TestReload: an unchanged file publishes nothing; a change that meets the
 // threshold is published and recorded; a change that does not meet it, or
 // leaves a required provider out, is refused and leaves the previous keys

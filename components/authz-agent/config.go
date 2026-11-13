@@ -55,7 +55,7 @@ func loadConfig(get lookup) config {
 			Required:         boolean(get, "authz.jwks.bootstrap.required", true),
 			HTTPTimeout:      seconds(get, "authz.jwks.http.timeout", authn.DefaultHTTPTimeout),
 			HTTPRetries:      integer(get, "authz.jwks.http.retries", authn.DefaultHTTPRetries),
-			TenantManagerURL: get("authz.tenant.manager.url", "http://tenant-manager:8080"),
+			TenantManagerURL: get("authz.tenant.manager.url", ""),
 			ReloadInterval:   seconds(get, "authz.trusted.providers.reload.interval", authn.DefaultReloadInterval),
 		},
 		Pull: pull.Config{
