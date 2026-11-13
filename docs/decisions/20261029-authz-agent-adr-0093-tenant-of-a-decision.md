@@ -13,6 +13,8 @@ kichasov
 
 - The owner of the policy decision code (`vlsi`) approves this record.
 - The project architect (`mr-joom`) decided that Go computes the tenant, and where it comes from.
+- The owner of the policy decision code (`vlsi`) decided on 2026-11-13 that R22 answers 503, and the project architect
+  (`mr-joom`) approves R22, which answers ADR-0092 R4 before the translation.
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
 
 #### Related ADRs
@@ -20,9 +22,11 @@ kichasov
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   the verification that makes the claim `tenant-id` usable, and ADR-0091 R14, the readiness conditions.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
-  ADR-0092 R4 and R5 compare a caller that is not M2M with the tenant of this record.
+  ADR-0092 R4 and R5 compare a caller that is not M2M with the tenant of this record, and R22 answers that comparison
+  with the default tenant before the translation.
 - [authz-agent-ADR-0095: Refuse a check request before policy evaluation](20261029-authz-agent-adr-0095-refuse-before-policy-evaluation.md):
-  ADR-0095 R1, the order of the steps before policy evaluation.
+  ADR-0095 R1, the order of the steps before policy evaluation, ADR-0095 R3, which answers 503 when the tenant of a
+  request cannot be known, and ADR-0095 R6 and R7, the form of the refusal of R22.
 - [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
   the agent's token, which the call to tenant-manager carries.
 
@@ -87,6 +91,16 @@ evaluation.
 - **R15** (`startup`). A default tenant that is not among the tenants of the policy data gets a warning and a metric at
   start.
 
+- **R22** (`handler`). While `AUTHZ_TENANT_MANAGER_URL` holds an address and the agent has not yet translated the name
+  of the default tenant under R11, it refuses with 503 and the reason code `DEFAULT_TENANT_NOT_TRANSLATED` a request
+  that needs the key of the default tenant, in either of two steps of ADR-0095 R1:
+  1. in step 4, a caller that is not M2M whose comparison under ADR-0092 R4 is with the default tenant;
+  2. in step 5, a request whose tenant of the decision is the default tenant under R1 item 4.
+
+  The 503 is a refusal of ADR-0095, with the empty body of ADR-0095 R6 and the `Retry-After` of ADR-0095 R7. It takes
+  precedence over the 403 of ADR-0095 R4, over R16 and R18, and over the answer of policy evaluation, and the agent
+  never decides such a request with the policy data stored under the untranslated name.
+
 #### A tenant without data
 
 - **R16** (`handler`). A tenant the policy data does not know gets 200 and a deny from Go, and empty lists on a bulk
@@ -115,6 +129,15 @@ The default tenant gives every request a tenant, and a deployment names which on
 misspelled default from denying every request of that tenant without a word (R11). Deciding by the address gives one
 rule for every deployment, and a namespace or a kind cluster without tenant-manager needs only an empty address (R14).
 
+Before the translation, the key of the default tenant's policy data is not known. A tenant whose key happens to equal
+the untranslated name is a different tenant, and deciding with its policy data could allow what the default tenant's
+policies deny. The comparison of ADR-0092 R4 with the default tenant cannot be made either, because R5 compares only
+with the translated key. The agent cannot answer such a request yet, so it refuses with 503, as ADR-0095 R3 does when
+the tenant of a request cannot be known. The translation either finishes or keeps the agent not ready under R11, so a
+client that reaches the agent in that window gets the answer `/ready` gives, and a retry succeeds once the translation
+is done. A 403 would tell the caller that it is outside its tenant, and a denial would read as the decision of a
+policy; neither is true yet, and a caller does not retry either (R22).
+
 Sending the tenant of the decision on outgoing calls keeps a PIP from answering for another tenant than the policies
 evaluate (R7).
 
@@ -134,6 +157,13 @@ readiness probe passes. An agent that stays not ready stops the rollout, and the
   Pods, and the readiness probe would pass while that tenant gets a deny on every request.
 - **A6. Stay not ready only for a rejected snapshot of the default tenant.** Rejected by R19: where another tenant
   carries the traffic, its rejected snapshot would have the same effect.
+- **A7. Decide a request of the default tenant before the translation with the policy data stored under its
+  untranslated name.** Rejected by R22: that data can belong to another tenant.
+- **A8. Deny a request of the default tenant before the translation with 200, as for a tenant without data.** Rejected
+  by R22: the denial reads as a policy decision, and the caller does not retry it although the translation ends.
+- **A9. Refuse with the 403 of ADR-0095 R4 a caller that is not M2M whose comparison under ADR-0092 R4 is with the
+  default tenant before the translation.** Rejected by R22: the agent cannot know yet whether the caller is outside
+  its tenant.
 
 ## Consequences
 
@@ -145,6 +175,10 @@ Negative:
 - A user token without `tenant-id` reaches the tenant its service names, the default tenant included, when that service
   is M2M. ADR-0092 R4 limits a service that is not.
 - A deployment with tenant-manager needs it at start: until it answers, the agent is not ready.
+- Until the agent translates the name of the default tenant, the requests that R22 names get 503, where after the
+  translation the same requests get the 403 of ADR-0095 R4 or the answer of policy evaluation. A client that calls the
+  agent before it is ready and does not retry a 503 fails during that window. A request that needs no key of the
+  default tenant, such as an M2M caller that names another tenant, is decided as usual.
 - A translation that returns a value other than the key of the policy data leaves the default tenant without data, and
   its requests get a deny.
 - The chart's default address is `http://tenant-manager:8080`, so a namespace without tenant-manager has to set the
@@ -155,3 +189,11 @@ Negative:
   eviction, or an OOM kill. After a restart of all Pods, every tenant of the installation waits for that snapshot to be
   fixed. A single agent on a VM or a deployment with one replica has no old Pods to go on serving, so there every
   restart does this.
+
+Follow-ups:
+
+- When R22 is accepted, ADR-0095 gains a line that ADR-0093 R22 adds a 503 to its steps 4 and 5, and its R16 gains a
+  503 row for `DEFAULT_TENANT_NOT_TRANSLATED` with the rule ADR-0093 R22. ADR-0092 gains a line that ADR-0093 R22
+  answers its R4 before the translation.
+- #205 decides a request of the default tenant before the translation in the tenant whose key is the untranslated
+  name, where R22 refuses it with 503. The wiring of the default tenant is #232.
