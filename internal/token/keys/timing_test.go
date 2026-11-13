@@ -273,8 +273,8 @@ func TestLookupOrReload_WaitsThreeSecondsForAReloadByDefault(t *testing.T) {
 		transport.setHold(hold)
 		start := time.Now()
 		_, err := set.LookupOrReload(t.Context(), Query{Issuer: iss("cloud-common"), KID: "rotated"})
-		if !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload() error = %v, want %v", err, ErrKeyUnknown)
+		if !errors.Is(err, ErrKeysUnavailable) {
+			t.Errorf("LookupOrReload() error = %v, want %v", err, ErrKeysUnavailable)
 		}
 		if got := time.Since(start); got != 3*time.Second {
 			t.Errorf("LookupOrReload() returned after %s, want 3s", got)
@@ -587,8 +587,8 @@ func TestLookupOrReload_StopsWaitingWhenItsContextEnds(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		cancel()
 		started := time.Now()
-		if _, err := set.LookupOrReload(ctx, Query{Issuer: provider.Issuer, KID: "key-2"}); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(%q) with an ended context error = %v while the reload was held, want %v", "key-2", err, ErrKeyUnknown)
+		if _, err := set.LookupOrReload(ctx, Query{Issuer: provider.Issuer, KID: "key-2"}); !errors.Is(err, ErrKeysUnavailable) {
+			t.Errorf("LookupOrReload(%q) with an ended context error = %v while the reload was held, want %v", "key-2", err, ErrKeysUnavailable)
 		}
 		if got := time.Since(started); got != 0 {
 			t.Errorf("LookupOrReload() with an ended context returned after %s, want 0s", got)
@@ -614,8 +614,8 @@ func TestLookupOrReload_StopsWaitingAfterTheReloadWait(t *testing.T) {
 		hold := make(chan struct{})
 		transport.setHold(hold)
 		started := time.Now()
-		if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "key-2"}); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(%q) error = %v while the reload was held, want %v", "key-2", err, ErrKeyUnknown)
+		if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "key-2"}); !errors.Is(err, ErrKeysUnavailable) {
+			t.Errorf("LookupOrReload(%q) error = %v while the reload was held, want %v", "key-2", err, ErrKeysUnavailable)
 		}
 		if got := time.Since(started); got != 20*time.Millisecond {
 			t.Errorf("LookupOrReload() returned after %s, want the ReloadWait of 20ms", got)
@@ -804,6 +804,71 @@ func TestLookupOrReload_WarnsWhenTheReloadFails(t *testing.T) {
 	}
 }
 
+// The first load of the realm is held past ReloadWait, so the token has no
+// answer about the keys, and the load brings them once the response arrives.
+func TestLookupOrReload_ReportsKeysAsUnavailableWhenTheFirstLoadOutlastsTheWait(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		transport := newFakeTransport(t)
+		set := bubbleSetOf(t, Config{Keycloak: &Keycloak{URL: "http://keycloak.test"}}, Options{ReloadWait: 20 * time.Millisecond}, transport)
+		hold := make(chan struct{})
+		transport.setHold(hold)
+		if _, err := lookupRealm(t, set, "tenant-1"); !errors.Is(err, ErrKeysUnavailable) {
+			t.Errorf("LookupOrReload() error = %v, want %v", err, ErrKeysUnavailable)
+		}
+		close(hold)
+		synctest.Wait()
+		if _, err := set.Lookup(Query{Issuer: iss("tenant-1"), KID: "k1"}); err != nil {
+			t.Errorf("Lookup() after the held load ended error = %v, want none", err)
+		}
+	})
+}
+
+// jwksOf returns a JWKS document that lists keys.
+func jwksOf(t *testing.T, keys ...json.RawMessage) []byte {
+	t.Helper()
+	body, err := json.Marshal(map[string]any{"keys": keys})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return body
+}
+
+// sequencedTransport answers discovery at once and each JWKS request from
+// bodies, by the order of arrival, and holds a request whose gate is set. A
+// request reports its number on arrived before it is held.
+type sequencedTransport struct {
+	bodies  map[int][]byte
+	status  map[int]int
+	gates   map[int]chan struct{}
+	arrived chan int
+
+	mu sync.Mutex
+	n  int
+}
+
+func newSequencedTransport() *sequencedTransport {
+	return &sequencedTransport{bodies: map[int][]byte{}, status: map[int]int{}, gates: map[int]chan struct{}{}, arrived: make(chan int, 16)}
+}
+
+func (s *sequencedTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	if address, ok := strings.CutSuffix(r.URL.String(), "/.well-known/openid-configuration"); ok {
+		body, err := json.Marshal(map[string]string{"jwks_uri": address + "/jwks"})
+		return response(body), err
+	}
+	s.mu.Lock()
+	s.n++
+	i := s.n
+	s.mu.Unlock()
+	s.arrived <- i
+	if gate := s.gates[i]; gate != nil {
+		<-gate
+	}
+	if status := s.status[i]; status != 0 {
+		return &http.Response{StatusCode: status, Body: http.NoBody}, nil
+	}
+	return response(s.bodies[i]), nil
+}
+
 // spinUntil lets the other goroutines of the bubble run until cond holds. A
 // goroutine that waits for a mutex is not durably blocked, so synctest.Wait does
 // not return while one does, and this loop stands in for it.
@@ -835,8 +900,8 @@ func TestLookupOrReload_KeepsAThousandRealmsByDefault(t *testing.T) {
 			}
 		}
 		kc.publishRealm("tenant-1000", ecJWK(t, "k1", nil))
-		if _, err := lookupRealm(t, set, "tenant-1000"); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(realm tenant-1000) error = %v, want %v", err, ErrKeyUnknown)
+		if _, err := lookupRealm(t, set, "tenant-1000"); !errors.Is(err, ErrKeysUnavailable) {
+			t.Errorf("LookupOrReload(realm tenant-1000) error = %v, want %v", err, ErrKeysUnavailable)
 		}
 		if got := kc.loadsOf("tenant-1000"); got != 0 {
 			t.Errorf("discovery requests for realm tenant-1000 = %d, want 0", got)
@@ -888,8 +953,8 @@ func TestLookupOrReload_RefusesARealmAtTheLimitWithoutASearchBeforeOneIsDue(t *t
 		}
 		_, _ = lookupRealm(t, set, "ghost")
 		time.Sleep(30 * time.Second)
-		if err := lookupRealmWhileHolding(t, set, "ghost", "c"); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(realm c) error = %v, want %v", err, ErrKeyUnknown)
+		if err := lookupRealmWhileHolding(t, set, "ghost", "c"); !errors.Is(err, ErrKeysUnavailable) {
+			t.Errorf("LookupOrReload(realm c) error = %v, want %v", err, ErrKeysUnavailable)
 		}
 	})
 }
@@ -916,11 +981,11 @@ func TestLookupOrReload_RefusesARealmAtTheLimitWithoutASearchWhileALoadOutlastsI
 		kc.setHold(hold)
 		_, _ = lookupRealm(t, set, "ghost")
 		time.Sleep(61 * time.Second)
-		if _, err := lookupRealm(t, set, "c"); !errors.Is(err, ErrKeyUnknown) {
-			t.Fatalf("LookupOrReload(realm c) error = %v, want %v", err, ErrKeyUnknown)
+		if _, err := lookupRealm(t, set, "c"); !errors.Is(err, ErrKeysUnavailable) {
+			t.Fatalf("LookupOrReload(realm c) error = %v, want %v", err, ErrKeysUnavailable)
 		}
-		if err := lookupRealmWhileHolding(t, set, "ghost", "d"); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(realm d) error = %v, want %v", err, ErrKeyUnknown)
+		if err := lookupRealmWhileHolding(t, set, "ghost", "d"); !errors.Is(err, ErrKeysUnavailable) {
+			t.Errorf("LookupOrReload(realm d) error = %v, want %v", err, ErrKeysUnavailable)
 		}
 	})
 }
@@ -931,8 +996,8 @@ func TestLookupOrReload_RefusesARealmAtTheLimitWithoutASearchBeforeTheNextFailed
 	synctest.Test(t, func(t *testing.T) {
 		set, _ := youngFailedRealmAtTheLimit(t)
 		time.Sleep(10 * time.Second)
-		if err := lookupRealmWhileHolding(t, set, "young", "d"); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(realm d) at 70 s error = %v, want %v", err, ErrKeyUnknown)
+		if err := lookupRealmWhileHolding(t, set, "young", "d"); !errors.Is(err, ErrKeysUnavailable) {
+			t.Errorf("LookupOrReload(realm d) at 70 s error = %v, want %v", err, ErrKeysUnavailable)
 		}
 	})
 }
@@ -983,5 +1048,145 @@ func TestRefresh_GivesEachProviderAndRequiredRealmALineAndSumsUpTheRealmsTokensN
 				t.Errorf("line %d of the Refresh() error = %q, want the prefix %q", i+1, lines[i], prefix)
 			}
 		}
+	})
+}
+
+// A scheduled Refresh holds the lock of the source while it stores two RSA keys,
+// and the load that their kid starts queues behind it. The wait can end before
+// that load does, or the load can fail. Neither says that the keys cannot be
+// loaded, because they have just arrived.
+func TestLookupOrReload_FindsAKeyThatARefreshBroughtDuringTheWait(t *testing.T) {
+	tests := []struct {
+		name       string
+		status     int
+		held       bool
+		reloadWait time.Duration
+	}{
+		{"the wait runs out", 0, true, 300 * time.Millisecond},
+		{"the load fails", http.StatusServiceUnavailable, false, 5 * time.Second},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				server := newSequencedTransport()
+				two := jwksOf(t, rsaJWK(t, 2048, "r1", nil), rsaJWK(t, 2048, "r2", nil))
+				server.bodies[1], server.bodies[2], server.bodies[3] = jwksOf(t, ecJWK(t, "ec", nil)), two, two
+				server.status[3] = tt.status
+				refreshGate, loadGate := make(chan struct{}), make(chan struct{})
+				server.gates[2] = refreshGate
+				if tt.held {
+					server.gates[3] = loadGate
+				}
+				provider := providerOf("p")
+				set := bubbleSetOf(t, Config{Providers: []Provider{provider}}, Options{ReloadWait: tt.reloadWait}, server)
+				if err := set.Refresh(t.Context()); err != nil {
+					t.Fatalf("Refresh() error = %v", err)
+				}
+				<-server.arrived
+
+				refreshed := make(chan error, 1)
+				go func() { refreshed <- set.Refresh(t.Context()) }()
+				<-server.arrived
+				looked := make(chan error, 1)
+				go func() {
+					_, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "r1"})
+					looked <- err
+				}()
+				src := set.providers[provider.Issuer]
+				spinUntil(t, "the load for the token to start", func() bool {
+					src.onDemand.mu.Lock()
+					defer src.onDemand.mu.Unlock()
+					return src.onDemand.running != nil
+				})
+				close(refreshGate)
+				if err := <-refreshed; err != nil {
+					t.Fatalf("Refresh() error = %v", err)
+				}
+				if err := <-looked; err != nil {
+					t.Errorf("LookupOrReload() error = %v, want none", err)
+				}
+				close(loadGate)
+				synctest.Wait()
+			})
+		})
+	}
+}
+
+// Every case has loaded keys before the load, and each row shows what that
+// load gets. TestLookupOrReload_TakesA404AsAnAnswerOnlyForARealmWithNoKeys
+// covers the 404 of a realm.
+func TestLookupOrReload_ReportsKeysAsUnavailableOnlyWhenTheSourceGaveNoAnswer(t *testing.T) {
+	tests := []struct {
+		name   string
+		reload func(f *fakeTransport)
+		want   error
+	}{
+		{"server error", func(f *fakeTransport) { f.setStatus("idp.test", http.StatusServiceUnavailable) }, ErrKeysUnavailable},
+		{"refused request", func(f *fakeTransport) { f.setStatus("idp.test", http.StatusForbidden) }, ErrKeysUnavailable},
+		{"no connection", func(f *fakeTransport) { f.down = true }, ErrKeysUnavailable},
+		{"JWKS that is not JSON", func(f *fakeTransport) { f.jwks = []byte("not json") }, ErrKeysUnavailable},
+		{"JWKS whose keys is null", func(f *fakeTransport) { f.jwks = []byte(`{"keys": null}`) }, ErrKeysUnavailable},
+		{"404 from a provider", func(f *fakeTransport) { f.setStatus("idp.test", http.StatusNotFound) }, ErrKeysUnavailable},
+		{"JWKS without a usable key", func(f *fakeTransport) { f.jwks = []byte(`{"keys": []}`) }, ErrKeyUnknown},
+		{"JWKS without the key", func(*fakeTransport) {}, ErrKeyUnknown},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				transport := newFakeTransport(t)
+				provider := providerOf("realm")
+				set := bubbleSetOf(t, Config{Providers: []Provider{provider}}, testOptions(), transport)
+				if err := set.Refresh(t.Context()); err != nil {
+					t.Fatalf("Refresh() error = %v", err)
+				}
+				tt.reload(transport)
+				if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "rotated"}); !errors.Is(err, tt.want) {
+					t.Errorf("LookupOrReload() error = %v, want %v", err, tt.want)
+				}
+			})
+		})
+	}
+}
+
+// A provider that never loaded a key has no key to keep, so only the rule for a
+// provider makes its 404 no answer.
+func TestLookupOrReload_TakesA404OfAProviderWithNoKeysAsNoAnswer(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		transport := newFakeTransport(t)
+		transport.setStatus("idp.test", http.StatusNotFound)
+		provider := providerOf("realm")
+		set := bubbleSetOf(t, Config{Providers: []Provider{provider}}, testOptions(), transport)
+		if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "k1"}); !errors.Is(err, ErrKeysUnavailable) {
+			t.Errorf("LookupOrReload() error = %v, want %v", err, ErrKeysUnavailable)
+		}
+	})
+}
+
+// The lookup at 59 s falls in the minute in which no load starts, so it has
+// only the answer of the failed load. A key already loaded stays usable
+// throughout, and the load at 60 s answers.
+func TestLookupOrReload_ReportsKeysAsUnavailableUntilALoadAnswers(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		transport := newFakeTransport(t)
+		provider := providerOf("realm")
+		set := bubbleSetOf(t, Config{Providers: []Provider{provider}}, testOptions(), transport)
+		if err := set.Refresh(t.Context()); err != nil {
+			t.Fatalf("Refresh() error = %v", err)
+		}
+		transport.setStatus("idp.test", http.StatusServiceUnavailable)
+		began := time.Now()
+		lookup := func(kid string, want error) {
+			t.Helper()
+			if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: kid}); !errors.Is(err, want) {
+				t.Errorf("%s after the outage began, LookupOrReload(%q) error = %v, want %v", time.Since(began), kid, err, want)
+			}
+		}
+		lookup("rotated", ErrKeysUnavailable)
+		time.Sleep(59 * time.Second)
+		lookup("rotated", ErrKeysUnavailable)
+		lookup("k1", nil)
+		transport.setStatus("idp.test", 0)
+		time.Sleep(time.Second)
+		lookup("rotated", ErrKeyUnknown)
 	})
 }

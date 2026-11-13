@@ -580,7 +580,7 @@ func TestVerify_AcceptsATokenWhoseKeyAReloadBringsWhileItsContextLasts(t *testin
 		want Code
 	}{
 		{"context that lasts", t.Context(), ""},
-		{"context that has ended", ended, CodeKIDUnknown},
+		{"context that has ended", ended, CodeKeysUnavailable},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

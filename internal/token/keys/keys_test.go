@@ -639,11 +639,11 @@ func TestRefresh_AJWKSWithoutAUsableKeyRemovesTheProvidersKeys(t *testing.T) {
 		wantKept bool
 	}{
 		{"JWKS whose keys array is empty", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": []}`) }, false},
-		{"JWKS whose keys is null", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": null}`) }, false},
 		{"JWKS whose only key is an encryption key", func(t *testing.T, idp *fakeIdP) {
 			idp.publish(ecJWK(t, "enc", map[string]any{"use": "enc"}))
 		}, false},
 		{"JWKS without a keys array", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{}`) }, true},
+		{"JWKS whose keys is null", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": null}`) }, true},
 		{"JWKS whose keys is an object", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": {}}`) }, true},
 	}
 	for _, tt := range tests {

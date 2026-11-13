@@ -105,6 +105,36 @@ func TestVerify_ComputesTheM2MTestFromTheSourceOfARealKey(t *testing.T) {
 	}
 }
 
+// Keycloak is down and the realm has not loaded, so the code says that the
+// token could not be checked. The same token names a realm that does not exist
+// on a Keycloak that is up, and there the source has answered.
+func TestVerify_TellsAnOutageOfKeycloakFromARealmThatDoesNotExist(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
+	tests := []struct {
+		name    string
+		handler http.HandlerFunc
+		want    Code
+	}{
+		{"Keycloak answers 503", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusServiceUnavailable) }, CodeKeysUnavailable},
+		{"Keycloak answers 404", http.NotFound, CodeKIDUnknown},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := httptest.NewServer(tt.handler)
+			t.Cleanup(srv.Close)
+			set, err := keys.New(keys.Config{Keycloak: &keys.Keycloak{URL: srv.URL}}, keys.Options{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			v, _ := newVerifier(set)
+			raw := s.sign(t, claimsAt(start, map[string]any{"iss": "https://public.example" + realmsPath + "tenant"}))
+			if _, err := v.Verify(t.Context(), raw); codeOf(err) != tt.want {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
+	}
+}
+
 // These tokens go through a real [keys.Set], because the choice of the key is
 // the behavior: which issuer a token names, and which key of that issuer its
 // header selects. Realms a and b publish the same kid and have one key each, so

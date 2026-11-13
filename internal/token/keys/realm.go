@@ -61,12 +61,13 @@ func validRealm(name string) bool {
 
 // realmSource returns the source of the realm, adding it and starting its
 // first load when no token named that realm before. It returns
-// [ErrKeyUnknown] when the limit of [maxLoadsPerMinute] on-demand loads refuses
-// another, and when the Set already holds [Options.maxRealms] realms. A realm
-// that is not required and never loaded a usable key stays for a minute after
-// its last load started, so its tokens send no request, and the Set then drops
-// it at the next new realm or the next [Set.Refresh]. Names that exist on no
-// Keycloak therefore cannot fill it; a realm that loaded keys keeps its place.
+// [ErrKeysUnavailable] when the limit of [maxLoadsPerMinute] on-demand loads
+// refuses another, and when the Set already holds [Options.maxRealms] realms. A
+// realm that is not required and never loaded a usable key stays for a minute
+// after its last load started, so its tokens send no request, and the Set then
+// drops it at the next new realm or the next [Set.Refresh]. Names that exist on
+// no Keycloak therefore cannot fill it; a realm that loaded keys keeps its
+// place.
 //
 // The iss is read before the signature verifies, so a stream of such names can
 // reach this code on every request. The limit of loads comes first, and a realm
@@ -85,13 +86,13 @@ func (s *Set) realmSource(ctx context.Context, name string) (*source, error) {
 	now := time.Now()
 	if !s.loads.take(now) {
 		s.warnOnce(now, "trusted providers: realm %q is not loaded, and its tokens are refused for now: the agent started %d on-demand loads in the last minute, the most it allows", name, maxLoadsPerMinute)
-		return nil, ErrKeyUnknown
+		return nil, ErrKeysUnavailable
 	}
 	s.dropFailedRealms(now)
 	if len(s.realms) >= s.opts.maxRealms {
 		s.loads.refund(now)
 		s.warnOnce(now, "trusted providers: realm %q is not loaded, and its tokens are refused: the agent holds %d realms, the most it keeps", name, s.opts.maxRealms)
-		return nil, ErrKeyUnknown
+		return nil, ErrKeysUnavailable
 	}
 	src := s.newSource(Source{Realm: name}, s.realmAddress(name), s.keycloakClient, false)
 	s.realms[name] = src
