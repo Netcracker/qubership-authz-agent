@@ -82,6 +82,11 @@ type Provider struct {
 	// read on every request, so a rotated token takes effect without a
 	// restart.
 	TokenFile string `json:"tokenFile,omitempty"`
+	// Kubernetes marks the provider as the service account token issuer of
+	// a Kubernetes API server. A token its keys verify is refused when its
+	// iat is ahead of the verifier's clock by more than the verifier's
+	// leeway.
+	Kubernetes bool `json:"kubernetes,omitempty"`
 }
 
 // validProviderID is the accepted shape of [Provider.ID].
