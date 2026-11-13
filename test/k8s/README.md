@@ -11,6 +11,10 @@ install them by hand. CI runs the same targets one step at a time.
 | `values.yaml` | Chart values that point the agent at the harness Services and at the stub |
 | `policy-admin-values.yaml` | Chart values for the `authz-policy-admin` stub, installed from its own chart |
 
+The Docker stand of the `docker-e2e-*` targets repeats these settings in `test/docker/compose.yaml` and
+`test/docker/authz/trusted-providers.json`, so a value changed here belongs there too. Its Keycloak imports every realm
+file of `authn/` as it is.
+
 The test stand runs the public Keycloak image, `quay.io/keycloak/keycloak`, in
 dev mode. The chart puts the realm files into a ConfigMap, and Keycloak imports
 them with `--import-realm` at every start; no test adds a realm, a client, or a
