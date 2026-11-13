@@ -28,12 +28,6 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type stepResult struct {
-	Name    string
-	Status  string
-	Elapsed time.Duration
-}
-
 // RuntimeSuite is the top-level Testify suite for runtime integration tests.
 // It bootstraps Keycloak tokens, uploads policies, and validates step coverage.
 type RuntimeSuite struct {
@@ -46,8 +40,7 @@ type RuntimeSuite struct {
 	expiredAdminToken       string
 	currentStepName         string
 
-	results []stepResult
-	mu      sync.Mutex
+	steps stepLog
 
 	// noPullRoute reports once per run that the agent has no pull route, which
 	// leaves every upload waiting a pull interval.
@@ -60,7 +53,7 @@ func TestRuntimeSuite(t *testing.T) {
 
 func (s *RuntimeSuite) SetupSuite() {
 	s.cfg = LoadConfig()
-	s.results = make([]stepResult, 0, len(Catalog))
+	s.steps.results = make([]stepResult, 0, len(Catalog))
 
 	s.SetupStep("setup.wait_for_keycloak", func() error {
 		return WaitForKeycloak(s.cfg.KcBaseURL, 60*time.Second, s.currentRequestID())
@@ -152,10 +145,7 @@ func (s *RuntimeSuite) SetupStep(name string, fn func() error) {
 		status = "FAIL"
 	}
 
-	r := stepResult{Name: name, Status: status, Elapsed: elapsed}
-	s.mu.Lock()
-	s.results = append(s.results, r)
-	s.mu.Unlock()
+	s.steps.add(stepResult{Name: name, Status: status, Elapsed: elapsed})
 
 	fmt.Printf("STEP %s %s %dms\n", status, name, elapsed.Milliseconds())
 
@@ -165,7 +155,7 @@ func (s *RuntimeSuite) SetupStep(name string, fn func() error) {
 }
 
 // Step executes a named test step, validates it against the catalog, measures
-// duration, and prints a STEP PASS/FAIL line to stdout.
+// duration, and prints a STEP PASS, FAIL, or SKIP line to stdout.
 func (s *RuntimeSuite) Step(name string, fn func()) {
 	s.T().Helper()
 	if _, ok := CatalogByName[name]; !ok {
@@ -177,44 +167,32 @@ func (s *RuntimeSuite) Step(name string, fn func()) {
 		s.currentStepName = ""
 	}()
 
-	start := time.Now()
-	passed := s.Run(name, fn)
-	elapsed := time.Since(start)
+	r := s.steps.run(s, name, fn)
 
-	status := "PASS"
-	if !passed {
-		status = "FAIL"
-	}
-
-	r := stepResult{Name: name, Status: status, Elapsed: elapsed}
-	s.mu.Lock()
-	s.results = append(s.results, r)
-	s.mu.Unlock()
-
-	fmt.Printf("STEP %s %s %dms\n", status, name, elapsed.Milliseconds())
+	fmt.Printf("STEP %s %s %dms\n", r.Status, name, r.Elapsed.Milliseconds())
 }
 
 func (s *RuntimeSuite) TearDownSuite() {
 	fmt.Println("\n=== STEP SUMMARY ===")
-	for _, r := range s.results {
+	for _, r := range s.steps.results {
 		fmt.Printf("STEP %s %s %dms\n", r.Status, r.Name, r.Elapsed.Milliseconds())
 	}
-	fmt.Printf("=== %d/%d steps executed ===\n", len(s.results), len(Catalog))
+	fmt.Printf("=== %d/%d steps executed ===\n", len(s.steps.results), len(Catalog))
 
 	if os.Getenv("FULL_RUNTIME_SUITE") != "true" {
 		return
 	}
+	for _, msg := range fullRunErrors(s.steps.results, Catalog) {
+		s.T().Error(msg)
+	}
+}
 
-	executed := make(map[string]bool, len(s.results))
-	for _, r := range s.results {
-		executed[r.Name] = true
-	}
-	for _, e := range Catalog {
-		if executed[e.Name] {
-			continue
-		}
-		s.T().Errorf("catalog step %q was never executed", e.Name)
-	}
+// skipStep skips the running step and stores reason, which TearDownSuite
+// repeats when it fails a full run on the skipped step. reason says what the
+// stand lacks, such as the environment variable that turns the step on.
+func (s *RuntimeSuite) skipStep(reason string) {
+	s.T().Helper()
+	s.steps.skip(s.T(), reason)
 }
 
 // ── request helpers ──────────────────────────────────────────────────────

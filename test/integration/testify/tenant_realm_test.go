@@ -17,12 +17,12 @@
 package runtimetest
 
 // TestTenantRealm checks tenant realms, which Keycloak names by an identifier
-// the chart cannot know. The chart names such a realm by its tenant's name,
-// and the agent asks tenant-manager for the identifier before it loads the
-// realm's keys. The tenant-manager emulator knows the name default and not
-// unregistered, whose realm is otherwise built the same way, so the token
-// from default is accepted because of that lookup and not because the agent
-// accepts any token the harness Keycloak signs.
+// the trusted providers file cannot know. The file names such a realm by its
+// tenant's name, and the agent asks tenant-manager for the identifier before
+// it loads the realm's keys. The tenant-manager emulator knows the name
+// default and not unregistered, whose realm is otherwise built the same way,
+// so the token from default is accepted because of that lookup and not
+// because the agent accepts any token the harness Keycloak signs.
 func (s *RuntimeSuite) TestTenantRealm() {
 	body := map[string]interface{}{"type": "ORDER", "operation": "READ", "resource": map[string]interface{}{}}
 

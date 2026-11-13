@@ -1,3 +1,9 @@
+# GitHub-hosted runner labels that actionlint 1.7.12, the version Super-Linter
+# v9.0.0 ships, does not know. actionlint reads this list as labels of
+# self-hosted runners. .githooks/pre-commit passes this file to actionlint too.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
 paths:
   .github/workflows/**/*.{yml,yaml}:
     ignore:
