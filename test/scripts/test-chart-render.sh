@@ -481,6 +481,18 @@ else
   fail "the agent Pod does not take the client-credentials Secret without KUBERNETES_M2M_ENABLED"
 fi
 
+# The agent chooses its token by KUBERNETES_M2M_ENABLED itself, so the chart
+# passes the value, the default as well as a value set at install.
+for set_value in "" true; do
+  expected="${set_value:-false}"
+  rendered="$(env_value KUBERNETES_M2M_ENABLED ${set_value:+--set KUBERNETES_M2M_ENABLED=${set_value}})"
+  if [[ "${rendered}" == "${expected}" ]]; then
+    pass "KUBERNETES_M2M_ENABLED reaches the agent as ${expected}"
+  else
+    fail "KUBERNETES_M2M_ENABLED rendered as '${rendered}', expected ${expected}"
+  fi
+done
+
 # Every setting the service reads has to reach it, and the objects it reads
 # them from have to be mounted.
 for env_name in AUTHZ_PUBLIC_ADDR AUTHZ_HTTP_ADDR \
@@ -977,6 +989,7 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
     fi
   done
 done
+
 
 echo
 if (( failures > 0 )); then

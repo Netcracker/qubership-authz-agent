@@ -70,10 +70,12 @@ services:
       # Pull loop: the cadence comes from SVT_PAP_PULL_INTERVAL so the
       # host-side wait after a re-seed and the puller's own interval cannot
       # drift apart. The token file is a static dummy so the stub's
-      # Authorization check passes.
+      # Authorization check passes; KUBERNETES_M2M_ENABLED makes the agent
+      # read its token from that file instead of a token endpoint.
       AUTHZ_PAP_CLIENT_SOURCE_URL: http://authz-policy-admin:18090
       AUTHZ_PAP_CLIENT_PULL_INTERVAL: "${SVT_PAP_PULL_INTERVAL:-2}"
       AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-pull-token
+      KUBERNETES_M2M_ENABLED: "true"
     volumes:
       - ./keycloak/trusted-providers.json:/etc/authz/trusted-providers.json:ro
       - ./keycloak/ac-pull-token:/etc/authz/ac-pull-token:ro

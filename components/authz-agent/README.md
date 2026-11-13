@@ -44,18 +44,21 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
 | `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
 | `AUTHZ_ENTITLEMENTS_URL`, `AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT`, `AUTHZ_ENTITLEMENTS_HTTP_RETRIES` | empty, `5`, `3` | The entitlements PIP pinned by the deployment, with its timeout in seconds and its attempts per request, each at least `1`; an empty URL adds none |
-| `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; empty reads the token from `AUTHZ_PAP_CLIENT_TOKEN_FILE` instead |
+| `KUBERNETES_M2M_ENABLED` | `false` | Chooses the token the agent sends: `true` sends the projected token in `AUTHZ_PAP_CLIENT_TOKEN_FILE`, and `false` sends the token of its realm from `AUTHZ_M2M_TOKEN_URL`; the chart sets it from its value of the same name |
+| `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; with `KUBERNETES_M2M_ENABLED=false` an empty endpoint stops the start |
 | `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials |
 | `AUTHZ_M2M_RENEW_BEFORE_SECONDS` | `60` | Seconds before its expiry at which the token is refreshed, at least `0` |
-| `AUTHZ_PAP_CLIENT_TOKEN_FILE` | `/var/run/secrets/tokens/netcracker/token` | The token file, read every 15 seconds, when there is no token endpoint; the default is where the platform's charts mount the netcracker-audience projected token |
+| `AUTHZ_PAP_CLIENT_TOKEN_FILE` | `/var/run/secrets/tokens/netcracker/token` | The token file, read every 15 seconds with `KUBERNETES_M2M_ENABLED=true`, where a missing file or an empty value stops the start; the default is where the platform's charts mount the netcracker-audience projected token |
 
 A variable set to the empty string switches its feature off where the table says so. An unset variable takes the
-default, and so does an empty number, an empty `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, and an empty `LOGGING_LEVEL_ROOT`.
+default, and so does an empty number, an empty `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, an empty `KUBERNETES_M2M_ENABLED`, and
+an empty `LOGGING_LEVEL_ROOT`.
 
 A number is an integer in decimal digits with an optional sign, and a number of seconds is at most `9223372036`.
-`AUTHZ_JWKS_BOOTSTRAP_REQUIRED` and `LOGGING_LEVEL_ROOT` are read without regard to case. A value of another form or
-outside its range stops the start: the agent logs one line, at any log level, that names each such variable with the
-values it accepts, and exits with status 1 before it listens. For example:
+`AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, `KUBERNETES_M2M_ENABLED`, and `LOGGING_LEVEL_ROOT` are read without regard to case. A
+value of another form or outside its range stops the start, and so does a missing token source of the agent: the agent
+logs one line, at any log level, that names each such variable with the values it accepts or with the source it lacks,
+and exits with status 1 before it listens. For example:
 
 ```text
 configuration: AUTHZ_PAP_CLIENT_PULL_INTERVAL="2s": expected an integer number of seconds from 0 to 9223372036

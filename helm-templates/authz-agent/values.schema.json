@@ -461,7 +461,7 @@
       "$id": "#/properties/AUTHZ_PAP_CLIENT_TOKEN_FILE",
       "type": "string",
       "title": "The AUTHZ_PAP_CLIENT_TOKEN_FILE schema",
-      "description": "Path of the Bearer token the pull loop sends, written by the kubelet when KUBERNETES_M2M_ENABLED is true and by the agent's own token loop otherwise",
+      "description": "Path of the projected token that the kubelet writes and the agent sends when KUBERNETES_M2M_ENABLED is true",
       "default": "/var/run/secrets/tokens/netcracker/token",
       "examples": [
         "/var/run/secrets/tokens/netcracker/token"

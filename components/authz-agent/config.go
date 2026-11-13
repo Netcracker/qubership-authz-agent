@@ -17,7 +17,9 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -41,8 +43,8 @@ type config struct {
 	Authn authn.Config
 	// Pull configures the policy pull; [pull.Config] says what disables it.
 	Pull pull.Config
-	// M2M configures the agent's own token; empty TokenURL and TokenFile
-	// disable it.
+	// M2M configures the agent's own token: from TokenURL, or from TokenFile
+	// when TokenURL is empty.
 	M2M m2m.Config
 }
 
@@ -58,7 +60,8 @@ const maxSeconds = math.MaxInt64 / int64(time.Second)
 // loadConfig builds the configuration from the environment. A number, a
 // boolean, or a log level that is empty takes its default, as an unset one
 // does. The error names every variable whose value is not of its type or
-// out of its range, with the values that variable accepts.
+// out of its range, with the values that variable accepts, and the variable
+// of a token source that KUBERNETES_M2M_ENABLED requires and does not find.
 func loadConfig(get lookup) (config, error) {
 	s := settings{get: get}
 	cfg := config{
@@ -93,6 +96,21 @@ func loadConfig(get lookup) (config, error) {
 	if url := strings.TrimRight(strings.TrimSpace(get("authz.entitlements.url", "")), "/"); url != "" {
 		cfg.Pull.Entitlements = &pips.EntitlementsConfig{URL: url, HTTPTimeoutSeconds: int(timeout / time.Second), HTTPRetries: retries}
 	}
+	// KUBERNETES_M2M_ENABLED chooses the token the agent sends. true sends the
+	// projected token of the netcracker audience in AUTHZ_PAP_CLIENT_TOKEN_FILE;
+	// false sends the token of the agent's realm from AUTHZ_M2M_TOKEN_URL. The
+	// other source is not used.
+	refusedBefore := len(s.refused)
+	kubernetesToken := s.boolean("kubernetes.m2m.enabled", false)
+	switch {
+	case len(s.refused) > refusedBefore:
+		// A refused value names no token source to check.
+	case kubernetesToken:
+		cfg.M2M.TokenURL = ""
+		s.requireFile("authz.pap.client.token.file", cfg.M2M.TokenFile, "and KUBERNETES_M2M_ENABLED=true sends the token in this file")
+	case cfg.M2M.TokenURL == "":
+		s.refuse("authz.m2m.token.url", "", "the token endpoint of the agent's realm, which KUBERNETES_M2M_ENABLED=false, the default, requires")
+	}
 	// The platform logger reads LOGGING_LEVEL_ROOT itself and takes info
 	// for a value it does not know.
 	s.oneOf("logging.level.root", logLevels)
@@ -103,7 +121,8 @@ func loadConfig(get lookup) (config, error) {
 }
 
 // settings reads the values that loadConfig checks, and records each value
-// that it refuses. A value that is empty takes the fallback.
+// that it refuses. A number, a boolean, or a level that is empty takes the
+// fallback.
 type settings struct {
 	get     lookup
 	refused []string
@@ -164,6 +183,25 @@ func (s *settings) oneOf(key string, values []string) {
 		}
 	}
 	s.refuse(key, raw, "one of "+strings.Join(values, ", "))
+}
+
+// requireFile refuses path, the value of key, unless it names a regular file
+// that exists; why ends the refusal with what reads the file.
+func (s *settings) requireFile(key, path, why string) {
+	info, err := os.Stat(path)
+	var reason string
+	var pathErr *fs.PathError
+	switch {
+	case errors.As(err, &pathErr):
+		reason = pathErr.Err.Error()
+	case err != nil:
+		reason = err.Error()
+	case info.IsDir():
+		reason = "is a directory"
+	default:
+		return
+	}
+	s.refused = append(s.refused, fmt.Sprintf("%s=%q: %s, %s", variable(key), path, reason, why))
 }
 
 func (s *settings) refuse(key, raw, accepted string) {
