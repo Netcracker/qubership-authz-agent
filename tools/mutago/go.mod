@@ -12,7 +12,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/quality-gates/mutago/v2 v2.10.40 // indirect
+	github.com/quality-gates/mutago/v2 v2.10.41 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/schollz/progressbar/v3 v3.18.0 // indirect
 	github.com/stretchr/testify v1.12.1 // indirect
