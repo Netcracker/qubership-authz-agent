@@ -1,0 +1,271 @@
+{
+ "about": "Round 76, task 16: survivor:route bulk/operations v2 | engine effect_other NOT_APPLICABLE→deny, moved to route = bulk/operations v2 from round29/fields-custom-effect.json (r29fields-custom-effect-not-applicable). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R29FD_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ax76-43-r29fields-custom-effect-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-43-r29fields-custom-effect-deny",
+   "about": "A CUSTOMER customization replaces the rule with effect DENY, every other field as uploaded.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p==1"
+         }
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter-before",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "read",
+           "name": "customized read",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY",
+           "rsqlPredicate": "p==1"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "filter-after",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ax76-43-r29fields-custom-effect-not-applicable",
+   "about": "A CUSTOMER customization replaces the rule with effect NOT_APPLICABLE, every other field as uploaded. Task 16 moves it to route = bulk/operations v2.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p==1"
+         }
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-bulk-operations-v2",
+     "bulkOperations": [
+      {
+       "id": "r29",
+       "resource": {
+        "id": "r29"
+       },
+       "operations": [
+        "READ"
+       ]
+      }
+     ],
+     "v2": {}
+    },
+    {
+     "name": "filter-before",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "read",
+           "name": "customized read",
+           "target": "true",
+           "condition": "true",
+           "effect": "NOT_APPLICABLE",
+           "rsqlPredicate": "p==1"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-bulk-operations-v2",
+       "bulkOperations": [
+        {
+         "id": "r29",
+         "resource": {
+          "id": "r29"
+         },
+         "operations": [
+          "READ"
+         ]
+        }
+       ],
+       "v2": {}
+      },
+      {
+       "name": "filter-after",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ax76-43-r29fields-custom-effect-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-bulk-operations-v2",
+     "bulkOperations": [
+      {
+       "id": "r29",
+       "resource": {
+        "id": "r29",
+        "c": "n"
+       },
+       "operations": [
+        "READ"
+       ]
+      }
+     ],
+     "v2": {}
+    }
+   ]
+  }
+ ]
+}

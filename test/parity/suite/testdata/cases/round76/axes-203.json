@@ -1,0 +1,62 @@
+{
+ "about": "Round 76, task 16: survivor:depth nested | filter resource_type_text=upper, moved to depth = nested from round28/subject-resource-type.json (r28subj-rt-01). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R28T_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ax76-203-r28subj-rt-01",
+   "about": "The resource type is \"PARITY_SUITE_R28T_01_x\\\"}, {\\\"b\\\": 1\". Task 16 moves it to depth = nested.",
+   "sets": [
+    {
+     "target": "resourceType == 'PARITY_SUITE_R28T_01_x\"}, {\"b\": 1'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "key": "dset",
+     "sets": [
+      {
+       "key": "set",
+       "target": "resourceType == 'PARITY_SUITE_R28T_01_x\"}, {\"b\": 1'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "t==${resourceType}",
+            "sqlPredicate": "t=${resourceType}",
+            "mongodbPredicate": "{ \"t\": ${resourceType} }",
+            "predicate": "x.t.eq(${resourceType})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "type": "PARITY_SUITE_R28T_01_x\"}, {\"b\": 1"
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "type": "PARITY_SUITE_R28T_01_x\"}, {\"b\": 1",
+     "resource": {
+      "id": "r28"
+     }
+    }
+   ]
+  }
+ ]
+}

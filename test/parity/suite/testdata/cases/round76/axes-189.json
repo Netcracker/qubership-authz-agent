@@ -1,0 +1,67 @@
+{
+ "about": "Round 76, task 16: survivor:depth nested | lang idiom_match_anchor=find, moved to depth = nested from round16/hypotheses.json (x16-match-unicode-letters-1). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R16_",
+ "pins": {},
+ "pips": {
+  "header": {
+   "name": "subject.parityR16List",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r16-list",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "ax76-189-x16-match-unicode-letters-1",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": "aé",
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": "aé",
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "key": "ds0",
+     "sets": [
+      {
+       "key": "s0",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p0",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r0",
+           "target": "true",
+           "condition": "resource.x MATCH a* OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "about": "Task 16 moves it to depth = nested."
+  }
+ ]
+}

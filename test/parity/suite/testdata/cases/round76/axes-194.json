@@ -1,0 +1,678 @@
+{
+ "about": "Round 76, task 16: survivor:depth nested | lang trailing_dot_path=ABSENT, moved to depth = nested from round75/filter-undefined-targets.json (v75u-dot-condition-allow-do). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R75_FILTER_UNDEFINED_TARGETS_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ax76-194-v75u-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-194-v75u-dot-policy-allow-do",
+   "about": "A set DENY_OVERRIDES with a policy whose ALLOW rule carries the predicate allowed==1, beside a policy whose target is a path that ends in a dot (resource.a. == 1) and whose one ALLOW rule has no predicate. check/resource fails that target on every row with a resource, and the policy does not apply? Does the filter keep allowed==1 or deny? The filter, then check/resource of four rows: allowed = 1 with a = 1, tags = [\"x\"], flag = 1 (row-1); allowed = 1 with a = 0, tags = null, flag = 0 (row-2); allowed = 1 with flag = 1 and neither a nor tags (row-3); allowed = 0 with a = 1, tags = [\"x\"] (row-4).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "open",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "open-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1",
+          "sqlPredicate": "allowed=1",
+          "predicate": "${resourceType}.allowed.eq(1)",
+          "mongodbPredicate": "{ \"allowed\": 1 }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "node",
+       "target": "resource.a. == 1",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "node-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "id": "row-1",
+      "allowed": 1,
+      "a": 1,
+      "tags": [
+       "x"
+      ],
+      "flag": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "id": "row-2",
+      "allowed": 1,
+      "a": 0,
+      "tags": null,
+      "flag": 0
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "id": "row-3",
+      "allowed": 1,
+      "flag": 1
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "id": "row-4",
+      "allowed": 0,
+      "a": 1,
+      "tags": [
+       "x"
+      ],
+      "flag": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-194-v75u-dot-policy-allow-pud",
+   "about": "The same under a set PERMIT_UNLESS_DENY. The filter, then check/resource of four rows: allowed = 1 with a = 1, tags = [\"x\"], flag = 1 (row-1); allowed = 1 with a = 0, tags = null, flag = 0 (row-2); allowed = 1 with flag = 1 and neither a nor tags (row-3); allowed = 0 with a = 1, tags = [\"x\"] (row-4).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "open",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "open-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1",
+          "sqlPredicate": "allowed=1",
+          "predicate": "${resourceType}.allowed.eq(1)",
+          "mongodbPredicate": "{ \"allowed\": 1 }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "node",
+       "target": "resource.a. == 1",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "node-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "id": "row-1",
+      "allowed": 1,
+      "a": 1,
+      "tags": [
+       "x"
+      ],
+      "flag": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "id": "row-2",
+      "allowed": 1,
+      "a": 0,
+      "tags": null,
+      "flag": 0
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "id": "row-3",
+      "allowed": 1,
+      "flag": 1
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "id": "row-4",
+      "allowed": 0,
+      "a": 1,
+      "tags": [
+       "x"
+      ],
+      "flag": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-194-v75u-null-policy-allow-do",
+   "about": "A set DENY_OVERRIDES with a policy whose ALLOW rule carries the predicate allowed==1, beside a policy whose target is resource.tags CONTAINS 'x' and whose one ALLOW rule has no predicate. On row-2 tags is null, where CONTAINS fails the comparison. Does the filter keep allowed==1, and does check/resource of row-2 answer true? The filter, then check/resource of four rows: allowed = 1 with a = 1, tags = [\"x\"], flag = 1 (row-1); allowed = 1 with a = 0, tags = null, flag = 0 (row-2); allowed = 1 with flag = 1 and neither a nor tags (row-3); allowed = 0 with a = 1, tags = [\"x\"] (row-4).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "open",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "open-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1",
+          "sqlPredicate": "allowed=1",
+          "predicate": "${resourceType}.allowed.eq(1)",
+          "mongodbPredicate": "{ \"allowed\": 1 }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "node",
+       "target": "resource.tags CONTAINS 'x'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "node-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "id": "row-1",
+      "allowed": 1,
+      "a": 1,
+      "tags": [
+       "x"
+      ],
+      "flag": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "id": "row-2",
+      "allowed": 1,
+      "a": 0,
+      "tags": null,
+      "flag": 0
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "id": "row-3",
+      "allowed": 1,
+      "flag": 1
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "id": "row-4",
+      "allowed": 0,
+      "a": 1,
+      "tags": [
+       "x"
+      ],
+      "flag": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-194-v75u-dot-rule-allow-do",
+   "about": "A set DENY_OVERRIDES with a policy whose ALLOW rule carries the predicate allowed==1, beside a policy with target true whose one ALLOW rule has the target resource.a. == 1 and no predicate. Does the filter keep allowed==1? The filter, then check/resource of four rows: allowed = 1 with a = 1, tags = [\"x\"], flag = 1 (row-1); allowed = 1 with a = 0, tags = null, flag = 0 (row-2); allowed = 1 with flag = 1 and neither a nor tags (row-3); allowed = 0 with a = 1, tags = [\"x\"] (row-4).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "open",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "open-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1",
+          "sqlPredicate": "allowed=1",
+          "predicate": "${resourceType}.allowed.eq(1)",
+          "mongodbPredicate": "{ \"allowed\": 1 }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "node",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "node-allow",
+         "target": "resource.a. == 1",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "id": "row-1",
+      "allowed": 1,
+      "a": 1,
+      "tags": [
+       "x"
+      ],
+      "flag": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "id": "row-2",
+      "allowed": 1,
+      "a": 0,
+      "tags": null,
+      "flag": 0
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "id": "row-3",
+      "allowed": 1,
+      "flag": 1
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "id": "row-4",
+      "allowed": 0,
+      "a": 1,
+      "tags": [
+       "x"
+      ],
+      "flag": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-194-v75u-null-rule-deny-pred-do",
+   "about": "A set DENY_OVERRIDES with a policy whose ALLOW rule carries the predicate allowed==1, beside a policy DENY_OVERRIDES with target true whose one DENY rule carries the predicate flag==1 and has the target resource.tags CONTAINS 'x'. Does the filter drop the DENY rule (allowed==1), keep its negated predicate, or deny? The filter, then check/resource of four rows: allowed = 1 with a = 1, tags = [\"x\"], flag = 1 (row-1); allowed = 1 with a = 0, tags = null, flag = 0 (row-2); allowed = 1 with flag = 1 and neither a nor tags (row-3); allowed = 0 with a = 1, tags = [\"x\"] (row-4).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "open",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "open-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1",
+          "sqlPredicate": "allowed=1",
+          "predicate": "${resourceType}.allowed.eq(1)",
+          "mongodbPredicate": "{ \"allowed\": 1 }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "node",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "node-deny",
+         "target": "resource.tags CONTAINS 'x'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "flag==1",
+          "sqlPredicate": "flag=1",
+          "predicate": "${resourceType}.flag.eq(1)",
+          "mongodbPredicate": "{ \"flag\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "id": "row-1",
+      "allowed": 1,
+      "a": 1,
+      "tags": [
+       "x"
+      ],
+      "flag": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "id": "row-2",
+      "allowed": 1,
+      "a": 0,
+      "tags": null,
+      "flag": 0
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "id": "row-3",
+      "allowed": 1,
+      "flag": 1
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "id": "row-4",
+      "allowed": 0,
+      "a": 1,
+      "tags": [
+       "x"
+      ],
+      "flag": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-194-v75u-dot-condition-allow-do",
+   "about": "A set DENY_OVERRIDES with a policy whose ALLOW rule carries the predicate allowed==1, beside a policy with target true whose one ALLOW rule has no predicate and the condition resource.a. == 1. check/resource fails that condition on every row, and the failed comparison fails the decision: does the filter still select allowed==1, which every check of a row denies? The filter, then check/resource of four rows: allowed = 1 with a = 1, tags = [\"x\"], flag = 1 (row-1); allowed = 1 with a = 0, tags = null, flag = 0 (row-2); allowed = 1 with flag = 1 and neither a nor tags (row-3); allowed = 0 with a = 1, tags = [\"x\"] (row-4). Task 16 moves it to depth = nested.",
+   "sets": [
+    {
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "key": "dset",
+     "sets": [
+      {
+       "key": "set",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_OVERRIDES",
+       "policies": [
+        {
+         "key": "open",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "open-allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "allowed==1",
+            "sqlPredicate": "allowed=1",
+            "predicate": "${resourceType}.allowed.eq(1)",
+            "mongodbPredicate": "{ \"allowed\": 1 }"
+           }
+          }
+         ]
+        },
+        {
+         "key": "node",
+         "target": "true",
+         "algorithm": "DENY_OVERRIDES",
+         "rules": [
+          {
+           "key": "node-allow",
+           "target": "true",
+           "condition": "resource.a. == 1",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "id": "row-1",
+      "allowed": 1,
+      "a": 1,
+      "tags": [
+       "x"
+      ],
+      "flag": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "id": "row-2",
+      "allowed": 1,
+      "a": 0,
+      "tags": null,
+      "flag": 0
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "id": "row-3",
+      "allowed": 1,
+      "flag": 1
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "id": "row-4",
+      "allowed": 0,
+      "a": 1,
+      "tags": [
+       "x"
+      ],
+      "flag": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-194-v75u-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

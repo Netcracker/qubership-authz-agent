@@ -1,0 +1,197 @@
+{
+ "about": "Round 76, task 16: open:e.undeclared_pip_fails_checks|status|absent, moved to status = absent from round19/stand-rule.json (s19-reads-b-only). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R19S_",
+ "pins": {
+  "/api/v1/pip/r19-a": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r19-b": {
+   "statusCode": 200,
+   "body": "v"
+  }
+ },
+ "pips": {
+  "a": {
+   "name": "subject.parityR19A",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r19-a",
+   "requestAttributes": {
+    "case": "r19-a"
+   }
+  },
+  "b": {
+   "name": "subject.parityR19B",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r19-b",
+   "requestAttributes": {
+    "case": "r19-b"
+   }
+  },
+  "mapping": {
+   "name": "subject.permissions.PARITY_R19",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R19_READ"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "ax76-22-s19-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-22-s19-reads-a",
+   "about": "Declares subject.parityR19A and reads it: true.",
+   "pips": [
+    "a"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR19A == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "omitStatus": true
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-22-s19-reads-b-only",
+   "about": "Declares only subject.parityR19B: from here the set of s19-reads-a reads an undeclared PIP. Task 16 moves it to status = absent.",
+   "pips": [
+    "b"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR19B == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "omitStatus": true
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-22-s19-control-while-broken",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r19"
+     }
+    }
+   ]
+  }
+ ]
+}

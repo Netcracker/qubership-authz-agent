@@ -1,0 +1,57 @@
+{
+ "about": "Round 76, task 16: survivor:depth nested | lang fold=lower_tr, moved to depth = nested from round28/subject-case.json (r28subj-name-upper). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R28C_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ax76-186-r28subj-name-upper",
+   "about": "subject.name against its text in upper case. Task 16 moves it to depth = nested.",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r28"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "key": "ds0",
+     "sets": [
+      {
+       "key": "s0",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p0",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r0",
+           "target": "true",
+           "condition": "subject.name == 'PARITY-READER' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

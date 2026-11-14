@@ -1,0 +1,79 @@
+{
+ "about": "Round 76, task 16: survivor:depth nested | filter custom_param_source=EXACT, moved to depth = nested from round29/pipfield-custom-param.json (r29pipfield-custom-param-resource-owner). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R29F_",
+ "pins": {},
+ "pips": {
+  "cp-own": {
+   "name": "subject.permissions.parityR29Cp",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_CP"
+     ]
+    }
+   }
+  },
+  "cp-other": {
+   "name": "subject.permissions.parityR29CpOther",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_CQ"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "ax76-200-r29pipfield-custom-param-resource-owner",
+   "about": "customPredicate parameter 'resource.owner' Task 16 moves it to depth = nested.",
+   "sets": [
+    {
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "key": "dset",
+     "sets": [
+      {
+       "key": "set",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "probe",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "customPredicate": {
+             "params": {
+              "p": "resource.owner"
+             },
+             "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]"
+            }
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  }
+ ]
+}

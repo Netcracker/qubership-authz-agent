@@ -1,0 +1,91 @@
+{
+ "about": "Round 76, task 16: survivor:depth nested | lang string_list_split=ELEMENTS, moved to depth = nested from round19-antlr/lexer.json (a19-list-comma-inside-an-element). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R19A_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ax76-193-a19-list-comma-inside-an-element",
+   "about": "A comma inside a quoted element of a two-element list. x = 'v' holds if the element splits at the comma; x = 'v,w' holds if each quoted string is one element. Task 16 moves it to depth = nested.",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "x": "v,w",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "x": "v,w",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p02-a-n",
+     "resource": {
+      "x": "z",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p02-a-y",
+     "resource": {
+      "x": "z",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "key": "ds0",
+     "sets": [
+      {
+       "key": "s0",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p0",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r0",
+           "target": "true",
+           "condition": "resource.x IN 'v,w', 'z' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
