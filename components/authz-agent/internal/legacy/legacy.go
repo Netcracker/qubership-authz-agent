@@ -50,12 +50,24 @@ func errMissing(parameter string) *RequestError {
 }
 
 // Resource is one entry of input.resources. The values are kept as the
-// caller sent them, so a resource type or operation that is not a string
-// reaches the policy unchanged.
+// caller sent them, so a resource type that is a number or a boolean reaches
+// the policy unchanged, and so does such an operation on check/resource and
+// check/resource/bulk. The bulk/operations routes give the policy the text
+// of each operation.
 type Resource struct {
 	ResourceType any
 	Operation    any
 	Resource     any
+	// Raw holds the same three fields as the request wrote them, member
+	// order and number text included, for the generated policies; a field
+	// the request left out is empty.
+	Raw RawResource
+}
+
+// RawResource is the JSON text of a resource's fields as the request wrote
+// them; an empty field is one the request left out.
+type RawResource struct {
+	Type, Operation, Resource json.RawMessage
 }
 
 // Entry is the legacy id and operation behind one Resource of a
@@ -232,14 +244,11 @@ func CheckResourceBulkOperationsV2(body []byte) ([]Resource, []Entry, *RequestEr
 }
 
 // CheckFilter builds the resource of the check/filter routes from the query
-// parameters. resourceType must not be blank; an operation that is blank
-// means ALL. Both values reach the policy as sent, spaces included.
+// parameters. resourceType must not be blank. Both values are kept as sent,
+// spaces included; an operation the request left out is empty.
 func CheckFilter(resourceType, operation string) ([]Resource, *RequestError) {
 	if strings.TrimSpace(resourceType) == "" {
 		return nil, errBadRequest
-	}
-	if strings.TrimSpace(operation) == "" {
-		operation = "ALL"
 	}
 	return []Resource{{ResourceType: resourceType, Operation: operation, Resource: map[string]any{}}}, nil
 }
@@ -256,7 +265,9 @@ func (it checkItem) resource() (Resource, *RequestError) {
 }
 
 // newResource converts the raw fields; a missing resource is an empty
-// object.
+// object. A type or operation that is a list or an object is a bad
+// request: the policies compare both as text, and a structure has no text
+// a caller could mean.
 func newResource(typ, op, res json.RawMessage) (Resource, *RequestError) {
 	t, err := value(typ, "")
 	if err != nil {
@@ -266,26 +277,42 @@ func newResource(typ, op, res json.RawMessage) (Resource, *RequestError) {
 	if err != nil {
 		return Resource{}, err
 	}
+	if structure(t) || structure(o) {
+		return Resource{}, errBadRequest
+	}
 	r, err := value(res, map[string]any{})
 	if err != nil {
 		return Resource{}, err
 	}
-	return Resource{ResourceType: t, Operation: o, Resource: r}, nil
+	return Resource{ResourceType: t, Operation: o, Resource: r,
+		Raw: RawResource{Type: typ, Operation: op, Resource: res}}, nil
+}
+
+// structure reports whether v is a list or an object.
+func structure(v any) bool {
+	switch v.(type) {
+	case []any, map[string]any:
+		return true
+	}
+	return false
 }
 
 // expand appends one Resource and Entry per operation of a bulk/operations
-// item, skipping operations that are empty strings or null.
+// item, skipping operations that are null. An empty operation is decided like
+// any other, so the answer lists it, with the ids it allows. An operation
+// that is a list or an object is a bad request, as in [newResource].
 func expand(resources []Resource, entries []Entry, typ json.RawMessage, ops []json.RawMessage, res json.RawMessage, id string) ([]Resource, []Entry, *RequestError) {
 	for _, op := range ops {
-		name := text(op)
-		if name == "" {
+		if s := string(bytes.TrimSpace(op)); s == "" || s == "null" {
 			continue
 		}
-		r, err := newResource(typ, nil, res)
+		name := text(op)
+		r, err := newResource(typ, op, res)
 		if err != nil {
 			return nil, nil, err
 		}
 		r.Operation = name
+		r.Raw.Operation = op
 		resources = append(resources, r)
 		entries = append(entries, Entry{ID: id, Operation: name})
 	}
@@ -378,14 +405,42 @@ func uniqueIDs(ids []json.RawMessage) *RequestError {
 }
 
 // skipHeaders are the request headers left out of input.requestHeaders: the
-// transport's own, the tokens the input carries in their own fields, and
-// the one the agent itself uses for the request id.
+// pseudo-headers of HTTP/2, the framing and proxy headers, the tokens the
+// input carries in their own fields, and the one the agent itself uses for
+// the request id. Host, Content-Type, and Accept-Encoding stay, because a
+// HEADER PIP over them reads them in legacy as any other header.
 var skipHeaders = map[string]bool{
 	":authority": true, ":path": true, ":method": true, ":scheme": true, ":status": true, ":protocol": true,
-	"content-type": true, "content-length": true, "accept-encoding": true, "host": true,
-	"transfer-encoding": true, "connection": true, "x-forwarded-for": true, "x-forwarded-proto": true,
+	"content-length": true, "transfer-encoding": true, "connection": true, "x-forwarded-for": true, "x-forwarded-proto": true,
 	"x-request-id": true, "x-envoy-expected-rq-timeout-ms": true, "authorization": true,
 	"incoming-token": true,
+}
+
+// RequestHeaders returns the headers of a request that policies and PIPs
+// may read, under their lowercase names: every header but [skipHeaders],
+// which leaves out the framing and proxy headers, the caller's admission
+// token, and the subject's token. A repeated header has its last value.
+func RequestHeaders(headers map[string][]string) map[string]string {
+	out := map[string]string{}
+	for k, values := range headers {
+		name := strings.ToLower(k)
+		if skipHeaders[name] || len(values) == 0 {
+			continue
+		}
+		out[name] = values[len(values)-1]
+	}
+	return out
+}
+
+// IncomingToken returns the Incoming-Token header of a request as sent, the
+// last value of a repeated one, and "" without one.
+func IncomingToken(headers map[string][]string) string {
+	for k, values := range headers {
+		if strings.EqualFold(k, "incoming-token") && len(values) > 0 {
+			return values[len(values)-1]
+		}
+	}
+	return ""
 }
 
 // Input builds the canonical authorize input of a legacy request from its
@@ -413,12 +468,8 @@ func Input(headers map[string][]string, resources []Resource) map[string]any {
 		}
 	}
 	requestHeaders := map[string]any{}
-	for k, values := range headers {
-		name := strings.ToLower(k)
-		if skipHeaders[name] || len(values) == 0 {
-			continue
-		}
-		requestHeaders[name] = values[len(values)-1]
+	for name, v := range RequestHeaders(headers) {
+		requestHeaders[name] = v
 	}
 	list := make([]any, len(resources))
 	for i, r := range resources {
@@ -502,68 +553,6 @@ func CheckResourceBulkOperationsResponse(result any, entries []Entry, v2 bool) [
 		return mustJSON(map[string]any{"decision": byOperation})
 	}
 	return mustJSON(byOperation)
-}
-
-// filterResponse is the wire shape of the check/filter routes, in the field
-// order the legacy service used.
-type filterResponse struct {
-	CalculationResult      string  `json:"calculationResult"`
-	FilterCondition        string  `json:"filterCondition"`
-	MongodbFilterCondition string  `json:"mongodbFilterCondition"`
-	RsqlFilterCondition    string  `json:"rsqlFilterCondition"`
-	SQLFilterCondition     string  `json:"sqlFilterCondition"`
-	CustomFilterCondition  *string `json:"customFilterCondition"`
-}
-
-// FilterResponse is the body of the check/filter routes. A missing or
-// denied first result is DENY with every condition empty. An allowed result
-// without predicates of the types rsql, querydsl, mongodb, sql, or custom is
-// ALLOW. With any of them it is USE_FILTER_CONDITION: the querydsl
-// predicate as filterCondition, the others in their own fields, and
-// customFilterCondition null unless a custom predicate exists.
-func FilterResponse(result any) []byte {
-	r := first(results(result))
-	if !allowed(r) {
-		return mustJSON(filterResponse{CalculationResult: "DENY"})
-	}
-	predicates, _ := object(r)["predicates"].([]any)
-	rsql := predicate(predicates, "rsql")
-	querydsl := predicate(predicates, "querydsl")
-	mongodb := predicate(predicates, "mongodb")
-	sql := predicate(predicates, "sql")
-	custom := predicate(predicates, "custom")
-	resp := filterResponse{CalculationResult: "ALLOW", FilterCondition: querydsl}
-	if custom != "" {
-		resp.CustomFilterCondition = &custom
-	}
-	if rsql != "" || querydsl != "" || mongodb != "" || sql != "" || custom != "" {
-		resp.CalculationResult = "USE_FILTER_CONDITION"
-		resp.MongodbFilterCondition = mongodb
-		resp.RsqlFilterCondition = rsql
-		resp.SQLFilterCondition = sql
-	}
-	return mustJSON(resp)
-}
-
-// predicate is the text of the first predicate of the given type: a string
-// as it is, any other value as JSON, and "" when the result has none or
-// the predicate is null.
-func predicate(predicates []any, typ string) string {
-	for _, p := range predicates {
-		fields := object(p)
-		if fields["predicateType"] != typ {
-			continue
-		}
-		switch v := fields["predicate"].(type) {
-		case nil:
-			return ""
-		case string:
-			return v
-		default:
-			return string(mustJSON(v))
-		}
-	}
-	return ""
 }
 
 func object(v any) map[string]any {

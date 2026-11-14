@@ -15,7 +15,12 @@
 // Package regobuiltins registers the built-in functions that Rego generated
 // from legacy policies calls, and provides [Documents], [JSONOf], and
 // [CompilePath], with which such a function reads its arguments. [All] lists
-// the functions; it declares none yet.
+// the functions:
+//
+//   - nc.http.send(request) sends one HTTP request with the agent's own
+//     token and a timeout, and returns its response; the one built-in that
+//     reaches the network, through the [HTTP] of the query's context, with
+//     answers kept for one decision request by [WithCalls].
 //
 // Nothing is registered globally. A compiler takes [Capabilities], a query
 // takes [Options], and an OPA test runner takes the same functions through the
@@ -42,9 +47,12 @@ type Builtin struct {
 	Option func(*rego.Rego)
 }
 
-// All returns the built-in functions in a fixed order. It returns none yet.
+// All returns the built-in functions in a fixed order.
 func All() []Builtin {
-	return nil
+	return []Builtin{
+		{httpSendDecl, rego.Function1(&rego.Function{Name: httpSendDecl.Name, Decl: httpSendDecl.Decl,
+			Nondeterministic: true}, httpSend)},
+	}
 }
 
 // Capabilities returns the capabilities of the linked OPA version with the

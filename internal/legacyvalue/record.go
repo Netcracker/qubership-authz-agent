@@ -14,13 +14,7 @@
 
 package legacyvalue
 
-import (
-	"slices"
-	"strconv"
-	"strings"
-
-	"authz-agent/internal/jsonvalue"
-)
+import "authz-agent/internal/jsonvalue"
 
 // State is the state an operand resolves to.
 type State string
@@ -93,26 +87,16 @@ type Record struct {
 	// "TRUE". For a list or an object it is Fold of its Java [Text], which a
 	// string equals it by. Generated code compares a number with a number or
 	// a string by Number instead, and the two are unequal unless both have
-	// one; two numbers that both lack one, such as 1e400, compare by k
+	// one; two numbers that both lack one, such as 1e400, compare by ck
 	// (ADR-0083).
 	Key *string
 	// ck: the key with case, the same text before [Fold].
 	CaseKey *string
 	// ks: the keys of the elements that are not null, for a list; the record's
 	// own Key for any other value, which a collection operator reads as a list
-	// of one. A number element compares with a number or a string by the
-	// Number of its record in e instead.
+	// of one. A number element compares with a number or a string by its value
+	// instead.
 	Keys []string
-	// o: for a list or an object, the key two lists or two objects are equal
-	// by: object members in key order, keys and strings with their case, and
-	// each value typed, so {"a": 1} and {"a": "1"} have two keys, and so do
-	// ["X"] and ["x"]. The list that [Of] reads is a set, as legacy reads a
-	// list operand into a java.util.HashSet: its key lists the keys of its
-	// elements sorted and without repeats, so [1, 2], [2, 1], and [1, 2, 2]
-	// share one. A list inside an element or a member keeps its order. A
-	// number is keyed by its Number, or by its [NumberText] where it has none,
-	// so {"a": 1}, {"a": 1.0}, and {"a": 1e0} share one (ADR-0083).
-	Structure *string
 	// n: the number new BigDecimal(ck) reads, set for a number and for
 	// a string that BigDecimal reads; <, <=, >, and >= compare it, and so does
 	// == between a number and a number or a string. A fraction or an exponent
@@ -120,11 +104,6 @@ type Record struct {
 	// Infinity, has none. It is normalized, so two equal numbers have the same
 	// Number.
 	Number *jsonvalue.Decimal
-	// e: the records of the elements of a list, null elements included. An
-	// element record has no e of its own: a list nested in an element compares
-	// by the o and the ks of the element record. So the records of a value
-	// hold its text a fixed number of times, however deep its lists nest.
-	Elements []Record
 }
 
 // WithState returns the record of an operand in state s, which carries no
@@ -133,15 +112,37 @@ func WithState(s State) Record {
 	return Record{State: s}
 }
 
+// Parts names the fields of the record of a list that [OfParts] builds.
+type Parts uint8
+
+// The parts of the record of a list.
+const (
+	// PartKey is k and ck.
+	PartKey Parts = 1 << iota
+	// PartKeys is ks.
+	PartKeys
+	// AllParts is every part, the record [Of] returns.
+	AllParts = PartKey | PartKeys
+)
+
 // Of returns the record of v as the operand's value: state NULL for nil,
 // EMPTY_COLL for an empty list, NULL_ELEMENT for a list that holds nil, and
 // VALUE otherwise. Of panics if v is not a [jsonvalue.Value].
 func Of(v jsonvalue.Value) Record {
-	return of(v, true)
+	return OfParts(v, AllParts)
 }
 
-// of returns the record of v, and leaves out e when elements is false.
-func of(v jsonvalue.Value, elements bool) Record {
+// OfParts returns the record [Of] returns, with only the parts p of a
+// non-empty list; the state and the class of a list, and the record of any
+// other value, are whole.
+func OfParts(v jsonvalue.Value, p Parts) Record {
+	if l, ok := v.([]jsonvalue.Value); ok && len(l) > 0 {
+		return listRecord(l, p)
+	}
+	return of(v)
+}
+
+func of(v jsonvalue.Value) Record {
 	switch x := v.(type) {
 	case nil:
 		return Record{State: StateNull}
@@ -152,13 +153,15 @@ func of(v jsonvalue.Value, elements bool) Record {
 	case bool:
 		return scalar(TypeBoolean, ClassScalar, Text(x))
 	case []jsonvalue.Value:
-		return listRecord(x, elements)
+		if len(x) == 0 {
+			return Record{State: StateEmptyColl}
+		}
+		return listRecord(x, AllParts)
 	case *jsonvalue.Object:
 		ck := Text(x)
 		k := Fold(ck)
-		sk := structureKey(x)
 		return Record{State: StateValue, Class: ClassOther, Type: TypeObject, Key: &k, CaseKey: &ck,
-			Keys: []string{k}, Structure: &sk}
+			Keys: []string{k}}
 	}
 	panic("legacyvalue: not a Value")
 }
@@ -172,72 +175,24 @@ func scalar(t Type, c Class, text string) Record {
 	return r
 }
 
-func listRecord(list []jsonvalue.Value, elements bool) Record {
-	if len(list) == 0 {
-		return Record{State: StateEmptyColl}
+// listRecord returns the record of a non-empty list with the parts p. It
+// writes the Java text of the list once and that of each element once, so
+// its cost is linear in the size of the list however deep its lists nest.
+func listRecord(list []jsonvalue.Value, p Parts) Record {
+	r := Record{State: StateValue, Class: ClassList, Type: TypeArray}
+	if p&PartKey != 0 {
+		ck := Text(list)
+		k := Fold(ck)
+		r.CaseKey, r.Key = &ck, &k
 	}
-	if elements {
-		return listWithElements(list)
+	if p&PartKeys != 0 {
+		r.Keys = []string{}
 	}
-	ck := Text(list)
-	k := Fold(ck)
-	sk := structureKey(list)
-	r := Record{State: StateValue, Class: ClassList, Type: TypeArray, Key: &k, CaseKey: &ck,
-		Keys: []string{}, Structure: &sk}
 	for _, e := range list {
-		if !classify(&r, e) {
+		if !classify(&r, e) && r.Keys != nil {
 			r.Keys = append(r.Keys, Fold(Text(e)))
 		}
 	}
-	return r
-}
-
-// listWithElements returns the record of a non-empty list with e. It builds
-// the list's ck, k, and ks from the records of its elements, which hold the
-// same texts, instead of reading the elements again, and its o as the key of
-// a set. The element records
-// come from of(e, false), which reads each element directly: joining at every
-// level would copy each byte once per level of nesting.
-func listWithElements(list []jsonvalue.Value) Record {
-	r := Record{State: StateValue, Class: ClassList, Type: TypeArray, Keys: []string{},
-		Elements: make([]Record, len(list))}
-	var ck, k strings.Builder
-	ck.WriteByte('[')
-	k.WriteByte('[')
-	elementKeys := make([]string, len(list))
-	for i, e := range list {
-		er := of(e, false)
-		r.Elements[i] = er
-		if i > 0 {
-			ck.WriteString(", ")
-			k.WriteString(", ")
-		}
-		// A null element and an empty list have a record without ck or o.
-		var ek string
-		if er.Key != nil {
-			ck.WriteString(*er.CaseKey)
-			ek = *er.Key
-		} else {
-			text := Text(e)
-			ck.WriteString(text)
-			ek = Fold(text)
-		}
-		k.WriteString(ek)
-		if er.Structure != nil {
-			elementKeys[i] = *er.Structure
-		} else {
-			elementKeys[i] = structureKey(e)
-		}
-		if !classify(&r, e) {
-			r.Keys = append(r.Keys, ek)
-		}
-	}
-	ck.WriteByte(']')
-	k.WriteByte(']')
-	slices.Sort(elementKeys)
-	elementKeys = slices.Compact(elementKeys)
-	cks, ks, os := ck.String(), k.String(), "["+strings.Join(elementKeys, ",")+"]"
-	r.CaseKey, r.Key, r.Structure = &cks, &ks, &os
 	return r
 }
 
@@ -254,55 +209,4 @@ func classify(r *Record, e jsonvalue.Value) bool {
 		r.Class = ClassOther
 	}
 	return false
-}
-
-// structureKey returns a text of v in which every object lists its members in
-// key order, a string is quoted with its case, and a number is unquoted as its
-// Number prints it, or as [NumberText] where it has none, so a number and a string
-// of the same digits differ.
-func structureKey(v jsonvalue.Value) string {
-	var b strings.Builder
-	writeStructureKey(&b, v)
-	return b.String()
-}
-
-func writeStructureKey(b *strings.Builder, v jsonvalue.Value) {
-	switch x := v.(type) {
-	case nil:
-		b.WriteString("null")
-	case bool:
-		b.WriteString(strconv.FormatBool(x))
-	case jsonvalue.Number:
-		if d, ok := jsonvalue.ParseBigDecimal(NumberText(x)); ok {
-			b.WriteString(d.String())
-		} else {
-			b.WriteString(NumberText(x))
-		}
-	case string:
-		var buf [64]byte
-		b.Write(strconv.AppendQuote(buf[:0], x))
-	case []jsonvalue.Value:
-		b.WriteByte('[')
-		for i, e := range x {
-			if i > 0 {
-				b.WriteByte(',')
-			}
-			writeStructureKey(b, e)
-		}
-		b.WriteByte(']')
-	case *jsonvalue.Object:
-		keys := slices.Sorted(slices.Values(x.Keys()))
-		b.WriteByte('{')
-		for i, k := range keys {
-			if i > 0 {
-				b.WriteByte(',')
-			}
-			var buf [64]byte
-			b.Write(strconv.AppendQuote(buf[:0], k))
-			b.WriteByte(':')
-			e, _ := x.Get(k)
-			writeStructureKey(b, e)
-		}
-		b.WriteByte('}')
-	}
 }

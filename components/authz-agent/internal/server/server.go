@@ -19,14 +19,16 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"runtime/debug"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 
 	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/engine"
-	"authz-agent/components/authz-agent/internal/pull"
+	"authz-agent/components/authz-agent/internal/snapshot"
 )
 
 // LegacyAPIVersion is the body of GET /api-version: the specification
@@ -66,6 +68,19 @@ type Options struct {
 	// are stored. Only a build with the paritytest tag routes a request to
 	// it.
 	PullNow func(ctx context.Context) error
+	// Snapshots answers check/resource and its bulk routes with the
+	// generated policies of the request's tenant; nil answers them, like
+	// check/filter, with the embedded policies.
+	Snapshots *snapshot.Registry
+	// DefaultTenant is the tenant of a request that names none by the
+	// query parameter tenant_id or the header Tenant.
+	DefaultTenant func() string
+	// DefaultTenantResolved reports whether DefaultTenant gives the tenant's
+	// ID rather than its display name; nil means it always does. Until it
+	// does, a caller is never matched with the default tenant, and a
+	// request in the default tenant is denied as in a tenant without
+	// policies.
+	DefaultTenantResolved func() bool
 }
 
 // Server owns the handlers.
@@ -82,6 +97,7 @@ func Register(app *fiber.App, eng *engine.Engine, opts Options) *Server {
 		opts.Log = discardLogger{}
 	}
 	s := &Server{engine: eng, opts: opts}
+	app.Use(s.recoverPanic)
 	app.Get("/health", s.health)
 	app.Get("/ready", s.ready)
 	app.Get("/api-version", apiVersion)
@@ -102,15 +118,23 @@ type Report struct {
 	// Bootstrap carries the counts when a bootstrap threshold is not met or
 	// a required provider is missing.
 	Bootstrap *authn.Details
-	// Conversion counts the last policy conversion, on either outcome.
-	Conversion *pull.Conversion
-	Loaded     bool
+	Loaded    bool
+	// Waiting names the tenants whose policies keep Loaded unset, because
+	// the source names them and no snapshot of theirs was accepted.
+	Waiting []string
+	// UnresolvedTenant is the display name of the default tenant while
+	// tenant-manager has not resolved it, and keeps the service not ready;
+	// "" when it is resolved or the lookup is off.
+	UnresolvedTenant string
+	// Snapshots is the state of every tenant's generated policies, nil
+	// without a registry.
+	Snapshots *snapshot.Health
 }
 
 // HealthResponse is the body of a healthy GET /health.
 type HealthResponse struct {
-	Status           string           `json:"status"`
-	PolicyConversion *pull.Conversion `json:"policyConversion,omitempty"`
+	Status    string           `json:"status"`
+	Snapshots *snapshot.Health `json:"snapshots,omitempty"`
 }
 
 // HealthErrorResponse is the body of a 503 GET /health or GET /ready.
@@ -124,30 +148,35 @@ type HealthErrorResponse struct {
 // separate engine to wait for. The field stays because the body's shape is
 // what the platform's probes and dashboards already read.
 type HealthErrorDetails struct {
-	OPAReady         *bool            `json:"opaReady,omitempty"`
-	ConfigError      string           `json:"configError,omitempty"`
-	Bootstrap        *authn.Details   `json:"bootstrap,omitempty"`
-	PolicyConversion *pull.Conversion `json:"policyConversion,omitempty"`
+	OPAReady    *bool            `json:"opaReady,omitempty"`
+	ConfigError string           `json:"configError,omitempty"`
+	Bootstrap   *authn.Details   `json:"bootstrap,omitempty"`
+	Snapshots   *snapshot.Health `json:"snapshots,omitempty"`
 }
 
-// health answers 200 with the conversion counts
-// when healthy, 503 with the reason and its details otherwise. The
-// policies' first load is not part of it, so a liveness probe does not
-// restart a service that is still waiting for its source; /ready carries
-// that.
+// health answers 200 with the state of every
+// tenant's generated policies when healthy, 503 with the reason and its
+// details otherwise. A tenant whose candidate was refused leaves the
+// service healthy: the tenant names the refusal, and the other tenants
+// are served. The policies' first load is not part of it, so a liveness
+// probe does not restart a service that is still waiting for its source;
+// /ready carries that.
 func (s *Server) health(c *fiber.Ctx) error {
 	if s.opts.Health == nil {
 		return c.JSON(HealthResponse{Status: "healthy"})
 	}
 	report := s.opts.Health()
 	if report.Healthy {
-		return c.JSON(HealthResponse{Status: "healthy", PolicyConversion: report.Conversion})
+		return c.JSON(HealthResponse{Status: "healthy", Snapshots: report.Snapshots})
 	}
 	return unavailable(c, report)
 }
 
 // ready is the readiness answer: 200 {"status":"ready"} once the service
-// is healthy and the policies have loaded, 503 with the reason otherwise.
+// is healthy, the policies have loaded, and the default tenant is resolved,
+// 503 otherwise. The 503 reason is the health reason when unhealthy, and
+// otherwise names each unmet condition, separated by "; ": the tenants of
+// [Report.Waiting] and [Report.UnresolvedTenant].
 func (s *Server) ready(c *fiber.Ctx) error {
 	if s.opts.Health == nil {
 		return c.JSON(fiber.Map{"status": "ready"})
@@ -156,8 +185,20 @@ func (s *Server) ready(c *fiber.Ctx) error {
 	if !report.Healthy {
 		return unavailable(c, report)
 	}
+	var reasons []string
 	if !report.Loaded {
-		report.Message = "policies not loaded yet"
+		reason := "policies not loaded yet"
+		if len(report.Waiting) > 0 {
+			reason = "no snapshot accepted yet for tenants " + strings.Join(report.Waiting, ", ")
+		}
+		reasons = append(reasons, reason)
+	}
+	if report.UnresolvedTenant != "" {
+		reasons = append(reasons, fmt.Sprintf("default tenant %q not resolved via tenant-manager yet",
+			report.UnresolvedTenant))
+	}
+	if len(reasons) > 0 {
+		report.Message = strings.Join(reasons, "; ")
 		return unavailable(c, report)
 	}
 	return c.JSON(fiber.Map{"status": "ready"})
@@ -169,10 +210,10 @@ func unavailable(c *fiber.Ctx, report Report) error {
 	return c.Status(http.StatusServiceUnavailable).JSON(HealthErrorResponse{
 		Message: report.Message,
 		Details: &HealthErrorDetails{
-			OPAReady:         &ready,
-			ConfigError:      report.ConfigError,
-			Bootstrap:        report.Bootstrap,
-			PolicyConversion: report.Conversion,
+			OPAReady:    &ready,
+			ConfigError: report.ConfigError,
+			Bootstrap:   report.Bootstrap,
+			Snapshots:   report.Snapshots,
 		},
 	})
 }
@@ -182,20 +223,20 @@ func apiVersion(c *fiber.Ctx) error {
 	return c.SendString(LegacyAPIVersion)
 }
 
+// recoverPanic answers 500 to a request whose handler panicked and reports
+// the panic with its stack, so that one request cannot stop the process and
+// the checks of every tenant with it.
+func (s *Server) recoverPanic(c *fiber.Ctx) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.opts.Log.ErrorC(c.UserContext(), "%s %s panicked, answered 500: %v\n%s", c.Method(), c.Path(), r, debug.Stack())
+			err = opaError(c, http.StatusInternalServerError, "internal_error", "internal error")
+		}
+	}()
+	return c.Next()
+}
+
 // opaError writes an error body in the shape of OPA's REST API.
 func opaError(c *fiber.Ctx, status int, code, message string) error {
 	return c.Status(status).JSON(fiber.Map{"code": code, "message": message})
-}
-
-// evaluate runs the decision at segments with input. defined is false when
-// the document is undefined.
-func (s *Server) evaluate(c *fiber.Ctx, segments []string, input any) (result any, defined bool, err error) {
-	result, defined, err = s.engine.Eval(c.UserContext(), segments, input)
-	if err != nil {
-		// Reported here because the caller answers 500 and reports nothing.
-		s.opts.Log.ErrorC(c.UserContext(), "decision failed path=%s: %v", strings.Join(segments, "/"), err)
-		return nil, false, err
-	}
-	s.opts.Log.DebugC(c.UserContext(), "decision path=%s defined=%t", strings.Join(segments, "/"), defined)
-	return result, defined, nil
 }

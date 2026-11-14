@@ -23,6 +23,7 @@ import (
 	"github.com/netcracker/qubership-core-lib-go/v3/context-propagation/ctxmanager"
 
 	"authz-agent/components/authz-agent/internal/legacy"
+	"authz-agent/components/authz-agent/internal/snapshot"
 )
 
 // RegisterPublic adds the public routes to app: the check routes of the
@@ -32,6 +33,7 @@ import (
 // the Envoy path matches did; the check routes then read the body, and the
 // filter routes the query, whatever the method.
 func (s *Server) RegisterPublic(app *fiber.App) {
+	app.Use(s.recoverPanic)
 	app.Use(s.requestID)
 	app.All("/access/v1/check/resource/bulk/operations", s.checkResourceBulkOperations(false))
 	app.All("/preview/v1/check/resource/bulk/operations", s.checkResourceBulkOperations(false))
@@ -76,13 +78,64 @@ func (s *Server) notFound(c *fiber.Ctx) error {
 	return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "not found"})
 }
 
-// publicHealth is the public surface's /health: the service's own health
-// for GET, and 405 for any other method, as access-control answers.
+// PublicHealthResponse is the body of the public GET /health. It names no
+// tenant, set, PIP, or reason: those are for the operator, on the internal
+// /health.
+type PublicHealthResponse struct {
+	Status string `json:"status"`
+	*TenantCounts
+}
+
+// TenantCounts counts the tenants of [snapshot.Health].
+type TenantCounts struct {
+	// Tenants counts every tenant the registry knows.
+	Tenants int `json:"tenants"`
+	// Served counts the tenants with a published snapshot.
+	Served int `json:"served"`
+	// Rejected counts the tenants whose latest candidate was refused.
+	Rejected int `json:"rejected"`
+	// Failing counts the tenants whose published snapshot has a part that
+	// answers as a failed source.
+	Failing int `json:"failing"`
+}
+
+// publicHealth is the public surface's /health: the status and the tenant
+// counts for GET, 200 when healthy and 503 otherwise, and 405 for any
+// other method, as access-control answers.
 func (s *Server) publicHealth(c *fiber.Ctx) error {
 	if c.Method() != fiber.MethodGet {
 		return c.Status(http.StatusMethodNotAllowed).JSON(fiber.Map{"message": "method not allowed"})
 	}
-	return s.health(c)
+	if s.opts.Health == nil {
+		return c.JSON(PublicHealthResponse{Status: "healthy"})
+	}
+	report := s.opts.Health()
+	body := PublicHealthResponse{Status: "healthy", TenantCounts: countTenants(report.Snapshots)}
+	if !report.Healthy {
+		body.Status = "unhealthy"
+		c.Status(http.StatusServiceUnavailable)
+	}
+	return c.JSON(body)
+}
+
+// countTenants counts the tenants of h, nil without a registry.
+func countTenants(h *snapshot.Health) *TenantCounts {
+	if h == nil {
+		return nil
+	}
+	n := &TenantCounts{Tenants: len(h.Tenants)}
+	for _, t := range h.Tenants {
+		if t.Ready {
+			n.Served++
+		}
+		if t.Rejected != nil {
+			n.Rejected++
+		}
+		if len(t.Failures) > 0 {
+			n.Failing++
+		}
+	}
+	return n
 }
 
 func (s *Server) checkResource(v2 bool) fiber.Handler {
@@ -91,7 +144,7 @@ func (s *Server) checkResource(v2 bool) fiber.Handler {
 		if err != nil {
 			return s.refuse(c, err)
 		}
-		return s.check(c, resources, func(result any) []byte {
+		return s.decide(c, resources, func(result any) []byte {
 			return legacy.CheckResourceResponse(result, v2)
 		})
 	}
@@ -102,7 +155,7 @@ func (s *Server) checkResourceBulk(c *fiber.Ctx) error {
 	if err != nil {
 		return s.refuse(c, err)
 	}
-	return s.check(c, resources, func(result any) []byte {
+	return s.decide(c, resources, func(result any) []byte {
 		return legacy.CheckResourceBulkResponse(result, ids)
 	})
 }
@@ -123,7 +176,7 @@ func (s *Server) checkResourceBulkOperations(v2 bool) fiber.Handler {
 			// the Lua filter answered it without calling OPA.
 			return sendJSON(c, http.StatusOK, legacy.CheckResourceBulkOperationsResponse(nil, nil, v2))
 		}
-		return s.check(c, resources, func(result any) []byte {
+		return s.decide(c, resources, func(result any) []byte {
 			return legacy.CheckResourceBulkOperationsResponse(result, entries, v2)
 		})
 	}
@@ -134,7 +187,7 @@ func (s *Server) checkFilter(c *fiber.Ctx) error {
 	if err != nil {
 		return s.refuse(c, err)
 	}
-	return s.check(c, resources, legacy.FilterResponse)
+	return s.filter(c, resources[0])
 }
 
 // lastQuery is the value of the last query parameter named key, "" when
@@ -147,27 +200,6 @@ func lastQuery(c *fiber.Ctx, key string) string {
 		}
 	}
 	return value
-}
-
-// check evaluates the canonical decision for a legacy request and writes
-// the response: the body shape builds from the decision, or the authError
-// as {"message": ...} with its status when the policy refused the request.
-// An undefined decision gets the empty envelope without a result, and a
-// failed evaluation 500, so that both stay visible as they were through
-// Envoy.
-func (s *Server) check(c *fiber.Ctx, resources []legacy.Resource, shape func(result any) []byte) error {
-	input := legacy.Input(c.GetReqHeaders(), resources)
-	result, defined, err := s.evaluate(c, []string{"authorize"}, input)
-	if err != nil {
-		return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
-	}
-	if !defined {
-		return c.JSON(fiber.Map{})
-	}
-	if status, body, refused := legacy.AuthError(result); refused {
-		return sendJSON(c, status, body)
-	}
-	return sendJSON(c, http.StatusOK, shape(result))
 }
 
 // refuse writes a request the legacy API rejects before any policy runs:

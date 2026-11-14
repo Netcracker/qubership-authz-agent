@@ -24,7 +24,7 @@ is reviewed.
   the agent is one Go process, and this record fixes where that process reads its configuration.
 - [authz-agent-ADR-0082: Evaluate jsonPath with our own Go package instead of a third-party library](20261023-authz-agent-adr-0082-own-jsonpath-evaluator.md):
   the semantics of a jsonPath, which the reader keeps as written.
-- [authz-agent-ADR-0083: Compare operands as the Java values legacy reads, and a number by value](20261024-authz-agent-adr-0083-operands-as-java-values.md):
+- [authz-agent-ADR-0083: Compare two values by one rule in every operator: a number by value, any other scalar by its text ignoring case](20261024-authz-agent-adr-0083-operands-as-java-values.md):
   the semantics of a value, which the reader keeps as written.
 
 ## Context
@@ -84,13 +84,15 @@ follows five rules.
    `Export.Dropped`.
 2. **Legacy invariants are checked once, when the export is read.** A top-level set or a PIP declaration without a
    usable `tenantId` belongs to no tree and is reported in `Export.Orphans`. A nested element without `tenantId` takes
-   the tenant of its top-level set. Where the export breaks the tenant properties above, the reader isolates the
-   damaged element, and the tenant keeps the rest of its tree. A top-level set that holds an element of another tenant,
-   or whose `policySetId` the tenant has more than once, becomes an isolated set: it fails every request under its
-   target and holds nothing else. A PIP name the tenant declares more than once becomes an isolated declaration, which
-   a condition reads as a failed PIP. Each isolation is listed in `Export.Dropped`. An element the reader cannot read,
-   such as one with an unknown combining algorithm, fails the tenant's candidate snapshot (`Export.Failed`) and keeps
-   the previous snapshot. The Rego generator and the evaluator rely on these invariants and carry no fallback rule
+   the tenant of its top-level set. Where the export breaks the tenant properties above, the reader isolates the damaged
+   element, and the tenant keeps the rest of its tree. A top-level set that holds an element of another tenant, or whose
+   `policySetId` the tenant has more than once, becomes an isolated set: it fails every request under its target and
+   holds nothing else. Where every top-level set of that `policySetId` in the tenant is identical, the tenant's own set
+   is one of them, so the reader reads the first and isolates none. A PIP name the tenant declares more than once
+   becomes an isolated declaration, which a condition reads as a failed PIP, unless every declaration of the name is
+   identical, and the reader then keeps one. Each isolation is listed in `Export.Dropped`. An element the reader cannot
+   read, such as one with an unknown combining algorithm, fails the tenant's candidate snapshot (`Export.Failed`) and
+   keeps the previous snapshot. The Rego generator and the evaluator rely on these invariants and carry no fallback rule
    such as "the first declaration wins".
 3. **Text is normalized once, in the reader.** A whole condition equal to `true` or `false`, ignoring ASCII case and
    the characters up to U+0020 around it, which Java's `String.trim` removes, becomes a constant node. Every other
@@ -128,7 +130,8 @@ We considered four alternatives:
   the production rules that carry one. The reader of simplified policies, the policy admin stub, and the parity
   fixtures stop using `querydslPredicate`.
 - `internal/policyir` drops the field `querydslPredicate` and the unsupported finding for it. It isolates a repeated PIP
-  name and a damaged top-level set as rule 2 says, instead of dropping the second declaration or failing the tenant.
+  name and a damaged top-level set as rule 2 says, instead of dropping the second declaration or failing the tenant,
+  and reads once the identical copies rule 2 names.
   It keeps reporting a top-level set or a PIP
   declaration without a usable tenant in `Export.Orphans`; legacy never exports one, so only a hand-made input reaches
   that path. It lists every unknown key it drops in `Export.Dropped`, maps `externalId`, `cacheable`, and

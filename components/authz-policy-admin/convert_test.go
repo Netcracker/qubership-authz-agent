@@ -16,92 +16,182 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"slices"
+	"strings"
 	"testing"
 
-	"authz-agent/internal/acconfig"
-	"authz-agent/internal/simplifiedpolicies"
+	"authz-agent/internal/policyir"
 )
 
-// discardWarnings drops what the production converter reports; this test is
-// about the documents it produces.
-type discardWarnings struct{}
-
-func (discardWarnings) Warnf(string, ...any) {}
-
-// The stub only earns its keep if what it serves is what the production
-// converter can read back. This test closes the loop in milliseconds; before
-// the stub moved into this module the only check was a ten-minute Compose run.
-//
-// The import of internal/acconfig is deliberate and lives in a _test.go file on
-// purpose: the shipped binary must not link the production converter (otherwise
-// the integration suites would compare the converter against itself), but the
-// test may — and it is supposed to fail when the v3 wire shape changes.
-func TestV3RoundTripThroughProductionConverter(t *testing.T) {
+// The stub only earns its keep if what it serves is what the service reads
+// back. The import of internal/policyir lives in a _test.go file on purpose:
+// the shipped binary must not link the service's reader, otherwise the
+// integration suites would compare the reader against itself, but the test
+// may, and it is supposed to fail when the v3 wire shape changes.
+func TestV3RoundTripThroughTheServiceReader(t *testing.T) {
 	input := []simplifiedPolicy{
-		{Component: "billing", ResourceType: "Invoice", Operation: "READ", Roles: []any{"ROLE_ADMIN"}},
-		{Component: "billing", ResourceType: "Invoice", Operation: "UPDATE", Roles: []any{"ROLE_ADMIN"}, Condition: "subject.tenantId == resource.tenantId"},
-		{Component: "billing", ResourceType: "Invoice", Operation: "READ", Roles: []any{"ROLE_USER"}, RSQLPredicate: "ownerId==${subject.id}"},
-		{Component: "billing", ResourceType: "Invoice", Operation: "LIST", Roles: []any{"ROLE_USER"}, Predicate: `Invoice.ownerId.eq("${subject.id}")`},
+		{Tenant: "tenant-a", Component: "billing", ResourceType: "Invoice", Operation: "READ", Roles: []any{"ROLE_ADMIN"}},
+		{Tenant: "tenant-a", Component: "billing", ResourceType: "Invoice", Operation: "UPDATE", Roles: []any{"ROLE_ADMIN"}, Condition: "subject.tenantId == resource.tenantId"},
+		{Tenant: "tenant-a", Component: "billing", ResourceType: "Invoice", Operation: "READ", Roles: []any{"ROLE_USER"}, RSQLPredicate: "ownerId==${subject.id}"},
 	}
-
-	raw, err := json.Marshal(v3PolicySetsResponse{Hash: "deadbeef", PolicySets: toV3PolicySets(input)})
+	raw, err := json.Marshal(v3PolicySetsResponse{Hash: "deadbeef", PolicySets: toV3PolicySets(input, defaultTenant)})
 	if err != nil {
 		t.Fatalf("marshal v3 envelope: %v", err)
 	}
 
-	got, _, err := acconfig.ConvertPolicySets(raw, discardWarnings{})
-	if err != nil {
-		t.Fatalf("ConvertPolicySets: %v", err)
-	}
-	if len(got) != len(input) {
-		t.Fatalf("converter returned %d policies, want %d: %+v", len(got), len(input), got)
-	}
-
-	for _, want := range input {
-		if !containsPolicy(got, want) {
-			t.Errorf("policy lost in the round trip: %+v\ngot: %+v", want, got)
+	tree := readTree(t, raw, []byte(`{"pips": []}`), "tenant-a")
+	var got []string
+	for _, set := range tree.Sets {
+		for _, p := range set.Policies {
+			for _, r := range p.Rules {
+				got = append(got, format(p.Target)+" | "+format(r.Target)+" | "+format(r.Condition)+
+					" | rsql="+r.Predicates.Text[policyir.DialectRSQL]+" | querydsl="+r.Predicates.Text[policyir.DialectQueryDSL])
+			}
 		}
+	}
+	slices.Sort(got)
+	want := []string{
+		`subject.roles CONTAINS "ROLE_ADMIN" | operation EQ "READ" |  | rsql= | querydsl=`,
+		`subject.roles CONTAINS "ROLE_ADMIN" | operation EQ "UPDATE" | pip("subject.tenantId") EQ resource.tenantId | rsql= | querydsl=`,
+		`subject.roles CONTAINS "ROLE_USER" | operation EQ "READ" |  | rsql=ownerId==${subject.id} | querydsl=`,
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("rules read back =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
 }
 
-func TestPIPRoundTripThroughProductionConverter(t *testing.T) {
+// A global policy, of component, resourceType, and operation ALL, reaches
+// the service as a set the reader accepts, so it carries its component.
+func TestAGlobalPolicyRoundTripsThroughTheServiceReader(t *testing.T) {
+	input := []simplifiedPolicy{
+		{Tenant: "tenant-a", Component: "ALL", ResourceType: "ALL", Operation: "ALL", Roles: []any{"ROLE_ADMIN"}},
+	}
+	raw, err := json.Marshal(v3PolicySetsResponse{Hash: "deadbeef", PolicySets: toV3PolicySets(input, defaultTenant)})
+	if err != nil {
+		t.Fatalf("marshal v3 envelope: %v", err)
+	}
+
+	tree := readTree(t, raw, []byte(`{"pips": []}`), "tenant-a")
+	if len(tree.Sets) != 1 {
+		t.Errorf("sets read back = %d, want 1; dump:\n%s", len(tree.Sets), tree.Dump())
+	}
+}
+
+// format is the condition c as the reader parsed it, "" for none.
+func format(c *policyir.Condition) string {
+	if c == nil {
+		return ""
+	}
+	return policyir.FormatCondition(c)
+}
+
+func TestPIPRoundTripThroughTheServiceReader(t *testing.T) {
 	input := []simplifiedPIP{
-		{Name: "tenant", PipType: "TOKEN", Claim: "tenant_id", Domain: "billing"},
-		{Name: "org-header", PipType: "HEADER", Header: "X-Org-Id"},
+		{Tenant: "tenant-a", Name: "subject.tenant", PipType: "TOKEN", Claim: "tenant_id", Domain: "billing"},
+		{Tenant: "tenant-a", Name: "subject.org", PipType: "HEADER", Header: "X-Org-Id", Domain: "billing"},
 	}
-
-	raw, err := json.Marshal(v3PIPsResponse{Hash: "deadbeef", PIPs: toV3PIPs(input)})
+	raw, err := json.Marshal(v3PIPsResponse{Hash: "deadbeef", PIPs: toV3PIPs(input, defaultTenant)})
 	if err != nil {
 		t.Fatalf("marshal v3 envelope: %v", err)
 	}
 
-	got, err := acconfig.ConvertPIPs(raw, discardWarnings{})
-	if err != nil {
-		t.Fatalf("ConvertPIPs: %v", err)
+	tree := readTree(t, []byte(`{"policySets": []}`), raw, "tenant-a")
+	var got []string
+	for _, p := range tree.PIPs {
+		got = append(got, p.Name+" "+string(p.Type)+" "+p.Claim+p.Header)
 	}
-	if len(got) != len(input) {
-		t.Fatalf("converter returned %d PIPs, want %d: %+v", len(got), len(input), got)
-	}
-	for i, want := range input {
-		if got[i].Name != want.Name {
-			t.Errorf("PIP %d: name %q, want %q", i, got[i].Name, want.Name)
-		}
+	want := []string{"subject.tenant TOKEN tenant_id", "subject.org HEADER X-Org-Id"}
+	if !slices.Equal(got, want) {
+		t.Errorf("PIPs read back = %q, want %q", got, want)
 	}
 }
 
-func containsPolicy(got []simplifiedpolicies.Policy, want simplifiedPolicy) bool {
-	for _, g := range got {
-		if g.Component == want.Component &&
-			g.ResourceType == want.ResourceType &&
-			g.Operation == want.Operation &&
-			g.RSQLPredicate == want.RSQLPredicate &&
-			g.QueryDSLPredicate == want.Predicate &&
-			conditionString(g.Condition) == conditionString(want.Condition) &&
-			rolesKey(g.Roles) == rolesKey(want.Roles) {
-			return true
-		}
+// TestTheRuleTakesThePredicatesAccessControlReads: a rule's filter
+// predicates are the rsqlPredicate of the policy and the mongodbPredicate of
+// its predicates object, or its predicates text; every other predicate key,
+// top-level or nested, gives the rule nothing.
+func TestTheRuleTakesThePredicatesAccessControlReads(t *testing.T) {
+	tests := []struct{ name, fields, rsql, mongodb string }{
+		{"a predicates object", `"predicates": {"mongodbPredicate": "nested", "sqlPredicate": "s"}`, "", "nested"},
+		{"a predicates text", `"predicates": "as text"`, "", "as text"},
+		{"nested beside top-level", `"predicates": {"mongodbPredicate": "nested"}, "mongodbPredicate": "top"`, "", "nested"},
+		{"a top-level mongodbPredicate", `"mongodbPredicate": "top"`, "", ""},
+		{"every top-level key", `"rsqlPredicate": "a==1", "sqlPredicate": "a = 1", "mongodbPredicate": "{}",
+			"predicate": "doc.a.eq(1)", "querydslPredicate": "doc.a.eq(1)"`, "a==1", ""},
 	}
-	return false
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var p simplifiedPolicy
+			if err := json.Unmarshal([]byte(`{"component": "PARITY", "resourceType": "PARITY_DOC",
+				"operation": "READ", "roles": ["ROLE_A"], `+tt.fields+`}`), &p); err != nil {
+				t.Fatalf("unmarshal the policy: %v", err)
+			}
+			r := toV3PolicySets([]simplifiedPolicy{p}, defaultTenant)[0].Policies[0].Rules[0]
+			got := fmt.Sprintf("rsql=%q mongodb=%q sql=%q querydsl=%q", r.RSQLPredicate, r.MongoDBPredicate,
+				r.SQLPredicate, r.Predicate)
+			want := fmt.Sprintf("rsql=%q mongodb=%q sql=%q querydsl=%q", tt.rsql, tt.mongodb, "", "")
+			if got != want {
+				t.Errorf("rule predicates = %s, want %s", got, want)
+			}
+		})
+	}
+}
+
+// TestPIPExportKeepsTheMappingAndCacheFields: the tables of a MAPPING PIP,
+// the cache settings, and the resource type of a FILTERED PIP reach the
+// service reader as uploaded.
+func TestPIPExportKeepsTheMappingAndCacheFields(t *testing.T) {
+	var input []simplifiedPIP
+	if err := json.Unmarshal([]byte(`[
+		{"name": "subject.permissions", "pipType": "MAPPING", "domain": "billing",
+		 "productMapping": {}, "customMapping": {"ROLE_A": ["P1"]}},
+		{"name": "subject.g", "pipType": "GENERAL", "url": "http://g", "domain": "billing",
+		 "cacheable": true, "cachePeriod": 5},
+		{"name": "subject.f", "pipType": "FILTERED", "url": "http://f", "domain": "billing",
+		 "resourceType": "ORDER"}]`), &input); err != nil {
+		t.Fatalf("unmarshal the upload: %v", err)
+	}
+	for i := range input {
+		input[i].Tenant = "tenant-a"
+	}
+	raw, err := json.Marshal(v3PIPsResponse{Hash: "deadbeef", PIPs: toV3PIPs(input, defaultTenant)})
+	if err != nil {
+		t.Fatalf("marshal v3 envelope: %v", err)
+	}
+
+	tree := readTree(t, []byte(`{"policySets": []}`), raw, "tenant-a")
+	var got []string
+	for _, p := range tree.PIPs {
+		got = append(got, fmt.Sprintf("%s product=%s custom=%s cacheable=%s period=%s rt=%s",
+			p.Name, p.ProductMapping, p.CustomMapping, p.Cacheable, p.CachePeriod, p.ResourceType))
+	}
+	want := []string{
+		`subject.permissions product={} custom={"ROLE_A":["P1"]} cacheable= period= rt=`,
+		`subject.g product= custom= cacheable=true period=5 rt=`,
+		`subject.f product= custom= cacheable= period= rt=ORDER`,
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("PIPs read back =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// readTree reads the two documents as the service does and returns the tree
+// of tenant, failing the test when the reader drops or fails anything.
+func readTree(t *testing.T, policySets, pips []byte, tenant string) *policyir.Tree {
+	t.Helper()
+	export, err := policyir.FromRegular(policySets, pips)
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	if len(export.Failed) != 0 || len(export.Orphans) != 0 || len(export.Dropped) != 0 {
+		t.Fatalf("FromRegular failed %v, orphaned %v, dropped %v; want everything read", export.Failed, export.Orphans, export.Dropped)
+	}
+	tree := export.Trees[tenant]
+	if tree == nil {
+		t.Fatalf("FromRegular read tenants %v, want %s", export.Trees, tenant)
+	}
+	return tree
 }
 
 // TestRolesTarget_MultiRoleKeepsEveryRole pins the fidelity fix: the stub used

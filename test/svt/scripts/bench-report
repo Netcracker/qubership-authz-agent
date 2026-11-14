@@ -60,9 +60,6 @@ SCENARIOS = [
     ("rls-predicate-pips-2-header-pip",          "rls-predicate-pips-2-header-pip",          "RLS-predicate-pips"),
     ("rls-predicate-pips-3-header-pip",          "rls-predicate-pips-3-header-pip",          "RLS-predicate-pips"),
     ("rls-predicate-summary-10-predicates-3-token-pip", "rls-predicate-summary-10-predicates-3-token-pip", "RLS-predicate-pips"),
-    # Wildcard
-    ("wildcard-all-single",     "wildcard-all-single",     "Wildcard"),
-    ("wildcard-mixed-bulk",     "wildcard-mixed-bulk",     "Wildcard"),
 ]
 # fmt: on
 
@@ -173,8 +170,6 @@ def generate_methodology():
   of token-claim or header-derived PIP references (measures PIP resolution scaling).
 - **rls-predicate-summary-10-predicates-3-token-pip**: combined stress scenario — 10 predicates
   and 3 token PIPs.
-- **wildcard-all-single**: global wildcard access short-circuit (single resource).
-- **wildcard-mixed-bulk**: mixed wildcard + exact OLS in one bulk request.
 """
 
 

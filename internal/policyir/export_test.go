@@ -164,8 +164,6 @@ func TestFromRegularReadsASimplifiedSetOfAnotherShapeAsARegularSet(t *testing.T)
 		policies  string
 	}{
 		{"a set target spelled with EQUALS", "resourceType EQUALS 'R'", readPolicy},
-		{"the set target true of a global policy", "true", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
-			"target": "true", "rules": [{"effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`},
 		{"a policy target of operation ALL", "", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
 			"target": "operation == 'ALL'", "rules": [{"effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`},
 		{"a policy target spelled with EQUALS", "", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
@@ -194,6 +192,76 @@ func TestFromRegularReadsASimplifiedSetOfAnotherShapeAsARegularSet(t *testing.T)
 			tr := tree(t, fromRegular(t, `[`+simplifiedSetWithTarget("t", setTarget, tc.policies)+`]`, `[]`), "t")
 			if len(tr.Simplified) != 0 || len(tr.Sets) != 1 {
 				t.Errorf("simplified groups %d, sets %d, want 0 and 1; dump:\n%s", len(tr.Simplified), len(tr.Sets), tr.Dump())
+			}
+		})
+	}
+}
+
+// resourceTypeAllSet is a set of type SIMPLIFIED of resourceType ALL, as the
+// PAP writes it with the set target true, of component and with policies the
+// JSON of its policies.
+func resourceTypeAllSet(component, policies string) string {
+	return `{"type": "SIMPLIFIED", "tenantId": "t", "domain": "D", "component": "` + component + `",
+		"status": "ACTIVE", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "policySetId": "s",
+		"target": "true", "policySets": [], "policies": ` + policies + `}`
+}
+
+// A global policy, of component, resourceType, and operation ALL with no
+// condition and no predicate, is read as the regular set it is written as.
+func TestFromRegularReadsAGlobalPolicyAsARegularSet(t *testing.T) {
+	t.Parallel()
+
+	e := fromRegular(t, `[`+resourceTypeAllSet("ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		"target": "true", "rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`)+`]`, `[]`)
+
+	tr := tree(t, e, "t")
+	if len(tr.Simplified) != 0 || len(tr.Sets) != 1 {
+		t.Errorf("simplified groups %d, sets %d, want 0 and 1; dump:\n%s", len(tr.Simplified), len(tr.Sets), tr.Dump())
+	}
+}
+
+// A simplified policy of resourceType ALL that is not a global policy fails
+// its tenant, and the error names the policy (ADR-0102 R4). The PAP writes
+// the operation into the policy target; the test PAP writes it into the rule
+// target.
+func TestFromRegularRejectsAPolicyOfResourceTypeAllThatIsNotGlobal(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name, component, policies, why string
+	}{
+		{"another component", "C", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`,
+			"its component is not ALL"},
+		{"an operation in the policy target", "ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "operation == 'READ'",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`,
+			"a target of its policy or its rule reads more than the roles"},
+		{"an operation in the rule target", "ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "subject.roles CONTAINS 'A'",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "operation == 'READ'"}]}]`,
+			"a target of its policy or its rule reads more than the roles"},
+		{"a resource attribute in the policy target", "ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "resource.a == 'y'",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`,
+			"a target of its policy or its rule reads more than the roles"},
+		{"a condition", "ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'",
+			"condition": "resource.a == 'y'"}]}]`, "it has a condition"},
+		{"an rsql predicate", "ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'",
+			"rsqlPredicate": "a==1"}]}]`, "it has a predicate"},
+		{"a custom predicate", "ALL", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'",
+			"customPredicate": {"predicate": "p", "params": {}}}]}]`, "it has a predicate"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := fromRegular(t, `[`+resourceTypeAllSet(tc.component, tc.policies)+`]`, `[]`)
+
+			want := `policy set "s": simplified policy "r1" has resourceType ALL and is not a global policy: ` + tc.why
+			if err := e.Failed["t"]; err == nil || err.Error() != want {
+				t.Errorf("Failed[t] = %v, want %s", err, want)
 			}
 		})
 	}
@@ -315,6 +383,107 @@ func TestFromRegularIsolatesAPIPNameDeclaredMoreThanOnce(t *testing.T) {
 	}
 }
 
+func TestFromRegularReadsOnceAPIPNameDeclaredMoreThanOnceIdentically(t *testing.T) {
+	t.Parallel()
+
+	e := fromRegular(t, `[]`, `[
+		{"name": "subject.x", "pipType": "TOKEN", "claim": "c", "domain": "D1", "tenantId": "t"},
+		{"name": "subject.x", "pipType": "TOKEN", "claim": "c", "domain": "D1", "tenantId": "t"}]`)
+
+	want := `pip "subject.x" type=TOKEN claim="c" domain="D1"` + "\n"
+	if got := tree(t, e, "t").Dump(); got != want {
+		t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
+	}
+	wantDropped := []string{`pip "subject.x": declared 2 times identically, read once`}
+	if got := e.Dropped["t"]; !slices.Equal(got, wantDropped) {
+		t.Errorf("Dropped[t] = %q, want %q", got, wantDropped)
+	}
+}
+
+// Two declarations of one name read as identical when a request attribute or
+// the default value holds a JSON object with its members in another order, and
+// as different when the value differs. A mapping with its members in another
+// order keeps them isolated, since the permissions come in the mapping's
+// order, and so does a mapping value that differs.
+func TestFromRegularComparesThePIPsOfANameInAnyMemberOrder(t *testing.T) {
+	t.Parallel()
+
+	mapping := func(roles string) string {
+		return `{"name": "subject.x", "pipType": "MAPPING", "tenantId": "t",
+			"productMapping": {"subject.roles": ` + roles + `}}`
+	}
+	attributes := func(a string) string {
+		return `{"name": "subject.x", "pipType": "MAPPING", "tenantId": "t", "requestAttributes": {"a": ` + a + `}}`
+	}
+	custom := func(roles string) string {
+		return `{"name": "subject.x", "pipType": "MAPPING", "tenantId": "t",
+			"customMapping": {"subject.roles": ` + roles + `}}`
+	}
+	defaultValue := func(v string) string {
+		return `{"name": "subject.x", "pipType": "TOKEN", "claim": "c", "tenantId": "t", "defaultValue": ` + v + `}`
+	}
+	const identical = `pip "subject.x": declared 2 times identically, read once`
+	cases := []struct {
+		name, first, second, wantDropped string
+	}{
+		{"mapping members in another order", mapping(`{"ROLE_A": ["p"], "ROLE_B": ["q"]}`),
+			mapping(`{"ROLE_B": ["q"], "ROLE_A": ["p"]}`), `pip "subject.x": isolated: declared 2 times`},
+		{"a mapping value that differs", mapping(`{"ROLE_A": ["p"], "ROLE_B": ["q"]}`),
+			mapping(`{"ROLE_B": ["q"], "ROLE_A": ["r"]}`), `pip "subject.x": isolated: declared 2 times`},
+		{"request attribute members in another order", attributes(`{"x": 1, "y": 2}`), attributes(`{"y": 2, "x": 1}`),
+			identical},
+		{"a request attribute that differs", attributes(`{"x": 1, "y": 2}`), attributes(`{"x": 1, "y": 3}`),
+			`pip "subject.x": isolated: declared 2 times`},
+		{"custom mapping members in another order", custom(`{"ROLE_A": ["p"], "ROLE_B": ["q"]}`),
+			custom(`{"ROLE_B": ["q"], "ROLE_A": ["p"]}`), `pip "subject.x": isolated: declared 2 times`},
+		{"default value members in another order", defaultValue(`{"x": 1, "y": 2}`), defaultValue(`{"y": 2, "x": 1}`),
+			identical},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := fromRegular(t, `[]`, `[`+tc.first+`, `+tc.second+`]`)
+			if got := e.Dropped["t"]; !slices.Equal(got, []string{tc.wantDropped}) {
+				t.Errorf("Dropped[t] = %q, want [%q]", got, tc.wantDropped)
+			}
+		})
+	}
+}
+
+// Two top-level sets of one policySetId read as identical when a JSON object
+// they hold has its members in another order: the unknown keys of the set, or
+// the value of a custom predicate's parameter. A parameter value that differs
+// keeps them isolated.
+func TestFromRegularComparesTheSetsOfAPolicySetIdInAnyMemberOrder(t *testing.T) {
+	t.Parallel()
+
+	const identical = `policy set 1 "s": identical to policy set 0, read once`
+	const isolated = `policy set 0 "s": isolated: the tenant has 2 top-level sets with this policySetId`
+	set := func(rest string) string {
+		return `{"tenantId": "t", "policySetId": "s", "target": "resourceType == 'R'"` + rest + `}`
+	}
+	custom := func(param string) string {
+		return `, "policies": [{"rules": [{"effect": "ALLOW",
+			"customPredicate": {"predicate": "own", "params": {"p": ` + param + `}}}]}]`
+	}
+	cases := []struct {
+		name, first, second, want string
+	}{
+		{"unknown keys in another order", set(`, "PARITY_x": 1, "PARITY_y": 2`), set(`, "PARITY_y": 2, "PARITY_x": 1`), identical},
+		{"a parameter's members in another order", set(custom(`{"x": 1, "y": 2}`)), set(custom(`{"y": 2, "x": 1}`)), identical},
+		{"a parameter that differs", set(custom(`{"x": 1, "y": 2}`)), set(custom(`{"y": 2, "x": 3}`)), isolated},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := fromRegular(t, `[`+tc.first+`, `+tc.second+`]`, `[]`)
+			if got := e.Dropped["t"]; !slices.Contains(got, tc.want) {
+				t.Errorf("Dropped[t] = %q, want it to hold %q", got, tc.want)
+			}
+		})
+	}
+}
+
 // The export can show a tenant's set holding a policy of another tenant, which
 // the legacy service moved there while it served an earlier export. Such a set
 // is isolated with its target, and the tenant keeps its other sets. A policy
@@ -369,12 +538,15 @@ func TestFromRegularIsolatesASetWithAnElementOfAnotherTenant(t *testing.T) {
 // tenantId and with the policySetId of the tenant's own set, and nothing in it
 // tells the two apart. A top-level set that applies is isolated when the tenant
 // has another top-level set of its policySetId, whatever the status of the
-// other, while a set of the same policySetId in another tenant is read as
-// usual.
+// other, unless every such set is identical to the first, which is then read
+// alone. Identical means equal in every field and in the unknown keys, with the
+// spaces around a text cut. A set of the same policySetId in another tenant is
+// read as usual.
 func TestFromRegularIsolatesTheSetsOfAPolicySetIdATenantHasTwice(t *testing.T) {
 	t.Parallel()
 
 	const reason = "the tenant has 2 top-level sets with this policySetId"
+	const reason3 = "the tenant has 3 top-level sets with this policySetId"
 	const other = `{"tenantId": "u", "policySetId": "s", "target": "resourceType == 'R'"}`
 	cases := []struct {
 		name        string
@@ -393,6 +565,32 @@ func TestFromRegularIsolatesTheSetsOfAPolicySetIdATenantHasTwice(t *testing.T) {
 			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason + "\"\n" +
 				"  target[set_target]: resourceType EQ \"R1\"\n",
 			[]string{`policy set 0 "s": isolated: ` + reason, `policy set 1 "s": status INACTIVE`}},
+		{"two identical sets", `{"tenantId": "t", "policySetId": "s", "status": "ACTIVE",
+			"target": "resourceType == 'R1'"}`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  target[set_target]: resourceType EQ \"R1\"\n",
+			[]string{`policy set 1 "s": identical to policy set 0, read once`}},
+		{"two sets that differ in the spaces around the target", `{"tenantId": "t", "policySetId": "s",
+			"status": "ACTIVE", "target": "  resourceType == 'R1' "}`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  target[set_target]: resourceType EQ \"R1\"\n",
+			[]string{`policy set 1 "s": identical to policy set 0, read once`}},
+		{"two sets that differ in an unknown key", `{"tenantId": "t", "policySetId": "s", "status": "ACTIVE",
+			"target": "resourceType == 'R1'", "PARITY_extra": 1}`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason + "\"\n" +
+				"  target[set_target]: resourceType EQ \"R1\"\n" +
+				"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason + "\"\n" +
+				"  target[set_target]: resourceType EQ \"R1\"\n",
+			[]string{`policy set 0 "s": isolated: ` + reason, `policy set 1 "s": unknown key PARITY_extra`,
+				`policy set 1 "s": isolated: ` + reason}},
+		{"two identical sets and a third that differs", `{"tenantId": "t", "policySetId": "s", "status": "ACTIVE",
+			"target": "resourceType == 'R1'"}, {"tenantId": "t", "policySetId": "s", "target": "resourceType == 'R2'"}`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason3 + "\"\n" +
+				"  target[set_target]: resourceType EQ \"R1\"\n" +
+				"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason3 + "\"\n" +
+				"  target[set_target]: resourceType EQ \"R1\"\n" +
+				"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason3 + "\"\n" +
+				"  target[set_target]: resourceType EQ \"R2\"\n",
+			[]string{`policy set 0 "s": isolated: ` + reason3, `policy set 1 "s": isolated: ` + reason3,
+				`policy set 2 "s": isolated: ` + reason3}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -408,6 +606,157 @@ func TestFromRegularIsolatesTheSetsOfAPolicySetIdATenantHasTwice(t *testing.T) {
 			wantOther := "set \"s\" name=\"\" domain=\"\" algorithm=absent\n  target[set_target]: resourceType EQ \"R\"\n"
 			if got := tree(t, e, "u").Dump(); got != wantOther {
 				t.Errorf("Dump() of u =\n%s\nwant\n%s", got, wantOther)
+			}
+		})
+	}
+}
+
+// refusedPattern is the reason FromRegular gives for the MATCH pattern a)|(b,
+// which package regexp does not compile: the parenthesis closes before one
+// opens.
+const refusedPattern = "MATCH pattern \"a)|(b\" is not a valid regular expression: " +
+	"error parsing regexp: unexpected ): `a)|(b`"
+
+// A MATCH or NOT MATCH pattern that package regexp does not compile isolates
+// the policy that holds it, in its target or in a rule: the policy keeps no
+// rules, and gets the target true when its own target holds the pattern. The
+// set keeps its other policy, whose pattern a|b compiles.
+func TestFromRegularIsolatesAPolicyWithAPatternRegexpRefuses(t *testing.T) {
+	t.Parallel()
+
+	const control = `{"policyId": "p2", "rules": [{"ruleId": "r2", "effect": "ALLOW",
+		"condition": "resource.uri MATCH a|b"}]}`
+	const controlDump = "  policy \"p2\" name=\"\" algorithm=absent\n" +
+		"    rule \"r2\" name=\"\" effect=ALLOW\n" +
+		"      condition[rule_condition]: resource.uri MATCH pattern(\"a|b\")\n"
+	isolated := fmt.Sprintf("    isolated: %q\n", refusedPattern)
+	cases := []struct {
+		name, policy, wantDump string
+	}{
+		{"a rule condition", `{"policyId": "p1", "target": "resourceType == 'R'",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "condition": "resource.uri MATCH a)|(b"}]}`,
+			"  policy \"p1\" name=\"\" algorithm=absent\n" + isolated +
+				"    target[policy_target]: resourceType EQ \"R\"\n"},
+		{"a rule target under NOT MATCH", `{"policyId": "p1", "target": "resourceType == 'R'",
+			"rules": [{"ruleId": "r1", "effect": "ALLOW", "target": "resource.uri NOT MATCH a)|(b"}]}`,
+			"  policy \"p1\" name=\"\" algorithm=absent\n" + isolated +
+				"    target[policy_target]: resourceType EQ \"R\"\n"},
+		{"the policy target", `{"policyId": "p1", "name": "N1", "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+			"target": "resource.uri MATCH a)|(b", "rules": [{"ruleId": "r1", "effect": "ALLOW"}]}`,
+			"  policy \"p1\" name=\"N1\" algorithm=PERMIT_UNLESS_DENY\n" + isolated +
+				"    target[policy_target]: TRUE\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "policies": [`+tc.policy+`, `+control+`]}]`, `[]`)
+			want := "set \"s\" name=\"\" domain=\"\" algorithm=absent\n" + tc.wantDump + controlDump
+			if got := tree(t, e, "t").Dump(); got != want {
+				t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
+			}
+			wantDropped := []string{`policy set 0 "s": policy "p1": isolated: ` + refusedPattern}
+			if got := e.Dropped["t"]; !slices.Equal(got, wantDropped) {
+				t.Errorf("Dropped[t] = %q, want %q", got, wantDropped)
+			}
+		})
+	}
+}
+
+// A pattern that package regexp does not compile isolates a set whose target
+// holds it, top-level or nested, with the target true, and a set of
+// simplified policies whose condition holds it. The tenant keeps its other
+// set, whose pattern /api/*/items compiles.
+func TestFromRegularIsolatesASetWithAPatternRegexpRefuses(t *testing.T) {
+	t.Parallel()
+
+	const control = `{"tenantId": "t", "policySetId": "ok", "policies": [{"policyId": "p",
+		"rules": [{"ruleId": "r", "effect": "ALLOW", "condition": "resource.uri MATCH /api/*/items"}]}]}`
+	const controlDump = "set \"ok\" name=\"\" domain=\"\" algorithm=absent\n" +
+		"  policy \"p\" name=\"\" algorithm=absent\n" +
+		"    rule \"r\" name=\"\" effect=ALLOW\n" +
+		"      condition[rule_condition]: resource.uri MATCH pattern(\"/api/*/items\")\n"
+	cases := []struct {
+		name, set, wantDump, wantDropped string
+	}{
+		{"a top-level set target", `{"tenantId": "t", "policySetId": "s", "target": "resource.uri MATCH a)|(b",
+			"policies": [{"policyId": "p1"}]}`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n" +
+				fmt.Sprintf("  isolated: %q\n", refusedPattern) +
+				"  target[set_target]: TRUE\n",
+			`policy set 0 "s": isolated: ` + refusedPattern},
+		{"a nested set target", `{"tenantId": "t", "policySetId": "s", "target": "resourceType == 'R'",
+			"policySets": [{"policySetId": "m", "policySets": [{"policySetId": "n", "target": "resource.uri MATCH a)|(b"}]}]}`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n" +
+				"  target[set_target]: resourceType EQ \"R\"\n" +
+				"  set \"m\" name=\"\" domain=\"\" algorithm=absent\n" +
+				"    set \"n\" name=\"\" domain=\"\" algorithm=absent\n" +
+				fmt.Sprintf("      isolated: %q\n", refusedPattern) +
+				"      target[set_target]: TRUE\n",
+			`policy set 0 "s": policy set "m": policy set "n": isolated: ` + refusedPattern},
+		{"a condition of a simplified set", strings.Replace(simplifiedSet("t", "R", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "true", "rules": [{"ruleId": "r", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'",
+			"condition": "resource.uri MATCH a)|(b"}]}]`), `"domain": "D",`, `"domain": "D", "name": "N", "externalId": "X",`, 1),
+			"set \"s\" name=\"N\" domain=\"D\" algorithm=absent externalId=\"X\"\n" +
+				fmt.Sprintf("  isolated: %q\n", refusedPattern) +
+				"  target[set_target]: resourceType EQ \"R\"\n",
+			`policy set 0 "s": isolated: ` + refusedPattern},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := fromRegular(t, "["+tc.set+", "+control+"]", `[]`)
+			if got, want := tree(t, e, "t").Dump(), tc.wantDump+controlDump; got != want {
+				t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
+			}
+			if got := e.Dropped["t"]; !slices.Equal(got, []string{tc.wantDropped}) {
+				t.Errorf("Dropped[t] = %q, want [%q]", got, tc.wantDropped)
+			}
+		})
+	}
+}
+
+// A set isolated for another reason keeps its target, unless the target
+// holds a pattern that package regexp does not compile: then the target is
+// true, as for a set that pattern isolates, and the reason stays the first.
+func TestFromRegularGivesASetIsolatedForAnotherReasonTheTargetTrueForAPatternRegexpRefuses(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name, sets, wantDump string
+		wantDropped          []string
+	}{
+		{"two sets of one policySetId", `[{"tenantId": "t", "policySetId": "s", "target": "resource.uri MATCH a)|(b"},
+			{"tenantId": "t", "policySetId": "s", "name": "n", "target": "resource.uri MATCH a)|(b"}]`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n" +
+				"  isolated: \"the tenant has 2 top-level sets with this policySetId\"\n" +
+				"  target[set_target]: TRUE\n" +
+				"set \"s\" name=\"n\" domain=\"\" algorithm=absent\n" +
+				"  isolated: \"the tenant has 2 top-level sets with this policySetId\"\n" +
+				"  target[set_target]: TRUE\n",
+			[]string{`policy set 0 "s": isolated: the tenant has 2 top-level sets with this policySetId`,
+				`policy set 1 "s": isolated: the tenant has 2 top-level sets with this policySetId`}},
+		{"a policy of another tenant", `[{"tenantId": "t", "policySetId": "s", "target": "resource.uri MATCH a)|(b",
+			"policies": [{"policyId": "p", "tenantId": "u"}]}]`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n" +
+				"  isolated: \"policy \\\"p\\\" has tenantId \\\"u\\\"\"\n" +
+				"  target[set_target]: TRUE\n",
+			[]string{`policy set 0 "s": isolated: policy "p" has tenantId "u"`}},
+		{"a policy of another tenant under a pattern that compiles", `[{"tenantId": "t", "policySetId": "s",
+			"target": "resource.uri MATCH a|b", "policies": [{"policyId": "p", "tenantId": "u"}]}]`,
+			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n" +
+				"  isolated: \"policy \\\"p\\\" has tenantId \\\"u\\\"\"\n" +
+				"  target[set_target]: resource.uri MATCH pattern(\"a|b\")\n",
+			[]string{`policy set 0 "s": isolated: policy "p" has tenantId "u"`}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := fromRegular(t, tc.sets, `[]`)
+			if got := tree(t, e, "t").Dump(); got != tc.wantDump {
+				t.Errorf("Dump() =\n%s\nwant\n%s", got, tc.wantDump)
+			}
+			if got := e.Dropped["t"]; !slices.Equal(got, tc.wantDropped) {
+				t.Errorf("Dropped[t] = %q, want %q", got, tc.wantDropped)
 			}
 		})
 	}
@@ -725,6 +1074,122 @@ func TestFromRegularBindsThePassInsideTheIteratingSet(t *testing.T) {
 	}
 }
 
+// The name of a combining algorithm is read with the spaces, tabs, and line
+// breaks at either end cut, in a set, a policy, and an iterate alike; a
+// no-break space is not cut, and the name stays unknown.
+func TestFromRegularCutsTheSpacesAroundAnAlgorithm(t *testing.T) {
+	t.Parallel()
+
+	e := fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "combiningAlgorithm": "\tDENY_OVERRIDES ",
+		"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": " DENY_UNLESS_PERMIT"},
+		"policies": [{"policyId": "p", "combiningAlgorithm": "PERMIT_OVERRIDES\n"}],
+		"policySets": [{"policySetId": "n", "combiningAlgorithm": " PERMIT_UNLESS_DENY"}]}]`, `[]`)
+
+	want := `set "s" name="" domain="" algorithm=DENY_OVERRIDES
+  iterate var="iterate1" algorithm=DENY_UNLESS_PERMIT
+  policy "p" name="" algorithm=PERMIT_OVERRIDES
+  set "n" name="" domain="" algorithm=PERMIT_UNLESS_DENY
+`
+	if got := tree(t, e, "t").Dump(); got != want {
+		t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
+	}
+	nbsp := fromRegular(t, `[{"tenantId": "t", "policySetId": "s",
+		"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": "\u00a0DENY_UNLESS_PERMIT"}}]`, `[]`)
+	if got := tree(t, nbsp, "t").Dump(); !strings.Contains(got, "always fails") {
+		t.Errorf("Dump() of an algorithm after a no-break space =\n%s\nwant the set always failing", got)
+	}
+}
+
+// The status and the type of a set, the effect and the ruleType of a rule,
+// and the pipType and the type of a PIP are read with the characters up to
+// U+0020 at either end cut, as the policy service cuts every enum field of an
+// upload. A status after a no-break space is not cut, and the set applies.
+func TestFromRegularCutsTheSpacesAroundEveryEnumField(t *testing.T) {
+	t.Parallel()
+
+	inactive := fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "status": " INACTIVE\t"},
+		{"tenantId": "t", "policySetId": "n", "status": "\u00a0INACTIVE"}]`, `[]`)
+	if got, want := inactive.Dropped["t"], []string{`policy set 0 "s": status INACTIVE`}; !slices.Equal(got, want) {
+		t.Errorf("Dropped[t] = %q, want %q", got, want)
+	}
+
+	rules := tree(t, fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "policies": [{"policyId": "p", "rules": [
+		{"ruleId": "d", "effect": " DENY\n"},
+		{"ruleId": "f", "effect": "ALLOW", "ruleType": "\rAPPLICABLE_FOR_FRONTEND "}]}]}]`, `[]`), "t")
+	want := "set \"s\" name=\"\" domain=\"\" algorithm=absent\n  policy \"p\" name=\"\" algorithm=absent\n" +
+		"    rule \"d\" name=\"\" effect=DENY\n    rule \"f\" name=\"\" effect=ALLOW frontend\n"
+	if got := rules.Dump(); got != want {
+		t.Errorf("Dump() of the rules =\n%s\nwant\n%s", got, want)
+	}
+
+	simplified := tree(t, fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "type": " SIMPLIFIED",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "resourceType == 'R'",
+		"policies": [{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "operation == 'READ'",
+			"rules": [{"ruleId": "r", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]}]`, `[]`), "t")
+	if got, _, _ := strings.Cut(simplified.Dump(), "\n"); !strings.HasPrefix(got, `simplified "s"`) {
+		t.Errorf("first line of Dump() of a set of type \" SIMPLIFIED\" = %s, want a simplified group", got)
+	}
+
+	pips := tree(t, fromRegular(t, `[]`, `[{"tenantId": "t", "name": "subject.h", "pipType": "HEADER ", "header": "h"},
+		{"tenantId": "t", "name": "subject.g", "pipType": "\tGENERAL", "type": " JSON", "url": "http://pip", "jsonPath": "$.a"}]`), "t")
+	for name, want := range map[string][2]string{"subject.h": {"HEADER", ""}, "subject.g": {"GENERAL", "JSON"}} {
+		pip, ok := pips.PIP(name)
+		if !ok || string(pip.Type) != want[0] || pip.ReturnType != want[1] {
+			t.Errorf("PIP(%s) = %+v, %t, want pipType %s and type %q", name, pip, ok, want[0], want[1])
+		}
+	}
+
+	// A PIP field the cut would leave empty stays as sent: a blank type is
+	// kept, and a blank pipType is refused rather than read as GENERAL.
+	blankType := tree(t, fromRegular(t, `[]`, `[{"tenantId": "t", "name": "subject.g", "type": " ", "url": "http://pip"}]`), "t")
+	if pip, ok := blankType.PIP("subject.g"); !ok || pip.ReturnType != " " {
+		t.Errorf("PIP(subject.g) of type \" \" = %+v, %t, want the type kept as \" \"", pip, ok)
+	}
+	blankPIPType := fromRegular(t, `[]`, `[{"tenantId": "t", "name": "subject.g", "pipType": " ", "url": "http://pip"}]`)
+	if err := blankPIPType.Failed["t"]; err == nil || !strings.Contains(err.Error(), `pipType " " unknown`) {
+		t.Errorf("Failed[t] of a PIP of pipType \" \" = %v, want pipType \" \" unknown", err)
+	}
+}
+
+// The target and the condition of a set, a policy, and a rule are read with
+// the characters up to U+0020 at either end cut, as the policy service cuts
+// them before it parses them: a SIMPLIFIED set with padded expressions is
+// read as the same simplified group, and a regular set as the same set.
+func TestFromRegularCutsTheSpacesAroundATargetAndACondition(t *testing.T) {
+	t.Parallel()
+
+	simplified := func(pad string) string {
+		return `[{"tenantId": "t", "policySetId": "s", "type": "SIMPLIFIED", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "` + pad + `resourceType == 'R'` + pad + `",
+			"policies": [{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "` + pad + `operation == 'READ'",
+				"rules": [{"ruleId": "r", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'` + pad + `"}]}]}]`
+	}
+	regular := func(pad string) string {
+		return `[{"tenantId": "t", "policySetId": "s", "target": "` + pad + `resourceType == 'R'",
+			"policies": [{"policyId": "p", "target": "operation == 'READ'` + pad + `",
+				"rules": [{"ruleId": "r", "effect": "ALLOW", "target": "` + pad + `true",
+					"condition": "` + pad + `resource.a == 'x'` + pad + `"}]}]}]`
+	}
+	for name, doc := range map[string]func(string) string{"simplified": simplified, "regular": regular} {
+		want := tree(t, fromRegular(t, doc(""), `[]`), "t").Dump()
+		if got := tree(t, fromRegular(t, doc(` \t\r\n`), `[]`), "t").Dump(); got != want {
+			t.Errorf("Dump() of the %s set with padded expressions =\n%s\nwant\n%s", name, got, want)
+		}
+	}
+	if first, _, _ := strings.Cut(tree(t, fromRegular(t, simplified(" "), `[]`), "t").Dump(), "\n"); !strings.HasPrefix(first, `simplified "s"`) {
+		t.Errorf("first line of Dump() of the padded SIMPLIFIED set = %s, want a simplified group", first)
+	}
+	if first, _, _ := strings.Cut(tree(t, fromRegular(t, simplified("\u00a0"), `[]`), "t").Dump(), "\n"); strings.HasPrefix(first, `simplified "s"`) {
+		t.Errorf("first line of Dump() of the SIMPLIFIED set padded with a no-break space = %s, want no simplified group", first)
+	}
+	blank := func(target string) string {
+		return tree(t, fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "target": "`+target+`"}]`, `[]`), "t").Dump()
+	}
+	if got, want := blank(` \t`), blank(``); got != want {
+		t.Errorf("Dump() of a set with a blank target =\n%s\nwant that of an empty target\n%s", got, want)
+	}
+}
+
 // An iterate the legacy service never evaluates makes its set a permanent
 // failure under the set's target.
 func TestFromRegularMarksAnIterateLegacyNeverEvaluates(t *testing.T) {
@@ -785,6 +1250,12 @@ func TestFromRegularFailsOnlyTheTenantOfABadElement(t *testing.T) {
 		{"an unknown effect", `[{"tenantId": "bad", "policies": [{"rules": [{"effect": "PERMIT"}]}]}]`, `[]`,
 			`effect "PERMIT" unknown`},
 		{"a target that is not a string", `[{"tenantId": "bad", "target": 5}]`, `[]`, "target"},
+		{"a boolean target, which the policy service never exports", `[{"tenantId": "bad", "target": true}]`, `[]`,
+			"target"},
+		{"a boolean condition", `[{"tenantId": "bad", "policies": [{"rules": [{"condition": false}]}]}]`, `[]`,
+			"policies.0.rules.0.condition"},
+		{"a policy target that is an array", `[{"tenantId": "bad", "policies": [{"target": [true]}]}]`, `[]`,
+			"policies.0.target"},
 		{"an unknown pipType", `[]`, `[{"tenantId": "bad", "name": "subject.x", "pipType": "ENTITLEMENT"}]`,
 			`pipType "ENTITLEMENT" unknown`},
 		{"a PIP name shorter than subject.", `[]`, `[{"tenantId": "bad", "name": "x", "pipType": "TOKEN"}]`,

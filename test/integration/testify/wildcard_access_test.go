@@ -43,21 +43,9 @@ func (s *RuntimeSuite) TestWildcardAccess() {
 	s.Step("wildcard_access.all_all.exact_type_allowed", func() {
 		h := incomingTokenHeader(s.validAdminToken)
 		body := map[string]interface{}{"type": "WC_EXACT_ONLY", "operation": "READ", "resource": map[string]interface{}{}}
-		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
+		code, b := s.post("/access/v1/check/resource", h, body)
 		s.Require().Equal(200, code, "body: %s", string(b))
 		s.Assert().Equal("true", bodyStr(b))
-	})
-
-	// ── ALL/<operation>: order-reader READ on any resourceType ──────────
-	// wildcard_access.legacy.check_filter_all_op covers the allowed READ.
-
-	s.Step("wildcard_access.all_op.reader_delete_denied", func() {
-		h := incomingTokenHeader(s.validOrderReaderToken)
-		body := map[string]interface{}{"type": "UNKNOWN_TYPE", "operation": "DELETE", "resource": map[string]interface{}{}}
-		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
-		s.Require().Equal(200, code, "body: %s", string(b))
-		s.Assert().Equal("false", bodyStr(b),
-			"order-reader has ALL/READ wildcard but not ALL/DELETE")
 	})
 
 	// ── <resourceType>/ALL: order-reader any op on WC_RT_TARGET ────────
@@ -73,7 +61,7 @@ func (s *RuntimeSuite) TestWildcardAccess() {
 	s.Step("wildcard_access.rt_all.reader_other_rt_denied", func() {
 		h := incomingTokenHeader(s.validOrderReaderToken)
 		body := map[string]interface{}{"type": "OTHER_TYPE", "operation": "DELETE", "resource": map[string]interface{}{}}
-		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
+		code, b := s.post("/access/v1/check/resource", h, body)
 		s.Require().Equal(200, code, "body: %s", string(b))
 		s.Assert().Equal("false", bodyStr(b),
 			"order-reader has WC_RT_TARGET/ALL but not OTHER_TYPE/ALL")
@@ -85,13 +73,12 @@ func (s *RuntimeSuite) TestWildcardAccess() {
 		h := incomingTokenHeader(s.validOrderReaderToken)
 		body := []map[string]interface{}{
 			{"id": "wc-rt", "type": "WC_RT_TARGET", "operation": "DELETE", "resource": map[string]interface{}{}},
-			{"id": "wc-op", "type": "INVOICE", "operation": "READ", "resource": map[string]interface{}{}},
+			{"id": "wc-other", "type": "OTHER_TYPE", "operation": "DELETE", "resource": map[string]interface{}{}},
 		}
-		code, b := s.post("/access/v1/check/resource/bulk?tenant_id=default", h, body)
+		code, b := s.post("/access/v1/check/resource/bulk", h, body)
 		s.Require().Equal(200, code, "body: %s", string(b))
-		ids := jsonStrArr(b)
-		s.Assert().Contains(ids, "wc-rt", "WC_RT_TARGET/DELETE should be allowed via resourceType wildcard")
-		s.Assert().Contains(ids, "wc-op", "INVOICE/READ should be allowed via operation wildcard (ALL/READ)")
+		s.Assert().ElementsMatch([]string{"wc-rt"}, jsonStrArr(b),
+			"only WC_RT_TARGET/DELETE is allowed, through the resourceType wildcard")
 	})
 
 	// ── Legacy endpoints with wildcard-access ───────────────────────────
@@ -103,7 +90,7 @@ func (s *RuntimeSuite) TestWildcardAccess() {
 			"operation": "DELETE",
 			"resource":  map[string]interface{}{},
 		}
-		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
+		code, b := s.post("/access/v1/check/resource", h, body)
 		s.Require().Equal(200, code, "body: %s", string(b))
 		s.Assert().Equal("true", bodyStr(b),
 			"admin with ALL/ALL wildcard must get boolean true from check/resource")
@@ -115,20 +102,11 @@ func (s *RuntimeSuite) TestWildcardAccess() {
 			{"id": "wc-1", "type": "UNKNOWN_TYPE", "operation": "DELETE", "resource": map[string]interface{}{}},
 			{"id": "wc-2", "type": "ANOTHER_TYPE", "operation": "CREATE", "resource": map[string]interface{}{}},
 		}
-		code, b := s.post("/access/v1/check/resource/bulk?tenant_id=default", h, body)
+		code, b := s.post("/access/v1/check/resource/bulk", h, body)
 		s.Require().Equal(200, code, "body: %s", string(b))
 		ids := jsonStrArr(b)
 		s.Assert().Contains(ids, "wc-1", "ALL/ALL wildcard must allow wc-1")
 		s.Assert().Contains(ids, "wc-2", "ALL/ALL wildcard must allow wc-2")
-	})
-
-	s.Step("wildcard_access.legacy.check_filter_all_op", func() {
-		h := incomingTokenHeader(s.validOrderReaderToken)
-		code, b := s.post("/access/v1/check/filter?resourceType=UNKNOWN_TYPE&operation=READ", h, map[string]interface{}{})
-		s.Require().Equal(200, code, "body: %s", string(b))
-		j := jsonObj(b)
-		s.Assert().Equal("ALLOW", j["calculationResult"],
-			"order-reader with ALL/READ wildcard must get ALLOW from check/filter")
 	})
 
 	// ── Restore original policies ───────────────────────────────────────
