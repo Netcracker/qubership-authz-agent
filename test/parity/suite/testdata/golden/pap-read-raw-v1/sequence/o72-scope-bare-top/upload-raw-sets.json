@@ -1,0 +1,42 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-o72-scope-bare-top",
+        "iterate": {
+          "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+          "foreach": "subject.permissionScope"
+        },
+        "name": "o72-scope-bare-top set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "o72-scope-bare-top reader",
+            "policyId": "4455ff90-abdd-efc3-a023-f46d9244396e",
+            "rules": [
+              {
+                "condition": "subject.permissionScope IS NULL OR resource.a == 'y'",
+                "effect": "ALLOW",
+                "name": "o72-scope-bare-top probe",
+                "ruleId": "7f5d9113-5cbb-64a8-1845-1a51d8398cbd",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-o72-scope-bare-top"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-o72-scope-bare-top"
+          }
+        ],
+        "policySetId": "ad3efbf3-d27e-ecca-75cc-4b19cbf0036c",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_O72_SCOPE_BARE_TOP'",
+        "tenantId": "parity-o72-scope-bare-top",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

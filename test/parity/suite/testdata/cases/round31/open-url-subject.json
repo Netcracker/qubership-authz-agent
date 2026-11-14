@@ -1,0 +1,246 @@
+{
+ "about": "A GENERAL PIP whose url holds ${subject.X}. Round 30 asked the same source through requestAttributes over a FILTERED PIP, and the PAP refused that upload; the PAP does not check a url that way. The source X answers v, and the route the url then names answers v: a = n is true when the url reads the source's value. If a remote source reads as null in a url, the call goes to a route nothing pins, the outer PIP fails, and both requests are false. pipCalls records the call to the route the source's value names. The TOKEN source (the reader's preferred_username) is the control: local either way, true for both.",
+ "resourceTypePrefix": "PARITY_SUITE_R31O_",
+ "pins": {
+  "/api/v1/pip/r31open-url-v": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r31open-url-filtered-v": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r31open-url-token-parity-reader": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r31open-url-source": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r31open-url-source-filtered": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "source": {
+   "name": "subject.parityR31Src",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r31open-url-source",
+   "requestAttributes": {
+    "case": "r31open-url"
+   }
+  },
+  "source-filtered": {
+   "name": "subject.parityR31Src.filtered",
+   "pipType": "FILTERED",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r31open-url-source-filtered",
+   "requestAttributes": {
+    "case": "r31open-url"
+   },
+   "resourceType": "PARITY_R31_FILTERED"
+  },
+  "source-token": {
+   "name": "subject.parityR31SrcTok",
+   "pipType": "TOKEN",
+   "type": "REGULAR",
+   "claim": "preferred_username",
+   "cacheable": false
+  },
+  "outer": {
+   "name": "subject.parityR31Url",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r31open-url-${subject.parityR31Src}",
+   "requestAttributes": {
+    "case": "r31open-url"
+   }
+  },
+  "outer-filtered": {
+   "name": "subject.parityR31UrlF",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r31open-url-filtered-${subject.parityR31Src.filtered}",
+   "requestAttributes": {
+    "case": "r31open-url"
+   }
+  },
+  "outer-token": {
+   "name": "subject.parityR31UrlT",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r31open-url-token-${subject.parityR31SrcTok}",
+   "requestAttributes": {
+    "case": "r31open-url"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r31open-url-subject-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r31",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31open-url-general-source",
+   "about": "The url is …/r31open-url-${subject.parityR31Src}, a GENERAL PIP.",
+   "pips": [
+    "source",
+    "outer"
+   ],
+   "condition": "subject.parityR31Url == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r31open-url-v"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31open-url-filtered-source",
+   "about": "The url is …/r31open-url-filtered-${subject.parityR31Src.filtered}, a FILTERED PIP.",
+   "pips": [
+    "source-filtered",
+    "outer-filtered"
+   ],
+   "condition": "subject.parityR31UrlF == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r31open-url-filtered-v"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31open-url-token-source",
+   "about": "Control: the url is …/r31open-url-token-${subject.parityR31SrcTok}, a TOKEN PIP.",
+   "pips": [
+    "source-token",
+    "outer-token"
+   ],
+   "condition": "subject.parityR31UrlT == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r31open-url-token-parity-reader"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31open-url-subject-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r31",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

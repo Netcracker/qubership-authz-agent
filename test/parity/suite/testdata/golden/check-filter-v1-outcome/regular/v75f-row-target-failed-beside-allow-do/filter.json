@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_R75_FAILED_SOURCE_V75F_ROW_TARGET_FAILED_BESIDE_ALLOW_DO.allowed.eq(1)",
+    "mongodbFilterCondition": "{ \"allowed\": 1 }",
+    "rsqlFilterCondition": "allowed==1",
+    "sqlFilterCondition": "allowed=1",
+    "customFilterCondition": null
+  }
+}

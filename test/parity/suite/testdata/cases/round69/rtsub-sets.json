@@ -1,0 +1,293 @@
+{
+ "about": "Round 69, review of authz-agent PR #147: ${resourceType} in the four filter dialects when the request's resource type differs from the set target in letter case, or carries spaces at its ends. Does the target match, and is the substituted text the request's spelling, the target's, or a normalized one? Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R69_RTSUB_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "rt69-sets-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rt69-up-lower",
+   "about": "Set target in upper case, request type in lower case. The ALLOW rule reads ${resourceType} in querydsl (${resourceType}.t.eq(\"${subject.id}\"), as full-use-filter), rsql t==${resourceType}, sql t='${resourceType}' and mongodb { \"t\": \"${resourceType}\" }. check/resource true says the target matched; filterCondition and the other texts show which spelling the substitution carries.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "set-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "set-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "predicate": "${resourceType}.t.eq(\"${subject.id}\")",
+          "rsqlPredicate": "t==${resourceType}",
+          "sqlPredicate": "t='${resourceType}'",
+          "mongodbPredicate": "{ \"t\": \"${resourceType}\" }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     },
+     "type": "parity_suite_r69_rtsub_rt69_up_lower"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "type": "parity_suite_r69_rtsub_rt69_up_lower"
+    }
+   ]
+  },
+  {
+   "id": "rt69-up-mixed",
+   "about": "Set target in upper case, request type in mixed case (Parity_Suite_…). The ALLOW rule reads ${resourceType} in querydsl (${resourceType}.t.eq(\"${subject.id}\"), as full-use-filter), rsql t==${resourceType}, sql t='${resourceType}' and mongodb { \"t\": \"${resourceType}\" }. check/resource true says the target matched; filterCondition and the other texts show which spelling the substitution carries.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "set-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "set-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "predicate": "${resourceType}.t.eq(\"${subject.id}\")",
+          "rsqlPredicate": "t==${resourceType}",
+          "sqlPredicate": "t='${resourceType}'",
+          "mongodbPredicate": "{ \"t\": \"${resourceType}\" }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     },
+     "type": "Parity_Suite_R69_Rtsub_Rt69_Up_Mixed"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "type": "Parity_Suite_R69_Rtsub_Rt69_Up_Mixed"
+    }
+   ]
+  },
+  {
+   "id": "rt69-low-upper",
+   "about": "Set target in lower case, request type in upper case. The ALLOW rule reads ${resourceType} in querydsl (${resourceType}.t.eq(\"${subject.id}\"), as full-use-filter), rsql t==${resourceType}, sql t='${resourceType}' and mongodb { \"t\": \"${resourceType}\" }. check/resource true says the target matched; filterCondition and the other texts show which spelling the substitution carries.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceTypeLowerCase}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "set-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "set-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "predicate": "${resourceType}.t.eq(\"${subject.id}\")",
+          "rsqlPredicate": "t==${resourceType}",
+          "sqlPredicate": "t='${resourceType}'",
+          "mongodbPredicate": "{ \"t\": \"${resourceType}\" }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "rt69-spaces",
+   "about": "The request type with a space at each end, against two sets: one whose target names the type (resourceType == '<type>', its predicates read the attribute a) and one whose target names it with the same spaces (resourceType == ' <type> ', attribute b). Which attribute appears says whether the type is trimmed before the targets compare it; the text after a or b says whether the substitution carries the spaces.",
+   "sets": [
+    {
+     "key": "exact",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "exact-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "exact-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "predicate": "${resourceType}.a.eq(\"${subject.id}\")",
+          "rsqlPredicate": "a==${resourceType}",
+          "sqlPredicate": "a='${resourceType}'",
+          "mongodbPredicate": "{ \"a\": \"${resourceType}\" }"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "spaced",
+     "target": "resourceType == ' {{resourceType}} '",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "spaced-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "spaced-allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "predicate": "${resourceType}.b.eq(\"${subject.id}\")",
+          "rsqlPredicate": "b==${resourceType}",
+          "sqlPredicate": "b='${resourceType}'",
+          "mongodbPredicate": "{ \"b\": \"${resourceType}\" }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     },
+     "type": " PARITY_SUITE_R69_RTSUB_RT69_SPACES "
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "type": " PARITY_SUITE_R69_RTSUB_RT69_SPACES "
+    }
+   ]
+  },
+  {
+   "id": "rt69-sets-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

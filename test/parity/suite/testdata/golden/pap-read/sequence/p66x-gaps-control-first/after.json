@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-gaps-control-first",
+        "name": "p66x-gaps-control-first s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-gaps-control-first s reader",
+            "policyId": "fe14da77-8c83-016c-85f6-d0d00e75437b",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-gaps-control-first s rule",
+                "ruleId": "298ba7e3-f478-2d32-d44f-3b872d27d110",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-gaps-control-first"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-gaps-control-first"
+          }
+        ],
+        "policySetId": "6d6e855c-0dfa-11cd-b46b-76729860b7ba",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_GAPS_CONTROL_FIRST'",
+        "tenantId": "parity-p66x-gaps-control-first",
+        "type": "DEFAULT"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p66x-gaps-control-first"
+  ]
+}

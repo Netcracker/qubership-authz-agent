@@ -1,0 +1,341 @@
+{
+ "about": "An entitlements read and a nested decision that fails, in a rule, policy, and set target, with every node under PERMIT_UNLESS_DENY and a DENY rule: 400 means the PAP refuses the form, true that the node does not apply, false that the decision fails. The test function pins the entitlements service to answer 500.",
+ "resourceTypePrefix": "PARITY_SUITE_R15_",
+ "pins": {
+  "/api/v1/pip/r15-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 15 case"
+   }
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR15Failing",
+   "url": "http://pip-mock:8090/api/v1/pip/r15-failing",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR15Failing"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "q15-failing-entitlements-in-a-rule-target",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "subject.entitledResources.of('PARITY_R15_ENT').as('Owner') CONTAINS 'e1'",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q15-failing-nested-decision-in-a-rule-target",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "subject allowed 'LIST' on resource",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "list",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "lister",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "subject.parityR15Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q15-failing-entitlements-in-a-policy-target",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.entitledResources.of('PARITY_R15_ENT').as('Owner') CONTAINS 'e1'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q15-failing-nested-decision-in-a-policy-target",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject allowed 'LIST' on resource",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "list",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "lister",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "subject.parityR15Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q15-failing-entitlements-in-a-set-target",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "subject.entitledResources.of('PARITY_R15_ENT').as('Owner') CONTAINS 'e1'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q15-failing-nested-decision-in-a-set-target",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "subject allowed 'LIST' on resource",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "list",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "lister",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "subject.parityR15Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,284 @@
+{
+ "about": "userId when the check of VIEW_AS_ANOTHER_USER on OnBehalfOfUserAuthorization fails: the set that authorizes it reads a GENERAL PIP whose route answers 500. Round 29 asked a check that denies and one that allows (404, no User Management API on the stand). False and DENY if a failed check denies; 404 if it counts as allowed.",
+ "resourceTypePrefix": "PARITY_SUITE_R30G_",
+ "pins": {
+  "/api/v1/pip/r30gaps-on-behalf": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 30 case"
+   }
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           "r1",
+           "r2"
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "fail": {
+   "name": "subject.parityR30OnBehalf",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r30gaps-on-behalf",
+   "requestAttributes": {
+    "case": "r30gaps-on-behalf"
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "r30gaps-on-behalf-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-on-behalf-failed-check",
+   "pips": [
+    "fail"
+   ],
+   "sets": [
+    {
+     "key": "auth",
+     "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "auth",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "view",
+         "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+         "condition": "subject.parityR30OnBehalf == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "resource",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "about": "The reader asks as itself (userId = its own id) and without userId.",
+   "requests": [
+    {
+     "name": "read-as-self",
+     "resource": {
+      "id": "r30"
+     },
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "filter-as-self",
+     "filter": true,
+     "operation": "READ",
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "read-without-user-id",
+     "resource": {
+      "id": "r30"
+     }
+    },
+    {
+     "name": "authorization-check",
+     "type": "OnBehalfOfUserAuthorization",
+     "operation": "VIEW_AS_ANOTHER_USER",
+     "resource": {
+      "id": "r30"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-on-behalf-http-500-check",
+   "pips": [
+    "fail",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "auth-scope",
+     "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "auth",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "view",
+         "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    },
+    {
+     "key": "resource",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "about": "The set that authorizes VIEW_AS_ANOTHER_USER iterates over the permission scope, whose values are plain strings: round 29 saw such a set answer 500 (r29gaps-scope-plain-string-values). The reader asks as itself and without userId.",
+   "requests": [
+    {
+     "name": "read-as-self",
+     "resource": {
+      "id": "r30"
+     },
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "read-without-user-id",
+     "resource": {
+      "id": "r30"
+     }
+    },
+    {
+     "name": "authorization-check",
+     "type": "OnBehalfOfUserAuthorization",
+     "operation": "VIEW_AS_ANOTHER_USER",
+     "resource": {
+      "id": "r30"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-on-behalf-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

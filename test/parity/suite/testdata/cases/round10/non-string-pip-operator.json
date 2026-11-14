@@ -1,0 +1,511 @@
+{
+ "about": "What a condition answers when a GENERAL PIP it reads answers the JSON number 1000. non-string-pip-beside-allow-* records one form, != 'x', beside an allowing rule, which refuses the whole answer; a relational operator, an equality with the string 1000, IS NOT NULL, the PIP on the right of the operator, and a policy that does not read the PIP at all are recorded nowhere. Each condition is asked alone and through the probe and its control, with resource.amount 5 and resource.a y. resource.amount <= <PIP> is also asked at 5000, the other side of the limit. Every nv-number-* case is repeated as nv-string-* with the PIP answering the string \"1000\", the control the number cases are read against. nv-number-unrelated-policy declares the number PIP and reads only the resource, and has to allow. The agent's condition parser accepts every condition here.",
+ "resourceTypePrefix": "PARITY_SUITE_R10_",
+ "pins": {
+  "/api/v1/pip/r10-value-number": {
+   "statusCode": 200,
+   "body": {
+    "value": 1000
+   }
+  },
+  "/api/v1/pip/r10-value-string": {
+   "statusCode": 200,
+   "body": {
+    "value": "1000"
+   }
+  }
+ },
+ "pips": {
+  "number": {
+   "name": "subject.parityR10ValueNumber",
+   "url": "http://pip-mock:8090/api/v1/pip/r10-value-number",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "requestAttributes": {
+    "case": "r10-value"
+   },
+   "cacheable": false
+  },
+  "string": {
+   "name": "subject.parityR10ValueString",
+   "url": "http://pip-mock:8090/api/v1/pip/r10-value-string",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "requestAttributes": {
+    "case": "r10-value"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "nv-number-amount-at-most-the-pip-alone",
+   "condition": "resource.amount <= subject.parityR10ValueNumber",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-amount-at-most-the-pip",
+   "condition": "resource.amount <= subject.parityR10ValueNumber OR resource.a == 'y'",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-amount-at-most-the-pip-control",
+   "resourceType": "PARITY_SUITE_R10_NV_NUMBER_AMOUNT_AT_MOST_THE_PIP_CTL",
+   "condition": "resource.a == 'y' OR resource.amount <= subject.parityR10ValueNumber",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-pip-at-least-the-amount-alone",
+   "condition": "subject.parityR10ValueNumber >= resource.amount",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-pip-at-least-the-amount",
+   "condition": "subject.parityR10ValueNumber >= resource.amount OR resource.a == 'y'",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-pip-at-least-the-amount-control",
+   "resourceType": "PARITY_SUITE_R10_NV_NUMBER_PIP_AT_LEAST_THE_AMOUNT_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR10ValueNumber >= resource.amount",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-pip-equals-the-string-alone",
+   "condition": "subject.parityR10ValueNumber == '1000'",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-pip-equals-the-string",
+   "condition": "subject.parityR10ValueNumber == '1000' OR resource.a == 'y'",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-pip-equals-the-string-control",
+   "resourceType": "PARITY_SUITE_R10_NV_NUMBER_PIP_EQUALS_THE_STRING_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR10ValueNumber == '1000'",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-pip-is-not-null-alone",
+   "condition": "subject.parityR10ValueNumber IS NOT NULL",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-pip-is-not-null",
+   "condition": "subject.parityR10ValueNumber IS NOT NULL OR resource.a == 'y'",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-pip-is-not-null-control",
+   "resourceType": "PARITY_SUITE_R10_NV_NUMBER_PIP_IS_NOT_NULL_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR10ValueNumber IS NOT NULL",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-amount-at-most-the-pip-over-the-limit",
+   "condition": "resource.amount <= subject.parityR10ValueNumber",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5000",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5000
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-amount-at-most-the-pip-alone",
+   "condition": "resource.amount <= subject.parityR10ValueString",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-amount-at-most-the-pip",
+   "condition": "resource.amount <= subject.parityR10ValueString OR resource.a == 'y'",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-amount-at-most-the-pip-control",
+   "resourceType": "PARITY_SUITE_R10_NV_STRING_AMOUNT_AT_MOST_THE_PIP_CTL",
+   "condition": "resource.a == 'y' OR resource.amount <= subject.parityR10ValueString",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-pip-at-least-the-amount-alone",
+   "condition": "subject.parityR10ValueString >= resource.amount",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-pip-at-least-the-amount",
+   "condition": "subject.parityR10ValueString >= resource.amount OR resource.a == 'y'",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-pip-at-least-the-amount-control",
+   "resourceType": "PARITY_SUITE_R10_NV_STRING_PIP_AT_LEAST_THE_AMOUNT_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR10ValueString >= resource.amount",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-pip-equals-the-string-alone",
+   "condition": "subject.parityR10ValueString == '1000'",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-pip-equals-the-string",
+   "condition": "subject.parityR10ValueString == '1000' OR resource.a == 'y'",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-pip-equals-the-string-control",
+   "resourceType": "PARITY_SUITE_R10_NV_STRING_PIP_EQUALS_THE_STRING_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR10ValueString == '1000'",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-pip-is-not-null-alone",
+   "condition": "subject.parityR10ValueString IS NOT NULL",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-pip-is-not-null",
+   "condition": "subject.parityR10ValueString IS NOT NULL OR resource.a == 'y'",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-pip-is-not-null-control",
+   "resourceType": "PARITY_SUITE_R10_NV_STRING_PIP_IS_NOT_NULL_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR10ValueString IS NOT NULL",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-string-amount-at-most-the-pip-over-the-limit",
+   "condition": "resource.amount <= subject.parityR10ValueString",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "amount-5000",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5000
+     }
+    }
+   ]
+  },
+  {
+   "id": "nv-number-unrelated-policy",
+   "condition": "resource.a == 'y'",
+   "pips": [
+    "number"
+   ],
+   "requests": [
+    {
+     "name": "amount-5",
+     "resource": {
+      "id": "r10-value",
+      "amount": 5,
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

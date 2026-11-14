@@ -1,0 +1,152 @@
+{
+ "about": "Whether a GENERAL whose requestAttributes carry ${subject.isM2M} inside a text makes a set's condition one the tenant holds. Round 37 sent such a text as written (r37open-ra-is-m2m-in-text), its GENERAL named by a simplified policy.",
+ "resourceTypePrefix": "PARITY_SUITE_R41HPX_",
+ "pins": {
+  "/api/v1/pip/r41open-m2m-held-pip-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "held": {
+   "name": "subject.parityR41HeldPipInText",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r41open-m2m-held-pip-in-text",
+   "requestAttributes": {
+    "case": "r41open-m2m-held-pip-in-text",
+    "x": "id-${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r41openm2mheldpipintext-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r41open-m2m-held-pip-in-text",
+   "pips": [
+    "held"
+   ],
+   "about": "An ACTIVE top-level set whose only rule allows on resource.a == 'y' OR subject.parityR41HeldPipInText == 'v'; the GENERAL carries requestAttributes.x id-${subject.isM2M}. read-a-n reads the GENERAL, which answers v: true with one call if the tenant does not hold the condition. read-other and the last control answer true if it does not, 400 if a text that holds ${subject.isM2M} counts as the whole value.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y' OR subject.parityR41HeldPipInText == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r41",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r41open-m2m-held-pip-in-text"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r41",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r41open-m2m-held-pip-in-text"
+    },
+    {
+     "name": "read-other",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     },
+     "type": "PARITY_SUITE_R41HPX_R41OPENM2MHELDPIPINTEXT_CONTROL_FIRST"
+    }
+   ]
+  },
+  {
+   "id": "r41openm2mheldpipintext-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

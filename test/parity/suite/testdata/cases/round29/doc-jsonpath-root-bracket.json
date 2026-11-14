@@ -1,0 +1,177 @@
+{
+ "about": "PIP paths in bracket notation: a GENERAL jsonPath $['groups'] over {\"groups\": [\"v\"]}, and a TOKEN claim $['department'] over the reader's token, whose department claim is finance. True if the bracket reads the key.",
+ "resourceTypePrefix": "PARITY_SUITE_R29D_",
+ "pins": {
+  "/api/v1/pip/r29doc-bracket": {
+   "statusCode": 200,
+   "body": {
+    "groups": [
+     "v"
+    ],
+    "n": 5
+   }
+  }
+ },
+ "pips": {
+  "bracket": {
+   "name": "subject.parityR29DocBracket",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29doc-bracket",
+   "type": "JSON",
+   "jsonPath": "$['groups']"
+  },
+  "claim": {
+   "name": "subject.parityR29DocClaim",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "$['department']",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "r29doc-general-json-path-bracket",
+   "about": "jsonPath $['groups'].",
+   "condition": "subject.parityR29DocBracket == 'v' OR resource.a == 'y'",
+   "pips": [
+    "bracket",
+    "claim"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29doc",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29doc",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29doc-general-json-path-bracket-in-a-deny-rule",
+   "about": "jsonPath $['groups']. The same condition in a DENY rule: an ended rule allows, a failed decision denies.",
+   "pips": [
+    "bracket",
+    "claim"
+   ],
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityR29DocBracket == 'v' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29doc",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29doc",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29doc-token-claim-bracket",
+   "about": "claim $['department'].",
+   "condition": "subject.parityR29DocClaim == 'finance' OR resource.a == 'y'",
+   "pips": [
+    "bracket",
+    "claim"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29doc",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29doc",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29doc-token-claim-bracket-in-a-deny-rule",
+   "about": "claim $['department']. The same condition in a DENY rule: an ended rule allows, a failed decision denies.",
+   "pips": [
+    "bracket",
+    "claim"
+   ],
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityR29DocClaim == 'finance' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29doc",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29doc",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

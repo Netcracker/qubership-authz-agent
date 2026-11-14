@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-papseq-control-first",
+        "name": "p66x-papseq-control-first s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-papseq-control-first s reader",
+            "policyId": "10a1c623-7ff9-2263-9c09-6714f37c9c9c",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-papseq-control-first s rule",
+                "ruleId": "cd7c55f2-e5a7-ac5e-515a-9207a9e1a357",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-papseq-control-first"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-papseq-control-first"
+          }
+        ],
+        "policySetId": "2fd27375-20c0-1b66-8ae3-caf0a87ca0c9",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_PAPSEQ_CONTROL_FIRST'",
+        "tenantId": "parity-p66x-papseq-control-first",
+        "type": "DEFAULT"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p66x-papseq-control-first"
+  ]
+}

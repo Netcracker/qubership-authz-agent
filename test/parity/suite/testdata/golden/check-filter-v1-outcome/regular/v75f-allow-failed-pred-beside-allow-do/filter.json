@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R75_FAILED_SOURCE_V75F_ALLOW_FAILED_PRED_BESIDE_ALLOW_DO.owner.eq(1)).or(PARITY_SUITE_R75_FAILED_SOURCE_V75F_ALLOW_FAILED_PRED_BESIDE_ALLOW_DO.allowed.eq(1))",
+    "mongodbFilterCondition": "{ \"$or\": [ {\"owner\": 1}, {\"allowed\": 1} ] }",
+    "rsqlFilterCondition": "owner==1,allowed==1",
+    "sqlFilterCondition": "owner=1 OR allowed=1",
+    "customFilterCondition": null
+  }
+}

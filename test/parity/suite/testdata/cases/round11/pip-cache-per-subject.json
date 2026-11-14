@@ -1,0 +1,69 @@
+{
+ "about": "Whether the cache of a GENERAL PIP declared cacheable true is kept per subject. pip-cache-cacheable-true records one subject reading the PIP after its answer changed, which a cache per subject and a cache per PIP name serve the same way. parity-reader and parity-multi-role both hold ROLE_PARITY_READER, and the policy allows == 'granted'. pip-mock answers \"granted\" and the reader reads; pip-mock is re-pinned to \"refused\", and inside the cache period the multi-role user reads, which is true when the reader's cached value is served to another subject and false when the PIP is called again; then the reader reads once more, the control that the cache holds the first value. The calls the route received over the case are recorded. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone.",
+ "resourceTypePrefix": "PARITY_SUITE_R11_",
+ "pins": {},
+ "pips": {
+  "general": {
+   "name": "subject.parityR11PerSubject",
+   "url": "http://pip-mock:8090/api/v1/pip/r11-cache-per-subject",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "cacheable": true,
+   "requestAttributes": {
+    "case": "cache-per-subject"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "cache-per-subject",
+   "condition": "subject.parityR11PerSubject == 'granted'",
+   "pips": [
+    "general"
+   ],
+   "requests": [
+    {
+     "name": "reader-first",
+     "resource": {
+      "id": "r11-cache"
+     }
+    },
+    {
+     "name": "multi-role-user-after-the-change",
+     "subject": "user:parity-multi-role",
+     "pins": {
+      "/api/v1/pip/r11-cache-per-subject": {
+       "statusCode": 200,
+       "body": {
+        "value": "refused"
+       }
+      }
+     },
+     "resource": {
+      "id": "r11-cache"
+     }
+    },
+    {
+     "name": "reader-again",
+     "resource": {
+      "id": "r11-cache"
+     }
+    }
+   ],
+   "policy": {
+    "id": "00000000-0000-0000-0000-0000000f1102"
+   },
+   "pins": {
+    "/api/v1/pip/r11-cache-per-subject": {
+     "statusCode": 200,
+     "body": {
+      "value": "granted"
+     }
+    }
+   },
+   "pipCalls": "/api/v1/pip/r11-cache-per-subject"
+  }
+ ]
+}

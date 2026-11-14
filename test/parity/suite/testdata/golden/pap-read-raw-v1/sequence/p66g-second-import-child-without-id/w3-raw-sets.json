@@ -1,0 +1,63 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "name": "p66g-second-import-child-without-id s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66g-second-import-child-without-id added",
+            "policyId": "\u003cgenerated UUID\u003e",
+            "rules": [],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66g-second-import-child-without-id"
+          },
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66g-second-import-child-without-id added",
+            "policyId": "\u003cgenerated UUID\u003e",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66g-second-import-child-without-id added rule",
+                "ruleId": "4a54e57e-a08f-4d4d-67c4-31b548800007",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'LIST'",
+                "tenantId": "parity-p66g-second-import-child-without-id"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66g-second-import-child-without-id"
+          },
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66g-second-import-child-without-id s reader",
+            "policyId": "1bf4f07c-9c5f-e7ed-410a-444351a41d09",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66g-second-import-child-without-id s rule",
+                "ruleId": "1d8d59a6-04a9-9297-14aa-c05eb2a58e55",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'UPDATE'",
+                "tenantId": "parity-p66g-second-import-child-without-id"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66g-second-import-child-without-id"
+          }
+        ],
+        "policySetId": "1290b7af-76c7-9b1b-abf7-e4d0b45d3fa8",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66G_SECOND_IMPORT_CHILD_WITHOUT_ID'",
+        "tenantId": "parity-p66g-second-import-child-without-id",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-move-project-holder",
+        "name": "p66x-move-project s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-project s reader",
+            "policyId": "4035415a-b74c-3edb-ce03-4199ca14de9d",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-move-project s rule",
+                "ruleId": "f9f2fe7c-fb07-806a-dc7c-1807a591c186",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'UPDATE'",
+                "tenantId": "parity-p66x-move-project-holder"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-move-project-holder"
+          }
+        ],
+        "policySetId": "f8c772a8-090a-e7eb-ffe5-61e8f1f59e81",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-move-project-holder",
+            "name": "p66x-move-project c",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-move-project c reader",
+                "policyId": "925ff523-304e-9aea-b5c1-108fba0d74ad",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-move-project c rule",
+                    "ruleId": "7a3d7f33-c6a1-3cf3-1055-f390cf9a98c2",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'LIST'",
+                    "tenantId": "parity-p66x-move-project-holder"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-move-project-holder"
+              }
+            ],
+            "policySetId": "e494e70b-1276-5974-6064-3578c730d78e",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_PROJECT'",
+            "tenantId": "parity-p66x-move-project-holder",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_PROJECT'",
+        "tenantId": "parity-p66x-move-project-holder",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

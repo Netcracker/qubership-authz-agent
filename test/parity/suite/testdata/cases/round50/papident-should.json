@@ -1,0 +1,1002 @@
+{
+ "about": "Round 50 (should): which object an identity names in the PAP. Each case writes two objects of one identity (in one write, in two writes, through two operations, in two spellings) and reads back and decides what was kept; its twin writes the same with distinct identities. Each case runs in a tenant of its own, writes to a domain and an externalId of its own and empties them last; a control writes and reads back first and last.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p50i-control-should-first",
+   "about": "control: a declaration written and read back, as pap-read/two-domain-mapping read one",
+   "resourceType": "PARITY_SUITE_P50_ID_902",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_902"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_902"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissions.PARITY_P50I902_A",
+       "pipType": "MAPPING",
+       "cacheable": false,
+       "type": "UUID",
+       "customMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_P50I_902": [
+          "parity_p50i_902_a"
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_902"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_902"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p50i-902"
+  },
+  {
+   "id": "p50i-domain-pips-spelled-lower",
+   "about": "domain PIPs written to a domain and then to its spelling (lower), each domain read back",
+   "resourceType": "PARITY_SUITE_P50_ID_054",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_054"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "before-spelled",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "parity_p50_id_054"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_054"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP50I054A",
+       "pipType": "HEADER",
+       "header": "x-parity-p50i-054-a",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "mid-spelled",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "parity_p50_id_054"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "parity_p50_id_054"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP50I054B",
+       "pipType": "HEADER",
+       "header": "x-parity-p50i-054-b",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_054"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "after-spelled",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "parity_p50_id_054"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "cleanup-spelled",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "parity_p50_id_054"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_054"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p50i-054"
+  },
+  {
+   "id": "p50i-domain-pips-spelled-trail-space",
+   "about": "domain PIPs written to a domain and then to its spelling (trail-space), each domain read back",
+   "resourceType": "PARITY_SUITE_P50_ID_055",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_055"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "before-spelled",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_055 "
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_055"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP50I055A",
+       "pipType": "HEADER",
+       "header": "x-parity-p50i-055-a",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "mid-spelled",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_055 "
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_055 "
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP50I055B",
+       "pipType": "HEADER",
+       "header": "x-parity-p50i-055-b",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_055"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "after-spelled",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_055 "
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "cleanup-spelled",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_055 "
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_055"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p50i-055"
+  },
+  {
+   "id": "p50i-pip-name-spelled-first-upper",
+   "about": "two domains declaring HEADER PIPs whose names differ in the case of one letter",
+   "resourceType": "PARITY_SUITE_P50_ID_051",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_051"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "before-other",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_051_B"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_051"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP50I051A",
+       "pipType": "HEADER",
+       "header": "x-parity-p50i-051-a",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_051_B"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.ParityP50I051A",
+       "pipType": "HEADER",
+       "header": "x-parity-p50i-051-b",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_051"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "after-other",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_051_B"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "cleanup-other",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_051_B"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_051"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p50i-051"
+  },
+  {
+   "id": "p50i-pip-name-spelled-d",
+   "about": "two domains declaring HEADER PIPs of distinct names",
+   "resourceType": "PARITY_SUITE_P50_ID_053",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_053"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "before-other",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_053_B"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_053"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP50I053A",
+       "pipType": "HEADER",
+       "header": "x-parity-p50i-053-a",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_053_B"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP50I053B",
+       "pipType": "HEADER",
+       "header": "x-parity-p50i-053-b",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_053"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "after-other",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_053_B"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "cleanup-other",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_053_B"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_053"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p50i-053"
+  },
+  {
+   "id": "p50i-role-spelled-lower",
+   "about": "the permissions of a role read with its name in lower case",
+   "resourceType": "PARITY_SUITE_P50_ID_075",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_075"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_075"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissions.PARITY_P50I075_M",
+       "pipType": "MAPPING",
+       "cacheable": false,
+       "type": "UUID",
+       "customMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_P50I_075": [
+          "parity_p50i_075_m"
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-permissions",
+     "args": {
+      "role": "role_parity_p50i_075",
+      "level": "custom"
+     },
+     "observe": [
+      "read:read-permissions"
+     ],
+     "markers": [
+      "parity_p50i_075_"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_075"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p50i-075"
+  },
+  {
+   "id": "p50i-role-spelled-d",
+   "about": "the permissions of a role read by its name",
+   "resourceType": "PARITY_SUITE_P50_ID_076",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_076"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_076"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissions.PARITY_P50I076_M",
+       "pipType": "MAPPING",
+       "cacheable": false,
+       "type": "UUID",
+       "customMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_P50I_076": [
+          "parity_p50i_076_m"
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-permissions",
+     "args": {
+      "role": "ROLE_PARITY_P50I_076",
+      "level": "custom"
+     },
+     "observe": [
+      "read:read-permissions"
+     ],
+     "markers": [
+      "parity_p50i_076_"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_076"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p50i-076"
+  },
+  {
+   "id": "p50i-domain-pips-spelled-lead-space",
+   "about": "domain PIPs written to a domain and then to its spelling (lead-space), each domain read back",
+   "resourceType": "PARITY_SUITE_P50_ID_056",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_056"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "before-spelled",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": " PARITY_P50_ID_056"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_056"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP50I056A",
+       "pipType": "HEADER",
+       "header": "x-parity-p50i-056-a",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "mid-spelled",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": " PARITY_P50_ID_056"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": " PARITY_P50_ID_056"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP50I056B",
+       "pipType": "HEADER",
+       "header": "x-parity-p50i-056-b",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_056"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "after-spelled",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": " PARITY_P50_ID_056"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "cleanup-spelled",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": " PARITY_P50_ID_056"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_056"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p50i-056"
+  },
+  {
+   "id": "p50i-domain-pips-spelled-trail-tab",
+   "about": "domain PIPs written to a domain and then to its spelling (trail-tab), each domain read back",
+   "resourceType": "PARITY_SUITE_P50_ID_057",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_057"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "before-spelled",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_057\t"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_057"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP50I057A",
+       "pipType": "HEADER",
+       "header": "x-parity-p50i-057-a",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "mid-spelled",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_057\t"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_057\t"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP50I057B",
+       "pipType": "HEADER",
+       "header": "x-parity-p50i-057-b",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_057"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "after-spelled",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_057\t"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "cleanup-spelled",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_057\t"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_057"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p50i-057"
+  },
+  {
+   "id": "p50i-control-should-last",
+   "about": "control: a declaration written and read back, as pap-read/two-domain-mapping read one",
+   "resourceType": "PARITY_SUITE_P50_ID_952",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_952"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_952"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissions.PARITY_P50I952_A",
+       "pipType": "MAPPING",
+       "cacheable": false,
+       "type": "UUID",
+       "customMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_P50I_952": [
+          "parity_p50i_952_a"
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_952"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P50_ID_952"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p50i-952"
+  }
+ ]
+}

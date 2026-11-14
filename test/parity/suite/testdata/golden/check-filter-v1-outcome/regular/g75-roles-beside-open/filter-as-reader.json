@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_G75_ROLES_BESIDE_OPEN.open.eq(1)).or(PARITY_SUITE_G75_ROLES_BESIDE_OPEN.role.in(\"ROLE_PARITY_READER\"))",
+    "mongodbFilterCondition": "{ \"$or\": [ {{ \"open\": 1 }}, {{ \"role\": { \"$in\": [ \"ROLE_PARITY_READER\" ] } }} ] }",
+    "rsqlFilterCondition": "open==1,role=in=(\"ROLE_PARITY_READER\")",
+    "sqlFilterCondition": "open=1 OR role IN ('ROLE_PARITY_READER')",
+    "customFilterCondition": null
+  }
+}

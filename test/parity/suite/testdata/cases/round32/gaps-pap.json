@@ -1,0 +1,215 @@
+{
+ "about": "Uploads round 31 did not send, each with a value of a JSON type the documentation does not list for its field. Round 31 found every scalar bound to its field: the boolean true to a string, the number 1 and the text false to a boolean, 2.5 to an integer. The load golden is the answer; a read follows each accepted upload.",
+ "resourceTypePrefix": "PARITY_SUITE_R32G_",
+ "pins": {
+  "/api/v1/pip/r32gaps-typed": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "fraction-text-for-an-integer": {
+   "name": "subject.parityR32Typed0",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r32gaps-typed",
+   "requestAttributes": {
+    "case": "r32gaps-typed"
+   },
+   "cachePeriod": "2.5"
+  }
+ },
+ "cases": [
+  {
+   "id": "r32gaps-pap-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-object-for-a-string",
+   "about": "The set's description is the object {\"k\": \"v\"}. Upload 200 if any JSON value binds to a string field, 400 if only a scalar does.",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "fields": {
+      "description": {
+       "k": "v"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-list-for-a-string",
+   "about": "The set's description is the list [\"v\"]. Upload 200 if any JSON value binds to a string field, 400 if only a scalar does.",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "fields": {
+      "description": [
+       "v"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-fraction-text-for-an-integer",
+   "about": "The GENERAL PIP's cachePeriod is the text \"2.5\". Upload 200 if the text of a fraction binds to an integer field, 400 if only the text of an integer does.",
+   "pips": [
+    "fraction-text-for-an-integer"
+   ],
+   "condition": "subject.parityR32Typed0 == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-pap-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

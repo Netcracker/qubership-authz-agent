@@ -1,0 +1,415 @@
+{
+ "about": "Round 69: a rule condition that reads subject.permissionScopes or subject.permissionScopeX.a, names that start with permissionScope without the dot after it, outside iterate and inside an iterate over subject.permissionScope. Only the PERMISSION_SCOPE is declared: is each upload refused as the twin over the undeclared subject.parityR69Plain is, or stored as a read of the permission scope? Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R69U_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/r69-scopes": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r69-scopex": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r69-plain": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "s69-undecl-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s69-undecl-scopes-outside",
+   "about": "A DENY_UNLESS_PERMIT rule with condition `subject.permissionScopes CONTAINS 'v' OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. Only the PERMISSION_SCOPE is declared, not subject.permissionScopes. The upload is refused if the name is a PIP like any other, as for the twin over subject.parityR69Plain; it is stored if the PAP takes the name for the permission scope.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScopes CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s69-undecl-scopex-outside",
+   "about": "A DENY_UNLESS_PERMIT rule with condition `subject.permissionScopeX.a CONTAINS 'v' OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. Only the PERMISSION_SCOPE is declared, not subject.permissionScopeX.a. The upload is refused if the name is a PIP like any other, as for the twin over subject.parityR69Plain; it is stored if the PAP takes the name for the permission scope.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScopeX.a CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s69-undecl-plain-outside",
+   "about": "A DENY_UNLESS_PERMIT rule with condition `subject.parityR69Plain CONTAINS 'v' OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. Only the PERMISSION_SCOPE is declared, not subject.parityR69Plain. The upload is refused if the name is a PIP like any other, as for the twin over subject.parityR69Plain; it is stored if the PAP takes the name for the permission scope.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR69Plain CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s69-undecl-scopes-iterate",
+   "about": "A DENY_UNLESS_PERMIT rule with condition `subject.permissionScopes CONTAINS 'v' OR resource.a == 'y'` inside an iterate over subject.permissionScope (one assignment, region r1), a = n and a = y. Only the PERMISSION_SCOPE is declared, not subject.permissionScopes. The upload is refused if the name is a PIP like any other, as for the twin over subject.parityR69Plain; it is stored if the PAP takes the name for the permission scope.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScopes CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s69-undecl-scopex-iterate",
+   "about": "A DENY_UNLESS_PERMIT rule with condition `subject.permissionScopeX.a CONTAINS 'v' OR resource.a == 'y'` inside an iterate over subject.permissionScope (one assignment, region r1), a = n and a = y. Only the PERMISSION_SCOPE is declared, not subject.permissionScopeX.a. The upload is refused if the name is a PIP like any other, as for the twin over subject.parityR69Plain; it is stored if the PAP takes the name for the permission scope.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScopeX.a CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s69-undecl-plain-iterate",
+   "about": "A DENY_UNLESS_PERMIT rule with condition `subject.parityR69Plain CONTAINS 'v' OR resource.a == 'y'` inside an iterate over subject.permissionScope (one assignment, region r1), a = n and a = y. Only the PERMISSION_SCOPE is declared, not subject.parityR69Plain. The upload is refused if the name is a PIP like any other, as for the twin over subject.parityR69Plain; it is stored if the PAP takes the name for the permission scope.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR69Plain CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s69-undecl-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

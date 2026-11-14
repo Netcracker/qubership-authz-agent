@@ -1,0 +1,1319 @@
+{
+ "resourceTypePrefix": "PARITY_SUITE_R69_RERUN_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/obs-failed": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity observation wrapper"
+   }
+  },
+  "/api/v1/pip/r29-pairs-gen": {
+   "statusCode": 200,
+   "body": [
+    "x",
+    "y"
+   ]
+  },
+  "/api/v1/pip/r44-raw-untyped": {
+   "statusCode": 200,
+   "body": [
+    "y"
+   ]
+  }
+ },
+ "pips": {
+  "gen": {
+   "name": "subject.parityR29PairsGen",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pairs-gen",
+   "requestAttributes": {
+    "case": "r29-pairs-gen"
+   }
+  },
+  "hdr": {
+   "name": "subject.parityR29PairsHdr",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r29-pairs",
+   "cacheable": false
+  },
+  "map": {
+   "name": "subject.permissions.PARITY_R29_PAIRS",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "p1",
+      "p2"
+     ]
+    }
+   }
+  },
+  "obs-subject-parityobsfailed": {
+   "name": "subject.parityObsFailed",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/obs-failed",
+   "requestAttributes": {
+    "case": "obs-failed"
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "tok": {
+   "name": "subject.parityR29PairsTok",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "untyped": {
+   "name": "subject.parityR44RawUntyped",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r44-raw-untyped",
+   "requestAttributes": {
+    "case": "r44-raw-untyped"
+   }
+  }
+ },
+ "standVersion": true,
+ "about": "The unstable round 67 golden rp67-041/q1 asked again: as recorded, alone, and split into single checks classed by the route only one of the case's sets reads. Controls first and last must answer true.",
+ "cases": [
+  {
+   "id": "rr69-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rr69-041-q1-alone",
+   "pips": [
+    "gen",
+    "hdr",
+    "map",
+    "obs-subject-parityobsfailed",
+    "scope",
+    "tok",
+    "untyped"
+   ],
+   "sets": [
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND operation == 'READ'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "omitStatus": true,
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": null
+     },
+     "policies": [
+      {
+       "key": "p2",
+       "target": "false",
+       "algorithm": "PERMIT_OVERRIDES",
+       "fields": {
+        "status": "INACTIVE"
+       },
+       "rules": [
+        {
+         "key": "r3",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        },
+        {
+         "key": "r5",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        }
+       ]
+      },
+      {
+       "key": "p10",
+       "target": "false",
+       "algorithm": "PERMIT_OVERRIDES",
+       "fields": {
+        "status": "INACTIVE"
+       },
+       "rules": [
+        {
+         "key": "r11",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        },
+        {
+         "key": "r12",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        }
+       ]
+      },
+      {
+       "key": "p8",
+       "target": "true",
+       "fields": {
+        "target": false,
+        "uiTarget": null
+       },
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "r9",
+         "target": "false",
+         "effect": "NOT_APPLICABLE",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "s13",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p14",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "r15",
+         "target": "true",
+         "fields": {
+          "target": null
+         },
+         "effect": "USE_FILTER_CONDITION",
+         "condition": "subject.parityR44RawUntyped CONTAINS 'y'"
+        }
+       ]
+      },
+      {
+       "key": "p16",
+       "target": "true",
+       "fields": {
+        "target": true
+       },
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "r17",
+         "target": "subject.parityR29PairsTok == 'y'",
+         "effect": "NOT_APPLICABLE",
+         "condition": "subject.parityR29PairsHdr CONTAINS 'h1'"
+        }
+       ]
+      },
+      {
+       "key": "p18",
+       "target": "true",
+       "fields": {
+        "target": false,
+        "uiTarget": null
+       },
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r19",
+         "target": "true",
+         "effect": "NOT_APPLICABLE",
+         "condition": "true",
+         "fields": {
+          "condition": false
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "s20",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "omitStatus": true,
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": null
+     },
+     "fields": {
+      "type": "SIMPLIFIED"
+     },
+     "policies": [
+      {
+       "key": "p21",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "fields": {
+        "deprecated": null
+       },
+       "rules": [
+        {
+         "key": "r22",
+         "target": "true",
+         "fields": {
+          "target": false
+         },
+         "effect": "USE_FILTER_CONDITION",
+         "condition": "subject.parityR29PairsHdr CONTAINS 'h1'",
+         "predicates": {
+          "mongodbPredicate": "{ \"f22a\": ${resourceType} }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "p27",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "fields": {
+        "deprecated": null
+       },
+       "rules": [
+        {
+         "key": "r28",
+         "target": "true",
+         "fields": {
+          "target": false
+         },
+         "effect": "USE_FILTER_CONDITION",
+         "condition": "subject.parityR29PairsHdr CONTAINS 'h1'",
+         "predicates": {
+          "mongodbPredicate": "{ \"f22a\": ${resourceType} }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "p25",
+       "target": "true",
+       "fields": {
+        "target": true
+       },
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r26",
+         "target": "true",
+         "omitFields": [
+          "target"
+         ],
+         "effect": "NOT_APPLICABLE",
+         "condition": "subject.parityR29PairsTok == 'y' OR subject.parityR29PairsHdr CONTAINS 'h1'",
+         "predicates": {
+          "predicate": "${resourceType}.f26a.in(${subject.roles}, ${subject.parityR29PairsGen})"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "s29",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "status": "INACTIVE",
+       "fields": {
+        "deprecated": null
+       },
+       "policies": [
+        {
+         "key": "p30",
+         "target": "true",
+         "fields": {
+          "target": false
+         },
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "r31",
+           "target": "false",
+           "effect": "NOT_APPLICABLE",
+           "condition": "false",
+           "predicates": {
+            "rsqlPredicate": "f31a=in=(${subject.parityR29PairsGen})",
+            "sqlPredicate": "f31a IN (${subject.parityR29PairsGen})",
+            "predicate": "${resourceType}.f31a.in(${subject.parityR29PairsGen})",
+            "mongodbPredicate": "{ \"f31a\": { \"$in\": ${subject.parityR29PairsGen} } }"
+           }
+          }
+         ]
+        },
+        {
+         "key": "p32",
+         "target": "true",
+         "fields": {
+          "target": false,
+          "uiTarget": null
+         },
+         "algorithm": "PERMIT_OVERRIDES",
+         "rules": [
+          {
+           "key": "r33",
+           "target": "true",
+           "fields": {
+            "target": null
+           },
+           "effect": "ALLOW",
+           "condition": "true",
+           "omitFields": [
+            "condition"
+           ],
+           "predicates": {
+            "predicate": "${resourceType}.f33a.eq(${resourceType})"
+           }
+          }
+         ]
+        },
+        {
+         "key": "p34",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r35",
+           "target": "true",
+           "effect": "USE_FILTER_CONDITION",
+           "condition": "true",
+           "fields": {
+            "condition": false
+           },
+           "predicates": {
+            "customPredicate": {
+             "params": {
+              "p0": "subject.id"
+             },
+             "predicate": "[{\"value\":${p0},\"property\":\"f35a\",\"operator\":\"in\"}]"
+            }
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "q1",
+     "bulkOperations": [
+      {
+       "id": "rp10",
+       "operations": [
+        "READ"
+       ],
+       "resource": "rp"
+      },
+      {
+       "id": "rp11",
+       "operations": [
+        "READ"
+       ],
+       "resource": "rp"
+      }
+     ],
+     "subject": "m2m",
+     "headers": {
+      "x-parity-r44-raw": "h1",
+      "x-parity-r44-raw-2": "h2"
+     },
+     "tenantId": ""
+    }
+   ],
+   "about": "q1 of rp67-041 before any other request of the case's configuration, right after the opening control."
+  },
+  {
+   "id": "rr69-041-as-recorded",
+   "pips": [
+    "gen",
+    "hdr",
+    "map",
+    "obs-subject-parityobsfailed",
+    "scope",
+    "tok",
+    "untyped"
+   ],
+   "sets": [
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND operation == 'READ'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "omitStatus": true,
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": null
+     },
+     "policies": [
+      {
+       "key": "p2",
+       "target": "false",
+       "algorithm": "PERMIT_OVERRIDES",
+       "fields": {
+        "status": "INACTIVE"
+       },
+       "rules": [
+        {
+         "key": "r3",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        },
+        {
+         "key": "r5",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        }
+       ]
+      },
+      {
+       "key": "p10",
+       "target": "false",
+       "algorithm": "PERMIT_OVERRIDES",
+       "fields": {
+        "status": "INACTIVE"
+       },
+       "rules": [
+        {
+         "key": "r11",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        },
+        {
+         "key": "r12",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        }
+       ]
+      },
+      {
+       "key": "p8",
+       "target": "true",
+       "fields": {
+        "target": false,
+        "uiTarget": null
+       },
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "r9",
+         "target": "false",
+         "effect": "NOT_APPLICABLE",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "s13",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p14",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "r15",
+         "target": "true",
+         "fields": {
+          "target": null
+         },
+         "effect": "USE_FILTER_CONDITION",
+         "condition": "subject.parityR44RawUntyped CONTAINS 'y'"
+        }
+       ]
+      },
+      {
+       "key": "p16",
+       "target": "true",
+       "fields": {
+        "target": true
+       },
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "r17",
+         "target": "subject.parityR29PairsTok == 'y'",
+         "effect": "NOT_APPLICABLE",
+         "condition": "subject.parityR29PairsHdr CONTAINS 'h1'"
+        }
+       ]
+      },
+      {
+       "key": "p18",
+       "target": "true",
+       "fields": {
+        "target": false,
+        "uiTarget": null
+       },
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r19",
+         "target": "true",
+         "effect": "NOT_APPLICABLE",
+         "condition": "true",
+         "fields": {
+          "condition": false
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "s20",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "omitStatus": true,
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": null
+     },
+     "fields": {
+      "type": "SIMPLIFIED"
+     },
+     "policies": [
+      {
+       "key": "p21",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "fields": {
+        "deprecated": null
+       },
+       "rules": [
+        {
+         "key": "r22",
+         "target": "true",
+         "fields": {
+          "target": false
+         },
+         "effect": "USE_FILTER_CONDITION",
+         "condition": "subject.parityR29PairsHdr CONTAINS 'h1'",
+         "predicates": {
+          "mongodbPredicate": "{ \"f22a\": ${resourceType} }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "p27",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "fields": {
+        "deprecated": null
+       },
+       "rules": [
+        {
+         "key": "r28",
+         "target": "true",
+         "fields": {
+          "target": false
+         },
+         "effect": "USE_FILTER_CONDITION",
+         "condition": "subject.parityR29PairsHdr CONTAINS 'h1'",
+         "predicates": {
+          "mongodbPredicate": "{ \"f22a\": ${resourceType} }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "p25",
+       "target": "true",
+       "fields": {
+        "target": true
+       },
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r26",
+         "target": "true",
+         "omitFields": [
+          "target"
+         ],
+         "effect": "NOT_APPLICABLE",
+         "condition": "subject.parityR29PairsTok == 'y' OR subject.parityR29PairsHdr CONTAINS 'h1'",
+         "predicates": {
+          "predicate": "${resourceType}.f26a.in(${subject.roles}, ${subject.parityR29PairsGen})"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "s29",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "status": "INACTIVE",
+       "fields": {
+        "deprecated": null
+       },
+       "policies": [
+        {
+         "key": "p30",
+         "target": "true",
+         "fields": {
+          "target": false
+         },
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "r31",
+           "target": "false",
+           "effect": "NOT_APPLICABLE",
+           "condition": "false",
+           "predicates": {
+            "rsqlPredicate": "f31a=in=(${subject.parityR29PairsGen})",
+            "sqlPredicate": "f31a IN (${subject.parityR29PairsGen})",
+            "predicate": "${resourceType}.f31a.in(${subject.parityR29PairsGen})",
+            "mongodbPredicate": "{ \"f31a\": { \"$in\": ${subject.parityR29PairsGen} } }"
+           }
+          }
+         ]
+        },
+        {
+         "key": "p32",
+         "target": "true",
+         "fields": {
+          "target": false,
+          "uiTarget": null
+         },
+         "algorithm": "PERMIT_OVERRIDES",
+         "rules": [
+          {
+           "key": "r33",
+           "target": "true",
+           "fields": {
+            "target": null
+           },
+           "effect": "ALLOW",
+           "condition": "true",
+           "omitFields": [
+            "condition"
+           ],
+           "predicates": {
+            "predicate": "${resourceType}.f33a.eq(${resourceType})"
+           }
+          }
+         ]
+        },
+        {
+         "key": "p34",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r35",
+           "target": "true",
+           "effect": "USE_FILTER_CONDITION",
+           "condition": "true",
+           "fields": {
+            "condition": false
+           },
+           "predicates": {
+            "customPredicate": {
+             "params": {
+              "p0": "subject.id"
+             },
+             "predicate": "[{\"value\":${p0},\"property\":\"f35a\",\"operator\":\"in\"}]"
+            }
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "q0",
+     "bulkOperations": [
+      {
+       "id": "rp00",
+       "operations": [
+        "UPDATE"
+       ]
+      },
+      {
+       "id": "rp01",
+       "operations": [
+        "UPDATE"
+       ]
+      }
+     ],
+     "subject": "m2m",
+     "userId": "parity-other",
+     "headers": {
+      "x-parity-r44-raw": "h1",
+      "x-parity-r44-raw-2": "h2"
+     },
+     "tenantId": ""
+    },
+    {
+     "name": "q1",
+     "bulkOperations": [
+      {
+       "id": "rp10",
+       "operations": [
+        "READ"
+       ],
+       "resource": "rp"
+      },
+      {
+       "id": "rp11",
+       "operations": [
+        "READ"
+       ],
+       "resource": "rp"
+      }
+     ],
+     "subject": "m2m",
+     "headers": {
+      "x-parity-r44-raw": "h1",
+      "x-parity-r44-raw-2": "h2"
+     },
+     "tenantId": ""
+    }
+   ],
+   "about": "rp67-041 with q0 and q1 as round 67 sent them: q1, READ as the M2M subject with no userId, answered 500 on one stand and 200 on another."
+  },
+  {
+   "id": "rr69-041-q1-classified",
+   "pips": [
+    "gen",
+    "hdr",
+    "map",
+    "obs-subject-parityobsfailed",
+    "scope",
+    "tok",
+    "untyped"
+   ],
+   "sets": [
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND operation == 'READ'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "omitStatus": true,
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": null
+     },
+     "policies": [
+      {
+       "key": "p2",
+       "target": "false",
+       "algorithm": "PERMIT_OVERRIDES",
+       "fields": {
+        "status": "INACTIVE"
+       },
+       "rules": [
+        {
+         "key": "r3",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        },
+        {
+         "key": "r5",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        }
+       ]
+      },
+      {
+       "key": "p10",
+       "target": "false",
+       "algorithm": "PERMIT_OVERRIDES",
+       "fields": {
+        "status": "INACTIVE"
+       },
+       "rules": [
+        {
+         "key": "r11",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        },
+        {
+         "key": "r12",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        }
+       ]
+      },
+      {
+       "key": "p8",
+       "target": "true",
+       "fields": {
+        "target": false,
+        "uiTarget": null
+       },
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "r9",
+         "target": "false",
+         "effect": "NOT_APPLICABLE",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "s13",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p14",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "r15",
+         "target": "true",
+         "fields": {
+          "target": null
+         },
+         "effect": "USE_FILTER_CONDITION",
+         "condition": "subject.parityR44RawUntyped CONTAINS 'y'"
+        }
+       ]
+      },
+      {
+       "key": "p16",
+       "target": "true",
+       "fields": {
+        "target": true
+       },
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "r17",
+         "target": "subject.parityR29PairsTok == 'y'",
+         "effect": "NOT_APPLICABLE",
+         "condition": "subject.parityR29PairsHdr CONTAINS 'h1'"
+        }
+       ]
+      },
+      {
+       "key": "p18",
+       "target": "true",
+       "fields": {
+        "target": false,
+        "uiTarget": null
+       },
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r19",
+         "target": "true",
+         "effect": "NOT_APPLICABLE",
+         "condition": "true",
+         "fields": {
+          "condition": false
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "s20",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "omitStatus": true,
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": null
+     },
+     "fields": {
+      "type": "SIMPLIFIED"
+     },
+     "policies": [
+      {
+       "key": "p21",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "fields": {
+        "deprecated": null
+       },
+       "rules": [
+        {
+         "key": "r22",
+         "target": "true",
+         "fields": {
+          "target": false
+         },
+         "effect": "USE_FILTER_CONDITION",
+         "condition": "subject.parityR29PairsHdr CONTAINS 'h1'",
+         "predicates": {
+          "mongodbPredicate": "{ \"f22a\": ${resourceType} }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "p27",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "fields": {
+        "deprecated": null
+       },
+       "rules": [
+        {
+         "key": "r28",
+         "target": "true",
+         "fields": {
+          "target": false
+         },
+         "effect": "USE_FILTER_CONDITION",
+         "condition": "subject.parityR29PairsHdr CONTAINS 'h1'",
+         "predicates": {
+          "mongodbPredicate": "{ \"f22a\": ${resourceType} }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "p25",
+       "target": "true",
+       "fields": {
+        "target": true
+       },
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r26",
+         "target": "true",
+         "omitFields": [
+          "target"
+         ],
+         "effect": "NOT_APPLICABLE",
+         "condition": "subject.parityR29PairsTok == 'y' OR subject.parityR29PairsHdr CONTAINS 'h1'",
+         "predicates": {
+          "predicate": "${resourceType}.f26a.in(${subject.roles}, ${subject.parityR29PairsGen})"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "s29",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "status": "INACTIVE",
+       "fields": {
+        "deprecated": null
+       },
+       "policies": [
+        {
+         "key": "p30",
+         "target": "true",
+         "fields": {
+          "target": false
+         },
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "r31",
+           "target": "false",
+           "effect": "NOT_APPLICABLE",
+           "condition": "false",
+           "predicates": {
+            "rsqlPredicate": "f31a=in=(${subject.parityR29PairsGen})",
+            "sqlPredicate": "f31a IN (${subject.parityR29PairsGen})",
+            "predicate": "${resourceType}.f31a.in(${subject.parityR29PairsGen})",
+            "mongodbPredicate": "{ \"f31a\": { \"$in\": ${subject.parityR29PairsGen} } }"
+           }
+          }
+         ]
+        },
+        {
+         "key": "p32",
+         "target": "true",
+         "fields": {
+          "target": false,
+          "uiTarget": null
+         },
+         "algorithm": "PERMIT_OVERRIDES",
+         "rules": [
+          {
+           "key": "r33",
+           "target": "true",
+           "fields": {
+            "target": null
+           },
+           "effect": "ALLOW",
+           "condition": "true",
+           "omitFields": [
+            "condition"
+           ],
+           "predicates": {
+            "predicate": "${resourceType}.f33a.eq(${resourceType})"
+           }
+          }
+         ]
+        },
+        {
+         "key": "p34",
+         "target": "true",
+         "fields": {
+          "target": true
+         },
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r35",
+           "target": "true",
+           "effect": "USE_FILTER_CONDITION",
+           "condition": "true",
+           "fields": {
+            "condition": false
+           },
+           "predicates": {
+            "customPredicate": {
+             "params": {
+              "p0": "subject.id"
+             },
+             "predicate": "[{\"value\":${p0},\"property\":\"f35a\",\"operator\":\"in\"}]"
+            }
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "q0",
+     "bulkOperations": [
+      {
+       "id": "rp00",
+       "operations": [
+        "UPDATE"
+       ]
+      },
+      {
+       "id": "rp01",
+       "operations": [
+        "UPDATE"
+       ]
+      }
+     ],
+     "subject": "m2m",
+     "userId": "parity-other",
+     "headers": {
+      "x-parity-r44-raw": "h1",
+      "x-parity-r44-raw-2": "h2"
+     },
+     "tenantId": ""
+    },
+    {
+     "subject": "m2m",
+     "headers": {
+      "x-parity-r44-raw": "h1",
+      "x-parity-r44-raw-2": "h2"
+     },
+     "tenantId": "",
+     "name": "q1-rp10",
+     "operation": "READ",
+     "resource": {
+      "id": "rp10"
+     },
+     "classifyBy": "/api/v1/pip/r44-raw-untyped"
+    },
+    {
+     "subject": "m2m",
+     "headers": {
+      "x-parity-r44-raw": "h1",
+      "x-parity-r44-raw-2": "h2"
+     },
+     "tenantId": "",
+     "name": "q1-rp11",
+     "operation": "READ",
+     "resource": {
+      "id": "rp11"
+     },
+     "classifyBy": "/api/v1/pip/r44-raw-untyped"
+    }
+   ],
+   "about": "q1 of rp67-041 as a single check per item, classed by the calls to the route of subject.parityR44RawUntyped, which only the set s13 reads."
+  },
+  {
+   "id": "rr69-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

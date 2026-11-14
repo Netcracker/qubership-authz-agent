@@ -1,0 +1,258 @@
+{
+ "about": "requestAttributes of a GENERAL PIP with a placeholder no golden sent: pipCalls records what the call carried. Each route answers [\"v\"], and each probe is `subject.X == 'v' OR resource.a == 'y'`, so a = n is true whatever the attributes.",
+ "resourceTypePrefix": "PARITY_SUITE_R35G_",
+ "pins": {
+  "/api/v1/pip/r35gaps-ra-list": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r35gaps-ra-empty": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r35gaps-ra-undeclared": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r35gaps-ra-type": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "token-empty": {
+   "name": "subject.parityR35TokenEmpty",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "list": {
+   "name": "subject.parityR35RaList",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r35gaps-ra-list",
+   "requestAttributes": {
+    "case": "r35gaps-ra-list",
+    "l": [
+     "${subject.id}",
+     "x"
+    ]
+   }
+  },
+  "empty": {
+   "name": "subject.parityR35RaEmpty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r35gaps-ra-empty",
+   "requestAttributes": {
+    "case": "r35gaps-ra-empty",
+    "e": "${subject.parityR35TokenEmpty}"
+   }
+  },
+  "undeclared": {
+   "name": "subject.parityR35RaUndeclared",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r35gaps-ra-undeclared",
+   "requestAttributes": {
+    "case": "r35gaps-ra-undeclared",
+    "u": "${subject.parityR35Undeclared}"
+   }
+  },
+  "type": {
+   "name": "subject.parityR35RaType",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r35gaps-ra-type",
+   "requestAttributes": {
+    "case": "r35gaps-ra-type",
+    "t": "${resourceType}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r35gaps-request-attributes-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r35",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-request-attribute-list",
+   "pips": [
+    "list"
+   ],
+   "about": "requestAttributes.l is the list [\"${subject.id}\", \"x\"]. The call carries the reader's id in its place if a list is substituted element by element; the text ${subject.id} if only text values are.",
+   "condition": "subject.parityR35RaList == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r35gaps-ra-list"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-request-attribute-empty-token",
+   "pips": [
+    "token-empty",
+    "empty"
+   ],
+   "about": "requestAttributes.e is ${subject.parityR35TokenEmpty}, a TOKEN PIP over a claim the token lacks, without defaultValue. The call carries [] if the empty PIP is an empty list; null if it is no value.",
+   "condition": "subject.parityR35RaEmpty == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r35gaps-ra-empty"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-request-attribute-undeclared",
+   "pips": [
+    "undeclared"
+   ],
+   "about": "requestAttributes.u is ${subject.parityR35Undeclared}, a name no PIP of the tenant declares. The call carries null if it is no value; the text as written if an unknown name is left alone.",
+   "condition": "subject.parityR35RaUndeclared == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r35gaps-ra-undeclared"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-request-attribute-resource-type",
+   "pips": [
+    "type"
+   ],
+   "about": "requestAttributes.t is ${resourceType}. The call carries the request's resource type if the placeholder names the type, as it does in a filter predicate; the text as written if it is left alone.",
+   "condition": "subject.parityR35RaType == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r35gaps-ra-type"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-request-attributes-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r35",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

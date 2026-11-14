@@ -1,0 +1,239 @@
+{
+ "about": "Round 72: a tenant_id no stand provisioned on check/filter and bulk operations v2, and an empty tenant_id on the bulk routes. The sets load into the default tenant; each case asks with the other tenant_id and without it.",
+ "resourceTypePrefix": "PARITY_SUITE_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "g72-unknown-tenant-filter",
+   "about": "A set in the default tenant allows READ to anyone. check/filter of READ with a tenant_id no stand provisioned (parity-g72-tenant-nobody-provisioned): an empty tenant of its own answers DENY, the default tenant ALLOW, a refusal its status. The same filter without tenant_id is the control, ALLOW.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter-in-an-unknown-tenant",
+     "filter": true,
+     "operation": "READ",
+     "tenantId": "parity-g72-tenant-nobody-provisioned"
+    },
+    {
+     "name": "filter-in-the-default-tenant",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "g72-unknown-tenant-bulk-v2",
+   "about": "The same set. check/resource/bulk/operations v2 of two READ items with a tenant_id no stand provisioned: an empty tenant of its own allows neither item, the default tenant both, a refusal answers its status. The same request without tenant_id is the control, both items.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "operations-in-an-unknown-tenant",
+     "bulkOperations": [
+      {
+       "id": "r72a",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r72a"
+       }
+      },
+      {
+       "id": "r72b",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r72b"
+       }
+      }
+     ],
+     "v2": {},
+     "tenantId": "parity-g72-tenant-nobody-provisioned"
+    },
+    {
+     "name": "operations-in-the-default-tenant",
+     "bulkOperations": [
+      {
+       "id": "r72a",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r72a"
+       }
+      },
+      {
+       "id": "r72b",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r72b"
+       }
+      }
+     ],
+     "v2": {}
+    }
+   ]
+  },
+  {
+   "id": "g72-empty-tenant-bulk",
+   "about": "The same set. tenant_id present and empty (tenant_id=) on check/resource/bulk and on bulk/operations v1 and v2, each of two READ items. s24-empty-tenant-id read check/resource and check/filter with an empty tenant_id in the default tenant; these ask whether the bulk routes read it alike (both items) or as no tenant (a refusal or no item). The bulk without tenant_id is the control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "bulk-with-an-empty-tenant",
+     "bulk": [
+      {
+       "id": "r72a",
+       "operation": "READ",
+       "resource": {
+        "id": "r72a"
+       }
+      },
+      {
+       "id": "r72b",
+       "operation": "READ",
+       "resource": {
+        "id": "r72b"
+       }
+      }
+     ],
+     "tenantId": ""
+    },
+    {
+     "name": "operations-with-an-empty-tenant",
+     "bulkOperations": [
+      {
+       "id": "r72a",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r72a"
+       }
+      },
+      {
+       "id": "r72b",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r72b"
+       }
+      }
+     ],
+     "tenantId": ""
+    },
+    {
+     "name": "operations-v2-with-an-empty-tenant",
+     "bulkOperations": [
+      {
+       "id": "r72a",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r72a"
+       }
+      },
+      {
+       "id": "r72b",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r72b"
+       }
+      }
+     ],
+     "v2": {},
+     "tenantId": ""
+    },
+    {
+     "name": "bulk-in-the-default-tenant",
+     "bulk": [
+      {
+       "id": "r72a",
+       "operation": "READ",
+       "resource": {
+        "id": "r72a"
+       }
+      },
+      {
+       "id": "r72b",
+       "operation": "READ",
+       "resource": {
+        "id": "r72b"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

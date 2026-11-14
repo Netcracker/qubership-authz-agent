@@ -1,0 +1,55 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-o72-scope-bare-nested",
+        "name": "o72-scope-bare-nested set",
+        "policies": [],
+        "policySetId": "950bc3f3-73d6-8e68-c466-4a345ce0664b",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-o72-scope-bare-nested",
+            "iterate": {
+              "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+              "foreach": "subject.permissionScope"
+            },
+            "name": "o72-scope-bare-nested inner",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "o72-scope-bare-nested reader",
+                "policyId": "4a2cf690-7ccb-41cd-8aca-c330dd77f6b8",
+                "rules": [
+                  {
+                    "condition": "subject.permissionScope IS NULL OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "o72-scope-bare-nested probe",
+                    "ruleId": "ac9e0461-ebf5-56b3-55c1-117fb423f9a0",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o72-scope-bare-nested"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o72-scope-bare-nested"
+              }
+            ],
+            "policySetId": "02612b84-12a9-e592-af0c-bc08408a2970",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "true",
+            "tenantId": "parity-o72-scope-bare-nested",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_O72_SCOPE_BARE_NESTED'",
+        "tenantId": "parity-o72-scope-bare-nested",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}
