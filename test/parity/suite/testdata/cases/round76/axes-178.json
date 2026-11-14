@@ -1,0 +1,276 @@
+{
+ "about": "Round 76, task 16: survivor:subject m2m | filter mongo_invert=OPS, moved to subject = m2m from round69/filtersub-classes-journal-2.json (fs69-c-r28rsql-pud-op-gt-bare). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ax76-178-fs69-c-set-algorithm-permit-unless-deny-over-allow-and-deny-predicates",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "allows",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      },
+      {
+       "key": "denies",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "list-deny-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "blocked==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "allowed": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {
+      "allowed": "zz",
+      "blocked": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {
+      "allowed": 1,
+      "blocked": "zz"
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "LIST",
+     "resource": {
+      "allowed": "zz",
+      "blocked": 1
+     }
+    },
+    {
+     "name": "row-5",
+     "operation": "LIST",
+     "resource": {
+      "allowed": "zz",
+      "blocked": 0
+     }
+    },
+    {
+     "name": "row-6",
+     "operation": "LIST",
+     "resource": {
+      "allowed": "zz",
+      "blocked": 2
+     }
+    },
+    {
+     "name": "row-7",
+     "operation": "LIST",
+     "resource": {
+      "allowed": 0,
+      "blocked": "zz"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-178-fs69-c-target-resource-is-null-without-predicate-alone",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-reads-the-resource",
+         "target": "operation == 'LIST' AND resource.x IS NULL",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "x": "zz"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {}
+    }
+   ]
+  },
+  {
+   "id": "ax76-178-fs69-c-resource-is-null-without-predicate-alone",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-reads-the-resource",
+         "target": "operation == 'LIST'",
+         "condition": "resource.x IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "x": "zz"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {}
+    }
+   ]
+  },
+  {
+   "id": "ax76-178-fs69-c-r28rsql-pud-op-gt-bare",
+   "about": "A DENY rule under PERMIT_UNLESS_DENY with the predicate a=gt=5. The filter shows how each dialect negates it; tells apart: rsql negation tree. Task 16 moves it to subject = m2m.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_M2M'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a=gt=5",
+          "sqlPredicate": "a>5",
+          "predicate": "${resourceType}.a.gt(5)",
+          "mongodbPredicate": "{ \"a\": { \"$gt\": 5 } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "subject": "m2m"
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "a": "zz"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {
+      "a": 4
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {},
+     "subject": "m2m"
+    },
+    {
+     "name": "row-4",
+     "operation": "LIST",
+     "resource": {
+      "a": 5
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "row-5",
+     "operation": "LIST",
+     "resource": {
+      "a": 6
+     },
+     "subject": "m2m"
+    }
+   ]
+  }
+ ]
+}

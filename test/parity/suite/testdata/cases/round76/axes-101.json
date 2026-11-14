@@ -1,0 +1,207 @@
+{
+ "about": "Round 76, task 16: survivor:route check/resource v2 | engine children_eval set=until_failure, moved to route = check/resource v2 from round22/order-levels.json (o22-policies-deny-unless-permit). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R22O_",
+ "pins": {
+  "/api/v1/pip/r22-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 22 case"
+   }
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR22Failing",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r22-failing",
+   "requestAttributes": {
+    "case": "r22-failing"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "ax76-101-o22-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-101-o22-rules-deny-unless-permit",
+   "about": "Two ALLOW rules of one DENY_UNLESS_PERMIT policy in a DENY_UNLESS_PERMIT set: fails, declared first, and allow.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "fails",
+         "target": "true",
+         "condition": "subject.parityR22Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22"
+     },
+     "classifyBy": "/api/v1/pip/r22-failing"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/r22-failing"
+    }
+   ]
+  },
+  {
+   "id": "ax76-101-o22-policies-deny-unless-permit",
+   "about": "Two DENY_UNLESS_PERMIT policies of one DENY_UNLESS_PERMIT set: the failing one first, then the one that permits. Task 16 moves it to route = check/resource v2.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "failing",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "fails",
+         "target": "true",
+         "condition": "subject.parityR22Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      },
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "classifyBy": "/api/v1/pip/r22-failing",
+     "name": "read-check-resource-v2",
+     "resource": {
+      "id": "r22"
+     },
+     "operation": "READ",
+     "v2": {}
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/r22-failing"
+    }
+   ]
+  },
+  {
+   "id": "ax76-101-o22-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-check-resource-v2",
+     "resource": {
+      "id": "r22",
+      "c": "n"
+     },
+     "operation": "READ",
+     "v2": {}
+    }
+   ]
+  }
+ ]
+}

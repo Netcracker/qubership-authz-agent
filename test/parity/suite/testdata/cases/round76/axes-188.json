@@ -1,0 +1,410 @@
+{
+ "about": "Round 76, task 16: survivor:depth nested | lang right_null_literal=F, moved to depth = nested from round17/residual.json (r17-residual-001). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R17_",
+ "pins": {
+  "/api/v1/pip/r17-residual-011-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r17-residual-012-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-014-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-015-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r17-residual-016-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r17-residual-017-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-018-right": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-019-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r17-residual-020-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-021-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r17-residual-022-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r17-residual-023-right": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-024-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-026-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r17-residual-027-right": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-030-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r17-residual-031-right": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-034-right": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-035-right": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-037-right": {
+   "statusCode": 200,
+   "body": true
+  }
+ },
+ "pips": {
+  "r17-residual-011-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-011-right",
+   "requestAttributes": {
+    "case": "r17-residual-011-right"
+   }
+  },
+  "r17-residual-012-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-012-right",
+   "requestAttributes": {
+    "case": "r17-residual-012-right"
+   }
+  },
+  "r17-residual-014-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-014-right",
+   "requestAttributes": {
+    "case": "r17-residual-014-right"
+   }
+  },
+  "r17-residual-015-subject-parityfzdepartment": {
+   "name": "subject.parityR17FzDepartment",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "r17-residual-015-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-015-right",
+   "requestAttributes": {
+    "case": "r17-residual-015-right"
+   }
+  },
+  "r17-residual-016-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-016-right",
+   "requestAttributes": {
+    "case": "r17-residual-016-right"
+   }
+  },
+  "r17-residual-017-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-017-right",
+   "requestAttributes": {
+    "case": "r17-residual-017-right"
+   }
+  },
+  "r17-residual-018-subject-parityfzdepartment": {
+   "name": "subject.parityR17FzDepartment",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "r17-residual-018-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-018-right",
+   "requestAttributes": {
+    "case": "r17-residual-018-right"
+   }
+  },
+  "r17-residual-019-subject-parityfzdepartment": {
+   "name": "subject.parityR17FzDepartment",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "r17-residual-019-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-019-right",
+   "requestAttributes": {
+    "case": "r17-residual-019-right"
+   }
+  },
+  "r17-residual-020-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-020-right",
+   "requestAttributes": {
+    "case": "r17-residual-020-right"
+   }
+  },
+  "r17-residual-021-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-021-right",
+   "requestAttributes": {
+    "case": "r17-residual-021-right"
+   }
+  },
+  "r17-residual-022-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-022-right",
+   "requestAttributes": {
+    "case": "r17-residual-022-right"
+   }
+  },
+  "r17-residual-023-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-023-right",
+   "requestAttributes": {
+    "case": "r17-residual-023-right"
+   }
+  },
+  "r17-residual-024-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-024-right",
+   "requestAttributes": {
+    "case": "r17-residual-024-right"
+   }
+  },
+  "r17-residual-026-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-026-right",
+   "requestAttributes": {
+    "case": "r17-residual-026-right"
+   }
+  },
+  "r17-residual-027-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-027-right",
+   "requestAttributes": {
+    "case": "r17-residual-027-right"
+   }
+  },
+  "r17-residual-030-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-030-right",
+   "requestAttributes": {
+    "case": "r17-residual-030-right"
+   }
+  },
+  "r17-residual-031-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-031-right",
+   "requestAttributes": {
+    "case": "r17-residual-031-right"
+   }
+  },
+  "r17-residual-034-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-034-right",
+   "requestAttributes": {
+    "case": "r17-residual-034-right"
+   }
+  },
+  "r17-residual-035-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-035-right",
+   "requestAttributes": {
+    "case": "r17-residual-035-right"
+   }
+  },
+  "r17-residual-037-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-037-right",
+   "requestAttributes": {
+    "case": "r17-residual-037-right"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "ax76-188-r17-residual-000",
+   "condition": "resource.o.x == 6 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-188-r17-residual-001",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "key": "ds0",
+     "sets": [
+      {
+       "key": "s0",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p0",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r0",
+           "target": "true",
+           "condition": "resource.items[*].x > null OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "about": "Task 16 moves it to depth = nested."
+  }
+ ]
+}

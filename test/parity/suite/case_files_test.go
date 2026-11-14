@@ -1381,7 +1381,14 @@ func userManagementRouteProblems(owner string, pins map[string]PipStubResponse) 
 
 // dropsPIPNamesOnPurpose lists the case files that let a case declare fewer PIP
 // names than the cases before it, because the file asks what that does.
-var dropsPIPNamesOnPurpose = map[string]bool{"round19/stand-rule.json": true}
+var dropsPIPNamesOnPurpose = map[string]bool{
+	"round19/stand-rule.json": true,
+	// these ask a case of round19/stand-rule.json under another set status, and drop the same PIP names
+	"round76/axes-19.json": true,
+	"round76/axes-20.json": true,
+	"round76/axes-21.json": true,
+	"round76/axes-22.json": true,
+}
 
 // checkKeepsPIPNames fails a file of round 19 or later in which a case with
 // sets names PIPs without naming every PIP name that an earlier case with sets

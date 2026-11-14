@@ -1,0 +1,143 @@
+{
+ "about": "Round 76, task 16: survivor:route check/resource v2 | lang idiom_number_text=double_all, moved to route = check/resource v2 from round44/idioms-conditions.json (id44-number-text-0-or). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R44_IDIOM_",
+ "pins": {},
+ "pips": {
+  "obs-subject-parityidiomgen": {
+   "name": "subject.parityIdiomGen",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/idiom-gen"
+  },
+  "obs-subject-parityidiomhdr": {
+   "name": "subject.parityIdiomHdr",
+   "pipType": "HEADER",
+   "header": "X-Parity-Idiom",
+   "cacheable": false
+  }
+ },
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ax76-121-id44-control-first-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-121-id44-number-text-0-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == '9223372036854775808' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n-check-resource-v2",
+     "resource": {
+      "x": 9223372036854775808,
+      "id": "obs",
+      "a": "n"
+     },
+     "operation": "READ",
+     "v2": {}
+    },
+    {
+     "name": "a-y-check-resource-v2",
+     "resource": {
+      "x": 9223372036854775808,
+      "id": "obs",
+      "a": "y"
+     },
+     "operation": "READ",
+     "v2": {}
+    }
+   ],
+   "about": "Task 16 moves it to route = check/resource v2."
+  },
+  {
+   "id": "ax76-121-id44-control-last-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y-check-resource-v2",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "y"
+     },
+     "operation": "READ",
+     "v2": {}
+    }
+   ]
+  }
+ ]
+}

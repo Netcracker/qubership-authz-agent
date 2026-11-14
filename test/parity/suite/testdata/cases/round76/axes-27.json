@@ -1,0 +1,125 @@
+{
+ "about": "Round 76, task 16: survivor:route bulk/operations v2 | engine url_reading=OBSERVED, moved to route = bulk/operations v2 from round29/r28-url.json (r29r28-url-backslash). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R29U_",
+ "pins": {
+  "/api/v1/pip/r29b/xy": {
+   "statusCode": 200,
+   "body": [
+    "m-dropped"
+   ]
+  },
+  "/api/v1/pip/r29b/x\\y": {
+   "statusCode": 200,
+   "body": [
+    "m-kept"
+   ]
+  },
+  "/api/v1/pip/r29r/plain": {
+   "statusCode": 200,
+   "body": [
+    "m-plain"
+   ]
+  },
+  "/api/v1/pip/r29q/it's": {
+   "statusCode": 200,
+   "body": [
+    "m-quote"
+   ]
+  }
+ },
+ "pips": {
+  "bs": {
+   "name": "subject.parityR29Bs",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29b/x\\y",
+   "requestAttributes": {
+    "case": "subject.parityR29Bs"
+   }
+  },
+  "res": {
+   "name": "subject.parityR29Res",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29r/${resource.u}",
+   "requestAttributes": {
+    "case": "subject.parityR29Res"
+   }
+  },
+  "quote": {
+   "name": "subject.parityR29Quote",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29q/it's",
+   "requestAttributes": {
+    "case": "subject.parityR29Quote"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "ax76-27-r29r28-url-backslash",
+   "pips": [
+    "bs"
+   ],
+   "about": "The url ends with x\\y. m-dropped: the backslash is dropped (the path a round 28 probe showed); m-kept: the path keeps it; neither, and a-y false: the call fails. Task 16 moves it to route = bulk/operations v2.",
+   "condition": "subject.parityR29Bs == resource.want OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "want-m-dropped-bulk-operations-v2",
+     "bulkOperations": [
+      {
+       "id": "r29",
+       "resource": {
+        "want": "m-dropped",
+        "a": "n",
+        "id": "r29"
+       },
+       "operations": [
+        "READ"
+       ]
+      }
+     ],
+     "v2": {}
+    },
+    {
+     "name": "want-m-kept-bulk-operations-v2",
+     "bulkOperations": [
+      {
+       "id": "r29",
+       "resource": {
+        "want": "m-kept",
+        "a": "n",
+        "id": "r29"
+       },
+       "operations": [
+        "READ"
+       ]
+      }
+     ],
+     "v2": {}
+    },
+    {
+     "name": "a-y-bulk-operations-v2",
+     "bulkOperations": [
+      {
+       "id": "r29",
+       "resource": {
+        "want": "none",
+        "a": "y",
+        "id": "r29"
+       },
+       "operations": [
+        "READ"
+       ]
+      }
+     ],
+     "v2": {}
+    }
+   ]
+  }
+ ]
+}

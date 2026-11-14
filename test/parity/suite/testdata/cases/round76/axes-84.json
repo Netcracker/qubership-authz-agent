@@ -1,0 +1,226 @@
+{
+ "about": "Round 76, task 16: survivor:route check/filter v1 | lang general_scalar_other L×IN→ABORT, moved to route = check/filter v1 from round58/open-single.json (op58-scalar-body-not-in). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R58_OPEN_",
+ "pins": {
+  "/api/v1/pip/r58open-num": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r58open-fz": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r58open-sent": {
+   "statusCode": 200,
+   "body": [
+    "m"
+   ]
+  },
+  "/api/v1/pip/r58open-failed": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity sentinel poison"
+   }
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "num": {
+   "name": "subject.parityR58Num",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r58open-num",
+   "requestAttributes": {
+    "case": "r58open-num"
+   }
+  },
+  "fz": {
+   "name": "subject.parityR58Fz",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r58open-fz",
+   "requestAttributes": {
+    "case": "r58open-fz"
+   }
+  },
+  "hdr": {
+   "name": "subject.parityR58Hdr",
+   "pipType": "HEADER",
+   "type": "UUID",
+   "header": "x-parity-r58-hdr",
+   "cacheable": false
+  },
+  "sent": {
+   "name": "subject.parityR58Sent",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r58open-sent",
+   "requestAttributes": {
+    "case": "r58open-sent"
+   }
+  },
+  "failed": {
+   "name": "subject.parityR58Failed",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r58open-failed",
+   "requestAttributes": {
+    "case": "r58open-failed"
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ax76-84-op58-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-84-op58-scalar-body-not-in",
+   "about": "A GENERAL body that is the number 5 on the left of NOT IN a list of texts that holds its text '5'. ALLOW form: the comparison OR resource.a == 'y'. Task 16 moves it to route = check/filter v1.",
+   "pips": [
+    "failed",
+    "fz",
+    "hdr",
+    "num",
+    "scope",
+    "sent"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR58Num NOT IN '5', 'b' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "a-y-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "ax76-84-op58-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  }
+ ]
+}
