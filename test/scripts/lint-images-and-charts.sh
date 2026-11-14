@@ -14,8 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Lints the charts under helm-templates/ with helm lint, lints every
-# Dockerfile with hadolint, validates the rendered manifests of the three
+# Lints the charts under helm-templates/ with helm lint, checks that no image
+# under build/ replaces the entrypoint of its qubership-core-base stage, lints
+# every Dockerfile with hadolint, validates the rendered manifests of the three
 # charts with kubeconform -strict, and scans the rendered product charts
 # (authz-agent, authz-policy-admin) with trivy config. The test-stand chart is
 # a test fixture and gets the schema check only.
@@ -87,6 +88,23 @@ echo "[helm lint] charts, $(helm version --short)"
 for_each_chart lint_chart
 if [[ "${lint_only}" == true ]]; then
   exit 0
+fi
+
+# The images under build/ run on qubership-core-base behind its entrypoint,
+# which loads the CA certificates of /tmp/cert into the trust store and
+# forwards signals to the binary. An ENTRYPOINT in the final stage replaces it.
+echo "[entrypoint] Dockerfiles under build/"
+entrypoint_errors=0
+while IFS= read -r -d '' dockerfile; do
+  if awk 'toupper($1) == "FROM" {base = /qubership-core-base/; entrypoint = 0}
+          toupper($1) == "ENTRYPOINT" {entrypoint = 1}
+          END {exit !(base && entrypoint)}' "${dockerfile}"; then
+    echo "error: ${dockerfile} sets ENTRYPOINT in its qubership-core-base stage, so the base image's entrypoint never runs: a CA certificate under /tmp/cert is not trusted, and signals reach the binary unforwarded. Remove the ENTRYPOINT line and make the binary the CMD, as build/authz-policy-admin/Dockerfile does." >&2
+    entrypoint_errors=$((entrypoint_errors + 1))
+  fi
+done < <(git ls-files -z 'build/*/Dockerfile')
+if [[ "${entrypoint_errors}" -gt 0 ]]; then
+  exit 1
 fi
 
 for tool in hadolint kubeconform trivy; do

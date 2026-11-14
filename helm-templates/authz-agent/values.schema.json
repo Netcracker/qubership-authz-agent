@@ -179,6 +179,16 @@
       "title": "The READONLY_CONTAINER_FILE_SYSTEM_ENABLED schema",
       "type": "boolean"
     },
+    "CA_CERTIFICATES_SECRET": {
+      "$id": "#/properties/CA_CERTIFICATES_SECRET",
+      "type": "string",
+      "title": "The CA_CERTIFICATES_SECRET schema",
+      "description": "Name of a Secret whose keys ending in .crt, .cer, or .pem hold CA certificates the agent trusts; the Pod mounts it at /tmp/cert. Empty mounts nothing",
+      "default": "",
+      "examples": [
+        "corporate-ca"
+      ]
+    },
     "MANAGED_BY": {
       "$id": "#/properties/MANAGED_BY",
       "type": "string",
