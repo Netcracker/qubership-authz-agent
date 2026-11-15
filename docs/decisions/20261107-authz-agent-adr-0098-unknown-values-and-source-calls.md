@@ -25,7 +25,8 @@ vlsi
   the attributes of a resource in a filter, which are unknown values of this record, and the terms unknown target and
   node that can deny, which R11 uses.
 - [authz-agent-ADR-0100: Reject a tenant's candidate snapshot whole when it holds a form the agent cannot evaluate](20261107-authz-agent-adr-0100-forms-the-agent-cannot-evaluate.md):
-  ADR-0100 R4, a policy set that legacy never evaluates.
+  ADR-0100 R4, a policy set that legacy never evaluates, and ADR-0100 R10, a node that a pattern that does not compile
+  isolates.
 
 ## Context
 
@@ -63,7 +64,8 @@ it, answer 200, and read each value from its source at most once per request and
   4. the result of `subject allowed` or `subject denied` over a decision that depends on an unknown value;
   5. the decision of a policy set that legacy never evaluates, as ADR-0100 defines it;
   6. a value of a PIP that ADR-0090 rule 2 isolates;
-  7. the decision of a policy set that ADR-0090 rule 2 isolates;
+  7. the decision of a policy set that ADR-0090 rule 2 isolates, or of a policy or a policy set that ADR-0100 R10
+     isolates;
   8. the result of a comparison on which legacy fails with an exception, over a value that the source returned
      normally or an attribute of the resource, such as `IS EMPTY` or `IS NOT EMPTY` over a PIP body `null`, or an
      operator that legacy cannot apply to an attribute of the resource that is `null`.
@@ -79,9 +81,9 @@ it, answer 200, and read each value from its source at most once per request and
   unknown, `AND` is false when any operand is false, and `OR` is true when any operand is true.
 - **R2** (`translate`). A resource is allowed only if it is allowed for every value that each unknown value could take.
   Otherwise it is denied. R11 denies some resources that this rule alone would allow.
-- **R3** (`handler`). A source failure, and a policy set of item 5 or 7 of the unknown values that a request reaches,
-  never make a check route answer 500. The answer is 200, and each resource gets
-  its decision under R2. The exception is a subject whose token has no roles at all in a request with
+- **R3** (`handler`). A source failure, and a policy or a policy set of item 5 or 7 of the unknown values that a
+  request reaches, never make a check route answer 500. The answer is 200, and each resource gets its decision under
+  R2. The exception is a subject whose token has no roles at all in a request with
   `obligations=true`, which gets 500 as in legacy.
 - **R11** (`translate`). A rule whose condition is unknown under R1 because of a failed value denies, whatever
   the effect of the rule and whatever the other rules and the combining algorithms give. It denies where the rule is
@@ -98,8 +100,8 @@ it, answer 200, and read each value from its source at most once per request and
      with an attribute of the resource.
 - **R4** (`translate`). A resource denied under R2 because of an unknown value, under R11, or under ADR-0099 R10
   because a target is an unknown target through a failed value, gets the denial reason `PIP resolution failed`, with
-  the names of the sources that failed, of the policy sets of item 5 or 7 whose decision it depends on, or of the
-  operator and the operand of item 8.
+  the names of the sources that failed, of the policies and policy sets of item 5 or 7 whose decision it depends on,
+  or of the operator and the operand of item 8.
 - **R12** (`translate`). These departures can allow a resource that legacy denies, and they are departures that allow
   more under ADR-0097 R5:
   1. a condition whose value R1 settles without the failed value, such as `subject.x == 'v' OR resource.a == 'y'` with a
