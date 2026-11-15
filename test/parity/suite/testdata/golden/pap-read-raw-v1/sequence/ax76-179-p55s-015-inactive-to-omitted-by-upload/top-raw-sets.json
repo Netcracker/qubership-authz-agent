@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-ax76-179-p55s-015-inactive-to-omitted-by-upload",
+        "name": "p55s-015-inactive-to-omitted-by-upload s1",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p55s-015-inactive-to-omitted-by-upload s1",
+            "policyId": "df82d5f5-aa41-6de4-e56a-750c6066ca31",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p55s-015-inactive-to-omitted-by-upload s1 rule",
+                "ruleId": "673323a3-68f0-8bbf-be2b-4646fae21156",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-ax76-179-p55s-015-inactive-to-omitted-by-upload"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-ax76-179-p55s-015-inactive-to-omitted-by-upload"
+          }
+        ],
+        "policySetId": "4516bd19-5c09-3fa5-0f56-f7219ba4955a",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P55S_015'",
+        "tenantId": "parity-ax76-179-p55s-015-inactive-to-omitted-by-upload",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}
