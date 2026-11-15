@@ -1,0 +1,28 @@
+{
+  "ax76-200-r29pipfield-custom-param-resource-owner": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": {
+          "logic": {
+            "path": "a4b8a4ca-29ad-547f-538f-b6948150e42e"
+          },
+          "data": {
+            "a4b8a4ca-29ad-547f-538f-b6948150e42e": {
+              "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+              "params": {
+                "p": null
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

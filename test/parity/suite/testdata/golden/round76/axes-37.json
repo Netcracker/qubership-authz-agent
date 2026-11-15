@@ -1,0 +1,66 @@
+{
+  "ax76-37-r29fields-custom-effect-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-37-r29fields-custom-effect-control-last": {
+    "check-resource-bulk-v1-outcome/regular/read-bulk-v1": {"status":200,"allowed":["r29"]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-37-r29fields-custom-effect-deny": {
+    "check-filter-v1-outcome/regular/filter-after": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "p!=1",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/filter-before": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-37-r29fields-custom-effect-not-applicable": {
+    "check-filter-v1-outcome/regular/filter-after": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "p!=1",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/filter-before": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-v1-outcome/regular/read-after-bulk-v1": {"status":200,"allowed":["r29"]},
+    "check-resource-bulk-v1-outcome/regular/read-before-bulk-v1": {"status":200,"allowed":["r29"]},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "ax76-95-sn44-iterate-deny-overrides-deny": {
+    "check-resource-v2-outcome/regular/read-check-resource-v2": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read-check-resource-v2": {"calls":0,"requestAttributes":null}
+  },
+  "ax76-95-sn44-nodes-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":2,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "ax76-95-sn44-nodes-control-last": {
+    "check-resource-v2-outcome/regular/read-check-resource-v2": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read-check-resource-v2": {"calls":2,"requestAttributes":{"case":"s44-sent"}}
+  }
+}

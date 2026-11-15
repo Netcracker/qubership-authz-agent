@@ -1,0 +1,47 @@
+{
+  "ax76-18-r41open-m2m-held-pip-disable-simplified": {
+    "check-resource-v2-outcome/regular/after-read-check-resource-v2": {"status":400,"decision":false,"message":{"message":"subject.parityR41HeldPipDisable"}},
+    "check-resource-v2-outcome/regular/after-read-policy-check-resource-v2": {"status":400,"decision":false,"message":{"message":"subject.parityR41HeldPipDisable"}},
+    "check-resource-v2-outcome/regular/before-read-check-resource-v2": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: subject.isM2M"
+      }
+    },
+    "check-resource-v2-outcome/regular/before-read-policy-check-resource-v2": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: subject.isM2M"
+      }
+    },
+    "import-pip-customization-v1/regular/disable": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-18-r41open-m2m-held-pip-disable-simplified-policy": {
+    "check-resource-v1-outcome/isolated/read-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: subject.isM2M"
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-y": {"calls":0,"requestAttributes":null}
+  },
+  "ax76-18-r41openm2mheldpipdisablesimplified-control-first": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax76-18-r41openm2mheldpipdisablesimplified-control-last": {
+    "check-resource-v2-outcome/regular/read-check-resource-v2": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: subject.isM2M"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "ax76-159-r30open-effect-absent-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-159-r30open-effect-absent-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-159-r30open-replace-without-effect": {
+    "check-filter-v1-outcome/regular/filter-after": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/filter-before": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

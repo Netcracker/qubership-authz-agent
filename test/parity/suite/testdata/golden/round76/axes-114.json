@@ -1,0 +1,49 @@
+{
+  "ax76-114-r30open-remote-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-114-r30open-remote-control-last": {
+    "check-resource-v2-outcome/regular/read-check-resource-v2": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-114-r30open-remote-filtered-allow": {
+    "check-resource-v1-outcome/regular/anonymous-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/anonymous-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/m2m-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/m2m-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reader-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reader-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/anonymous-a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/m2m-a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/reader-a-n": {"calls":1,"requestAttributes":{"case":"r30open-remote-filtered"}}
+  },
+  "ax76-114-r30open-remote-filtered-deny": {
+    "check-resource-v1-outcome/regular/anonymous-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/anonymous-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/m2m-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/m2m-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reader-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reader-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/anonymous-a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/m2m-a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/reader-a-n": {"calls":1,"requestAttributes":{"case":"r30open-remote-filtered"}}
+  },
+  "ax76-114-r30open-remote-level-allow": {
+    "check-resource-v2-outcome/regular/level-partner-a-n-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/level-partner-a-y-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/level-upper-m2m-a-n-check-resource-v2": {"status":200,"decision":false},
+    "check-resource-v2-outcome/regular/level-upper-m2m-a-y-check-resource-v2": {"status":200,"decision":false},
+    "check-resource-v2-outcome/regular/reader-a-n-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/reader-a-y-check-resource-v2": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/level-partner-a-n-check-resource-v2": {"calls":1,"requestAttributes":{"case":"r30open-remote"}},
+    "pip-call/regular/level-upper-m2m-a-n-check-resource-v2": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/reader-a-n-check-resource-v2": {"calls":1,"requestAttributes":{"case":"r30open-remote"}}
+  }
+}

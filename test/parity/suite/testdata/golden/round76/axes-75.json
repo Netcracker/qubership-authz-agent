@@ -1,0 +1,16 @@
+{
+  "ax76-75-z26-g-000": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax76-75-z26-g-001": {
+    "check-resource-bulk-operations-v1-outcome/isolated/probe-a-n-bulk-operations-v1": {"status":200,"decision":{"READ":[]}},
+    "check-resource-bulk-operations-v1-outcome/isolated/probe-a-y-bulk-operations-v1": {"status":200,"decision":{"READ":["r26"]}},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax76-75-z26-g-control-first": {
+    "check-resource-bulk-operations-v1-outcome/regular/read-bulk-operations-v1": {"status":200,"decision":{"READ":["r26"]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
