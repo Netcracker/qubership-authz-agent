@@ -214,21 +214,21 @@ type requestError struct {
 }
 
 func (e *requestError) Error() string {
-	var unsent *url.Error
-	if !errors.As(e.err, &unsent) {
+	var urlErr *url.Error
+	if !errors.As(e.err, &urlErr) {
 		// Do documents a *url.Error for every error it returns; an error of
-		// any other type is cut whole.
+		// any other type has its whole text quoted and cut.
 		return quoted(e.err.Error(), 200)
 	}
-	return fmt.Sprintf("%s %q: %s", unsent.Op, unsent.URL, quoted(unsent.Err.Error(), 200))
+	return fmt.Sprintf("%s %q: %s", urlErr.Op, urlErr.URL, quoted(urlErr.Err.Error(), 200))
 }
 
 func (e *requestError) Unwrap() error { return e.err }
 
 // quoted quotes s, cut to its first limit runes with "..." after the cut.
 func quoted(s string, limit int) string {
-	// s can run to tens of megabytes, and []rune(s) would take four bytes
-	// for each of them.
+	// s can run to tens of megabytes, and []rune(s) would allocate four
+	// bytes for each rune of s.
 	n := 0
 	for i := range s {
 		if n == limit {
