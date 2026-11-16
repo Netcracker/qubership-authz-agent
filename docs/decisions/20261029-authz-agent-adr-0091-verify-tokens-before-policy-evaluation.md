@@ -166,9 +166,10 @@ These records use no wider word for a realm token and a file token together. The
   out, the limit of R33 refused the load, or the list of R34 is full.
 - **R39** (`keys`). A source answered when it returned a document with a `keys` array, even an empty one. A 200 with any
   other body is a failed load. A 404 of the discovery document of R4 counts as an answer only for a realm with no keys
-  loaded, so a token that names a realm the Keycloak does not hold gets `TOKEN_KID_UNKNOWN`. A realm in
-  `keycloak.requiredRealms` counts here like any other realm. For a realm that holds keys a 404 is a failed reload, and
-  the keys stay. A 404 of the `jwks_uri` that the discovery document names, and a 404 for a provider, are no answer.
+  loaded, and only when its body is a JSON object with `error` set to `Realm does not exist`. A token that names such a
+  realm gets `TOKEN_KID_UNKNOWN`. A realm in `keycloak.requiredRealms` counts here like any other realm. For a realm
+  that holds keys a 404 is a failed reload, and the keys stay. Any other 404 of the discovery document, a 404 of the
+  `jwks_uri` that the discovery document names, and a 404 for a provider are no answer.
 
 #### Checks
 
@@ -260,8 +261,11 @@ cost Keycloak, because a load happens before any signature is checked (R31, R33 
 that a source withdrew, and a source that is down keeps its keys, so an outage does not change the answers for keys
 already loaded (R25, R28).
 
-Keycloak answers 404 for the discovery document of a realm it does not hold. Once that document answers 200 the realm
-exists, so a 404 of its `jwks_uri` is a fault of the address, such as a misconfigured proxy (R39).
+Keycloak 26 answers the discovery document of a realm it does not hold with a 404 whose JSON body has `error` set to
+`Realm does not exist`. The agent cannot tell a 404 with another body from one that something else on the path sends,
+such as a proxy with no route, or a Keycloak that serves its realms without the `/auth` prefix that R4 adds, so that
+404 says nothing about the realm. Once the discovery document answers 200 the realm exists, so a 404 of its `jwks_uri`
+is most likely a fault of the address (R39).
 
 Readiness rather than the process keeps traffic away from a Pod without keys (R14, R19): a restart would ask a Keycloak
 that is already down, and the Pod would lose what it has loaded. Liveness stays apart for the same reason, because a
@@ -316,9 +320,9 @@ Negative:
   can hold all 10 loads, and a realm not loaded yet or a rotated key then waits up to a minute with its tokens refused.
 - A Pod that cannot reach Keycloak stays not ready rather than failing, so the signal is the readiness probe and the
   warnings.
-- A Keycloak, or a proxy in front of it, that starts to answer 404 for the discovery document of every realm while the
-  agent runs gives the tokens of a realm with no keys loaded `TOKEN_KID_UNKNOWN` rather than `TOKEN_KEYS_UNAVAILABLE`
-  until the address answers again. A realm that holds keys keeps them (R28, R39).
+- A 404 for a realm that Keycloak does not hold, whose body differs from the one R39 names, as another Keycloak version
+  or a proxy that replaces error pages may send, gives the tokens of that realm `TOKEN_KEYS_UNAVAILABLE` rather than
+  `TOKEN_KID_UNKNOWN` (R39).
 - An edit of the trusted providers file outside Helm takes effect only at the next restart of the Pods.
 - A provider that signs tokens without `kid` cannot be used, because all its tokens are refused.
 - A token without `iat` passes the current policies, and an `iat` up to 300 seconds in the future passes for every
