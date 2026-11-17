@@ -29,7 +29,7 @@ kichasov
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
   ADR-0093 R10 to R14, the default tenant, and ADR-0093 R17, the policy snapshots that readiness waits for.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
-  ADR-0094 R1 to R13 and R26 to R29, the marked provider and its tokens, and ADR-0094 R14 to R25, the extra checks of a
+  ADR-0094 R1 to R13 and R26 to R32, the marked provider and its tokens, and ADR-0094 R14 to R25, the extra checks of a
   Kubernetes token.
 - [authz-agent-ADR-0095: Refuse a check request before policy evaluation](20261029-authz-agent-adr-0095-refuse-before-policy-evaluation.md):
     ADR-0095 R16, the index of the reason codes.
