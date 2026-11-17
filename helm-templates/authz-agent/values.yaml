@@ -287,8 +287,9 @@ AUTHZ_PAP_CLIENT_TOKEN_FILE: /var/run/secrets/tokens/netcracker/token
 # IS EMPTY is true. Nothing is logged for that, so set the URL wherever
 # entitlements-based policies are in use.
 AUTHZ_ENTITLEMENTS_URL: ''
-# Per-request timeout and retry count for the aggregator call. Same shape as
-# the AUTHZ_JWKS_HTTP_* knobs above.
+# Per-request timeout of the aggregator call, in seconds.
+# AUTHZ_ENTITLEMENTS_HTTP_RETRIES has no effect: each call to the aggregator
+# is one attempt.
 AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT: 5
 AUTHZ_ENTITLEMENTS_HTTP_RETRIES: 3
 
