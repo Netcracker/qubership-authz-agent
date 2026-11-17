@@ -16,18 +16,22 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
+	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 
 	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/engine"
@@ -80,22 +84,135 @@ func TestReport(t *testing.T) {
 	}
 }
 
-// TestGet: a variable set to the empty string is returned as the empty
-// string, where configloader alone would fall back to the default; an
-// unset variable takes the default, and a set one is returned as set.
+// The agent runs as a child process of this test binary, which calls main
+// when AUTHZ_AGENT_TEST_RUN_MAIN is 1. The child reads no trusted providers
+// file and no token file, so that only the value under test stops it.
+func TestStart_StopsAndNamesTheVariable(t *testing.T) {
+	if os.Getenv("AUTHZ_AGENT_TEST_RUN_MAIN") == "1" {
+		main()
+		return
+	}
+	busy := busyAddress(t)
+	for _, tt := range []struct {
+		name  string
+		env   []string
+		level string
+		want  string
+	}{
+		{"an invalid value at the default log level", []string{"AUTHZ_PAP_CLIENT_PULL_INTERVAL=2s"}, "",
+			`configuration: AUTHZ_PAP_CLIENT_PULL_INTERVAL="2s": expected an integer number of seconds from 0 to 9223372036`},
+		{"an invalid value at the log level fatal", []string{"AUTHZ_PAP_CLIENT_PULL_INTERVAL=2s"}, "fatal",
+			`configuration: AUTHZ_PAP_CLIENT_PULL_INTERVAL="2s": expected an integer number of seconds from 0 to 9223372036`},
+		{"a public address in use at the default log level", []string{"AUTHZ_PUBLIC_ADDR=" + busy}, "",
+			`public listener on AUTHZ_PUBLIC_ADDR="` + busy + `": `},
+		{"a public address in use at the log level fatal", []string{"AUTHZ_PUBLIC_ADDR=" + busy}, "fatal",
+			`public listener on AUTHZ_PUBLIC_ADDR="` + busy + `": `},
+		{"an internal address in use at the log level fatal", []string{"AUTHZ_HTTP_ADDR=" + busy}, "fatal",
+			`internal listener on AUTHZ_HTTP_ADDR="` + busy + `": `},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			agent := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestStart_StopsAndNamesTheVariable$")
+			agent.Env = append(childEnvironment(), "AUTHZ_AGENT_TEST_RUN_MAIN=1", "LOGGING_LEVEL_ROOT="+tt.level,
+				"AUTHZ_HTTP_ADDR=127.0.0.1:0", "AUTHZ_PUBLIC_ADDR=127.0.0.1:0",
+				"AUTHZ_TRUSTED_PROVIDERS_FILE=", "AUTHZ_PAP_CLIENT_TOKEN_FILE=")
+			agent.Env = append(agent.Env, tt.env...)
+			out, err := agent.CombinedOutput()
+			var exit *exec.ExitError
+			if !errors.As(err, &exit) || exit.ExitCode() != 1 {
+				t.Errorf("the agent with %v ended with %v, want exit status 1", tt.env, err)
+			}
+			if !strings.Contains(string(out), tt.want) {
+				t.Errorf("the agent's output lacks %q:\n%s", tt.want, out)
+			}
+		})
+	}
+}
+
+// childEnvironment is the environment of this test process without the
+// variables that the agent or the platform logger can read: every variable
+// whose name starts with authz., log.level, or logging.level once folded as
+// configloader folds it, to lower case with dots for underscores.
+func childEnvironment() []string {
+	var kept []string
+	for _, entry := range os.Environ() {
+		name, _, _ := strings.Cut(entry, "=")
+		key := strings.ReplaceAll(strings.ToLower(name), "_", ".")
+		if strings.HasPrefix(key, "authz.") || strings.HasPrefix(key, "log.level") || strings.HasPrefix(key, "logging.level") {
+			continue
+		}
+		kept = append(kept, entry)
+	}
+	return kept
+}
+
+func TestLogStop_RaisesOnlyTheLevelFatal(t *testing.T) {
+	saved := logger.GetLevel()
+	t.Cleanup(func() { logger.SetLevel(saved) })
+	for _, tt := range []struct {
+		name      string
+		level     logging.Lvl
+		wantLevel logging.Lvl
+	}{
+		{"fatal is raised to error", logging.LvlCrit, logging.LvlError},
+		{"error stays error", logging.LvlError, logging.LvlError},
+		{"debug stays debug", logging.LvlDebug, logging.LvlDebug},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			logger.SetLevel(tt.level)
+			logStop("logStop test line")
+			if got := logger.GetLevel(); got != tt.wantLevel {
+				t.Errorf("logger level after logStop() at %v = %v, want %v", tt.level, got, tt.wantLevel)
+			}
+		})
+	}
+}
+
 func TestGet(t *testing.T) {
-	t.Setenv("AUTHZ_TRUSTED_PROVIDERS_FILE", "")
-	if got := get("authz.trusted.providers.file", authn.DefaultFile); got != "" {
-		t.Errorf("get() with the variable empty = %q, want empty", got)
-	}
-	if got := get("authz.trusted.providers.unset", "fallback"); got != "fallback" {
-		t.Errorf("get() with the variable unset = %q, want the fallback", got)
-	}
-	t.Setenv("AUTHZ_TRUSTED_PROVIDERS_FILE", "/p.json")
-	// init read the environment before t.Setenv; a fresh Init sees the value.
-	configloader.Init(configloader.EnvPropertySource())
-	if got := get("authz.trusted.providers.file", authn.DefaultFile); got != "/p.json" {
-		t.Errorf("get() with the variable set = %q, want /p.json", got)
+	t.Run("an empty variable is returned empty", func(t *testing.T) {
+		t.Setenv("AUTHZ_TRUSTED_PROVIDERS_FILE", "")
+		if got := get("authz.trusted.providers.file", authn.DefaultFile); got != "" {
+			t.Errorf("get() with AUTHZ_TRUSTED_PROVIDERS_FILE empty = %q, want empty", got)
+		}
+	})
+	t.Run("an unset variable takes the fallback", func(t *testing.T) {
+		if got := get("authz.agent.test.unset", "fallback"); got != "fallback" {
+			t.Errorf("get() with AUTHZ_AGENT_TEST_UNSET unset = %q, want the fallback", got)
+		}
+	})
+	t.Run("a set variable is returned as set", func(t *testing.T) {
+		t.Setenv("AUTHZ_TRUSTED_PROVIDERS_FILE", "/p.json")
+		if got := get("authz.trusted.providers.file", authn.DefaultFile); got != "/p.json" {
+			t.Errorf("get() with AUTHZ_TRUSTED_PROVIDERS_FILE=/p.json = %q, want /p.json", got)
+		}
+	})
+}
+
+// Where one variable's name adds an underscore and a suffix to another's, as
+// LOG_LEVEL_PACKAGE_AUTHZ-AGENT does to LOG_LEVEL, configloader, which main
+// initializes from the environment, nests the longer one under the key of the
+// shorter one. Each test initializes it again after setting the variables, so
+// that a get that read through configloader would see them.
+func TestLoadConfig_RefusesAValueBesideAVariableThatExtendsItsName(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		env  map[string]string
+		want string
+	}{
+		{"a pull interval beside a longer variable", map[string]string{"AUTHZ_PAP_CLIENT_PULL_INTERVAL": "2s", "AUTHZ_PAP_CLIENT_PULL_INTERVAL_X": "1"},
+			`AUTHZ_PAP_CLIENT_PULL_INTERVAL="2s": expected an integer number of seconds from 0 to 9223372036`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Cleanup(func() { configloader.Init(configloader.EnvPropertySource()) })
+			for name, value := range tt.env {
+				t.Setenv(name, value)
+			}
+			configloader.Init(configloader.EnvPropertySource())
+			if _, err := loadConfig(get); err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Errorf("loadConfig(get) with %v in the environment = %v, want an error with %q", tt.env, err, tt.want)
+			}
+		})
 	}
 }
 
