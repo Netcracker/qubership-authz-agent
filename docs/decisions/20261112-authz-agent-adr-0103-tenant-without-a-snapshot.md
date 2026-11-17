@@ -19,7 +19,7 @@ vlsi
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   ADR-0091 R17, the conditions that the 503 of `/ready` names, and ADR-0091 R18, liveness, which R4 and R5 build on.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
-  the tenant of the decision, the default tenant and its translation (ADR-0093 R11), which ADR-0093 also answers for a
+  the tenant of the decision, the default tenant and its translation (ADR-0093 R11), which ADR-0093 R22 answers for a
   request that needs the default tenant before the translation, and readiness (ADR-0093 R17, R19, R21). R1 here
   replaces ADR-0093 R16 and R18.
 - [authz-agent-ADR-0095: Refuse a check request before policy evaluation](20261029-authz-agent-adr-0095-refuse-before-policy-evaluation.md):
@@ -96,6 +96,11 @@ covers the three reasons a tenant can lack a snapshot, because a caller cannot t
 same (R1). Answering at once keeps a request from holding a connection for as long as the pull takes, and the status
 stays 200, so a caller does not retry a request that the next pull may not fix either (R1). The reason tells an
 operator who reads a denial that no policy was evaluated (R2).
+
+A default tenant whose name is not translated yet gets the 503 of ADR-0093 R22 instead, because that window has one
+reason and always ends: the translation finishes, or ADR-0093 R11 keeps the agent not ready, so a retry succeeds. Of the
+three reasons that R1 covers, the window of a tenant that the policy data does not name never ends, so a 503 would make
+its caller retry forever (A1).
 
 `/health` is the liveness probe. A restart does not give a tenant a snapshot, and with one broken tenant a liveness
 probe that failed would restart every Pod and stop the other tenants as well (R4). Readiness is where a rollout waits,
