@@ -23,6 +23,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -59,8 +60,12 @@ func init() {
 
 func main() {
 	cfg, err := loadConfig(get)
+	refused := otherRootLevelNames(os.Environ())
 	if err != nil {
-		logStop("configuration: %v", err)
+		refused = append([]string{err.Error()}, refused...)
+	}
+	if len(refused) > 0 {
+		logStop("configuration: %s", strings.Join(refused, "; "))
 		os.Exit(1)
 	}
 	modules, err := policies.Modules()

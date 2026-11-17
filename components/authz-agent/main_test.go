@@ -103,6 +103,11 @@ func TestStart_StopsAndNamesTheVariable(t *testing.T) {
 			`configuration: AUTHZ_PAP_CLIENT_PULL_INTERVAL="2s": expected an integer number of seconds from 0 to 9223372036`},
 		{"an invalid value at the log level fatal", []string{"AUTHZ_PAP_CLIENT_PULL_INTERVAL=2s"}, "fatal",
 			`configuration: AUTHZ_PAP_CLIENT_PULL_INTERVAL="2s": expected an integer number of seconds from 0 to 9223372036`},
+		{"a root log level under log_level", []string{"log_level=debug"}, "",
+			`configuration: log_level="debug": expected no variable of this name, since the agent reads the root log level from LOGGING_LEVEL_ROOT alone`},
+		{"an invalid value beside a root log level under log_level", []string{"AUTHZ_PAP_CLIENT_PULL_INTERVAL=2s", "log_level=debug"}, "",
+			`configuration: AUTHZ_PAP_CLIENT_PULL_INTERVAL="2s": expected an integer number of seconds from 0 to 9223372036; ` +
+				`log_level="debug": expected no variable of this name, since the agent reads the root log level from LOGGING_LEVEL_ROOT alone`},
 		{"a public address in use at the default log level", []string{"AUTHZ_PUBLIC_ADDR=" + busy}, "",
 			`public listener on AUTHZ_PUBLIC_ADDR="` + busy + `": `},
 		{"a public address in use at the log level fatal", []string{"AUTHZ_PUBLIC_ADDR=" + busy}, "fatal",
@@ -200,6 +205,10 @@ func TestLoadConfig_RefusesAValueBesideAVariableThatExtendsItsName(t *testing.T)
 		env  map[string]string
 		want string
 	}{
+		{"LOG_LEVEL alone", map[string]string{"LOG_LEVEL": "debug"},
+			`LOG_LEVEL="debug": expected no value, since the agent reads the root log level from LOGGING_LEVEL_ROOT alone`},
+		{"LOG_LEVEL beside a package log level", map[string]string{"LOG_LEVEL": "debug", "LOG_LEVEL_PACKAGE_AUTHZ-AGENT": "info"},
+			`LOG_LEVEL="debug": expected no value, since the agent reads the root log level from LOGGING_LEVEL_ROOT alone`},
 		{"a pull interval beside a longer variable", map[string]string{"AUTHZ_PAP_CLIENT_PULL_INTERVAL": "2s", "AUTHZ_PAP_CLIENT_PULL_INTERVAL_X": "1"},
 			`AUTHZ_PAP_CLIENT_PULL_INTERVAL="2s": expected an integer number of seconds from 0 to 9223372036`},
 	} {

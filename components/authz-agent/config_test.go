@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -177,6 +178,8 @@ func TestLoadConfig_RefusesAnInvalidValue(t *testing.T) {
 			`LOGGING_LEVEL_ROOT="verbose": expected one of debug, info, warn, error, fatal`},
 		{"a space before the log level", "logging.level.root", " info",
 			`LOGGING_LEVEL_ROOT=" info": expected one of debug, info, warn, error, fatal`},
+		{"a root log level under LOG_LEVEL", "log.level", "debug",
+			`LOG_LEVEL="debug": expected no value, since the agent reads the root log level from LOGGING_LEVEL_ROOT alone`},
 		{"a listen address without a port", "authz.public.addr", "bogus",
 			`AUTHZ_PUBLIC_ADDR="bogus": expected <host>:<port>, with the host empty, an IP address, or a host name and the port from 0 to 65535, such as 0.0.0.0:8080`},
 		{"a negative port", "authz.http.addr", "0.0.0.0:-1",
@@ -297,6 +300,42 @@ func TestLoadConfig_TakesALogLevelInCapitals(t *testing.T) {
 	mustLoad(t, map[string]string{"logging.level.root": "INFO"})
 }
 
+func TestLoadConfig_RefusesLOG_LEVELBesideAValidRootLevel(t *testing.T) {
+	got := refusal(t, map[string]string{"logging.level.root": "info", "log.level": "debug"})
+	want := `LOG_LEVEL="debug": expected no value, since the agent reads the root log level from LOGGING_LEVEL_ROOT alone`
+	if got != want {
+		t.Errorf("loadConfig() with LOGGING_LEVEL_ROOT=info and LOG_LEVEL=debug refused with %q, want %q", got, want)
+	}
+}
+
+func TestOtherRootLevelNames(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		environ []string
+		want    []string
+	}{
+		{"log_level in lower case", []string{"log_level=debug"},
+			[]string{`log_level="debug": expected no variable of this name, since the agent reads the root log level from LOGGING_LEVEL_ROOT alone`}},
+		{"LOG_LEVEL spelled with dots and mixed case", []string{"Log.Level=debug"},
+			[]string{`Log.Level="debug": expected no variable of this name, since the agent reads the root log level from LOGGING_LEVEL_ROOT alone`}},
+		{"logging_level_root in lower case beside LOGGING_LEVEL_ROOT", []string{"LOGGING_LEVEL_ROOT=info", "logging_level_root=verbose"},
+			[]string{`logging_level_root="verbose": expected no variable of this name, since the agent reads the root log level from LOGGING_LEVEL_ROOT alone`}},
+		{"LOG_LEVEL and LOGGING_LEVEL_ROOT themselves", []string{"LOG_LEVEL=debug", "LOGGING_LEVEL_ROOT=info"}, nil},
+		{"an empty log_level", []string{"log_level="},
+			[]string{`log_level="": expected no variable of this name, since the agent reads the root log level from LOGGING_LEVEL_ROOT alone`}},
+		{"a variable below LOGGING_LEVEL_ROOT", []string{"LOGGING_LEVEL_ROOT=info", "LOGGING_LEVEL_ROOT_X=1"},
+			[]string{`LOGGING_LEVEL_ROOT_X="1": expected no variable of this name, since the agent reads the root log level from LOGGING_LEVEL_ROOT alone`}},
+		{"package levels of the agent's logger", []string{"LOG_LEVEL_PACKAGE_AUTHZ-AGENT=info", "LOGGING_LEVEL_AUTHZ-AGENT=debug"}, nil},
+		{"a variable below LOG_LEVEL", []string{"LOG_LEVEL_X=1"}, nil},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := otherRootLevelNames(tt.environ); !slices.Equal(got, tt.want) {
+				t.Errorf("otherRootLevelNames(%q) = %q, want %q", tt.environ, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestLoadConfig_EmptyValuesTakeTheDefaults(t *testing.T) {
 	empty := map[string]string{
 		"authz.jwks.bootstrap.required":           "",
@@ -308,6 +347,7 @@ func TestLoadConfig_EmptyValuesTakeTheDefaults(t *testing.T) {
 		"authz.entitlements.http.timeout":         "",
 		"authz.entitlements.http.retries":         "",
 		"logging.level.root":                      "",
+		"log.level":                               "",
 		"authz.http.addr":                         "",
 		"authz.public.addr":                       "",
 		"authz.tenant.manager.url":                "",

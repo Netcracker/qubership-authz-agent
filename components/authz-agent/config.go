@@ -57,6 +57,13 @@ type lookup func(key, fallback string) string
 // logLevels are the values of LOGGING_LEVEL_ROOT the platform logger reads.
 var logLevels = []string{"debug", "info", "warn", "error", "fatal"}
 
+// rootLevelKey and logLevelKey are the keys under which the platform logger
+// reads the root log level, from LOGGING_LEVEL_ROOT and from LOG_LEVEL.
+const (
+	rootLevelKey = "logging.level.root"
+	logLevelKey  = "log.level"
+)
+
 // maxSeconds is the largest whole number of seconds a [time.Duration] holds:
 // 9223372036, about 292 years.
 const maxSeconds = math.MaxInt64 / int64(time.Second)
@@ -64,10 +71,11 @@ const maxSeconds = math.MaxInt64 / int64(time.Second)
 // loadConfig builds the configuration from the environment. A number, a
 // boolean, a log level, or a listen address that is empty takes its default,
 // as an unset one does, and an empty URL turns its feature off. A file path is
-// used as set, empty included, without a check. LOGGING_LEVEL_ROOT is only
-// checked: the platform logger reads it itself. The error names every
-// variable whose value is not of its form or out of its range, with the
-// values that variable accepts.
+// used as set, empty included, without a check. LOGGING_LEVEL_ROOT and
+// LOG_LEVEL are only checked: the platform logger reads them itself. The error
+// names every variable whose value is not of its form or out of its range,
+// with the values that variable accepts. It also names LOG_LEVEL whenever
+// that variable is not empty.
 func loadConfig(get lookup) (config, error) {
 	s := settings{get: get}
 	cfg := config{
@@ -104,7 +112,13 @@ func loadConfig(get lookup) (config, error) {
 	}
 	// The platform logger reads LOGGING_LEVEL_ROOT itself and falls back to
 	// info where the value is not a level name; fromList refuses such a value.
-	s.fromList("logging.level.root", logLevels)
+	s.fromList(rootLevelKey, logLevels)
+	// The logger falls back to LOG_LEVEL where LOGGING_LEVEL_ROOT is unset or
+	// empty. To keep one name for the root level, a non-empty LOG_LEVEL is
+	// refused even beside a valid LOGGING_LEVEL_ROOT.
+	if raw := s.get(logLevelKey, ""); raw != "" {
+		s.refuse(logLevelKey, raw, "no value, "+rootLevelRefusal)
+	}
 	if len(s.refused) > 0 {
 		return config{}, errors.New(strings.Join(s.refused, "; "))
 	}
@@ -287,6 +301,35 @@ func urlPort(port string) bool {
 
 func (s *settings) refuse(key, raw, accepted string) {
 	s.refused = append(s.refused, fmt.Sprintf("%s=%q: expected %s", variable(key), raw, accepted))
+}
+
+// rootLevelRefusal is the reason a variable other than LOGGING_LEVEL_ROOT
+// may not set the root log level.
+const rootLevelRefusal = "since the agent reads the root log level from LOGGING_LEVEL_ROOT alone"
+
+// otherRootLevelNames returns a refusal for each variable in environ that
+// changes what the platform logger reads as the root log level, except
+// LOGGING_LEVEL_ROOT and LOG_LEVEL, which loadConfig checks itself. Each entry
+// of environ has the form NAME=value. The logger reads the level through
+// configloader, which folds a name to lower case and its underscores to dots.
+// So the logger reads log_level as it reads LOG_LEVEL, and configloader nests
+// a name that adds an underscore and a suffix to another, such as
+// LOGGING_LEVEL_ROOT_X, under the key of the shorter one, which then holds no
+// value. Such a variable is refused whatever its value, the empty string
+// included, since configloader keeps only one of two names that fold onto
+// one key.
+func otherRootLevelNames(environ []string) []string {
+	var refused []string
+	for _, entry := range environ {
+		name, value, _ := strings.Cut(entry, "=")
+		key := strings.ReplaceAll(strings.ToLower(name), "_", ".")
+		root := key == logLevelKey || key == rootLevelKey || strings.HasPrefix(key, rootLevelKey+".")
+		if !root || name == "LOG_LEVEL" || name == "LOGGING_LEVEL_ROOT" {
+			continue
+		}
+		refused = append(refused, fmt.Sprintf("%s=%q: expected no variable of this name, %s", name, value, rootLevelRefusal))
+	}
+	return refused
 }
 
 // variable is the environment variable that holds key: AUTHZ_HTTP_ADDR for
