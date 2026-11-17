@@ -49,6 +49,12 @@ const composite = `{
   }
 }`
 
+// withoutComposite is the topology of an installation outside a composite.
+const withoutComposite = `{"cloudProvider": "OnPrem"}`
+
+// emptyComposite is a composite whose domains name no origin or peer.
+const emptyComposite = `{"composite": {"baseline": {"controller": "bg-ctl"}, "satellites": [null, {"origin": ""}]}}`
+
 // writeTopology writes content to a topology file in a new directory and
 // returns its path.
 func writeTopology(t *testing.T, content string) string {
@@ -60,10 +66,8 @@ func writeTopology(t *testing.T, content string) string {
 	return path
 }
 
-// The service's own namespace, own, is not in the topology and is the
-// control: a parsed topology replaces it rather than adding to it.
 func TestAllowlist_AllowsTheOriginAndPeerOfEveryDomain(t *testing.T) {
-	a := New(Options{TopologyFile: writeTopology(t, composite), Namespace: "own"})
+	a := New(Options{TopologyFile: writeTopology(t, composite)})
 	tests := []struct {
 		namespace string
 		want      bool
@@ -74,7 +78,6 @@ func TestAllowlist_AllowsTheOriginAndPeerOfEveryDomain(t *testing.T) {
 		{"sat-peer", true},
 		{"solo", true},
 		{"bg-ctl", false},
-		{"own", false},
 		{"", false},
 	}
 	for _, tt := range tests {
@@ -91,13 +94,17 @@ func TestAllowlist_AllowsTheSatellitesOfACompositeWithoutABaseline(t *testing.T)
 	}
 }
 
-func TestAllowlist_AllowsItsOwnNamespaceAloneWithoutATopology(t *testing.T) {
+func TestAllowlist_AlwaysAllowsItsOwnNamespace(t *testing.T) {
 	tests := []struct {
 		name string
 		file string
 	}{
 		{"missing file", filepath.Join(t.TempDir(), "absent")},
 		{"file that is not JSON", writeTopology(t, "composite: yes")},
+		{"file without a composite", writeTopology(t, withoutComposite)},
+		{"composite that names no namespace", writeTopology(t, emptyComposite)},
+		{"composite that does not name it", writeTopology(t, composite)},
+		{"composite with satellites and no baseline", writeTopology(t, `{"composite": {"satellites": [{"origin": "sat-origin"}]}}`)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -105,24 +112,28 @@ func TestAllowlist_AllowsItsOwnNamespaceAloneWithoutATopology(t *testing.T) {
 			if !a.Allows("own") {
 				t.Errorf("Allows(%q) = false, want true", "own")
 			}
-			if a.Allows("base-origin") {
-				t.Errorf("Allows(%q) = true, want false", "base-origin")
+			if a.Allows("other") {
+				t.Errorf("Allows(%q) = true, want false", "other")
 			}
 		})
 	}
 }
 
-func TestAllowlist_AllowsNoneWithoutATopologyOrAnOwnNamespace(t *testing.T) {
-	a := New(Options{TopologyFile: filepath.Join(t.TempDir(), "absent")})
-	if a.Allows("") {
-		t.Errorf("Allows(%q) = true, want false", "")
+func TestAllowlist_AllowsNoneWithoutACompositeOrAnOwnNamespace(t *testing.T) {
+	tests := []struct {
+		name string
+		file string
+	}{
+		{"missing file", filepath.Join(t.TempDir(), "absent")},
+		{"file without a composite", writeTopology(t, withoutComposite)},
 	}
-}
-
-func TestAllowlist_AllowsNoneForATopologyWithoutAComposite(t *testing.T) {
-	a := New(Options{TopologyFile: writeTopology(t, `{"cloudProvider": "OnPrem"}`), Namespace: "own"})
-	if a.Allows("own") {
-		t.Errorf("Allows(%q) = true, want false", "own")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := New(Options{TopologyFile: tt.file})
+			if a.Allows("") {
+				t.Errorf("Allows(%q) = true, want false", "")
+			}
+		})
 	}
 }
 
@@ -203,20 +214,58 @@ func TestAllowlist_WarnsOnceWhileTheTopologyIsMissing(t *testing.T) {
 	}
 }
 
+// A file that parses is read without a warning, whether or not it names a
+// namespace of a composite.
+func TestAllowlist_WarnsOnlyWhenTheTopologyCannotBeReadOrParsed(t *testing.T) {
+	tests := []struct {
+		name string
+		file string
+		want int
+	}{
+		{"missing file", filepath.Join(t.TempDir(), "absent"), 1},
+		{"file that is not JSON", writeTopology(t, "composite: yes"), 1},
+		{"file without a composite", writeTopology(t, withoutComposite), 0},
+		{"composite that names no namespace", writeTopology(t, emptyComposite), 0},
+		{"composite", writeTopology(t, composite), 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			log := &recordingLogger{}
+			New(Options{TopologyFile: tt.file, Namespace: "own", Log: log})
+			if got := log.count(); got != tt.want {
+				t.Errorf("warnings = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+// Between the two times the file goes missing, it is read with or without a
+// composite.
 func TestAllowlist_WarnsAgainWhenTheTopologyGoesAwayAgain(t *testing.T) {
-	log := &recordingLogger{}
-	path := filepath.Join(t.TempDir(), "data")
-	a := New(Options{TopologyFile: path, Namespace: "own", Log: log})
-	if err := os.WriteFile(path, []byte(composite), 0o600); err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name    string
+		content string
+	}{
+		{"composite", composite},
+		{"file without a composite", withoutComposite},
 	}
-	a.reload()
-	if err := os.Remove(path); err != nil {
-		t.Fatal(err)
-	}
-	a.reload()
-	if got := log.count(); got != 2 {
-		t.Errorf("warnings = %d, want 2: one for each time the file went missing", got)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			log := &recordingLogger{}
+			path := filepath.Join(t.TempDir(), "data")
+			a := New(Options{TopologyFile: path, Namespace: "own", Log: log})
+			if err := os.WriteFile(path, []byte(tt.content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			a.reload()
+			if err := os.Remove(path); err != nil {
+				t.Fatal(err)
+			}
+			a.reload()
+			if got := log.count(); got != 2 {
+				t.Errorf("warnings = %d, want 2: one for each time the file went missing", got)
+			}
+		})
 	}
 }
 
@@ -307,7 +356,7 @@ func TestAllowlist_AdmitNamesWhyItRefusesAKubernetesToken(t *testing.T) {
 		{"no kubernetes.io claim", map[string]any{}, noNamespace},
 		{"kubernetes.io that is a string", map[string]any{"kubernetes.io": "sat-peer"}, noNamespace},
 		{"namespace that is not a string", map[string]any{"kubernetes.io": map[string]any{"namespace": 5}}, noNamespace},
-		{"namespace outside the topology", map[string]any{"kubernetes.io": map[string]any{"namespace": "own"}}, `namespace "own" is not an allowed namespace`},
+		{"namespace outside the topology", map[string]any{"kubernetes.io": map[string]any{"namespace": "other"}}, `namespace "other" is not an allowed namespace`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -332,7 +381,7 @@ func TestAllowlist_AdmitChecksTheTokensOfTheProviderKubernetes(t *testing.T) {
 		{"allowed namespace", keys.KubernetesID,
 			map[string]any{"kubernetes.io": map[string]any{"namespace": "sat-peer"}}, ""},
 		{"namespace outside the topology", keys.KubernetesID,
-			map[string]any{"kubernetes.io": map[string]any{"namespace": "own"}}, verify.CodeNamespaceNotAllowed},
+			map[string]any{"kubernetes.io": map[string]any{"namespace": "other"}}, verify.CodeNamespaceNotAllowed},
 		{"no kubernetes.io claim", keys.KubernetesID,
 			map[string]any{"sub": "system:serviceaccount:own:agent"}, verify.CodeNamespaceNotAllowed},
 		{"kubernetes.io that is a string", keys.KubernetesID,
@@ -342,11 +391,11 @@ func TestAllowlist_AdmitChecksTheTokensOfTheProviderKubernetes(t *testing.T) {
 		{"Namespace that differs in case", keys.KubernetesID,
 			map[string]any{"kubernetes.io": map[string]any{"Namespace": "sat-peer"}}, verify.CodeNamespaceNotAllowed},
 		{"namespace outside the topology beside a Namespace inside it", keys.KubernetesID,
-			map[string]any{"kubernetes.io": json.RawMessage(`{"namespace": "own", "Namespace": "sat-peer"}`)}, verify.CodeNamespaceNotAllowed},
+			map[string]any{"kubernetes.io": json.RawMessage(`{"namespace": "other", "Namespace": "sat-peer"}`)}, verify.CodeNamespaceNotAllowed},
 		{"namespace given twice, the last time as a number", keys.KubernetesID,
 			map[string]any{"kubernetes.io": json.RawMessage(`{"namespace": "sat-peer", "namespace": 5}`)}, verify.CodeNamespaceNotAllowed},
-		{"identity-provider token", keys.IdentityProviderID,
-			map[string]any{"kubernetes.io": map[string]any{"namespace": "own"}}, ""},
+		{"identity-provider token with a namespace outside the topology", keys.IdentityProviderID,
+			map[string]any{"kubernetes.io": map[string]any{"namespace": "other"}}, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
