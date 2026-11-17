@@ -161,9 +161,15 @@ These records use no wider word for a realm token and a file token together. The
 - **R36** (`keys`). A realm that loaded keys keeps its place, and a reload that fails leaves its keys, as R28 states.
 - **R37** (`keys`). With 1000 realms held, a token of another realm evicts none of them and is refused with
   `TOKEN_KEYS_UNAVAILABLE`.
-- **R38** (`verify`). A token that finds no key because its keys could not be loaded is refused with
-  `TOKEN_KEYS_UNAVAILABLE`. The keys could not be loaded when the last load of the source failed, the wait of R71 ran
-  out, the limit of R33 refused the load, or the list of R34 is full.
+- **R38** (`keys`, `verify`). A token that finds no key because its keys could not be loaded is refused with
+  `TOKEN_KEYS_UNAVAILABLE`. The keys could not be loaded when the last load of the source failed, or when the agent does
+  not hold the realm of the token and either the limit of R33 refused a load of that realm or the list of R34 is full.
+  They also could not be loaded when a request waits for an on-demand load and the wait of R71 runs out, or the request
+  is canceled or its deadline passes, before that load ends. This cause counts only if no load of the source stored a
+  result between the start of that on-demand load and the check of the token after the wait against the keys already
+  loaded. They also could not be loaded when the limit of R33 refused the on-demand load of a source that the agent
+  holds. This cause counts only if no load of the source stored a result between the refusal and the check of the token
+  against the keys already loaded that follows it.
 - **R39** (`keys`). The agent refuses a response whose JWKS lists two usable keys with different key material under one
   `kid`. Usable entries under one `kid` that share their key material load as one key, from the first of those entries.
   During a load, the agent also refuses a response of any status whose body is longer than 1 MiB (1048576 bytes),
@@ -265,6 +271,11 @@ cost Keycloak, because a load happens before any signature is checked (R31, R33 
 defines, the hourly reload drops a key that the source withdrew (R25, R28). A source that is down keeps its keys, so an
 outage does not change the results for keys already loaded (R28).
 
+A result that a load stores in the time R38 names for a wait or a refusal decides as the last load does, so a 503 after
+an answer would report an outage that did not happen (R23, R38). Without such a result, the token is checked only
+against a result from before that time, in which an invented `kid` and a key that the source added since look the same,
+so it gets a 503 rather than a 401 (R29, R38).
+
 Keycloak 26 answers the discovery document of a realm it does not hold with a 404 whose JSON body has `error` set to
 `Realm does not exist`. The agent cannot tell a 404 with another body from one that something else on the path sends,
 such as a proxy with no route, or a Keycloak that serves its realms without the `/auth` prefix that R4 adds, so that
@@ -333,6 +344,10 @@ Negative:
   can hold all 10 loads, and a realm not loaded yet or a rotated key then waits up to a minute with its tokens refused.
 - A Pod that cannot reach Keycloak stays not ready rather than failing, so the signal is the readiness probe and the
   warnings.
+- Two requests with the same token at about the same time can get different codes, `TOKEN_KID_UNKNOWN` (401) and
+  `TOKEN_KEYS_UNAVAILABLE` (503), depending on whether each one waited for an on-demand load that had not ended, and on
+  which result a load of the source had stored last when each one was checked against the keys already loaded (R31,
+  R38).
 - A 404 for a realm that Keycloak does not hold, whose body differs from the one R39 names, as another Keycloak version
   or a proxy that replaces error pages may send, gives the tokens of that realm `TOKEN_KEYS_UNAVAILABLE` rather than
   `TOKEN_KID_UNKNOWN` (R39).
