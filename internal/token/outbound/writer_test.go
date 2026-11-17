@@ -17,6 +17,7 @@ package outbound
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"io"
 	"math"
 	"net/http"
@@ -231,7 +232,65 @@ func TestWriter_CutsTheCauseOfAFailedRequestTo200Runes(t *testing.T) {
 	e.location = "/%zz" + strings.Repeat("7", 4096)
 	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
 	_, err := w.Refresh(context.Background())
-	checkCutAfter(t, err, `Post "`+w.cfg.TokenURL+`": `)
+	checkCutAfter(t, err, "POST "+w.cfg.TokenURL+": ")
+}
+
+// A client that follows redirects puts the URL of the last request it sent,
+// here a Location of over 5000 bytes on a closed server, into the error it
+// returns.
+func TestWriter_NamesTheTokenURLWhenAFollowedRedirectFails(t *testing.T) {
+	closed := httptest.NewServer(http.NotFoundHandler())
+	closed.Close()
+	e := newTokenEndpoint(t, "")
+	e.status = http.StatusTemporaryRedirect
+	e.location = closed.URL + "/" + strings.Repeat("a", 5000)
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	w.cfg.Client = &http.Client{}
+	_, err := w.Refresh(context.Background())
+	if err == nil {
+		t.Fatal("Refresh() error = nil, want an error")
+	}
+	prefix := "POST " + w.cfg.TokenURL + ": "
+	text, named := strings.CutPrefix(err.Error(), prefix)
+	if !named {
+		t.Fatalf("Refresh() error = %.300q, want one that starts with %q", err, prefix)
+	}
+	cause, uerr := strconv.Unquote(text)
+	if uerr != nil {
+		t.Fatalf("Refresh() error = %.300q, want a quoted cause after %q: %v", err, prefix, uerr)
+	}
+	if got := utf8.RuneCountInString(cause); got > 200 {
+		t.Errorf("Refresh() error quotes a cause of %d runes, want at most 200", got)
+	}
+}
+
+func TestWriter_RefreshErrorWrapsTheContextErrorOfTheRequest(t *testing.T) {
+	expired, cancelExpired := context.WithDeadline(context.Background(), time.Unix(0, 0))
+	defer cancelExpired()
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+	tests := []struct {
+		name string
+		ctx  context.Context
+		want error
+	}{
+		{"deadline passed", expired, context.DeadlineExceeded},
+		{"canceled", canceled, context.Canceled},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 300}`)
+			w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+			_, err := w.Refresh(tt.ctx)
+			if !errors.Is(err, tt.want) {
+				t.Errorf("Refresh() error = %v, want one that wraps %v", err, tt.want)
+			}
+			var doErr *url.Error
+			if !errors.As(err, &doErr) {
+				t.Errorf("Refresh() error = %v, want one that wraps a *url.Error", err)
+			}
+		})
+	}
 }
 
 // x/oauth2 reads a body sent with either of these types as a form.
