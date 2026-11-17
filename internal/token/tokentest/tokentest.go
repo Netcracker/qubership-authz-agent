@@ -56,8 +56,12 @@ const (
 // keyID is the kid of the key of every Issuer.
 const keyID = "test-key"
 
-// realmPath is the path of [Realm] under the address of an Issuer.
-const realmPath = "/auth/realms/" + Realm
+// realmsPath is the path under the address of an Issuer where the realms are,
+// and realmPath is the path of [Realm].
+const (
+	realmsPath = "/auth/realms/"
+	realmPath  = realmsPath + Realm
+)
 
 // Issuer is an identity provider that runs in the test process. It publishes
 // one ES256 key through OIDC discovery on an [httptest.Server] and signs tokens
@@ -97,6 +101,13 @@ func NewIssuer() *Issuer {
 	mux.HandleFunc("/jwks", func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write(jwks)
 	})
+	// Every other path under realmsPath gets the 404 that Keycloak returns for
+	// a realm it does not hold.
+	mux.HandleFunc(realmsPath, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"error":"Realm does not exist"}`))
+	})
 	dir := must(os.MkdirTemp("", "tokentest"))
 	server.StartTLS()
 	issuer := &Issuer{server: server, private: private, dir: dir}
@@ -130,7 +141,10 @@ func (i *Issuer) Config() keys.Config {
 }
 
 // RealmConfig returns a configuration whose Keycloak is this issuer. A token
-// whose iss is [Issuer.RealmURL] is a realm token of [Realm].
+// whose iss is [Issuer.RealmURL] is a realm token of [Realm]. The issuer holds
+// no other realm, and a verifier on this configuration refuses a token of
+// another realm with [authz-agent/internal/token/verify.CodeKIDUnknown], as on
+// a Keycloak that does not hold that realm.
 func (i *Issuer) RealmConfig() keys.Config {
 	return keys.Config{Keycloak: &keys.Keycloak{URL: i.URL(), CAFile: i.caFile()}}
 }

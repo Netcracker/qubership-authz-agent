@@ -24,8 +24,8 @@ import (
 )
 
 // source is the signing keys of one source: a [Provider] of the configuration
-// or a realm of a [Keycloak]. It is safe for concurrent use, and find never
-// waits for a load.
+// or a realm of a [Keycloak]. It is safe for concurrent use, and a lookup
+// through current never waits for a load.
 type source struct {
 	fetcher *fetcher
 	// required marks a source [Set.Ready] waits for.
@@ -35,31 +35,39 @@ type source struct {
 
 	// reloading serializes the fetches of this source.
 	reloading sync.Mutex
-	// current holds the keys loaded last. It is nil before the first load and
-	// after a reload that finds no usable signing key.
-	current atomic.Pointer[[]Key]
+	// current holds what the last load left, and an empty loadResult until the
+	// first load ends.
+	current atomic.Pointer[loadResult]
 	// loaded is set by the first load that finds a usable key, and stays set.
 	loaded atomic.Bool
+}
+
+// loadResult is what a load leaves for the lookups after it: the keys, and
+// whether the source answered. One value holds both, so a lookup reads them
+// from the same load.
+type loadResult struct {
+	// keys holds the keys loaded last: those of this load, or those it kept
+	// when it failed. It is nil when no load found a usable signing key, and
+	// after a load that got a JWKS without one.
+	keys []Key
+	// answered reports whether the source answered this load, as
+	// [ErrKeysUnavailable] defines it.
+	answered bool
+}
+
+// find returns the key with the given kid among the keys of r, and
+// [ErrKeyUnknown] when there is none. [fetcher.parseJWKS] keeps one key per
+// kid.
+func (r *loadResult) find(kid string) (Key, error) {
+	if i := slices.IndexFunc(r.keys, func(k Key) bool { return k.ID == kid }); i >= 0 {
+		return r.keys[i], nil
+	}
+	return Key{}, ErrKeyUnknown
 }
 
 // label names the source in a log line or an error: realm "<name>" for a realm
 // of a Keycloak, provider "<id>" for an entry of [Config.Providers].
 func (src *source) label() string { return src.fetcher.source.label() }
-
-// find returns the key with the given kid among the keys loaded last, and
-// [ErrKeyUnknown] when there is none. [fetcher.parseJWKS] keeps one key per
-// kid.
-func (src *source) find(kid string) (Key, error) {
-	var loaded []Key
-	if p := src.current.Load(); p != nil {
-		loaded = *p
-	}
-	i := slices.IndexFunc(loaded, func(k Key) bool { return k.ID == kid })
-	if i < 0 {
-		return Key{}, ErrKeyUnknown
-	}
-	return loaded[i], nil
-}
 
 // reload fetches the keys once and replaces the loaded ones. A fetch that
 // fails keeps them, and a JWKS without a usable signing key removes them, so
@@ -70,25 +78,42 @@ func (src *source) reload(ctx context.Context) error {
 	defer src.reloading.Unlock()
 
 	fetched, err := src.fetcher.fetch(ctx)
-	var previous []Key
-	if p := src.current.Load(); p != nil {
-		previous = *p
-	}
+	previous := src.current.Load().keys
+	answered := src.answered(err, len(previous) > 0)
 	switch {
 	case errors.Is(err, errNoUsableKey):
-		src.current.Store(nil)
+		src.current.Store(&loadResult{answered: answered})
 		return fmt.Errorf("%s has no keys, and its tokens are refused until a reload finds a usable key: %w", src.label(), err)
-	case err != nil && len(previous) == 0:
-		return fmt.Errorf("%s has no keys: %w", src.label(), err)
 	case err != nil:
+		src.current.Store(&loadResult{keys: previous, answered: answered})
+		if len(previous) == 0 {
+			return fmt.Errorf("%s has no keys: %w", src.label(), err)
+		}
 		return fmt.Errorf("%s keeps its previous keys: %w", src.label(), err)
 	}
-	src.current.Store(&fetched)
+	src.current.Store(&loadResult{keys: fetched, answered: answered})
 	src.loaded.Store(true)
 	if !sameKIDs(previous, fetched) {
 		src.fetcher.log.Infof("trusted providers: %s now publishes %d signing keys", src.label(), len(fetched))
 	}
 	return nil
+}
+
+// answered reports whether err, the result of a fetch, is an answer of the
+// source. holdsKeys reports whether the source held keys before the fetch. No
+// error and a JWKS without a usable signing key are answers. So is
+// [errRealmMissing] for a realm that holds no keys, and every other error is
+// not. A realm that holds keys existed when it loaded them, so its 404 is a
+// failed reload. A provider is named by the configuration, so its 404 means
+// that its address is wrong. A realm in keycloak.requiredRealms counts like any
+// other realm, although the configuration names it too. Its address is built
+// from keycloak.url, which every realm shares, so with a wrong keycloak.url no
+// realm in keycloak.requiredRealms loads keys, and [Set.Ready] stays false
+// while that list names one. Once a required realm has loaded keys, an
+// [errRealmMissing] of another realm means that the Keycloak does not hold it.
+func (src *source) answered(err error, holdsKeys bool) bool {
+	missingRealm := errors.Is(err, errRealmMissing) && src.fetcher.source.Provider == nil && !holdsKeys
+	return err == nil || errors.Is(err, errNoUsableKey) || missingRealm
 }
 
 func sameKIDs(a, b []Key) bool {

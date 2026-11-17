@@ -38,8 +38,9 @@ import (
 	"github.com/lestrrat-go/jwx/v3/jwk"
 )
 
-// maxResponseBytes bounds the body of a discovery document and of a JWKS,
-// 1 MiB (1048576 bytes).
+// maxResponseBytes bounds the body of every response that a load reads,
+// whatever its status, 1 MiB (1048576 bytes). It bounds the body after the
+// transport removes the gzip coding that the transport requests.
 const maxResponseBytes = 1 << 20
 
 // maxListedSkippedKeys bounds the skipped keys whose reasons a warning or an
@@ -179,34 +180,94 @@ func newClient(label string, base func() (*x509.CertPool, error), caFile string,
 // A reload that gets it removes the keys of the source.
 var errNoUsableKey = errors.New("no usable signing key")
 
+// errRealmMissing reports the 404 that Keycloak returns for the discovery
+// document of a realm it does not hold: a JSON object whose member named
+// exactly error is [realmDoesNotExist]. A 404 with another body, such as one
+// from a proxy with no route for the path, is not one, and neither is a 404 of
+// the JWKS: a realm whose discovery document returns 200 exists.
+var errRealmMissing = errors.New("the Keycloak reports that the realm does not exist")
+
+// realmDoesNotExist is the error member of the body of the 404 that Keycloak
+// returns for a realm it does not hold.
+const realmDoesNotExist = "Realm does not exist"
+
+// statusError reports a response to a GET whose status is not 2xx.
+type statusError struct {
+	url    string
+	status int
+	// missingRealm reports whether the response is the 404 that Keycloak
+	// returns for a realm it does not hold.
+	missingRealm bool
+}
+
+// reportsMissingRealm reports whether a response with status and body is the
+// 404 that Keycloak returns for a realm it does not hold: a JSON object whose
+// member named exactly error, read through [member], is the string
+// [realmDoesNotExist].
+func reportsMissingRealm(status int, body []byte) bool {
+	if status != http.StatusNotFound {
+		return false
+	}
+	var message string
+	return member(body, "error", &message) == nil && message == realmDoesNotExist
+}
+
+// member decodes into v the member of doc named exactly name, and leaves v as
+// it is when doc has no such member. It fails when doc is neither a JSON object
+// nor null, and when the member does not decode into v. It decodes doc into a
+// map, because [json.Unmarshal] matches the name of a struct field without
+// regard to case, so a struct would take KEYS or Keys for keys.
+func member(doc []byte, name string, v any) error {
+	var members map[string]json.RawMessage
+	if err := json.Unmarshal(doc, &members); err != nil {
+		return err
+	}
+	raw, ok := members[name]
+	if !ok {
+		return nil
+	}
+	if err := json.Unmarshal(raw, v); err != nil {
+		return fmt.Errorf("%s: %w", name, err)
+	}
+	return nil
+}
+
+func (e *statusError) Error() string { return fmt.Sprintf("GET %s: HTTP %d", e.url, e.status) }
+
 // fetch downloads the JWKS of the source, through discovery unless a provider
-// names a JWKSURI, and returns its signing keys. It fails when a request
-// fails or answers a status other than 2xx, when a document is not the JSON
-// it should be, when discovery names an address that is not https for a
-// provider that sets Kubernetes, and when the JWKS lists two different keys
-// under one kid; a JWKS without a usable signing key fails with errNoUsableKey.
+// names a JWKSURI, and returns its signing keys. It fails when a request fails
+// or returns a status other than 2xx, when it gets a response whose body is
+// longer than 1 MiB, when a document is not the JSON it should be, when
+// discovery names an address that is not https for a provider that sets
+// Kubernetes, and when the JWKS lists two usable keys with different key
+// material under one kid. Keycloak's 404 for a realm it does not hold, on the
+// discovery document, fails with errRealmMissing, and a JWKS without a usable
+// signing key with errNoUsableKey. It matches each member it reads by its exact
+// name, through [member]: the jwks_uri of the discovery document, the keys of
+// the JWKS, and the error of Keycloak's 404.
 func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 	f.logIssuerChange()
 	uri := f.jwksURI()
 	if uri == "" {
 		discovery := strings.TrimRight(f.address, "/") + "/.well-known/openid-configuration"
 		body, err := f.get(ctx, discovery)
+		if failed, ok := errors.AsType[*statusError](err); ok && failed.missingRealm {
+			return nil, fmt.Errorf("%w: %w", err, errRealmMissing)
+		}
 		if err != nil {
 			return nil, err
 		}
-		var doc struct {
-			JWKSURI string `json:"jwks_uri"`
-		}
-		if err := json.Unmarshal(body, &doc); err != nil {
+		var jwksURI string
+		if err := member(body, "jwks_uri", &jwksURI); err != nil {
 			return nil, fmt.Errorf("discovery document %s: %w", discovery, err)
 		}
-		if doc.JWKSURI == "" {
+		if jwksURI == "" {
 			return nil, fmt.Errorf("discovery document %s has no jwks_uri", discovery)
 		}
-		if p := f.source.Provider; p != nil && p.Kubernetes && !isHTTPSURL(doc.JWKSURI) {
-			return nil, fmt.Errorf("discovery document %s names the jwks_uri %.200q; %s sets kubernetes, so it reads its keys only over https; to read the keys without discovery, set jwksUri to %s%s", discovery, doc.JWKSURI, f.source.label(), apiServerJWKSURI, p.caFileRemedy())
+		if p := f.source.Provider; p != nil && p.Kubernetes && !isHTTPSURL(jwksURI) {
+			return nil, fmt.Errorf("discovery document %s names the jwks_uri %.200q; %s sets kubernetes, so it reads its keys only over https; to read the keys without discovery, set jwksUri to %s%s", discovery, jwksURI, f.source.label(), apiServerJWKSURI, p.caFileRemedy())
 		}
-		uri = doc.JWKSURI
+		uri = jwksURI
 	}
 	body, err := f.get(ctx, uri)
 	if err != nil {
@@ -220,8 +281,10 @@ func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 }
 
 // get returns the body of a 2xx response to a GET of url, with the bearer token
-// in the file that [fetcher.tokenFile] returns, where it returns one. Any other
-// status, a redirect included, is an error.
+// in the file that [fetcher.tokenFile] returns, where it returns one. A
+// response whose body is longer than maxResponseBytes fails whatever its
+// status, and its error is not a *statusError. Any other status, a redirect
+// included, is a *statusError.
 func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -244,11 +307,11 @@ func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("GET %s: read body: %w", url, err)
 	}
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("GET %s: HTTP %d", url, resp.StatusCode)
-	}
 	if len(body) > maxResponseBytes {
-		return nil, fmt.Errorf("GET %s: response is longer than %d bytes", url, maxResponseBytes)
+		return nil, fmt.Errorf("GET %s: HTTP %d: response body is longer than %d bytes", url, resp.StatusCode, maxResponseBytes)
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, &statusError{url: url, status: resp.StatusCode, missingRealm: reportsMissingRealm(resp.StatusCode, body)}
 	}
 	return body, nil
 }
@@ -291,26 +354,21 @@ func readToken(path string) (string, error) {
 
 // parseJWKS returns the signing keys of a JWKS document. A key that cannot sign
 // a token the service accepts is skipped, and when the parse loads a key,
-// [fetcher.reportSkipped] reports the skipped keys. The same key listed twice
-// under one kid is kept once. A keys member that is null counts as an empty
-// array, the way a Go server writes an empty key set; one that is missing or
-// holds another value is an error. So is a JWKS left with no usable signing
-// key, which fails with errNoUsableKey and the [skippedKeys.describe] text: the
-// reasons of the first maxListedSkippedKeys skipped keys, the count of the
-// rest, and the count of encryption keys.
+// [fetcher.reportSkipped] reports the skipped keys. A key listed again under
+// the same kid with the same key material is loaded once, from the first of
+// its usable entries, and two usable keys with different key material under
+// one kid are an error. A keys member that is missing or is not an array, null
+// included, is an error too; [member] reads it by that exact name. So is a JWKS
+// left with no usable signing key, which fails with errNoUsableKey and the
+// [skippedKeys.describe] text: the reasons of the first maxListedSkippedKeys
+// skipped keys, the count of the rest, and the count of encryption keys.
 func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
-	var doc struct {
-		Keys json.RawMessage `json:"keys"`
-	}
-	if err := json.Unmarshal(body, &doc); err != nil {
+	var entries []json.RawMessage
+	if err := member(body, "keys", &entries); err != nil {
 		return nil, err
 	}
-	if doc.Keys == nil {
+	if entries == nil {
 		return nil, errors.New("no keys array")
-	}
-	var entries []json.RawMessage
-	if err := json.Unmarshal(doc.Keys, &entries); err != nil {
-		return nil, fmt.Errorf("keys is not an array: %w", err)
 	}
 	var out []Key
 	var skipped skippedKeys

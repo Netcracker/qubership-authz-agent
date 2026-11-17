@@ -16,22 +16,28 @@ package keys
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 )
+
+// errLoadRefused reports that the limit of on-demand loads refused a load that
+// was due.
+var errLoadRefused = errors.New("the limit of on-demand loads refused the load")
 
 // onDemand runs the on-demand loads of one source for the callers that ask for
 // one. A caller that asks while a load runs waits for that load instead of
 // starting another. A load starts at most once per interval, and only when
 // loads admits it. It is safe for concurrent use.
 type onDemand struct {
-	load     func(context.Context)
+	load func(context.Context)
+	// current is where the loads of the source store their results.
+	current  *atomic.Pointer[loadResult]
 	interval time.Duration
 	// loads is the limit this onDemand shares with the others of a [Set].
 	loads *windowLimit
-	// refused runs when loads refuses a load that interval allows.
-	refused func(now time.Time)
 
 	mu sync.Mutex
 	// running is closed when the load in progress ends, and is nil while
@@ -39,6 +45,8 @@ type onDemand struct {
 	running chan struct{}
 	// started is when the last load started, zero before the first.
 	started time.Time
+	// from is the result that current held when the last load started.
+	from *loadResult
 }
 
 // wait starts a load unless one runs already, the last one started less than
@@ -46,26 +54,42 @@ type onDemand struct {
 // ends or ctx ends. With no load running and none allowed to start, it returns
 // at once. The load runs with the values of ctx but not with its deadline or
 // cancellation, so it goes on for the other callers after ctx ends.
-func (o *onDemand) wait(ctx context.Context) {
+//
+// The error is nil when the load it waited for has ended, whether or not ctx
+// has ended too, and when no load is due yet, so that the result of the last
+// load stands. It is errLoadRefused when loads refused a load that was due, and
+// the error of ctx when ctx ended while the load still ran. With an error, wait
+// also returns from: the result that current held when the load it waited for
+// started, or when loads refused the load. A result in current other than from
+// was stored after that point. With no error, from is nil.
+func (o *onDemand) wait(ctx context.Context) (from *loadResult, err error) {
 	o.mu.Lock()
-	running := o.running
-	if running == nil {
+	if o.running == nil {
 		now := time.Now()
 		if !o.spaced(now) {
 			o.mu.Unlock()
-			return
+			return nil, nil
 		}
 		if !o.loads.take(now) {
+			from = o.current.Load()
 			o.mu.Unlock()
-			o.refused(now)
-			return
+			return from, errLoadRefused
 		}
-		running = o.start(ctx, now)
+		o.start(ctx, now)
 	}
+	running, from := o.running, o.from
 	o.mu.Unlock()
 	select {
 	case <-running:
+		return nil, nil
 	case <-ctx.Done():
+		// A select picks at random among ready cases, so check the load again.
+		select {
+		case <-running:
+			return nil, nil
+		default:
+			return from, ctx.Err()
+		}
 	}
 }
 
@@ -76,14 +100,13 @@ func (o *onDemand) begin(ctx context.Context, now time.Time) {
 	o.start(ctx, now)
 }
 
-// start runs load in a new goroutine and returns the channel closed when it
-// ends. The caller holds mu.
-func (o *onDemand) start(ctx context.Context, now time.Time) chan struct{} {
+// start runs load in a new goroutine. The caller holds mu.
+func (o *onDemand) start(ctx context.Context, now time.Time) {
 	o.started = now
+	o.from = o.current.Load()
 	running := make(chan struct{})
 	o.running = running
 	go o.run(context.WithoutCancel(ctx), running)
-	return running
 }
 
 // spaced reports whether interval has passed since the last start. The

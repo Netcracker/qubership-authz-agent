@@ -136,6 +136,29 @@ func TestIssuer_SignsARealmTokenThatItsRealmConfigVerifies(t *testing.T) {
 	}
 }
 
+// The issuer signs the token with the key that verifies its tokens of
+// [tokentest.Realm], so only the realm in iss differs from them.
+func TestIssuer_RefusesATokenOfARealmItDoesNotHoldAsAnUnknownKID(t *testing.T) {
+	tests := []struct {
+		name  string
+		realm string
+	}{
+		{"another realm", "missing"},
+		{"realm whose name extends the one it holds", tokentest.Realm + "s"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			issuer := newIssuer(t)
+			claims := issuer.Claims()
+			claims["iss"] = issuer.URL() + "/auth/realms/" + tt.realm
+			_, err := verifierOn(t, issuer, issuer.RealmConfig(), verify.Options{}).Verify(t.Context(), issuer.Sign(claims))
+			if refused, _ := errors.AsType[*verify.Error](err); refused == nil || refused.Code != verify.CodeKIDUnknown {
+				t.Errorf("Verify() of a token of realm %q error = %v, want code %q", tt.realm, err, verify.CodeKIDUnknown)
+			}
+		})
+	}
+}
+
 // The claims have no exp and no iat, which a Sign that fills in the claims of a
 // valid token would add.
 func TestIssuer_SignsExactlyTheClaimsItIsGiven(t *testing.T) {

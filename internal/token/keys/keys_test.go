@@ -28,6 +28,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -167,8 +168,11 @@ func TestRefresh_ReportsAProviderWhoseKeysCannotBeRead(t *testing.T) {
 		name  string
 		setup func(t *testing.T, idp *fakeIdP)
 	}{
-		{"discovery answers 404", func(t *testing.T, idp *fakeIdP) { idp.status = http.StatusNotFound }},
+		{"discovery returns 404", func(t *testing.T, idp *fakeIdP) { idp.status = http.StatusNotFound }},
 		{"discovery without jwks_uri", func(t *testing.T, idp *fakeIdP) { idp.discovery = []byte(`{}`) }},
+		{"discovery whose member JWKS_URI names the JWKS", func(t *testing.T, idp *fakeIdP) {
+			idp.discovery = []byte(`{"JWKS_URI": "` + idp.srv.URL + `/jwks"}`)
+		}},
 		{"discovery jwks_uri that is not http", func(t *testing.T, idp *fakeIdP) { idp.discovery = []byte(`{"jwks_uri": "file:///etc/jwks.json"}`) }},
 		{"discovery that is not JSON", func(t *testing.T, idp *fakeIdP) { idp.discovery = []byte(`<html></html>`) }},
 		{"JWKS without a keys array", func(t *testing.T, idp *fakeIdP) { idp.jwks = []byte(`{}`) }},
@@ -201,6 +205,57 @@ func TestRefresh_ReportsAProviderWhoseKeysCannotBeRead(t *testing.T) {
 	}
 }
 
+func TestRefresh_KeepsTheJSONErrorOfADocumentItCannotDecode(t *testing.T) {
+	tests := []struct {
+		name   string
+		setup  func(idp *fakeIdP)
+		target any
+		want   string
+	}{
+		{"discovery that is not JSON", func(idp *fakeIdP) { idp.discovery = []byte(`<html></html>`) }, new(*json.SyntaxError), "discovery document "},
+		{"discovery whose jwks_uri is a number", func(idp *fakeIdP) { idp.discovery = []byte(`{"jwks_uri": 5}`) }, new(*json.UnmarshalTypeError), ": jwks_uri: json:"},
+		{"JWKS that is not JSON", func(idp *fakeIdP) { idp.jwks = []byte(`<html></html>`) }, new(*json.SyntaxError), "JWKS "},
+		{"JWKS that is an array", func(idp *fakeIdP) { idp.jwks = []byte(`[]`) }, new(*json.UnmarshalTypeError), "JWKS "},
+		{"JWKS whose keys is an object", func(idp *fakeIdP) { idp.jwks = []byte(`{"keys": {}}`) }, new(*json.UnmarshalTypeError), ": keys: json:"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			idp := newIdP(t, ecJWK(t, "k1", nil))
+			tt.setup(idp)
+			set := mustNew(t, Config{Providers: []Provider{issuer("realm", idp)}}, testOptions())
+			err := set.Refresh(t.Context())
+			if !errors.As(err, tt.target) {
+				t.Errorf("Refresh() error = %v, want one that wraps a %v", err, reflect.TypeOf(tt.target).Elem())
+			}
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Errorf("Refresh() error = %v, want one that says %q", err, tt.want)
+			}
+		})
+	}
+}
+
+func TestRefresh_NamesTheMemberThatADocumentLacks(t *testing.T) {
+	tests := []struct {
+		name  string
+		setup func(idp *fakeIdP)
+		want  string
+	}{
+		{"discovery without jwks_uri", func(idp *fakeIdP) { idp.discovery = []byte(`{}`) }, "has no jwks_uri"},
+		{"JWKS without keys", func(idp *fakeIdP) { idp.jwks = []byte(`{}`) }, "no keys array"},
+		{"JWKS whose keys is null", func(idp *fakeIdP) { idp.jwks = []byte(`{"keys": null}`) }, "no keys array"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			idp := newIdP(t, ecJWK(t, "k1", nil))
+			tt.setup(idp)
+			set := mustNew(t, Config{Providers: []Provider{issuer("realm", idp)}}, testOptions())
+			if err := set.Refresh(t.Context()); err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Errorf("Refresh() error = %v, want one that says %q", err, tt.want)
+			}
+		})
+	}
+}
+
 // k2 is listed after the repeated key, so a load that stops at the repeat
 // fails on k2.
 func TestRefresh_TheSameKeyListedTwiceLoadsOnce(t *testing.T) {
@@ -212,6 +267,29 @@ func TestRefresh_TheSameKeyListedTwiceLoadsOnce(t *testing.T) {
 	}
 	if !loaded(set, provider, "k2") {
 		t.Errorf("Lookup(%q) found nothing, want the key listed after the repeat", "k2")
+	}
+}
+
+// The JWKS lists one RSA key twice under one kid, first with alg RS256 and then
+// with alg PS256.
+func TestRefresh_LoadsAKeyListedTwiceFromItsFirstEntry(t *testing.T) {
+	first := rsaJWK(t, 2048, "k1", nil)
+	var members map[string]any
+	if err := json.Unmarshal(first, &members); err != nil {
+		t.Fatal(err)
+	}
+	second := withMembers(t, members, nil, map[string]any{"alg": "PS256"})
+	provider := issuer("realm", newIdP(t, first, second))
+	set := mustLoad(t, testOptions(), provider)
+	key, err := set.Lookup(Query{Issuer: provider.Issuer, KID: "k1"})
+	if err != nil {
+		t.Fatalf("Lookup(%q) error = %v", "k1", err)
+	}
+	if !key.Allows("RS256") {
+		t.Errorf("Lookup(%q).Allows(%q) = false, want true, the alg of the first entry", "k1", "RS256")
+	}
+	if key.Allows("PS256") {
+		t.Errorf("Lookup(%q).Allows(%q) = true, want false, the alg of the second entry", "k1", "PS256")
 	}
 }
 
@@ -751,11 +829,11 @@ func TestRefresh_AJWKSWithoutAUsableKeyRemovesTheProvidersKeys(t *testing.T) {
 		wantKept bool
 	}{
 		{"JWKS whose keys array is empty", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": []}`) }, false},
-		{"JWKS whose keys is null", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": null}`) }, false},
 		{"JWKS whose only key is an encryption key", func(t *testing.T, idp *fakeIdP) {
 			idp.publish(ecJWK(t, "enc", map[string]any{"use": "enc"}))
 		}, false},
 		{"JWKS without a keys array", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{}`) }, true},
+		{"JWKS whose keys is null", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": null}`) }, true},
 		{"JWKS whose keys is an object", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": {}}`) }, true},
 	}
 	for _, tt := range tests {
@@ -900,10 +978,12 @@ func TestRefresh_QuotesTheParserErrorOfASkippedKey(t *testing.T) {
 // realm a reloaded.
 func TestJoinReloadErrors_OrdersItsLinesWhateverTheOrderOfTheSources(t *testing.T) {
 	sourceOf := func(from Source, required bool) *source {
-		return &source{fetcher: &fetcher{source: from}, required: required}
+		src := &source{fetcher: &fetcher{source: from}, required: required}
+		src.current.Store(&loadResult{})
+		return src
 	}
 	d := sourceOf(Source{Realm: "d"}, false)
-	d.current.Store(&[]Key{{ID: "k1"}})
+	d.current.Store(&loadResult{keys: []Key{{ID: "k1"}}, answered: true})
 	sources := []*source{
 		d,
 		sourceOf(Source{Realm: "b"}, false),
@@ -976,5 +1056,13 @@ func TestLookup_RefusesAnIssuerNoProviderHasByteForByte(t *testing.T) {
 		if _, err := set.Lookup(Query{Issuer: iss, KID: "k1"}); !errors.Is(err, ErrIssuerUnknown) {
 			t.Errorf("Lookup(issuer %q) error = %v, want %v", iss, err, ErrIssuerUnknown)
 		}
+	}
+}
+
+func TestUnavailableError_NamesTheSentinelAndTheReason(t *testing.T) {
+	err := &UnavailableError{Reason: "the load did not end within 3s"}
+	const want = "the keys of the source cannot be loaded: the load did not end within 3s"
+	if got := err.Error(); got != want {
+		t.Errorf("(&UnavailableError{Reason: %q}).Error() = %q, want %q", err.Reason, got, want)
 	}
 }
