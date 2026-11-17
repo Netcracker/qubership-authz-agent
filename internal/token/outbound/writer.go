@@ -94,7 +94,8 @@ type Writer struct {
 	// requested is when the last token request started, whatever its
 	// outcome, in Unix nanoseconds; zero before the first one.
 	requested atomic.Int64
-	// now is the clock requested and Renew read.
+	// now is the clock requested, Renew, and the exp claim check of Refresh
+	// read.
 	now func() time.Time
 }
 
@@ -204,11 +205,14 @@ func renewal(lifetime time.Duration) time.Duration {
 }
 
 // Refresh requests one token and writes it to the file, and returns how long
-// the token lives. The lifetime is the response's expires_in, at most
-// 2147483647 seconds (about 68 years), or the time left until the token's
-// exp claim when the response has none. An exp further ahead than a
-// Duration can hold, about 292 years, gives the longest Duration. On an
-// error the file keeps its previous content.
+// the token lives. The response is read as JSON whatever its Content-Type.
+// The lifetime is its expires_in, at most 2147483647 seconds (about 68
+// years). expires_in may be a JSON number or a string that holds an integer.
+// One not written as an integer, such as 3600.5 or 1e10, fails the request,
+// and so does one outside the int64 range. Without an expires_in above 0,
+// the lifetime is the time left until the token's exp claim, and an exp
+// further ahead than a Duration can hold, about 292 years, gives the
+// longest Duration. On an error the file keeps its previous content.
 func (w *Writer) Refresh(ctx context.Context) (time.Duration, error) {
 	w.requested.Store(w.now().UnixNano())
 	clientID, err := readSecret(w.cfg.ClientIDFile)
@@ -239,7 +243,9 @@ func (w *Writer) request(ctx context.Context, clientID, clientSecret string) (st
 		style = oauth2.AuthStyleInHeader
 	}
 	grant := clientcredentials.Config{ClientID: clientID, ClientSecret: clientSecret, TokenURL: w.cfg.TokenURL, AuthStyle: style}
-	token, err := grant.Token(context.WithValue(ctx, oauth2.HTTPClient, w.cfg.Client))
+	client := *w.cfg.Client
+	client.Transport = jsonResponses{next: client.Transport}
+	token, err := grant.Token(context.WithValue(ctx, oauth2.HTTPClient, &client))
 	var refused *oauth2.RetrieveError
 	var unsent *url.Error
 	switch {
@@ -258,22 +264,74 @@ func (w *Writer) request(ctx context.Context, clientID, clientSecret string) (st
 		// that value can be as long as the body, up to 1 MiB.
 		return "", 0, fmt.Errorf("POST %s: %s", w.cfg.TokenURL, quoted(err.Error(), 200))
 	}
-	// Token sets Expiry from expires_in, a count of whole seconds, as the
-	// response arrives, and leaves it zero when the response has none;
-	// rounding gives the count back.
-	if lifetime := time.Until(token.Expiry).Round(time.Second); lifetime > 0 {
+	if lifetime := expiresIn(token.Extra("expires_in")); lifetime > 0 {
 		return token.AccessToken, lifetime, nil
 	}
 	exp, err := expiry(token.AccessToken)
 	if err != nil {
-		return "", 0, fmt.Errorf("POST %s: token response has no expires_in, and %w", w.cfg.TokenURL, err)
+		return "", 0, fmt.Errorf("POST %s: token response has no expires_in above 0, and %w", w.cfg.TokenURL, err)
 	}
-	left := exp - float64(time.Now().UnixNano())/float64(time.Second)
+	left := exp - float64(w.now().UnixNano())/float64(time.Second)
 	if left <= 0 {
 		expired := expiresAt(token.AccessToken).UTC().Format(time.RFC3339)
 		return "", 0, fmt.Errorf("POST %s: the token expired at %s", w.cfg.TokenURL, expired)
 	}
 	return token.AccessToken, fromSeconds(left), nil
+}
+
+// jsonResponses is the transport of the token requests. It sets the
+// Content-Type of every response to application/json before x/oauth2 reads
+// it, so x/oauth2 parses every body as JSON, the type RFC 6749, section
+// 5.1, has the token response sent as. x/oauth2 reads a body sent as
+// text/plain or application/x-www-form-urlencoded as a form and refuses no
+// expires_in in a form, while expiresIn relies on the checks of the JSON
+// path.
+type jsonResponses struct {
+	// next sends the requests; nil means http.DefaultTransport.
+	next http.RoundTripper
+}
+
+func (t jsonResponses) RoundTrip(req *http.Request) (*http.Response, error) {
+	next := t.next
+	if next == nil {
+		next = http.DefaultTransport
+	}
+	resp, err := next.RoundTrip(req)
+	// A transport returns no response with its error, and http.Client
+	// reports one that returns neither.
+	if resp == nil {
+		return nil, err
+	}
+	// A RoundTripper a caller supplies may build a response with no header.
+	if resp.Header == nil {
+		resp.Header = http.Header{}
+	}
+	resp.Header.Set("Content-Type", "application/json")
+	return resp, nil
+}
+
+// maxExpiresIn is the longest lifetime an expires_in gives, in seconds:
+// 2147483647, about 68 years.
+const maxExpiresIn = math.MaxInt32
+
+// expiresIn returns the lifetime that v, the expires_in of a token response,
+// gives: 0 when v is nil or not above 0, and at most maxExpiresIn seconds.
+// x/oauth2 parses a JSON expires_in as an integer in the int64 range and
+// refuses the response otherwise. The integer may be written as a number or
+// as a string, so v is nil, a float64, or a string that holds such an
+// integer.
+func expiresIn(v any) time.Duration {
+	var seconds float64
+	switch v := v.(type) {
+	case float64:
+		seconds = v
+	case string:
+		seconds, _ = strconv.ParseFloat(v, 64)
+	}
+	if seconds <= 0 {
+		return 0
+	}
+	return time.Duration(min(seconds, maxExpiresIn)) * time.Second
 }
 
 // oauthError returns the error member of an OAuth error response (RFC 6749,
