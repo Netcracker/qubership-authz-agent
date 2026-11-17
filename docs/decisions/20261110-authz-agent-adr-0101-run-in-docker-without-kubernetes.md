@@ -41,19 +41,21 @@ Docker. At 5a351ef5 the agent took the default for a value it could not read, an
 
 ## Decision
 
-We will support running the agent from its image under Docker, with no Kubernetes, configured by environment variables
-and mounted files alone, which the agent checks itself on every target. The repository ships a Compose example, and CI
-runs it.
+We will support running the agent from its image with Docker Compose, with no Kubernetes, configured by environment
+variables and mounted files alone, which the agent checks itself on every target. The repository ships a Compose
+example.
 
 ### Terms
 
-- **Docker target**: the agent run from its release image by Docker Engine, alone or with Docker Compose v2, on
-  `linux/amd64` or `linux/arm64`, with no Kubernetes component.
+- **Docker target**: the agent run from its release image by Docker Compose v2 on Docker Engine, on `linux/amd64` or
+  `linux/arm64`, with no Kubernetes component.
 - **Compose example**: `deploy/docker/compose.yaml` and the files beside it in `deploy/docker`.
 - **Docker page**: `deploy/docker/README.md`.
+- **Public surface**: the listener whose address `AUTHZ_PUBLIC_ADDR` sets.
+- **Internal surface**: the listener whose address `AUTHZ_HTTP_ADDR` sets.
 - **Agent variable**: an environment variable that code built into the agent binary from `components/authz-agent` or
   `internal` reads by name, `LOGGING_LEVEL_ROOT` included. A variable that only a test, the Go runtime, or the standard
-  library reads, such as `GOMEMLIMIT` or `HTTPS_PROXY`, is not one.
+  library reads, such as `GOMEMLIMIT` or `HTTPS_PROXY`, is not one, and neither is `LOG_LEVEL`, which R30 governs.
 - **Settings table**: the table under `## Configuration` in `components/authz-agent/README.md`.
 - **Stops the start**: as ADR-0091 defines it.
 
@@ -61,9 +63,8 @@ runs it.
 
 #### The image
 
-- **R4** (`image`, `startup`). On the Docker target, wherever the agent starts and becomes ready with the uid of the
-  image and no other limit, it also starts and becomes ready with any uid in group 0, a read-only root file system, and
-  all Linux capabilities dropped.
+- **R4** (`image`, `startup`). On the Docker target, running as any uid in group 0, with a read-only root file system
+  and all Linux capabilities dropped, changes neither whether the agent starts nor whether it becomes ready.
 - **R19** (`image`). On the Docker target, under the restrictions of R4, an agent started from the release image adds
   the CA certificates in the `.crt`, `.cer`, and `.pem` files under `/tmp/cert` at its start to the system roots of the
   image. Every HTTPS call of the agent that trusts the system roots trusts those certificates too, and refuses a server
@@ -79,8 +80,8 @@ runs it.
   variable and stops the start on a value that the row of the variable in the settings table does not accept, with a
   message that names the variable and the values its row accepts. The agent reads an integer as decimal digits with an
   optional sign, a boolean as `true` or `false` alone, without regard to case, and a value from a list without regard
-  to case. An unset agent variable, and an empty integer, boolean, or value from a list, takes the default of its row;
-  an empty value of any other type does what its row says.
+  to case. An unset agent variable, and an empty integer, boolean, or value from a list, takes the default of its row,
+  or does what the row says where it gives no default; an empty value of any other type does what its row says.
 - **R7** (`startup`, `client`). The settings table gives an empty default to every agent variable that holds the address
   of a service the agent calls, `AUTHZ_TENANT_MANAGER_URL` included. With `KUBERNETES_M2M_ENABLED=false` the agent opens
   no file under `/var/run/secrets` that the default of an agent variable names.
@@ -89,113 +90,88 @@ runs it.
   names the variable and, where values of others require it, those values. R20 takes precedence over the default that
   R6 gives an unset or empty variable.
 - **R21** (`startup`, `client`). The settings table has a row for each agent variable; a row may name several
-  variables. A row gives the type, the values or the range accepted, the default or, where there is none, that the
-  variable is always required, what an empty value does where the type admits one, and the values of other agent
-  variables that make the variable required, where some do. An empty default is a default. The range of a number lies
-  within the values that its destination type holds in its unit: `-9223372036` to `9223372036` for a number of seconds.
-  The range of `AUTHZ_ENTITLEMENTS_HTTP_RETRIES`, and of `AUTHZ_JWKS_HTTP_RETRIES` while the agent reads it, ends at
-  `<retry maximum>`.
+  variables. A row gives the type and the values or the range accepted. It gives the default, or, where the variable has
+  none, what the agent does without a value. It says whether the variable is required, always or under values of other
+  agent variables that the row names, and what an empty value does where the type admits one. An empty default is a
+  default. The range of a number lies within the values that its destination type holds in its unit.
+- **R30** (`startup`). The agent takes its root log level from `LOGGING_LEVEL_ROOT`. A non-empty `LOG_LEVEL` stops the
+  start, with a message that names `LOGGING_LEVEL_ROOT`.
 
-#### The Compose example
+#### The Compose example and the Docker page
 
 - **R8** (`docker`). The Compose example runs the agent from its release image, mounts the trusted providers file at
   `/etc/authz` and the client credentials at `/etc/secret`, and holds an example trusted providers file.
 - **R9** (`docker`, `startup`). The environment file of the Compose example lists every agent variable with a comment.
   It gives each variable that the configuration of the example requires a placeholder, such as an address under
-  `example.com`, and every other variable the default of its row in the settings table. It sets `M2M_AUTH_MODE` to
-  `legacy` and `KUBERNETES_M2M_ENABLED` to `false`.
+  `example.com`, gives every other variable that has a default the default of its row in the settings table, and leaves
+  each remaining variable commented out. It sets `M2M_AUTH_MODE` to `legacy` and `KUBERNETES_M2M_ENABLED` to `false`.
 - **R10** (`docker`). The Compose example gives the agent a stop grace period of 30 seconds.
-- **R11** (`docker`). The Compose example declares a healthcheck on `/ready` of the internal port, which passes when
-  `/ready` answers 200, and fails when it answers 503 or any status of 400 or above, when the connection fails, and when
-  no answer comes within the healthcheck's timeout.
+- **R11** (`docker`). The Compose example declares a healthcheck on `/ready` of the internal surface, which passes only
+  while `/ready` reports the agent ready.
 - **R12** (`docker`). The Compose example sets the restart policy `unless-stopped`.
-- **R13** (`docker`). The Compose example publishes the public port and publishes the internal port on `127.0.0.1`
-  alone, if at all.
+- **R13** (`docker`). The Compose example publishes the ports of the public surface and of the internal surface on no
+  address other than `127.0.0.1`.
 - **R14** (`docker`). The Docker page shows how to trust a private CA through `/tmp/cert`.
 - **R15** (`docker`). The Docker page requires a host clock synchronized over NTP.
 - **R16** (`docker`). The Docker page states that the agent serves plain HTTP and that a proxy in front of the public
-  port terminates TLS.
+  surface terminates TLS. It states that a proxy in a container on the same host reaches the public surface over the
+  Compose network, and that a proxy on another host needs the port of the public surface published on an interface
+  that host reaches.
+- **R29** (`docker`). The Docker page shows how to make the client credentials mounted at `/etc/secret` readable to the
+  uid the agent runs as, without making them readable to other users of the host.
 
-#### The check in CI
+#### The README files
 
-- **R17** (`ci`). On every pull request and every push to `main`, a CI job on the GitHub-hosted runner `ubuntu-26.04`
-  builds the image of that commit and starts the Compose example with it. An override file adds Keycloak and a policy
-  source as containers. The job then runs against the agent every case of `test/integration/testify` that the kind job
-  runs, except a case that needs a Kubernetes token, the topology file, or the Kubernetes API.
-- **R24** (`ci`). The job of R17 shows, against the image of the commit run under the restrictions of R4, that a value
-  R6 refuses stops the start, and that an unset variable that the configuration of the Compose example requires stops
-  the start.
-- **R25** (`ci`). The job of R17 shows, against the image of the commit run under the restrictions of R4, that an HTTPS
-  call to a server whose certificate a CA under `/tmp/cert` signed succeeds, and that a call to a server whose
-  certificate was signed by a CA that neither `/tmp/cert` nor the image trusts fails (R19).
-- **R26** (`ci`). The job of R17 shows that the healthcheck of R11 reports the container unhealthy while `/ready`
-  answers 503, and healthy once it answers 200.
-- **R27** (`ci`). The job of R17 shows that `docker compose stop` ends the agent of the Compose example through
-  `SIGTERM` within the stop grace period of R10, with an exit status other than 137.
-
-### Implementation notes
-
-Adds no requirement.
-
-- R6, R20, and R21: let `loadConfig` in `components/authz-agent/config.go` check every agent variable, collect the
-  values it refuses, and return them in one error that `main` reports before the agent listens. The platform logger
-  drops errors at the log level `fatal`, so let `main` raise the level to `error` for that report.
-- R9: a test that compares the keys of the environment file with the agent variables keeps R9 true as variables are
-  added.
-- R11: the image ships `curl`, and `curl --fail` exits with an error on a status of 400 or above.
-- R4, R5, and R24 to R27: the override of R17 can run the agent as a uid such as `12345:0`, and the Compose example
-  already sets `read_only: true` and `cap_drop: [ALL]`. For the CA, a small HTTPS server with the certificate of a
-  test CA, and one with the certificate of another test CA, can stand in for a PIP. Starting the agent while the policy
-  source is stopped, and then starting the source, moves `/ready` from 503 to 200. The job replaces the release image
-  with the image of the commit, so R8 to R13 stay properties of the files that a reader checks.
-- R17: the suite reads every address from its environment, as `test/integration/testify/helpers.go` lists them. The
-  realms of `test/k8s/authn` and the images of `test/integration/pipstub` and `test/integration/tenantmanager` serve the
-  override as they serve kind.
+- **R28** (`docker`). The top-level `README.md` and `components/authz-agent/README.md` link the Docker page as a
+  supported way to run the agent, and neither states that the agent runs only in Kubernetes.
 
 ### Justification
 
 The agent calls Keycloak, the PIPs, and the policy source over HTTPS. An installation with a private CA needs the
 release image to trust that CA under the same restrictions as the rest of its run, and the Docker page shows an operator
-how (R14, R19). The agent needs neither root nor a writable root file system, and R4 keeps it so.
+how (R14, R19). The agent needs neither root nor a writable root file system, and R4 keeps it so. Under R4 the agent may
+run as a uid that owns none of the files the operator mounts. A bind mount keeps the owner and mode of each file, so the
+Docker page shows how to make the credentials readable to that uid without making them readable to every user of the
+host (R29).
 
 On the Docker target nothing but the agent checks its configuration. The token for the API server and the topology file
 exist only in a cluster, so ADR-0092 R16 leaves `legacy` as the only mode outside Kubernetes, and R5 requires that mode
 to work with neither. A mistyped value of any agent variable stops the start, as an unknown mode does under
 ADR-0092 R15, so an operator learns of it at once rather than running with a default they did not choose (R6). The
-settings table keeps the list in one file, so a new variable joins it in the change that adds it (R21). A number that
-its destination type cannot hold, such as a number of seconds above `9223372036`, overflows `time.Duration` instead of
-being refused, so its range ends there (R21). A variable that the values of others require, such as
-`AUTHZ_M2M_TOKEN_URL` with `KUBERNETES_M2M_ENABLED=false` under ADR-0096 R5, is marked in its row, and R20 stops the
-start without it; a pair that a record forbids, such as those of ADR-0096 R8, stops the start as that record says. R6
-reads a boolean as ADR-0096 R3 reads `KUBERNETES_M2M_ENABLED`, so that no setting accepts a spelling another one
-refuses.
+settings table keeps the list in one file, so a new variable joins it in the change that adds it (R21). A variable can
+be optional and still have no default, so a row gives the default and whether the variable is required separately (R21).
+A number that its destination type cannot hold would overflow instead of being refused, so its range ends within that
+type, and the row gives the bound (R21). A variable that the values of others require, such as `AUTHZ_M2M_TOKEN_URL`
+with `KUBERNETES_M2M_ENABLED=false` under ADR-0096 R5, is marked in its row, and R20 stops the start without it; a pair
+that a record forbids, such as those of ADR-0096 R8, stops the start as that record says. R6 reads a boolean as
+ADR-0096 R3 reads `KUBERNETES_M2M_ENABLED`, so that no setting accepts a spelling another one refuses. The platform
+logger reads `LOG_LEVEL` when `LOGGING_LEVEL_ROOT` is unset or empty, and runs at `info` with only a warning when it
+cannot parse the value. So the root log level has one name, `LOGGING_LEVEL_ROOT`, and a non-empty `LOG_LEVEL` stops the
+start (R30).
 
 A default address such as `http://tenant-manager:8080` names a service that only some networks have, whether the name
 belongs to a Kubernetes Service or to a Compose service. With an address of tenant-manager the agent stays not ready
 until the translation through tenant-manager succeeds (ADR-0093 R11), and with an empty one it uses the default tenant
 as given (ADR-0093 R14). An empty default lets an agent without tenant-manager start, and an operator who has one names
-it (R7). With `KUBERNETES_M2M_ENABLED=false` the agent gets its token from `AUTHZ_M2M_TOKEN_URL` (ADR-0096 R5) and needs
-no file under `/var/run/secrets`, where nothing is mounted on the Docker target (R7).
+it (R7). With `KUBERNETES_M2M_ENABLED=false`, which the agent reads itself (ADR-0096 R1), the agent gets its token from
+`AUTHZ_M2M_TOKEN_URL` (ADR-0096 R5) and needs no file under `/var/run/secrets`, where nothing is mounted on the Docker
+target (R7).
 
-An operator starts from the Compose example, and CI runs the same file, so a change that breaks the Docker target fails
-a check (R8, R9, R17). The trusted providers file and `AUTHZ_M2M_TOKEN_URL` stay in the example, because the agent does
-not read `IDENTITY_PROVIDER_URL` (ADR-0091 R78). The agent shuts its two surfaces down one after the other, each in up
-to 5 seconds, so in up to 10 seconds, all of Docker's default stop timeout, and 30 seconds leave a margin (R10).
+An operator starts from the Compose example, so it carries what the agent needs to start (R8, R9). The trusted providers
+file and `AUTHZ_M2M_TOKEN_URL` stay in the example, because the agent does not read `IDENTITY_PROVIDER_URL`
+(ADR-0091 R78). Docker's default stop timeout is too short for the agent to stop gracefully, so the example sets a
+longer one (R10). A reader looks in the README files for how to run the agent, so both link the Docker page, and a
+sentence that ties the agent to Kubernetes would send that reader away (R28).
 
 Docker shows the state of a container only through a healthcheck, and keeps running a container marked unhealthy. A
-dependent container waits until the agent is ready (ADR-0091 R14), and a healthcheck that passed on a 503 from `/ready`
-would let `docker compose up --wait` go on with an agent that is not ready (R11). The restart policy covers a process
-that exits (R12). Docker publishes a port on every interface unless the mapping names one, and the internal port serves
-the metrics, `/ready`, and `/health` (R13). Token checks compare `exp` and `nbf` with the host clock, with a leeway of
-30 seconds (ADR-0091 R44). A clock that drifts further makes the agent refuse valid tokens or accept expired ones (R15).
-TLS stays outside the agent for its clients, as the architect decided (R16).
-
-A job on `ubuntu-26.04` stays on Ubuntu 26.04 until a change to the workflow moves it, while `ubuntu-latest` moves to
-the next Ubuntu release on GitHub's schedule (R17). GitHub still updates the tools of either image every week, Docker
-and Compose among them. The suite already exercises the agent on kind over HTTP alone, so in Docker it covers the same
-paths, apart from the cases that read what only a cluster has (R17). The suite shows neither a refused configuration,
-nor a private CA under the restrictions of R4, nor a failing healthcheck, nor a stop within the grace period, so the job
-shows each of them in a rule of its own, which a change can bring apart from the others (R24 to R27).
+dependent container waits until the agent is ready (ADR-0091 R14), and a healthcheck that passed while `/ready` reports
+the agent not ready would let `docker compose up --wait` go on with an agent that is not ready (R11). The restart policy
+covers a process that exits (R12). Docker publishes a port on every interface unless the mapping names one. The internal
+surface serves the metrics and the probes, and the public surface takes bearer tokens over plain HTTP, so the example
+keeps both on `127.0.0.1`. A proxy in a container on the same host needs no published port, and the interface a proxy on
+another host reaches is the operator's choice (R13, R16). Token checks compare `exp` and `nbf` with the host clock, with
+a leeway of 30 seconds (ADR-0091 R44). A clock that drifts further makes the agent refuse valid tokens or accept expired
+ones (R15). TLS stays outside the agent for its clients, as the architect decided (R16).
 
 ### Alternatives considered
 
@@ -206,38 +182,36 @@ shows each of them in a rule of its own, which a change can bring apart from the
 - **A4. Log a warning and keep the default for an invalid value.** Rejected by R6: the warning is easy to miss, and the
   agent would run, for example, with a pull interval the operator did not choose.
 - **A5. Put the healthcheck into the Dockerfile.** The address would be fixed in the image, while `AUTHZ_HTTP_ADDR` can
-  move the internal port.
-- **A6. Check only readiness and one decision in CI.** Rejected by R17: a regression on the Docker target outside that
-  path would pass.
-- **A7. Publish the internal port on every interface.** Rejected by R13: anyone on the network could read the metrics.
+  change the address of the internal surface.
+- **A7. Publish the ports on every interface.** Rejected by R13: anyone on the network could read the metrics, and a
+  client that reached the public surface directly would send its bearer token in clear text, where anyone on the
+  network path can read and reuse it.
 - **A8. Accept `1`, `yes`, `on`, `0`, `no`, and `off` for every boolean.** Rejected by R6: ADR-0096 R3 would have to
   accept them as well, and ADR-0091 R64 removes `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, the one setting that accepted them at
   5a351ef5.
+- **A10. Support `docker run` without Compose.** The stop grace period, the healthcheck, the restart policy, and the
+  port bindings would each become a flag that every operator has to repeat.
+- **A11. Accept `LOG_LEVEL` as a second name of the log level and check both.** Rejected by R30: with two names for one
+  setting, an operator has to know which one the agent reads when both are set.
 
 ## Consequences
 
 Negative:
 
-- A plain `docker run` needs `--stop-timeout 30`, or Docker kills the agent before it shuts down (R10).
 - Docker does not restart a container that hangs without exiting. The healthcheck only marks it, and the monitoring of
   the installation has to act (R11, R12).
+- A configuration that stops the start makes the restart policy start the agent again and again, each start ending
+  with the same message in `docker compose logs` (R12).
 - On the Docker target the operator writes the address of Keycloak twice, in the trusted providers file and in
   `AUTHZ_M2M_TOKEN_URL` (ADR-0091 R78).
-- The agent at 5a351ef5 started with values that now stop the start, such as `AUTHZ_JWKS_HTTP_TIMEOUT=5s` and
-  `AUTHZ_M2M_RENEW_BEFORE_SECONDS=1m` (R6). While the agent reads `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, `yes`, `on`, `1`,
-  `no`, `off`, and `0` stop the start for that setting as well (R6).
+- A value that the agent at 5a351ef5 replaced with its default, such as `5s` for a number of seconds, now stops the
+  start (R6).
+- An installation without the chart that sets `LOG_LEVEL` now stops the start, and moves the value to
+  `LOGGING_LEVEL_ROOT` (R30).
+- An installation that ran v0.1.0 without the chart and uses tenant-manager sets `AUTHZ_TENANT_MANAGER_URL` before it
+  upgrades. Without it the agent sends no request to tenant-manager: it uses the default tenant as given (ADR-0093 R14)
+  and a realm named by a tenant's display name as written (R7).
+- Releases before 1.0, v0.1.0 included, carry no stable API or configuration commitment, so the release notes of each
+  release that implements R6, R7, or R30 list what it changes for an installation without the chart.
 - On the Docker target only `legacy` works, so services that call with Kubernetes tokens cannot use such an agent
   (ADR-0092 R16).
-- With the empty default of R7, an agent without `AUTHZ_TENANT_MANAGER_URL` sends no request to tenant-manager. It uses
-  the default tenant as given (ADR-0093 R14), and a realm named by a tenant's display name as written.
-
-Follow-ups:
-
-- The top-level README and `components/authz-agent/README.md` link the Docker page instead of stating that the
-  deployment assumes Kubernetes.
-
-## Open points
-
-- **O2.** The maximum of `AUTHZ_ENTITLEMENTS_HTTP_RETRIES`, and of `AUTHZ_JWKS_HTTP_RETRIES` while the agent reads it,
-  `<retry maximum>` in R21. The answers under consideration are a bound that no installation needs to exceed, such as
-  `100`, and the largest value of its destination type. The architect decides. It affects R21.
