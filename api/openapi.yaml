@@ -46,9 +46,8 @@ paths:
       summary: Legacy v1 OLS single-resource check.
       description: |
         Returns a JSON boolean literal (`true` or `false`) reflecting the
-        OLS decision for a single `(type, operation, resource)`. The
-        `tenant_id` query parameter is accepted for legacy thin-client
-        compatibility but does not influence the decision.
+        OLS decision for a single `(type, operation, resource)` in the
+        tenant that `tenant_id` names.
       parameters:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
@@ -98,6 +97,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /access/v1/check/resource/bulk:
     post:
       operationId: access_v1_check_resource_bulk
@@ -160,6 +161,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /access/v1/check/resource/bulk/operations:
     post:
       operationId: access_v1_check_resource_bulk_operations
@@ -221,6 +224,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /preview/v1/check/resource/bulk/operations:
     post:
       operationId: preview_v1_check_resource_bulk_operations
@@ -277,6 +282,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /access/v1/check/filter:
     post:
       operationId: access_v1_check_filter
@@ -286,8 +293,8 @@ paths:
         Driven entirely by query parameters (`resourceType`, `operation`);
         the JSON body is reserved for legacy back-compat and must be
         present but is unused. Always returns the six-field
-        `CheckFilterResponse` shape on `200`. `customFilterCondition` is
-        JSON `null` on the simplified-policy path.
+        `CheckFilterResponse` shape on `200`; a field of a dialect without
+        a predicate is JSON `null`.
       parameters:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
@@ -347,6 +354,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /access/v2/check/resource:
     post:
       operationId: access_v2_check_resource
@@ -407,6 +416,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /access/v2/check/resource/bulk/operations:
     post:
       operationId: access_v2_check_resource_bulk_operations
@@ -462,6 +473,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /preview/v2/check/resource/bulk/operations:
     post:
       operationId: preview_v2_check_resource_bulk_operations
@@ -514,6 +527,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /access/v2/check/filter:
     post:
       operationId: access_v2_check_filter
@@ -580,6 +595,8 @@ paths:
               examples:
                 missing_token:
                   value: { "message": "Authorization token is missing" }
+        '403':
+          $ref: '#/components/responses/CallerTenantMismatch'
   /api-version:
     get:
       operationId: api_version_get
@@ -605,10 +622,9 @@ paths:
       tags: [meta]
       summary: Health of the agent on the public listener.
       description: |
-        Returns `200 { "status": "healthy" }` once the agent's trusted
-        providers have settled. An agent whose trusted providers fail to
-        bootstrap, or whose trusted-providers configuration is invalid,
-        returns `503 { "message": ..., "details": ... }`.
+        Returns `200` with `status: healthy` once the agent's trusted
+        providers have settled, and `503` with `status: unhealthy`
+        otherwise. Both carry the counts of the agent's tenants.
       security: []
       responses:
         '200':
@@ -616,26 +632,34 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthHealthyResponse'
+                $ref: '#/components/schemas/PublicHealthResponse'
               examples:
                 healthy:
-                  value: { "status": "healthy" }
+                  value: { "status": "healthy", "tenants": 3, "served": 3, "rejected": 1, "failing": 0 }
         '503':
-          description: Unhealthy (degraded bootstrap).
+          description: Unhealthy.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthUnhealthyResponse'
+                $ref: '#/components/schemas/PublicHealthResponse'
               examples:
-                bootstrap_threshold:
-                  summary: Strict-mode JWKS bootstrap threshold not met.
-                  value: { "message": "bootstrap threshold not met", "details": { "opaReady": true, "bootstrap": { "mode": "strict", "successCount": 0, "requiredCount": 1 } } }
+                unhealthy:
+                  value: { "status": "unhealthy", "tenants": 3, "served": 3, "rejected": 0, "failing": 0 }
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  responses:
+    CallerTenantMismatch:
+      description: |
+        The token in `Authorization` is not an M2M token, and it may not ask
+        about the tenant of the request. Such a token may ask only about the
+        tenant of its `tenant-id` claim, or about the default tenant when it
+        has no such claim or an empty one. An M2M token, one whose
+        `realm_access.roles` holds `ROLE_M2M` or whose `level` is `m2m` or
+        `key-manager`, may name any tenant. The response has no body.
   parameters:
     IncomingTokenHeader:
       name: Incoming-Token
@@ -661,7 +685,11 @@ components:
       name: tenant_id
       in: query
       required: false
-      description: Accepted for legacy thin-client compatibility; does not influence the decision.
+      description: |
+        ID of the tenant whose policies decide the request. Without it the
+        `Tenant` header names the tenant, and without both the agent's
+        default tenant decides. A tenant with no published policies denies
+        the request.
       schema:
         type: string
     ObligationsQuery:
@@ -783,17 +811,30 @@ components:
           enum: [ALLOW, DENY, USE_FILTER_CONDITION]
         filterCondition:
           type: string
-          description: Always empty on the simplified-policy path.
+          nullable: true
+          description: The condition in QueryDSL; `null` without a QueryDSL predicate.
         mongodbFilterCondition:
           type: string
+          nullable: true
+          description: The condition in MongoDB; `null` without a MongoDB predicate.
         rsqlFilterCondition:
           type: string
+          nullable: true
+          description: The condition in RSQL; `null` without an RSQL predicate.
         sqlFilterCondition:
           type: string
-        customFilterCondition:
-          type: string
           nullable: true
-          description: JSON `null` on the simplified-policy path; populated only by legacy full-policy custom-condition payloads.
+          description: The condition in SQL; `null` without an SQL predicate.
+        customFilterCondition:
+          type: object
+          nullable: true
+          description: The custom predicates as `logic`, joined by `AND`, `OR` and `NOT`, and their `data`; `null` without a custom predicate.
+          required: [logic, data]
+          properties:
+            logic: {}
+            data:
+              type: object
+              additionalProperties: true
     ApiVersionResponse:
       type: object
       additionalProperties: false
@@ -818,115 +859,33 @@ components:
           type: array
           items:
             type: integer
-    HealthHealthyResponse:
+    PublicHealthResponse:
       type: object
       additionalProperties: false
       required: [status]
+      description: |
+        Status of the agent and counts of its tenants. The body names no
+        tenant and no reason; the operator reads those on port 8181.
+        The counts are absent when the agent runs without a snapshot
+        registry.
       properties:
         status:
           type: string
-          enum: [healthy]
-        policyConversion:
-          $ref: '#/components/schemas/PolicyConversionStats'
-    HealthUnhealthyResponse:
-      type: object
-      additionalProperties: false
-      required: [message]
-      properties:
-        message:
-          type: string
-          description: |
-            Human-readable summary of the failed health criterion
-            (`trusted providers configuration is invalid`,
-            `required identity providers did not bootstrap`,
-            `bootstrap threshold not met`).
-        details:
-          $ref: '#/components/schemas/HealthErrorDetails'
-    HealthErrorDetails:
-      type: object
-      additionalProperties: false
-      description: |
-        Diagnostic context for unhealthy responses. `opaReady` is always
-        `true`, because the policy engine runs inside the agent's
-        process. `bootstrap` is present when the failure was the JWKS
-        bootstrap threshold check, and `configError` is present when the
-        trusted-providers configuration file is unreadable or invalid.
-      properties:
-        opaReady:
-          type: boolean
-        configError:
-          type: string
-          description: |
-            Present when the trusted-providers configuration file could not
-            be read or parsed. A rejected config is surfaced here rather
-            than silently clearing thresholds.
-        bootstrap:
-          $ref: '#/components/schemas/BootstrapHealthDetails'
-        policyConversion:
-          $ref: '#/components/schemas/PolicyConversionStats'
-    PolicyConversionStats:
-      type: object
-      additionalProperties: false
-      required: [policySets, policySetsSkipped, rules, rulesSkipped, rulesDenySkipped, policies]
-      description: |
-        Counts from the most recent conversion of the access-control policy
-        set into the OPA document. Present only after the first successful pull.
-
-        The skipped counters are the load-bearing part. A pull that fetched
-        1294 policy sets and converted none of them succeeds by every other
-        measure — `status: healthy` and `policiesLoaded: true` both hold —
-        and from the outside it looks like an authorization outage, because
-        every decision denies. These counts are what distinguishes the two,
-        for an operator reading the body and for monitoring scraping it.
-
-        Readiness is deliberately NOT gated on them: a partial data problem
-        must not turn into an outage.
-      properties:
-        policySets:
+          enum: [healthy, unhealthy]
+        tenants:
           type: integer
-          description: Policy sets present in the fetched payload.
-        policySetsSkipped:
+          description: Tenants the agent knows.
+        served:
+          type: integer
+          description: Tenants with published policies.
+        rejected:
+          type: integer
+          description: Tenants whose latest policies were refused.
+        failing:
           type: integer
           description: |
-            Policy sets from which no rule could be converted. Non-zero means
-            part of the authorization model is missing from OPA.
-        rules:
-          type: integer
-          description: Rules converted into the OPA document.
-        rulesSkipped:
-          type: integer
-          description: |
-            Rules dropped because their target did not parse. Fail-closed:
-            an unrecognised role target skips the policy rather than granting
-            open access.
-        rulesDenySkipped:
-          type: integer
-          description: DENY-effect rules skipped; the converter emits ALLOW rules only.
-        policies:
-          type: integer
-          description: Simplified policies produced by the conversion.
-    BootstrapHealthDetails:
-      type: object
-      additionalProperties: false
-      required: [mode, successCount, requiredCount]
-      properties:
-        mode:
-          type: string
-          enum: [strict, permissive]
-        successCount:
-          type: integer
-        requiredCount:
-          type: integer
-        missingRequired:
-          type: array
-          items:
-            type: string
-          description: |
-            Names the identity providers marked `required: true` in the
-            trusted-providers file that did not bootstrap successfully.
-            Present only when at least one required provider is absent.
-            Omitted when all required providers
-            are healthy.
+            Tenants whose published policies have a part that answers
+            as a failed source.
     LegacyErrorResponse:
       type: object
       additionalProperties: false

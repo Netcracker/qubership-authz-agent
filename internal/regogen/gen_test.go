@@ -1,0 +1,4204 @@
+// Copyright 2024-2026 Netcracker Technology Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package regogen
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"fmt"
+	"maps"
+	"math"
+	"net/http"
+	"reflect"
+	"regexp"
+	"slices"
+	"strings"
+	"sync"
+	"testing"
+
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
+
+	"authz-agent/internal/jsonvalue"
+	"authz-agent/internal/policyir"
+	"authz-agent/internal/regobuiltins"
+	"authz-agent/internal/regogen/spectables"
+)
+
+// tenantWithSet returns the tree of a tenant whose export holds one set with
+// one policy, both of the algorithm given, and one rule of the effect and
+// condition given.
+func tenantWithSet(t testing.TB, algorithm, effect, condition string) *policyir.Tree {
+	t.Helper()
+	return tenantWithSetAndPIPs(t, algorithm, effect, condition, "")
+}
+
+// tenantWithSetAndPIPs is tenantWithSet with the PIP declarations given, a
+// comma-separated list of JSON objects without their tenantId, each starting
+// with its name.
+func tenantWithSetAndPIPs(t testing.TB, algorithm, effect, condition, pips string) *policyir.Tree {
+	t.Helper()
+	sets := fmt.Sprintf(`{"policySets": [{"policySetId": "s1", "name": "s1", "status": "ACTIVE",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": %[1]q, "tenantId": "t1",
+		"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": %[1]q,
+			"tenantId": "t1", "rules": [{"ruleId": "r1", "target": "operation == 'read'",
+				"condition": %[2]q, "effect": %[3]q, "tenantId": "t1"}]}]}]}`, algorithm, condition, effect)
+	pips = strings.ReplaceAll(pips, `{"name"`, `{"tenantId": "t1", "name"`)
+	exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": [`+pips+`]}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	tree, ok := exp.Trees["t1"]
+	if !ok {
+		t.Fatalf("FromRegular: no tree of t1; failed %v, dropped %v", exp.Failed, exp.Dropped)
+	}
+	return tree
+}
+
+func table(t testing.TB) *spectables.Table {
+	t.Helper()
+	tab, err := DefaultTable()
+	if err != nil {
+		t.Fatalf("DefaultTable: %v", err)
+	}
+	return tab
+}
+
+// resolved is a value the specification resolved for an operand: a state
+// alone, or VALUE with the JSON text of the value.
+func resolved(t *testing.T, state, value string) Resolved {
+	t.Helper()
+	r := Resolved{State: spectables.State(state)}
+	if value != "" {
+		v, err := jsonvalue.Decode([]byte(value))
+		if err != nil {
+			t.Fatalf("jsonvalue.Decode(%s): %v", value, err)
+		}
+		r.Value = v
+	}
+	return r
+}
+
+// decide generates the module of tree with opt, and evaluates the read of a
+// doc whose operand key holds v.
+func decide(t *testing.T, tree *policyir.Tree, opt Options, key string, v Resolved) bool {
+	t.Helper()
+	return decideValues(t, tree, opt, map[string]Resolved{key: v})
+}
+
+// decideValues is decide with the values of several operands, by key.
+func decideValues(t *testing.T, tree *policyir.Tree, opt Options, values map[string]Resolved) bool {
+	t.Helper()
+	return decideWith(t, tree, table(t), opt, values)
+}
+
+// decideWith is decideValues with the tables given.
+func decideWith(t *testing.T, tree *policyir.Tree, tab *spectables.Table, opt Options, values map[string]Resolved) bool {
+	t.Helper()
+	m, err := Generate(tree, tab, opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	return evalModule(t, m, Request{Body: Body{Operation: "read", ResourceType: "doc"}, Values: values})
+}
+
+// evalModule compiles the module and evaluates allow for the request.
+func evalModule(t *testing.T, m *Module, req Request) bool {
+	t.Helper()
+	return evalRule(t, m, req, "allow") == true
+}
+
+// evalRule compiles the module and evaluates rule for the request, decision
+// and maybe from the module of Options.Decision; nil when the rule is
+// undefined.
+func evalRule(t *testing.T, m *Module, req Request, rule string) any {
+	t.Helper()
+	in, err := Project(m, req)
+	if err != nil {
+		t.Fatalf("Project: %v", err)
+	}
+	return evalInput(t, m, in, rule)
+}
+
+// lastQuery is the query evalInput prepared last, so that a test that
+// evaluates one module many times prepares it once.
+var lastQuery struct {
+	sync.Mutex
+	query, text string
+	pq          rego.PreparedEvalQuery
+}
+
+// evalInput is evalRule on the input in.
+func evalInput(t *testing.T, m *Module, in *Input, rule string) any {
+	t.Helper()
+	pkg, text := DefaultOptions().Package, m.Text
+	if rule == "decision" || rule == "maybe" {
+		pkg, text = pkg+"_decision", m.DecisionText
+	}
+	query := "data." + pkg + "." + rule
+	lastQuery.Lock()
+	pq := lastQuery.pq
+	if lastQuery.query != query || lastQuery.text != text {
+		var err error
+		pq, err = rego.New(append([]func(*rego.Rego){rego.Query(query),
+			rego.Module("gen.rego", text)}, Builtins()...)...).PrepareForEval(context.Background())
+		if err != nil {
+			lastQuery.Unlock()
+			t.Fatalf("PrepareForEval: %v\n%s", err, text)
+		}
+		lastQuery.query, lastQuery.text, lastQuery.pq = query, text, pq
+	}
+	lastQuery.Unlock()
+	rs, err := pq.Eval(in.Context(replayContext(t, in)), rego.EvalParsedInput(in.Value()))
+	if err != nil {
+		t.Fatalf("Eval: %v", err)
+	}
+	if len(rs) != 1 {
+		return nil
+	}
+	return rs[0].Expressions[0].Value
+}
+
+// replayContext returns a context in which nc.http.send answers each PIP
+// call of in with the value the request gave the PIP ([ReplayTransport]). A
+// value no response gives fails the test.
+func replayContext(t *testing.T, in *Input) context.Context {
+	t.Helper()
+	tr, errs := ReplayTransport(in)
+	if len(errs) > 0 {
+		t.Fatalf("ReplayTransport: %v", errs)
+	}
+	h := &regobuiltins.HTTP{Client: &http.Client{Transport: tr}, Token: func() (string, error) { return "own", nil }}
+	return regobuiltins.WithCalls(h.Context(context.Background()))
+}
+
+const keyA = `["res",".a"]`
+
+// The cells of EQ(res:path, lit:str) give a string value the comparison of
+// keys under equalsIgnoreCase, and the state ABSENT the false rail.
+func TestEqualityOfAnAttributeAndALiteral(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a == 'Ab'")
+	for _, tc := range []struct {
+		name         string
+		state, value string
+		want         bool
+	}{
+		{"the same text allows", "VALUE", `"Ab"`, true},
+		{"another case allows", "VALUE", `"aB"`, true},
+		{"another text denies", "VALUE", `"Ac"`, false},
+		{"a missing attribute denies", "ABSENT", "", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := decide(t, tree, DefaultOptions(), keyA, resolved(t, tc.state, tc.value)); got != tc.want {
+				t.Errorf("allow(resource.a = %s %s) = %v, want %v", tc.state, tc.value, got, tc.want)
+			}
+		})
+	}
+}
+
+// A record is keyed by the operand's text, and the module reads a text that
+// is not a Rego identifier, such as resource.a$b, by a bracketed string. A
+// comparison of two such operands binds a variable named after both.
+func TestAnOperandThatIsNotAnIdentifierReadsItsRecordByItsText(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a$b CONTAINS ANY resource.c$d")
+	for _, tc := range []struct {
+		name, right string
+		want        bool
+	}{
+		{"a shared element allows", `["y"]`, true},
+		{"no shared element denies", `["z"]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{`["res",".a$b"]`: resolved(t, "VALUE", `["x", "y"]`),
+				`["res",".c$d"]`: resolved(t, "VALUE", tc.right)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource.c$d = %s) = %v, want %v", tc.right, got, tc.want)
+			}
+		})
+	}
+}
+
+// A request may send the whole resource as a string, and the resource then
+// compares by value. An export whose domain of the whole resource held only
+// an object answered every such leaf with a constant false.
+func TestAWholeResourceStringComparesByValue(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource == 'btn'")
+	for _, tc := range []struct {
+		name, value string
+		want        bool
+	}{
+		{"the named string allows", `"btn"`, true},
+		{"another string denies", `"menu"`, false},
+		{"an object denies", `{"id": "btn"}`, false},
+		{"null in state VALUE denies", `null`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := decide(t, tree, DefaultOptions(), `["res",""]`, resolved(t, "VALUE", tc.value)); got != tc.want {
+				t.Errorf("allow(resource = %s) = %v, want %v", tc.value, got, tc.want)
+			}
+		})
+	}
+}
+
+// A path that opens with a bracket reads from the member resource of the
+// resource: resource['x'] is resource.resource['x'], so neither a member x
+// nor a member named resource['x'] is read.
+func TestARootBracketReadsTheMemberResource(t *testing.T) {
+	m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource['x'] == 'v'"), table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	for _, tc := range []struct {
+		name, resource string
+		want           bool
+	}{
+		{"a member resource holding x allows", `{"resource": {"x": "v"}}`, true},
+		{"a member x denies", `{"x": "v"}`, false},
+		{"a member named resource['x'] denies", `{"resource['x']": "v"}`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := Request{Body: Body{Operation: "read", ResourceType: "doc", Resource: mustDecode(t, tc.resource),
+				HasResource: true}, Values: map[string]Resolved{}}
+			m.Resolve(req.Body, req.Values)
+			if got := evalModule(t, m, req); got != tc.want {
+				t.Errorf("allow(resource['x'] == 'v', resource = %s) = %v, want %v", tc.resource, got, tc.want)
+			}
+		})
+	}
+}
+
+// A null element on the left of CONTAINS ends the rule in legacy, and the
+// agent reads the end as an undefined leaf. Under PERMIT_UNLESS_DENY a DENY
+// rule permits only when its condition is false, so the null element denies
+// where a list without the value permits.
+func TestANullElementLeavesContainsUndefined(t *testing.T) {
+	tree := tenantWithSet(t, "PERMIT_UNLESS_DENY", "DENY", "resource.a CONTAINS 'v'")
+	for _, tc := range []struct {
+		name, value string
+		want        bool
+	}{
+		{"a list without the value is false and permits", `["w"]`, true},
+		{"a list with the value is true and denies", `["v"]`, false},
+		{"a null element is undefined and denies", `[null, "w"]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := decide(t, tree, DefaultOptions(), keyA, resolved(t, "VALUE", tc.value)); got != tc.want {
+				t.Errorf("allow(resource.a = %s) = %v, want %v", tc.value, got, tc.want)
+			}
+		})
+	}
+}
+
+// relAsArrayEq loads the embedded table with every cell of rule rel, < of two
+// string attributes among them, naming array_eq instead, which no template
+// implements.
+func relAsArrayEq(t *testing.T) *spectables.Table {
+	t.Helper()
+	const result = `{"outcome": "by_value", "outcomes": ["T", "F"], "value_rule": [`
+	return editedTable(t, result+`"rel"]}`, result+`"array_eq"]}`)
+}
+
+// A value-dependent cell whose value rule no template implements is a
+// generation error that names the operator and the kinds, never a false rail.
+// The same leaf generates from the table as it is.
+func TestAValueDependentCellWithoutATemplateFailsGeneration(t *testing.T) {
+	tab := relAsArrayEq(t)
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a < resource.b")
+	_, err := Generate(tree, tab, DefaultOptions())
+	if err == nil || !strings.Contains(err.Error(), "LT(res:path ") {
+		t.Errorf("Generate(resource.a < resource.b) with rule array_eq: error = %v, want one naming LT(res:path ...)",
+			err)
+	}
+	if _, err := Generate(tree, table(t), DefaultOptions()); err != nil {
+		t.Errorf("Generate(resource.a < resource.b) error = %v, want none", err)
+	}
+}
+
+// A subject list of two or more values on the right of == or != answers
+// with the profile's setting right_list_scalar_ops, false for the agent,
+// before the lists are compared; a list of one compares as a set, and !=
+// negates it.
+func TestALongListOnTheRightOfEqualityAnswersTheSetting(t *testing.T) {
+	for _, tc := range []struct {
+		name, op, roles, scopes string
+		want                    bool
+	}{
+		{"== with two scopes is false however the lists compare", "==", `["x", "y"]`, `["y", "x"]`, false},
+		{"!= with two scopes is false too", "!=", `["x"]`, `["x", "y"]`, false},
+		{"== with one scope compares the lists", "==", `["x"]`, `["x"]`, true},
+		{"!= with one scope negates the comparison", "!=", `["x"]`, `["y"]`, true},
+		{"!= with one scope in another case is false", "!=", `["x"]`, `["X"]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.roles "+tc.op+" subject.scopes")
+			values := map[string]Resolved{`["subj","roles"]`: resolved(t, "VALUE", tc.roles),
+				`["subj","scopes"]`: resolved(t, "VALUE", tc.scopes)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(roles %s scopes, roles = %s, scopes = %s) = %v, want %v", tc.op, tc.roles, tc.scopes,
+					got, tc.want)
+			}
+		})
+	}
+}
+
+// A list operand compared with a resource attribute list under == is equal
+// as a set of its elements: order, repeats, and case do not matter, and a
+// number equals its text (ADR-0083 R1, R2, R6).
+func TestAListEqualsAnAttributeListAsASet(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.permissions == resource.a")
+	for _, tc := range []struct {
+		name, perm, a string
+		want          bool
+	}{
+		{"another order and a repeat allow", `["x", "y"]`, `["y", "x", "x"]`, true},
+		{"another case allows", `["x"]`, `["X"]`, true},
+		{"a number and its text allow", `["5"]`, `[5]`, true},
+		{"another element denies", `["x"]`, `["y"]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{`["subj","permissions"]`: resolved(t, "VALUE", tc.perm),
+				keyA: resolved(t, "VALUE", tc.a)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(permissions = %s, resource.a = %s) = %v, want %v", tc.perm, tc.a, got, tc.want)
+			}
+		})
+	}
+}
+
+// IN of two objects compares them member by member: the same keys and, for
+// each, an equal value, a number equal to its text (ADR-0083 R6).
+func TestAnObjectIsInAnEqualObject(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a IN resource.b")
+	for _, tc := range []struct {
+		name, a, b string
+		want       bool
+	}{
+		{"the same members allow", `{"k": "v", "n": 1}`, `{"n": 1, "k": "v"}`, true},
+		{"another value denies", `{"k": "v"}`, `{"k": "w"}`, false},
+		{"a number and its text allow", `{"n": 1}`, `{"n": "1"}`, true},
+		{"another key denies", `{"n": 1}`, `{"m": 1}`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["res",".b"]`: resolved(t, "VALUE", tc.b)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource.a = %s, resource.b = %s) = %v, want %v", tc.a, tc.b, got, tc.want)
+			}
+		})
+	}
+}
+
+// editedTable loads the embedded table with every occurrence of from
+// replaced by to; the test fails when the table no longer holds from.
+func editedTable(t *testing.T, from, to string) *spectables.Table {
+	t.Helper()
+	if !bytes.Contains(agentTables, []byte(from)) {
+		t.Fatalf("the embedded table has no text %s", from)
+	}
+	tab, err := spectables.Load(bytes.NewReader(bytes.ReplaceAll(agentTables, []byte(from), []byte(to))))
+	if err != nil {
+		t.Fatalf("Load(edited table): %v", err)
+	}
+	return tab
+}
+
+// An absent condition takes the export's absent expression, while a
+// simplified policy without a condition grants by its operation and roles
+// whatever that expression is.
+func TestAnAbsentConditionTakesTheExportsAbsentExpression(t *testing.T) {
+	sets := `{"policySets": [
+		{"policySetId": "s1", "name": "s1", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		 "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		 "policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "t1", "rules": [{"ruleId": "r1", "target": "operation == 'read'", "effect": "ALLOW",
+				"tenantId": "t1"}]}]},
+		{"policySetId": "s2", "name": "s2", "status": "ACTIVE", "type": "SIMPLIFIED",
+		 "target": "resourceType == 'note'", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		 "policies": [{"policyId": "p2", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "t1", "rules": [{"ruleId": "r2", "target": "subject.roles CONTAINS ANY 'reader'",
+				"effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+	exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	tree := exp.Trees["t1"]
+	if len(tree.Simplified) != 1 {
+		t.Fatalf("FromRegular read %d simplified groups, want 1", len(tree.Simplified))
+	}
+	falseTable := editedTable(t, `"absent_expression": "T"`, `"absent_expression": "F"`)
+	for _, tc := range []struct {
+		name  string
+		tab   *spectables.Table
+		rtype string
+		want  bool
+	}{
+		{"a rule without a condition applies when absent is true", table(t), "doc", true},
+		{"a rule without a condition does not apply when absent is false", falseTable, "doc", false},
+		{"a simplified policy without a condition grants when absent is false", falseTable, "note", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			m, err := Generate(tree, tc.tab, DefaultOptions())
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			got := evalModule(t, m, Request{Body: Body{Operation: "read", ResourceType: tc.rtype}, Roles: []string{"reader"}})
+			if got != tc.want {
+				t.Errorf("allow(read %s) = %v, want %v", tc.rtype, got, tc.want)
+			}
+		})
+	}
+}
+
+// A rule whose effect is neither ALLOW nor DENY counts as the export's
+// effects say: USE_FILTER_CONDITION denies by the export, and permits once
+// the export says so.
+func TestAnOtherEffectCountsAsTheExportSays(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "USE_FILTER_CONDITION", "resource.a == 'x'")
+	permits := editedTable(t, `"USE_FILTER_CONDITION": "deny"`, `"USE_FILTER_CONDITION": "permit"`)
+	for _, tc := range []struct {
+		name string
+		tab  *spectables.Table
+		want bool
+	}{
+		{"deny by the export's effects", table(t), false},
+		{"permit once the export says so", permits, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := decideWith(t, tree, tc.tab, DefaultOptions(), map[string]Resolved{keyA: resolved(t, "VALUE", `"x"`)}); got != tc.want {
+				t.Errorf("allow(resource.a = \"x\") = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+// The generator combines children by the node rules of the export, not by
+// constants of its own. Under PERMIT_UNLESS_DENY a node whose only rule does
+// not apply permits by the export's rules; with "none" changed to "na" in the
+// export, the same tree denies.
+func TestTheNodeRulesComeFromTheExport(t *testing.T) {
+	edited := editedTable(t,
+		`"PERMIT_UNLESS_DENY": {"permit": "permit", "deny": "deny", "both": "deny", "none": "permit"}`,
+		`"PERMIT_UNLESS_DENY": {"permit": "permit", "deny": "deny", "both": "deny", "none": "na"}`)
+	tree := tenantWithSet(t, "PERMIT_UNLESS_DENY", "DENY", "resource.a == 'x'")
+	for _, tc := range []struct {
+		name string
+		tab  *spectables.Table
+		want bool
+	}{
+		{"none permits under the export's rules", table(t), true},
+		{"none denies once the export says na", edited, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := decideWith(t, tree, tc.tab, DefaultOptions(), map[string]Resolved{keyA: resolved(t, "VALUE", `"y"`)}); got != tc.want {
+				t.Errorf("allow(resource.a = \"y\") = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+// A list or an object compares with a string by the text the profile prints
+// for it, in either order and under equalsIgnoreCase; a number inside prints
+// without trailing zeros.
+func TestAStructureComparesWithAStringByItsText(t *testing.T) {
+	keyB := `["res",".b"]`
+	for _, tc := range []struct {
+		name, condition, a, b string
+		want                  bool
+	}{
+		{"a list equals its text in another case", "resource.a == '[X, y]'", `["x", "y"]`, "", true},
+		{"a number element prints without its trailing zero", "resource.a == '[1]'", `[1.0]`, "", true},
+		{"a list does not equal another text", "resource.a == '[y]'", `["x"]`, "", false},
+		{"a string equals the text of a list on the right", "resource.b == resource.a", `["x"]`, `"[x]"`, true},
+		{"an object contains its text", "resource.a CONTAINS '{k=v}'", `{"k": "v"}`, "", true},
+		{"a list is in literals that hold its text", "resource.a IN '[x]', 'z'", `["x"]`, "", true},
+		{"a list is not in literals that hold its elements", "resource.a IN 'x', 'z'", `["x"]`, "", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a)}
+			if tc.b != "" {
+				values[keyB] = resolved(t, "VALUE", tc.b)
+			}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(%s, resource.a = %s, resource.b = %s) = %v, want %v", tc.condition, tc.a, tc.b, got,
+					tc.want)
+			}
+		})
+	}
+}
+
+// A string compared under == with a right operand in state NULL equals it
+// only as the text [], since the profile reads that operand as an empty list.
+func TestAStringEqualsANullOperandOnlyAsAnEmptyList(t *testing.T) {
+	for _, tc := range []struct {
+		name, op, b string
+		want        bool
+	}{
+		{"[] equals it", "==", `"[]"`, true},
+		{"another string does not", "==", `"x"`, false},
+		{"another string differs from it", "!=", `"x"`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.b "+tc.op+" resource.a")
+			values := map[string]Resolved{keyA: resolved(t, "NULL", ""), `["res",".b"]`: resolved(t, "VALUE", tc.b)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource.b %s resource.a, resource.b = %s, resource.a in NULL) = %v, want %v", tc.op,
+					tc.b, got, tc.want)
+			}
+		})
+	}
+}
+
+// A whole resource that is a list, compared under == with a right operand in
+// state NULL, equals it only when the list is empty, since the profile reads
+// that operand as an empty list and compares two lists as sets.
+func TestAListEqualsANullOperandOnlyWhenEmpty(t *testing.T) {
+	for _, tc := range []struct {
+		name, op, resource string
+		want               bool
+	}{
+		{"an empty list equals it", "==", `[]`, true},
+		{"a list with an element does not", "==", `["x"]`, false},
+		{"an empty list does not differ from it", "!=", `[]`, false},
+		{"a list with an element differs from it", "!=", `["x"]`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource "+tc.op+" resource.a")
+			values := map[string]Resolved{keyA: resolved(t, "NULL", ""), `["res",""]`: resolved(t, "VALUE", tc.resource)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource %s resource.a, resource = %s, resource.a in NULL) = %v, want %v", tc.op,
+					tc.resource, got, tc.want)
+			}
+		})
+	}
+}
+
+// A string literal on the left of == or != compares with a resource operand
+// as a string reference there does, whatever state the operand is in.
+func TestALiteralOnTheLeftEqualsAsAReferenceDoes(t *testing.T) {
+	for _, lit := range []string{"[]", "x"} {
+		for _, op := range []string{"==", "!="} {
+			for _, a := range []Resolved{resolved(t, "NULL", ""), resolved(t, "ABSENT", ""),
+				resolved(t, "VALUE", `"x"`), resolved(t, "VALUE", `"y"`)} {
+				t.Run(fmt.Sprintf("'%s' %s %s %v", lit, op, a.State, a.Value), func(t *testing.T) {
+					b := resolved(t, "VALUE", fmt.Sprintf("%q", lit))
+					byRef := decideValues(t, tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.b "+op+" resource.a"),
+						DefaultOptions(), map[string]Resolved{keyA: a, `["res",".b"]`: b})
+					condition := "'" + lit + "' " + op + " resource.a"
+					got := decide(t, tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", condition), DefaultOptions(), keyA, a)
+					if got != byRef {
+						t.Errorf("allow(%s, resource.a = %s %v) = %v, want %v as for resource.b = %s", condition, a.State, a.Value, got,
+							byRef, lit)
+					}
+				})
+			}
+		}
+	}
+}
+
+// Two lists, nested ones included, are equal as sets of their elements; a
+// list inside keeps its order. Two objects are equal by their members, and
+// two scalars at any depth as at the top: a number by its value, also against
+// its text, and a string ignoring case (ADR-0083 R1, R2, R6).
+func TestStructuresEqualByTheirElements(t *testing.T) {
+	for _, tc := range []struct {
+		name, a, b string
+		want       bool
+	}{
+		{"nested lists in another order are equal", `[["a"], "b"]`, `["b", ["a"]]`, true},
+		{"a list inside keeps its order", `[["a", "c"]]`, `[["c", "a"]]`, false},
+		{"lists with a null in another order are equal", `[null, "x"]`, `["x", null]`, true},
+		{"a list with a null differs from one without", `[null, "x"]`, `["x"]`, false},
+		{"objects with equal numbers are equal", `{"n": 1}`, `{"n": 1.0}`, true},
+		{"objects with strings in another case are equal", `{"k": "V"}`, `{"k": "v"}`, true},
+		{"an object member and its text are equal", `{"n": 1}`, `{"n": "1"}`, true},
+		{"a list element and its text are equal", `[1]`, `["1"]`, true},
+		{"a member of an object in a list and its text are equal", `[{"n": 1}]`, `[{"n": "1"}]`, true},
+		{"two texts of one number differ", `["5.0"]`, `["5.00"]`, false},
+		{"a member name in another case differs", `{"K": 1}`, `{"k": 1}`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a == resource.b")
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["res",".b"]`: resolved(t, "VALUE", tc.b)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource.a = %s, resource.b = %s) = %v, want %v", tc.a, tc.b, got, tc.want)
+			}
+		})
+	}
+}
+
+// A literal list of two or more quoted strings splits at every comma, so an
+// item with a comma inside is two values; a list of one is not split.
+func TestALiteralListSplitsAtCommas(t *testing.T) {
+	for _, tc := range []struct {
+		name, condition, a string
+		want               bool
+	}{
+		{"a string with a comma is not in a split list", "resource.a IN 'a,b', 'x'", `"a,b"`, false},
+		{"a part of the split item is in it", "resource.a IN 'a,b', 'x'", `"a"`, true},
+		{"a list text with a comma is not in a split list", "resource.a IN '[null, abc]', 'x'", `[null, "abc"]`, false},
+		{"a list text without a comma is in it", "resource.a IN '[null]', 'x'", `[null]`, true},
+		{"a list of one item is not split", "resource.a IN 'a,b'", `"a,b"`, true},
+		{"each part is trimmed", "resource.a IN ' a', 'x'", `"a"`, true},
+		{"an empty part is kept", "resource.a IN 'a', ''", `""`, true},
+		{"a list of numbers is not read as text", "resource.a IN 1, 2", `2`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			if got := decide(t, tree, DefaultOptions(), keyA, resolved(t, "VALUE", tc.a)); got != tc.want {
+				t.Errorf("allow(%s, resource.a = %s) = %v, want %v", tc.condition, tc.a, got, tc.want)
+			}
+		})
+	}
+}
+
+// How a literal list is read comes from the export's knobs: with
+// string_list_split ELEMENTS a list of two or more items keeps them as
+// written, so an item with a comma inside is one value.
+func TestTheExportDecidesHowALiteralListIsRead(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a IN 'a,b', 'x'")
+	elements := editedTable(t, `"string_list_split": "SPLIT_TRIM"`, `"string_list_split": "ELEMENTS"`)
+	for _, tc := range []struct {
+		name string
+		tab  *spectables.Table
+		want bool
+	}{
+		{"a split list does not hold the item with a comma", table(t), false},
+		{"a list of items as written holds it", elements, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := decideWith(t, tree, tc.tab, DefaultOptions(), map[string]Resolved{keyA: resolved(t, "VALUE", `"a,b"`)}); got != tc.want {
+				t.Errorf("allow(resource.a = \"a,b\") = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+// CONTAINS ANY with a null element on both sides compares the values, and a
+// null equals nothing; with a null on the left only, it ends the rule, which
+// the agent reads as undefined.
+func TestContainsAnyWithNullsOnBothSidesCompares(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a CONTAINS ANY resource.b")
+	for _, tc := range []struct {
+		name, a, b string
+		want       bool
+	}{
+		{"a common value allows", `[null, "x"]`, `[null, "x"]`, true},
+		{"no common value but the nulls denies", `[null, "y"]`, `[null, "x"]`, false},
+		{"a null on the left only is undefined and denies", `[null, "x"]`, `["x"]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["res",".b"]`: resolved(t, "VALUE", tc.b)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource.a = %s, resource.b = %s) = %v, want %v", tc.a, tc.b, got, tc.want)
+			}
+		})
+	}
+}
+
+// A null element that leaves CONTAINS undefined does not make an ALLOW rule
+// permit either: with the value in a list without a null, the same rule
+// permits.
+func TestANullElementDoesNotMakeContainsTrue(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a CONTAINS 'v'")
+	for _, tc := range []struct {
+		name, value string
+		want        bool
+	}{
+		{"a list with the value is true and allows", `["v"]`, true},
+		{"a null element beside the value is undefined and denies", `[null, "v"]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := decide(t, tree, DefaultOptions(), keyA, resolved(t, "VALUE", tc.value)); got != tc.want {
+				t.Errorf("allow(resource.a = %s) = %v, want %v", tc.value, got, tc.want)
+			}
+		})
+	}
+}
+
+// NOT IN with literals is the negation of IN on a string value, under
+// equalsIgnoreCase.
+func TestNotInALiteralList(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a NOT IN 'x', 'y'")
+	for _, tc := range []struct {
+		name, value string
+		want        bool
+	}{
+		{"a value outside the list allows", `"z"`, true},
+		{"a listed value denies", `"y"`, false},
+		{"a listed value in another case denies", `"X"`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := decide(t, tree, DefaultOptions(), keyA, resolved(t, "VALUE", tc.value)); got != tc.want {
+				t.Errorf("allow(resource.a = %s) = %v, want %v", tc.value, got, tc.want)
+			}
+		})
+	}
+}
+
+// In a MATCH pattern, * matches characters other than /, and the pattern
+// matches the whole value. The literal segments become index guards, so a
+// wrong segment count must deny as well.
+func TestMatchAPathPattern(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.p MATCH /api/*/items")
+	for _, tc := range []struct {
+		name, value string
+		want        bool
+	}{
+		{"one segment in place of the star allows", `"/api/v1/items"`, true},
+		{"two segments in place of the star deny", `"/api/v1/x/items"`, false},
+		{"a trailing slash denies", `"/api/v1/items/"`, false},
+		{"another last segment denies", `"/api/v1/item"`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := decide(t, tree, DefaultOptions(), `["res",".p"]`, resolved(t, "VALUE", tc.value)); got != tc.want {
+				t.Errorf("allow(resource.p = %s) = %v, want %v", tc.value, got, tc.want)
+			}
+		})
+	}
+}
+
+// A number beyond the range of a double is matched as the text it prints as,
+// Infinity or -Infinity, against a pattern written in the condition and
+// against the text of a resource path on the right of MATCH. A number in the
+// range, up to the largest double, takes the outcome the tables give every
+// number on the left of MATCH. Under an ALLOW rule a miss and a failed leaf
+// both deny; the DENY rule of a PERMIT_UNLESS_DENY set tells them apart, since
+// a miss allows there and a failed leaf denies.
+func TestANumberBeyondTheDoubleRangeMatchesAsItsText(t *testing.T) {
+	for _, tc := range []struct {
+		name, condition, a, b string
+		deny                  bool
+		want                  bool
+	}{
+		{"1e400 matches Inf.*", "resource.a MATCH Inf.*", `1e400`, `"n"`, false, true},
+		{"1e400 does not match 1.*", "resource.a MATCH 1.*", `1e400`, `"n"`, false, false},
+		{"-1e400 matches -Inf.*", "resource.a MATCH -Inf.*", `-1e400`, `"n"`, false, true},
+		{"-1e400 does not match Inf.*", "resource.a MATCH Inf.*", `-1e400`, `"n"`, false, false},
+		{"1e400 is not NOT MATCH Inf.*", "resource.a NOT MATCH Inf.*", `1e400`, `"n"`, false, false},
+		{"a number in range ends the rule under NOT MATCH", "resource.a NOT MATCH Inf.*", `5`, `"n"`, false, false},
+		{"the largest double does not match Inf.*", "resource.a MATCH Inf.*", `1.7976931348623157e308`, `"n"`, false, false},
+		{"1.8e308, just past the largest double, matches Inf.*", "resource.a MATCH Inf.*", `1.8e308`, `"n"`, false, true},
+		{"1e400 decides MATCH in an OR", "resource.a MATCH Inf.* OR resource.b == 'y'", `1e400`, `"n"`, false, true},
+		{"1e400 is NOT MATCH the text of a resource path", "resource.a NOT MATCH resource.q", `1e400`, `"n"`, false, true},
+		{"the string Infinity is NOT MATCH the text of a resource path", "resource.a NOT MATCH resource.q", `"Infinity"`, `"n"`, false, true},
+		{"the text of the path itself matches it", "resource.a NOT MATCH resource.q", `"resource.q"`, `"n"`, false, false},
+		{"a DENY rule denies 1e400 MATCH Inf.*", "resource.a MATCH Inf.*", `1e400`, `"n"`, true, false},
+		{"a DENY rule allows -1e400 that misses Inf.*", "resource.a MATCH Inf.*", `-1e400`, `"n"`, true, true},
+		{"a DENY rule allows 1e400 that is not NOT MATCH Inf.*", "resource.a NOT MATCH Inf.*", `1e400`, `"n"`, true, true},
+		{"a DENY rule denies -1e400 NOT MATCH Inf.*", "resource.a NOT MATCH Inf.*", `-1e400`, `"n"`, true, false},
+		{"a DENY rule allows the largest double under MATCH Inf.*", "resource.a MATCH Inf.*", `1.7976931348623157e308`, `"n"`, true, true},
+		{"a DENY rule denies 1.8e308 MATCH Inf.*", "resource.a MATCH Inf.*", `1.8e308`, `"n"`, true, false},
+		{"-1e400 is NOT MATCH Inf.*", "resource.a NOT MATCH Inf.*", `-1e400`, `"n"`, false, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			algorithm, effect := "DENY_UNLESS_PERMIT", "ALLOW"
+			if tc.deny {
+				algorithm, effect = "PERMIT_UNLESS_DENY", "DENY"
+			}
+			tree := tenantWithSet(t, algorithm, effect, tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["res",".b"]`: resolved(t, "VALUE", tc.b)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(%s %s, resource.a = %s, resource.b = %s) = %v, want %v",
+					effect, tc.condition, tc.a, tc.b, got, tc.want)
+			}
+		})
+	}
+}
+
+// subject allowed 'write' on resource reads the decision for operation write
+// from a copy of the tree where the operation is that constant.
+func TestSubjectAllowedReadsTheDecisionForAnotherOperation(t *testing.T) {
+	sets := `{"policySets": [
+		{"policySetId": "s1", "name": "s1", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		 "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		 "policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "t1", "rules": [
+				{"ruleId": "r1", "target": "operation == 'read'", "condition": "subject allowed 'write' on resource",
+				 "effect": "ALLOW", "tenantId": "t1"},
+				{"ruleId": "r2", "target": "operation == 'write'", "condition": "resource.a == 'w'",
+				 "effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+	exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	tree := exp.Trees["t1"]
+	for _, tc := range []struct {
+		name, value string
+		want        bool
+	}{
+		{"a resource the subject may write may be read", `"w"`, true},
+		{"a resource the subject may not write may not be read", `"z"`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := decide(t, tree, DefaultOptions(), keyA, resolved(t, "VALUE", tc.value)); got != tc.want {
+				t.Errorf("allow(read, resource.a = %s) = %v, want %v", tc.value, got, tc.want)
+			}
+		})
+	}
+}
+
+// The flat module, the module with a rule per node, and the module with
+// subject groups answer alike: the forms differ in how the index finds
+// candidates, not in the decision. The roles leaf reads only the subject, so
+// the third form moves it into a group.
+func TestTheFormsOfTheModuleAnswerAlike(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_OVERRIDES", "ALLOW",
+		"subject.roles CONTAINS 'admin' AND resource.a IN 'x', 'y' OR resource.a CONTAINS 'z'")
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	if m, err := Generate(tree, table(t), groups); err != nil || len(m.Groups) == 0 {
+		t.Fatalf("Generate with groups: %d groups, error %v; want at least one group", len(m.Groups), err)
+	}
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	const roles = `["subj","roles"]`
+	for _, tc := range []struct {
+		name, roles, value string
+		want               bool
+	}{
+		{"an admin reading a listed value is allowed", `["admin"]`, `"Y"`, true},
+		{"a guest reading a listed value is denied", `["guest"]`, `"y"`, false},
+		{"an admin reading an unlisted value is denied", `["admin"]`, `"w"`, false},
+		{"anyone reading a list with z is allowed", `["guest"]`, `["z"]`, true},
+		{"a null element beside z is denied", `["guest"]`, `[null, "z"]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{roles: resolved(t, "VALUE", tc.roles), keyA: resolved(t, "VALUE", tc.value)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(roles = %s, resource.a = %s) %s = %v, want %v", tc.roles, tc.value, form, got,
+						tc.want)
+				}
+			}
+		})
+	}
+}
+
+// Under == a number, a boolean, or an object equals no list, whatever it
+// holds: only a string compares with a list's text. A subject list of two or
+// more values answers != with the setting right_list_scalar_ops, false for
+// the agent, before that.
+func TestANumberOrAnObjectEqualsNoList(t *testing.T) {
+	const nested, id = `["res",".a.b"]`, `["subj","id"]`
+	for _, tc := range []struct {
+		name, op, a, id string
+		want            bool
+	}{
+		{"a number is not a list that holds its text", "!=", `5`, `["5"]`, true},
+		{"a number equals no list", "==", `5`, `["5"]`, false},
+		{"an object is not a list that holds its text", "!=", `{"k": "v"}`, `["{k=v}"]`, true},
+		{"a list of two values answers the setting", "!=", `5`, `["5", "6"]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a.b "+tc.op+" subject.id")
+			values := map[string]Resolved{nested: resolved(t, "VALUE", tc.a), id: resolved(t, "VALUE", tc.id)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource.a.b %s subject.id, resource.a.b = %s, subject.id = %s) = %v, want %v", tc.op,
+					tc.a, tc.id, got, tc.want)
+			}
+		})
+	}
+}
+
+// Under == a null subject attribute equals no subject list, so != holds for a
+// list of one value; a list of two or more answers the setting
+// right_list_scalar_ops, false for the agent.
+func TestANullEqualsNoList(t *testing.T) {
+	const name, id = `["subj","name"]`, `["subj","id"]`
+	for _, tc := range []struct {
+		name, op, id string
+		want         bool
+	}{
+		{"a null equals no list", "==", `["x"]`, false},
+		{"a null is not a list of one value", "!=", `["x"]`, true},
+		{"a list of two values answers the setting", "!=", `["x", "y"]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.name "+tc.op+" subject.id")
+			values := map[string]Resolved{name: resolved(t, "VALUE", `null`), id: resolved(t, "VALUE", tc.id)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(subject.name %s subject.id, subject.name = null, subject.id = %s) = %v, want %v", tc.op,
+					tc.id, got, tc.want)
+			}
+		})
+	}
+}
+
+// A subject list on the right of CONTAINS or NOT CONTAINS compares element
+// by element when it holds one value; with two or more it answers the
+// setting right_list_scalar_ops, false for the agent, under either operator.
+func TestAStringContainsASubjectListOfOneValue(t *testing.T) {
+	for _, tc := range []struct {
+		name, op, id string
+		want         bool
+	}{
+		{"one equal value allows", "CONTAINS", `["x"]`, true},
+		{"one other value denies", "CONTAINS", `["y"]`, false},
+		{"one other value is not contained", "NOT CONTAINS", `["y"]`, true},
+		{"two values with an equal one answer the setting", "CONTAINS", `["x", "y"]`, false},
+		{"two other values answer the setting under the negation", "NOT CONTAINS", `["y", "z"]`, false},
+		{"a list of null holds nothing, so it is not contained", "NOT CONTAINS", `[null]`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a "+tc.op+" subject.id")
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", `"x"`), `["subj","id"]`: resolved(t, "VALUE", tc.id)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource.a %s subject.id, subject.id = %s) = %v, want %v", tc.op, tc.id, got, tc.want)
+			}
+		})
+	}
+}
+
+// An object on the right of CONTAINS or CONTAINS ANY is one candidate: a
+// string on the left equals it by its text, an object by its members,
+// ignoring the case of their values, and a list element of another kind not
+// at all.
+func TestAnObjectOnTheRightIsOneCandidate(t *testing.T) {
+	const object = `{"k": "v"}`
+	for _, tc := range []struct {
+		name, op, a string
+		want        bool
+	}{
+		{"a string equals the object's text in another case", "CONTAINS", `"{K=v}"`, true},
+		{"a string with another text denies", "CONTAINS", `"{k=w}"`, false},
+		{"a list of strings holds the text", "CONTAINS", `["z", "{k=v}"]`, true},
+		{"an object element with the same members allows", "CONTAINS", `[{"k": "v"}, ["q"]]`, true},
+		{"an object element in another case allows", "CONTAINS", `[{"k": "V"}, ["q"]]`, true},
+		{"an object element with another value denies", "CONTAINS", `[{"k": "w"}, ["q"]]`, false},
+		{"a string element beside a list holds the text", "CONTAINS", `["{k=v}", ["q"]]`, true},
+		{"a list element with the text inside denies", "CONTAINS", `[["{k=v}"]]`, false},
+		{"an object with the same members has one in common", "CONTAINS ANY", object, true},
+		{"an object in another case has one in common", "CONTAINS ANY", `{"k": "V"}`, true},
+		{"an object with another value has none", "CONTAINS ANY", `{"k": "w"}`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a "+tc.op+" resource.b")
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["res",".b"]`: resolved(t, "VALUE", object)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource.a %s resource.b, resource.a = %s, resource.b = %s) = %v, want %v", tc.op,
+					tc.a, object, got, tc.want)
+			}
+		})
+	}
+}
+
+// generalPIPs declares subject.g and subject.h as GENERAL PIPs.
+const generalPIPs = `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g"},
+	{"name": "subject.h", "pipType": "GENERAL", "url": "http://h"}`
+
+// A one-element GENERAL list of null (SINGLE_ODD) fails the PIP on the left
+// of CONTAINS ANY, and the agent reads that as undefined; one of a boolean
+// is a list without a null. On the right the list of null is a value, so a
+// null element on the left ends the rule only against the list of a boolean.
+// Under PERMIT_UNLESS_DENY a DENY rule permits only when its condition is
+// false, which tells false from undefined.
+func TestASingleOddListUnderContainsAny(t *testing.T) {
+	tree := tenantWithSetAndPIPs(t, "PERMIT_UNLESS_DENY", "DENY", "subject.g CONTAINS ANY subject.h", generalPIPs)
+	for _, tc := range []struct {
+		name                 string
+		gState, g, hState, h string
+		want                 bool
+	}{
+		{"a boolean against an empty PIP is false", "SINGLE_ODD", `[true]`, "PIP_EMPTY", "", true},
+		{"a null against an empty PIP is undefined", "SINGLE_ODD", `[null]`, "PIP_EMPTY", "", false},
+		{"a boolean against a list with a null is false", "SINGLE_ODD", `[true]`, "VALUE", `[null, "x"]`, true},
+		{"a null on the left is undefined against a list with a null", "SINGLE_ODD", `[null]`, "VALUE",
+			`[null, "x"]`, false},
+		{"a null element against a boolean ends the rule", "VALUE", `[null, "x"]`, "SINGLE_ODD", `[true]`, false},
+		{"a null element against a null compares the values", "VALUE", `[null, "x"]`, "SINGLE_ODD", `[null]`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{`["subj","g"]`: resolved(t, tc.gState, tc.g),
+				`["subj","h"]`: resolved(t, tc.hState, tc.h)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(subject.g = %s %s, subject.h = %s %s) = %v, want %v", tc.gState, tc.g, tc.hState,
+					tc.h, got, tc.want)
+			}
+		})
+	}
+}
+
+// NOT CONTAINS ANY negates CONTAINS ANY and keeps its undefined cell: a null
+// element on the left ends the rule against a one-element GENERAL list
+// (SINGLE_ODD) of a boolean, and against a list of null the values are
+// compared, so the null equals nothing and no element is common. ALLOW under
+// DENY_UNLESS_PERMIT tells true from the rest, and DENY under
+// PERMIT_UNLESS_DENY tells false from the rest.
+func TestASingleOddListOnTheRightOfNotContainsAny(t *testing.T) {
+	for _, tc := range []struct {
+		name, alg, effect, a, g string
+		want                    bool
+	}{
+		{"a null element against a boolean is not true", "DENY_UNLESS_PERMIT", "ALLOW", `[null, "x"]`, `[true]`, false},
+		{"a null element against a boolean is not false", "PERMIT_UNLESS_DENY", "DENY", `[null, "x"]`, `[true]`, false},
+		{"a null element against a null is true", "DENY_UNLESS_PERMIT", "ALLOW", `[null, "x"]`, `[null]`, true},
+		{"a list without a null against a boolean is true", "DENY_UNLESS_PERMIT", "ALLOW", `["x"]`, `[true]`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSetAndPIPs(t, tc.alg, tc.effect, "resource.a NOT CONTAINS ANY subject.g", generalPIPs)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["subj","g"]`: resolved(t, "SINGLE_ODD", tc.g)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(%s %s, resource.a = %s, subject.g = SINGLE_ODD %s) = %v, want %v", tc.alg, tc.effect,
+					tc.a, tc.g, got, tc.want)
+			}
+		})
+	}
+}
+
+// On the left of NOT CONTAINS ANY a one-element GENERAL list of null is a
+// list, where CONTAINS ANY reads it as a failed PIP, so against an empty PIP
+// it shares no element and the condition is true, as for a list of a boolean.
+func TestASingleOddListOnTheLeftOfNotContainsAny(t *testing.T) {
+	tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.g NOT CONTAINS ANY subject.h", generalPIPs)
+	for _, g := range []string{`[true]`, `[null]`} {
+		t.Run(g, func(t *testing.T) {
+			values := map[string]Resolved{`["subj","g"]`: resolved(t, "SINGLE_ODD", g),
+				`["subj","h"]`: resolved(t, "PIP_EMPTY", "")}
+			if got := decideValues(t, tree, DefaultOptions(), values); !got {
+				t.Errorf("allow(subject.g = SINGLE_ODD %s, subject.h = PIP_EMPTY) = false, want true", g)
+			}
+		})
+	}
+}
+
+// CONTAINS and NOT CONTAINS compare a GENERAL PIP with a GENERAL or a HEADER
+// PIP. With a one-element list of a non-string (SINGLE_ODD) on the left and a
+// list of several values on the right, both operators are false, and a null
+// in the left list fails the PIP. ALLOW under DENY_UNLESS_PERMIT tells true
+// from the rest, and DENY under PERMIT_UNLESS_DENY tells false from the rest.
+func TestContainsBetweenTwoPIPs(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	pips := generalPIPs + `, {"name": "subject.r", "pipType": "HEADER", "header": "X-R"}`
+	five := resolved(t, "SCALAR_ODD", `5`)
+	// a GENERAL or a HEADER PIP answers a list of several values so
+	ab := resolved(t, "VALUE", `["a", "b"]`)
+	ab.PIPList = true
+	for _, tc := range []struct {
+		name, alg, effect, condition, gState, g string
+		right                                   Resolved
+		a                                       string
+		want                                    bool
+	}{
+		{"a text body contains no number body", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g CONTAINS subject.h OR resource.a == 'y'", "VALUE", `"v"`, five, `"n"`, false},
+		{"an alternative that holds beside CONTAINS", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g CONTAINS subject.h OR resource.a == 'y'", "VALUE", `"v"`, five, `"y"`, true},
+		{"a text body does not contain a number body", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g NOT CONTAINS subject.h OR resource.a == 'y'", "VALUE", `"v"`, five, `"n"`, true},
+		{"an alternative that holds beside NOT CONTAINS", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g NOT CONTAINS subject.h OR resource.a == 'y'", "VALUE", `"v"`, five, `"y"`, true},
+		{"CONTAINS of a listed boolean and a GENERAL list is not true", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g CONTAINS subject.h", "SINGLE_ODD", `[true]`, ab, `"n"`, false},
+		{"CONTAINS of a listed boolean and a GENERAL list is false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g CONTAINS subject.h", "SINGLE_ODD", `[true]`, ab, `"n"`, true},
+		{"CONTAINS of a listed object and a GENERAL list is false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g CONTAINS subject.h", "SINGLE_ODD", `[{"k": "a"}]`, ab, `"n"`, true},
+		{"CONTAINS of a listed null and a GENERAL list is not true", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g CONTAINS subject.h", "SINGLE_ODD", `[null]`, ab, `"n"`, false},
+		{"CONTAINS of a listed null and a GENERAL list is not false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g CONTAINS subject.h", "SINGLE_ODD", `[null]`, ab, `"n"`, false},
+		{"NOT CONTAINS of a listed boolean and a GENERAL list is not true", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g NOT CONTAINS subject.h", "SINGLE_ODD", `[true]`, ab, `"n"`, false},
+		{"NOT CONTAINS of a listed boolean and a GENERAL list is false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g NOT CONTAINS subject.h", "SINGLE_ODD", `[true]`, ab, `"n"`, true},
+		{"NOT CONTAINS of a listed null and a GENERAL list is not true", "DENY_UNLESS_PERMIT", "ALLOW",
+			"subject.g NOT CONTAINS subject.h", "SINGLE_ODD", `[null]`, ab, `"n"`, false},
+		{"NOT CONTAINS of a listed null and a GENERAL list is not false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g NOT CONTAINS subject.h", "SINGLE_ODD", `[null]`, ab, `"n"`, false},
+		{"CONTAINS of a listed boolean and a HEADER list is false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g CONTAINS subject.r", "SINGLE_ODD", `[true]`, ab, `"n"`, true},
+		{"CONTAINS of a listed null and a HEADER list is not false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g CONTAINS subject.r", "SINGLE_ODD", `[null]`, ab, `"n"`, false},
+		{"NOT CONTAINS of a listed boolean and a HEADER list is false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g NOT CONTAINS subject.r", "SINGLE_ODD", `[true]`, ab, `"n"`, true},
+		{"NOT CONTAINS of a listed null and a HEADER list is not false", "PERMIT_UNLESS_DENY", "DENY",
+			"subject.g NOT CONTAINS subject.r", "SINGLE_ODD", `[null]`, ab, `"n"`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSetAndPIPs(t, tc.alg, tc.effect, tc.condition, pips)
+			// the condition reads one of subject.h and subject.r
+			values := map[string]Resolved{`["subj","g"]`: resolved(t, tc.gState, tc.g),
+				`["subj","h"]`: tc.right, keyR: tc.right, keyA: resolved(t, "VALUE", tc.a)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s %s, %s, subject.g = %s %s, right = %+v, resource.a = %s) %s = %v, want %v",
+						tc.alg, tc.effect, tc.condition, tc.gState, tc.g, tc.right, tc.a, form, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
+// A null whole resource is in no list, and a one-element GENERAL list of null
+// on the right of IN ends the rule, which the agent reads as undefined.
+func TestANullResourceIsInNoSingleOddList(t *testing.T) {
+	tree := tenantWithSetAndPIPs(t, "PERMIT_UNLESS_DENY", "DENY", "resource IN subject.g", generalPIPs)
+	for _, tc := range []struct {
+		name, g string
+		want    bool
+	}{
+		{"a list of a boolean is false and permits", `[true]`, true},
+		{"a list of null is undefined and denies", `[null]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{`["res",""]`: resolved(t, "VALUE", "null"),
+				`["subj","g"]`: resolved(t, "SINGLE_ODD", tc.g)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource = null, subject.g = SINGLE_ODD %s) = %v, want %v", tc.g, got, tc.want)
+			}
+		})
+	}
+}
+
+// A string on the left of CONTAINS equals a list or an object element of a
+// subject list by the element's text, under equalsIgnoreCase.
+func TestAStringEqualsAStructureElementByItsText(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a CONTAINS subject.id")
+	for _, tc := range []struct {
+		name, a, id string
+		want        bool
+	}{
+		{"the text of an object element in another case allows", `"{K=v}"`, `[{"k": "v"}]`, true},
+		{"the text of a list element allows", `"[x]"`, `[["x"]]`, true},
+		{"an element of a list element denies", `"x"`, `[["x"]]`, false},
+		{"the text of a nested member allows", `"{k=[\"a\"]}"`, `[{"k": ["a"]}]`, true},
+		{"the Java text of a nested member denies", `"{k=[a]}"`, `[{"k": ["a"]}]`, false},
+		{"two values with an equal one answer the setting", `"x"`, `[["q"], "x"]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["subj","id"]`: resolved(t, "VALUE", tc.id)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource.a = %s, subject.id = %s) = %v, want %v", tc.a, tc.id, got, tc.want)
+			}
+		})
+	}
+}
+
+// A one-element GENERAL list of an object (SINGLE_ODD) has an element in
+// common with an equal object on the right of CONTAINS ANY: the members
+// decide, their values ignoring case.
+func TestASingleOddObjectContainsAnEqualObject(t *testing.T) {
+	tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.g CONTAINS ANY resource.b", generalPIPs)
+	for _, tc := range []struct {
+		name, g string
+		want    bool
+	}{
+		{"the same members allow", `[{"k": "v"}]`, true},
+		{"a member in another case allows", `[{"k": "V"}]`, true},
+		{"another member denies", `[{"k": "w"}]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{`["subj","g"]`: resolved(t, "SINGLE_ODD", tc.g),
+				`["res",".b"]`: resolved(t, "VALUE", `{"k": "v"}`)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(subject.g = SINGLE_ODD %s, resource.b = {\"k\": \"v\"}) = %v, want %v", tc.g, got,
+					tc.want)
+			}
+		})
+	}
+}
+
+// A one-element GENERAL list (SINGLE_ODD) contains no element of an empty
+// resource list, which CONTAINS reads as one value; a list of null fails the
+// PIP, and the agent reads that as undefined.
+func TestASingleOddListContainsNoEmptyAttributeList(t *testing.T) {
+	tree := tenantWithSetAndPIPs(t, "PERMIT_UNLESS_DENY", "DENY", "subject.g CONTAINS resource.b", generalPIPs)
+	for _, tc := range []struct {
+		name, g string
+		want    bool
+	}{
+		{"a list of a boolean is false and permits", `[true]`, true},
+		{"a list of null is undefined and denies", `[null]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{`["subj","g"]`: resolved(t, "SINGLE_ODD", tc.g),
+				`["res",".b"]`: resolved(t, "EMPTY_COLL", "[]")}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(subject.g = SINGLE_ODD %s, resource.b = EMPTY_COLL) = %v, want %v", tc.g, got, tc.want)
+			}
+		})
+	}
+}
+
+// Two lists have an element in common under CONTAINS ANY, a list on the left
+// contains a subject list of one value, or a list is a subset of another, when
+// two elements are equal: an object by its members and a list by its
+// elements in order, a number by its value, also against its text, any other
+// scalar by its text ignoring case, and null equal to null (ADR-0083 R1, R2,
+// R6, R7).
+func TestStructureElementsAreEqualByValue(t *testing.T) {
+	for _, tc := range []struct {
+		name, condition, a, b string
+		want                  bool
+	}{
+		{"an object element with the same members", "resource.a CONTAINS subject.id", `[{"k": "v"}]`,
+			`[{"k": "v"}]`, true},
+		{"an object element in another case", "resource.a CONTAINS subject.id", `[{"k": "V"}]`, `[{"k": "v"}]`,
+			true},
+		{"a list element in another case", "resource.a CONTAINS ANY subject.id", `[["A"]]`, `[["a"]]`, true},
+		{"a list element with another string", "resource.a CONTAINS ANY subject.id", `[["a"]]`, `[["b"]]`, false},
+		{"a list element with a number in another spelling", "resource.a CONTAINS ANY subject.id", `[[1]]`, `[[1.0]]`,
+			true},
+		{"a list element with a boolean and its text", "resource.a CONTAINS ANY subject.id", `[[true]]`, `[["TRUE"]]`,
+			true},
+		{"a subset with a boolean and its text", "resource.a IS SUBSET subject.id", `[[true]]`, `[["TRUE"]]`, true},
+		{"a subset with an equal boolean", "resource.a IS SUBSET subject.id", `[[true]]`, `[[true]]`, true},
+		{"a subset with a string in another case", "resource.a IS SUBSET subject.id", `[["A"]]`, `[["a"]]`, true},
+		{"a subset with another string", "resource.a IS SUBSET subject.id", `[["a"]]`, `[["b"]]`, false},
+		{"a subset with a number in another spelling", "resource.a IS SUBSET subject.id", `[[1]]`, `[[1.0]]`, true},
+		{"a subset with a number and its text", "resource.a IS SUBSET subject.id", `[[1]]`, `[["1.0"]]`, true},
+		{"a subset with two texts of one number", "resource.a IS SUBSET subject.id", `[["1"]]`, `[["1.0"]]`, false},
+		{"a list element with a number and its text", "resource.a CONTAINS ANY subject.id", `[[1]]`, `[["1.0"]]`, true},
+		{"a list element with two texts of one number", "resource.a CONTAINS ANY subject.id", `[["1"]]`, `[["1.0"]]`,
+			false},
+		{"a list element in another order", "resource.a CONTAINS ANY subject.id", `[["a", "b"]]`, `[["b", "a"]]`,
+			false},
+		{"a list element with a null equals one with a null", "resource.a CONTAINS ANY subject.id", `[[null]]`,
+			`[[null]]`, true},
+		{"a list element with a null and its text", "resource.a CONTAINS ANY subject.id", `[[null]]`, `[["null"]]`,
+			false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["subj","id"]`: resolved(t, "VALUE", tc.b)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(%s, resource.a = %s, subject.id = %s) = %v, want %v", tc.condition, tc.a, tc.b, got,
+					tc.want)
+			}
+		})
+	}
+}
+
+// An object on the left of CONTAINS contains a string by its text or an
+// equal object, never a list, even one that holds its text.
+func TestAnObjectContainsNoList(t *testing.T) {
+	for _, tc := range []struct {
+		op   string
+		want bool
+	}{{"CONTAINS", false}, {"NOT CONTAINS", true}} {
+		t.Run(tc.op, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a "+tc.op+" subject.id")
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", `{"k": "v"}`),
+				`["subj","id"]`: resolved(t, "VALUE", `["{k=v}"]`)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource.a = {\"k\": \"v\"} %s subject.id = [\"{k=v}\"]) = %v, want %v", tc.op, got,
+					tc.want)
+			}
+		})
+	}
+}
+
+// A resource list attribute on the right of CONTAINS is one value, so no
+// element on the left equals it, an equal list element included, whatever
+// the list holds.
+func TestAResourceListOnTheRightIsOneValue(t *testing.T) {
+	tree := tenantWithSet(t, "PERMIT_UNLESS_DENY", "DENY", "resource.a CONTAINS resource.b")
+	for _, tc := range []struct{ name, a, b string }{
+		{"an equal list element", `[["x"]]`, `[["x"]]`},
+		{"an element of a list with a null", `["x"]`, `[null, "x"]`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["res",".b"]`: resolved(t, "VALUE", tc.b)}
+			if got := decideValues(t, tree, DefaultOptions(), values); !got {
+				t.Errorf("allow(resource.a = %s CONTAINS resource.b = %s) = false, want true: the condition is false",
+					tc.a, tc.b)
+			}
+		})
+	}
+}
+
+// A null whole resource is in no list without a null, and NOT IN holds.
+func TestANullResourceIsInNoList(t *testing.T) {
+	for _, tc := range []struct {
+		op   string
+		want bool
+	}{{"IN", false}, {"NOT IN", true}} {
+		t.Run(tc.op, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource "+tc.op+" subject.id")
+			values := map[string]Resolved{`["res",""]`: resolved(t, "VALUE", "null"),
+				`["subj","id"]`: resolved(t, "VALUE", `["x"]`)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(resource = null %s subject.id = [\"x\"]) = %v, want %v", tc.op, got, tc.want)
+			}
+		})
+	}
+}
+
+// leafOutcome evaluates condition as the only leaf of two modules, one where
+// an ALLOW rule permits on its true rail and one where a DENY rule permits on
+// its false rail, and returns T, F, or U for neither.
+func leafOutcome(t *testing.T, condition string, opt Options, values map[string]Resolved) string {
+	t.Helper()
+	return leafOutcomeWithPIPs(t, condition, "", opt, values)
+}
+
+// leafOutcomeWithPIPs is leafOutcome with the PIP declarations given, as
+// tenantWithSetAndPIPs takes them.
+func leafOutcomeWithPIPs(t *testing.T, condition, pips string, opt Options, values map[string]Resolved) string {
+	t.Helper()
+	isTrue := decideValues(t, tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", condition, pips), opt, values)
+	isFalse := decideValues(t, tenantWithSetAndPIPs(t, "PERMIT_UNLESS_DENY", "DENY", condition, pips), opt, values)
+	switch {
+	case isTrue && isFalse:
+		t.Fatalf("%s is on both rails", condition)
+	case isTrue:
+		return "T"
+	case isFalse:
+		return "F"
+	}
+	return "U"
+}
+
+// <, <=, >, and >= compare the numbers the values read as: a string that
+// BigDecimal reads, and a number of the input rounded to a double, which
+// leaves 4.99999999999999999999 equal to 5. A value that reads as no number,
+// a boolean, and a number of the input beyond the range of a double compare
+// false; the string "1e400" is a number. A literal compares by its exact
+// value, and one that reads as no number, or a fraction beyond the range of a
+// double, compares false. The false rail holds each of them, which a negated
+// comparison would leave undefined where the number is missing.
+func TestARelationalComparisonComparesTheNumbersOfTheValues(t *testing.T) {
+	big := "1" + strings.Repeat("0", 400)
+	for _, tc := range []struct {
+		name, condition, a, want string
+	}{
+		{"a smaller number", "resource.a < 5", `3`, "T"},
+		{"a string that reads as a smaller number", "resource.a < 5", `"3"`, "T"},
+		{"the bound itself", "resource.a < 5", `5`, "F"},
+		{"the bound itself under <=", "resource.a <= 5", `5`, "T"},
+		{"the bound itself under >=", "resource.a >= 5", `5`, "T"},
+		{"the bound itself under >", "resource.a > 5", `5`, "F"},
+		{"a fraction the double rounds to the bound", "resource.a < 5", `4.99999999999999999999`, "F"},
+		{"a string that reads as no number", "resource.a < 5", `"abc"`, "F"},
+		{"a boolean", "resource.a < 5", `true`, "F"},
+		{"a number beyond the double range", "resource.a > 5", `1e400`, "F"},
+		{"a string beyond the double range", "resource.a > 5", `"1e400"`, "T"},
+		{"a string below a literal by its exact value", "resource.a < 0.30000000000000001", `"0.3"`, "T"},
+		{"a string above a literal by its exact value", "resource.a < 0.30000000000000001", `"0.30000000000000002"`,
+			"F"},
+		{"a string literal that reads as no number", "resource.a < 'abc'", `"a"`, "F"},
+		{"a boolean literal", "resource.a < true", `0`, "F"},
+		{"a literal fraction beyond the double range", "resource.a < " + big + ".5", `5`, "F"},
+		{"a literal integer beyond the double range", "resource.a < " + big, `5`, "T"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a)}
+			if got := leafOutcome(t, tc.condition, DefaultOptions(), values); got != tc.want {
+				t.Errorf("%s with resource.a = %s is %s, want %s", tc.condition, tc.a, got, tc.want)
+			}
+		})
+	}
+}
+
+// A resource path written with one dot at its end is a reference of its own,
+// keyed with the dot, whose state is the knob trailing_dot_path's (ERROR, an
+// unknown outcome) when the request has a resource and ABSENT when it has
+// none. The path without the dot is the control: it still reads the value.
+func TestAPathThatEndsInADotIsAStateOfItsOwn(t *testing.T) {
+	for _, tc := range []struct {
+		name, condition, key, state, value, want string
+	}{
+		{"a nested path with a resource", "resource.a.b. == 'w'", `["res",".a.b."]`, "ERROR", "", "U"},
+		{"a nested path without a resource", "resource.a.b. == 'w'", `["res",".a.b."]`, "ABSENT", "", "F"},
+		{"a path with an index", "resource.l[0]. == 'w'", `["res",".l[0]."]`, "ERROR", "", "U"},
+		{"the path without the dot", "resource.a.b == 'w'", `["res",".a.b"]`, "VALUE", `"w"`, "T"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{tc.key: resolved(t, tc.state, tc.value)}
+			if got := leafOutcome(t, tc.condition, DefaultOptions(), values); got != tc.want {
+				t.Errorf("%s with %s in state %s is %s, want %s", tc.condition, tc.key, tc.state, got, tc.want)
+			}
+		})
+	}
+}
+
+// The kind of a path that ends in a dot counts the dot, as the
+// specification's does: resource.a. is a nested path, resource.a one with one
+// step.
+func TestThePathKindCountsTheTrailingDot(t *testing.T) {
+	m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a. == 'w' OR resource.a == 'v'"),
+		table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	kinds := map[string]spectables.Kind{}
+	for _, r := range m.Refs {
+		if strings.HasPrefix(r.Key, `["res",`) {
+			kinds[r.Key] = r.Kind
+		}
+	}
+	want := map[string]spectables.Kind{`["res",".a."]`: spectables.KindResNested, keyA: spectables.KindResPath}
+	if !maps.Equal(kinds, want) {
+		t.Errorf("kinds of the references = %v, want %v", kinds, want)
+	}
+}
+
+// With trailing_dot_path ABSENT a path that ends in a dot is ABSENT whatever
+// the resource, so its comparison is known, and a path without the dot keeps
+// every state of its kind, ABSENT included.
+func TestTrailingDotPathAbsentLeavesThePathWithoutTheDotAlone(t *testing.T) {
+	absent := editedTable(t, `"trailing_dot_path": "ERROR"`, `"trailing_dot_path": "ABSENT"`)
+	for _, tc := range []struct {
+		name, condition, key, state, value string
+		want                               bool
+	}{
+		{"a path that ends in a dot", "resource.a. IS NULL", `["res",".a."]`, "ABSENT", "", true},
+		{"the path without the dot, absent", "resource.a IS NULL", keyA, "ABSENT", "", true},
+		{"the path without the dot, a value", "resource.a == 'w'", keyA, "VALUE", `"w"`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			opt := DefaultOptions()
+			opt.Decision = true
+			m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition), absent, opt)
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			req := Request{Body: Body{Operation: "read", ResourceType: "doc"},
+				Values: map[string]Resolved{tc.key: resolved(t, tc.state, tc.value)}}
+			if got := evalModule(t, m, req); got != tc.want {
+				t.Errorf("allow(%s) with %s in state %s = %v, want %v:\n%s", tc.condition, tc.key, tc.state, got,
+					tc.want, m.Text)
+			}
+			if tc.key != keyA && strings.Contains(m.DecisionText, "_hiP") {
+				t.Errorf("%s under ABSENT has a hi bound:\n%s", tc.condition, m.DecisionText)
+			}
+		})
+	}
+}
+
+// An export whose trailing_dot_path holds a value the generator does not know
+// is a defect of the export, so a resource path is an error.
+func TestAnUnknownTrailingDotPathIsAnError(t *testing.T) {
+	tab := editedTable(t, `"trailing_dot_path": "ERROR"`, `"trailing_dot_path": "NULL"`)
+	if _, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a == 'w'"), tab,
+		DefaultOptions()); err == nil || !strings.Contains(err.Error(), "trailing_dot_path") {
+		t.Errorf("Generate error = %v, want one that names trailing_dot_path", err)
+	}
+}
+
+// With trailing_dot_path DROP the dot is read away: resource.a. reads the
+// value of resource.a.
+func TestTrailingDotPathDropReadsThePathWithoutTheDot(t *testing.T) {
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a. == 'w'")
+	drop := editedTable(t, `"trailing_dot_path": "ERROR"`, `"trailing_dot_path": "DROP"`)
+	if !decideWith(t, tree, drop, DefaultOptions(), map[string]Resolved{keyA: resolved(t, "VALUE", `"w"`)}) {
+		t.Errorf("allow(resource.a. == 'w') with resource.a = \"w\" under DROP = false, want true")
+	}
+}
+
+// Two attributes compare as numbers at any exponent, a negative one by its
+// magnitude reversed, zero between the signs and equal to minus zero, and two
+// strings that read as no number compare false.
+func TestTwoAttributesCompareAsNumbers(t *testing.T) {
+	for _, tc := range []struct {
+		name, op, a, b, want string
+	}{
+		{"two strings that read as numbers, not as text", "<", `"10"`, `"9"`, "F"},
+		{"two negative numbers", "<", `-1.55`, `-1.5`, "T"},
+		{"two positive numbers that share leading digits", "<", `1.5`, `1.55`, "T"},
+		{"zero and a positive number", "<", `0`, `1`, "T"},
+		{"a negative number and zero", "<", `-1`, `0`, "T"},
+		{"a negative and a positive number", "<", `-1`, `1`, "T"},
+		{"zero and minus zero", "<", `0`, `-0`, "F"},
+		{"zero and minus zero under <=", "<=", `0`, `-0`, "T"},
+		{"two exponents beyond the double range", "<", `"1e400"`, `"1e401"`, "T"},
+		{"two negative exponents beyond the double range", "<", `"-1e401"`, `"-1e400"`, "T"},
+		{"two strings that read as no number", "<", `"x"`, `"y"`, "F"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), `["res",".b"]`: resolved(t, "VALUE", tc.b)}
+			cond := "resource.a " + tc.op + " resource.b"
+			if got := leafOutcome(t, cond, DefaultOptions(), values); got != tc.want {
+				t.Errorf("%s with resource.a = %s, resource.b = %s is %s, want %s", cond, tc.a, tc.b, got, tc.want)
+			}
+		})
+	}
+}
+
+// A comparison of subject attributes joins a subject group, which Go
+// evaluates by the same numbers: with a literal on either side, and between
+// two attributes.
+func TestASubjectGroupComparesTheNumbers(t *testing.T) {
+	opt := DefaultOptions()
+	opt.Groups = true
+	for _, tc := range []struct {
+		name, condition, id, subjName, want string
+	}{
+		{"a smaller number", "subject.id < 5", `3`, `""`, "T"},
+		{"a larger number", "subject.id < 5", `7`, `""`, "F"},
+		{"a string that reads as no number", "subject.id < 5", `"abc"`, `""`, "F"},
+		{"a literal on the left above the value", "5 > subject.id", `3`, `""`, "T"},
+		{"a literal on the left below the value", "5 > subject.id", `7`, `""`, "F"},
+		{"two attributes in order", "subject.id < subject.name", `1`, `2`, "T"},
+		{"two attributes out of order", "subject.id < subject.name", `2`, `1`, "F"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{`["subj","id"]`: resolved(t, "VALUE", tc.id),
+				`["subj","name"]`: resolved(t, "VALUE", tc.subjName)}
+			if got := leafOutcome(t, tc.condition, opt, values); got != tc.want {
+				t.Errorf("%s with subject.id = %s, subject.name = %s is %s, want %s", tc.condition, tc.id, tc.subjName,
+					got, tc.want)
+			}
+		})
+	}
+}
+
+// IS SUBSET holds when the left value, read as a list, is not empty and each
+// of its elements equals an element on the right as the other operators
+// compare them: ignoring case, a number equal to its text, a list equal to a
+// string by its Java text, and a null element equal to nothing. An object on
+// the right equals nothing. A resource attribute on the right offers its
+// elements as a list literal does (ADR-0083 R7).
+func TestIsSubsetComparesElementsAsTheOtherOperators(t *testing.T) {
+	const perms, b, id, g = `["subj","permissions"]`, `["res",".b"]`, `["subj","id"]`, `["subj","g"]`
+	for _, tc := range []struct {
+		name, condition, a, rightKey, right, want string
+	}{
+		{"every element on the right", "resource.a IS SUBSET subject.permissions", `["x"]`, perms, `["x", "y"]`, "T"},
+		{"an element in another case", "resource.a IS SUBSET subject.permissions", `["X"]`, perms, `["x"]`, "T"},
+		{"an element not on the right", "resource.a IS SUBSET subject.permissions", `["z"]`, perms, `["x"]`, "F"},
+		{"a number and its text", "resource.a IS SUBSET subject.permissions", `[5]`, perms, `["5"]`, "T"},
+		{"two texts of one number", "resource.a IS SUBSET subject.permissions", `["5.0"]`, perms, `["5.00"]`, "F"},
+		{"a list and its text", "resource.a IS SUBSET subject.permissions", `[["abc"]]`, perms, `["[abc]"]`, "T"},
+		{"a string read as a list of one", "resource.a IS SUBSET subject.permissions", `"x"`, perms, `["x"]`, "T"},
+		{"a null element", "resource.a IS SUBSET subject.permissions", `["x", null]`, perms, `["x"]`, "F"},
+		{"a number in a resource attribute on the right", "resource.a IS SUBSET resource.b", `[5]`, b, `[5.0]`, "T"},
+		{"a boolean in a resource attribute on the right", "resource.a IS SUBSET resource.b", `["TRUE"]`, b, `[true]`,
+			"T"},
+		{"a list in a resource attribute on the right", "resource.a IS SUBSET resource.b", `[["x"]]`, b, `[["X"]]`, "T"},
+		{"a string in a resource attribute on the right", "resource.a IS SUBSET resource.b", `[5]`, b, `["5"]`, "T"},
+		{"an object on the right", "resource.a IS SUBSET subject.id", `[{}]`, id, `[{}]`, "F"},
+		{"a string where the object was", "resource.a IS SUBSET subject.id", `["x"]`, id, `["x"]`, "T"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), tc.rightKey: resolved(t, "VALUE", tc.right)}
+			if got := leafOutcomeWithPIPs(t, tc.condition, generalPIPs, DefaultOptions(), values); got != tc.want {
+				t.Errorf("%s with %s and %s is %s, want %s", tc.condition, tc.a, tc.right, got, tc.want)
+			}
+		})
+	}
+}
+
+// A string on the left of IS SUBSET equals a boolean on the right by its text
+// ignoring case, as a boolean on the left does (ADR-0083 R4, R7).
+func TestAStringIsASubsetOfABooleanOfItsText(t *testing.T) {
+	for _, tc := range []struct{ a, want string }{{`"true"`, "T"}, {`"TRUE"`, "T"}, {`true`, "T"}, {`"yes"`, "F"},
+		{`false`, "F"}} {
+		t.Run(tc.a, func(t *testing.T) {
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a)}
+			if got := leafOutcome(t, "resource.a IS SUBSET true", DefaultOptions(), values); got != tc.want {
+				t.Errorf("resource.a = %s IS SUBSET true is %s, want %s", tc.a, got, tc.want)
+			}
+		})
+	}
+}
+
+// An empty whole resource is a subset of nothing, so IS NOT SUBSET holds for
+// it as for a list with an element outside the right.
+func TestAnEmptyResourceIsNotASubset(t *testing.T) {
+	for _, tc := range []struct{ resource, want string }{{`[]`, "T"}, {`["y"]`, "T"}, {`["x"]`, "F"}} {
+		t.Run(tc.resource, func(t *testing.T) {
+			values := map[string]Resolved{`["res",""]`: resolved(t, "VALUE", tc.resource)}
+			if got := leafOutcome(t, "resource IS NOT SUBSET 'x'", DefaultOptions(), values); got != tc.want {
+				t.Errorf("resource = %s IS NOT SUBSET 'x' is %s, want %s", tc.resource, got, tc.want)
+			}
+		})
+	}
+}
+
+// IS SUBSET of subject lists joins a subject group, which Go evaluates by the
+// same deeps: against literals and between two attributes.
+func TestASubjectGroupComparesSubsets(t *testing.T) {
+	opt := DefaultOptions()
+	opt.Groups = true
+	for _, tc := range []struct {
+		name, condition, perms, roles, want string
+	}{
+		{"every element listed", "subject.permissions IS SUBSET 'x', 'y'", `["x"]`, `[]`, "T"},
+		{"an element not listed", "subject.permissions IS SUBSET 'x', 'y'", `["x", "z"]`, `[]`, "F"},
+		{"an element in another case", "subject.permissions IS SUBSET 'x', 'y'", `["X"]`, `[]`, "T"},
+		{"a number and a literal of its text", "subject.permissions IS SUBSET '5.0', 'y'", `[5]`, `[]`, "T"},
+		{"every element in the roles", "subject.permissions IS SUBSET subject.roles", `["x"]`, `["x", "y"]`, "T"},
+		{"an element not in the roles", "subject.permissions IS SUBSET subject.roles", `["x", "z"]`, `["x"]`, "F"},
+		{"a literal in the permissions", "'x' IS SUBSET subject.permissions", `["x", "y"]`, `[]`, "T"},
+		{"a literal not in the permissions", "'z' IS SUBSET subject.permissions", `["x", "y"]`, `[]`, "F"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{`["subj","permissions"]`: resolved(t, "VALUE", tc.perms),
+				`["subj","roles"]`: resolved(t, "VALUE", tc.roles)}
+			if got := leafOutcome(t, tc.condition, opt, values); got != tc.want {
+				t.Errorf("%s with subject.permissions = %s, subject.roles = %s is %s, want %s", tc.condition, tc.perms,
+					tc.roles, got, tc.want)
+			}
+		})
+	}
+}
+
+// Go compares two subject lists under CONTAINS ANY through a set of the keys
+// of the right one when it holds more than eight elements, and under IS
+// SUBSET through the index of the right one, so a subset beside CONTAINS ANY
+// of the same roles reads each.
+func TestASubjectGroupComparesTwoLongLists(t *testing.T) {
+	opt := DefaultOptions()
+	opt.Groups = true
+	const roles = `["x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "X9", "y"]`
+	for _, tc := range []struct {
+		name, condition, perms, want string
+	}{
+		{"every element in the roles", "subject.permissions IS SUBSET subject.roles", `["y", "x8"]`, "T"},
+		{"an element not in the roles", "subject.permissions IS SUBSET subject.roles", `["y", "z"]`, "F"},
+		{"an element in the roles in another case", "subject.permissions IS SUBSET subject.roles", `["x9"]`, "T"},
+		{"a key and a subset in the same roles", "subject.roles CONTAINS ANY 'x9', 'r1', 'r2', 'r3', 'r4', 'r5' AND subject.permissions IS SUBSET subject.roles",
+			`["y"]`, "T"},
+		{"one element in the roles", "subject.permissions CONTAINS ANY subject.roles", `["z", "y"]`, "T"},
+		{"no element in the roles", "subject.permissions CONTAINS ANY subject.roles", `["z"]`, "F"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{`["subj","permissions"]`: resolved(t, "VALUE", tc.perms),
+				`["subj","roles"]`: resolved(t, "VALUE", roles)}
+			if got := leafOutcome(t, tc.condition, opt, values); got != tc.want {
+				t.Errorf("%s with subject.permissions = %s, subject.roles = %s is %s, want %s", tc.condition, tc.perms,
+					roles, got, tc.want)
+			}
+		})
+	}
+}
+
+// Go evaluates a subject group whose factor lists more keys than
+// maxPlainClauses by the keys of the input, and looks a key up in a list
+// longer than eight as in a set: a key anywhere in the list, in another case,
+// which CONTAINS ANY ignores, and in a short list, and IN reads a literal
+// there. Two groups that share a factor, here the one of subject.roles, read
+// the same answer of it.
+func TestASubjectGroupFindsAKeyAmongMany(t *testing.T) {
+	opt := DefaultOptions()
+	opt.Groups = true
+	const anyOf6 = "subject.roles CONTAINS ANY 'r1', 'r2', 'r3', 'r4', 'r5', 'r6'"
+	const shared = anyOf6 + " AND subject.permissions CONTAINS ANY 'p1' AND resource.a == 'p' OR " +
+		anyOf6 + " AND subject.permissions CONTAINS ANY 'p2' AND resource.a == 'q'"
+	const long = `["x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", `
+	const both = `["p1", "p2"]`
+	for _, tc := range []struct {
+		name, condition, roles, perms, a, want string
+	}{
+		{"the last key in a long list", anyOf6, long + `"r6"]`, both, `"p"`, "T"},
+		{"the first key in a long list", anyOf6, `["r1", ` + long[1:] + `"x10"]`, both, `"p"`, "T"},
+		{"no key in a long list", anyOf6, long + `"x10"]`, both, `"p"`, "F"},
+		{"a key in another case in a long list", anyOf6, long + `"R4"]`, both, `"p"`, "T"},
+		{"a key in a short list", anyOf6, `["x", "r3"]`, both, `"p"`, "T"},
+		{"no key in a short list", anyOf6, `["x", "y"]`, both, `"p"`, "F"},
+		{"the shared factor, the first group", shared, long + `"r2"]`, both, `"p"`, "T"},
+		{"the shared factor, the second group", shared, long + `"r2"]`, both, `"q"`, "T"},
+		{"without the shared factor, the first group", shared, long + `"x10"]`, both, `"p"`, "F"},
+		{"without the shared factor, the second group", shared, long + `"x10"]`, both, `"q"`, "F"},
+		{"a literal in a long list", "'r6' IN subject.roles", long + `"r6"]`, both, `"p"`, "T"},
+		{"a literal not in a long list", "'r6' IN subject.roles", long + `"x10"]`, both, `"p"`, "F"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{`["subj","roles"]`: resolved(t, "VALUE", tc.roles),
+				`["subj","permissions"]`: resolved(t, "VALUE", tc.perms), keyA: resolved(t, "VALUE", tc.a)}
+			if got := leafOutcome(t, tc.condition, opt, values); got != tc.want {
+				t.Errorf("%s with subject.roles = %s, subject.permissions = %s, resource.a = %s is %s, want %s",
+					tc.condition, tc.roles, tc.perms, tc.a, got, tc.want)
+			}
+		})
+	}
+}
+
+// One module answers the groups of each input apart from the inputs before
+// it, in turn and at once: the roles of a simplified policy, of a factor of
+// more than maxPlainClauses keys and of a factor of one key, are looked up in
+// a long list of one input and found missing in the next.
+func TestASubjectGroupIsAnsweredForEachInputAlone(t *testing.T) {
+	sets := `{"policySets": [{"policySetId": "s", "name": "s", "status": "ACTIVE", "type": "SIMPLIFIED",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"policies": [{"policyId": "p", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "t1", "rules": [{"ruleId": "r", "target": "subject.roles CONTAINS ANY 'r1','r2','r3','r4','r5','r6'",
+				"condition": "subject.permissions CONTAINS ANY 'p1'", "effect": "ALLOW", "tenantId": "t1"},
+				{"ruleId": "r7", "target": "subject.roles CONTAINS ANY 'r7'", "effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+	exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	opt := DefaultOptions()
+	opt.Groups = true
+	m, err := Generate(exp.Trees["t1"], table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	long := []string{"x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9"}
+	cases := []struct {
+		name  string
+		roles []string
+		perms string
+		want  bool
+	}{
+		{"a role in a long list", append(slices.Clone(long), "r6"), `["p1"]`, true},
+		{"the other role in a long list", append(slices.Clone(long), "r7"), `["q"]`, true},
+		{"no role in a long list", append(slices.Clone(long), "x10"), `["p1"]`, false},
+		{"a role in a short list", []string{"r2"}, `["p1"]`, true},
+		{"a role without the permission", append(slices.Clone(long), "r3"), `["q"]`, false},
+	}
+	request := func(i int) Request {
+		return Request{Body: Body{Operation: "read", ResourceType: "doc"}, Roles: cases[i].roles,
+			Values: map[string]Resolved{`["subj","permissions"]`: resolved(t, "VALUE", cases[i].perms)}}
+	}
+	groups := make([][]string, len(cases))
+	for round := range 2 {
+		for i, tc := range cases {
+			if got := evalModule(t, m, request(i)); got != tc.want {
+				t.Errorf("round %d, %s: allow = %v, want %v", round, tc.name, got, tc.want)
+			}
+			in, err := Project(m, request(i))
+			if err != nil {
+				t.Fatalf("Project: %v", err)
+			}
+			groups[i] = in.SubjectGroups
+		}
+	}
+	var wg sync.WaitGroup
+	for n := range 40 {
+		wg.Go(func() {
+			i := n % len(cases)
+			if got := EvalGroups(m, mustProject(t, m, request(i))); !slices.Equal(got, groups[i]) {
+				t.Errorf("%s at once with other inputs: groups %v, want %v", cases[i].name, got, groups[i])
+			}
+		})
+	}
+	wg.Wait()
+}
+
+func mustProject(t *testing.T, m *Module, req Request) *Input {
+	t.Helper()
+	in, err := Project(m, req)
+	if err != nil {
+		t.Errorf("Project: %v", err)
+		return &Input{}
+	}
+	return in
+}
+
+// A one-element GENERAL list of a boolean, null, or an object (SINGLE_ODD) on
+// the left of IS SUBSET is a list: the boolean equals its text, and null and
+// an object equal no string.
+func TestASingleOddListOnTheLeftOfIsSubsetIsAList(t *testing.T) {
+	for _, tc := range []struct{ g, want string }{{`[true]`, "T"}, {`[null]`, "F"}, {`[{}]`, "F"}} {
+		t.Run(tc.g, func(t *testing.T) {
+			values := map[string]Resolved{`["subj","g"]`: resolved(t, "SINGLE_ODD", tc.g),
+				`["res",".b"]`: resolved(t, "VALUE", `["true"]`)}
+			got := leafOutcomeWithPIPs(t, "subject.g IS SUBSET resource.b", generalPIPs, DefaultOptions(), values)
+			if got != tc.want {
+				t.Errorf("subject.g = SINGLE_ODD %s IS SUBSET resource.b = [\"true\"] is %s, want %s", tc.g, got, tc.want)
+			}
+		})
+	}
+}
+
+// A list value, the whole resource or the subject's scopes, is empty by its
+// length; a string is not empty.
+func TestAListIsEmptyByItsLength(t *testing.T) {
+	const resource, scopes = `["res",""]`, `["subj","scopes"]`
+	for _, tc := range []struct {
+		name, condition, key, value, want string
+	}{
+		{"an empty resource list", "resource IS EMPTY", resource, `[]`, "T"},
+		{"a resource list with an element", "resource IS EMPTY", resource, `["a"]`, "F"},
+		{"a resource string", "resource IS EMPTY", resource, `"x"`, "F"},
+		{"an empty resource list under IS NOT EMPTY", "resource IS NOT EMPTY", resource, `[]`, "F"},
+		{"a resource list with an element under IS NOT EMPTY", "resource IS NOT EMPTY", resource, `["a"]`, "T"},
+		{"no scopes", "subject.scopes IS EMPTY", scopes, `[]`, "T"},
+		{"a scope", "subject.scopes IS EMPTY", scopes, `["a"]`, "F"},
+		{"no scopes under IS NOT EMPTY", "subject.scopes IS NOT EMPTY", scopes, `[]`, "F"},
+		{"a scope under IS NOT EMPTY", "subject.scopes IS NOT EMPTY", scopes, `["a"]`, "T"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := map[string]Resolved{tc.key: resolved(t, "VALUE", tc.value)}
+			if got := leafOutcome(t, tc.condition, DefaultOptions(), values); got != tc.want {
+				t.Errorf("%s with %s is %s, want %s", tc.condition, tc.value, got, tc.want)
+			}
+		})
+	}
+}
+
+// In the copy of the tree for one operation, the operation is a literal, and
+// a comparison of it with literals is decided at generation: the rule that
+// subject allowed reads holds exactly where that comparison does.
+func TestAComparisonOfTheOperationWithLiteralsIsDecidedAtGeneration(t *testing.T) {
+	for _, tc := range []struct {
+		name, operation, condition string
+		want                       bool
+	}{
+		{"the operation in a literal list", "write", "operation IS SUBSET 'write', 'x'", true},
+		{"the operation outside a literal list", "write", "operation IS SUBSET 'x', 'y'", false},
+		{"an operation that reads as a smaller number", "3", "operation < 5", true},
+		{"an operation that reads as a larger number", "7", "operation < 5", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			sets := fmt.Sprintf(`{"policySets": [
+				{"policySetId": "s1", "name": "s1", "status": "ACTIVE", "target": "resourceType == 'doc'",
+				 "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+				 "policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+					"tenantId": "t1", "rules": [
+						{"ruleId": "r1", "target": "operation == 'read'", "condition": "subject allowed '%[1]s' on resource",
+						 "effect": "ALLOW", "tenantId": "t1"},
+						{"ruleId": "r2", "target": "operation == '%[1]s'", "condition": %[2]q,
+						 "effect": "ALLOW", "tenantId": "t1"}]}]}]}`, tc.operation, tc.condition)
+			exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+			if err != nil {
+				t.Fatalf("FromRegular: %v", err)
+			}
+			if got := decideValues(t, exp.Trees["t1"], DefaultOptions(), nil); got != tc.want {
+				t.Errorf("allow(read) where subject allowed %q reads %s = %v, want %v", tc.operation, tc.condition, got,
+					tc.want)
+			}
+		})
+	}
+}
+
+// IN with two or more literals is one membership clause for a scalar's key
+// and one for a structure's text, however many literals there are: a clause
+// per literal would grow the module with every value a condition lists. A
+// single literal is an equality instead, and is not compared here.
+func TestInWithLiteralsDoesNotGrowWithTheirNumber(t *testing.T) {
+	generate := func(condition string) *Module {
+		m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", condition), table(t), DefaultOptions())
+		if err != nil {
+			t.Fatalf("Generate(%s): %v", condition, err)
+		}
+		return m
+	}
+	m5 := generate("resource.a IN 'a', 'b', 'c', 'd', 'e'")
+	two, five, m5text := generate("resource.a IN 'x', 'y'").Stats.AllowClauses, m5.Stats.AllowClauses, m5.Text
+	if five != two {
+		t.Errorf("allow clauses of IN with five literals = %d, want %d as with two", five, two)
+		t.Log(m5text)
+	}
+}
+
+// CONTAINS ANY with literals takes one clause per literal for the attribute
+// classes whose keys it reads and one clause for all literals for those whose
+// element index it reads: the classes that read one field share a clause,
+// which checks that the class is one of them.
+func TestContainsAnyWithLiteralsTakesAClausePerLiteralAndOneForStructures(t *testing.T) {
+	const condition = "resource.a CONTAINS ANY 'a', 'b', 'c', 'd', 'e'"
+	m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", condition), table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate(%s): %v", condition, err)
+	}
+	if got := m.Stats.AllowClauses; got != 6 {
+		t.Errorf("allow clauses of %s = %d, want 6", condition, got)
+		t.Log(m.Text)
+	}
+}
+
+// Two CONTAINS ANY of literals in one clause each look the shapes of their
+// literals up in an element index of structures, where a nested list equals
+// a literal of its Java text (ADR-0083 R8), and the module compiles and
+// answers with both: the variable of one lookup is not the other's. AND puts
+// two true rows in a clause, and OR two false rows, which a DENY rule under
+// PERMIT_UNLESS_DENY reads.
+func TestTwoContainsAnyOfLiteralsShareAClause(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	const both = "resource.a CONTAINS ANY '[x]', 'y' AND subject.id CONTAINS ANY 'p', '[q]'"
+	const either = "resource.a CONTAINS ANY '[x]', 'y' OR subject.id CONTAINS ANY 'p', '[q]'"
+	for _, tc := range []struct {
+		name, alg, effect, condition, a, id string
+		want                                bool
+	}{
+		{"nested lists that hold a literal each", "DENY_UNLESS_PERMIT", "ALLOW", both, `[["X"]]`, `[["q"]]`, true},
+		{"a nested list without a literal", "DENY_UNLESS_PERMIT", "ALLOW", both, `[["X"]]`, `[["r"]]`, false},
+		{"nested lists without a literal", "PERMIT_UNLESS_DENY", "DENY", either, `[["z"]]`, `[["r"]]`, true},
+		{"a nested list that holds a literal", "PERMIT_UNLESS_DENY", "DENY", either, `[["z"]]`, `[["Q"]]`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, tc.alg, tc.effect, tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a),
+				`["subj","id"]`: resolved(t, "VALUE", tc.id)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s, resource.a = %s, subject.id = %s) %s = %v, want %v", tc.condition, tc.a,
+						tc.id, form, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
+// The clauses CONTAINS ANY shares among attribute classes, on its true and
+// false rails, hold for a value of each class they join and for no list with
+// a null element, whose keys hold the literal too: a null element leaves
+// CONTAINS ANY undefined. A subject attribute joins a subject group, whose
+// evaluator reads the shared class check in Go.
+func TestAJoinedClassCheckAdmitsOnlyTheClassesItJoins(t *testing.T) {
+	grouped := DefaultOptions()
+	grouped.Groups = true
+	for _, operand := range []struct {
+		name, attribute, key string
+		opt                  Options
+	}{
+		{"a resource attribute", "resource.a", keyA, DefaultOptions()},
+		{"a subject attribute in a group", "subject.id", `["subj","id"]`, grouped},
+	} {
+		condition := operand.attribute + " CONTAINS ANY 'x', '5'"
+		for _, tc := range []struct {
+			name, value, want string
+		}{
+			{"a string literal", `"x"`, "T"},
+			{"a number literal", `5`, "T"},
+			{"a list holding a literal", `["w", "x"]`, "T"},
+			{"a list holding no literal", `["w"]`, "F"},
+			{"a list holding a literal and a null element", `[null, "x"]`, "U"},
+		} {
+			t.Run(operand.name+"/"+tc.name, func(t *testing.T) {
+				values := map[string]Resolved{operand.key: resolved(t, "VALUE", tc.value)}
+				if got := leafOutcome(t, condition, operand.opt, values); got != tc.want {
+					t.Errorf("%s with %s = %s is %s, want %s", condition, operand.attribute, tc.value, got, tc.want)
+				}
+			})
+		}
+	}
+}
+
+// A clause holds only where one class satisfies every class check of a
+// reference in it, a check that allows several classes included.
+func TestAClauseNeedsAClassEveryClassCheckAllows(t *testing.T) {
+	one := func(cl string) expr { return expr{fact: fact{ref: "r1", field: factClass, val: cl}} }
+	some := func(cls ...string) expr { return expr{fact: fact{ref: "r1", field: factClass, vals: cls}} }
+	for _, tc := range []struct {
+		name string
+		c    clause
+		want bool
+	}{
+		{"a class among those allowed", clause{some("list", "scalar", "string"), one("string")}, true},
+		{"a class outside those allowed", clause{some("list", "scalar", "string"), one("object")}, false},
+		{"two sets that share a class", clause{some("list", "scalar"), some("scalar", "object")}, true},
+		{"two sets that share no class", clause{some("list", "scalar", "string"), some("nested_list", "object")}, false},
+		{"a set and a class of another reference", clause{some("list", "scalar"),
+			{fact: fact{ref: "r2", field: factClass, val: "object"}}}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := consistent(tc.c); got != tc.want {
+				t.Errorf("consistent(%+v) = %v, want %v", tc.c, got, tc.want)
+			}
+		})
+	}
+}
+
+// The same tree and options give the same module byte for byte, the same
+// subject groups, and the same report, however Go orders its maps from one
+// run to the next.
+func TestTheSameTreeGivesTheSameModule(t *testing.T) {
+	tree := tenantWithSetAndPIPs(t, "DENY_OVERRIDES", "ALLOW",
+		"subject.roles CONTAINS 'admin' AND resource.a IN 'x', 'y' OR resource.a CONTAINS ANY subject.g "+
+			"OR subject.id < 5 AND resource.b IS SUBSET 'p', 'q' OR resource.c MATCH /api/*/items "+
+			"OR resource.d == subject.name", generalPIPs)
+	opt := DefaultOptions()
+	opt.Groups, opt.Report = true, true
+	first, err := Generate(tree, table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	for range 5 {
+		m, err := Generate(tree, table(t), opt)
+		if err != nil {
+			t.Fatalf("Generate: %v", err)
+		}
+		if m.Text != first.Text {
+			t.Fatalf("a second generation of one tree differs:\n%s\nfirst:\n%s", m.Text, first.Text)
+		}
+		if !reflect.DeepEqual(m.Groups, first.Groups) {
+			t.Fatalf("a second generation of one tree has other groups: %v, first %v", m.Groups, first.Groups)
+		}
+		if len(m.Report) != len(first.Report) {
+			t.Fatalf("a second generation of one tree has %d report entries, first %d", len(m.Report),
+				len(first.Report))
+		}
+		for i := range m.Report {
+			if !reflect.DeepEqual(m.Report[i], first.Report[i]) {
+				t.Fatalf("report entry %d of a second generation = %+v, first %+v", i, m.Report[i], first.Report[i])
+			}
+		}
+	}
+}
+
+// twoSets returns the tree of a tenant with two sets of these IDs on resource
+// type doc: the first permits any operation when resource.a is x, the second
+// permits read when subject allowed 'write' on resource.
+func twoSets(t *testing.T, id1, id2 string) *policyir.Tree {
+	t.Helper()
+	set := func(id, target, condition string) string {
+		return fmt.Sprintf(`{"policySetId": %q, "status": "ACTIVE", "target": "resourceType == 'doc'",
+			"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+			"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+				"tenantId": "t1", "rules": [{"ruleId": "r1", "target": %q,
+					"condition": %q, "effect": "ALLOW", "tenantId": "t1"}]}]}`, id, target, condition)
+	}
+	sets := `{"policySets": [` + set(id1, "true", "resource.a == 'x'") + ", " +
+		set(id2, "operation == 'read'", "subject allowed 'write' on resource") + `]}`
+	exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	tree, ok := exp.Trees["t1"]
+	if !ok {
+		t.Fatalf("FromRegular: no tree of t1; failed %v, dropped %v", exp.Failed, exp.Dropped)
+	}
+	return tree
+}
+
+// The rules of a node are named by its set's label and the node's position in
+// the set, and the rules of the copy of the tree that
+// subject allowed 'write' reads by the operation and the depth before that.
+func TestTheRulesOfANodeAreNamedByItsSetAndPosition(t *testing.T) {
+	opt := DefaultOptions()
+	opt.Flat = false
+	m, err := Generate(twoSets(t, "D5F62EC4-1111-4111-8111-111111111111", "0a1b2c3d-2222-4222-8222-222222222222"),
+		table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	for _, want := range []string{"\nset_d5f62ec4_4aa3_p1_loP_1 if {", "\nset_0a1b2c3d_356f_p1_loP_1 if {",
+		"\ndec_write_1_set_d5f62ec4_4aa3_any_loP if {", "\ndec_write_1_loP if {"} {
+		if !strings.Contains(m.Text, want) {
+			t.Errorf("the module lacks %q; module:\n%s", want, m.Text)
+		}
+	}
+}
+
+// A label is a function of one set's ID, so two IDs with one label would read
+// each other's rules; the generation fails instead. IDs that share the first
+// 8 hex digits alone get labels that differ in the hash.
+func TestSetsWhoseIDsShareALabelFailTheGeneration(t *testing.T) {
+	// the SHA-256 of either ID starts with af87
+	_, err := Generate(twoSets(t, "d5f62ec4-1111-4111-8111-000000000183", "d5f62ec4-1111-4111-8111-0000000001a3"),
+		table(t), DefaultOptions())
+	want := `policy sets "d5f62ec4-1111-4111-8111-000000000183" and "d5f62ec4-1111-4111-8111-0000000001a3" share the label set_d5f62ec4_af87`
+	if err == nil || err.Error() != want {
+		t.Errorf("Generate error = %v, want %s", err, want)
+	}
+	if _, err := Generate(twoSets(t, "d5f62ec4-1111-4111-8111-111111111111", "d5f62ec4-2222-4222-8222-222222222222"),
+		table(t), DefaultOptions()); err != nil {
+		t.Errorf("Generate of IDs that share the first 8 hex digits only: %v", err)
+	}
+}
+
+// An ID that is not a UUID is written into the label so that it reads back:
+// _ doubled, any other character but a letter or a digit as _<hex>_.
+func TestALabelReadsBackToTheSetID(t *testing.T) {
+	for id, want := range map[string]string{
+		"d5f62ec4-1111-4111-8111-111111111111": "set_d5f62ec4_ebc4",
+		"plain7":                               "set_plain7",
+		"a_p1":                                 "set_a__p1",
+		"spec:set:x-1":                         "set_spec_3a_set_3a_x_2d_1",
+		"\u0439":                               "set__439_",
+	} {
+		if got := setLabel(id); got != want {
+			t.Errorf("setLabel(%q) = %s, want %s", id, got, want)
+		}
+	}
+	if isBelow("set_a__p1", "set_a") {
+		t.Errorf("set_a__p1, the set of ID a_p1, is below set_a")
+	}
+	if !isBelow("set_a_p1_r2", "set_a_p1") {
+		t.Errorf("set_a_p1_r2 is not below set_a_p1")
+	}
+}
+
+// The name of a rule that any node may read is a hash of its clauses, so a
+// set added before the one that reads it, with a shared rule of its own, does
+// not rename it. A condition over a PIP may be unknown, and a DENY rule reads
+// its false rail through such a rule.
+func TestASharedRuleKeepsItsNameWhenAnotherSetIsAdded(t *testing.T) {
+	set := func(id, condition string) string {
+		return fmt.Sprintf(`{"policySetId": %q, "status": "ACTIVE", "target": "resourceType == 'doc'",
+			"combiningAlgorithm": "PERMIT_UNLESS_DENY", "tenantId": "t1",
+			"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+				"tenantId": "t1", "rules": [{"ruleId": "r1", "target": "true",
+					"condition": %q, "effect": "DENY", "tenantId": "t1"}]}]}`, id, condition)
+	}
+	shared := regexp.MustCompile(`(?m)^rail_[tf]_[0-9a-f]{12}\b`)
+	names := func(sets ...string) []string {
+		t.Helper()
+		exp, err := policyir.FromRegular([]byte(`{"policySets": [`+strings.Join(sets, ", ")+`]}`),
+			[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`))
+		if err != nil {
+			t.Fatalf("FromRegular: %v", err)
+		}
+		m, err := Generate(exp.Trees["t1"], table(t), DefaultOptions())
+		if err != nil {
+			t.Fatalf("Generate: %v", err)
+		}
+		if !regexp.MustCompile(`\n# rail_[tf]_[0-9a-f]{12}: holds where pip\("subject\.g"\) EQ `).MatchString(m.Text) {
+			t.Errorf("the module names no comparison above a shared rule; module:\n%s", m.Text)
+		}
+		got := shared.FindAllString(m.Text, -1)
+		slices.Sort(got)
+		return slices.Compact(got)
+	}
+	s1, s2 := set("s1", "subject.g == 'x'"), set("s2", "subject.g == 'y'")
+	want := append(names(s1), names(s2)...)
+	slices.Sort(want)
+	if got := names(s1, s2); len(want) != 2 || !slices.Equal(got, want) {
+		t.Errorf("the shared rules of s1 and s2 together are %v, want those of s1 and of s2 alone, %v", got, want)
+	}
+}
+
+// Two different bodies whose hashed names agree fail the generation rather
+// than read each other's clauses.
+func TestTwoBodiesWithOneHashedNameFailTheGeneration(t *testing.T) {
+	g := &gen{hashedKeys: map[string]string{}}
+	name := g.hashed(prefixAnd, "a")
+	g.hashedKeys[name] = "b"
+	g.hashed(prefixAnd, "a")
+	want := "two different bodies share the name " + name
+	if g.collision == nil || g.collision.Error() != want {
+		t.Errorf("collision = %v, want %s", g.collision, want)
+	}
+}
+
+// The module lists the sets by label and the rules by name, so the order of
+// the sets in the export does not change the text, and a simplified set
+// stands where its label puts it rather than ahead of every other set. The
+// copies of the tree for subject allowed are made as the conditions are read,
+// in the order of the export.
+func TestTheModuleListsTheSetsByLabel(t *testing.T) {
+	regular := func(id, condition string) string {
+		return fmt.Sprintf(`{"policySetId": %q, "status": "ACTIVE", "target": "resourceType == 'doc'",
+			"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+			"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+				"tenantId": "t1", "rules": [{"ruleId": "r1", "target": "operation == 'read'",
+					"condition": %q, "effect": "ALLOW", "tenantId": "t1"}]}]}`, id, condition)
+	}
+	a, c := regular("a", "subject allowed 'z' on resource"), regular("c", "subject allowed 'w' on resource")
+	simplified := `{"policySetId": "b", "status": "ACTIVE", "type": "SIMPLIFIED",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"policies": [{"policyId": "p1", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "t1", "rules": [{"ruleId": "r1", "target": "subject.roles CONTAINS ANY 'reader'",
+				"condition": "resource.b == 'y'", "effect": "ALLOW", "tenantId": "t1"}]}]}`
+	text := func(sets ...string) string {
+		t.Helper()
+		exp, err := policyir.FromRegular([]byte(`{"policySets": [`+strings.Join(sets, ", ")+`]}`), []byte(`{"pips": []}`))
+		if err != nil {
+			t.Fatalf("FromRegular: %v", err)
+		}
+		opt := DefaultOptions()
+		opt.Flat = false
+		m, err := Generate(exp.Trees["t1"], table(t), opt)
+		if err != nil {
+			t.Fatalf("Generate: %v", err)
+		}
+		return m.Text
+	}
+	ac := text(a, simplified, c)
+	if ca := text(c, simplified, a); ca != ac {
+		t.Errorf("sets c, b, a give another module than a, b, c:\n%s\nwant:\n%s", ca, ac)
+	}
+	at := []int{strings.Index(ac, "\n# set_a: "), strings.Index(ac, "\n# set_b: "), strings.Index(ac, "\n# set_c: ")}
+	if slices.Contains(at, -1) || !slices.IsSorted(at) {
+		t.Errorf("the sources of set_a, set_b, set_c stand at %v, want in that order; module:\n%s", at, ac)
+	}
+}
+
+// An edit of one set changes the module of the tenant by the lines it changes
+// in the module of that set alone: the rule names and the shared rules of the
+// other sets stay as they were. The nodes have rules of their own when the
+// module is not flat. The lines are compared as multisets, so a
+// block that moves goes unseen here; TestTheModuleListsTheSetsByLabel covers
+// the positions. The edit gives a condition over a
+// PIP to the DENY rule of set b, which then reads a shared rule; sets a and c
+// read shared rules of their own, over subject.h, since every comparison of
+// one PIP reads one rule of the states where the PIP fails it.
+func TestAnEditOfOneSetChangesNoLineOfTheOthers(t *testing.T) {
+	regular := func(id, condition string) string {
+		return fmt.Sprintf(`{"policySetId": %q, "status": "ACTIVE", "target": "resourceType == 'doc'",
+			"combiningAlgorithm": "PERMIT_UNLESS_DENY", "tenantId": "t1",
+			"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+				"tenantId": "t1", "rules": [{"ruleId": "r1", "target": "operation == 'read'",
+					"condition": %q, "effect": "DENY", "tenantId": "t1"}]}]}`, id, condition)
+	}
+	lines := func(sets ...string) map[string]int {
+		t.Helper()
+		exp, err := policyir.FromRegular([]byte(`{"policySets": [`+strings.Join(sets, ", ")+`]}`),
+			[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"},
+				{"tenantId": "t1", "name": "subject.h", "pipType": "GENERAL", "url": "http://h"}]}`))
+		if err != nil {
+			t.Fatalf("FromRegular: %v", err)
+		}
+		opt := DefaultOptions()
+		opt.Flat = false
+		m, err := Generate(exp.Trees["t1"], table(t), opt)
+		if err != nil {
+			t.Fatalf("Generate: %v", err)
+		}
+		n := map[string]int{}
+		for _, l := range strings.Split(m.Text, "\n") {
+			// the function of a PIP stands once in a module, whichever sets
+			// read the PIP, after a blank line
+			if l != "" && !strings.HasPrefix(l, "pip_") {
+				n[l]++
+			}
+		}
+		return n
+	}
+	// change returns the lines that after holds more or fewer times than
+	// before, with the difference.
+	change := func(before, after map[string]int) map[string]int {
+		d := map[string]int{}
+		for l := range maps.Keys(before) {
+			d[l] = after[l] - before[l]
+		}
+		for l := range maps.Keys(after) {
+			d[l] = after[l] - before[l]
+		}
+		maps.DeleteFunc(d, func(_ string, n int) bool { return n == 0 })
+		return d
+	}
+	a, c := regular("a", "subject.h == 'x'"), regular("c", "subject.h == 'z'")
+	b0, b1 := regular("b", "resource.b == 'y'"), regular("b", "resource.b == 'y' AND subject.g == 'y'")
+	own := change(lines(b0), lines(b1))
+	if len(own) == 0 {
+		t.Fatalf("the edit of b changes no line of the module of b alone")
+	}
+	if got := change(lines(a, b0, c), lines(a, b1, c)); !reflect.DeepEqual(got, own) {
+		t.Errorf("the edit of b changes the lines of the tenant by\n%v\nwant those of the module of b alone:\n%v", got, own)
+	}
+}
+
+// A product with a factor that reads a node's rule is materialized past
+// RefFanout clauses; a decision for another operation is not a node's rule,
+// so a rule whose target reads one and whose condition has 9 disjuncts keeps
+// its product inline.
+func TestADecisionForAnotherOperationDoesNotMaterializeAProduct(t *testing.T) {
+	var ors []string
+	for i := range 9 {
+		ors = append(ors, fmt.Sprintf("resource.a == '%d'", i))
+	}
+	tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", strings.Join(ors, " OR "))
+	allowed := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject allowed 'w' on resource")
+	tree.Sets[0].Policies[0].Rules[0].Target = allowed.Sets[0].Policies[0].Rules[0].Condition
+	m, err := Generate(tree, table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	if n := strings.Count(m.Text, "\n"+prefixAnd+"_"); n != 0 {
+		t.Errorf("the module has %d and_ rules, want none; module:\n%s", n, m.Text)
+	}
+}
+
+// The second set of a repeated ID is labeled _dup2, and the set an iterate
+// evaluates per pass _each; the rules of both start with their labels.
+func TestARepeatedIDAndAnIterateSetHaveLabelsOfTheirOwn(t *testing.T) {
+	sets := `{"policySets": [
+		{"policySetId": "s", "status": "ACTIVE", "target": "resourceType == 'r1'", "tenantId": "t1",
+		 "combiningAlgorithm": "PERMIT_UNLESS_DENY"},
+		{"policySetId": "s", "status": "ACTIVE", "target": "resourceType == 'r2'", "tenantId": "t1",
+		 "combiningAlgorithm": "PERMIT_UNLESS_DENY"}]}`
+	exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	opt := DefaultOptions()
+	opt.Flat, opt.Decision = false, true
+	m, err := Generate(exp.Trees["t1"], table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	for _, want := range []string{"\nset_s_hiP_1 if {", "\nset_s_dup2_hiP_1 if {"} {
+		if !strings.Contains(m.DecisionText, want) {
+			t.Errorf("the decision module lacks %q; module:\n%s", want, m.DecisionText)
+		}
+	}
+	m, err = Generate(iterateTree(t, "DENY_UNLESS_PERMIT", "subject.permissionScope.domain CONTAINS resource.domain"),
+		table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	if want := "\nset_s1_each_any_loP(p) if {"; !strings.Contains(m.Text, want) {
+		t.Errorf("the module lacks %q; module:\n%s", want, m.Text)
+	}
+}
+
+// A subject group is named by a hash of its factors, and its membership names
+// the comparisons it holds.
+func TestASubjectGroupIsNamedByItsContent(t *testing.T) {
+	opt := DefaultOptions()
+	opt.Groups = true
+	m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.roles CONTAINS ANY 'reader'"), table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	re := regexp.MustCompile(`(?m)^\t"(g_[0-9a-f]{12})" in input\.subject_groups # group: subject\.roles CONTAINS_ANY \["reader"\]$`)
+	g := re.FindStringSubmatch(m.Text)
+	if g == nil {
+		t.Fatalf("the module has no membership of a group named by its content; module:\n%s", m.Text)
+	}
+	if _, ok := m.Groups[g[1]]; !ok {
+		t.Errorf("Groups = %v, want a group %s", slices.Collect(maps.Keys(m.Groups)), g[1])
+	}
+}
+
+func TestNaturalCompareOrdersARunOfDigitsByItsNumber(t *testing.T) {
+	for _, tc := range []struct {
+		a, b string
+		want int
+	}{
+		{"set_x_p2", "set_x_p10", -1},
+		{"set_x_p10", "set_x_p2", 1},
+		{"set_x_p2_r1", "set_x_p2_r1", 0},
+		{"set_x_any_loP", "set_x_p1_loP_1", -1},
+		{"a01", "a1", -1},
+		{"a1", "a01", 1},
+		{"set_x", "set_x_p1", -1},
+	} {
+		if got := naturalCompare(tc.a, tc.b); got != tc.want {
+			t.Errorf("naturalCompare(%q, %q) = %d, want %d", tc.a, tc.b, got, tc.want)
+		}
+	}
+}
+
+// The module names, above the clauses read from a rule, the rule's label and,
+// at its first clause, the IDs, names, targets, and condition of the rule and
+// of the policy and the set above it; a node without a name shows its ID
+// alone.
+func TestTheModuleNamesThePolicyEachClauseCameFrom(t *testing.T) {
+	m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a IS EMPTY"), table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	for _, want := range []string{
+		"# set_s1: set \"s1\" \"s1\", DENY_UNLESS_PERMIT\n#   target: resourceType EQ \"doc\"\n" +
+			"# set_s1_p1: policy \"p1\", DENY_UNLESS_PERMIT\n#   target: TRUE\n" +
+			"# set_s1_p1_r1: rule \"r1\", ALLOW\n#   target: operation EQ \"read\"\n" +
+			"#   condition: resource.a IS_EMPTY\n# set_s1_p1_r1\npermit if {\n",
+	} {
+		if !strings.Contains(m.Text, want) {
+			t.Errorf("the module lacks\n%s\nmodule:\n%s", want, m.Text)
+		}
+	}
+}
+
+// A rule that holds a rail of a condition names the condition above it, and
+// its prefix, rail_t_ or rail_f_, says whether it holds where the condition is
+// true or false, so a reader of "not rail_f_<hash>" in a DENY rule learns which
+// outcome the negation leaves. The false rail of pip("subject.g") EQ "x" holds
+// where the PIP's key is not "x".
+func TestAConditionRailNamesTheConditionAndTheOutcomeItHoldsAt(t *testing.T) {
+	m, err := Generate(tenantWithSetAndPIPs(t, "PERMIT_UNLESS_DENY", "DENY", "subject.g == 'x'",
+		`{"name": "subject.g", "pipType": "GENERAL", "url": "http://g"}`), table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	head := regexp.MustCompile(`(?m)^# (rail_f_[0-9a-f]{12}): holds where pip\("subject\.g"\) EQ "x" is false\n`).
+		FindStringSubmatchIndex(m.Text)
+	if head == nil {
+		t.Fatalf("the module names no false rail of the condition; module:\n%s", m.Text)
+	}
+	name := m.Text[head[2]:head[3]]
+	rule, _, _ := strings.Cut(m.Text[head[1]:], "\n\n")
+	if !strings.Contains(rule, `.key != "x"`) {
+		t.Errorf("rule %s, named the false rail, has no clause where the key is not \"x\":\n%s", name, rule)
+	}
+	if !strings.Contains(m.Text, "not "+name+"\n") {
+		t.Errorf("no rule reads not %s; module:\n%s", name, m.Text)
+	}
+}
+
+// A product that a rule moves out into and_<hash> names the nodes it came from,
+// and each of its clauses names its node and the outcome it requires of each
+// comparison, which the clause itself does not show: T where the clause comes
+// from the comparison's true rail, F where it comes from the false one.
+func TestAClauseOfASharedProductNamesItsNodeAndTheOutcomesItRequires(t *testing.T) {
+	const pip = `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g"}`
+	cases := []struct {
+		name, effect, condition, pips, want string
+	}{
+		{"the true rail of an ALLOW condition", "ALLOW", "resource.a == 'x' AND resource.b IN 'y', 'z'", "",
+			`# set_s1_p1_r1: resource\.a EQ "x" -> T\n`},
+		{"the false rail of a DENY condition", "DENY", "subject.g == 'x' OR resource.b IN 'y', 'z'", pip,
+			`# set_s1_p1_r1: pip\("subject\.g"\) EQ "x" -> F\n`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			opt := DefaultOptions()
+			opt.ProductLimit = 1
+			algorithm := map[string]string{"ALLOW": "DENY_UNLESS_PERMIT", "DENY": "PERMIT_UNLESS_DENY"}[tc.effect]
+			m, err := Generate(tenantWithSetAndPIPs(t, algorithm, tc.effect, tc.condition, tc.pips), table(t), opt)
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			want := regexp.MustCompile(`(?m)^# (and_[0-9a-f]{12}): clauses of set_s1_p1_r1\n` + tc.want +
+				`(and_[0-9a-f]{12}) if \{\n`)
+			if got := want.FindStringSubmatch(m.Text); got == nil || got[1] != got[2] {
+				t.Errorf("the module lacks a product named by its node and outcome, %s; module:\n%s", want, m.Text)
+			}
+		})
+	}
+}
+
+// A comparison of a number with a literal reads the number's order key, a
+// list a reader cannot read as the literal, so the line ends with the
+// literal's number and the operator, on the literal's side of it.
+func TestAComparisonWithANumberNamesTheLiteral(t *testing.T) {
+	const pip = `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g"}`
+	cases := []struct {
+		name, effect, condition, pips, want string
+	}{
+		{"a literal on the right", "ALLOW", "resource.a < 5", "",
+			`(?m)^\tinput\.number\["resource\.a"\] < \[[^\]]*\] # < 5$`},
+		{"a literal on the left", "ALLOW", "5 < resource.a", "",
+			`(?m)^\t\[[^\]]*\] < input\.number\["resource\.a"\] # 5 <$`},
+		{"the false rail", "DENY", "subject.g < 5", pip,
+			`(?m)^\tp_subject_g\.number >= \[[^\]]*\] # >= 5$`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			algorithm := map[string]string{"ALLOW": "DENY_UNLESS_PERMIT", "DENY": "PERMIT_UNLESS_DENY"}[tc.effect]
+			m, err := Generate(tenantWithSetAndPIPs(t, algorithm, tc.effect, tc.condition, tc.pips), table(t),
+				DefaultOptions())
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			if want := regexp.MustCompile(tc.want); !want.MatchString(m.Text) {
+				t.Errorf("the module lacks %s; module:\n%s", want, m.Text)
+			}
+		})
+	}
+}
+
+// With Report set, the module carries a report entry for every comparison: the
+// set, policy, and rule of its condition, where the condition stands, the
+// comparison as written, and for each pair of operand points the cell's
+// outcome and, for a value-dependent cell, the value rules of its template.
+func TestTheReportNamesTheCellAndTemplateOfEachComparison(t *testing.T) {
+	opt := DefaultOptions()
+	opt.Report = true
+	m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a < 5"), table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	var leaf *LeafReport
+	for i, r := range m.Report {
+		if r.Place == spectables.PlaceRuleCondition {
+			leaf = &m.Report[i]
+		}
+	}
+	if leaf == nil {
+		t.Fatalf("the report has no rule condition: %+v", m.Report)
+	}
+	if got, want := [4]string{leaf.Set, leaf.Policy, leaf.Rule, leaf.Leaf}, [4]string{"s1", "p1", "r1", "resource.a < 5"}; got != want {
+		t.Errorf("set, policy, rule, and leaf of the rule condition = %q, want %q", got, want)
+	}
+	num := spectables.Point{Kind: spectables.KindLitNum, State: spectables.StateValue, Class: spectables.ClassScalar}
+	want := map[spectables.Point]CellReport{
+		{Kind: spectables.KindResPath, State: spectables.StateValue, Class: spectables.ClassString}: {
+			Outcome: spectables.OutcomeByValue, Template: "rel"},
+		{Kind: spectables.KindResPath, State: spectables.StateAbsent}: {Outcome: spectables.OutcomeF},
+	}
+	for _, c := range leaf.Cells {
+		w, ok := want[c.Left]
+		if !ok {
+			continue
+		}
+		delete(want, c.Left)
+		if c.Right != num || c.Outcome != w.Outcome || c.Template != w.Template {
+			t.Errorf("cell at %+v = %+v, want right %+v, outcome %s, template %q", c.Left, c, num, w.Outcome,
+				w.Template)
+		}
+	}
+	for p := range want {
+		t.Errorf("the report has no cell at %+v", p)
+	}
+	m2, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a < 5"), table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate without Report: %v", err)
+	}
+	if len(m2.Report) != 0 {
+		t.Errorf("without Report the module carries %d report entries, want none", len(m2.Report))
+	}
+}
+
+// The report places each comparison: a set target, a policy target, the
+// condition of a simplified policy, a comparison over an undeclared PIP with
+// no cells, and the comparisons of the copy of the tree that subject allowed
+// reads, after which the next comparison of the same condition is the tree's
+// own again. A by_value cell names its template, including a fixed one for
+// two literals and single_odd for a SINGLE_ODD list.
+func TestTheReportPlacesEachComparison(t *testing.T) {
+	sets := `{"policySets": [
+		{"policySetId": "s1", "name": "s1", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		 "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		 "policies": [{"policyId": "p1", "target": "resource.t == 'y'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "t1", "rules": [
+				{"ruleId": "r1", "target": "operation == 'read'",
+				 "condition": "subject allowed 'write' on resource AND resource.a < 5", "effect": "ALLOW",
+				 "tenantId": "t1"},
+				{"ruleId": "r2", "target": "operation == 'write'", "condition": "subject.g IS SUBSET resource.b",
+				 "effect": "ALLOW", "tenantId": "t1"},
+				{"ruleId": "r3", "target": "operation == 'read'", "condition": "subject.nope == 'x'",
+				 "effect": "ALLOW", "tenantId": "t1"}]}]},
+		{"policySetId": "s2", "name": "s2", "status": "ACTIVE", "type": "SIMPLIFIED",
+		 "target": "resourceType == 'note'", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		 "policies": [{"policyId": "p2", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "t1", "rules": [{"ruleId": "r4", "target": "subject.roles CONTAINS ANY 'reader'",
+				"condition": "resource.c == 'x'", "effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+	exp, err := policyir.FromRegular([]byte(sets),
+		[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	opt := DefaultOptions()
+	opt.Report = true
+	m, err := Generate(exp.Trees["t1"], table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	type where struct {
+		set, policy, rule string
+		place             spectables.Place
+		operation         string
+		depth             int
+		leaf              string
+	}
+	entries := map[where]LeafReport{}
+	for _, r := range m.Report {
+		entries[where{r.Set, r.Policy, r.Rule, r.Place, r.Operation, r.Depth, r.Leaf}] = r
+	}
+	for _, w := range []where{
+		{"s1", "", "", spectables.PlaceSetTarget, "", 0, `resourceType == "doc"`},
+		{"s1", "p1", "", spectables.PlacePolicyTarget, "", 0, `resource.t == "y"`},
+		{"s2", "r4", "", spectables.PlaceSimplified, "", 0, `resource.c == "x"`},
+		{"s1", "p1", "r1", spectables.PlaceRuleCondition, "write", 1, "resource.a < 5"},
+		{"s1", "p1", "r1", spectables.PlaceRuleCondition, "", 0, "resource.a < 5"},
+	} {
+		if _, ok := entries[w]; !ok {
+			t.Errorf("the report has no entry %+v", w)
+		}
+	}
+	undeclared := where{"s1", "p1", "r3", spectables.PlaceRuleCondition, "", 0, `pip("subject.nope") == "x"`}
+	if r, ok := entries[undeclared]; !ok || len(r.Cells) != 0 {
+		t.Errorf("entry %+v = %+v, present %v; want one without cells", undeclared, r, ok)
+	}
+	template := func(w where, left spectables.State) string {
+		for _, c := range entries[w].Cells {
+			if c.Left.State == left {
+				return c.Template
+			}
+		}
+		return "no such cell"
+	}
+	copyTarget := where{"s1", "p1", "r1", spectables.PlaceRuleTarget, "write", 1, `operation == "read"`}
+	if got := template(copyTarget, spectables.StateValue); got != "two literals compared at generation" {
+		t.Errorf("template of %+v = %q, want two literals compared at generation", copyTarget, got)
+	}
+	odd := where{"s1", "p1", "r2", spectables.PlaceRuleCondition, "", 0, `pip("subject.g") IS SUBSET resource.b`}
+	if got := template(odd, spectables.StateSingleOdd); got != "single_odd,subset" {
+		t.Errorf("template of the SINGLE_ODD cell of %+v = %q, want single_odd,subset", odd, got)
+	}
+}
+
+// A tree with a form the agent cannot execute is rejected as a whole, and the
+// error lists every such form with its place, so that no form runs in part;
+// the same tree without them generates.
+func TestAFormTheAgentCannotExecuteRejectsTheTenant(t *testing.T) {
+	sets := `{"policySets": [{"policySetId": "s1", "name": "s1", "status": "ACTIVE",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "t1", "rules": [{"ruleId": "r1", "target": %q,
+				"condition": %q, "effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+	generate := func(target, condition string) (*Module, error) {
+		exp, err := policyir.FromRegular([]byte(fmt.Sprintf(sets, target, condition)), []byte(`{"pips": []}`))
+		if err != nil {
+			t.Fatalf("FromRegular: %v", err)
+		}
+		return Generate(exp.Trees["t1"], table(t), DefaultOptions())
+	}
+	_, err := generate("operation == == 'read'", "resource.a[(@.length-1)] == 'x'")
+	var rej *RejectedError
+	if !errors.As(err, &rej) {
+		t.Fatalf("Generate error = %v, want a *RejectedError", err)
+	}
+	want := []Rejection{
+		{`set "s1" > policy "p1" > rule "r1" > target`, policyir.FormSyntax, "operation == == 'read'"},
+		{`set "s1" > policy "p1" > rule "r1" > condition`, policyir.FormJSONPath, "resource.a[(@.length-1)]"},
+	}
+	if !reflect.DeepEqual(rej.Rejections, want) {
+		t.Errorf("Rejections = %+v, want %+v", rej.Rejections, want)
+	}
+	if _, err := generate("operation == 'read'", "resource.a == 'x'"); err != nil {
+		t.Errorf("Generate without the forms: %v, want no error", err)
+	}
+}
+
+// A comparison the generator does not translate rejects the tenant too, and
+// the rejection names the place of its condition.
+func TestAComparisonWithoutATemplateRejectsTheTenantAtItsPlace(t *testing.T) {
+	tab := relAsArrayEq(t)
+	_, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a < resource.b"), tab,
+		DefaultOptions())
+	var rej *RejectedError
+	if !errors.As(err, &rej) || len(rej.Rejections) != 1 {
+		t.Fatalf("Generate error = %v, want a *RejectedError with one rejection", err)
+	}
+	r := rej.Rejections[0]
+	if r.Where != `set "s1" > policy "p1" > rule "r1" > rule_condition` || r.Form != FormGenerator {
+		t.Errorf("rejection = %+v, want one at the rule condition of r1 with form %s", r, FormGenerator)
+	}
+}
+
+// A set a damaged export leaves unusable fails as a source does under its
+// target, and the module lists it as a failure instead of taking the whole
+// tenant out of service. Here the two sets of one policySetId would each
+// permit alone, being PERMIT_UNLESS_DENY without policies; isolated, they
+// deny under their targets, and the tenant's other set answers as usual.
+func TestAnIsolatedSetFailsUnderItsTargetOnly(t *testing.T) {
+	sets := `{"policySets": [
+		{"policySetId": "s", "status": "ACTIVE", "target": "resourceType == 'r1'", "tenantId": "t1",
+		 "combiningAlgorithm": "PERMIT_UNLESS_DENY"},
+		{"policySetId": "s", "status": "ACTIVE", "target": "resourceType == 'r2'", "tenantId": "t1",
+		 "combiningAlgorithm": "PERMIT_UNLESS_DENY"},
+		{"policySetId": "ok", "status": "ACTIVE", "target": "resourceType == 'other'",
+		 "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		 "tenantId": "t1", "policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "t1", "rules": [{"ruleId": "r", "target": "true", "effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+	exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	m, err := Generate(exp.Trees["t1"], table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	reason := "isolated: the tenant has 2 top-level sets with this policySetId"
+	if want := []Failure{{Set: "s", Reason: reason}}; !reflect.DeepEqual(m.Failures, want) {
+		t.Errorf("Failures = %+v, want %+v", m.Failures, want)
+	}
+	for _, tc := range []struct {
+		resourceType string
+		want         bool
+	}{{"r1", false}, {"r2", false}, {"other", true}} {
+		if got := evalModule(t, m, Request{Body: Body{Operation: "read", ResourceType: tc.resourceType}}); got != tc.want {
+			t.Errorf("allow(read %s) = %v, want %v", tc.resourceType, got, tc.want)
+		}
+	}
+	single := `{"policySets": [{"policySetId": "s", "status": "ACTIVE", "target": "resourceType == 'r1'",
+		"tenantId": "t1", "combiningAlgorithm": "PERMIT_UNLESS_DENY"}]}`
+	exp, err = policyir.FromRegular([]byte(single), []byte(`{"pips": []}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	if m, err = Generate(exp.Trees["t1"], table(t), DefaultOptions()); err != nil {
+		t.Fatalf("Generate of the set alone: %v", err)
+	}
+	if !evalModule(t, m, Request{Body: Body{Operation: "read", ResourceType: "r1"}}) {
+		t.Errorf("allow(read r1) of the set alone = false, want true: only its isolation denies")
+	}
+}
+
+// A policy whose MATCH pattern package regexp does not compile fails as a
+// source does under its target, and the module lists it as a failure of its
+// set. Under DENY_OVERRIDES the failure denies read, which the policy beside
+// it permits, and leaves write, outside the target, to that policy. The
+// policy is PERMIT_UNLESS_DENY, so without its rule it would permit too, and
+// with a pattern that compiles it permits a value the pattern matches.
+func TestAPolicyWithAPatternRegexpRefusesFailsUnderItsTargetOnly(t *testing.T) {
+	for _, tc := range []struct {
+		pattern  string
+		failures []Failure
+		wantRead bool
+	}{
+		{"a)|(b", []Failure{{Set: "s", Policy: "p1", Reason: "isolated: " +
+			"MATCH pattern \"a)|(b\" is not a valid regular expression: error parsing regexp: unexpected ): `a)|(b`"}},
+			false},
+		{"a|b", nil, true},
+		{`\\Qa`, nil, true},
+	} {
+		t.Run(tc.pattern, func(t *testing.T) {
+			sets := `{"policySets": [{"policySetId": "s", "status": "ACTIVE", "target": "resourceType == 'doc'",
+				"tenantId": "t1", "combiningAlgorithm": "DENY_OVERRIDES", "policies": [
+				{"policyId": "p1", "target": "operation == 'read'", "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+				 "tenantId": "t1", "rules": [{"ruleId": "r1", "target": "true", "effect": "ALLOW", "tenantId": "t1",
+					"condition": "resource.p MATCH ` + tc.pattern + `"}]},
+				{"policyId": "p2", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+				 "tenantId": "t1", "rules": [{"ruleId": "r2", "target": "true", "effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+			exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+			if err != nil {
+				t.Fatalf("FromRegular: %v", err)
+			}
+			m, err := Generate(exp.Trees["t1"], table(t), DefaultOptions())
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			if !reflect.DeepEqual(m.Failures, tc.failures) {
+				t.Errorf("Failures = %+v, want %+v", m.Failures, tc.failures)
+			}
+			for _, op := range []struct {
+				name string
+				want bool
+			}{{"read", tc.wantRead}, {"write", true}} {
+				req := Request{Body: Body{Operation: op.name, ResourceType: "doc", Resource: mustDecode(t, `{"p": "a"}`),
+					HasResource: true}, Values: map[string]Resolved{}}
+				m.Resolve(req.Body, req.Values)
+				if got := evalModule(t, m, req); got != op.want {
+					t.Errorf("allow(%s, resource.p = a) = %v, want %v", op.name, got, op.want)
+				}
+			}
+		})
+	}
+}
+
+// A condition that reads a PIP the tenant declares more than once
+// differently, or not at all, reads a failed source: the comparison is
+// undefined, so an ALLOW rule does not permit, and the module lists the PIP
+// as a failure. With one declaration the same rule permits.
+func TestAnIsolatedOrUndeclaredPIPFails(t *testing.T) {
+	const tok = `{"name": "subject.x", "pipType": "TOKEN", "claim": "c"}`
+	for _, tc := range []struct {
+		name, pips string
+		want       bool
+		failures   []Failure
+	}{
+		{"one declaration", tok, true, nil},
+		{"two different declarations", tok + `, {"name": "subject.x", "pipType": "TOKEN", "claim": "d"}`, false,
+			[]Failure{{Set: "s1", PIP: "subject.x", Reason: "isolated: declared 2 times"}}},
+		{"no declaration", "", false, []Failure{{Set: "s1", PIP: "subject.x", Reason: "not declared"}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.x == 'v'", tc.pips)
+			m, err := Generate(tree, table(t), DefaultOptions())
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			if !reflect.DeepEqual(m.Failures, tc.failures) {
+				t.Errorf("Failures = %+v, want %+v", m.Failures, tc.failures)
+			}
+			values := map[string]Resolved{`["subj","x"]`: resolved(t, "VALUE", `"v"`)}
+			if got := evalModule(t, m, Request{Body: Body{Operation: "read", ResourceType: "doc"}, Values: values}); got != tc.want {
+				t.Errorf("allow(subject.x = v) = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+// A set the legacy service never evaluates, such as one whose iterate runs
+// over something other than the permission scope, is listed as a failure too.
+func TestASetLegacyNeverEvaluatesIsAFailure(t *testing.T) {
+	sets := `{"policySets": [{"policySetId": "s", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		"tenantId": "t1", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		"iterate": {"foreach": "subject.roles", "combiningAlgorithm": "DENY_UNLESS_PERMIT"}}]}`
+	exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	m, err := Generate(exp.Trees["t1"], table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	if want := []Failure{{Set: "s", Reason: `iterate foreach "subject.roles"`}}; !reflect.DeepEqual(m.Failures, want) {
+		t.Errorf("Failures = %+v, want %+v", m.Failures, want)
+	}
+}
+
+// A comparison the generator cannot translate inside the copy of the tree
+// that subject allowed reads rejects the tenant once, placed in that copy.
+func TestARejectionInACopyOfTheTreeNamesTheCopy(t *testing.T) {
+	tab := relAsArrayEq(t)
+	sets := `{"policySets": [{"policySetId": "s1", "name": "s1", "status": "ACTIVE",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "t1", "rules": [
+				{"ruleId": "r1", "target": "operation == 'read'", "condition": "subject allowed 'write' on resource",
+				 "effect": "ALLOW", "tenantId": "t1"},
+				{"ruleId": "r2", "target": "operation == 'write'", "condition": "resource.a < resource.b",
+				 "effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+	exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	_, err = Generate(exp.Trees["t1"], tab, DefaultOptions())
+	var rej *RejectedError
+	if !errors.As(err, &rej) || len(rej.Rejections) != 1 {
+		t.Fatalf("Generate error = %v, want a *RejectedError with one rejection", err)
+	}
+	want := `set "s1" > policy "p1" > rule "r2" > rule_condition > (subject allowed "write")`
+	if r := rej.Rejections[0]; r.Where != want || r.Form != FormGenerator {
+		t.Errorf("rejection = %+v, want one at %s with form %s", r, want, FormGenerator)
+	}
+}
+
+// An export whose knob holds a value the generator does not know is a defect
+// of the export, not a form of the tenant, so the error is no rejection.
+func TestAnUnknownKnobValueIsNoRejection(t *testing.T) {
+	tab := editedTable(t, `"string_list_split": "SPLIT_TRIM"`, `"string_list_split": "BY_HAND"`)
+	_, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a IN 'x', 'y'"), tab, DefaultOptions())
+	var rej *RejectedError
+	if err == nil || errors.As(err, &rej) {
+		t.Errorf("Generate error = %v, want an error that is not a *RejectedError", err)
+	}
+}
+
+// iterateTree is a tenant whose one set iterates over the permission scope
+// under algorithm, with one ALLOW rule whose condition compares the pass's
+// domain with the resource's.
+func iterateTree(t testing.TB, algorithm, condition string) *policyir.Tree {
+	t.Helper()
+	sets := fmt.Sprintf(`{"policySets": [{"policySetId": "s1", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": %q},
+		"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "t1", "rules": [{"ruleId": "r1", "target": "true", "condition": %q,
+				"effect": "ALLOW", "tenantId": "t1"}]}]}]}`, algorithm, condition)
+	exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	return exp.Trees["t1"]
+}
+
+// An iterate evaluates its set once per assignment of the permission scope,
+// with subject.permissionScope.<key> reading the pass, and combines the passes
+// by its algorithm: under DENY_UNLESS_PERMIT one permitting pass permits, and
+// no pass denies. A permission scope that cannot be read leaves the node
+// unknown, which denies.
+func TestAnIterateCombinesItsPasses(t *testing.T) {
+	const domain = `["subj","permissionScope.domain"]`
+	pass := func(v string) map[string]Resolved { return map[string]Resolved{domain: resolved(t, "VALUE", v)} }
+	for _, form := range []struct {
+		name string
+		opt  func(*Options)
+	}{{"flat", func(*Options) {}}, {"without inlining", func(o *Options) { o.Flat = false }},
+		{"with groups", func(o *Options) { o.Groups = true }}} {
+		opt := DefaultOptions()
+		form.opt(&opt)
+		m, err := Generate(iterateTree(t, "DENY_UNLESS_PERMIT", "subject.permissionScope.domain CONTAINS resource.domain"),
+			table(t), opt)
+		if err != nil {
+			t.Fatalf("Generate: %v", err)
+		}
+		for _, tc := range []struct {
+			name  string
+			scope Scope
+			want  bool
+		}{
+			{"the second of two passes holds the domain", Scope{Passes: []map[string]Resolved{pass(`["x"]`), pass(`["d"]`)}}, true},
+			{"no pass holds the domain", Scope{Passes: []map[string]Resolved{pass(`["x"]`), pass(`["y"]`)}}, false},
+			{"no pass at all", Scope{Passes: []map[string]Resolved{}}, false},
+			{"a scope that cannot be read", Scope{Failed: true}, false},
+		} {
+			t.Run(form.name+"/"+tc.name, func(t *testing.T) {
+				req := Request{Body: Body{Operation: "read", ResourceType: "doc"}, Scope: &tc.scope,
+					Values: map[string]Resolved{`["res",".domain"]`: resolved(t, "VALUE", `"d"`)}}
+				if got := evalModule(t, m, req); got != tc.want {
+					t.Errorf("allow(resource.domain = d, scope %+v) = %v, want %v", tc.scope, got, tc.want)
+				}
+			})
+		}
+	}
+}
+
+// A simplified policy and a rule in an iterate pass whose condition reads a
+// failed PIP deny the resource beside a set that permits, in every form of
+// the module, and leave the decision unknown. A condition that a known
+// operand settles does not: the iterate's AND over a domain the pass does not
+// hold is false, and the simplified policy of a role the subject lacks does
+// not apply.
+func TestAFailedConditionDeniesBesideAPermitInEveryForm(t *testing.T) {
+	const allowAll = `{"policySetId": "all", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1", "policies": [{"policyId": "p",
+		"target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"rules": [{"ruleId": "r", "target": "true", "effect": "ALLOW", "tenantId": "t1"}]}]}`
+	const simplified = `{"policySetId": "s", "status": "ACTIVE", "type": "SIMPLIFIED", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1", "policies": [{"policyId": "p",
+		"target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"rules": [{"ruleId": "r", "target": "subject.roles CONTAINS ANY 'r1'", "condition": "subject.g == 'x'",
+			"effect": "ALLOW", "tenantId": "t1"}]}]}`
+	const iterate = `{"policySetId": "i", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": "DENY_UNLESS_PERMIT"},
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+			"rules": [{"ruleId": "r", "target": "true",
+				"condition": "subject.permissionScope.domain CONTAINS resource.domain AND subject.g == 'x'",
+				"effect": "ALLOW", "tenantId": "t1"}]}]}`
+	const domain = `["subj","permissionScope.domain"]`
+	for _, tc := range []struct {
+		name, set, roles, resourceDomain string
+		want                             string
+	}{
+		{"a simplified policy of the subject's role", simplified, "r1", "d", "unknown"},
+		{"a simplified policy of another role", simplified, "r2", "d", "permit"},
+		{"an iterate pass that holds the domain", iterate, "r1", "d", "unknown"},
+		{"an iterate pass without the domain", iterate, "r1", "z", "permit"},
+	} {
+		exp, err := policyir.FromRegular([]byte(`{"policySets": [`+allowAll+`, `+tc.set+`]}`),
+			[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`))
+		if err != nil {
+			t.Fatalf("FromRegular: %v", err)
+		}
+		for _, form := range []struct {
+			name string
+			opt  func(*Options)
+		}{{"flat", func(*Options) {}}, {"without inlining", func(o *Options) { o.Flat = false }},
+			{"with groups", func(o *Options) { o.Groups = true }}} {
+			t.Run(form.name+"/"+tc.name, func(t *testing.T) {
+				opt := DefaultOptions()
+				opt.Decision = true
+				form.opt(&opt)
+				m, err := Generate(exp.Trees["t1"], table(t), opt)
+				if err != nil {
+					t.Fatalf("Generate: %v", err)
+				}
+				req := Request{Body: Body{Operation: "read", ResourceType: "doc"}, Roles: []string{tc.roles},
+					Scope: &Scope{Passes: []map[string]Resolved{{domain: resolved(t, "VALUE", `["d"]`)}}},
+					Values: map[string]Resolved{`["subj","g"]`: resolved(t, "ERROR", ""),
+						`["res",".domain"]`: resolved(t, "VALUE", `"`+tc.resourceDomain+`"`)}}
+				if got := evalRule(t, m, req, "decision"); got != tc.want {
+					t.Errorf("decision(roles %s, resource.domain %s, subject.g failed) = %v, want %s",
+						tc.roles, tc.resourceDomain, got, tc.want)
+				}
+			})
+		}
+	}
+}
+
+// subject allowed 'write' reads the decision for write, which a rule over a
+// failed PIP denies as a whole, so a read that requires it is not permitted
+// either, as the check of write is not.
+func TestSubjectAllowedReadsADecisionDeniedOverAFailedSource(t *testing.T) {
+	const sets = `{"policySets": [{"policySetId": "w", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1", "policies": [{"policyId": "p",
+		"target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"rules": [{"ruleId": "w1", "target": "operation == 'write'", "effect": "ALLOW", "tenantId": "t1"},
+			{"ruleId": "w2", "target": "operation == 'write'", "condition": "subject.g == 'x'", "effect": "ALLOW",
+			"tenantId": "t1"}]}]},
+		{"policySetId": "r", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1", "policies": [{"policyId": "p",
+		"target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"rules": [{"ruleId": "r1", "target": "operation == 'read'", "condition": "subject allowed 'write' on resource",
+			"effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+	exp, err := policyir.FromRegular([]byte(sets),
+		[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	opt := DefaultOptions()
+	opt.Decision = true
+	m, err := Generate(exp.Trees["t1"], table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	for _, op := range []string{"write", "read"} {
+		req := Request{Body: Body{Operation: op, ResourceType: "doc"},
+			Values: map[string]Resolved{`["subj","g"]`: resolved(t, "ERROR", "")}}
+		if got := evalRule(t, m, req, "decision"); got != "unknown" {
+			t.Errorf("decision(%s, subject.g failed) = %v, want unknown", op, got)
+		}
+	}
+}
+
+// Under PERMIT_UNLESS_DENY an iterate with no pass permits, the algorithm's
+// outcome over no children, while a scope that cannot be read leaves the
+// node unknown and denies.
+func TestAnEmptyScopeAndAFailedScopeDiffer(t *testing.T) {
+	m, err := Generate(iterateTree(t, "PERMIT_UNLESS_DENY", "resource.domain == 'never'"), table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	for _, tc := range []struct {
+		name  string
+		scope Scope
+		want  bool
+	}{{"no pass", Scope{Passes: []map[string]Resolved{}}, true}, {"a failed scope", Scope{Failed: true}, false}} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := Request{Body: Body{Operation: "read", ResourceType: "doc"}, Scope: &tc.scope,
+				Values: map[string]Resolved{`["res",".domain"]`: resolved(t, "VALUE", `"d"`)}}
+			if got := evalModule(t, m, req); got != tc.want {
+				t.Errorf("allow(scope %+v) = %v, want %v", tc.scope, got, tc.want)
+			}
+		})
+	}
+}
+
+// subject allowed inside an iterate reads the decision in the current pass,
+// which the generator does not translate yet, so the tenant is rejected.
+func TestSubjectAllowedInsideAnIterateRejectsTheTenant(t *testing.T) {
+	_, err := Generate(iterateTree(t, "DENY_UNLESS_PERMIT", "subject allowed 'write' on resource"), table(t),
+		DefaultOptions())
+	var rej *RejectedError
+	if !errors.As(err, &rej) || rej.Rejections[0].Form != FormGenerator {
+		t.Errorf("Generate error = %v, want a *RejectedError of form %s", err, FormGenerator)
+	}
+}
+
+// nestedIterateTree is a tenant whose PERMIT_UNLESS_DENY set holds a set that
+// iterates over the permission scope: inner is the nested set's algorithm,
+// iter the iterate's, and the nested set's one rule has the effect and
+// condition given. The parent permits unless the nested set denies or is
+// unknown, so its answer tells a deny, a not applicable, and an unknown node
+// apart.
+func nestedIterateTree(t *testing.T, inner, iter, effect, condition string) *policyir.Tree {
+	t.Helper()
+	sets := fmt.Sprintf(`{"policySets": [{"policySetId": "parent", "status": "ACTIVE", "target": "true",
+		"combiningAlgorithm": "PERMIT_UNLESS_DENY", "tenantId": "t1", "policySets": [
+		{"policySetId": "s1", "target": "resourceType == 'doc'", "combiningAlgorithm": %q, "tenantId": "t1",
+		 "iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": %q},
+		 "policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": %[1]q, "tenantId": "t1",
+			"rules": [{"ruleId": "r1", "target": "true", "condition": %[3]q, "effect": %[4]q, "tenantId": "t1"}]}]}]}]}`,
+		inner, iter, condition, effect)
+	exp, err := policyir.FromRegular([]byte(sets), []byte(`{"pips": []}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	tree, ok := exp.Trees["t1"]
+	if !ok {
+		t.Fatalf("FromRegular: no tree of t1; failed %v, dropped %v", exp.Failed, exp.Dropped)
+	}
+	return tree
+}
+
+// Under a PERMIT_UNLESS_DENY parent the outcome of the iterate's node shows:
+// a scope that cannot be read leaves it unknown, which denies, while no pass
+// gives PERMIT_OVERRIDES' not applicable, which permits; a denying pass makes
+// DENY_OVERRIDES deny; and where the set's target does not hold, the node is
+// not applicable whatever the scope.
+func TestTheOutcomeOfAnIterateNode(t *testing.T) {
+	const domain = `["subj","permissionScope.domain"]`
+	pass := func(v string) map[string]Resolved { return map[string]Resolved{domain: resolved(t, "VALUE", v)} }
+	const cond = "subject.permissionScope.domain CONTAINS resource.domain"
+	for _, tc := range []struct {
+		name, inner, iter, effect, resourceType string
+		scope                                   Scope
+		want                                    bool
+	}{
+		{"a failed scope is unknown", "DENY_UNLESS_PERMIT", "PERMIT_OVERRIDES", "ALLOW", "doc",
+			Scope{Failed: true}, false},
+		{"no pass is not applicable under PERMIT_OVERRIDES", "DENY_UNLESS_PERMIT", "PERMIT_OVERRIDES", "ALLOW", "doc",
+			Scope{Passes: []map[string]Resolved{}}, true},
+		{"a pass whose rule denies makes DENY_OVERRIDES deny", "PERMIT_UNLESS_DENY", "DENY_OVERRIDES", "DENY", "doc",
+			Scope{Passes: []map[string]Resolved{pass(`["x"]`), pass(`["d"]`)}}, false},
+		{"passes whose rule does not deny permit under DENY_OVERRIDES", "PERMIT_UNLESS_DENY", "DENY_OVERRIDES",
+			"DENY", "doc", Scope{Passes: []map[string]Resolved{pass(`["x"]`)}}, true},
+		{"a failed scope under a target that does not hold", "DENY_UNLESS_PERMIT", "PERMIT_OVERRIDES", "ALLOW",
+			"other", Scope{Failed: true}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			m, err := Generate(nestedIterateTree(t, tc.inner, tc.iter, tc.effect, cond), table(t), DefaultOptions())
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			req := Request{Body: Body{Operation: "read", ResourceType: tc.resourceType}, Scope: &tc.scope,
+				Values: map[string]Resolved{`["res",".domain"]`: resolved(t, "VALUE", `"d"`)}}
+			if got := evalModule(t, m, req); got != tc.want {
+				t.Errorf("allow(%s, scope %+v) = %v, want %v", tc.resourceType, tc.scope, got, tc.want)
+			}
+		})
+	}
+}
+
+// A pass reads subject groups as the tree does, a DENY rule in a pass denies
+// under DENY_OVERRIDES, and a rule that a condition both inside and outside an
+// iterate shares stays a rule of the tree outside and a function of the pass
+// inside, in every form of the module, aliases and a rule without a condition
+// included.
+func TestAnIterateInEveryFormOfTheModule(t *testing.T) {
+	const domain = `["subj","permissionScope.domain"]`
+	sets := `{"policySets": [
+		{"policySetId": "s1", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		 "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		 "iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": "DENY_UNLESS_PERMIT"},
+		 "policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "t1",
+			"rules": [
+				{"ruleId": "r1", "target": "true", "effect": "DENY", "tenantId": "t1",
+				 "condition": "subject.g == 'x'"},
+				{"ruleId": "r2", "target": "true", "effect": "ALLOW", "tenantId": "t1",
+				 "condition": "subject.roles CONTAINS 'r' AND subject.permissionScope.domain CONTAINS resource.domain"},
+				{"ruleId": "r3", "target": "operation == 'audit'", "effect": "ALLOW", "tenantId": "t1"}]}]},
+		{"policySetId": "s2", "status": "ACTIVE", "target": "resourceType == 'note'",
+		 "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		 "policies": [{"policyId": "p2", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "t1",
+			"rules": [{"ruleId": "r4", "target": "true", "effect": "DENY", "tenantId": "t1",
+				"condition": "subject.g == 'x'"},
+				{"ruleId": "r5", "target": "true", "effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+	exp, err := policyir.FromRegular([]byte(sets),
+		[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	for _, form := range []struct {
+		name string
+		opt  func(*Options)
+	}{{"flat", func(*Options) {}}, {"without inlining", func(o *Options) { o.Flat = false }},
+		{"with groups", func(o *Options) { o.Groups = true }},
+		{"with aliases", func(o *Options) { o.Flat, o.AliasClauses = false, 0 }}} {
+		opt := DefaultOptions()
+		form.opt(&opt)
+		m, err := Generate(exp.Trees["t1"], table(t), opt)
+		if err != nil {
+			t.Fatalf("Generate %s: %v", form.name, err)
+		}
+		for _, tc := range []struct {
+			name, resourceType, roles, g string
+			want                         bool
+		}{
+			{"a pass with the domain and the role", "doc", `["r"]`, `"y"`, true},
+			{"the role missing", "doc", `["q"]`, `"y"`, false},
+			{"the PIP that the DENY rule reads denies", "doc", `["r"]`, `"x"`, false},
+			{"the same condition outside the iterate denies", "note", `["q"]`, `"x"`, false},
+			{"the same condition false outside the iterate permits", "note", `["q"]`, `"y"`, true},
+		} {
+			t.Run(form.name+"/"+tc.name, func(t *testing.T) {
+				req := Request{Body: Body{Operation: "read", ResourceType: tc.resourceType}, Roles: []string{"r"},
+					Scope: &Scope{Passes: []map[string]Resolved{{domain: resolved(t, "VALUE", `["d"]`)}}},
+					Values: map[string]Resolved{`["res",".domain"]`: resolved(t, "VALUE", `"d"`),
+						`["subj","roles"]`: resolved(t, "VALUE", tc.roles), `["subj","g"]`: resolved(t, "VALUE", tc.g)}}
+				if got := evalModule(t, m, req); got != tc.want {
+					t.Errorf("allow(%s, roles %s, subject.g %s) = %v, want %v", tc.resourceType, tc.roles, tc.g, got,
+						tc.want)
+				}
+			})
+		}
+	}
+}
+
+// With Decision, a second module answers decision, and the module of allow
+// keeps only allow: decision is permit where it allows,
+// deny where no node may permit, and unknown where the denial depends on a
+// value or a source the agent could not read. Every value known never gives
+// unknown, and a rule whose condition reads a failed PIP leaves the denial
+// unknown even beside a top-level node that permits. Without Decision the
+// module has no rule decision.
+func TestTheDecisionTellsAnUnknownDenialApart(t *testing.T) {
+	sets := func(rules string) string {
+		return `{"policySets": [{"policySetId": "s1", "status": "ACTIVE", "target": "resourceType == 'doc'",
+			"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+			"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES",
+				"tenantId": "t1", "rules": [` + rules + `]}]}]}`
+	}
+	const (
+		allowG   = `{"ruleId": "a", "target": "true", "condition": "subject.g == 'x'", "effect": "ALLOW", "tenantId": "t1"}`
+		allowAll = `{"ruleId": "b", "target": "true", "effect": "ALLOW", "tenantId": "t1"}`
+		denyG    = `{"ruleId": "c", "target": "true", "condition": "subject.g == 'x'", "effect": "DENY", "tenantId": "t1"}`
+		allowNo  = `{"ruleId": "d", "target": "true", "condition": "subject.none == 'x'", "effect": "ALLOW", "tenantId": "t1"}`
+		otherSet = `, {"policySetId": "s2", "status": "ACTIVE", "target": "resourceType == 'doc'",
+			"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1", "policies": [{"policyId": "p2",
+			"target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1", "rules": [` + allowAll + `]}]}`
+	)
+	for _, tc := range []struct {
+		name, export, state, value, want string
+	}{
+		{"an ALLOW rule's value permits", sets(allowG), "VALUE", `"x"`, "permit"},
+		{"an ALLOW rule's other value denies", sets(allowG), "VALUE", `"y"`, "deny"},
+		{"an ALLOW rule's failed PIP leaves the denial unknown", sets(allowG), "ERROR", "", "unknown"},
+		{"a DENY rule's value denies beside a permit", sets(allowAll + "," + denyG), "VALUE", `"x"`, "deny"},
+		{"a DENY rule's other value lets the permit through", sets(allowAll + "," + denyG), "VALUE", `"y"`, "permit"},
+		{"a DENY rule's failed PIP leaves the denial unknown", sets(allowAll + "," + denyG), "ERROR", "", "unknown"},
+		{"an undeclared PIP leaves the denial unknown", sets(allowNo), "VALUE", `"x"`, "unknown"},
+		{"a DENY rule's failed PIP denies beside a top-level node that permits",
+			strings.TrimSuffix(sets(allowAll+","+denyG), "]}") + otherSet + "]}", "ERROR", "", "unknown"},
+	} {
+		exp, err := policyir.FromRegular([]byte(tc.export),
+			[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`))
+		if err != nil {
+			t.Fatalf("FromRegular: %v", err)
+		}
+		tree, ok := exp.Trees["t1"]
+		if !ok {
+			t.Fatalf("FromRegular: no tree of t1; failed %v", exp.Failed)
+		}
+		for _, form := range []struct {
+			name string
+			opt  func(*Options)
+		}{{"flat", func(*Options) {}}, {"without inlining", func(o *Options) { o.Flat = false }},
+			{"with groups", func(o *Options) { o.Groups = true }}} {
+			t.Run(form.name+"/"+tc.name, func(t *testing.T) {
+				opt := DefaultOptions()
+				opt.Decision = true
+				form.opt(&opt)
+				m, err := Generate(tree, table(t), opt)
+				if err != nil {
+					t.Fatalf("Generate: %v", err)
+				}
+				req := Request{Body: Body{Operation: "read", ResourceType: "doc"},
+					Values: map[string]Resolved{`["subj","g"]`: resolved(t, tc.state, tc.value)}}
+				if strings.Contains(m.Text, "maybe") {
+					t.Errorf("the module of allow holds maybe; the decision module should:\n%s", m.Text)
+				}
+				if got := evalRule(t, m, req, "decision"); got != tc.want {
+					t.Errorf("decision(subject.g = %s %s) = %v, want %s", tc.state, tc.value, got, tc.want)
+				}
+			})
+		}
+	}
+	m, err := Generate(tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.g == 'x'", generalPIPs),
+		table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate without Decision: %v", err)
+	}
+	if m.DecisionText != "" || strings.Contains(m.Text, "maybe") {
+		t.Errorf("without Decision, the decision module is %q and the module mentions maybe: %v; want neither",
+			m.DecisionText, strings.Contains(m.Text, "maybe"))
+	}
+}
+
+// A caller of JSONPathRecord outside the projection, whose record holds
+// every field, gets the error of the limit for a selection too big to look
+// up, and a record for one at the limit.
+func TestJSONPathRecordFailsOnASelectionTooBigToLookUp(t *testing.T) {
+	list := func(n int) string {
+		elems := make([]string, n)
+		for i := range elems {
+			elems[i] = fmt.Sprintf(`["1", "2", "3", "0e%d"]`, i)
+		}
+		return "[" + strings.Join(elems, ",") + "]"
+	}
+	if _, err := JSONPathRecord(mustDecode(t, `{"b": [`+list(15)+`]}`), ".b[0]"); err != nil {
+		t.Errorf("JSONPathRecord of 15 lists of four texts: %v, want a record", err)
+	}
+	// a halt keeps the text of the error, not the error
+	if _, err := JSONPathRecord(mustDecode(t, `{"b": [`+list(16)+`]}`), ".b[0]"); err == nil ||
+		!strings.Contains(err.Error(), errIndexTooBig.Error()) {
+		t.Errorf("JSONPathRecord of 16 lists of four texts: %v, want the error of the limit", err)
+	}
+}
+
+// nc.resource_path gives a resource path the state the specification's
+// resolve_resource gives it: a missing member, a path through a missing
+// parent, a path that starts with a bracket, and no resource or a null one
+// are ABSENT; an index past the end INDEX_OOB; a wildcard that selects
+// nothing EMPTY_SEL; one null NULL; one empty list EMPTY_COLL; anything else
+// VALUE. A selection the package stops as too large is ERROR.
+func TestAResourcePathTakesTheStateOfItsSelection(t *testing.T) {
+	deep := strings.Repeat(`{"key":`, 60) + `1` + strings.Repeat(`}`, 60)
+	for _, tc := range []struct {
+		name, doc, path, want string
+	}{
+		{"a wildcard that selects values", `{"items": [{"id": "x"}]}`, ".items[*].id", "VALUE"},
+		{"a wildcard that selects nothing", `{"items": []}`, ".items[*].id", "EMPTY_SEL"},
+		{"a missing member", `{"other": 1}`, ".items[*].id", "ABSENT"},
+		{"a missing parent", `{"a": {}}`, ".a.x", "ABSENT"},
+		{"a path that starts with a bracket", `{"key": "value"}`, "['key']", "ABSENT"},
+		{"no resource or a null one", ``, ".items[*].id", "ABSENT"},
+		{"an index past the end", `{"items": []}`, ".items[0].id", "INDEX_OOB"},
+		{"one null", `{"items": [{"id": null}]}`, ".items[0].id", "NULL"},
+		{"one empty list", `{"items": [{"id": []}]}`, ".items[0].id", "EMPTY_COLL"},
+		{"one value", `{"items": [{"id": "x"}]}`, ".items[0].id", "VALUE"},
+		{"a selection too large to make", deep, "..key", "ERROR"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var doc jsonvalue.Value
+			if tc.doc != "" {
+				var err error
+				if doc, err = jsonvalue.Decode([]byte(tc.doc)); err != nil {
+					t.Fatalf("Decode(%s): %v", tc.doc, err)
+				}
+			}
+			rec, err := JSONPathRecord(doc, tc.path)
+			if err != nil {
+				t.Fatalf("JSONPathRecord: %v", err)
+			}
+			if got := rec.Get(ast.StringTerm(fieldState)); got == nil || got.Value.Compare(ast.String(tc.want)) != 0 {
+				t.Errorf("state of %s over %s = %v, want %s", tc.path, tc.doc, got, tc.want)
+			}
+		})
+	}
+}
+
+// The record of a lazily read resource path holds the fields the module
+// reads of it and no other: a path under CONTAINS 'x' reads no deeps of ==.
+// A record with every field took four times the bytes of one with the
+// fields read, over a list of 8192 strings past the budget of a request.
+func TestALazyPathRecordHoldsTheFieldsTheModuleReads(t *testing.T) {
+	m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a[0] CONTAINS 'x'"), table(t),
+		DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	i := slices.IndexFunc(m.Refs, func(r *Ref) bool { return r.Path != "" })
+	if i < 0 {
+		t.Fatalf("the module reads no lazy path:\n%s", m.Text)
+	}
+	doc, err := jsonvalue.Decode([]byte(`{"a": [["x", "y"]]}`))
+	if err != nil {
+		t.Fatalf("Decode: %v", err)
+	}
+	req := Request{Body: Body{Operation: "read", ResourceType: "doc", Resource: doc, HasResource: true}}
+	rec, ok := evalRule(t, m, req, "path_"+m.Refs[i].Var).(map[string]any)
+	if !ok {
+		t.Fatalf("path_%s is no record:\n%s", m.Refs[i].Var, m.Text)
+	}
+	for _, f := range []string{fieldEqAlts, fieldEqIndex} {
+		if _, ok := rec[f]; ok {
+			t.Errorf("the record of %s holds %s, which the module does not read: %v", m.Refs[i].Path, f, rec)
+		}
+	}
+	if _, ok := rec[fieldElementKeys]; !ok {
+		t.Errorf("the record of %s lacks %s, which the module reads: %v", m.Refs[i].Path, fieldElementKeys, rec)
+	}
+}
+
+// A condition over a resource path that needs jsonPath reads the record
+// nc.resource_path returns from the request's resource, in every form of the
+// module, and decides as the specification does in each state of the
+// selection: the members of an object in the document's order and a number
+// with its text, two such paths in one comparison, and a selection too large
+// to make, which is undefined as a failed source is.
+func TestAJSONPathOperandIsReadFromTheResource(t *testing.T) {
+	deep := `{"o": ` + strings.Repeat(`{"key":`, 60) + `"x"` + strings.Repeat(`}`, 60) + `}`
+	for _, tc := range []struct {
+		name, condition, doc, want string
+	}{
+		{"a selected value contains the literal", "resource.items[*].id CONTAINS 'x'", `{"items": [{"id": "x"}, {"id": "y"}]}`, "T"},
+		{"no selected value is the literal", "resource.items[*].id CONTAINS 'x'", `{"items": [{"id": "y"}]}`, "F"},
+		{"the wildcard selects nothing", "resource.items[*].id CONTAINS 'x'", `{"items": []}`, "F"},
+		{"the member is missing", "resource.items[*].id CONTAINS 'x'", `{"other": 1}`, "F"},
+		{"no resource", "resource.items[*].id CONTAINS 'x'", ``, "F"},
+		{"an indexed value differing in letter case", "resource.items[0].id == 'x'", `{"items": [{"id": "X"}]}`, "T"},
+		{"an index past the end", "resource.items[0].id == 'x'", `{"items": []}`, "F"},
+		{"an indexed null", "resource.items[0].id == 'x'", `{"items": [{"id": null}]}`, "F"},
+		{"an indexed list", "resource.items[0].id == 'x'", `{"items": [{"id": ["x"]}]}`, "F"},
+		{"a pattern that matches", "resource.items[0].p MATCH /a/*", `{"items": [{"p": "/a/b"}]}`, "T"},
+		{"a pattern that does not match", "resource.items[0].p MATCH /a/*", `{"items": [{"p": "/a/b/c"}]}`, "F"},
+		{"keys in the document's order", "resource.o.keys() == '[b, a]'", `{"o": {"b": 1, "a": 2}}`, "T"},
+		{"keys in sorted order", "resource.o.keys() == '[a, b]'", `{"o": {"b": 1, "a": 2}}`, "F"},
+		{"a number with its text", "resource.items[0].n == '1.0'", `{"items": [{"n": 1.0}]}`, "T"},
+		{"a number without its fraction", "resource.items[0].n == '1'", `{"items": [{"n": 1.0}]}`, "T"},
+		{"two paths with equal values", "resource.a[0] == resource.b[0]", `{"a": ["x"], "b": ["X"]}`, "T"},
+		{"two paths with other values", "resource.a[0] == resource.b[0]", `{"a": ["x"], "b": ["y"]}`, "F"},
+		{"two paths, the second past the end", "resource.a[0] == resource.b[0]", `{"a": ["x"], "b": []}`, "F"},
+		{"a selection too large to make", "resource.o..key CONTAINS 'x'", deep, "U"},
+	} {
+		var doc jsonvalue.Value
+		if tc.doc != "" {
+			var err error
+			if doc, err = jsonvalue.Decode([]byte(tc.doc)); err != nil {
+				t.Fatalf("Decode(%s): %v", tc.doc, err)
+			}
+		}
+		for _, form := range []struct {
+			name string
+			opt  func(*Options)
+		}{{"flat", func(*Options) {}}, {"without inlining", func(o *Options) { o.Flat = false }},
+			{"with groups", func(o *Options) { o.Groups = true }}} {
+			t.Run(form.name+"/"+tc.name, func(t *testing.T) {
+				opt := DefaultOptions()
+				form.opt(&opt)
+				got := "U"
+				for _, rail := range []struct {
+					alg, effect, outcome string
+				}{{"DENY_UNLESS_PERMIT", "ALLOW", "T"}, {"PERMIT_UNLESS_DENY", "DENY", "F"}} {
+					m, err := Generate(tenantWithSet(t, rail.alg, rail.effect, tc.condition), table(t), opt)
+					if err != nil {
+						t.Fatalf("Generate: %v", err)
+					}
+					if !strings.Contains(m.Text, "nc.resource_path(input.resource") {
+						t.Fatalf("the module does not read the path through nc.resource_path:\n%s", m.Text)
+					}
+					if evalModule(t, m, Request{Body: Body{Operation: "read", ResourceType: "doc", Resource: doc, HasResource: doc != nil}}) {
+						got = rail.outcome
+					}
+				}
+				if got != tc.want {
+					t.Errorf("%s over %s is %s, want %s", tc.condition, tc.doc, got, tc.want)
+				}
+			})
+		}
+	}
+}
+
+// A node no unknown value reaches has its hi bound equal to its lo bound, so
+// with Decision the module reads the lo clauses for it: maybe has the clauses
+// of allow, and neither a rule of a hi bound nor the hi rule of a subject
+// allowed copy appears. A condition over a GENERAL PIP, one over a resource
+// path that ends in a dot, and one over a deep scan, which can stop as too
+// large, are the controls that keep the hi bound.
+func TestAnAlwaysKnownTreeAddsNoHiBound(t *testing.T) {
+	sets := `{"policySets": [{"policySetId": "s1", "name": "s1", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "t1",
+			"rules": [
+				{"ruleId": "r1", "target": "operation == 'read'", "condition": "subject allowed 'write' on resource",
+				 "effect": "ALLOW", "tenantId": "t1"},
+				{"ruleId": "r2", "target": "operation == 'write'", "condition": %q, "effect": "ALLOW", "tenantId": "t1"},
+				{"ruleId": "r3", "target": "true", "condition": "resource.b == 'no'", "effect": "DENY",
+				 "tenantId": "t1"}]}]}]}`
+	for _, tc := range []struct {
+		name, condition string
+		hi              bool
+	}{
+		{"an attribute of the resource", "resource.a == 'w'", false},
+		{"an attribute of the resource written with a dot at its end", "resource.a. == 'w'", true},
+		{"a deep scan of the resource", "resource..a == 'w'", true},
+		{"a GENERAL PIP", "subject.g == 'w'", true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			exp, err := policyir.FromRegular([]byte(fmt.Sprintf(sets, tc.condition)),
+				[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`))
+			if err != nil {
+				t.Fatalf("FromRegular: %v", err)
+			}
+			opt := DefaultOptions()
+			opt.Decision, opt.Flat = true, false
+			m, err := Generate(exp.Trees["t1"], table(t), opt)
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			allow, maybe := strings.Count(m.Text, "\npermit if"), strings.Count(m.DecisionText, "\nmaybe if")
+			hiRules := strings.Contains(m.DecisionText, "_hiP") || strings.Contains(m.DecisionText, "_hiD")
+			if hiRules != tc.hi || !tc.hi && maybe != allow {
+				t.Errorf("module over %s: hi rules %v (want %v), %d maybe and %d allow clauses:\n%s", tc.condition,
+					hiRules, tc.hi, maybe, allow, m.DecisionText)
+			}
+		})
+	}
+}
+
+// Each source of an unknown value leaves a denial unknown with Decision: a
+// set a damaged export isolates, an iterate over a permission scope that
+// cannot be read, and a simplified policy over a failed PIP.
+func TestEachSourceOfAnUnknownLeavesTheDenialUnknown(t *testing.T) {
+	const pips = `{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`
+	isolated := `{"policySets": [
+		{"policySetId": "s", "status": "ACTIVE", "target": "resourceType == 'doc'", "tenantId": "t1",
+		 "combiningAlgorithm": "PERMIT_UNLESS_DENY"},
+		{"policySetId": "s", "status": "ACTIVE", "target": "resourceType == 'other'", "tenantId": "t1",
+		 "combiningAlgorithm": "PERMIT_UNLESS_DENY"}]}`
+	simplified := `{"policySets": [{"policySetId": "s2", "name": "s2", "status": "ACTIVE", "type": "SIMPLIFIED",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"policies": [{"policyId": "p2", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": "t1", "rules": [{"ruleId": "r2", "target": "subject.roles CONTAINS ANY 'reader'",
+				"condition": "subject.g == 'x'", "effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+	tree := func(sets string) *policyir.Tree {
+		exp, err := policyir.FromRegular([]byte(sets), []byte(pips))
+		if err != nil {
+			t.Fatalf("FromRegular: %v", err)
+		}
+		return exp.Trees["t1"]
+	}
+	for _, tc := range []struct {
+		name string
+		tree *policyir.Tree
+		req  Request
+	}{
+		{"an isolated set", tree(isolated), Request{Body: Body{Operation: "read", ResourceType: "doc"}}},
+		{"an iterate over a failed scope", iterateTree(t, "DENY_UNLESS_PERMIT",
+			"subject.permissionScope.domain CONTAINS resource.domain"),
+			Request{Body: Body{Operation: "read", ResourceType: "doc"}, Scope: &Scope{Failed: true},
+				Values: map[string]Resolved{`["res",".domain"]`: resolved(t, "VALUE", `"d"`)}}},
+		{"a simplified policy over a failed PIP", tree(simplified),
+			Request{Body: Body{Operation: "read", ResourceType: "doc"}, Roles: []string{"reader"},
+				Values: map[string]Resolved{`["subj","g"]`: resolved(t, "ERROR", "")}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			opt := DefaultOptions()
+			opt.Decision = true
+			m, err := Generate(tc.tree, table(t), opt)
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			if got := evalRule(t, m, tc.req, "decision"); got != "unknown" {
+				t.Errorf("decision = %v, want unknown", got)
+			}
+		})
+	}
+}
+
+// subject denied reads the decision of a copy of the tree for another
+// operation. Over a copy that reads only known values the leaf is two-valued;
+// over one that reads a failed PIP the denial is unknown.
+func TestSubjectDeniedOverACopyOfTheTree(t *testing.T) {
+	sets := `{"policySets": [{"policySetId": "s1", "name": "s1", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+			"rules": [
+				{"ruleId": "r1", "target": "operation == 'read'", "condition": "subject denied 'write' on resource",
+				 "effect": "ALLOW", "tenantId": "t1"},
+				{"ruleId": "r2", "target": "operation == 'write'", "condition": %q, "effect": "ALLOW",
+				 "tenantId": "t1"}]}]}]}`
+	for _, tc := range []struct {
+		name, condition, key, state, value, want string
+	}{
+		{"a known value the write permits", "resource.a == 'w'", keyA, "VALUE", `"w"`, "deny"},
+		{"a known value the write denies", "resource.a == 'w'", keyA, "VALUE", `"z"`, "permit"},
+		{"a PIP value the write permits", "subject.g == 'w'", `["subj","g"]`, "VALUE", `"w"`, "deny"},
+		{"a PIP value the write denies", "subject.g == 'w'", `["subj","g"]`, "VALUE", `"z"`, "permit"},
+		{"a failed PIP", "subject.g == 'w'", `["subj","g"]`, "ERROR", "", "unknown"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			exp, err := policyir.FromRegular([]byte(fmt.Sprintf(sets, tc.condition)),
+				[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`))
+			if err != nil {
+				t.Fatalf("FromRegular: %v", err)
+			}
+			opt := DefaultOptions()
+			opt.Decision = true
+			m, err := Generate(exp.Trees["t1"], table(t), opt)
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			req := Request{Body: Body{Operation: "read", ResourceType: "doc"},
+				Values: map[string]Resolved{tc.key: resolved(t, tc.state, tc.value)}}
+			if got := evalRule(t, m, req, "decision"); got != tc.want {
+				t.Errorf("decision(%s with %s %s) = %v, want %s", tc.condition, tc.state, tc.value, got, tc.want)
+			}
+			if got := evalModule(t, m, req); got != (tc.want == "permit") {
+				t.Errorf("allow(%s with %s %s) = %v, want %v", tc.condition, tc.state, tc.value, got,
+					tc.want == "permit")
+			}
+		})
+	}
+}
+
+// Decision adds the decision module and leaves the module of allow and its
+// statistics as they are without it.
+func TestDecisionLeavesTheModuleOfAllowAlone(t *testing.T) {
+	tree := tenantWithSetAndPIPs(t, "DENY_OVERRIDES", "ALLOW",
+		"subject.roles CONTAINS 'admin' AND resource.a IN 'x', 'y' OR subject.g == 'z'", generalPIPs)
+	off, err := Generate(tree, table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	opt := DefaultOptions()
+	opt.Decision = true
+	on, err := Generate(tree, table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate with Decision: %v", err)
+	}
+	if on.Text != off.Text {
+		t.Errorf("the module of allow differs with Decision:\n%s\nwithout:\n%s", on.Text, off.Text)
+	}
+	if on.Stats.Clauses != off.Stats.Clauses || on.Stats.Rules != off.Stats.Rules || on.Stats.Bytes != off.Stats.Bytes {
+		t.Errorf("Stats with Decision %+v, without %+v; want equal clauses, rules, and bytes", on.Stats, off.Stats)
+	}
+	if on.Stats.DecisionClauses == 0 || off.Stats.DecisionClauses != 0 {
+		t.Errorf("DecisionClauses with Decision %d, without %d; want some and none", on.Stats.DecisionClauses,
+			off.Stats.DecisionClauses)
+	}
+}
+
+// A subject group answers from records that hold only the fields the module
+// reads as it does from records of every field: lists of strings, of a
+// nested list, an object, and null, and an empty list.
+func TestASubjectGroupReadsTheFieldsItsRecordsHold(t *testing.T) {
+	opt := DefaultOptions()
+	opt.Groups = true
+	for _, condition := range []string{
+		"subject.permissions CONTAINS 'p1'",
+		"subject.permissions CONTAINS ANY 'p1', 'p3'",
+		"subject.permissions IS EMPTY",
+		"'p1' IN subject.permissions",
+		"subject.permissions IS SUBSET 'p1', 'p2'",
+	} {
+		m, err := Generate(tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", condition, ""), table(t), opt)
+		if err != nil {
+			t.Fatalf("Generate %s: %v", condition, err)
+		}
+		if len(m.Groups) == 0 {
+			t.Fatalf("%s builds no subject group", condition)
+		}
+		for _, value := range []string{`["p1", "p2"]`, `["P1"]`, `[["p1"], "p2"]`, `[{"a": "p1"}, null]`, `[]`,
+			`["x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "p1"]`} {
+			v := resolved(t, "VALUE", value)
+			req := Request{Body: Body{Operation: "read", ResourceType: "doc"},
+				Values: map[string]Resolved{`["subj","permissions"]`: v}}
+			got := EvalGroups(m, mustProject(t, m, req))
+			whole := mustProject(t, m, req)
+			r := m.Refs[slices.IndexFunc(m.Refs, func(r *Ref) bool { return r.ID == "subject.permissions" })]
+			whole.Records[r.ID] = record(&Ref{Kind: r.Kind}, v)
+			if want := EvalGroups(m, whole); !slices.Equal(got, want) {
+				t.Errorf("%s with subject.permissions = %s: groups %v, from records of every field %v", condition,
+					value, got, want)
+			}
+		}
+	}
+}
+
+// A condition of more factors than productAll multiplies in order decides as
+// its atoms do, on the true and the false rail, with and without subject
+// groups: an AND of 40 atoms is true when every atom is and false when any
+// one is false, and an OR is false when every atom is and true when any one
+// is true.
+func TestAWideConditionDecidesAsItsAtoms(t *testing.T) {
+	const n = 40
+	for _, tc := range []struct {
+		name, op string
+		atom     func(i int) string
+		and      bool
+	}{
+		{"resource atoms joined by AND", " AND ", func(i int) string { return fmt.Sprintf("resource.a%d != 'x'", i) }, true},
+		{"resource atoms joined by OR", " OR ", func(i int) string { return fmt.Sprintf("resource.a%d == 'x'", i) }, false},
+		{"subject atoms joined by AND", " AND ", func(i int) string { return fmt.Sprintf("subject.roles CONTAINS 'r%d'", i) }, true},
+		{"subject atoms joined by OR", " OR ", func(i int) string { return fmt.Sprintf("subject.roles CONTAINS 'r%d'", i) }, false},
+	} {
+		atoms := make([]string, n)
+		for i := range atoms {
+			atoms[i] = tc.atom(i)
+		}
+		condition := strings.Join(atoms, tc.op)
+		for _, groups := range []bool{false, true} {
+			opt := DefaultOptions()
+			opt.Groups = groups
+			for _, rail := range []struct{ alg, effect string }{{"DENY_UNLESS_PERMIT", "ALLOW"}, {"PERMIT_UNLESS_DENY", "DENY"}} {
+				m, err := Generate(tenantWithSet(t, rail.alg, rail.effect, condition), table(t), opt)
+				if err != nil {
+					t.Fatalf("Generate: %v", err)
+				}
+				// odd is the one atom whose value differs from the others: false
+				// in an AND, true in an OR; -1 for none.
+				for odd := -1; odd < n; odd++ {
+					var members, roles []string
+					for i := range n {
+						holds := (i == odd) != tc.and
+						v := "x"
+						if holds == tc.and {
+							v = "y"
+						}
+						members = append(members, fmt.Sprintf(`"a%d": %q`, i, v))
+						if holds {
+							roles = append(roles, fmt.Sprintf(`"r%d"`, i))
+						}
+					}
+					res, err := jsonvalue.Decode([]byte("{" + strings.Join(members, ", ") + "}"))
+					if err != nil {
+						t.Fatalf("Decode: %v", err)
+					}
+					req := Request{Body: Body{Operation: "read", ResourceType: "doc", Resource: res, HasResource: true},
+						Values: map[string]Resolved{}}
+					m.Resolve(req.Body, req.Values)
+					req.Values[`["subj","roles"]`] = resolved(t, "VALUE", "["+strings.Join(roles, ", ")+"]")
+					holds := (odd < 0) == tc.and
+					if want := holds == (rail.effect == "ALLOW"); evalModule(t, m, req) != want {
+						t.Errorf("%s, groups %v, %s: allow = %v with atom %d odd, want %v",
+							tc.name, groups, rail.alg, !want, odd, want)
+					}
+				}
+			}
+		}
+	}
+}
+
+// agentOptions returns the options the agent generates a tenant's module with
+// (snapshot.New in components/authz-agent).
+func agentOptions() Options {
+	opt := DefaultOptions()
+	opt.Groups, opt.Decision = true, true
+	return opt
+}
+
+// An AND of up to 16 atoms, which productAll multiplies in order, generates
+// the module text of a product taken wholly in order. Halving such a list
+// turns other partial products into helper rules, which decide the same and
+// change the text of modules generated from real policy sets.
+func TestANarrowConditionKeepsTheTextOfAnInOrderProduct(t *testing.T) {
+	limit := sequentialFactors
+	t.Cleanup(func() { sequentialFactors = limit })
+	for n := 2; n <= 16; n++ {
+		atoms := make([]string, n)
+		for i := range atoms {
+			atoms[i] = fmt.Sprintf("resource.a%d != 'x'", i)
+		}
+		ts := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", strings.Join(atoms, " AND "))
+		for _, opt := range []Options{DefaultOptions(), agentOptions()} {
+			generate := func(factors int) *Module {
+				sequentialFactors = factors
+				m, err := Generate(ts, table(t), opt)
+				if err != nil {
+					t.Fatalf("Generate: %v", err)
+				}
+				return m
+			}
+			got, want := generate(limit), generate(math.MaxInt)
+			gotLines := strings.Split(got.Text+got.DecisionText, "\n")
+			wantLines := strings.Split(want.Text+want.DecisionText, "\n")
+			for i := range max(len(gotLines), len(wantLines)) {
+				if g, w := line(gotLines, i), line(wantLines, i); g != w {
+					t.Errorf("an AND of %d atoms, groups %v: line %d of the module text is %q, while an in-order product has %q",
+						n, opt.Groups, i+1, g, w)
+					break
+				}
+			}
+		}
+	}
+}
+
+// Two lists or two objects compare their members pairwise, and two scalars at
+// any depth compare as they do at the top: a number by its value, also against
+// a string of that value, any other scalar by its text ignoring case, and null
+// equal to null (ADR-0083 R1, R2, R5, R6). A list nested in another keeps its
+// order, a member name its case, and a list or an object equals a string of
+// its Java text ignoring case (R8). A condition on the subject alone moves
+// into a group, which every form must answer alike.
+func TestStructuresCompareTheirLeavesAsScalars(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	const keyB, keyID = `["res",".b"]`, `["subj","id"]`
+	for _, tc := range []struct {
+		name, condition, a, b, id string
+		want                      bool
+	}{
+		{"nested strings in another case", "resource.a == resource.b", `[["A"]]`, `[["a"]]`, `0`, true},
+		{"not equal to nested strings in another case", "resource.a != resource.b", `[["A"]]`, `[["a"]]`, `0`, false},
+		{"a member and a string of its value", "resource.a == resource.b", `{"n": 1}`, `{"n": "1.0"}`, `0`, true},
+		{"members with two strings of one value", "resource.a == resource.b", `[{"n": "5.0"}]`, `[{"n": "5.00"}]`, `0`,
+			false},
+		{"a nested list of a string and a number", "resource.a == resource.b", `[["x", 1]]`, `[["X", "1"]]`, `0`, true},
+		{"a nested list in another order", "resource.a == resource.b", `[[1, 2]]`, `[[2, 1]]`, `0`, false},
+		{"member names in another case", "resource.a == resource.b", `{"N": 1}`, `{"n": 1}`, `0`, false},
+		{"lists of null", "resource.a == resource.b", `[[null]]`, `[[null]]`, `0`, true},
+		{"a null member and its text", "resource.a == resource.b", `{"a": null}`, `{"a": "null"}`, `0`, false},
+		{"a string of a quote and a comma and two strings", "resource.a == resource.b", `[["a\",\"b"]]`,
+			`[["a", "b"]]`, `0`, false},
+		{"contains a nested number as its text", "resource.a CONTAINS ANY resource.b", `[[1]]`, `[["1"]]`, `0`, true},
+		{"contains no nested text of another spelling", "resource.a CONTAINS ANY resource.b", `[["5.0"]]`, `[["5.00"]]`,
+			`0`, false},
+		// the texts of a nested list of two strings of numbers are looked up
+		// at the subset of its leaves the other side has texts at, and those
+		// of four strings are scanned
+		{"contains a number beside a text of the same spelling", "resource.a CONTAINS ANY resource.b", `[[1, "5.0"]]`,
+			`[["1", "5.0"]]`, `0`, true},
+		{"contains no number beside a text of another spelling", "resource.a CONTAINS ANY resource.b", `[[1, "5.0"]]`,
+			`[["1", "5.00"]]`, `0`, false},
+		{"contains a number beside three texts of the same spelling", "resource.a CONTAINS ANY resource.b",
+			`[[1, "2", "3", "5.0"]]`, `[["1", "2", "3", "5.0"]]`, `0`, true},
+		{"contains no number beside a text of another spelling of four", "resource.a CONTAINS ANY resource.b",
+			`[[1, "2", "3", "5.0"]]`, `[["1", "2", "3", "5.00"]]`, `0`, false},
+		{"contains an object in another case", "resource.a CONTAINS resource.b", `[{"k": "V"}]`, `{"k": "v"}`, `0`,
+			true},
+		{"an object is in an object in another case", "resource.a IN resource.b", `{"k": "V"}`, `{"k": "v"}`, `0`, true},
+		{"a structure contains a literal in another case", "resource.a CONTAINS 'x'", `[["q"], "X"]`, `0`, `0`, true},
+		{"a structure contains a literal of an element's value", "resource.a CONTAINS '5.0'", `[["q"], 5]`, `0`, `0`,
+			true},
+		{"a structure contains no literal of another text", "resource.a CONTAINS ANY '5.0', '6'", `[["q"], "5.00"]`, `0`,
+			`0`, false},
+		{"a structure contains its Java text", "resource.a CONTAINS '[x]'", `[["X"]]`, `0`, `0`, true},
+		{"a subject list and nested strings in another case", "subject.id == resource.b", `0`, `[["a"]]`, `[["A"]]`,
+			true},
+		{"a subject list has an element in another case", "subject.id CONTAINS ANY resource.b", `0`, `[["a"], "z"]`,
+			`[["A"]]`, true},
+		{"a subject list contains a literal of an element's value", "subject.id CONTAINS '1.0'", `0`, `0`,
+			`[["q"], 1]`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), keyB: resolved(t, "VALUE", tc.b),
+				keyID: resolved(t, "VALUE", tc.id)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s, resource.a = %s, resource.b = %s, subject.id = %s) %s = %v, want %v",
+						tc.condition, tc.a, tc.b, tc.id, form, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
+// IS SUBSET compares an element of the left with the elements of the right as
+// the other operators compare two elements, whatever operand the right is:
+// ignoring case, a number equal to a string of its value, a structure equal
+// to a string of its Java text, and a nested list leaf by leaf; IS NOT SUBSET
+// negates it. Its left is not empty, a null element equals nothing, and an
+// object on the right equals nothing (ADR-0083 R5, R7). A condition on the
+// subject alone moves into a group, which every form must answer alike.
+func TestIsSubsetComparesElementsByTheOneRule(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	const keyB, keyID = `["res",".b"]`, `["subj","id"]`
+	for _, tc := range []struct {
+		name, condition, a, b, id string
+		want                      bool
+	}{
+		{"a string in another case", "resource.a IS SUBSET resource.b", `["X"]`, `["x", "y"]`, `0`, true},
+		{"a string not on the right", "resource.a IS SUBSET resource.b", `["z"]`, `["x", "y"]`, `0`, false},
+		{"a number of a resource attribute", "resource.a IS SUBSET resource.b", `[5]`, `[5.0]`, `0`, true},
+		{"a string and a boolean of its text", "resource.a IS SUBSET resource.b", `["TRUE"]`, `[true]`, `0`, true},
+		{"a nested list in another case", "resource.a IS SUBSET resource.b", `[["A"]]`, `[["a"]]`, `0`, true},
+		{"two texts of one number", "resource.a IS SUBSET resource.b", `["5.0"]`, `["5.00"]`, `0`, false},
+		{"an object on the right", "resource.a IS SUBSET resource.b", `[{"k": "v"}]`, `[{"k": "v"}]`, `0`, false},
+		{"a null element", "resource.a IS SUBSET resource.b", `[null]`, `[null]`, `0`, false},
+		{"an empty left", "resource.a IS SUBSET resource.b", `[]`, `["x"]`, `0`, false},
+		{"a list and its text in another case", "resource.a IS SUBSET resource.b", `[["ABC"]]`, `["[abc]"]`, `0`,
+			true},
+		{"a list's text and the list in another case", "resource.a IS SUBSET resource.b", `["[abc]"]`, `[["ABC"]]`,
+			`0`, true},
+		{"an object and its text in another case", "resource.a IS SUBSET resource.b", `[{"k": "V"}]`, `["{K=v}"]`,
+			`0`, true},
+		{"lists of null", "resource.a IS SUBSET resource.b", `[[null]]`, `[[null]]`, `0`, true},
+		{"not a subset with a string in another case", "resource.a IS NOT SUBSET resource.b", `["X"]`, `["x", "y"]`,
+			`0`, false},
+		{"not a subset with a number and its text", "resource.a IS NOT SUBSET resource.b", `["5.0"]`, `[5]`, `0`,
+			false},
+		{"not a subset with a string not on the right", "resource.a IS NOT SUBSET resource.b", `["z"]`, `["x"]`, `0`,
+			true},
+		{"a literal of a number's value", "'5.0' IS SUBSET resource.b", `0`, `[5]`, `0`, true},
+		{"a literal list in another case", "resource.a IS SUBSET 'x', 'y'", `["Y", "x"]`, `0`, `0`, true},
+		{"a subject list in another case", "subject.id IS SUBSET 'x', 'y'", `0`, `0`, `["X"]`, true},
+		{"a subject number and a literal of its text", "subject.id IS SUBSET '5.0', 'y'", `0`, `0`, `[5]`, true},
+		{"a subject nested list", "subject.id IS SUBSET resource.b", `0`, `[["a"], "z"]`, `[["A"]]`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), keyB: resolved(t, "VALUE", tc.b),
+				keyID: resolved(t, "VALUE", tc.id)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s, resource.a = %s, resource.b = %s, subject.id = %s) %s = %v, want %v",
+						tc.condition, tc.a, tc.b, tc.id, form, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
+// A GENERAL body of a number or a boolean (SCALAR_ODD), or a one-element list
+// of a non-string (SINGLE_ODD), is a list of that element on the right of IS
+// SUBSET, and IS SUBSET compares with it by the one rule (ADR-0083 R7). The
+// module of such a condition builds, so an alternative under OR that holds
+// decides the rule whatever the subset gives.
+func TestIsSubsetOfAnOddGeneralBodyComparesByTheOneRule(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	for _, tc := range []struct {
+		name, condition, state, g, a string
+		want                         bool
+	}{
+		{"a string of a number body's value", "resource.a IS SUBSET subject.g", "SCALAR_ODD", `5`, `"5.0"`, true},
+		{"another string and a number body", "resource.a IS SUBSET subject.g", "SCALAR_ODD", `5`, `"v"`, false},
+		{"a boolean body's text in another case", "resource.a IS SUBSET subject.g", "SCALAR_ODD", `true`, `"TRUE"`,
+			true},
+		{"another string and a boolean body", "resource.a IS NOT SUBSET subject.g", "SCALAR_ODD", `true`, `"x"`, true},
+		{"a string of a listed number's value", "resource.a IS SUBSET subject.g", "SINGLE_ODD", `[5]`, `"5"`, true},
+		{"a listed boolean's text", "resource.a IS NOT SUBSET subject.g", "SINGLE_ODD", `[true]`, `"true"`, false},
+		{"a listed null", "resource.a IS SUBSET subject.g", "SINGLE_ODD", `[null]`, `"v"`, false},
+		{"an alternative that holds", "resource.a IS SUBSET subject.g OR resource.b == 'y'", "SCALAR_ODD", `5`,
+			`"v"`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition, generalPIPs)
+			values := map[string]Resolved{`["subj","g"]`: resolved(t, tc.state, tc.g),
+				keyA: resolved(t, "VALUE", tc.a), `["res",".b"]`: resolved(t, "VALUE", `"y"`)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s, subject.g = %s %s, resource.a = %s) %s = %v, want %v", tc.condition,
+						tc.state, tc.g, tc.a, form, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
+// line returns lines[i], or "" past the end.
+func line(lines []string, i int) string {
+	if i < len(lines) {
+		return lines[i]
+	}
+	return ""
+}
+
+// A number equals a number or a string of the same value, whatever its
+// spelling, and two strings compare by their texts, so the relation is not
+// transitive (ADR-0083). A literal has the value of its own text, while a
+// number of the input is read as a double beyond its integers. A condition on
+// the subject alone moves into a group, which every form must answer alike.
+func TestANumberEqualsANumberOrAStringOfTheSameValue(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	const keyB, keyID, keyName = `["res",".b"]`, `["subj","id"]`, `["subj","name"]`
+	tiny := "0." + strings.Repeat("0", 399) + "1"
+	for _, tc := range []struct {
+		name, condition, a, b string
+		want                  bool
+	}{
+		{"a literal in another spelling", "resource.a == 5.0", `5`, `0`, true},
+		{"a string literal of the value", "resource.a == '05'", `5`, `0`, true},
+		{"a string of the value and a literal", "resource.a == 5", `"5.0"`, `0`, true},
+		{"two strings of one value differ", "resource.a == '5.0'", `"5.00"`, `0`, false},
+		{"two references in other spellings", "resource.a == resource.b", `5`, `5.0`, true},
+		{"a reference and a string of its value", "resource.a == resource.b", `5`, `"5.0"`, true},
+		{"a string reference and a number of its value", "resource.a == resource.b", `"5.0"`, `5`, true},
+		{"a string of no value is not a number", "resource.a != resource.b", `"abc"`, `5`, true},
+		{"a string of no value is not a number literal", "resource.a != 5", `"abc"`, `0`, true},
+		{"two string references of one value differ", "resource.a == resource.b", `"5.0"`, `"5.00"`, false},
+		{"not equal to a string of its value", "resource.a != resource.b", `5`, `"5.0"`, false},
+		{"a number beyond the doubles and its text differ", "resource.a == resource.b", `1e400`, `"Infinity"`, false},
+		{"two numbers beyond the doubles are equal", "resource.a == resource.b", `1e400`, `1e401`, true},
+		{"numbers beyond the doubles of two signs differ", "resource.a == resource.b", `1e400`, `-1e400`, false},
+		{"a literal below the doubles is not the zero an input reads", tiny + " == resource.a", tiny, `0`, false},
+		{"an input number below the doubles equals zero", "resource.a == 0", tiny, `0`, true},
+		{"in a literal list in another spelling", "resource.a IN 5.0, 6", `5`, `0`, true},
+		{"a string in a literal list of its value", "resource.a IN 5, 6", `"5.0"`, `0`, true},
+		{"a literal in a reference list of its value", "5.0 IN resource.b", `0`, `["5"]`, true},
+		{"a string literal in a reference list of its value", "'5.0' IN resource.b", `0`, `[5]`, true},
+		{"a string in a reference list of its value", "resource.a IN resource.b", `"5.0"`, `[5]`, true},
+		{"in a reference list of its text", "resource.a IN resource.b", `5`, `["5.0"]`, true},
+		{"a string in a list of a string of its value", "resource.a IN resource.b", `"5.0"`, `["5.00"]`, false},
+		{"contains a string of an element's value", "resource.a CONTAINS ANY resource.b", `[5]`, `["5.0"]`, true},
+		{"contains no string of another text", "resource.a CONTAINS ANY resource.b", `["5.0"]`, `["5.00"]`, false},
+		{"contains a number in another spelling", "resource.a CONTAINS 6.0", `[5, 6]`, `0`, true},
+		{"a subset by value", "resource.a IS SUBSET resource.b", `[5]`, `["5.0", 6]`, true},
+		{"a subset of strings by value", "resource.a IS SUBSET 5, 6", `["5.0"]`, `0`, true},
+		{"a subset of a literal list by value", "resource.a IS SUBSET 5.0, 6", `[5]`, `0`, true},
+		{"a structure contains a string of an element's value", "resource.a CONTAINS '5.0'", `[5, ["x"]]`, `0`, true},
+		{"two literals by value", "'5.0' == 5", `0`, `0`, true},
+		{"two string literals by text", "'5.0' == '5.00'", `0`, `0`, false},
+		{"a literal in a literal list by value", "5 IN '5.0', 'x'", `0`, `0`, true},
+		{"a subject number and a literal", "subject.id == 5.0", `0`, `0`, true},
+		{"a subject number and a string literal", "subject.id IN '5.0', 'x'", `0`, `0`, true},
+		{"a subject number and a reference", "subject.id == resource.b", `0`, `"5.0"`, true},
+		{"a subject string and a number literal", "subject.name == 5", `0`, `0`, true},
+		{"a subject string is equal to a number literal", "subject.name != 5", `0`, `0`, false},
+		{"a subject string and a subject number", "subject.name == subject.id", `0`, `0`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a), keyB: resolved(t, "VALUE", tc.b),
+				keyID: resolved(t, "VALUE", `5`), keyName: resolved(t, "VALUE", `"5.0"`)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s, resource.a = %s, resource.b = %s, subject.id = 5, subject.name = \"5.0\") %s"+
+						" = %v, want %v", tc.condition, tc.a, tc.b, form, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
+// A GENERAL or FILTERED PIP whose response is too big to look up reads as a
+// PIP that failed, in either order of an OR, rather than failing the request: the
+// decision is the one over a PIP that answered with an error, unknown where
+// the PIP decides it.
+func TestAPIPResponseTooBigToLookUpReadsAsAFailedPIP(t *testing.T) {
+	elems := make([]string, 16)
+	for i := range elems {
+		elems[i] = fmt.Sprintf(`["1", "2", "3", "0e%d"]`, i)
+	}
+	tooBig := resolved(t, "VALUE", "["+strings.Join(elems, ",")+"]")
+	for _, tc := range []struct{ condition, want string }{
+		{"resource.x == '1' OR resource.a CONTAINS ANY subject.g", "permit"},
+		{"resource.a CONTAINS ANY subject.g OR resource.x == '1'", "permit"},
+		{"resource.a CONTAINS ANY subject.g", "unknown"},
+		{"resource.a NOT CONTAINS ANY subject.g", "unknown"},
+		{"resource.a == subject.g", "unknown"},
+		{"resource.a != subject.g", "unknown"},
+		{"resource.a IS SUBSET subject.g", "unknown"},
+		{"resource.a IS NOT SUBSET subject.g", "unknown"},
+	} {
+		for _, pipType := range []string{"GENERAL", "FILTERED"} {
+			tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition,
+				`{"name": "subject.g", "pipType": "`+pipType+`", "url": "http://g"}`)
+			for _, form := range []struct {
+				name string
+				opt  func(*Options)
+			}{{"flat", func(*Options) {}}, {"without inlining", func(o *Options) { o.Flat = false }}} {
+				opt := DefaultOptions()
+				opt.Decision = true
+				form.opt(&opt)
+				m, err := Generate(tree, table(t), opt)
+				if err != nil {
+					t.Fatalf("Generate: %v", err)
+				}
+				for name, g := range map[string]Resolved{"too big to look up": tooBig,
+					"failed": resolved(t, "ERROR", "")} {
+					req := Request{Body: Body{Operation: "read", ResourceType: "doc"},
+						Values: map[string]Resolved{`["res",".x"]`: resolved(t, "VALUE", `"1"`),
+							keyA: resolved(t, "VALUE", `[["z"]]`), `["subj","g"]`: g}}
+					if got := evalRule(t, m, req, "decision"); got != tc.want {
+						t.Errorf("decision(%s) %s with the %s PIP subject.g %s = %v, want %s", tc.condition, form.name,
+							pipType, name, got, tc.want)
+					}
+				}
+			}
+		}
+	}
+}
+
+// A pass of the permission scope with a value too big to look up reads as a
+// permission scope that failed, whichever pass holds it: the decision is the
+// one over a scope that cannot be read, though another pass permits.
+func TestAScopePassTooBigToLookUpReadsAsAFailedScope(t *testing.T) {
+	const domain = `["subj","permissionScope.domain"]`
+	elems := make([]string, 16)
+	for i := range elems {
+		elems[i] = fmt.Sprintf(`["1", "2", "3", "0e%d"]`, i)
+	}
+	permits := map[string]Resolved{domain: resolved(t, "VALUE", `["z"]`)}
+	tooBig := map[string]Resolved{domain: resolved(t, "VALUE", "["+strings.Join(elems, ",")+"]")}
+	opt := DefaultOptions()
+	opt.Decision = true
+	m, err := Generate(iterateTree(t, "DENY_UNLESS_PERMIT", "resource.a CONTAINS ANY subject.permissionScope.domain"),
+		table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	decision := func(scope Scope) any {
+		return evalRule(t, m, Request{Body: Body{Operation: "read", ResourceType: "doc"}, Scope: &scope,
+			Values: map[string]Resolved{keyA: resolved(t, "VALUE", `["z"]`)}}, "decision")
+	}
+	want := decision(Scope{Failed: true})
+	if got := decision(Scope{Passes: []map[string]Resolved{permits}}); got == want {
+		t.Fatalf("decision of a permitting pass = %v, the same as of a failed scope", got)
+	}
+	for name, passes := range map[string][]map[string]Resolved{"first": {tooBig, permits},
+		"last": {permits, tooBig}} {
+		if got := decision(Scope{Passes: passes}); got != want {
+			t.Errorf("decision with the pass too big to look up %s = %v, want %v as with a failed scope", name,
+				got, want)
+		}
+	}
+}
+
+// A request with a value whose index of nested values is too big to look up
+// in linear time fails before evaluation, under every operator that reads
+// such an index: one lookup in a shape may read at most
+// 16 groups of the leaves with texts and lists of more than three such leaves
+// it scans. An index at the limit is looked up, and an index the module does
+// not read fails nothing.
+func TestARequestWithAnIndexTooBigToLookUpFails(t *testing.T) {
+	noflat := DefaultOptions()
+	noflat.Flat = false
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "without inlining": noflat, "with groups": groups}
+	// fourTexts is a list of n lists of four strings of numbers, of one shape
+	// and each with its own texts: its last string spells 0 another way.
+	fourTexts := func(n int) string {
+		elems := make([]string, n)
+		for i := range elems {
+			elems[i] = fmt.Sprintf(`["1", "2", "3", "0e%d"]`, i)
+		}
+		return "[" + strings.Join(elems, ",") + "]"
+	}
+	// leafSets is a list of n lists of twenty numbers of one shape, the i-th
+	// written as a string at leaf i, so each in a group of its own.
+	leafSets := func(n int) string {
+		elems := make([]string, n)
+		for i := range elems {
+			leaves := make([]string, 20)
+			for j := range leaves {
+				leaves[j] = "1"
+				if j == i {
+					leaves[j] = `"1"`
+				}
+			}
+			elems[i] = "[" + strings.Join(leaves, ",") + "]"
+		}
+		return "[" + strings.Join(elems, ",") + "]"
+	}
+	type row struct {
+		name, condition, a, b string
+		// fails is whether the request fails; want is allow otherwise
+		fails, want bool
+	}
+	// a matches the first list of b
+	rows := []row{
+		{"15 lists of four texts", "resource.a CONTAINS ANY resource.b", `[["1", "2", "3", "0e0"]]`, fourTexts(15),
+			false, true},
+		{"16 groups of one text", "resource.a CONTAINS ANY resource.b", `[["1"` + strings.Repeat(", 1", 19) + `]]`,
+			leafSets(16), false, true},
+		{"17 groups of one text", "resource.a CONTAINS ANY resource.b", `[["z"]]`, leafSets(17), true, false},
+		// CONTAINS ANY reads the index of its right operand only, and the
+		// Java text of the first list of a is the string in b
+		{"16 lists of four texts on the left", "resource.a CONTAINS ANY resource.b", fourTexts(16),
+			`["[1, 2, 3, 0e0]"]`, false, true},
+		{"15 lists of four texts at a path", "resource.a[0] CONTAINS ANY resource.b[0]",
+			`[[["1", "2", "3", "0e0"]]]`, "[" + fourTexts(15) + "]", false, true},
+	}
+	for _, op := range []string{"==", "!=", "IS SUBSET", "IS NOT SUBSET", "CONTAINS ANY", "NOT CONTAINS ANY",
+		"CONTAINS", "NOT CONTAINS", "IN", "NOT IN"} {
+		rows = append(rows,
+			row{"16 lists of four texts " + op, "resource.a " + op + " resource.b", `[["z"]]`, fourTexts(16), true,
+				false},
+			row{"16 lists of four texts at a path " + op, "resource.a[0] " + op + " resource.b[0]", `[[["z"]]]`,
+				"[" + fourTexts(16) + "]", true, false})
+	}
+	// the request fails whichever alternative of an OR comes first, though
+	// the other one holds
+	for _, c := range [][2]string{{"resource.a == resource.b", `[["z"]]`},
+		{"resource.a[0] == resource.b[0]", `[[["z"]]]`}} {
+		b := fourTexts(16)
+		if strings.Contains(c[0], "[0]") {
+			b = "[" + b + "]"
+		}
+		rows = append(rows,
+			row{"16 lists of four texts after a true alternative " + c[0], "resource.x == '1' OR " + c[0], c[1], b,
+				true, false},
+			row{"16 lists of four texts before a true alternative " + c[0], c[0] + " OR resource.x == '1'", c[1], b,
+				true, false})
+	}
+	for _, tc := range rows {
+		t.Run(tc.name, func(t *testing.T) {
+			// a DENY rule, which a comparison that failed silently would let
+			// through
+			tree := tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition)
+			if tc.fails {
+				tree = tenantWithSet(t, "PERMIT_UNLESS_DENY", "DENY", tc.condition)
+			}
+			body, err := ReadBody([]byte(`{"operation": "read", "type": "doc", "resource": {"x": "1", "a": ` +
+				tc.a + `, "b": ` + tc.b + `}}`))
+			if err != nil {
+				t.Fatalf("ReadBody: %v", err)
+			}
+			for form, opt := range forms {
+				m, err := Generate(tree, table(t), opt)
+				if err != nil {
+					t.Fatalf("Generate: %v", err)
+				}
+				req := Request{Body: body, Values: map[string]Resolved{}}
+				m.Resolve(body, req.Values)
+				in, err := Project(m, req)
+				if err == nil {
+					pq, perr := rego.New(append([]func(*rego.Rego){rego.Query("data." + opt.Package + ".allow"),
+						rego.Module("gen.rego", m.Text)}, Builtins()...)...).PrepareForEval(context.Background())
+					if perr != nil {
+						t.Fatalf("PrepareForEval: %v", perr)
+					}
+					var rs rego.ResultSet
+					if rs, err = pq.Eval(in.Context(context.Background()), rego.EvalParsedInput(in.Value())); err == nil &&
+						!tc.fails {
+						if got := len(rs) == 1 && rs[0].Expressions[0].Value == true; got != tc.want {
+							t.Errorf("allow(%s) %s = %v, want %v", tc.condition, form, got, tc.want)
+						}
+					}
+				}
+				got := errors.Is(err, errIndexTooBig)
+				if err != nil && !got {
+					t.Fatalf("the request of %s %s: %v", tc.condition, form, err)
+				}
+				if got != tc.fails {
+					t.Errorf("the request of %s %s fails with errIndexTooBig = %v, want %v; err = %v", tc.condition,
+						form, got, tc.fails, err)
+				}
+			}
+		})
+	}
+}

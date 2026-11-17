@@ -134,6 +134,8 @@ func TestNewTreeRejects(t *testing.T) {
 			p.sets[0].Sets[0].Policies = []*Policy{{ID: "p9"}}
 		}, `set "s2"`},
 		{"an isolated set with an iterate", func(p *parts) { p.sets[0].Isolated = "damaged" }, `set "s1"`},
+		{"an isolated policy with a rule", func(p *parts) { p.sets[0].Policies[0].Isolated = "refused" },
+			`policy "p1": an isolated policy has rules`},
 		{"an isolated set that always fails", func(p *parts) {
 			p.sets[0].Sets[0].Isolated = "damaged"
 			p.sets[0].Sets[0].AlwaysFails = "foreach"

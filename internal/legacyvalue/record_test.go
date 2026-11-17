@@ -17,6 +17,7 @@ package legacyvalue
 import (
 	"fmt"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -166,158 +167,20 @@ func TestOf_StructureCarriesItsJavaTextAndTheKeysOfItsElements(t *testing.T) {
 	}
 }
 
-func TestOf_ListCarriesARecordPerElementIncludingNull(t *testing.T) {
-	r := Of(mustDecode(t, `[null, "a", []]`))
-	var got []State
-	for _, e := range r.Elements {
-		got = append(got, e.State)
-	}
-	want := []State{StateNull, StateValue, StateEmptyColl}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("states of the element records = %v, want %v", got, want)
-	}
-}
-
-// Two lists or two objects with the same Java text, such as {a=1} or [x],
-// differ when an element or a member differs in type or case. Two lists agree
-// whatever the order and the repeats of their elements, as two sets do, while
-// a list inside an element or a member keeps its order. Two objects agree
-// whatever the order of their members, and two numbers agree when their
-// values do, as ADR-0083 decides.
-func TestOf_StructureKeyKeepsTypesAndCase(t *testing.T) {
-	structure := func(doc string) string {
-		t.Helper()
-		r := Of(mustDecode(t, doc))
-		if r.Structure == nil {
-			t.Fatalf("Of(%s) has no structure key", doc)
-		}
-		return *r.Structure
-	}
-	distinct := []string{
-		`{"a": 1}`, `{"a": "1"}`, `{"a": 2}`, `{"a": true}`, `{"a": "true"}`,
-		`{"a": 1e400}`, `{"a": -1e400}`, `{"a": "Infinity"}`,
-		`{"a": "x"}`, `{"a": "X"}`, `{"A": "x"}`, `{"a": [1]}`, `{"a": {"b": 1}}`, `{"a": {"b": "1"}}`,
-		`{"a": [1, 2]}`, `{"a": [2, 1]}`,
-		`[1]`, `["1"]`, `[1, "1"]`, `["x"]`, `["X"]`, `[1, 2]`, `[[1]]`, `[[1, 2]]`, `[[2, 1]]`, `[null]`, `["null"]`,
-	}
-	seen := map[string]string{}
-	for _, doc := range distinct {
-		k := structure(doc)
-		if other, ok := seen[k]; ok {
-			t.Errorf("Of(%s) and Of(%s) share the structure key %q", doc, other, k)
-		}
-		seen[k] = doc
-	}
-	same := [][2]string{
-		{`{"b": 1, "a": {"d": 2, "c": 3}}`, `{"a": {"c": 3, "d": 2}, "b": 1}`},
-		{`{"a": 1}`, `{"a": 1.0}`},
-		{`{"a": 1.0}`, `{"a": 1.00}`},
-		{`{"a": 100}`, `{"a": 1e2}`},
-		{`{"a": 0.0}`, `{"a": -0.0}`},
-		{`{"a": 0.1}`, `{"a": 0.10000000000000000001}`},
-		{`{"a": [1]}`, `{"a": [1.0]}`},
-		{`{"a": 1e400}`, `{"a": 1e500}`},
-		{`[1]`, `[1.0]`},
-		{`[1, 2]`, `[2, 1]`},
-		{`[1, 2]`, `[2, 1, 2]`},
-		{`[1]`, `[1, 1.0]`},
-		{`[[1, 2], [3]]`, `[[3], [1, 2]]`},
-		{`[null, null, 1]`, `[1, null]`},
-		{`[[1, {"b": 2}]]`, `[[1.0, {"b": 2e0}]]`},
-	}
-	for _, p := range same {
-		if a, b := structure(p[0]), structure(p[1]); a != b {
-			t.Errorf("structure keys of %s and %s = %q, %q, want them equal", p[0], p[1], a, b)
-		}
-	}
-}
-
-func TestOf_StructureKeyIsSetForListsAndObjects(t *testing.T) {
-	r := Of(mustDecode(t, `[{"a": 1}, "x", [2]]`))
-	want := []string{`["x",[2],{"a":1}]`, `{"a":1}`, "", "[2]"}
-	got := []string{structureOf(r)}
-	for _, e := range r.Elements {
-		got = append(got, structureOf(e))
-	}
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("structure keys of the list and its elements = %q, want %q", got, want)
-	}
-}
-
-func structureOf(r Record) string {
-	if r.Structure == nil {
-		return ""
-	}
-	return *r.Structure
-}
-
-// A list nested in an element is read through the o and the ks of the element
-// record, which has no e of its own.
-func TestOf_ElementRecordsHaveNoElements(t *testing.T) {
-	r := Of(mustDecode(t, `[[1, [2]], "x"]`))
-	nested := r.Elements[0]
-	if nested.Elements != nil {
-		t.Errorf("the record of the element [1, [2]] has the elements %+v, want none", nested.Elements)
-	}
-	if got, want := structureOf(nested), "[1,[2]]"; got != want {
-		t.Errorf("structure key of the element [1, [2]] = %q, want %q", got, want)
-	}
-	if want := []string{"1", "[2]"}; !reflect.DeepEqual(nested.Keys, want) {
-		t.Errorf("keys of the element [1, [2]] = %q, want %q", nested.Keys, want)
-	}
-}
-
-// Each list used to carry the text of every list nested in it, so a list
-// nested 1000 deep held about 1000 copies of its text, and building its record
-// took 0.1 s for a 15 KB document.
-func TestOf_RecordsOfADeepListHoldItsTextAFewTimes(t *testing.T) {
+// Building the record of a list nested 1000 deep allocates a few times the
+// size of the document, where joining the text level by level would copy each
+// byte once per level.
+func TestOf_RecordOfADeepListAllocatesAFewTimesItsSize(t *testing.T) {
 	const depth = 1000
 	doc := strings.Repeat(`["abc",`, depth) + "1" + strings.Repeat("]", depth)
-	held := textHeld(Of(mustDecode(t, doc)))
-	if limit := 10 * len(doc); held > limit {
-		t.Errorf("records of a list nested %d deep hold %d bytes of text, want at most %d, ten times the %d-byte document", depth, held, limit, len(doc))
-	}
-}
-
-// textHeld returns the bytes of text r and the records of its elements hold.
-func textHeld(r Record) int {
-	n := 0
-	for _, s := range []*string{r.Key, r.CaseKey, r.Structure} {
-		if s != nil {
-			n += len(*s)
-		}
-	}
-	for _, k := range r.Keys {
-		n += len(k)
-	}
-	for _, e := range r.Elements {
-		n += textHeld(e)
-	}
-	return n
-}
-
-// A list's record with e builds ck, k, and ks from the records of its
-// elements; they equal the texts the record without e reads from the list
-// itself, for each kind of element whose record lacks one of them. The two
-// records differ in o alone: the list that Of reads has the key of a set.
-func TestOf_ListTextsFromElementRecordsMatchTheList(t *testing.T) {
-	tests := []struct{ doc, set string }{
-		{`[null, 1]`, `[1,null]`},
-		{`[[], "a"]`, `["a",[]]`},
-		{`[[1, [2, null]], {"B": [], "a": "Ä"}]`, `[[1,[2,null]],{"B":[],"a":"Ä"}]`},
-		{`["Straße", "İ", "ABC", "x\"y"]`, `["ABC","Straße","x\"y","İ"]`},
-		{`[1.50, 1e400, -0, true]`, `[0,1.5,Infinity,true]`},
-	}
-	for _, tt := range tests {
-		v := mustDecode(t, tt.doc)
-		got, want := Of(v), of(v, false)
-		if o := structureOf(got); o != tt.set {
-			t.Errorf("structure key of Of(%s) = %q, want %q", tt.doc, o, tt.set)
-		}
-		got.Elements, got.Structure, want.Structure = nil, nil, nil
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("Of(%s) without e and o = %s, want %s", tt.doc, recordText(got), recordText(want))
-		}
+	v := mustDecode(t, doc)
+	var before, after runtime.MemStats
+	runtime.ReadMemStats(&before)
+	Of(v)
+	runtime.ReadMemStats(&after)
+	allocated := after.TotalAlloc - before.TotalAlloc
+	if limit := uint64(20 * len(doc)); allocated > limit {
+		t.Errorf("Of(a list nested %d deep) allocates %d bytes, want at most %d, twenty times the %d-byte document", depth, allocated, limit, len(doc))
 	}
 }
 
@@ -333,6 +196,32 @@ func recordText(r Record) string {
 	if r.Number != nil {
 		n = r.Number.String()
 	}
-	return fmt.Sprintf("{s: %s, t: %s, j: %s, k: %q, ck: %q, ks: %q, o: %q, n: %s}",
-		r.State, r.Class, r.Type, deref(r.Key), deref(r.CaseKey), r.Keys, deref(r.Structure), n)
+	return fmt.Sprintf("{s: %s, t: %s, j: %s, k: %q, ck: %q, ks: %q, n: %s}",
+		r.State, r.Class, r.Type, deref(r.Key), deref(r.CaseKey), r.Keys, n)
+}
+
+// The record OfParts builds with some of the parts of a list is the record of
+// Of with the other parts left out, null elements, nested lists, and objects
+// included.
+func TestOfPartsLeavesOutTheOtherParts(t *testing.T) {
+	docs := []string{`["Straße", "x\"y", 1.50, true]`, `[null, "a", [2, null], {"B": []}]`, `[1, 1, "1"]`, `[]`,
+		`"a"`, `{"a": [1]}`}
+	for _, doc := range docs {
+		v := mustDecode(t, doc)
+		whole := Of(v)
+		for p := Parts(0); p <= AllParts; p++ {
+			want := whole
+			if _, ok := v.([]jsonvalue.Value); ok {
+				if p&PartKey == 0 {
+					want.Key, want.CaseKey = nil, nil
+				}
+				if p&PartKeys == 0 {
+					want.Keys = nil
+				}
+			}
+			if got := OfParts(v, p); !reflect.DeepEqual(got, want) {
+				t.Errorf("OfParts(%s, %02b) = %s, want %s", doc, p, recordText(got), recordText(want))
+			}
+		}
+	}
 }

@@ -60,13 +60,6 @@ promoted to `docs/reports/bench-report-latest.md` (committed).
 - `rls-predicate-pips-3-header-pip` — 3 header PIPs
 - `rls-predicate-summary-10-predicates-3-token-pip` — combined stress: 10 predicates × 3 token PIPs
 
-### Wildcard-access scenarios (ADR-0040)
-
-- `wildcard-all-single` — single resource with `globalAccessRoles.byRole[role].all = true`
-  (request-level short-circuit, skips OLS/RLS entirely)
-- `wildcard-mixed-bulk` — 50 resources: 25 matched by `resourceTypes` wildcard (short-circuit),
-  25 through normal exact OLS (same background policy data as `ols-bulk-50`)
-
 ### Identity scenarios
 
 - `identity-verify-token` — cached `data.authn.verifiedTokens` fast path
@@ -80,7 +73,7 @@ Each scenario directory contains:
 - `bench.sh`: a wrapper around `opa bench` with `5` runs
 - `profile-trace.sh`: a wrapper around `opa eval --explain=full`
 
-Authorize-result scenarios (`ols-*`, `rls-*`, and `wildcard-*`) also provide an additive
+Authorize-result scenarios (`ols-*` and `rls-*`) also provide an additive
 real-token variant:
 
 - `data-real-token.json`: trusted-provider + JWKS overlay for full JWT validation

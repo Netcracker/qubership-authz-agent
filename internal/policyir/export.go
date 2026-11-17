@@ -37,8 +37,9 @@ type Export struct {
 	// tree.
 	Orphans []error
 	// Dropped maps a tenant ID to what its tree leaves out by the rules of
-	// [FromRegular], one line per dropped set, unknown key, isolated set, or
-	// isolated PIP name, naming it and the rule.
+	// [FromRegular], one line per dropped set, unknown key, isolated set, set
+	// read once, isolated PIP name, or PIP name read once, naming it and the
+	// rule.
 	Dropped map[string][]string
 }
 
@@ -58,9 +59,17 @@ type Export struct {
 // failing the tenant. A top-level set becomes [PolicySet.Isolated] when another
 // top-level set of the tenant has the same policySetId, whatever the status of
 // the other, or when a policy, a rule, or a nested set in it names another
-// tenant. A PIP name the tenant declares more than once becomes one
-// declaration with [PIP.Isolated]. Each isolation is listed in
-// [Export.Dropped].
+// tenant. Top-level sets of one tenant and policySetId that are all identical
+// are read as the first of them, since whichever is the tenant's own decides
+// alike. A PIP name the tenant declares more than once becomes one
+// declaration with [PIP.Isolated], unless every declaration of it is
+// identical, which is then read once. A MATCH or NOT MATCH pattern whose
+// [Pattern.Regexp] package regexp does not compile isolates the node it
+// stands in:
+// a policy, by its target or a rule, becomes [Policy.Isolated]; a set, by its
+// target, and a set of simplified policies, by a condition, become
+// [PolicySet.Isolated]. A node isolated by its own target gets the target
+// true. Each isolation is listed in [Export.Dropped].
 //
 // Every top-level set applies except one whose status is INACTIVE, DRAFT, or
 // ARCHIVED, whatever its type; a nested set applies in any status. A set of
@@ -74,7 +83,9 @@ type Export struct {
 // with no customPredicate and no predicate field. Each target is
 // the exact text the PAP writes, so a policy target operation == 'ALL' or
 // operation EQUALS 'O' is another shape. A SIMPLIFIED set of any other shape is
-// read as a regular set. A rule keeps its querydsl template in the field
+// read as a regular set, except that a set with the target true, which holds
+// simplified policies of resourceType ALL, fails its tenant when one of them
+// is not a global policy. A rule keeps its querydsl template in the field
 // predicate; the export has no field querydslPredicate. A PIP without a
 // pipType is GENERAL. A dropped set is listed in [Export.Dropped].
 func FromRegular(policySets, pips []byte) (*Export, error) {
@@ -103,7 +114,8 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 		pips       []*PIP
 		// pipCount counts the declarations of each PIP name.
 		pipCount map[string]int
-		// setCount counts the top-level sets of each policySetId.
+		// setCount counts the top-level sets of each policySetId, except
+		// that it is 1 for sets that are read once as identical.
 		setCount map[string]int
 		vars     int
 		err      error
@@ -126,10 +138,26 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 	}
 
 	heads := make([]*exportHead, len(*setsDoc.PolicySets))
+	type setKey struct{ tenant, id string }
+	sameID := map[setKey][]int{}
 	for i, raw := range *setsDoc.PolicySets {
 		heads[i] = readHead(raw)
 		if t := get("policy set", i, heads[i]); t != nil {
 			t.setCount[heads[i].ID]++
+			k := setKey{*heads[i].TenantID, heads[i].ID}
+			sameID[k] = append(sameID[k], i)
+		}
+	}
+	// copyOf maps a top-level set to the first set of its tenant and
+	// policySetId when every set of that tenant and policySetId is identical
+	// to the first: the tenant's own set is then one of them, whichever it is.
+	copyOf := map[int]int{}
+	for k, idx := range sameID {
+		if len(idx) > 1 && identicalSets(*setsDoc.PolicySets, idx) {
+			for _, i := range idx[1:] {
+				copyOf[i] = idx[0]
+			}
+			tenants[k.tenant].setCount[k.id] = 1
 		}
 	}
 	for i, raw := range *setsDoc.PolicySets {
@@ -146,12 +174,19 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: status %s", i, head.ID, head.Status))
 			continue
 		}
+		if first, ok := copyOf[i]; ok {
+			id := *head.TenantID
+			out.Dropped[id] = append(out.Dropped[id],
+				fmt.Sprintf("policy set %d %q: identical to policy set %d, read once", i, head.ID, first))
+			continue
+		}
 		var s exportSet
 		unknown, err := decodeReporting(raw, &s)
 		if err != nil {
 			t.err = fmt.Errorf("policy set %d: %w", i, err)
 			continue
 		}
+		s.cutTexts()
 		for _, key := range unknown {
 			id := *head.TenantID
 			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: unknown key %s", i, head.ID, key))
@@ -167,19 +202,37 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: isolated: %s", i, head.ID, reason))
 			t.sets = append(t.sets, &PolicySet{
 				ID: s.PolicySetID, Name: s.Name, Domain: s.Domain, ExternalID: s.ExternalID,
-				Target: condition(s.Target, PlaceSetTarget, ""), Isolated: reason,
+				Target: isolatedTarget(condition(s.Target, PlaceSetTarget, "")), Isolated: reason,
 			})
 			continue
 		}
+		if why := notGlobal(&s); why != "" {
+			t.err = fmt.Errorf("policy set %q: %s", s.PolicySetID, why)
+			continue
+		}
 		if g, ok := simplifiedGroup(&s); ok {
+			if why := groupRefused(g); why != "" {
+				id := *head.TenantID
+				out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: isolated: %s", i, head.ID, why))
+				t.sets = append(t.sets, &PolicySet{
+					ID: s.PolicySetID, Name: s.Name, Domain: s.Domain, ExternalID: s.ExternalID,
+					Target: isolatedTarget(condition(s.Target, PlaceSetTarget, "")), Isolated: why,
+				})
+				continue
+			}
 			t.simplified = append(t.simplified, g)
 			continue
 		}
-		b := setBuilder{vars: &t.vars}
+		var notes []string
+		b := setBuilder{vars: &t.vars, notes: &notes}
 		ps, err := b.set(&s, "")
 		if err != nil {
 			t.err = fmt.Errorf("policy set %q: %w", s.PolicySetID, err)
 			continue
+		}
+		for _, n := range notes {
+			id := *head.TenantID
+			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: %s", i, head.ID, n))
 		}
 		t.sets = append(t.sets, ps)
 	}
@@ -208,11 +261,28 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 			delete(out.Dropped, id)
 			continue
 		}
+		// identical maps a name the tenant declares more than once to whether
+		// every declaration of it equals the first: the tenant's own
+		// declaration is then one of them, whichever it is.
+		identical := map[string]bool{}
+		firstPIP := map[string]*PIP{}
+		for _, p := range t.pips {
+			if f, ok := firstPIP[p.Name]; !ok {
+				firstPIP[p.Name], identical[p.Name] = p, true
+			} else if !samePIP(f, p) {
+				identical[p.Name] = false
+			}
+		}
 		pips := t.pips[:0:0]
 		for _, p := range t.pips {
 			switch n := t.pipCount[p.Name]; {
 			case n == 1:
 				pips = append(pips, p)
+			case n > 1 && identical[p.Name]:
+				out.Dropped[id] = append(out.Dropped[id],
+					fmt.Sprintf("pip %q: declared %d times identically, read once", p.Name, n))
+				pips = append(pips, p)
+				t.pipCount[p.Name] = 0
 			case n > 1:
 				reason := fmt.Sprintf("declared %d times", n)
 				out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("pip %q: isolated: %s", p.Name, reason))
@@ -231,6 +301,78 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 	return out, nil
 }
 
+// identicalSets reports whether the sets of raws at idx read as the same set,
+// field by field, with the texts cut as [enumText] cuts them and with the same
+// unknown keys. The members of a JSON object compare in any order, here and in
+// a value the set holds as raw JSON, such as a parameter of a custom
+// predicate. A set that cannot be read is identical to none.
+func identicalSets(raws []json.RawMessage, idx []int) bool {
+	var first string
+	var firstUnknown []string
+	for n, i := range idx {
+		var s exportSet
+		unknown, err := decodeReporting(raws[i], &s)
+		if err != nil {
+			return false
+		}
+		s.cutTexts()
+		text, err := json.Marshal(s)
+		if err != nil {
+			return false
+		}
+		canonical, unknown := canonicalJSON(string(text)), slices.Sorted(slices.Values(unknown))
+		if n == 0 {
+			first, firstUnknown = canonical, unknown
+		} else if canonical != first || !slices.Equal(firstUnknown, unknown) {
+			return false
+		}
+	}
+	return true
+}
+
+// canonicalJSON returns the JSON value text with the members of every object
+// sorted by key and no spaces, so that two texts of one value compare equal.
+// A number keeps its text, so 1 and 1.0 differ. A text that is not one JSON
+// value is returned as is.
+func canonicalJSON(text string) string {
+	d := json.NewDecoder(strings.NewReader(text))
+	d.UseNumber()
+	var v any
+	if err := d.Decode(&v); err != nil || d.More() {
+		return text
+	}
+	out, err := json.Marshal(v)
+	if err != nil {
+		return text
+	}
+	return string(out)
+}
+
+// samePIP reports whether a and b are the same declaration, with the members
+// of a JSON object in a field that holds JSON text compared in any order,
+// except in productMapping and customMapping: the permissions of a MAPPING
+// PIP come in the order of those tables' members.
+func samePIP(a, b *PIP) bool {
+	ca, cb := canonicalPIP(*a), canonicalPIP(*b)
+	return reflect.DeepEqual(ca, cb)
+}
+
+// canonicalPIP returns p with every field that holds JSON text, except the
+// two mappings, in the form of [canonicalJSON].
+func canonicalPIP(p PIP) PIP {
+	for _, f := range []*string{&p.DefaultValue, &p.Cacheable, &p.CachePeriod} {
+		*f = canonicalJSON(*f)
+	}
+	if p.RequestAttributes != nil {
+		attrs := make(map[string]string, len(p.RequestAttributes))
+		for k, v := range p.RequestAttributes {
+			attrs[k] = canonicalJSON(v)
+		}
+		p.RequestAttributes = attrs
+	}
+	return p
+}
+
 // exportHead is what [FromRegular] reads of an element before the element
 // itself: the tenant, and the ID and status of a set.
 type exportHead struct {
@@ -239,7 +381,8 @@ type exportHead struct {
 	Status   string
 }
 
-// readHead reads the head of raw. A field of the wrong type reads as absent,
+// readHead reads the head of raw, with the status cut as [enumText] cuts it.
+// A field of the wrong type reads as absent,
 // so a set whose status is not a string fails its tenant when the set itself
 // is read.
 func readHead(raw json.RawMessage) *exportHead {
@@ -258,6 +401,7 @@ func readHead(raw json.RawMessage) *exportHead {
 	}
 	_ = json.Unmarshal(fields.PolicySetID, &h.ID)
 	_ = json.Unmarshal(fields.Status, &h.Status)
+	h.Status = enumText(h.Status)
 	return h
 }
 
@@ -351,6 +495,46 @@ func condition(text *string, place Place, iterVar string) *Condition {
 	return c
 }
 
+// enumText is the text of an enum field or an expression of an upload with
+// the characters up to U+0020 at either end cut, as the policy service cuts
+// it.
+func enumText(s string) string {
+	return strings.TrimFunc(s, func(r rune) bool { return r <= ' ' })
+}
+
+// cutTexts cuts the enum fields, the targets, and the conditions of s and of
+// the policies, rules, and sets it holds, as [enumText] does: the policy
+// service cuts an expression before it parses it.
+func (s *exportSet) cutTexts() {
+	s.Status, s.Type, s.CombiningAlgorithm = enumText(s.Status), enumText(s.Type), enumText(s.CombiningAlgorithm)
+	cutExpression(s.Target)
+	if s.Iterate != nil {
+		s.Iterate.CombiningAlgorithm = enumText(s.Iterate.CombiningAlgorithm)
+	}
+	for i := range s.Policies {
+		p := &s.Policies[i]
+		p.CombiningAlgorithm = enumText(p.CombiningAlgorithm)
+		cutExpression(p.Target)
+		for j := range p.Rules {
+			r := &p.Rules[j]
+			r.Effect, r.RuleType = enumText(r.Effect), enumText(r.RuleType)
+			cutExpression(r.Target)
+			cutExpression(r.Condition)
+		}
+	}
+	for i := range s.PolicySets {
+		s.PolicySets[i].cutTexts()
+	}
+}
+
+// cutExpression cuts the target or condition e, when there is one.
+func cutExpression(e *string) {
+	if e != nil {
+		*e = enumText(*e)
+	}
+}
+
+// algorithmOf reads the name of a combining algorithm.
 func algorithmOf(a string) (Algorithm, error) {
 	if !slices.Contains(algorithms, Algorithm(a)) {
 		return "", fmt.Errorf("combiningAlgorithm %q unknown", a)
@@ -360,6 +544,29 @@ func algorithmOf(a string) (Algorithm, error) {
 
 type setBuilder struct {
 	vars *int
+	// notes collects a line per policy or set the builder isolates, starting
+	// with path.
+	notes *[]string
+	// path names the nested sets between the top-level set and the node being
+	// built, each followed by ": ", and is empty at the top-level set.
+	path string
+}
+
+// isolate records that the builder isolates the node named by label, which is
+// empty for the set being built, for the reason why.
+func (b setBuilder) isolate(label, why string) {
+	*b.notes = append(*b.notes, b.path+label+"isolated: "+why)
+}
+
+// groupRefused returns the reason [patternRefused] gives for
+// the first condition of g that it refuses, or "" when there is none.
+func groupRefused(g *SimplifiedGroup) string {
+	for _, p := range g.Policies {
+		if why := conditionRefused(p.Condition); why != "" {
+			return why
+		}
+	}
+	return ""
 }
 
 // foreignElement names the first policy, rule, or nested set in s whose
@@ -401,6 +608,11 @@ func (b setBuilder) set(s *exportSet, iterVar string) (*PolicySet, error) {
 		ID: s.PolicySetID, Name: s.Name, Domain: s.Domain, ExternalID: s.ExternalID, Algorithm: alg,
 		Target: condition(s.Target, PlaceSetTarget, iterVar),
 	}
+	if why := conditionRefused(ps.Target); why != "" {
+		b.isolate("", why)
+		ps.Target, ps.Isolated = trueCondition(PlaceSetTarget), why
+		return ps, nil
+	}
 	inner := iterVar
 	if it := s.Iterate; it != nil {
 		ia, err := algorithmOf(it.CombiningAlgorithm)
@@ -428,7 +640,9 @@ func (b setBuilder) set(s *exportSet, iterVar string) (*PolicySet, error) {
 		ps.Policies = append(ps.Policies, p)
 	}
 	for i := range s.PolicySets {
-		k, err := b.set(&s.PolicySets[i], inner)
+		kb := b
+		kb.path += fmt.Sprintf("policy set %q: ", s.PolicySets[i].PolicySetID)
+		k, err := kb.set(&s.PolicySets[i], inner)
 		if err != nil {
 			return nil, within(fmt.Sprintf("policy set %q", s.PolicySets[i].PolicySetID), err)
 		}
@@ -492,6 +706,20 @@ func (b setBuilder) policy(p *exportPolicy, iterVar string) (*Policy, error) {
 			Predicates: preds,
 		})
 	}
+	why := conditionRefused(out.Target)
+	target := out.Target
+	if why != "" {
+		target = trueCondition(PlacePolicyTarget)
+	}
+	for i := 0; why == "" && i < len(out.Rules); i++ {
+		if why = conditionRefused(out.Rules[i].Target); why == "" {
+			why = conditionRefused(out.Rules[i].Condition)
+		}
+	}
+	if why != "" {
+		b.isolate(fmt.Sprintf("policy %q: ", out.ID), why)
+		return &Policy{ID: out.ID, Name: out.Name, Algorithm: out.Algorithm, Target: target, Isolated: why}, nil
+	}
 	return out, nil
 }
 
@@ -533,6 +761,72 @@ func compact(raw json.RawMessage) string {
 		return string(raw)
 	}
 	return b.String()
+}
+
+// notGlobal names the first simplified policy of resourceType ALL in s that
+// is not a global policy, and why, and returns empty when there is none. A
+// set of type SIMPLIFIED with the target true holds the simplified policies
+// of resourceType ALL, one per rule. Such a policy is global when the set's
+// component is ALL, the targets of its policy and its rule read nothing but
+// the roles, so its operation is ALL, and the rule has no condition and no
+// predicate in any dialect.
+func notGlobal(s *exportSet) string {
+	if s.Type != "SIMPLIFIED" || s.Target == nil || *s.Target != "true" {
+		return ""
+	}
+	for i := range s.Policies {
+		p := &s.Policies[i]
+		policyRoles := onlyRoles(p.Target)
+		for j := range p.Rules {
+			r := &p.Rules[j]
+			pr := predicates(r)
+			var why string
+			switch {
+			case s.Component == nil || *s.Component != "ALL":
+				why = "its component is not ALL"
+			case !policyRoles || !onlyRoles(r.Target):
+				why = "a target of its policy or its rule reads more than the roles"
+			case r.Condition != nil && *r.Condition != "":
+				why = "it has a condition"
+			case len(pr.Text) > 0 || pr.Custom != nil:
+				why = "it has a predicate"
+			default:
+				continue
+			}
+			name := fmt.Sprintf("rule %d of policy %d", j, i)
+			if r.RuleID != "" {
+				name = fmt.Sprintf("%q", r.RuleID)
+			}
+			return fmt.Sprintf("simplified policy %s has resourceType ALL and is not a global policy: %s", name, why)
+		}
+	}
+	return ""
+}
+
+// onlyRoles reports whether the target text is absent, true, or compares
+// subject.roles with literals alone.
+func onlyRoles(text *string) bool {
+	if text == nil || *text == "true" {
+		return true
+	}
+	c, err := ParseCondition(*text, PlaceRuleTarget, "")
+	if err != nil {
+		return false
+	}
+	for _, d := range c.Disjuncts {
+		for _, a := range d {
+			cmp, ok := a.(Compare)
+			if !ok || cmp.Left != Operand(Subject{Attr: SubjectRoles}) {
+				return false
+			}
+			switch cmp.Right.(type) {
+			case String, List:
+			default:
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // simplifiedGroup returns the simplified policies s holds, and false when s is
@@ -685,6 +979,13 @@ func readPIP(raw json.RawMessage) (p *PIP, unknown []string, err error) {
 	if e.Name == nil {
 		return nil, nil, errors.New("no name")
 	}
+	// A text the cut would leave empty stays as sent, as the policy service
+	// keeps it.
+	for _, f := range []*string{&e.PipType, &e.Type} {
+		if c := enumText(*f); c != "" {
+			*f = c
+		}
+	}
 	p = &PIP{
 		Name: *e.Name, Type: PIPType(e.PipType), ReturnType: e.Type, Domain: e.Domain, URL: e.URL,
 		HTTPMethod: e.HTTPMethod, Header: e.Header, Claim: e.Claim, BeanName: e.BeanName, JSONPath: e.JSONPath,
@@ -716,10 +1017,10 @@ func readPIP(raw json.RawMessage) (p *PIP, unknown []string, err error) {
 	default:
 		return nil, nil, fmt.Errorf("%q: headers %s is neither a string, a list, nor an object", p.Name, h)
 	}
+	if e.RequestAttributes != nil {
+		p.RequestAttributes = make(map[string]string, len(e.RequestAttributes))
+	}
 	for k, v := range e.RequestAttributes {
-		if p.RequestAttributes == nil {
-			p.RequestAttributes = map[string]string{}
-		}
 		p.RequestAttributes[k] = compact(v)
 	}
 	for _, f := range []struct {

@@ -40,19 +40,36 @@ const ossPolicies = `[
 
 func newTestServer(t *testing.T, dataDir string) *http.ServeMux {
 	t.Helper()
+	return newTestServerWithDefaultTenantID(t, dataDir, defaultTenant)
+}
+
+// newTestServerWithDefaultTenantID is newTestServer whose export gives the
+// default tenant the tenantId defaultTenantID.
+func newTestServerWithDefaultTenantID(t *testing.T, dataDir, defaultTenantID string) *http.ServeMux {
+	t.Helper()
 	st, err := newStore(dataDir)
 	if err != nil {
 		t.Fatalf("newStore: %v", err)
 	}
 	mux := http.NewServeMux()
-	(&server{st: st}).routes(mux)
+	(&server{st: st, defaultTenantID: defaultTenantID}).routes(mux)
 	return mux
 }
 
 func do(t *testing.T, mux *http.ServeMux, method, path, body string) *httptest.ResponseRecorder {
 	t.Helper()
+	return doWithTenantHeader(t, mux, method, path, body, "")
+}
+
+// doWithTenantHeader sends the request with the Tenant header set to tenant,
+// or with no Tenant header when tenant is empty.
+func doWithTenantHeader(t *testing.T, mux *http.ServeMux, method, path, body, tenant string) *httptest.ResponseRecorder {
+	t.Helper()
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	req.Header.Set("Authorization", "Bearer test")
+	if tenant != "" {
+		req.Header.Set("Tenant", tenant)
+	}
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
 	return rec
@@ -94,6 +111,61 @@ func TestDomainsAreIndependentAndExportIsTheUnion(t *testing.T) {
 	}
 	if !domains["BSS"] || !domains["OSS"] {
 		t.Errorf("v3 export covers %v, want both BSS and OSS", domains)
+	}
+}
+
+// TestTwoDomainsKeepTheirPoliciesInTwoSets: the same component and resource
+// type uploaded to two domains are two policy sets, as in access-control,
+// where each set is its own filter group.
+func TestTwoDomainsKeepTheirPoliciesInTwoSets(t *testing.T) {
+	mux := newTestServer(t, t.TempDir())
+	for _, domain := range []string{"domain1", "domain2"} {
+		body := `[{"component":"PARITY","resourceType":"PARITY_DOC","operation":"READ","roles":["ROLE_A"],` +
+			`"rsqlPredicate":"` + domain + `==1"}]`
+		if rec := do(t, mux, http.MethodPut, policiesPath+domain, body); rec.Code != http.StatusOK {
+			t.Fatalf("%s upload: got %d, body %s", domain, rec.Code, rec.Body.String())
+		}
+	}
+
+	var resp v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
+	var got []string
+	for _, ps := range resp.PolicySets {
+		var preds []string
+		for _, p := range ps.Policies {
+			for _, r := range p.Rules {
+				preds = append(preds, r.RSQLPredicate)
+			}
+		}
+		got = append(got, ps.PolicySetID+" "+strings.Join(preds, ","))
+	}
+	want := []string{"ps-domain1/PARITY/PARITY_DOC domain1==1", "ps-domain2/PARITY/PARITY_DOC domain2==1"}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("policy sets =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// TestPolicySetIDsTellTheKeysApart: keys whose parts differ only in where a
+// hyphen falls get two ids, since the agent isolates every set whose id
+// another set repeats.
+func TestPolicySetIDsTellTheKeysApart(t *testing.T) {
+	mux := newTestServer(t, t.TempDir())
+	for domain, component := range map[string]string{"a-b": "c", "a": "b-c"} {
+		body := `[{"component":"` + component + `","resourceType":"PARITY_DOC","operation":"READ","roles":["ROLE_A"]}]`
+		if rec := do(t, mux, http.MethodPut, policiesPath+domain, body); rec.Code != http.StatusOK {
+			t.Fatalf("%s upload: got %d, body %s", domain, rec.Code, rec.Body.String())
+		}
+	}
+
+	var resp v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
+	var got []string
+	for _, ps := range resp.PolicySets {
+		got = append(got, ps.PolicySetID)
+	}
+	want := []string{"ps-a/b-c/PARITY_DOC", "ps-a-b/c/PARITY_DOC"}
+	if strings.Join(got, " ") != strings.Join(want, " ") {
+		t.Errorf("policy set ids = %q, want %q", got, want)
 	}
 }
 
@@ -447,19 +519,182 @@ func TestInMemoryModeServesUploads(t *testing.T) {
 // debugging "my policies did not arrive" wants to see.
 func TestHashEndpointListsDomains(t *testing.T) {
 	mux := newTestServer(t, t.TempDir())
-	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies)
-	do(t, mux, http.MethodPut, pipsPath+"OSS", `[]`)
+	do(t, mux, http.MethodPut, policiesPath+"billing", `[]`)
+	do(t, mux, http.MethodPut, pipsPath+"network", `[]`)
+	do(t, mux, http.MethodPut, pipsPath+"support?tenant_id=tenant-a", `[]`)
 
 	var status struct {
 		Domains []string `json:"domains"`
 		Hash    string   `json:"hash"`
 	}
 	decode(t, do(t, mux, http.MethodGet, "/authz-policy-admin/hash", "").Body.Bytes(), &status)
-	if fmt.Sprint(status.Domains) != "[BSS OSS]" {
-		t.Errorf("domains %v, want [BSS OSS]", status.Domains)
+	if fmt.Sprint(status.Domains) != "[billing network tenant-a/support]" {
+		t.Errorf("domains %v, want [billing network tenant-a/support]", status.Domains)
 	}
 	if status.Hash == "" {
 		t.Error("hash is empty")
+	}
+}
+
+// The agent rejects an export whose policySets is null, so an empty store has
+// to export an empty array.
+func TestEmptyStoreExportsEmptyArrays(t *testing.T) {
+	mux := newTestServer(t, t.TempDir())
+	for _, tc := range []struct{ path, field string }{
+		{"/access/v3/config/policySets", "policySets"},
+		{"/access/v3/config/pips", "pips"},
+	} {
+		var resp map[string]json.RawMessage
+		decode(t, do(t, mux, http.MethodGet, tc.path, "").Body.Bytes(), &resp)
+		if got := string(resp[tc.field]); got != "[]" {
+			t.Errorf("GET %s: %s = %s, want []", tc.path, tc.field, got)
+		}
+	}
+}
+
+// Each tenant holds its own collection for a domain, and the export stamps
+// every policy set and PIP with the tenant that uploaded it. The tenant is the
+// tenant_id query parameter, else the Tenant header, else "default".
+func TestTenantsKeepSeparateCollectionsOfOneDomain(t *testing.T) {
+	mux := newTestServer(t, t.TempDir())
+	uploads := []struct {
+		name, query, header, resourceType string
+	}{
+		{name: "default", resourceType: "Invoice"},
+		{name: "query", query: "?tenant_id=tenant-a", resourceType: "Ticket"},
+		{name: "header", header: "tenant-b", resourceType: "Order"},
+		{name: "query over header", query: "?tenant_id=tenant-c", header: "tenant-b-ignored", resourceType: "Quote"},
+	}
+	for _, u := range uploads {
+		body := `[{"component":"billing","resourceType":"` + u.resourceType + `","operation":"READ","roles":["ROLE_ADMIN"]}]`
+		if rec := doWithTenantHeader(t, mux, http.MethodPut, policiesPath+"billing"+u.query, body, u.header); rec.Code != http.StatusOK {
+			t.Fatalf("%s policy upload: got %d, body %s", u.name, rec.Code, rec.Body.String())
+		}
+		pip := `[{"name":"subject.org","pipType":"TOKEN","claim":"` + u.resourceType + `"}]`
+		if rec := doWithTenantHeader(t, mux, http.MethodPut, pipsPath+"billing"+u.query, pip, u.header); rec.Code != http.StatusOK {
+			t.Fatalf("%s PIP upload: got %d, body %s", u.name, rec.Code, rec.Body.String())
+		}
+	}
+
+	for _, tc := range []struct{ query, header, want string }{
+		{"", "", "Invoice"},
+		{"?tenant_id=tenant-a", "", "Ticket"},
+		{"", "tenant-b", "Order"},
+		{"?tenant_id=tenant-c", "", "Quote"},
+		{"", "tenant-b-ignored", ""},
+	} {
+		var items []simplifiedPolicy
+		decode(t, doWithTenantHeader(t, mux, http.MethodGet, policiesPath+"billing"+tc.query, "", tc.header).Body.Bytes(), &items)
+		var got []string
+		for _, p := range items {
+			got = append(got, p.ResourceType)
+		}
+		if want := tc.want; fmt.Sprint(got) != fmt.Sprint(strings.Fields(want)) {
+			t.Errorf("GET billing%s with Tenant %q: resource types %v, want [%s]", tc.query, tc.header, got, want)
+		}
+	}
+
+	var sets v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &sets)
+	gotSets := map[string]string{}
+	for _, ps := range sets.PolicySets {
+		gotSets[ps.TenantID] = ps.Target
+	}
+	wantSets := map[string]string{
+		"default":  "resourceType == 'Invoice'",
+		"tenant-a": "resourceType == 'Ticket'",
+		"tenant-b": "resourceType == 'Order'",
+		"tenant-c": "resourceType == 'Quote'",
+	}
+	if fmt.Sprint(gotSets) != fmt.Sprint(wantSets) {
+		t.Errorf("policy set targets by tenantId = %v, want %v", gotSets, wantSets)
+	}
+
+	var pips v3PIPsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "").Body.Bytes(), &pips)
+	gotPIPs := map[string]string{}
+	for _, p := range pips.PIPs {
+		gotPIPs[p.TenantID] = p.Claim
+	}
+	wantPIPs := map[string]string{"default": "Invoice", "tenant-a": "Ticket", "tenant-b": "Order", "tenant-c": "Quote"}
+	if fmt.Sprint(gotPIPs) != fmt.Sprint(wantPIPs) {
+		t.Errorf("PIP claims by tenantId = %v, want %v", gotPIPs, wantPIPs)
+	}
+}
+
+// A collection of a tenant other than the default one survives a restart under
+// that tenant, and the default tenant keeps the file name it had before
+// uploads were kept per tenant.
+func TestStoreReloadsTenantCollections(t *testing.T) {
+	dir := t.TempDir()
+	first := newTestServer(t, dir)
+	do(t, first, http.MethodPut, policiesPath+"billing", `[{"component":"billing","resourceType":"Invoice","operation":"READ","roles":["ROLE_ADMIN"]}]`)
+	do(t, first, http.MethodPut, policiesPath+"support?tenant_id=tenant-a", `[{"component":"support","resourceType":"Ticket","operation":"UPDATE","roles":["ROLE_ENGINEER"]}]`)
+	before := hashOf(t, first)
+
+	for _, name := range []string{policiesFilePrefix + "billing.json", policiesFilePrefix + "tenant-a@support.json"} {
+		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+			t.Errorf("data file %s: %v", name, err)
+		}
+	}
+
+	second := newTestServer(t, dir)
+	if got := hashOf(t, second); got != before {
+		t.Errorf("hash changed across restart: %q → %q", before, got)
+	}
+	var resp v3PolicySetsResponse
+	decode(t, do(t, second, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
+	got := map[string]string{}
+	for _, ps := range resp.PolicySets {
+		got[ps.Domain] = ps.TenantID
+	}
+	if want := map[string]string{"billing": "default", "support": "tenant-a"}; fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("reloaded tenantId by domain = %v, want %v", got, want)
+	}
+}
+
+// The export gives the default tenant the configured tenantId, which a
+// stand sets to the ID tenant-manager resolves the default tenant to, and
+// leaves the tenant an upload named as it is.
+func TestTheDefaultTenantIsExportedUnderItsConfiguredID(t *testing.T) {
+	mux := newTestServerWithDefaultTenantID(t, t.TempDir(), "6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b")
+	do(t, mux, http.MethodPut, policiesPath+"billing", `[{"component":"billing","resourceType":"Invoice","operation":"READ","roles":["ROLE_ADMIN"]}]`)
+	do(t, mux, http.MethodPut, policiesPath+"billing?tenant_id=tenant-a", `[{"component":"billing","resourceType":"Ticket","operation":"READ","roles":["ROLE_ADMIN"]}]`)
+	do(t, mux, http.MethodPut, pipsPath+"billing", `[{"name":"subject.org","pipType":"TOKEN","claim":"org"}]`)
+
+	var sets v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &sets)
+	got := map[string]string{}
+	for _, ps := range sets.PolicySets {
+		got[ps.TenantID] = ps.Target
+	}
+	want := map[string]string{"6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b": "resourceType == 'Invoice'", "tenant-a": "resourceType == 'Ticket'"}
+	if fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("policy set targets by tenantId = %v, want %v", got, want)
+	}
+	var pips v3PIPsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "").Body.Bytes(), &pips)
+	if len(pips.PIPs) != 1 || pips.PIPs[0].TenantID != "6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b" {
+		t.Errorf("PIPs = %+v, want one PIP of tenantId 6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b", pips.PIPs)
+	}
+}
+
+// A tenant names a data file, so a tenant that is not a legal name is
+// refused with 400 and writes nothing.
+func TestInvalidTenantIsRejected(t *testing.T) {
+	dir := t.TempDir()
+	mux := newTestServer(t, dir)
+	for _, tc := range []struct{ name, query, header string }{
+		{"a path in the query", "?tenant_id=..%2Fx", ""},
+		{"an @ in the header", "", "a@b"},
+	} {
+		rec := doWithTenantHeader(t, mux, http.MethodPut, policiesPath+"billing"+tc.query, `[]`, tc.header)
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("%s: got %d, want 400", tc.name, rec.Code)
+		}
+	}
+	if files, _ := filepath.Glob(filepath.Join(dir, "*.json")); len(files) != 0 {
+		t.Errorf("data files after the refused uploads = %v, want none", files)
 	}
 }
 

@@ -16,6 +16,7 @@ package legacy
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -44,6 +45,12 @@ func TestCheckResource(t *testing.T) {
 			[]Resource{{ResourceType: "ORDER", Operation: "READ", Resource: nil}}, ""},
 		{"a type that is not a string reaches the policy unchanged", `{"type":5,"operation":"READ"}`,
 			[]Resource{{ResourceType: json.Number("5"), Operation: "READ", Resource: empty}}, ""},
+		{"a type that is a list is a bad request", `{"type":["ORDER"],"operation":"READ"}`, nil, "bad request"},
+		{"a type that is an object is a bad request", `{"type":{"a":1},"operation":"READ"}`, nil, "bad request"},
+		{"an operation that is a list is a bad request", `{"type":"ORDER","operation":["DELETE"]}`, nil, "bad request"},
+		{"an operation that is an object is a bad request", `{"type":"ORDER","operation":{"a":1}}`, nil, "bad request"},
+		{"an operation that is a number reaches the policy unchanged", `{"type":"ORDER","operation":5}`,
+			[]Resource{{ResourceType: "ORDER", Operation: json.Number("5"), Resource: empty}}, ""},
 		{"an empty body is a bad request", ``, nil, "bad request"},
 		{"a blank body is a bad request", " \n\t", nil, "bad request"},
 		{"an array body is a bad request", `[{"type":"ORDER","operation":"READ"}]`, nil, "bad request"},
@@ -66,7 +73,7 @@ func TestCheckResource(t *testing.T) {
 			if message(err) != tc.err {
 				t.Fatalf("CheckResource(%s) error = %q, want %q", tc.body, message(err), tc.err)
 			}
-			if !reflect.DeepEqual(got, tc.want) {
+			if got := decoded(got); !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("CheckResource(%s) = %#v, want %#v", tc.body, got, tc.want)
 			}
 		})
@@ -120,8 +127,8 @@ func TestCheckResourceBulk(t *testing.T) {
 
 // One resource per operation, with the operation as a string whatever the
 // caller sent, the item's type and resource repeated, and an Entry per
-// resource carrying the item's id. An empty or null operation adds nothing,
-// and a null id is no id.
+// resource carrying the item's id. An empty operation is one more resource, a
+// null operation adds nothing, and a null id is no id.
 func TestCheckResourceBulkOperations_ExpandsOperations(t *testing.T) {
 	body := `[{"id":"a","type":"ORDER","operations":["READ",5,"",null],"resource":{"k":"v"}},{"id":null,"type":"DOC","operations":["WRITE"]}]`
 	resources, entries, err := CheckResourceBulkOperations([]byte(body))
@@ -132,12 +139,14 @@ func TestCheckResourceBulkOperations_ExpandsOperations(t *testing.T) {
 	wantResources := []Resource{
 		{ResourceType: "ORDER", Operation: "READ", Resource: kv},
 		{ResourceType: "ORDER", Operation: "5", Resource: kv},
+		{ResourceType: "ORDER", Operation: "", Resource: kv},
 		{ResourceType: "DOC", Operation: "WRITE", Resource: map[string]any{}},
 	}
-	if !reflect.DeepEqual(resources, wantResources) {
-		t.Errorf("resources = %#v, want %#v", resources, wantResources)
+	if got := decoded(resources); !reflect.DeepEqual(got, wantResources) {
+		t.Errorf("resources = %#v, want %#v", got, wantResources)
 	}
-	wantEntries := []Entry{{ID: "a", Operation: "READ"}, {ID: "a", Operation: "5"}, {ID: "", Operation: "WRITE"}}
+	wantEntries := []Entry{{ID: "a", Operation: "READ"}, {ID: "a", Operation: "5"}, {ID: "a", Operation: ""},
+		{ID: "", Operation: "WRITE"}}
 	if !reflect.DeepEqual(entries, wantEntries) {
 		t.Errorf("entries = %#v, want %#v", entries, wantEntries)
 	}
@@ -150,7 +159,8 @@ func TestCheckResourceBulkOperations_Refusals(t *testing.T) {
 		n    int
 		err  string
 	}{
-		{"only empty operations leave nothing to check", `[{"type":"ORDER","operations":[""]}]`, 0, ""},
+		{"an empty operation is checked", `[{"type":"ORDER","operations":[""]}]`, 1, ""},
+		{"only null operations leave nothing to check", `[{"type":"ORDER","operations":[null]}]`, 0, ""},
 		{"an empty array has nothing to check", `[]`, 0, ""},
 		{"absent operations are missing", `[{"type":"ORDER"}]`, 0, "Missing required parameter: operations"},
 		{"operations that are not an array are missing", `[{"type":"ORDER","operations":"READ"}]`, 0, "Missing required parameter: operations"},
@@ -159,6 +169,8 @@ func TestCheckResourceBulkOperations_Refusals(t *testing.T) {
 		{"a missing type names the parameter", `[{"operations":["READ"]}]`, 0, "Missing required parameter: type"},
 		{"the same id twice is refused", `[{"id":"a","type":"ORDER","operations":["READ"]},{"id":"a","type":"DOC","operations":["READ"]}]`,
 			0, "Duplicate resource id in bulk request: resource ids must be unique"},
+		{"an operation that is a list is a bad request", `[{"type":"ORDER","operations":[["DELETE"]]}]`, 0, "bad request"},
+		{"an operation that is an object is a bad request", `[{"type":"ORDER","operations":[{"a":1}]}]`, 0, "bad request"},
 		{"an object body is a bad request", `{"type":"ORDER","operations":["READ"]}`, 0, "bad request"},
 		{"an empty body is a bad request", ``, 0, "bad request"},
 	}
@@ -189,8 +201,8 @@ func TestCheckResourceBulkOperationsV2_SharesTheType(t *testing.T) {
 		{ResourceType: "ORDER", Operation: "WRITE", Resource: empty},
 		{ResourceType: "ORDER", Operation: "READ", Resource: map[string]any{"o": json.Number("1")}},
 	}
-	if !reflect.DeepEqual(resources, wantResources) {
-		t.Errorf("resources = %#v, want %#v", resources, wantResources)
+	if got := decoded(resources); !reflect.DeepEqual(got, wantResources) {
+		t.Errorf("resources = %#v, want %#v", got, wantResources)
 	}
 	wantEntries := []Entry{{ID: "a", Operation: "READ"}, {ID: "a", Operation: "WRITE"}, {ID: "", Operation: "READ"}}
 	if !reflect.DeepEqual(entries, wantEntries) {
@@ -221,6 +233,8 @@ func TestCheckResourceBulkOperationsV2_Refusals(t *testing.T) {
 		{"null entries are a bad request", `{"type":"ORDER","entries":null}`, "bad request"},
 		{"an entry without operations names the parameter", `{"type":"ORDER","entries":[{"id":"a"}]}`, "Missing required parameter: operations"},
 		{"an entry that is not an object has no operations", `{"type":"ORDER","entries":["a"]}`, "Missing required parameter: operations"},
+		{"an operation that is a list is a bad request", `{"type":"ORDER","entries":[{"operations":[["DELETE"]]}]}`, "bad request"},
+		{"an operation that is an object is a bad request", `{"type":"ORDER","entries":[{"operations":[{"a":1}]}]}`, "bad request"},
 		{"the same id twice is refused", `{"type":"ORDER","entries":[{"id":"a","operations":["READ"]},{"id":"a","operations":["READ"]}]}`,
 			"Duplicate resource id in bulk request: resource ids must be unique"},
 	}
@@ -241,8 +255,7 @@ func TestCheckFilter(t *testing.T) {
 		want                    []Resource
 		err                     string
 	}{
-		{"a blank operation means ALL", "ORDER", " ", []Resource{{ResourceType: "ORDER", Operation: "ALL", Resource: map[string]any{}}}, ""},
-		{"an absent operation means ALL", "ORDER", "", []Resource{{ResourceType: "ORDER", Operation: "ALL", Resource: map[string]any{}}}, ""},
+		{"an absent operation stays empty", "ORDER", "", []Resource{{ResourceType: "ORDER", Operation: "", Resource: map[string]any{}}}, ""},
 		{"values keep their spaces", " ORDER ", " READ", []Resource{{ResourceType: " ORDER ", Operation: " READ", Resource: map[string]any{}}}, ""},
 		{"a blank resource type is a bad request", " ", "READ", nil, "bad request"},
 		{"an absent resource type is a bad request", "", "", nil, "bad request"},
@@ -275,7 +288,8 @@ func TestInput(t *testing.T) {
 			},
 			map[string]any{
 				"authorizationToken": "Bearer m2m", "subject": "Bearer user", "authorizationType": "",
-				"requestHeaders": map[string]any{"authorization-type": "", "x-tenant": "acme"}, "requestId": "r1",
+				"requestHeaders": map[string]any{"authorization-type": "", "x-tenant": "acme", "host": "agent",
+					"content-type": "application/json"}, "requestId": "r1",
 				"resources": wantResources,
 			}},
 		{"the subject falls back to the admission token",
@@ -436,39 +450,48 @@ func TestCheckResourceBulkOperationsResponse(t *testing.T) {
 	}
 }
 
-func typedPredicate(typ string, value any) map[string]any {
-	return map[string]any{"predicateType": typ, "predicate": value}
+// decoded returns rs without their raw fields, which TestRawFieldsKeepTheTextOfTheRequest
+// checks on its own.
+func decoded(rs []Resource) []Resource {
+	if rs == nil {
+		return nil
+	}
+	out := make([]Resource, len(rs))
+	for i, r := range rs {
+		r.Raw = RawResource{}
+		out[i] = r
+	}
+	return out
 }
 
-func TestFilterResponse(t *testing.T) {
-	const denied = `{"calculationResult":"DENY","filterCondition":"","mongodbFilterCondition":"","rsqlFilterCondition":"","sqlFilterCondition":"","customFilterCondition":null}`
-	const allowed = `{"calculationResult":"ALLOW","filterCondition":"","mongodbFilterCondition":"","rsqlFilterCondition":"","sqlFilterCondition":"","customFilterCondition":null}`
-	cases := []struct {
-		name   string
-		result any
-		want   string
-	}{
-		{"no results is DENY", decision(), denied},
-		{"a denied result is DENY whatever its predicates", decision(map[string]any{"isAllowed": false, "predicates": []any{typedPredicate("rsql", "a==b")}}), denied},
-		{"allowed without predicates is ALLOW", decision(allow()), allowed},
-		{"allowed with predicates of unknown types is ALLOW", decision(allow(typedPredicate("jpql", "a==b"))), allowed},
-		{"a null predicate counts as none", decision(allow(typedPredicate("rsql", nil))), allowed},
-		{"every typed predicate in its field, querydsl as filterCondition",
-			decision(allow(typedPredicate("rsql", "dept==eng"), typedPredicate("querydsl", "dept eq eng"), typedPredicate("mongodb", map[string]any{"dept": "eng"}),
-				typedPredicate("sql", "dept = 'eng'"), typedPredicate("custom", "x"))),
-			`{"calculationResult":"USE_FILTER_CONDITION","filterCondition":"dept eq eng","mongodbFilterCondition":"{\"dept\":\"eng\"}","rsqlFilterCondition":"dept==eng","sqlFilterCondition":"dept = 'eng'","customFilterCondition":"x"}`},
-		{"only querydsl is still USE_FILTER_CONDITION", decision(allow(typedPredicate("querydsl", "dept eq eng"))),
-			`{"calculationResult":"USE_FILTER_CONDITION","filterCondition":"dept eq eng","mongodbFilterCondition":"","rsqlFilterCondition":"","sqlFilterCondition":"","customFilterCondition":null}`},
-		{"the first predicate of a type wins", decision(allow(typedPredicate("rsql", "first"), typedPredicate("rsql", "second"))),
-			`{"calculationResult":"USE_FILTER_CONDITION","filterCondition":"","mongodbFilterCondition":"","rsqlFilterCondition":"first","sqlFilterCondition":"","customFilterCondition":null}`},
-		{"HTML characters are not escaped", decision(allow(typedPredicate("rsql", "a<b"))),
-			`{"calculationResult":"USE_FILTER_CONDITION","filterCondition":"","mongodbFilterCondition":"","rsqlFilterCondition":"a<b","sqlFilterCondition":"","customFilterCondition":null}`},
+func TestRawFieldsKeepTheTextOfTheRequest(t *testing.T) {
+	got, err := CheckResource([]byte(`{"type":"ORDER","operation":"READ","resource":{"b":1.50,"a":2}}`))
+	if err != nil {
+		t.Fatalf("CheckResource: %v", err)
 	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			if got := string(FilterResponse(tc.result)); got != tc.want {
-				t.Errorf("FilterResponse(%v) = %s, want %s", tc.result, got, tc.want)
-			}
-		})
+	want := RawResource{Type: json.RawMessage(`"ORDER"`), Operation: json.RawMessage(`"READ"`),
+		Resource: json.RawMessage(`{"b":1.50,"a":2}`)}
+	if !reflect.DeepEqual(got[0].Raw, want) {
+		t.Errorf("CheckResource raw = %s, want %s", rawText(got[0].Raw), rawText(want))
 	}
+
+	got, _, err = CheckResourceBulkOperations([]byte(`[{"id":"a","type":"ORDER","operations":["READ",5]}]`))
+	if err != nil {
+		t.Fatalf("CheckResourceBulkOperations: %v", err)
+	}
+	if len(got) != 2 || string(got[1].Raw.Operation) != "5" || string(got[1].Raw.Type) != `"ORDER"` || got[1].Raw.Resource != nil {
+		t.Errorf("CheckResourceBulkOperations raw = %v, want type \"ORDER\", operation 5, no resource", rawTexts(got))
+	}
+}
+
+func rawText(r RawResource) string {
+	return fmt.Sprintf("{type %s, operation %s, resource %s}", r.Type, r.Operation, r.Resource)
+}
+
+func rawTexts(rs []Resource) []string {
+	var out []string
+	for _, r := range rs {
+		out = append(out, rawText(r.Raw))
+	}
+	return out
 }

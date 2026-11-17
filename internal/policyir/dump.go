@@ -64,6 +64,9 @@ func (t *Tree) Dump() string {
 		}
 		for _, p := range s.Policies {
 			line(depth+1, "policy %q name=%q algorithm=%s", p.ID, p.Name, algorithm(p.Algorithm))
+			if p.Isolated != "" {
+				line(depth+2, "isolated: %q", p.Isolated)
+			}
 			dumpCondition(line, depth+2, "target", p.Target)
 			for _, r := range p.Rules {
 				effect := string(r.Effect)
@@ -167,19 +170,26 @@ func dumpCondition(line func(int, string, ...any), depth int, label string, c *C
 // disjuncts by OR, operators in their [Operator] spelling, and operands as
 // [FormatOperand] prints them. Since the language has no parentheses, the
 // line is unambiguous without them.
-func FormatCondition(c *Condition) string {
+func FormatCondition(c *Condition) string { return formatCondition(c, false) }
+
+// FormatConditionBrief returns the condition as [FormatCondition] does, but
+// leaves out the raw token of a list where the token is the items written
+// back, strings in single quotes, separated by ", ".
+func FormatConditionBrief(c *Condition) string { return formatCondition(c, true) }
+
+func formatCondition(c *Condition, brief bool) string {
 	ors := make([]string, len(c.Disjuncts))
 	for i, d := range c.Disjuncts {
 		ands := make([]string, len(d))
 		for j, a := range d {
-			ands[j] = formatAtom(a)
+			ands[j] = formatAtom(a, brief)
 		}
 		ors[i] = strings.Join(ands, " AND ")
 	}
 	return strings.Join(ors, " OR ")
 }
 
-func formatAtom(a Atom) string {
+func formatAtom(a Atom, brief bool) string {
 	switch v := a.(type) {
 	case Const:
 		return strings.ToUpper(strconv.FormatBool(v.Value))
@@ -193,9 +203,9 @@ func formatAtom(a Atom) string {
 		return fmt.Sprintf("subject %s %q on resource", verb, v.Operation)
 	case Compare:
 		if v.Right == nil {
-			return FormatOperand(v.Left) + " " + string(v.Op)
+			return formatOperand(v.Left, brief) + " " + string(v.Op)
 		}
-		return FormatOperand(v.Left) + " " + string(v.Op) + " " + FormatOperand(v.Right)
+		return formatOperand(v.Left, brief) + " " + string(v.Op) + " " + formatOperand(v.Right, brief)
 	case Unsupported:
 		return formatUnsupported(v)
 	default:
@@ -209,17 +219,23 @@ func formatAtom(a Atom) string {
 // A resource path with a character outside printable ASCII is Go-quoted too,
 // as resource"['a\nb']", so the dump keeps one node per line. A list of
 // several items also prints its raw token.
-func FormatOperand(o Operand) string {
+func FormatOperand(o Operand) string { return formatOperand(o, false) }
+
+func formatOperand(o Operand, brief bool) string {
 	switch v := o.(type) {
 	case Operation:
 		return "operation"
 	case ResourceType:
 		return "resourceType"
 	case Resource:
-		if strings.ContainsFunc(v.Path, func(r rune) bool { return r < ' ' || r > '~' }) {
-			return "resource" + strconv.Quote(v.Path)
+		path := v.Path
+		if v.TrailingDot {
+			path += "."
 		}
-		return "resource" + v.Path
+		if strings.ContainsFunc(path, func(r rune) bool { return r < ' ' || r > '~' }) {
+			return "resource" + strconv.Quote(path)
+		}
+		return "resource" + path
 	case Subject:
 		if v.Key != "" {
 			return fmt.Sprintf("subject.%s[%q]", v.Attr, v.Key)
@@ -250,17 +266,37 @@ func FormatOperand(o Operand) string {
 			items[i] = FormatOperand(it)
 		}
 		s := "[" + strings.Join(items, ", ") + "]"
-		if v.Raw != "" {
+		if v.Raw != "" && (!brief || v.Raw != writtenBack(v.Items)) {
 			s += fmt.Sprintf(" raw=%q", v.Raw)
 		}
 		return s
 	case Pattern:
+		if v.Path {
+			return fmt.Sprintf("pattern(%q, path)", v.Text)
+		}
 		return fmt.Sprintf("pattern(%q)", v.Text)
 	case Unsupported:
 		return formatUnsupported(v)
 	default:
 		return fmt.Sprintf("<%T>", o)
 	}
+}
+
+// writtenBack returns the items as a list token writes them: a string in
+// single quotes, a number and a boolean as their text, separated by ", ".
+func writtenBack(items []Literal) string {
+	parts := make([]string, len(items))
+	for i, it := range items {
+		switch v := it.(type) {
+		case String:
+			parts[i] = "'" + v.Value + "'"
+		case Number:
+			parts[i] = v.Text
+		case Bool:
+			parts[i] = strconv.FormatBool(v.Value)
+		}
+	}
+	return strings.Join(parts, ", ")
 }
 
 func formatUnsupported(u Unsupported) string {

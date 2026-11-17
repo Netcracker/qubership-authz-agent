@@ -518,8 +518,8 @@ else
   fail "a gateway registers /access/v1/authorize, which the agent does not serve"
 fi
 
-# /health answers once the trusted providers are in order and /ready once the
-# policies have loaded too, so a Pod waiting for its policy source is held out
+# /health answers once the trusted providers are in order and /ready once every
+# tenant has a snapshot too, so a Pod waiting for its policy source is held out
 # of the Service instead of being restarted.
 if [[ "${all_manifests}" == *"path: /ready"* && "${all_manifests}" == *"path: /health"* ]]; then
   pass "the agent Pod probes /ready for readiness and /health for liveness"
