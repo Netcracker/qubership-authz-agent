@@ -24,7 +24,8 @@ kichasov
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   verifies the tokens that this record accepts, and defines realm token, file token, and Kubernetes token.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
-  ADR-0093 R1, the tenant that a caller that is not M2M is compared with.
+  ADR-0093 R1, the tenant that a caller that is not M2M is compared with, and ADR-0093 R22, the 503 that takes the
+  place of the 403 of R4 before the default tenant is translated.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
     the marked provider and the checks of a Kubernetes token.
 - [authz-agent-ADR-0095: Refuse a check request before policy evaluation](20261029-authz-agent-adr-0095-refuse-before-policy-evaluation.md):
@@ -65,7 +66,8 @@ token that is not M2M to its own tenant.
 - **R3** (`handler`). An M2M token in `Authorization` may name any tenant.
 - **R4** (`handler`). A token in `Authorization` that is not M2M may reach only the tenant of its own non-empty
   `tenant-id` claim, or the default tenant when it has no such claim. Any other tenant gets 403 with
-  `CALLER_TENANT_MISMATCH` before policy evaluation.
+  `CALLER_TENANT_MISMATCH` before policy evaluation. The exception is a caller that ADR-0093 R22 refuses with 503
+  before the agent translates the name of the default tenant.
 - **R5** (`handler`). The comparison of R4 uses the tenant of the decision of ADR-0093 R1, so that an `Incoming-Token`
   cannot move the caller out of its tenant.
 
@@ -148,7 +150,8 @@ Negative:
 - Comparing with the tenant of the decision changes the answer of two requests that no golden covers:
   - A caller that is not M2M and has no `tenant-id`, such as a client-credentials token without `ROLE_M2M`, forwards the
     `Incoming-Token` of a user of tenant T. Without that header it is the golden `no-claim-names-no-tenant`, 200 in the
-    default tenant. Here the tenant of the decision is T, so the caller gets 403 `CALLER_TENANT_MISMATCH`.
+    default tenant. Here the tenant of the decision is T, so after the translation of the default tenant (ADR-0093 R22)
+    the caller gets 403 `CALLER_TENANT_MISMATCH`.
   - A user of tenant A sends a token in `Authorization`, `tenant_id=B`, and an `Incoming-Token` with `tenant-id` A.
     Without that header it is the golden `claim-a-names-tenant-b`, 403. Here the decision is computed in A, with 200.
 

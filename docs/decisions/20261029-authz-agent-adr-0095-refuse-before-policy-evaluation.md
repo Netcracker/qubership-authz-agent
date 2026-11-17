@@ -24,7 +24,8 @@ kichasov
   ADR-0092 R1 and R2, the refusals of a missing or wrong token, ADR-0092 R11, the kinds of token, and ADR-0092 R4, a
   caller outside its tenant.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
-  ADR-0093 R1, the tenant that the steps of this record compare with.
+  ADR-0093 R1, the tenant that the steps of this record compare with, and ADR-0093 R22, the 503 in steps 4 and 5
+  before the default tenant is translated.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
   ADR-0094 R14, R16 to R18, and R25, the refusals of a Kubernetes token.
 
@@ -59,14 +60,15 @@ and the reason code in the audit and a metric.
 - **R3** (`handler`). A failure in step 2 does not end the request, and policy evaluation gets the reason code of the
   failure. The exception is `TOKEN_KEYS_UNAVAILABLE`, which ends the request with a 503, because the tenant of step 3
   cannot be known.
-- **R4** (`handler`). A refusal in step 4 is a 403.
+- **R4** (`handler`). A refusal in step 4 is a 403, or a 503 for `DEFAULT_TENANT_NOT_TRANSLATED` of ADR-0093 R22.
 - **R5** (`handler`). In step 5 a tenant without data or with a rejected snapshot gets the deny of ADR-0093 R16 or R18
-  from Go.
+  from Go. The exception is a request that ADR-0093 R22 refuses in step 5 with a 503 for
+  `DEFAULT_TENANT_NOT_TRANSLATED`.
 
 #### Refusals
 
 - **R6** (`handler`). A refusal has an empty body.
-- **R7** (`handler`). A 503 carries `Retry-After: 60`, the minute in which a source is not asked again.
+- **R7** (`handler`). A 503 carries `Retry-After: 60`.
 - **R8** (`handler`). A 401 carries `WWW-Authenticate: Bearer` for `TOKEN_MISSING` and `TOKEN_SCHEME_INVALID`, and
   `WWW-Authenticate: Bearer error="invalid_token"` for every other code, as RFC 6750 requires. These reveal nothing
   beyond the status.
@@ -105,6 +107,7 @@ and the reason code in the audit and a metric.
   | 401 | `TOKEN_SUBJECT_INVALID` | ADR-0094 R16 |
   | 403 | `CALLER_TENANT_MISMATCH` | ADR-0092 R4 |
   | 503 | `TOKEN_KEYS_UNAVAILABLE` | ADR-0091 R37, R38, for either header |
+  | 503 | `DEFAULT_TENANT_NOT_TRANSLATED` | ADR-0093 R22 |
 
 ### Justification
 
@@ -116,9 +119,10 @@ looks, under the `X-Request-Id` (R9, R10).
 
 A code of its own for keys that could not be loaded keeps an outage of Keycloak from reading like an invented token. The
 503 says that the fault is not the caller's token, and `Retry-After` keeps a client from adding traffic during the
-outage (R2, R7). A user token whose keys cannot be loaded ends the request, because otherwise the same request would
-move to another tenant for as long as the outage lasts (R3). A code of its own for a realm token or a file token in
-`k8s` shows which services still call with one, which is what that mode is for.
+outage (R2, R7). Its 60 seconds is the minute in which a source of keys is not asked again. A user token whose keys
+cannot be loaded ends the request, because otherwise the same request would move to another tenant for as long as the
+outage lasts (R3). A code of its own for a realm token or a file token in `k8s` shows which services still call with
+one, which is what that mode is for.
 
 ### Alternatives considered
 
