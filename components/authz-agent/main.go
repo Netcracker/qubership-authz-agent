@@ -23,7 +23,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -44,7 +43,6 @@ import (
 	"authz-agent/components/authz-agent/internal/m2m"
 	"authz-agent/components/authz-agent/internal/pull"
 	"authz-agent/components/authz-agent/internal/server"
-	"authz-agent/internal/pips"
 	"authz-agent/policies"
 )
 
@@ -60,15 +58,19 @@ func init() {
 }
 
 func main() {
-	cfg := loadConfig(get)
+	cfg, err := loadConfig(get)
+	if err != nil {
+		logStop("configuration: %v", err)
+		os.Exit(1)
+	}
 	modules, err := policies.Modules()
 	if err != nil {
-		logger.Errorf("policies: %v", err)
+		logStop("policies: %v", err)
 		os.Exit(1)
 	}
 	eng, err := engine.New(engine.Options{Modules: modules})
 	if err != nil {
-		logger.Errorf("policy engine: %v", err)
+		logStop("policy engine: %v", err)
 		os.Exit(1)
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -86,7 +88,6 @@ func main() {
 	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != "" {
 		tokens = m2m.New(cfg.M2M, eng, logger)
 	}
-	cfg.Pull.Entitlements = pips.LoadEntitlementsConfigFromEnv()
 	var source pull.Tokens
 	if tokens != nil {
 		source = tokens
@@ -106,7 +107,7 @@ func main() {
 		DisableStartupMessage: true,
 	}).WithPrometheus("/prometheus").Process()
 	if err != nil {
-		logger.Errorf("fiber: %v", err)
+		logStop("fiber: %v", err)
 		os.Exit(1)
 	}
 	// The public routes match the way Envoy's path matches did: exact,
@@ -119,7 +120,7 @@ func main() {
 		DisableStartupMessage: true,
 	}).Process()
 	if err != nil {
-		logger.Errorf("fiber: %v", err)
+		logStop("fiber: %v", err)
 		os.Exit(1)
 	}
 	srv := server.Register(internal, eng, opts)
@@ -150,13 +151,13 @@ func main() {
 func serve(ctx context.Context, stop func(), cfg config, modules int, public, internal *fiber.App) bool {
 	publicSocket, err := net.Listen("tcp", cfg.PublicAddr)
 	if err != nil {
-		logger.Errorf("public listener on %s: %v", cfg.PublicAddr, err)
+		logStop("public listener on AUTHZ_PUBLIC_ADDR=%q: %v", cfg.PublicAddr, err)
 		return true
 	}
 	internalSocket, err := net.Listen("tcp", cfg.Addr)
 	if err != nil {
 		_ = publicSocket.Close()
-		logger.Errorf("internal listener on %s: %v", cfg.Addr, err)
+		logStop("internal listener on AUTHZ_HTTP_ADDR=%q: %v", cfg.Addr, err)
 		return true
 	}
 	logger.Infof("authz-agent: %d policy modules, public surface on %s, internal surface on %s",
@@ -190,7 +191,7 @@ func serveUntilShutdown(ctx context.Context, stop func(), surfaces []surface) bo
 		go func() {
 			defer servers.Done()
 			if err := s.app.Listener(s.socket); err != nil && ctx.Err() == nil {
-				logger.Errorf("%s server on %s: %v", s.name, s.socket.Addr(), err)
+				logStop("%s server on %s: %v", s.name, s.socket.Addr(), err)
 				failed.Store(true)
 				stop()
 			}
@@ -212,16 +213,33 @@ func serveUntilShutdown(ctx context.Context, stop func(), surfaces []surface) bo
 	return failed.Load()
 }
 
-// get reads one key through configloader, except that it returns the empty
-// string for an environment variable set to the empty string, where
-// configloader returns fallback. The caller decides what an empty value
-// means: an empty AUTHZ_TRUSTED_PROVIDERS_FILE runs the service without
-// trusted providers.
+// get returns the value of the environment variable that [variable] names
+// for key, the empty string included, or fallback where that variable is
+// unset. The caller decides what an empty value means: an empty
+// AUTHZ_TRUSTED_PROVIDERS_FILE runs the service without trusted providers.
+// get reads the variable itself rather than through configloader, which
+// nests a name that adds an underscore and a suffix to another, such as
+// LOG_LEVEL_PACKAGE_AUTHZ-AGENT, under the key of the shorter one, LOG_LEVEL,
+// and then returns no value for LOG_LEVEL.
 func get(key, fallback string) string {
-	if value, ok := os.LookupEnv(strings.ToUpper(strings.ReplaceAll(key, ".", "_"))); ok && value == "" {
-		return ""
+	if value, ok := os.LookupEnv(variable(key)); ok {
+		return value
 	}
-	return configloader.GetOrDefaultString(key, fallback)
+	return fallback
+}
+
+// logStop logs an error after which the agent exits with status 1. Where the
+// agent's logger is at the level fatal, which drops error lines, logStop first
+// raises the level to error, so that the line that says why the agent stops
+// is logged. Fatal is the only level the logger numbers below
+// [logging.LvlError], so every other level stays as it is, and a surface that
+// fails at run time keeps the warnings of the shutdown that follows, where
+// the level logs them.
+func logStop(format string, args ...any) {
+	if logger.GetLevel() < logging.LvlError {
+		logger.SetLevel(logging.LvlError)
+	}
+	logger.Errorf(format, args...)
 }
 
 // report composes the state of the loops: the trusted providers' outcome

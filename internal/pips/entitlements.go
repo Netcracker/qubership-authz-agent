@@ -14,59 +14,6 @@
 
 package pips
 
-import (
-	"os"
-	"strconv"
-	"strings"
-)
-
-// Environment variables consumed at startup to materialise the
-// deployment-pinned entitlements PIP entry per ADR-0054 + D-AG-17.
-// The variable names mirror the existing `AUTHZ_JWKS_HTTP_*` block so the
-// knob shape is consistent for operators.
-const (
-	EnvEntitlementsURL         = "AUTHZ_ENTITLEMENTS_URL"
-	EnvEntitlementsHTTPTimeout = "AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT"
-	EnvEntitlementsHTTPRetries = "AUTHZ_ENTITLEMENTS_HTTP_RETRIES"
-)
-
-// LoadEntitlementsConfigFromEnv reads the three AUTHZ_ENTITLEMENTS_*
-// environment variables and returns a populated config, or nil when
-// AUTHZ_ENTITLEMENTS_URL is unset. Trailing slashes on the URL are
-// stripped so the rego resolver can always compose
-// `${URL}/api/v3/user-entitlements/user/{userId}` without worrying
-// about double-`/`.
-//
-// Unparseable numeric values for timeout/retries fall back to the
-// defaults (mirroring DefaultJWKSHTTPTimeout / DefaultJWKSHTTPRetries
-// defaults) so a misconfigured env block produces a structured
-// warning rather than a crash. A zero or negative parsed value also
-// falls back to the default.
-func LoadEntitlementsConfigFromEnv() *EntitlementsConfig {
-	url := strings.TrimSpace(os.Getenv(EnvEntitlementsURL))
-	if url == "" {
-		return nil
-	}
-	url = strings.TrimRight(url, "/")
-	return &EntitlementsConfig{
-		URL:                url,
-		HTTPTimeoutSeconds: envIntOrDefault(EnvEntitlementsHTTPTimeout, DefaultEntitlementsHTTPTimeout),
-		HTTPRetries:        envIntOrDefault(EnvEntitlementsHTTPRetries, DefaultEntitlementsHTTPRetries),
-	}
-}
-
-func envIntOrDefault(key string, fallback int) int {
-	raw := strings.TrimSpace(os.Getenv(key))
-	if raw == "" {
-		return fallback
-	}
-	parsed, err := strconv.Atoi(raw)
-	if err != nil || parsed <= 0 {
-		return fallback
-	}
-	return parsed
-}
-
 // ApplyEntitlementsOverride merges the container-pinned entitlements
 // entry into a normalized PIP document produced by Normalize /
 // NormalizeItems. It is idempotent: calling it twice with the same

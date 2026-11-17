@@ -144,7 +144,7 @@ func (s *Source) Run(ctx context.Context) {
 }
 
 // runClientCredentials fetches a token, publishes it, and sleeps until the
-// renewal is due: RenewBefore before the expiry, no later than half the
+// renewal is due: RenewBefore before the expiry, no earlier than half the
 // lifetime, and never sooner than one second. A failed fetch is retried
 // with a backoff that doubles up to five minutes.
 func (s *Source) runClientCredentials(ctx context.Context) {
