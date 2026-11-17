@@ -32,7 +32,7 @@ The chart assembles the agent Pod as this one container.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger: `debug`, `info`, `warn`, `error`, or `fatal`; the chart sets it from its `LOG_LEVEL` value |
+| `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger: `debug`, `info`, `warn`, `error`, or `fatal`; the chart sets it from its `LOG_LEVEL` value. An environment variable named `LOG_LEVEL`, which the chart does not set, stops the start when it is not empty. Any other variable that the platform logger reads as either name, such as `log_level`, or that hides `LOGGING_LEVEL_ROOT` from it, such as `LOGGING_LEVEL_ROOT_X`, stops the start whatever its value |
 | `AUTHZ_PUBLIC_ADDR` | `0.0.0.0:8080` | Listen address of the public surface |
 | `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the internal surface: the probes, the metrics, and `/api-version` |
 | `AUTHZ_TRUSTED_PROVIDERS_FILE` | `/etc/authz/trusted-providers.json` | The trusted providers; empty runs without them |
