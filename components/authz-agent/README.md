@@ -85,9 +85,6 @@ source, and the PIPs. It reads them when the container starts. To give the agent
 3. After you replace the certificate in the Secret, restart the Pod, for example with
    `kubectl rollout restart deployment/authz-agent`.
 
-With Docker, mount the certificate file under `/tmp/cert` with `--volume`, and restart the container after you replace
-it.
-
 A file under `/tmp/cert` with one of those suffixes that holds no PEM certificate is skipped, and the agent starts
 without it. The entrypoint logs `Error process certificates file <path>: invalid certificates file data format.`
 
@@ -98,14 +95,13 @@ The path and the behavior come from the
 ## Stopping the agent
 
 A stop takes up to `SIGTERM_EXIT_DELAY` seconds, 10 by default, plus 10 seconds, so its grace period has to be longer
-than that. The 30 seconds Kubernetes gives a Pod by default are enough. With their default timeouts, `docker stop` and
-Docker Compose send `SIGKILL` before the delay ends, and the container exits with code 137 before the agent receives
-`SIGTERM`: run `docker stop --timeout 30`, or set `stop_grace_period: 30s` in Compose.
+than that. The 30 seconds Kubernetes gives a Pod by default are enough. When the grace period runs out first, the
+container gets `SIGKILL` and exits with code 137, while the entrypoint is still waiting or the agent is still finishing
+requests.
 
 On `SIGTERM`, the entrypoint of the base image waits `SIGTERM_EXIT_DELAY` seconds before it passes the signal on, which
 gives a Kubernetes Service time to stop sending requests to the Pod. The agent then takes up to 10 seconds to finish the
-requests in flight. Where nothing has to stop routing requests to the agent first, such as a single container in
-Docker, set `SIGTERM_EXIT_DELAY` to `0`.
+requests in flight. Where nothing has to stop routing requests to the agent first, set `SIGTERM_EXIT_DELAY` to `0`.
 
 ## Running it
 
