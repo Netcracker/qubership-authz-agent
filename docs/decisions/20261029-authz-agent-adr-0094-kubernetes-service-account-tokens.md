@@ -121,7 +121,8 @@ agent's own cluster verifies it, it passes the checks of this record, and its na
 
 #### The namespaces
 
-- **R17** (`namespaces`). A Kubernetes token is accepted only from a namespace of the installation.
+- **R17** (`namespaces`). A Kubernetes token from a namespace of the installation passes the namespace check, and a
+  Kubernetes token from any other namespace is refused.
 - **R18** (`namespaces`). The namespace is the `namespace` member of the `kubernetes.io` claim. A token without it is
   refused.
 - **R19** (`chart`). The chart mounts the ConfigMap `topology` with `optional: true`.
@@ -129,7 +130,8 @@ agent's own cluster verifies it, it passes the checks of this record, and its na
   namespace the agent runs in is allowed.
 - **R21** (`namespaces`). The agent reads the topology file again every 20 seconds.
 - **R22** (`verify`). The check of R17 runs on a verified token taken from the cache too.
-- **R23** (`namespaces`). A namespace that leaves the topology is refused once the kubelet has updated the mounted file
+- **R23** (`namespaces`). Except for the namespace the agent runs in, a namespace that leaves the topology is refused
+  once the kubelet has updated the mounted file
   and the next read has run, with no restart.
 - **R24** (`verify`). A Kubernetes token is never accepted without the check of R17.
 - **R25** (`namespaces`). A token that R17 or R18 refuses gets the code `TOKEN_NAMESPACE_NOT_ALLOWED`.
@@ -144,6 +146,10 @@ token never passes without the namespace check (R24).
 The signature cannot tell the services of one installation from those of another, because the API server signs both
 with the same keys. The topology file is the platform's own description of the installation, kept in every namespace,
 so the agent needs no list of its own.
+
+The namespace the agent runs in is a namespace of the installation whatever the topology file holds (R17, R23). Anyone
+who can create a Pod there can already run it with the agent's service account and mount the agent's Secrets, so
+accepting tokens from that namespace lets in no one new.
 
 Taking the issuer from the token for the API server needs no setting per cluster, and the token states exactly the value
 the tokens of that cluster carry (R4). Discovery follows from the issuer in the same way, and the chart setting covers
