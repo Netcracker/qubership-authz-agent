@@ -212,7 +212,10 @@ func renewal(lifetime time.Duration) time.Duration {
 // and so does one outside the int64 range. Without an expires_in above 0,
 // the lifetime is the time left until the token's exp claim, and an exp
 // further ahead than a Duration can hold, about 292 years, gives the
-// longest Duration. On an error the file keeps its previous content.
+// longest Duration. On an error the file keeps its previous content. When
+// the request fails before a response arrives, as when the connection is
+// refused or ctx ends first, the error unwraps to the *url.Error net/http
+// returned, so errors.Is(err, ctx.Err()) reports true when ctx ended first.
 func (w *Writer) Refresh(ctx context.Context) (time.Duration, error) {
 	w.requested.Store(w.now().UnixNano())
 	clientID, err := readSecret(w.cfg.ClientIDFile)
@@ -246,19 +249,21 @@ func (w *Writer) request(ctx context.Context, clientID, clientSecret string) (st
 	client := *w.cfg.Client
 	client.Transport = jsonResponses{next: client.Transport}
 	token, err := grant.Token(context.WithValue(ctx, oauth2.HTTPClient, &client))
-	var refused *oauth2.RetrieveError
-	var unsent *url.Error
+	var retrieveErr *oauth2.RetrieveError
+	var doErr *url.Error
 	switch {
-	case errors.As(err, &refused):
+	case errors.As(err, &retrieveErr):
 		// The message is built from the fields: RetrieveError.Error holds the
 		// whole response body, up to 1 MiB, when the response names no error.
-		return "", 0, fmt.Errorf("POST %s: HTTP %d%s", w.cfg.TokenURL, refused.Response.StatusCode, oauthError(refused))
-	case errors.As(err, &unsent):
-		// The text follows url.Error with the cause cut. net/http parses the
-		// Location header of a redirect before CheckRedirect stops it, quotes
-		// an unparsable header twice, and by default accepts response headers
-		// up to 10 MiB.
-		return "", 0, fmt.Errorf("%s %q: %s", unsent.Op, unsent.URL, quoted(unsent.Err.Error(), 200))
+		return "", 0, fmt.Errorf("POST %s: HTTP %d%s", w.cfg.TokenURL, retrieveErr.Response.StatusCode, oauthError(retrieveErr))
+	case errors.As(err, &doErr):
+		// url.Error holds the URL of the last request the client sent, which
+		// is a Location when the client follows redirects. The cause is cut:
+		// net/http parses the Location header of a redirect before
+		// CheckRedirect stops it, quotes an unparsable header twice, and by
+		// default accepts response headers up to 10 MiB.
+		text := fmt.Sprintf("POST %s: %s", w.cfg.TokenURL, quoted(doErr.Err.Error(), 200))
+		return "", 0, &requestError{text: text, err: doErr}
 	case err != nil:
 		// x/oauth2 repeats an expires_in it rejects in its parse error, and
 		// that value can be as long as the body, up to 1 MiB.
@@ -309,6 +314,18 @@ func (t jsonResponses) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp.Header.Set("Content-Type", "application/json")
 	return resp, nil
 }
+
+// requestError is the error of a token request that net/http failed. Its
+// text names the TokenURL and the cause cut to 200 runes, and it unwraps to
+// the *url.Error net/http returned.
+type requestError struct {
+	text string
+	err  *url.Error
+}
+
+func (e *requestError) Error() string { return e.text }
+
+func (e *requestError) Unwrap() error { return e.err }
 
 // maxExpiresIn is the longest lifetime an expires_in gives, in seconds:
 // 2147483647, about 68 years.
