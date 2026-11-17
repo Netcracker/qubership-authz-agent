@@ -159,18 +159,20 @@ func TestWriter_RefreshWritesTheTokenItObtains(t *testing.T) {
 	}
 }
 
-// The colon in the id would split the header in the wrong place unless the
-// id is form-encoded first.
+// The id and the secret hold characters that form encoding changes, a colon
+// among them, which would split the header in the wrong place unless each is
+// form-encoded first.
 func TestWriter_SendsTheCredentialsInABasicHeaderWhenAsked(t *testing.T) {
 	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 300}`)
 	w, secretFile := newTestWriter(t, e, inTempDir(t, "token"))
 	writeFile(t, filepath.Join(filepath.Dir(secretFile), "username"), "agent:1\n")
+	writeFile(t, secretFile, "p@ss word:1\n")
 	w.cfg.BasicAuth = true
 
 	if _, err := w.Refresh(context.Background()); err != nil {
 		t.Fatalf("Refresh() error = %v", err)
 	}
-	want := "Basic " + base64.StdEncoding.EncodeToString([]byte("agent%3A1:s3cret"))
+	want := "Basic " + base64.StdEncoding.EncodeToString([]byte("agent%3A1:p%40ss+word%3A1"))
 	if got := e.authorization(); got != want {
 		t.Errorf("token request Authorization = %q, want %q", got, want)
 	}
