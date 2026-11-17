@@ -21,9 +21,11 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"io/fs"
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -185,22 +187,35 @@ func TestAllowlist_RunReadsTheFileAgainOnTheInterval(t *testing.T) {
 	}
 }
 
-// recordingLogger keeps every warning it receives.
+// recordingLogger keeps every warning it receives and every error among
+// the warnings' arguments.
 type recordingLogger struct {
 	mu       sync.Mutex
 	messages []string
+	causes   []error
 }
 
-func (l *recordingLogger) Warnf(format string, _ ...any) {
+func (l *recordingLogger) Warnf(format string, args ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.messages = append(l.messages, format)
+	for _, arg := range args {
+		if err, ok := arg.(error); ok {
+			l.causes = append(l.causes, err)
+		}
+	}
 }
 
 func (l *recordingLogger) count() int {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	return len(l.messages)
+}
+
+func (l *recordingLogger) loggedCauses() []error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return slices.Clone(l.causes)
 }
 
 // The file stays missing across three reads; the fallback is reported once.
@@ -214,9 +229,7 @@ func TestAllowlist_WarnsOnceWhileTheTopologyIsMissing(t *testing.T) {
 	}
 }
 
-// A file that parses is read without a warning, whether or not it names a
-// namespace of a composite.
-func TestAllowlist_WarnsOnlyWhenTheTopologyCannotBeReadOrParsed(t *testing.T) {
+func TestAllowlist_WarnsOnlyWhenTheTopologyCannotBeReadOrParsedOrItsCompositeNamesNoNamespace(t *testing.T) {
 	tests := []struct {
 		name string
 		file string
@@ -224,8 +237,8 @@ func TestAllowlist_WarnsOnlyWhenTheTopologyCannotBeReadOrParsed(t *testing.T) {
 	}{
 		{"missing file", filepath.Join(t.TempDir(), "absent"), 1},
 		{"file that is not JSON", writeTopology(t, "composite: yes"), 1},
+		{"composite that names no namespace", writeTopology(t, emptyComposite), 1},
 		{"file without a composite", writeTopology(t, withoutComposite), 0},
-		{"composite that names no namespace", writeTopology(t, emptyComposite), 0},
 		{"composite", writeTopology(t, composite), 0},
 	}
 	for _, tt := range tests {
@@ -239,8 +252,26 @@ func TestAllowlist_WarnsOnlyWhenTheTopologyCannotBeReadOrParsed(t *testing.T) {
 	}
 }
 
-// Between the two times the file goes missing, it is read with or without a
-// composite.
+func TestAllowlist_WarnsWithTheCause(t *testing.T) {
+	tests := []struct {
+		name string
+		file string
+		want error
+	}{
+		{"missing file", filepath.Join(t.TempDir(), "absent"), fs.ErrNotExist},
+		{"composite that names no namespace", writeTopology(t, emptyComposite), errNoNamespace},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			log := &recordingLogger{}
+			New(Options{TopologyFile: tt.file, Namespace: "own", Log: log})
+			if causes := log.loggedCauses(); len(causes) != 1 || !errors.Is(causes[0], tt.want) {
+				t.Errorf("warning causes = %v, want one that is %v", causes, tt.want)
+			}
+		})
+	}
+}
+
 func TestAllowlist_WarnsAgainWhenTheTopologyGoesAwayAgain(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -264,6 +295,31 @@ func TestAllowlist_WarnsAgainWhenTheTopologyGoesAwayAgain(t *testing.T) {
 			a.reload()
 			if got := log.count(); got != 2 {
 				t.Errorf("warnings = %d, want 2: one for each time the file went missing", got)
+			}
+		})
+	}
+}
+
+func TestAllowlist_WarnsAgainWhenTheCauseChanges(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+	}{
+		{"file that is not JSON", "composite: yes"},
+		{"composite that names no namespace", emptyComposite},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			log := &recordingLogger{}
+			path := filepath.Join(t.TempDir(), "data")
+			a := New(Options{TopologyFile: path, Namespace: "own", Log: log})
+			if err := os.WriteFile(path, []byte(tt.content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			a.reload()
+			a.reload()
+			if got := log.count(); got != 2 {
+				t.Errorf("warnings = %d, want 2: one for the missing file and one for the %s", got, tt.name)
 			}
 		})
 	}
