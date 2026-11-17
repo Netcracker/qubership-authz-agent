@@ -350,6 +350,25 @@ func TestBootstrap_ResolvesTheRealmDisplayName(t *testing.T) {
 	}
 }
 
+// The Compose example of deploy/docker ships this file for an installation to
+// fill in, and the Docker end-to-end job replaces it with a file of its own.
+func TestLoad_AcceptsTheComposeExampleProvidersFile(t *testing.T) {
+	const path = "../../../../deploy/docker/authz/trusted-providers.json"
+
+	doc, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load(%q) error = %v", path, err)
+	}
+	if len(doc.Providers) == 0 {
+		t.Fatalf("Load(%q) = no providers, want the example's entries", path)
+	}
+	for i, p := range doc.Providers {
+		if err := p.validate(i); err != nil {
+			t.Errorf("Load(%q): provider %d: %v", path, i, err)
+		}
+	}
+}
+
 // TestReload: an unchanged file publishes nothing; a change that meets the
 // threshold is published and recorded; a change that does not meet it, or
 // leaves a required provider out, is refused and leaves the previous keys
