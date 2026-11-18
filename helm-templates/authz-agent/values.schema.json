@@ -272,7 +272,7 @@
       "$id": "#/properties/IDENTITY_PROVIDER_URL",
       "type": "string",
       "title": "The IDENTITY_PROVIDER_URL schema",
-      "description": "Base URL of the platform identity provider, without a realm. Used to generate the trusted providers when AUTHZ_TRUSTED_PROVIDERS is empty",
+      "description": "Base URL of the platform identity provider, without a realm. While AUTHZ_TRUSTED_PROVIDERS is empty, the chart builds the issuer of each realm in AUTHZ_IDP_REALMS from it. While KUBERNETES_M2M_ENABLED is false, the chart builds the agent's token endpoint AUTHZ_M2M_TOKEN_URL from it. Where the chart builds either one, it must be an http or https URL with a host",
       "default": "http://identity-provider:8080",
       "examples": [
         "http://identity-provider:8080",
@@ -419,7 +419,8 @@
       "examples": [
         3
       ],
-      "minimum": 1
+      "minimum": 1,
+      "maximum": 100
     },
     "AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL": {
       "$id": "#/properties/AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL",
@@ -461,7 +462,7 @@
       "$id": "#/properties/AUTHZ_PAP_CLIENT_TOKEN_FILE",
       "type": "string",
       "title": "The AUTHZ_PAP_CLIENT_TOKEN_FILE schema",
-      "description": "Path of the Bearer token the pull loop sends, written by the kubelet when KUBERNETES_M2M_ENABLED is true and by the agent's own token loop otherwise",
+      "description": "File the agent reads its token from when KUBERNETES_M2M_ENABLED is true. The chart mounts the projected token at the default path alone, so keep the default",
       "default": "/var/run/secrets/tokens/netcracker/token",
       "examples": [
         "/var/run/secrets/tokens/netcracker/token"
@@ -498,7 +499,8 @@
       "examples": [
         3
       ],
-      "minimum": 1
+      "minimum": 1,
+      "maximum": 100
     },
     "HPA_ENABLED": {
       "$id": "#/properties/HPA_ENABLED",

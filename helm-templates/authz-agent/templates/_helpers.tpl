@@ -23,7 +23,8 @@ issuer is composed as `<base>/auth/realms/<realm>`, which is exactly what the
 security libraries do (IdentityProviderConfig.java, security/token/keycloak.go).
 The composed issuer is only the address to fetch keys from; the `iss` claim is
 not checked at all any more, so a realm reached through a gateway hostname
-verifies the same way.
+verifies the same way. authz-agent.validateValues refuses an
+IDENTITY_PROVIDER_URL that is empty or has no http or https scheme or no host.
 
 `cloud-common` — the platform M2M realm — is the one entry marked required, so a
 Pod that cannot reach it does not report Ready. The rest are optional because
@@ -35,7 +36,7 @@ external subjects from internal ones is left to policies and roles.
 {{- if .Values.AUTHZ_TRUSTED_PROVIDERS -}}
 {{- toJson .Values.AUTHZ_TRUSTED_PROVIDERS -}}
 {{- else -}}
-{{- $base := trimSuffix "/" (required "IDENTITY_PROVIDER_URL must not be empty when AUTHZ_TRUSTED_PROVIDERS is unset" .Values.IDENTITY_PROVIDER_URL) -}}
+{{- $base := .Values.IDENTITY_PROVIDER_URL | default "" | toString | trimSuffix "/" -}}
 {{- $providers := list -}}
 {{- range .Values.AUTHZ_IDP_REALMS -}}
 {{- $entry := dict "id" . "issuer" (printf "%s/auth/realms/%s" $base .) -}}
@@ -95,10 +96,10 @@ do nothing useful at runtime — they fail at template time instead.
 Note on KUBERNETES_M2M_ENABLED=false (Keycloak mode): The Secret
 '{{ .Values.SERVICE_NAME }}-client-credentials' MUST exist before helm install.
 It is provisioned externally by the platform (security-scripts or manual creation
-with label core.netcracker.com/secret-type=m2m; see docs/architecture.md §
-"M2M Identity and Token Delivery"). If the Secret is missing, the agent cannot
-obtain its M2M token, the pull loop never authenticates, and the Pod stays
-NotReady indefinitely. Helm cannot verify Secret existence at template time.
+with label core.netcracker.com/secret-type=m2m). If the Secret is missing, the
+agent cannot obtain its M2M token, the pull loop never authenticates, and the
+Pod stays NotReady indefinitely. Helm cannot verify Secret existence at template
+time.
 */}}
 {{- define "authz-agent.validateValues" -}}
 {{/*
@@ -120,6 +121,60 @@ not, since the policies render either way.
 {{- range list "HPA_SCALING_UP_PODS" "HPA_SCALING_UP_PERCENT" "HPA_SCALING_DOWN_PODS" "HPA_SCALING_DOWN_PERCENT" -}}
 {{- if and (index $.Values (printf "%s_VALUE" .)) (not (hasKey $.Values (printf "%s_PERIOD_SECONDS" .))) -}}
 {{- fail (printf "%s_VALUE is set without %s_PERIOD_SECONDS: the platform's HorizontalPodAutoscaler template then renders the policy with an empty periodSeconds, which the API server rejects." . .) -}}
+{{- end -}}
+{{- end -}}
+{{/*
+The chart builds two values from IDENTITY_PROVIDER_URL. With
+KUBERNETES_M2M_ENABLED false, the Deployment sets AUTHZ_M2M_TOKEN_URL to it
+followed by the token path of the realm cloud-common, whatever
+AUTHZ_TRUSTED_PROVIDERS holds. With AUTHZ_TRUSTED_PROVIDERS empty, the
+trusted-providers ConfigMap gets the issuer `<base>/auth/realms/<realm>` for
+each realm in AUTHZ_IDP_REALMS, whatever KUBERNETES_M2M_ENABLED is. Where the
+chart builds either one, this check refuses a value that is empty or has no http
+or https scheme or no host. The message has one sentence for each value built,
+naming the setting that makes the chart build it.
+
+The agent refuses such a token endpoint when it starts, with an error that names
+AUTHZ_M2M_TOKEN_URL, and no chart value has that name, so this check names
+IDENTITY_PROVIDER_URL instead. Like that error, the check leaves the value out
+of the message, because a URL can hold a password. The agent accepts such an
+issuer and fails its discovery, so the provider never bootstraps. A generated
+cloud-common provider is marked required, and without it the agent returns 503
+on /health and /ready.
+
+The scheme and the host are read with regexMatch, which returns false for a
+value it does not match and never stops the render with an error. urlParse would
+stop the render on any value Go's url.Parse refuses, such as 10.0.0.5:8080, with
+an error that names no chart value and quotes the input.
+
+The host follows `//` and an optional user that ends at `@`. It is either any
+text in brackets, which is how an IPv6 address is written, or a name without
+brackets. An optional `:port` may follow either form. Any other value with an
+http or https scheme and a host renders. In a token endpoint, the agent refuses
+at start a user, a query, a fragment, a port outside 1 to 65535, or a character
+outside RFC 3986, such as a newline. The agent does not check an issuer at
+start, and the discovery of an issuer with a port that is not a number, or with
+a newline, fails.
+*/}}
+{{- $uses := list -}}
+{{- if not .Values.KUBERNETES_M2M_ENABLED -}}
+{{- $uses = append $uses "While KUBERNETES_M2M_ENABLED is false, its default, the chart builds the agent's token endpoint AUTHZ_M2M_TOKEN_URL from it." -}}
+{{- end -}}
+{{- if and (not .Values.AUTHZ_TRUSTED_PROVIDERS) .Values.AUTHZ_IDP_REALMS -}}
+{{- $uses = append $uses "While AUTHZ_TRUSTED_PROVIDERS is empty, its default, the chart builds the issuer of each realm in AUTHZ_IDP_REALMS from it." -}}
+{{- end -}}
+{{- if $uses -}}
+{{- $idp := .Values.IDENTITY_PROVIDER_URL | default "" | toString -}}
+{{- $problem := "" -}}
+{{- if not $idp -}}
+{{- $problem = "is empty" -}}
+{{- else if not (regexMatch "^(?i)https?:" $idp) -}}
+{{- $problem = "has no http or https scheme" -}}
+{{- else if not (regexMatch "^(?is)https?://([^/?#]*@)?(\\[[^\\]/?#@]+\\]|[^:/?#@\\[\\]]+)(:[^/?#@]*)?([/?#].*)?$" $idp) -}}
+{{- $problem = "has no host" -}}
+{{- end -}}
+{{- if $problem -}}
+{{- fail (printf "IDENTITY_PROVIDER_URL %s. %s Set it to an http or https URL with a host: the base URL of the platform identity provider, without a realm, such as http://identity-provider:8080." $problem (join " " $uses)) -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}

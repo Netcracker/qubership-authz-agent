@@ -15,8 +15,10 @@
 package main
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
+	"io/fs"
 	"math"
 	"net"
 	"net/netip"
@@ -46,8 +48,8 @@ type config struct {
 	Authn authn.Config
 	// Pull configures the policy pull; [pull.Config] says what disables it.
 	Pull pull.Config
-	// M2M configures the agent's own token; empty TokenURL and TokenFile
-	// disable it.
+	// M2M configures the agent's own token: from TokenURL, or from TokenFile
+	// when TokenURL is empty.
 	M2M m2m.Config
 }
 
@@ -68,14 +70,24 @@ const (
 // 9223372036, about 292 years.
 const maxSeconds = math.MaxInt64 / int64(time.Second)
 
+// maxRetries is the largest number of attempts per request that
+// AUTHZ_JWKS_HTTP_RETRIES and AUTHZ_ENTITLEMENTS_HTTP_RETRIES accept. The
+// chart's values schema has the same maximum.
+const maxRetries = 100
+
 // loadConfig builds the configuration from the environment. A number, a
-// boolean, a log level, or a listen address that is empty takes its default,
-// as an unset one does, and an empty URL turns its feature off. A file path is
-// used as set, empty included, without a check. LOGGING_LEVEL_ROOT and
-// LOG_LEVEL are only checked: the platform logger reads them itself. The error
-// names every variable whose value is not of its form or out of its range,
-// with the values that variable accepts. It also names LOG_LEVEL whenever
-// that variable is not empty.
+// boolean, a log level, a listen address, or a token file path that is empty
+// takes its default, as an unset one does, and an empty URL turns its
+// feature off, except AUTHZ_M2M_TOKEN_URL while KUBERNETES_M2M_ENABLED is
+// false, which is its default. Any other file path is used as set, empty
+// included, without a check. LOGGING_LEVEL_ROOT and LOG_LEVEL are only
+// checked: the platform logger reads them itself. The error names every
+// variable whose value is not of its form or out of its range, with the
+// values that variable accepts. With KUBERNETES_M2M_ENABLED false it also
+// names an unset or empty AUTHZ_M2M_TOKEN_URL, and with true an
+// AUTHZ_PAP_CLIENT_TOKEN_FILE whose file holds no token, with the reason;
+// with a refused KUBERNETES_M2M_ENABLED it names neither. It names LOG_LEVEL
+// whenever that variable is not empty.
 func loadConfig(get lookup) (config, error) {
 	s := settings{get: get}
 	cfg := config{
@@ -85,7 +97,7 @@ func loadConfig(get lookup) (config, error) {
 			File:             get("authz.trusted.providers.file", authn.DefaultFile),
 			Required:         s.boolean("authz.jwks.bootstrap.required", true),
 			HTTPTimeout:      s.seconds("authz.jwks.http.timeout", 1, authn.DefaultHTTPTimeout),
-			HTTPRetries:      s.integer("authz.jwks.http.retries", 1, authn.DefaultHTTPRetries),
+			HTTPRetries:      s.integer("authz.jwks.http.retries", 1, maxRetries, authn.DefaultHTTPRetries),
 			TenantManagerURL: s.httpURL("authz.tenant.manager.url"),
 			ReloadInterval:   s.seconds("authz.trusted.providers.reload.interval", 0, authn.DefaultReloadInterval),
 		},
@@ -99,16 +111,36 @@ func loadConfig(get lookup) (config, error) {
 			ClientIDFile:     get("authz.m2m.client.id.file", m2m.DefaultClientIDFile),
 			ClientSecretFile: get("authz.m2m.client.secret.file", m2m.DefaultClientSecretFile),
 			RenewBefore:      s.seconds("authz.m2m.renew.before.seconds", 0, m2m.DefaultRenewBefore),
-			TokenFile:        get("authz.pap.client.token.file", m2m.DefaultTokenFile),
+			TokenFile:        cmp.Or(get("authz.pap.client.token.file", ""), m2m.DefaultTokenFile),
 			WatchInterval:    m2m.DefaultWatchInterval,
 		},
 	}
 	// The entitlements timeout and retries are checked whether or not a URL
 	// turns the PIP on, as the chart's values schema checks them.
 	timeout := s.seconds("authz.entitlements.http.timeout", 1, pips.DefaultEntitlementsHTTPTimeout*time.Second)
-	retries := s.integer("authz.entitlements.http.retries", 1, pips.DefaultEntitlementsHTTPRetries)
+	retries := s.integer("authz.entitlements.http.retries", 1, maxRetries, pips.DefaultEntitlementsHTTPRetries)
 	if url := strings.TrimRight(s.httpURL("authz.entitlements.url"), "/"); url != "" {
 		cfg.Pull.Entitlements = &pips.EntitlementsConfig{URL: url, HTTPTimeoutSeconds: int(timeout / time.Second), HTTPRetries: retries}
+	}
+	// KUBERNETES_M2M_ENABLED chooses the token the agent sends. true sends the
+	// projected token of the netcracker audience in AUTHZ_PAP_CLIENT_TOKEN_FILE;
+	// false sends the token of the realm cloud-common from AUTHZ_M2M_TOKEN_URL.
+	// With true the agent sends no request to AUTHZ_M2M_TOKEN_URL, and with
+	// false it does not open AUTHZ_PAP_CLIENT_TOKEN_FILE. An endpoint that is
+	// not an http or https URL has been refused already, whichever value is set.
+	refusedBefore := len(s.refused)
+	kubernetesToken := s.boolean("kubernetes.m2m.enabled", false)
+	switch {
+	case len(s.refused) > refusedBefore:
+		// A refused value chooses no token source, so neither one is checked.
+	case kubernetesToken:
+		cfg.M2M.TokenURL = ""
+		s.requireToken("authz.pap.client.token.file", cfg.M2M.TokenFile)
+	// The raw value is tested, so that a token endpoint of the wrong form,
+	// refused where it was read, is not refused again as missing.
+	case s.get("authz.m2m.token.url", "") == "":
+		s.refuse("authz.m2m.token.url", "",
+			"the http or https URL of the token endpoint of the realm cloud-common, required while KUBERNETES_M2M_ENABLED is false, which is its default")
 	}
 	// The platform logger reads LOGGING_LEVEL_ROOT itself and falls back to
 	// info where the value is not a level name; fromList refuses such a value.
@@ -147,15 +179,15 @@ func (s *settings) seconds(key string, minimum int64, fallback time.Duration) ti
 	return time.Duration(n) * time.Second
 }
 
-// integer reads an integer from minimum to [math.MaxInt].
-func (s *settings) integer(key string, minimum, fallback int) int {
+// integer reads an integer from minimum to maximum.
+func (s *settings) integer(key string, minimum, maximum, fallback int) int {
 	raw := s.get(key, "")
 	if raw == "" {
 		return fallback
 	}
 	n, err := strconv.Atoi(raw)
-	if err != nil || n < minimum {
-		s.refuse(key, raw, fmt.Sprintf("an integer from %d to %d", minimum, math.MaxInt))
+	if err != nil || n < minimum || n > maximum {
+		s.refuse(key, raw, fmt.Sprintf("an integer from %d to %d", minimum, maximum))
 		return fallback
 	}
 	return n
@@ -297,6 +329,22 @@ func urlPort(port string) bool {
 	}
 	n, err := strconv.ParseUint(port, 10, 16)
 	return err == nil && n > 0
+}
+
+// requireToken refuses path, the value of key, unless the file it names holds
+// a token. The refusal gives the reason [m2m.CheckTokenFile] returns, without
+// the path, which the refusal names already.
+func (s *settings) requireToken(key, path string) {
+	err := m2m.CheckTokenFile(path)
+	if err == nil {
+		return
+	}
+	reason := err.Error()
+	var pathErr *fs.PathError
+	if errors.As(err, &pathErr) {
+		reason = pathErr.Err.Error()
+	}
+	s.refused = append(s.refused, fmt.Sprintf("%s=%q: %s, and KUBERNETES_M2M_ENABLED=true sends the token in this file", variable(key), path, reason))
 }
 
 func (s *settings) refuse(key, raw, accepted string) {
