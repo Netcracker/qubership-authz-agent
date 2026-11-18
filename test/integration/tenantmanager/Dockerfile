@@ -6,7 +6,7 @@ COPY go.mod ./
 COPY *.go ./
 RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" go build -o /tenant-manager .
 
-FROM ghcr.io/netcracker/qubership-core-base:alpine-2.5.13@sha256:891386ea91d90a1376e12f30b458fc23eb9793afd35f82817c90e4911cddd633
+FROM ghcr.io/netcracker/qubership-core-base:alpine-2.5.14@sha256:0359b4d0a324071dc4049866a868d901be9f0665fcb97e4f5f6f937d94930001
 COPY --chmod=555 --from=builder /tenant-manager /usr/local/bin/tenant-manager
 USER 10001:10001
 EXPOSE 8080
