@@ -122,6 +122,40 @@ not, since the policies render either way.
 {{- fail (printf "%s_VALUE is set without %s_PERIOD_SECONDS: the platform's HorizontalPodAutoscaler template then renders the policy with an empty periodSeconds, which the API server rejects." . .) -}}
 {{- end -}}
 {{- end -}}
+{{/*
+With KUBERNETES_M2M_ENABLED false, the Deployment sets AUTHZ_M2M_TOKEN_URL to
+IDENTITY_PROVIDER_URL followed by the token path of the realm cloud-common,
+whatever AUTHZ_TRUSTED_PROVIDERS holds. The agent refuses a token endpoint that
+has no http or https scheme or no host when it starts. Its error names
+AUTHZ_M2M_TOKEN_URL, and no chart value has that name, so this check names
+IDENTITY_PROVIDER_URL instead. Like the agent, the check leaves the value out of
+the message, because a URL can hold a password.
+
+The scheme and the host are read with regexMatch, which returns false for a
+value it does not match and never stops the render with an error. urlParse would
+stop the render on any value Go's url.Parse refuses, such as 10.0.0.5:8080, with
+an error that names no chart value and quotes the input.
+
+The host follows `//` and an optional user that ends at `@`. It is either any
+text in brackets, which is how an IPv6 address is written, or a name without
+brackets. An optional `:port` may follow either form. Any other part the agent
+refuses, such as a port that is not a number or a newline after the path, still
+renders, and the agent refuses it at start.
+*/}}
+{{- if not .Values.KUBERNETES_M2M_ENABLED -}}
+{{- $idp := .Values.IDENTITY_PROVIDER_URL | default "" | toString -}}
+{{- $problem := "" -}}
+{{- if not $idp -}}
+{{- $problem = "is empty" -}}
+{{- else if not (regexMatch "^(?i)https?:" $idp) -}}
+{{- $problem = "has no http or https scheme" -}}
+{{- else if not (regexMatch "^(?is)https?://([^/?#]*@)?(\\[[^\\]/?#@]+\\]|[^:/?#@\\[\\]]+)(:[^/?#@]*)?([/?#].*)?$" $idp) -}}
+{{- $problem = "has no host" -}}
+{{- end -}}
+{{- if $problem -}}
+{{- fail (printf "IDENTITY_PROVIDER_URL %s. With KUBERNETES_M2M_ENABLED=false, its default, the chart builds the agent's token endpoint AUTHZ_M2M_TOKEN_URL from it, so it must be an http or https URL with a host. Set it to the base URL of the platform identity provider, without a realm, such as http://identity-provider:8080." $problem) -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 
 {{/*

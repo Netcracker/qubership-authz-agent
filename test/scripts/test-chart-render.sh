@@ -493,6 +493,85 @@ for set_value in "" true; do
   fi
 done
 
+# With KUBERNETES_M2M_ENABLED false, the chart builds AUTHZ_M2M_TOKEN_URL from
+# IDENTITY_PROVIDER_URL. Most renders below set an explicit provider list,
+# because the generated one refuses an empty IDENTITY_PROVIDER_URL with an error
+# of its own.
+kc_provider=(--set-json 'AUTHZ_TRUSTED_PROVIDERS=[{"id":"kc","issuer":"https://kc.example.com/auth/realms/kc"}]')
+expect_token_url() {
+  local label="$1" expected="$2"
+  shift 2
+  local got
+  got="$(env_value AUTHZ_M2M_TOKEN_URL "$@")"
+  if [[ "${got}" == "${expected}" ]]; then
+    pass "${label}"
+  elif [[ -z "${got}" ]]; then
+    fail "${label}: the render sets no AUTHZ_M2M_TOKEN_URL: $(head -3 <<<"$(deployment_of "$@")")"
+  else
+    fail "${label}: AUTHZ_M2M_TOKEN_URL is '${got}', expected ${expected}"
+  fi
+}
+expect_token_url "a default install builds AUTHZ_M2M_TOKEN_URL from the default IDENTITY_PROVIDER_URL" \
+  "http://identity-provider:8080/auth/realms/cloud-common/protocol/openid-connect/token"
+expect_token_url "an https IDENTITY_PROVIDER_URL with a port builds AUTHZ_M2M_TOKEN_URL beside an explicit provider list" \
+  "https://identity-provider:8443/auth/realms/cloud-common/protocol/openid-connect/token" \
+  "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL=https://identity-provider:8443
+expect_token_url "an IDENTITY_PROVIDER_URL with an upper-case scheme builds AUTHZ_M2M_TOKEN_URL" \
+  "HTTP://identity-provider:8080/auth/realms/cloud-common/protocol/openid-connect/token" \
+  "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL=HTTP://identity-provider:8080
+expect_token_url "an IPv6 IDENTITY_PROVIDER_URL builds AUTHZ_M2M_TOKEN_URL" \
+  "http://[fd00::1]:8080/auth/realms/cloud-common/protocol/openid-connect/token" \
+  "${kc_provider[@]}" --set-string 'IDENTITY_PROVIDER_URL=http://[fd00::1]:8080'
+for row in "|is empty" "identity-provider:8080|has no http or https scheme" "10.0.0.5:8080|has no http or https scheme" \
+  "ftp://identity-provider|has no http or https scheme" "http://:8080|has no host" "http:/identity-provider:8080|has no host" \
+  "http://admin:s3cret@[::1|has no host"; do
+  IFS='|' read -r url rule <<<"${row}"
+  refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}" 2>&1 || true)"
+  if [[ "${refused}" == *"IDENTITY_PROVIDER_URL ${rule}. With KUBERNETES_M2M_ENABLED=false"* ]]; then
+    pass "IDENTITY_PROVIDER_URL '${url}' is refused, since it ${rule}, while the chart builds the token endpoint from it"
+  elif [[ "${refused}" == *"kind: Deployment"* ]]; then
+    fail "IDENTITY_PROVIDER_URL '${url}' must be refused as one that ${rule}, and the chart rendered AUTHZ_M2M_TOKEN_URL '$(env_value AUTHZ_M2M_TOKEN_URL "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}")'"
+  else
+    fail "IDENTITY_PROVIDER_URL '${url}' must be refused as one that ${rule}, got: $(head -3 <<<"${refused}")"
+  fi
+done
+# A null value removes the key, which leaves the chart nothing to build from.
+null_refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set IDENTITY_PROVIDER_URL=null 2>&1 || true)"
+if [[ "${null_refused}" == *"IDENTITY_PROVIDER_URL is empty. With KUBERNETES_M2M_ENABLED=false"* ]]; then
+  pass "a null IDENTITY_PROVIDER_URL is refused as empty while the chart builds the token endpoint from it"
+else
+  fail "a null IDENTITY_PROVIDER_URL must be refused as empty, got: $(head -3 <<<"${null_refused}")"
+fi
+# http://admin:s3cret@[::1 is refused for its unclosed bracket, and Go's URL
+# parser refuses both it and the value with the port 80a. Only the standard
+# error is read: a render that succeeds puts the value into the Deployment.
+for url in "http://admin:s3cret@[::1" "http://admin:s3cret@identity-provider:80a"; do
+  render_errors="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}" 2>&1 >/dev/null || true)"
+  if [[ "${render_errors}" != *"s3cret"* ]]; then
+    pass "no error of the render quotes the password in IDENTITY_PROVIDER_URL '${url}'"
+  else
+    fail "an error of the render quotes the password in IDENTITY_PROVIDER_URL '${url}': $(head -3 <<<"${render_errors}")"
+  fi
+done
+# Values with a scheme and a host that the agent refuses for another part: a
+# user, a port that is not a number, and the newline that a value read with
+# --set-file ends in, after a port and after a path.
+for url in "http://user@identity-provider:8080" "http://identity-provider:80a" \
+  $'http://identity-provider:8080\n' $'http://identity-provider:8080/\n'; do
+  render_errors="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}" 2>&1 >/dev/null || true)"
+  if [[ "${render_errors}" != *"has no host"* && "${render_errors}" != *"has no http or https scheme"* ]]; then
+    pass "IDENTITY_PROVIDER_URL $(printf %q "${url}") is not reported as missing a scheme or a host"
+  else
+    fail "IDENTITY_PROVIDER_URL $(printf %q "${url}") is reported as missing a scheme or a host: $(head -3 <<<"${render_errors}")"
+  fi
+done
+m2m_without_idp="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL= --set KUBERNETES_M2M_ENABLED=true 2>&1 || true)"
+if [[ "${m2m_without_idp}" == *"kind: Deployment"* ]]; then
+  pass "an empty IDENTITY_PROVIDER_URL renders under KUBERNETES_M2M_ENABLED, which builds no token endpoint"
+else
+  fail "an empty IDENTITY_PROVIDER_URL must render under KUBERNETES_M2M_ENABLED, got: $(head -3 <<<"${m2m_without_idp}")"
+fi
+
 # Every setting the service reads has to reach it, and the objects it reads
 # them from have to be mounted.
 for env_name in AUTHZ_PUBLIC_ADDR AUTHZ_HTTP_ADDR \
