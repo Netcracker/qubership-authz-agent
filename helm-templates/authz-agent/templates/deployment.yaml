@@ -163,7 +163,7 @@ spec:
             # Client credentials: the service obtains its M2M token itself
             # and refreshes it before it expires.
             - name: AUTHZ_M2M_TOKEN_URL
-              value: '{{ .Values.IDENTITY_PROVIDER_URL }}/auth/realms/cloud-common/protocol/openid-connect/token'
+              value: '{{ .Values.IDENTITY_PROVIDER_URL | trimSuffix "/" }}/auth/realms/cloud-common/protocol/openid-connect/token'
             - name: AUTHZ_M2M_CLIENT_ID_FILE
               value: /etc/secret/username
             - name: AUTHZ_M2M_CLIENT_SECRET_FILE
