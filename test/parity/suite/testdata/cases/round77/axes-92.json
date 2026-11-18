@@ -1,0 +1,200 @@
+{
+ "about": "Round 77, task 16: survivor:subject m2m | filter policy DENY_OVERRIDES→not_deny_only, moved to subject = m2m from round30/open-filter-effects.json (r30open-effect-not-applicable-deny-overrides). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R30O_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ax77-92-r30open-filter-effects-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-92-r30open-effect-use-filter-condition-deny-overrides",
+   "about": "One rule with effect USE_FILTER_CONDITION and condition true, alone in a policy and a set under DENY_OVERRIDES.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "USE_FILTER_CONDITION"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "ax77-92-r30open-effect-use-filter-condition-deny-overrides-with-predicate",
+   "about": "One rule with effect USE_FILTER_CONDITION and condition true and rsqlPredicate p==1, alone in a policy and a set under DENY_OVERRIDES.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "USE_FILTER_CONDITION",
+         "predicates": {
+          "rsqlPredicate": "p==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "ax77-92-r30open-effect-not-applicable-deny-overrides",
+   "about": "One rule with effect NOT_APPLICABLE and condition true, alone in a policy and a set under DENY_OVERRIDES. Task 16 moves it to subject = m2m.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_M2M'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "ax77-92-r30open-filter-effects-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

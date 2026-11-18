@@ -1,0 +1,226 @@
+{
+ "about": "Round 77, task 16: survivor:route check/filter v1 | cell PIP_NULL×EQ→ERR, moved to route = check/filter v1 from round76/axes-01.json (ax76-01-g75-body-text). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_",
+ "standVersion": true,
+ "pips": {
+  "text": {
+   "name": "subject.parityG75Text",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/g75-text-body",
+   "requestAttributes": {
+    "case": "g75-text-body"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "ax77-141-ax76-01-g75-values-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_G75_VALUES_CONTROL_FIRST",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_VALUES_CONTROL_FIRST'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-141-ax76-01-g75-body-text",
+   "about": "A GENERAL PIP answers 200 with a body that is not JSON (text, Content-Type text/plain) during a check: `subject.parityG75Text == 'blocked'` and `subject.parityG75Text IS NULL`, each with OR resource.a == 'y' and the DENY twin. A value, null, or a failed source? Task 16 moves it to route = check/filter v1.",
+   "resourceType": "PARITY_SUITE_G75_BODY_TEXT",
+   "pips": [
+    "text"
+   ],
+   "pins": {
+    "/api/v1/pip/g75-text-body": {
+     "statusCode": 200,
+     "bodyRaw": "blocked",
+     "headers": {
+      "Content-Type": "text/plain"
+     }
+    }
+   },
+   "sets": [
+    {
+     "key": "eq",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_TEXT_EQ'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-eq",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-eq",
+         "target": "true",
+         "condition": "subject.parityG75Text == 'blocked' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "eq-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_TEXT_EQ_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-eq-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-eq-d",
+         "target": "true",
+         "condition": "subject.parityG75Text == 'blocked'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "null",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_TEXT_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-null",
+         "target": "true",
+         "condition": "subject.parityG75Text IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "null-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_BODY_TEXT_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-null-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-null-d",
+         "target": "true",
+         "condition": "subject.parityG75Text IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "eq-a-n-check-filter-v1",
+     "filter": true,
+     "operation": "READ",
+     "type": "PARITY_SUITE_G75_BODY_TEXT_EQ"
+    },
+    {
+     "name": "eq-a-y-check-filter-v1",
+     "filter": true,
+     "operation": "READ",
+     "type": "PARITY_SUITE_G75_BODY_TEXT_EQ"
+    },
+    {
+     "name": "eq-deny-check-filter-v1",
+     "filter": true,
+     "operation": "READ",
+     "type": "PARITY_SUITE_G75_BODY_TEXT_EQ_D"
+    },
+    {
+     "name": "null-a-n-check-filter-v1",
+     "filter": true,
+     "operation": "READ",
+     "type": "PARITY_SUITE_G75_BODY_TEXT_NULL"
+    },
+    {
+     "name": "null-a-y-check-filter-v1",
+     "filter": true,
+     "operation": "READ",
+     "type": "PARITY_SUITE_G75_BODY_TEXT_NULL"
+    },
+    {
+     "name": "null-deny-check-filter-v1",
+     "filter": true,
+     "operation": "READ",
+     "type": "PARITY_SUITE_G75_BODY_TEXT_NULL_D"
+    }
+   ]
+  },
+  {
+   "id": "ax77-141-ax76-01-g75-values-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_G75_VALUES_CONTROL_LAST",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_VALUES_CONTROL_LAST'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  }
+ ]
+}

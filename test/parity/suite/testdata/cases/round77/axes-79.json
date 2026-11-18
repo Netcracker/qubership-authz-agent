@@ -1,0 +1,290 @@
+{
+ "about": "Round 77, task 16: survivor:place nested-set | lang no_url_is_empty=F, moved to place = nested-set from round33/gaps-carriers.json (r33gaps-typed-bean-is-empty). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R33G_",
+ "pins": {
+  "/api/v1/pip/r33gaps-v": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "bean": {
+   "name": "subject.parityR33Bean",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "beanName": "parityR33Bean"
+  },
+  "other-sources": {
+   "name": "subject.parityR33Sources",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r33gaps-v",
+   "requestAttributes": {
+    "case": "r33gaps-sources",
+    "t": "${tenant}",
+    "c": "${PARITY_R33_CONST}",
+    "n": "x-${requestId}"
+   }
+  },
+  "no-attributes": {
+   "name": "subject.parityR33NoAttributes",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r33gaps-v"
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "ax77-79-r33gaps-carriers-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-79-r33gaps-jp-number-against-the-text-5-0",
+   "about": "The filter compares the number 5 in the resource with the text literal '5.0': the direction round 32 did not ask (r32gaps-number-against-the-same-number-otherwise compared the text 5.0 in the resource with the number literal 5). False for a = n if the two compare as texts, true if as numbers.",
+   "condition": "resource.l[?(@.k == '5.0')].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": 5
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": 5
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-79-r33gaps-jp-number-against-the-text-5",
+   "about": "The filter compares the number 5 in the resource with the text literal '5'. True for a = n if the two compare as texts or as numbers, false if a number never equals a text.",
+   "condition": "resource.l[?(@.k == '5')].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": 5
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": 5
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-79-r33gaps-typed-bean-is-null",
+   "about": "The PIP declares pipType GENERAL and a beanName but no url (round 32 asked the same without pipType, r32gaps-pip-bean). Both requests true if the PIP gives no value and goes on, false if it fails.",
+   "pips": [
+    "bean"
+   ],
+   "condition": "subject.parityR33Bean IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-79-r33gaps-typed-bean-is-empty",
+   "about": "The same PIP under IS EMPTY. Both requests false if the PIP gives null (IS EMPTY over null ends the rule, as for a null resource value), true if its value is the empty list. Task 16 moves it to place = nested-set.",
+   "pips": [
+    "bean"
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-n",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p0",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r0",
+           "target": "true",
+           "condition": "subject.parityR33Bean IS EMPTY OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ax77-79-r33gaps-carriers-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

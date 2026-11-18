@@ -1,0 +1,130 @@
+{
+ "about": "Round 77, task 16: survivor:place policy-target | lang null_element_outcome=F, moved to place = policy-target from round17/values.json (v17-in-000). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R17_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ax77-76-v17-in-000",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": [
+       5,
+       "v"
+      ],
+      "y": [
+       null
+      ],
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": [
+       5,
+       "v"
+      ],
+      "y": [
+       null
+      ],
+      "id": "r17",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p02-a-n",
+     "resource": {
+      "x": [
+       null
+      ],
+      "y": [
+       null
+      ],
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p02-a-y",
+     "resource": {
+      "x": [
+       null
+      ],
+      "y": [
+       null
+      ],
+      "id": "r17",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p03-a-n",
+     "resource": {
+      "x": {},
+      "y": {
+       "k": "v"
+      },
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p03-a-y",
+     "resource": {
+      "x": {},
+      "y": {
+       "k": "v"
+      },
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p0",
+       "target": "resource.x IN resource.y OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "about": "Task 16 moves it to place = policy-target."
+  }
+ ]
+}

@@ -1,0 +1,205 @@
+{
+ "about": "Round 77, task 16: survivor:route check/filter v2 | filter set_hard_deny_wins DENY_OVERRIDES flip, moved to route = check/filter v2 from round67/open-single.json (op67-inactive-policy-deny). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R67_OPEN_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ax77-53-op67-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-53-op67-inactive-policy-allow",
+   "about": "An active policy whose ALLOW rule carries fa==1 beside an INACTIVE policy whose ALLOW rule carries fb==2, under PERMIT_OVERRIDES: does the filter read the INACTIVE policy?",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "active",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa==1",
+          "sqlPredicate": "fa=1",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"fa\": 1 }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "second",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-b",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fb==2",
+          "sqlPredicate": "fb=2",
+          "predicate": "${resourceType}.fb.eq(2)",
+          "mongodbPredicate": "{ \"fb\": 2 }"
+         }
+        }
+       ],
+       "fields": {
+        "status": "INACTIVE"
+       }
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-53-op67-inactive-policy-deny",
+   "about": "An active policy whose ALLOW rule carries fa==1 beside an INACTIVE policy whose DENY rule has no predicate, under DENY_OVERRIDES: does the filter read the INACTIVE policy? Task 16 moves it to route = check/filter v2.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "active",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa==1",
+          "sqlPredicate": "fa=1",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"fa\": 1 }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "second",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ],
+       "fields": {
+        "status": "INACTIVE"
+       }
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter-check-filter-v2",
+     "filter": true,
+     "operation": "READ",
+     "v2": {}
+    },
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-53-op67-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-check-filter-v2",
+     "filter": true,
+     "operation": "READ",
+     "v2": {}
+    }
+   ]
+  }
+ ]
+}

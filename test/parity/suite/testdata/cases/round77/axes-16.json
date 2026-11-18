@@ -1,0 +1,206 @@
+{
+ "about": "Round 77, task 16: survivor:route check/filter v2 | filter simplified_predicate_fields=doc, moved to route = check/filter v2 from round29/pairs-two-grants.json (r29pairs-two-005-s). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R29P_",
+ "pins": {
+  "/api/v1/pip/r29-pairs-gen": {
+   "statusCode": 200,
+   "body": [
+    "x",
+    "y"
+   ]
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "gen": {
+   "name": "subject.parityR29PairsGen",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pairs-gen",
+   "requestAttributes": {
+    "case": "r29-pairs-gen"
+   }
+  },
+  "hdr": {
+   "name": "subject.parityR29PairsHdr",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r29-pairs",
+   "cacheable": false
+  },
+  "map": {
+   "name": "subject.permissions.PARITY_R29_PAIRS",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "p1",
+      "p2"
+     ]
+    }
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "tok": {
+   "name": "subject.parityR29PairsTok",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "ax77-16-r29pairs-two-004-s",
+   "policy": {
+    "mongodbPredicate": "{ \"$and\": [ { \"$or\": [ { \"fa\": ${subject.parityR29PairsNope} }, { \"fb\": \"v1\" } ] }, { \"fc\": \"v2\" } ] }"
+   },
+   "condition": "resource.fa == 'zz-undeclared' AND resource.fc == 'v2' OR resource.fb == 'v1' AND resource.fc == 'v2'",
+   "requests": [
+    {
+     "name": "q",
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "i1",
+        "a": "y"
+       }
+      },
+      {
+       "id": "i2",
+       "operation": "READ",
+       "resource": {
+        "id": "i2",
+        "a": "n"
+       }
+      }
+     ],
+     "tenantId": ""
+    }
+   ],
+   "domain": "PARITY_R29_PAIRS_R29PAIRS_TWO_004",
+   "pips": [
+    "gen",
+    "hdr",
+    "map",
+    "scope",
+    "tok"
+   ]
+  },
+  {
+   "id": "ax77-16-r29pairs-two-005-s",
+   "policy": {
+    "customPredicate": {
+     "params": {
+      "p0": "subject.roles"
+     },
+     "predicate": "[{\"value\":${p0},\"property\":\"fa\",\"operator\":\"in\"}]"
+    }
+   },
+   "condition": "resource.fa IN subject.roles",
+   "requests": [
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "tenantId": "",
+     "name": "q-check-filter-v2",
+     "filter": true,
+     "operation": "READ",
+     "v2": {}
+    }
+   ],
+   "domain": "PARITY_R29_PAIRS_R29PAIRS_TWO_005",
+   "about": "Task 16 moves it to route = check/filter v2."
+  },
+  {
+   "id": "ax77-16-r29pairs-two-grants-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "read-check-filter-v2",
+     "filter": true,
+     "operation": "READ",
+     "v2": {}
+    }
+   ]
+  }
+ ]
+}

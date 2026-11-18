@@ -1,0 +1,235 @@
+{
+ "about": "Round 77, task 16: survivor:place nested-set | lang right_first_rule=collection_side, moved to place = nested-set from round44/patches-right-first.json (pt44-rf-absent-in-five-or). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R44_PATCH_",
+ "pins": {
+  "/api/v1/pip/patch-failed": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity patch case"
+   }
+  },
+  "/api/v1/pip/patch-five": {
+   "statusCode": 200,
+   "body": 5
+  }
+ },
+ "pips": {
+  "obs-subject-paritypatchfailed": {
+   "name": "subject.parityPatchFailed",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/patch-failed",
+   "requestAttributes": {
+    "case": "patch-failed"
+   }
+  },
+  "obs-subject-paritypatchfive": {
+   "name": "subject.parityPatchFive",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/patch-five",
+   "requestAttributes": {
+    "case": "patch-five"
+   }
+  }
+ },
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ax77-63-pt44-control-first-right-first-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.obsAbsent == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-63-pt44-rf-absent-in-failed-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x IN subject.parityPatchFailed",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-paritypatchfailed",
+    "obs-subject-paritypatchfive"
+   ]
+  },
+  {
+   "id": "ax77-63-pt44-rf-index-oob-in-failed-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l[2] IN subject.parityPatchFailed",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-paritypatchfailed",
+    "obs-subject-paritypatchfive"
+   ]
+  },
+  {
+   "id": "ax77-63-pt44-rf-absent-in-five-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "set-n",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "permit",
+           "target": "true",
+           "condition": "resource.x IN subject.parityPatchFive OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-paritypatchfailed",
+    "obs-subject-paritypatchfive"
+   ],
+   "about": "Task 16 moves it to place = nested-set."
+  },
+  {
+   "id": "ax77-63-pt44-control-last-right-first-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.obsAbsent == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

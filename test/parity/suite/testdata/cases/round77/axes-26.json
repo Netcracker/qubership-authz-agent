@@ -1,0 +1,160 @@
+{
+ "about": "Round 77, task 16: survivor:route bulk/operations v1 | lang header_list_scalar_op=T, moved to route = bulk/operations v1 from round22/context-one-grant.json (c22-016061). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R22C_",
+ "pins": {
+  "/api/v1/pip/c22-016061-l": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         },
+         {
+          "key": "tag",
+          "values": []
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/c22-044970-l": {
+   "statusCode": 200,
+   "body": [
+    null
+   ]
+  }
+ },
+ "pips": {
+  "c22-016061-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c22-016061-l",
+   "requestAttributes": {
+    "case": "c22-016061-l"
+   }
+  },
+  "c22-016061-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "c22-044970-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c22-044970-l",
+   "requestAttributes": {
+    "case": "c22-044970-l"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "ax77-26-c22-016061",
+   "pips": [
+    "c22-016061-generalL",
+    "c22-016061-headerR",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR subject.parityCxGL >= subject.parityCxHR",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     },
+     "name": "a-n-bulk-operations-v1",
+     "bulkOperations": [
+      {
+       "id": "cx",
+       "resource": {
+        "id": "cx",
+        "a": "n"
+       },
+       "operations": [
+        "READ"
+       ]
+      }
+     ]
+    },
+    {
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     },
+     "name": "a-y-bulk-operations-v1",
+     "bulkOperations": [
+      {
+       "id": "cx",
+       "resource": {
+        "id": "cx",
+        "a": "y"
+       },
+       "operations": [
+        "READ"
+       ]
+      }
+     ]
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=pip:GENERAL, rs=hlist Task 16 moves it to route = bulk/operations v1."
+  }
+ ]
+}
