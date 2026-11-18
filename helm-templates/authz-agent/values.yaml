@@ -245,8 +245,6 @@ AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL: 30
 #     etc.) carry no ArgoCD tracking annotations; the platform intentionally keeps
 #     them outside Helm-managed resources for exactly this reason.
 #
-#   See docs/architecture.md § "M2M Identity and Token Delivery".
-#
 # The chart passes the value to the agent under the same name. With true the
 # agent sends the token in AUTHZ_PAP_CLIENT_TOKEN_FILE, and a file that holds
 # no token stops the start; with false it gets its token from
