@@ -494,9 +494,14 @@ for set_value in "" true; do
 done
 
 # With KUBERNETES_M2M_ENABLED false, the chart builds AUTHZ_M2M_TOKEN_URL from
-# IDENTITY_PROVIDER_URL. Most renders below set an explicit provider list,
-# because the generated one refuses an empty IDENTITY_PROVIDER_URL with an error
-# of its own.
+# IDENTITY_PROVIDER_URL. Most renders below set an explicit provider list, so
+# that the chart builds only the token endpoint from IDENTITY_PROVIDER_URL. A
+# refusal names the problem, then gives one sentence for each value the chart
+# builds, then the remedy, which starts with "Set it to". Each check matches the
+# message from the problem to the start of the remedy, so a refusal that names
+# one value too many or too few fails it.
+token_use="While KUBERNETES_M2M_ENABLED is false, its default, the chart builds the agent's token endpoint AUTHZ_M2M_TOKEN_URL from it."
+issuer_use="While AUTHZ_TRUSTED_PROVIDERS is empty, its default, the chart builds the issuer of each realm in AUTHZ_IDP_REALMS from it."
 kc_provider=(--set-json 'AUTHZ_TRUSTED_PROVIDERS=[{"id":"kc","issuer":"https://kc.example.com/auth/realms/kc"}]')
 expect_token_url() {
   local label="$1" expected="$2"
@@ -530,7 +535,7 @@ for row in "|is empty" "identity-provider:8080|has no http or https scheme" "10.
   "http://admin:s3cret@[::1|has no host"; do
   IFS='|' read -r url rule <<<"${row}"
   refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}" 2>&1 || true)"
-  if [[ "${refused}" == *"IDENTITY_PROVIDER_URL ${rule}. With KUBERNETES_M2M_ENABLED=false"* ]]; then
+  if [[ "${refused}" == *"IDENTITY_PROVIDER_URL ${rule}. ${token_use} Set it to"* ]]; then
     pass "IDENTITY_PROVIDER_URL '${url}' is refused, since it ${rule}, while the chart builds the token endpoint from it"
   elif [[ "${refused}" == *"kind: Deployment"* ]]; then
     fail "IDENTITY_PROVIDER_URL '${url}' must be refused as one that ${rule}, and the chart rendered AUTHZ_M2M_TOKEN_URL '$(env_value AUTHZ_M2M_TOKEN_URL "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}")'"
@@ -540,7 +545,7 @@ for row in "|is empty" "identity-provider:8080|has no http or https scheme" "10.
 done
 # A null value removes the key, which leaves the chart nothing to build from.
 null_refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set IDENTITY_PROVIDER_URL=null 2>&1 || true)"
-if [[ "${null_refused}" == *"IDENTITY_PROVIDER_URL is empty. With KUBERNETES_M2M_ENABLED=false"* ]]; then
+if [[ "${null_refused}" == *"IDENTITY_PROVIDER_URL is empty. ${token_use} Set it to"* ]]; then
   pass "a null IDENTITY_PROVIDER_URL is refused as empty while the chart builds the token endpoint from it"
 else
   fail "a null IDENTITY_PROVIDER_URL must be refused as empty, got: $(head -3 <<<"${null_refused}")"
@@ -573,6 +578,47 @@ if [[ "${m2m_without_idp}" == *"kind: Deployment"* ]]; then
   pass "an empty IDENTITY_PROVIDER_URL renders under KUBERNETES_M2M_ENABLED, which builds no token endpoint"
 else
   fail "an empty IDENTITY_PROVIDER_URL must render under KUBERNETES_M2M_ENABLED, got: $(head -3 <<<"${m2m_without_idp}")"
+fi
+
+# With AUTHZ_TRUSTED_PROVIDERS empty, the chart builds the issuer of each realm
+# from IDENTITY_PROVIDER_URL, whatever KUBERNETES_M2M_ENABLED is. With
+# KUBERNETES_M2M_ENABLED true, the chart builds only the issuers from
+# IDENTITY_PROVIDER_URL.
+m2m_on=(--set KUBERNETES_M2M_ENABLED=true)
+for row in "|is empty" "identity-provider:8080|has no http or https scheme" "http://:8080|has no host"; do
+  IFS='|' read -r url rule <<<"${row}"
+  refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${m2m_on[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}" 2>&1 || true)"
+  if [[ "${refused}" == *"IDENTITY_PROVIDER_URL ${rule}. ${issuer_use} Set it to"* ]]; then
+    pass "IDENTITY_PROVIDER_URL '${url}' is refused under KUBERNETES_M2M_ENABLED, since it ${rule}, while the chart builds the issuers from it"
+  elif [[ "${refused}" == *"kind: Deployment"* ]]; then
+    fail "IDENTITY_PROVIDER_URL '${url}' must be refused under KUBERNETES_M2M_ENABLED as one that ${rule}, and the chart rendered the issuers $(yq_providers <<<"${refused}" | jq -c '[.providers[].issuer]' 2>&1 || true)"
+  else
+    fail "IDENTITY_PROVIDER_URL '${url}' must be refused under KUBERNETES_M2M_ENABLED as one that ${rule}, got: $(head -3 <<<"${refused}")"
+  fi
+done
+m2m_issuers="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${m2m_on[@]}" --set-string IDENTITY_PROVIDER_URL=https://identity-provider:8443 2>&1 || true)"
+m2m_issuer="$(yq_providers <<<"${m2m_issuers}" | jq -r '.providers[0].issuer' 2>/dev/null || true)"
+if [[ "${m2m_issuer}" == "https://identity-provider:8443/auth/realms/cloud-common" ]]; then
+  pass "an https IDENTITY_PROVIDER_URL builds the issuers under KUBERNETES_M2M_ENABLED"
+elif [[ -n "${m2m_issuer}" ]]; then
+  fail "an https IDENTITY_PROVIDER_URL under KUBERNETES_M2M_ENABLED builds the first issuer '${m2m_issuer}', expected https://identity-provider:8443/auth/realms/cloud-common"
+else
+  fail "an https IDENTITY_PROVIDER_URL must build the issuers under KUBERNETES_M2M_ENABLED, got: $(head -3 <<<"${m2m_issuers}")"
+fi
+# The default install builds both values, and the refusal names both.
+both_refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set-string IDENTITY_PROVIDER_URL=identity-provider:8080 2>&1 || true)"
+if [[ "${both_refused}" == *"IDENTITY_PROVIDER_URL has no http or https scheme. ${token_use} ${issuer_use} Set it to"* ]]; then
+  pass "a refusal without KUBERNETES_M2M_ENABLED and AUTHZ_TRUSTED_PROVIDERS names both the token endpoint and the issuers"
+else
+  fail "a refusal without KUBERNETES_M2M_ENABLED and AUTHZ_TRUSTED_PROVIDERS must name both the token endpoint and the issuers, got: $(head -3 <<<"${both_refused}")"
+fi
+# With AUTHZ_IDP_REALMS empty, the generated list has no issuer, so under
+# KUBERNETES_M2M_ENABLED the chart builds nothing from IDENTITY_PROVIDER_URL.
+no_realms="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${m2m_on[@]}" --set-json 'AUTHZ_IDP_REALMS=[]' --set-string IDENTITY_PROVIDER_URL= 2>&1 || true)"
+if [[ "$(yq_providers <<<"${no_realms}" | jq -r '.providers | length' 2>/dev/null || true)" == "0" ]]; then
+  pass "an empty IDENTITY_PROVIDER_URL renders an empty provider list under KUBERNETES_M2M_ENABLED when AUTHZ_IDP_REALMS is empty"
+else
+  fail "an empty IDENTITY_PROVIDER_URL must render an empty provider list under KUBERNETES_M2M_ENABLED when AUTHZ_IDP_REALMS is empty, got: $(head -3 <<<"${no_realms}")"
 fi
 
 # Every setting the service reads has to reach it, and the objects it reads
