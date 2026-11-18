@@ -1,0 +1,153 @@
+{
+ "about": "Round 77, task 16: survivor:route check/filter v1 | cell ERROR×CONTAINS→ABORT, moved to route = check/filter v1 from round33/open-own-policies.json (r33open-own-policy-fails-beside-an-allowing-set). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R33O_",
+ "pins": {
+  "/api/v1/pip/r33open-fail": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 33 case"
+   }
+  }
+ },
+ "pips": {
+  "fail": {
+   "name": "subject.parityR33Fail",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r33open-fail",
+   "requestAttributes": {
+    "case": "r33open-fail"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "ax77-115-r33open-own-policies-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-115-r33open-own-policy-fails-beside-an-allowing-set",
+   "about": "The set, DENY_UNLESS_PERMIT, holds the failing policy and the nested set that allows. False on every stand if the own policy comes first; true on a stand that reaches the nested set's ALLOW first and skips the PIP. Task 16 moves it to route = check/filter v1.",
+   "pips": [
+    "fail"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "own",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "fail",
+         "target": "true",
+         "condition": "subject.parityR33Fail CONTAINS 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "n1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "nested",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "classifyBy": "/api/v1/pip/r33open-fail",
+     "name": "read-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "ax77-115-r33open-own-policies-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  }
+ ]
+}

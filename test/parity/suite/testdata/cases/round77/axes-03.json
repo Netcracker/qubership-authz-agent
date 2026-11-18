@@ -1,0 +1,90 @@
+{
+ "about": "Round 77, task 16: survivor:route bulk/operations v1 | lang idiom_number_text=as_written, moved to route = bulk/operations v1 from round28/reach-values.json (r28reach-num-infinity-text). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R28V_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ax77-03-r28reach-num-infinity-text",
+   "about": "resource.x is the JSON number 1e400, beyond the double range. True if legacy reads it as a double, whose text is Infinity. Task 16 moves it to route = bulk/operations v1.",
+   "condition": "resource.x == 'Infinity' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n-bulk-operations-v1",
+     "bulkOperations": [
+      {
+       "id": "r18",
+       "resource": {
+        "x": 1e400,
+        "id": "r18",
+        "a": "n"
+       },
+       "operations": [
+        "READ"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "read-a-y-bulk-operations-v1",
+     "bulkOperations": [
+      {
+       "id": "r18",
+       "resource": {
+        "x": 1e400,
+        "id": "r18",
+        "a": "y"
+       },
+       "operations": [
+        "READ"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ax77-03-r28reach-values-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-bulk-operations-v1",
+     "bulkOperations": [
+      {
+       "id": "r28",
+       "resource": {
+        "c": "n",
+        "id": "r28"
+       },
+       "operations": [
+        "READ"
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
