@@ -95,10 +95,10 @@ do nothing useful at runtime — they fail at template time instead.
 Note on KUBERNETES_M2M_ENABLED=false (Keycloak mode): The Secret
 '{{ .Values.SERVICE_NAME }}-client-credentials' MUST exist before helm install.
 It is provisioned externally by the platform (security-scripts or manual creation
-with label core.netcracker.com/secret-type=m2m; see docs/architecture.md §
-"M2M Identity and Token Delivery"). If the Secret is missing, the agent cannot
-obtain its M2M token, the pull loop never authenticates, and the Pod stays
-NotReady indefinitely. Helm cannot verify Secret existence at template time.
+with label core.netcracker.com/secret-type=m2m). If the Secret is missing, the
+agent cannot obtain its M2M token, the pull loop never authenticates, and the
+Pod stays NotReady indefinitely. Helm cannot verify Secret existence at template
+time.
 */}}
 {{- define "authz-agent.validateValues" -}}
 {{/*
