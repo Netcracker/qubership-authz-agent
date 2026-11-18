@@ -520,8 +520,8 @@ expect_token_url "an IDENTITY_PROVIDER_URL with an upper-case scheme builds AUTH
   "HTTP://identity-provider:8080/auth/realms/cloud-common/protocol/openid-connect/token" \
   "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL=HTTP://identity-provider:8080
 expect_token_url "an IPv6 IDENTITY_PROVIDER_URL builds AUTHZ_M2M_TOKEN_URL" \
-  "http://[fd00::1]:8080/auth/realms/cloud-common/protocol/openid-connect/token" \
-  "${kc_provider[@]}" --set-string 'IDENTITY_PROVIDER_URL=http://[fd00::1]:8080'
+  "https://[fd00::1]:8443/auth/realms/cloud-common/protocol/openid-connect/token" \
+  "${kc_provider[@]}" --set-string 'IDENTITY_PROVIDER_URL=https://[fd00::1]:8443'
 for row in "|is empty" "identity-provider:8080|has no http or https scheme" "10.0.0.5:8080|has no http or https scheme" \
   "ftp://identity-provider|has no http or https scheme" "http://:8080|has no host" "http:/identity-provider:8080|has no host" \
   "http://admin:s3cret@[::1|has no host"; do
