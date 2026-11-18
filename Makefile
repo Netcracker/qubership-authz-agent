@@ -1,3 +1,8 @@
+# Targets run one at a time, under -j too, so `make e2e` and `make parity` run
+# their stages in the order they list them, and a goal list such as
+# `make e2e-images e2e-restart e2e-suite` runs in the order given.
+.NOTPARALLEL:
+
 # lint: run all linters against the full tree (mirrors CI super-linter checks).
 #
 # Requires: golangci-lint, shellcheck, yamllint, npx (markdownlint-cli2),
