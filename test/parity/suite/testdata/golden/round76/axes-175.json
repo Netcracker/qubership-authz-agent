@@ -3,7 +3,27 @@
     "check-resource-v2-outcome/sequence/absent": {"status":200,"decision":true},
     "check-resource-v2-outcome/sequence/false": {"status":200,"decision":true},
     "check-resource-v2-outcome/sequence/one": {"status":200,"decision":true},
-    "check-resource-v2-outcome/sequence/upper": {"status":200,"decision":true},
+    "check-resource-v2-outcome/sequence/upper": {
+      "status": 200,
+      "decision": true,
+      "obligations": {
+        "read": {
+          "whitelist": {
+            "fields": [
+              "f1"
+            ],
+            "fullAccess": false
+          }
+        },
+        "resourceType": "PARITY_SUITE_P61O_120",
+        "write": {
+          "whitelist": {
+            "fields": [],
+            "fullAccess": false
+          }
+        }
+      }
+    },
     "load-policy-sets-v1/sequence/allow": {"status":200},
     "load-simplified-policies-v1/sequence/declare": {"status":201},
     "pap-error-v1/sequence/write": {"status":200,"body":null},
@@ -52,7 +72,25 @@
     "pap-status-v1/sequence/write": {"status":200}
   },
   "ax76-175-p61o-121-type-case": {
-    "check-resource-v2-outcome/sequence/lower": {"status":200,"decision":true},
+    "check-resource-v2-outcome/sequence/lower": {
+      "status": 200,
+      "decision": true,
+      "obligations": {
+        "read": {
+          "whitelist": {
+            "fields": [],
+            "fullAccess": false
+          }
+        },
+        "resourceType": "parity_suite_p61o_121",
+        "write": {
+          "whitelist": {
+            "fields": [],
+            "fullAccess": false
+          }
+        }
+      }
+    },
     "load-policy-sets-v1/sequence/allow": {"status":200},
     "load-simplified-policies-v1/sequence/declare": {"status":201},
     "pap-error-v1/sequence/write": {"status":200,"body":null},
@@ -101,7 +139,27 @@
     "pap-status-v1/sequence/write": {"status":200}
   },
   "ax76-175-p61o-902-control-should-first": {
-    "check-resource-v2-outcome/sequence/reader": {"status":200,"decision":true},
+    "check-resource-v2-outcome/sequence/reader": {
+      "status": 200,
+      "decision": true,
+      "obligations": {
+        "read": {
+          "whitelist": {
+            "fields": [
+              "f1"
+            ],
+            "fullAccess": false
+          }
+        },
+        "resourceType": "PARITY_SUITE_P61O_902",
+        "write": {
+          "whitelist": {
+            "fields": [],
+            "fullAccess": false
+          }
+        }
+      }
+    },
     "load-policy-sets-v1/sequence/allow": {"status":200},
     "load-simplified-policies-v1/sequence/declare": {"status":201},
     "pap-error-v1/sequence/write": {"status":200,"body":null},
@@ -150,7 +208,27 @@
     "pap-status-v1/sequence/write": {"status":200}
   },
   "ax76-175-p61o-952-control-should-last": {
-    "check-resource-v2-outcome/sequence/reader": {"status":200,"decision":true},
+    "check-resource-v2-outcome/sequence/reader": {
+      "status": 200,
+      "decision": true,
+      "obligations": {
+        "read": {
+          "whitelist": {
+            "fields": [
+              "f1"
+            ],
+            "fullAccess": false
+          }
+        },
+        "resourceType": "PARITY_SUITE_P61O_952",
+        "write": {
+          "whitelist": {
+            "fields": [],
+            "fullAccess": false
+          }
+        }
+      }
+    },
     "load-policy-sets-v1/sequence/allow": {"status":200},
     "load-simplified-policies-v1/sequence/declare": {"status":201},
     "pap-error-v1/sequence/write": {"status":200,"body":null},
