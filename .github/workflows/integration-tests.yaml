@@ -59,7 +59,7 @@ jobs:
       - name: Install OPA
         uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
         with:
-          version: 2026.11.7
+          version: 2026.11.8
           install_args: aqua:open-policy-agent/opa
 
       - name: Run policy tests
@@ -110,7 +110,7 @@ jobs:
       - name: Install hadolint, kubeconform, and trivy
         uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
         with:
-          version: 2026.11.7
+          version: 2026.11.8
 
       - name: Lint the Dockerfiles and the rendered charts
         run: bash test/scripts/lint-images-and-charts.sh
