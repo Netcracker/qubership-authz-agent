@@ -161,13 +161,25 @@ These records use no wider word for a realm token and a file token together. The
 - **R36** (`keys`). A realm that loaded keys keeps its place, and a reload that fails leaves its keys, as R28 states.
 - **R37** (`keys`). With 1000 realms held, a token of another realm evicts none of them and is refused with
   `TOKEN_KEYS_UNAVAILABLE`.
-- **R38** (`verify`). A token that finds no key because its keys could not be loaded is refused with
-  `TOKEN_KEYS_UNAVAILABLE`. The keys could not be loaded when the last load of the source failed, the wait of R71 ran
-  out, the limit of R33 refused the load, or the list of R34 is full.
-- **R39** (`keys`). A source answered when it returned a document with a `keys` array, even an empty one. A 200 with any
-  other body is a failed load. A 404 counts as an answer only for a realm with no keys loaded, so a token that names a
-  realm the Keycloak does not hold gets `TOKEN_KID_UNKNOWN`. For a realm that holds keys a 404 is a failed reload, and
-  the keys stay. A 404 for a provider is no answer.
+- **R38** (`keys`, `verify`). A token that finds no key because its keys could not be loaded is refused with
+  `TOKEN_KEYS_UNAVAILABLE`. The keys could not be loaded when the last load of the source failed, or when the agent does
+  not hold the realm of the token and either the limit of R33 refused a load of that realm or the list of R34 is full.
+  They also could not be loaded when a request waits for an on-demand load and the wait of R71 runs out, or the request
+  is canceled or its deadline passes, before that load ends. This cause counts only if no load of the source stored a
+  result between the start of that on-demand load and the check of the token after the wait against the keys already
+  loaded. They also could not be loaded when the limit of R33 refused the on-demand load of a source that the agent
+  holds. This cause counts only if no load of the source stored a result between the refusal and the check of the token
+  against the keys already loaded that follows it.
+- **R39** (`keys`). The agent refuses a response whose JWKS lists two usable keys with different key material under one
+  `kid`. Usable entries under one `kid` that share their key material load as one key, from the first of those entries.
+  During a load, the agent also refuses a response of any status whose body is longer than 1 MiB (1048576 bytes),
+  measured after the gzip coding that the agent requests is removed. A load that gets a refused response is a failed
+  load. Otherwise, a source answered when it returned a document with a `keys` array, even an empty one. A 200 with any
+  other body is a failed load. A 404 of the discovery document of R4 counts as an answer only for a realm with no keys
+  loaded, and only when its body is a JSON object with `error` set to `Realm does not exist`. A token that names such a
+  realm gets `TOKEN_KID_UNKNOWN`. A realm in `keycloak.requiredRealms` counts here like any other realm. For a realm
+  that holds keys a 404 is a failed reload, and the keys stay. Any other 404 of the discovery document, a 404 of the
+  `jwks_uri` that the discovery document names, and a 404 for a provider are no answer.
 
 #### Checks
 
@@ -255,9 +267,25 @@ in two realms stops being a conflict (R3, R21).
 A realm or a provider signs with a new key as soon as the key is active, so a token that finds no key makes the agent
 look again (R29). That is how OpenID Connect Core 1.0, section 10.1.1, and the common clients find a rotated key. The
 load is per source, so one unknown `kid` costs one realm rather than every realm. The limits bound what invented tokens
-cost Keycloak, because a load happens before any signature is checked (R31, R33 to R35). The hourly reload drops a key
-that a source withdrew, and a source that is down keeps its keys, so an outage does not change the answers for keys
-already loaded (R25, R28).
+cost Keycloak, because a load happens before any signature is checked (R31, R33 to R35). When a source answered, as R39
+defines, the hourly reload drops a key that the source withdrew (R25, R28). A source that is down keeps its keys, so an
+outage does not change the results for keys already loaded (R28).
+
+A result that a load stores in the time R38 names for a wait or a refusal decides as the last load does, so a 503 after
+an answer would report an outage that did not happen (R23, R38). Without such a result, the token is checked only
+against a result from before that time, in which an invented `kid` and a key that the source added since look the same,
+so it gets a 503 rather than a 401 (R29, R38).
+
+Keycloak 26 answers the discovery document of a realm it does not hold with a 404 whose JSON body has `error` set to
+`Realm does not exist`. The agent cannot tell a 404 with another body from one that something else on the path sends,
+such as a proxy with no route, or a Keycloak that serves its realms without the `/auth` prefix that R4 adds, so that
+404 says nothing about the realm. Once the discovery document answers 200 the realm exists, so a 404 of its `jwks_uri`
+is most likely a fault of the address (R39).
+
+A key is found by source and then by `kid` (R21), so a JWKS that lists two usable keys with different key material under
+one `kid` names no single key for that `kid`. This holds even when the two keys differ in `kty`, and the `alg` of a
+token then fits only one of them (R39). The limit of 1 MiB bounds the memory that reading the body of one response takes
+(R39).
 
 Readiness rather than the process keeps traffic away from a Pod without keys (R14, R19): a restart would ask a Keycloak
 that is already down, and the Pod would lose what it has loaded. Liveness stays apart for the same reason, because a
@@ -297,6 +325,14 @@ declares (R57), and a failed token gives its readers a reason code instead of cl
   possibly a log.
 - **A11. Compute the subject and the TOKEN PIP values in the verification.** Rejected by R57: the verification would
   have to read the PIP declarations of every tenant.
+- **A12. Count a 404 of a realm in `keycloak.requiredRealms` as no answer, as for a provider.** Rejected by R39: a
+  provider has an address of its own, so its 404 most likely means a wrong `issuer` or `jwksUri`. The address of a realm
+  is built from `keycloak.url`, which every realm shares, so a wrong `keycloak.url` fails the load of every realm,
+  `cloud-common` included, and an agent that starts with it does not become ready (R14, R15).
+- **A13. Load a JWKS without the `kid` under which it lists two usable keys with different key material.** Rejected by
+  R39: the agent would then hold a key set that the source never published, and it would drop the key it holds for that
+  `kid` while the source still lists keys under that `kid`. A failed load keeps every key the agent holds, so the tokens
+  that those keys verify keep passing (R28).
 
 ## Consequences
 
@@ -308,6 +344,24 @@ Negative:
   can hold all 10 loads, and a realm not loaded yet or a rotated key then waits up to a minute with its tokens refused.
 - A Pod that cannot reach Keycloak stays not ready rather than failing, so the signal is the readiness probe and the
   warnings.
+- Two requests with the same token at about the same time can get different codes, `TOKEN_KID_UNKNOWN` (401) and
+  `TOKEN_KEYS_UNAVAILABLE` (503), depending on whether each one waited for an on-demand load that had not ended, and on
+  which result a load of the source had stored last when each one was checked against the keys already loaded (R31,
+  R38).
+- A 404 for a realm that Keycloak does not hold, whose body differs from the one R39 names, as another Keycloak version
+  or a proxy that replaces error pages may send, gives the tokens of that realm `TOKEN_KEYS_UNAVAILABLE` rather than
+  `TOKEN_KID_UNKNOWN` (R39).
+- While a source returns a response that the agent refuses under R39, the agent keeps the keys it holds for that source
+  (R28). A key that the source withdrew stays accepted. A token signed by a key that the source added gets
+  `TOKEN_KEYS_UNAVAILABLE` when its `kid` matches no key the agent holds (R38). When the source added the key under a
+  `kid` the agent already holds, the token is checked against the held key without a load and gets
+  `TOKEN_ALG_NOT_ALLOWED` or `TOKEN_SIGNATURE_INVALID` (R32, R41, R43). A source that has no keys loaded yet stays
+  without keys, and a required source then keeps the agent not ready (R14, R19). RFC 7517, section 4.5, allows a JWKS to
+  list keys of different `kty` under one `kid`, and a JWKS that lists two such usable keys never loads.
+- When a JWKS lists one key twice under one `kid` with a different `alg` in each entry, the agent loads the key from the
+  first usable entry, and the key accepts only the `alg` of that entry (R39). With RS256 in the first entry and PS256 in
+  the second, a PS256 token signed by that key gets `TOKEN_ALG_NOT_ALLOWED`, so the order of the entries decides which
+  `alg` passes.
 - An edit of the trusted providers file outside Helm takes effect only at the next restart of the Pods.
 - A provider that signs tokens without `kid` cannot be used, because all its tokens are refused.
 - A token without `iat` passes the current policies, and an `iat` up to 300 seconds in the future passes for every
