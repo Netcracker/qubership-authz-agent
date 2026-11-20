@@ -34,6 +34,7 @@ package keys
 
 import (
 	"context"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"math/rand/v2"
@@ -114,6 +115,11 @@ type Options struct {
 	RefreshInterval time.Duration
 	// ReloadWait bounds how long [Set.LookupOrReload] waits for a reload.
 	ReloadWait time.Duration
+	// InternalCAFile is a PEM bundle trusted together with the system roots
+	// by a provider that sets [Provider.Kubernetes] and finds its keys through
+	// discovery under an issuer that is not an https in-cluster address. ""
+	// leaves the system roots alone.
+	InternalCAFile string
 	// Log receives the diagnostics; nil discards them.
 	Log Logger
 
@@ -263,13 +269,26 @@ type Set struct {
 	nextDrop time.Time
 }
 
-// New returns a [Set] for cfg, with no keys loaded yet. It fails when cfg
-// breaks [Config.Validate] and when a caFile cannot be read.
+// New returns a [Set] for cfg, with no keys loaded yet. It takes the issuer of
+// a provider that sets [Provider.Kubernetes] from its [Provider.TokenFile].
+// Such a provider without a JWKSURI whose issuer is not an https in-cluster
+// address sends no token, does not use its CAFile, and trusts the system roots
+// together with [Options.InternalCAFile]. New fails when cfg breaks
+// [Config.Validate], when the TokenFile of a provider that sets Kubernetes
+// holds no token with a non-empty string iss, when such a provider without a
+// JWKSURI takes an iss that is not an https URL with a host, when an https
+// in-cluster issuer has neither a CAFile nor a JWKSURI, when two providers end
+// up with one issuer, and when a CA file cannot be read or holds no PEM
+// certificate.
 func New(cfg Config, opts Options) (*Set, error) {
+	opts = opts.withDefaults()
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
-	opts = opts.withDefaults()
+	cfg, err := cfg.withIssuers(opts)
+	if err != nil {
+		return nil, err
+	}
 	s := &Set{
 		opts:      opts,
 		providers: make(map[string]*source, len(cfg.Providers)),
@@ -278,7 +297,7 @@ func New(cfg Config, opts Options) (*Set, error) {
 		realms:    make(map[string]*source),
 	}
 	for _, p := range cfg.Providers {
-		client, err := newClient(fmt.Sprintf("provider %q", p.ID), p.CAFile, opts.HTTPTimeout)
+		client, err := clientOf(p, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -287,7 +306,7 @@ func New(cfg Config, opts Options) (*Set, error) {
 	if cfg.Keycloak == nil {
 		return s, nil
 	}
-	client, err := newClient("keycloak", cfg.Keycloak.CAFile, opts.HTTPTimeout)
+	client, err := newClient("keycloak caFile", emptyCertPool, cfg.Keycloak.CAFile, opts.HTTPTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -297,6 +316,14 @@ func New(cfg Config, opts Options) (*Set, error) {
 		s.realms[name] = s.newSource(Source{Realm: name}, s.realmAddress(name), client, true)
 	}
 	return s, nil
+}
+
+// clientOf returns the client of p, whose issuer is filled in.
+func clientOf(p Provider, opts Options) (*http.Client, error) {
+	if p.discoversWithoutToken() {
+		return newClient(fmt.Sprintf("provider %q internal CA file", p.ID), x509.SystemCertPool, opts.InternalCAFile, opts.HTTPTimeout)
+	}
+	return newClient(fmt.Sprintf("provider %q caFile", p.ID), emptyCertPool, p.CAFile, opts.HTTPTimeout)
 }
 
 // newSource returns a source that reads the keys of from through client, with
