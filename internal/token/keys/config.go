@@ -69,6 +69,12 @@ type Provider struct {
 	// /.well-known/openid-configuration. A provider that sets Kubernetes may
 	// not set it: [New] takes it from the token in TokenFile, under the rules
 	// of [Provider.Kubernetes].
+	//
+	// A provider whose Issuer names a realm of [Config.Keycloak], an address
+	// that ends in /auth/realms/<realm>, takes only the tokens whose iss
+	// matches it byte for byte. A token of that realm whose iss names it under
+	// another address stays a realm token, and its level and roles decide
+	// whether it is M2M, while no token of the provider is M2M.
 	Issuer string `json:"issuer,omitempty"`
 	// JWKSURI is the address of the provider's JWKS, an absolute http or
 	// https URL. With it, the keys are fetched without discovery.
@@ -113,7 +119,10 @@ type Provider struct {
 	// on every token its keys verify. Such a token is refused when its sub
 	// does not start with system:serviceaccount:, when its iat is ahead of
 	// the verifier's clock by more than the verifier's leeway, and when its
-	// namespace is not an allowed one. The mark requires Audiences to be
+	// namespace is not an allowed one.
+	// [authz-agent/internal/token/verify.Token.IsM2M] reports every such token
+	// as M2M, and no token of a provider without the mark, whatever its level
+	// or roles. The mark requires Audiences to be
 	// exactly netcracker, the audience that the services of an installation
 	// request, and refuses AllowMissingAud, so a token that a Pod got for the
 	// API server or for another service is refused. [Config.Validate] refuses
