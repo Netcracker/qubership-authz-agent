@@ -24,7 +24,7 @@ import (
 	"authz-agent/components/authz-agent/internal/pull"
 )
 
-// config is what the service needs to start. Every value comes from the
+// config is what the service needs to start. Every setting comes from the
 // environment through configloader: AUTHZ_HTTP_ADDR is `authz.http.addr`,
 // and so on.
 type config struct {
@@ -37,8 +37,8 @@ type config struct {
 	Authn authn.Config
 	// Pull configures the policy pull; [pull.Config] says what disables it.
 	Pull pull.Config
-	// M2M configures the agent's own token; empty TokenURL and TokenFile
-	// disable it.
+	// M2M configures the agent's own token: client credentials when
+	// TokenURL is set, the file at [m2m.DefaultTokenFile] otherwise.
 	M2M m2m.Config
 }
 
@@ -68,7 +68,7 @@ func loadConfig(get lookup) config {
 			ClientIDFile:     get("authz.m2m.client.id.file", m2m.DefaultClientIDFile),
 			ClientSecretFile: get("authz.m2m.client.secret.file", m2m.DefaultClientSecretFile),
 			RenewBefore:      seconds(get, "authz.m2m.renew.before.seconds", m2m.DefaultRenewBefore),
-			TokenFile:        get("authz.pap.client.token.file", m2m.DefaultTokenFile),
+			TokenFile:        m2m.DefaultTokenFile,
 			WatchInterval:    m2m.DefaultWatchInterval,
 		},
 	}
