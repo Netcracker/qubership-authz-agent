@@ -8,7 +8,7 @@ require (
 	github.com/lestrrat-go/jwx/v3 v3.4.0
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.11.5
 	github.com/netcracker/qubership-core-lib-go/v3 v3.15.4
-	github.com/open-policy-agent/opa v1.22.3
+	github.com/open-policy-agent/opa v1.22.4
 )
 
 require (
