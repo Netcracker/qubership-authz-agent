@@ -1,0 +1,74 @@
+{
+  "ax77-52-fs69-c-r28rsql-pud-op-gt-bare": {
+    "check-filter-v2-outcome/regular/filter-check-filter-v2": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_FS69_AX77_52_FS69_C_R28RSQL_PUD_OP_GT_BARE.a.gt(5)).not()",
+        "mongodbFilterCondition": "{ { \"a\": { \"$gt\": 5 } } }",
+        "rsqlFilterCondition": "a=le=5",
+        "sqlFilterCondition": "NOT (a\u003e5)",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-4": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-5": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-52-fs69-c-resource-is-null-without-predicate-alone": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-52-fs69-c-set-algorithm-permit-unless-deny-over-allow-and-deny-predicates": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "(allowed==1),(blocked!=1)",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-4": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-5": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-6": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-7": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-52-fs69-c-target-resource-is-null-without-predicate-alone": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

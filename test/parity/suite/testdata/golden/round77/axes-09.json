@@ -1,0 +1,34 @@
+{
+  "ax77-09-i72-claims-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-09-i72-claims-control-last": {
+    "check-resource-v2-outcome/regular/read-check-resource-v2": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-09-ic72-sub-array": {
+    "check-resource-v2-outcome/regular/id-is-null-a-n-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/id-is-null-a-y-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/id-is-null-deny-check-resource-v2": {"status":200,"decision":false},
+    "check-resource-v2-outcome/regular/id-is-sub-first-a-n-check-resource-v2": {"status":200,"decision":false},
+    "check-resource-v2-outcome/regular/id-is-sub-first-a-y-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/id-is-sub-first-deny-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/id-is-sub-text-a-n-check-resource-v2": {"status":200,"decision":false},
+    "check-resource-v2-outcome/regular/id-is-sub-text-a-y-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/id-is-sub-text-deny-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/name-is-null-a-n-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/name-is-null-a-y-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/name-is-null-deny-check-resource-v2": {"status":200,"decision":false},
+    "check-resource-v2-outcome/regular/name-is-preferred-username-a-n-check-resource-v2": {"status":200,"decision":false},
+    "check-resource-v2-outcome/regular/name-is-preferred-username-a-y-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/name-is-preferred-username-deny-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/roles-contain-reader-a-n-check-resource-v2": {"status":200,"decision":false},
+    "check-resource-v2-outcome/regular/roles-contain-reader-a-y-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/roles-contain-reader-deny-check-resource-v2": {"status":200,"decision":true},
+    "check-resource-v2-outcome/regular/roles-is-empty-a-n-check-resource-v2": {"status":200,"decision":false},
+    "check-resource-v2-outcome/regular/roles-is-empty-a-y-check-resource-v2": {"status":200,"decision":false},
+    "check-resource-v2-outcome/regular/roles-is-empty-deny-check-resource-v2": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

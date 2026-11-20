@@ -1,0 +1,173 @@
+{
+  "ax77-08-id44-control-first-or": {
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-control-last-or": {
+    "check-filter-v2-outcome/regular/a-y-check-filter-v2": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-header-charset-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax77-08-id44-header-charset-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax77-08-id44-header-item-trim-0-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax77-08-id44-header-item-trim-0-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax77-08-id44-header-item-trim-1-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax77-08-id44-header-item-trim-1-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax77-08-id44-header-item-trim-2-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax77-08-id44-header-item-trim-2-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax77-08-id44-list-item-trim-0-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-list-item-trim-0-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-list-item-trim-1-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-list-item-trim-1-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-list-item-trim-2-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-list-item-trim-2-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-match-meta-0-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-match-meta-0-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-number-text-0-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-number-text-0-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-pip-set-key-0-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax77-08-id44-pip-set-key-0-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax77-08-id44-pip-set-key-1-or": {
+    "check-filter-v2-outcome/regular/a-n-check-filter-v2": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v2-outcome/regular/a-y-check-filter-v2": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax77-08-id44-structure-number-text-0-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-structure-number-text-0-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-structure-number-text-1-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-structure-number-text-1-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-structure-number-text-2-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-08-id44-structure-number-text-2-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
