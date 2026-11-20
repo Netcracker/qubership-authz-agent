@@ -591,7 +591,7 @@ func TestVerify_AcceptsATokenWhoseKeyAReloadBringsWhileItsContextLasts(t *testin
 		want Code
 	}{
 		{"context that lasts", t.Context(), ""},
-		{"context that has ended", ended, CodeKIDUnknown},
+		{"context that has ended", ended, CodeKeysUnavailable},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1300,6 +1300,40 @@ func TestError_DetailOfARefusalByTheSelectedKeyQuotesTheIssNotTheProvider(t *tes
 			}
 			if !strings.Contains(err.Error(), strconv.Quote(testIssuer)) {
 				t.Errorf("Verify() error = %q, want it to quote the iss %q", err, testIssuer)
+			}
+		})
+	}
+}
+
+// A KeyFinder may return the sentinel without a reason.
+func TestLookupFailure_QuotesTheKIDAndTheReasonOfKeysThatCannotBeLoaded(t *testing.T) {
+	q := keys.Query{Issuer: testIssuer, KID: "k1"}
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{
+			"reason of a wait",
+			&keys.UnavailableError{Reason: "the load did not end within 3s"},
+			`the keys of iss "https://idp.example/auth/realms/r" cannot be loaded, so the token with kid "k1" cannot be checked: the load did not end within 3s`,
+		},
+		{
+			"reason of the limit of realms",
+			&keys.UnavailableError{Reason: "the agent holds 1000 realms, the most it keeps"},
+			`the keys of iss "https://idp.example/auth/realms/r" cannot be loaded, so the token with kid "k1" cannot be checked: the agent holds 1000 realms, the most it keeps`,
+		},
+		{
+			"sentinel without a reason",
+			keys.ErrKeysUnavailable,
+			`the keys of iss "https://idp.example/auth/realms/r" cannot be loaded, so the token with kid "k1" cannot be checked: no reason given`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			refused := lookupFailure(q, tt.err)
+			if refused.Code != CodeKeysUnavailable || refused.Detail != tt.want {
+				t.Errorf("lookupFailure(%v) = %s: %q, want %s: %q", tt.err, refused.Code, refused.Detail, CodeKeysUnavailable, tt.want)
 			}
 		})
 	}

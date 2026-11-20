@@ -88,9 +88,53 @@ var (
 	// ErrIssuerUnknown reports an issuer that is neither a [Provider] of the
 	// configuration nor a realm of its [Keycloak].
 	ErrIssuerUnknown = errors.New("issuer is not trusted")
-	// ErrKeyUnknown reports that no loaded key of the source has the kid.
+	// ErrKeyUnknown reports that no loaded key of the source has the kid. From
+	// [Set.LookupOrReload] it also means that the source answered, as
+	// [ErrKeysUnavailable] defines it.
 	ErrKeyUnknown = errors.New("no loaded key has the kid")
+	// ErrKeysUnavailable reports that no loaded key of the source has the kid
+	// and the source gave no answer for this lookup: its last load got none;
+	// the limit of on-demand loads or of realms refused the first load of a
+	// realm that the Set does not hold; the limit of on-demand loads refused the
+	// load that this lookup would have started for a source the Set holds, and
+	// no load had stored a result since the refusal; or the lookup stopped
+	// waiting for the load that it started or joined, and no load had stored a
+	// result since that load started. The last load is the last of any kind, a
+	// scheduled [Set.Refresh] included. Within a minute after the last on-demand
+	// load of the source started, a lookup starts no load: it waits for that
+	// load while it runs, and otherwise the last load decides.
+	//
+	// A load got an answer when it got a JWKS whose member named exactly keys is
+	// an array, whether or not the JWKS holds the kid or any usable key, unless
+	// the JWKS lists two usable keys with different key material under one kid.
+	// It also got one when the discovery document of a realm with no keys
+	// loaded returned the 404 that Keycloak returns for a realm it does not
+	// hold, a JSON object whose member named exactly error is "Realm does not
+	// exist". A response whose body is longer than 1 MiB (1048576 bytes) fails
+	// the load whatever its status, so neither that JWKS nor that 404 counts as
+	// an answer then. Any other failed load got none. [Set.LookupOrReload]
+	// returns it as an [*UnavailableError].
+	ErrKeysUnavailable = errors.New("the keys of the source cannot be loaded")
 )
+
+// UnavailableError is the [ErrKeysUnavailable] of one lookup, with the reason
+// the source gave no answer for it.
+type UnavailableError struct {
+	// Reason says which limit or wait ended the lookup, or that the last load
+	// got no answer. It names no source, because the signature of the token is
+	// not checked yet, and the token only claims to come from that source.
+	Reason string
+}
+
+// Error returns the text of [ErrKeysUnavailable] and the reason.
+func (e *UnavailableError) Error() string { return ErrKeysUnavailable.Error() + ": " + e.Reason }
+
+// Is reports whether target is [ErrKeysUnavailable].
+func (e *UnavailableError) Is(target error) bool { return target == ErrKeysUnavailable }
+
+// loadLimitReason is the reason of an [UnavailableError] when the limit of
+// [maxLoadsPerMinute] on-demand loads refuses a load.
+var loadLimitReason = fmt.Sprintf("the agent started %d on-demand loads in the last minute, the most it allows", maxLoadsPerMinute)
 
 // Query names the key a token asks for.
 type Query struct {
@@ -333,7 +377,9 @@ func (s *Set) newSource(from Source, address string, client *http.Client, requir
 		fetcher:  &fetcher{source: from, address: address, client: client, log: s.opts.Log},
 		required: required,
 	}
+	src.current.Store(&loadResult{})
 	src.onDemand = onDemand{
+		current: &src.current,
 		load: func(ctx context.Context) {
 			if err := src.reload(ctx); err != nil {
 				s.opts.Log.Warnf("trusted providers: on-demand load: %v", err)
@@ -341,9 +387,6 @@ func (s *Set) newSource(from Source, address string, client *http.Client, requir
 		},
 		interval: reloadInterval,
 		loads:    s.loads,
-		refused: func(now time.Time) {
-			s.warnOnce(now, "trusted providers: %s is not reloaded, and tokens that need a new key of it are refused for now: the agent started %d on-demand loads in the last minute, the most it allows", src.label(), maxLoadsPerMinute)
-		},
 	}
 	return src
 }
@@ -391,14 +434,15 @@ func (s *Set) Lookup(q Query) (Key, error) {
 			return Key{}, ErrKeyUnknown
 		}
 	}
-	return src.find(q.KID)
+	return src.current.Load().find(q.KID)
 }
 
 // LookupOrReload returns the key q names. When no loaded key of the source of
 // q.Issuer matches, it starts an on-demand load of that source, waits until the
 // load ends, ctx ends, or [Options.ReloadWait] passes, and looks again among
 // the keys loaded by then. A realm no token named before is loaded the same
-// way. The errors are those of [Set.Lookup].
+// way. The errors are those of [Set.Lookup], and [ErrKeysUnavailable] when no
+// key matches and the source gave no answer for this lookup.
 //
 // Callers that ask while such a load runs wait for it rather than start
 // another. One source loads at most once a minute this way, a [Set] starts at
@@ -412,14 +456,39 @@ func (s *Set) LookupOrReload(ctx context.Context, q Query) (Key, error) {
 	if err != nil {
 		return Key{}, err
 	}
-	key, err := src.find(q.KID)
+	key, err := src.current.Load().find(q.KID)
 	if !errors.Is(err, ErrKeyUnknown) {
 		return key, err
 	}
-	ctx, cancel := context.WithTimeout(ctx, s.opts.ReloadWait)
+	waitCtx, cancel := context.WithTimeout(ctx, s.opts.ReloadWait)
 	defer cancel()
-	src.onDemand.wait(ctx)
-	return src.find(q.KID)
+	from, waitErr := src.onDemand.wait(waitCtx)
+	if errors.Is(waitErr, errLoadRefused) {
+		s.warnOnce(time.Now(), "trusted providers: %s is not reloaded, and tokens that need a new key of it are refused for now: %s", src.label(), loadLimitReason)
+	}
+	// last is read once, so the keys and the answer come from the same load.
+	last := src.current.Load()
+	key, err = last.find(q.KID)
+	if !errors.Is(err, ErrKeyUnknown) {
+		return key, err
+	}
+	// When current holds a result other than from, a load stored it after the
+	// awaited load started or after the limit refused the load, and that result
+	// decides, whatever ended the wait.
+	if waitErr != nil && last == from {
+		switch {
+		case errors.Is(waitErr, errLoadRefused):
+			return Key{}, &UnavailableError{Reason: loadLimitReason}
+		case ctx.Err() != nil:
+			return Key{}, &UnavailableError{Reason: "the caller stopped waiting before the load ended"}
+		default:
+			return Key{}, &UnavailableError{Reason: fmt.Sprintf("the load did not end within %s", s.opts.ReloadWait)}
+		}
+	}
+	if !last.answered {
+		return Key{}, &UnavailableError{Reason: "the last load of the source failed"}
+	}
+	return Key{}, ErrKeyUnknown
 }
 
 // sourceFor returns the source of issuer, adding a realm no token named
@@ -546,7 +615,7 @@ func (r *otherRealms) add(src *source, err error) {
 		return
 	}
 	r.failed++
-	if src.current.Load() == nil {
+	if len(src.current.Load().keys) == 0 {
 		r.keyless++
 	}
 	if name := src.fetcher.source.Realm; r.firstErr == nil || name < r.firstName {

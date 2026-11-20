@@ -16,6 +16,8 @@ package verify
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -28,6 +30,14 @@ import (
 
 const realmsPath = "/auth/realms/"
 
+// missingRealm responds as Keycloak does to a request for a realm it does not
+// hold.
+func missingRealm(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	_, _ = io.WriteString(w, `{"error":"Realm does not exist"}`)
+}
+
 // keycloakOf serves the OIDC discovery document and the JWKS of each realm of
 // realms, whose keys are the public keys of the signers, each with its kid and
 // the x5t that thumbprints holds for that kid, and returns the address of the
@@ -39,7 +49,7 @@ func keycloakOf(t *testing.T, realms map[string][]*signer, thumbprints map[strin
 		realm, rest, _ := strings.Cut(strings.TrimPrefix(r.URL.Path, realmsPath), "/")
 		signers, ok := realms[realm]
 		if !ok {
-			http.NotFound(w, r)
+			missingRealm(w, r)
 			return
 		}
 		if rest == ".well-known/openid-configuration" {
@@ -102,6 +112,50 @@ func TestVerify_ComputesTheM2MTestFromTheSourceOfARealKey(t *testing.T) {
 			}
 			if got := tok.IsM2M(); got != tt.wantM2M {
 				t.Errorf("IsM2M() = %t, want %t", got, tt.wantM2M)
+			}
+		})
+	}
+}
+
+// Keycloak is down and the realm has not loaded, so the code says that the
+// token could not be checked. The same token names a realm that does not exist
+// on a Keycloak that is up, and there the source has answered. A 404 from
+// something other than Keycloak, such as one from a proxy with no route, is no
+// answer.
+func TestVerify_TellsAnOutageOfKeycloakFromARealmThatDoesNotExist(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
+	tests := []struct {
+		name       string
+		handler    http.HandlerFunc
+		want       Code
+		wantDetail string
+	}{
+		{
+			"Keycloak returns 503", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusServiceUnavailable) }, CodeKeysUnavailable,
+			`the keys of iss "https://public.example/auth/realms/tenant" cannot be loaded, so the token with kid "k1" cannot be checked: the last load of the source failed`,
+		},
+		{"Keycloak returns that the realm does not exist", missingRealm, CodeKIDUnknown, `no key of iss "https://public.example/auth/realms/tenant" has kid "k1"`},
+		{
+			"a 404 whose body is not the error of Keycloak", http.NotFound, CodeKeysUnavailable,
+			`the keys of iss "https://public.example/auth/realms/tenant" cannot be loaded, so the token with kid "k1" cannot be checked: the last load of the source failed`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := httptest.NewServer(tt.handler)
+			t.Cleanup(srv.Close)
+			set, err := keys.New(keys.Config{Keycloak: &keys.Keycloak{URL: srv.URL}}, keys.Options{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			v, _ := newVerifier(set)
+			raw := s.sign(t, claimsAt(start, map[string]any{"iss": "https://public.example" + realmsPath + "tenant"}))
+			_, err = v.Verify(t.Context(), raw)
+			if codeOf(err) != tt.want {
+				t.Fatalf("Verify() error = %v, want code %q", err, tt.want)
+			}
+			if refused, _ := errors.AsType[*Error](err); refused.Detail != tt.wantDetail {
+				t.Errorf("Verify() Detail = %q, want %q", refused.Detail, tt.wantDetail)
 			}
 		})
 	}

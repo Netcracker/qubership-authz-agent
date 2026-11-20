@@ -45,7 +45,11 @@ const testIssuer = "https://idp.example/auth/realms/r"
 const serviceAccountSub = "system:serviceaccount:ns:app"
 
 // fakeKeys is a KeyFinder that holds the keys of testIssuer in memory, and
-// finds a key by kid alone.
+// finds a key by kid alone. With an ended context, LookupOrReload reloads
+// nothing and reports a kid it does not hold with [keys.ErrKeysUnavailable], as
+// a [keys.Set] does when the lookup stopped waiting for the load that it
+// started or joined, and no load had stored a result since that load started.
+// It has no case in which the last load decides.
 type fakeKeys struct {
 	mu    sync.Mutex
 	byKID map[string]keys.Key
@@ -84,7 +88,11 @@ func (f *fakeKeys) LookupOrReload(ctx context.Context, q keys.Query) (keys.Key, 
 		}
 		f.onReload = nil
 	}
-	return f.find(q)
+	key, err := f.find(q)
+	if errors.Is(err, keys.ErrKeyUnknown) && ctx.Err() != nil {
+		return keys.Key{}, keys.ErrKeysUnavailable
+	}
+	return key, err
 }
 
 // find returns the key of q. The caller holds mu.
