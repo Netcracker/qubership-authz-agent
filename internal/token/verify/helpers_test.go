@@ -15,6 +15,7 @@
 package verify
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -37,10 +38,21 @@ import (
 // start is the time every test begins at.
 var start = time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
 
-// fakeKeys is a KeyFinder that holds its keys in memory.
+// testIssuer is the only issuer a fakeKeys trusts, and the iss of [claimsAt].
+const testIssuer = "https://idp.example/auth/realms/r"
+
+// fakeKeys is a KeyFinder that holds the keys of testIssuer in memory, and
+// finds a key by kid alone.
 type fakeKeys struct {
 	mu    sync.Mutex
 	byKID map[string]keys.Key
+	// onReload holds the keys the next reload adds: LookupOrReload adds
+	// them when it is asked for a kid it does not hold and its context has
+	// not ended, as a reload the caller waits for would.
+	onReload []keys.Key
+	// reloading, when set, runs during that reload; a test moves the clock
+	// in it by the time the reload takes.
+	reloading func()
 }
 
 func newFakeKeys(signers ...*signer) *fakeKeys {
@@ -51,11 +63,37 @@ func newFakeKeys(signers ...*signer) *fakeKeys {
 	return f
 }
 
-func (f *fakeKeys) Lookup(kid string) (keys.Key, bool) {
+func (f *fakeKeys) Lookup(q keys.Query) (keys.Key, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	k, ok := f.byKID[kid]
-	return k, ok
+	return f.find(q)
+}
+
+func (f *fakeKeys) LookupOrReload(ctx context.Context, q keys.Query) (keys.Key, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if _, err := f.find(q); errors.Is(err, keys.ErrKeyUnknown) && ctx.Err() == nil {
+		if f.reloading != nil {
+			f.reloading()
+		}
+		for _, k := range f.onReload {
+			f.byKID[k.ID] = k
+		}
+		f.onReload = nil
+	}
+	return f.find(q)
+}
+
+// find returns the key of q. The caller holds mu.
+func (f *fakeKeys) find(q keys.Query) (keys.Key, error) {
+	if q.Issuer != testIssuer {
+		return keys.Key{}, keys.ErrIssuerUnknown
+	}
+	k, ok := f.byKID[q.KID]
+	if !ok {
+		return keys.Key{}, keys.ErrKeyUnknown
+	}
+	return k, nil
 }
 
 func (f *fakeKeys) set(key keys.Key) {
@@ -112,7 +150,7 @@ func signerFor(t *testing.T, alg jwa.SignatureAlgorithm, private, public any, ki
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &signer{alg: alg, private: private, key: keys.Key{Provider: provider, ID: kid, JWK: key}}
+	return &signer{alg: alg, private: private, key: keys.Key{Source: keys.Source{Provider: provider}, ID: kid, JWK: key}}
 }
 
 // republished returns the signer's key as a new jwk.Key value, as a reload
@@ -154,7 +192,8 @@ func (s *signer) signWithHeaders(t *testing.T, claims, header map[string]any) st
 }
 
 // signPayload returns a compact JWS of payload, which need not be JSON,
-// whose protected header holds the signer's kid and each entry of header.
+// whose protected header holds the signer's kid and each entry of header. An
+// entry with a nil value removes that parameter.
 func (s *signer) signPayload(t *testing.T, payload []byte, header map[string]any) string {
 	t.Helper()
 	headers := jws.NewHeaders()
@@ -162,6 +201,12 @@ func (s *signer) signPayload(t *testing.T, payload []byte, header map[string]any
 		t.Fatal(err)
 	}
 	for name, value := range header {
+		if value == nil {
+			if err := headers.Remove(name); err != nil {
+				t.Fatal(err)
+			}
+			continue
+		}
 		if err := headers.Set(name, value); err != nil {
 			t.Fatal(err)
 		}
@@ -189,10 +234,12 @@ func segment(t *testing.T, v any) string {
 	return base64.RawURLEncoding.EncodeToString(raw)
 }
 
-// claimsAt returns claims of a token issued at now that expires an hour
-// later, with each entry of fields set, or removed when its value is nil.
+// claimsAt returns claims of a token that testIssuer issued at now and that
+// expires an hour later, with each entry of fields set, or removed when its
+// value is nil.
 func claimsAt(now time.Time, fields map[string]any) map[string]any {
 	claims := map[string]any{
+		"iss": testIssuer,
 		"sub": "user-1",
 		"iat": now.Unix(),
 		"exp": now.Add(time.Hour).Unix(),

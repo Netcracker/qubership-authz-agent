@@ -25,27 +25,47 @@ import (
 	"regexp"
 )
 
-// Config is the trusted providers file: a JSON object whose providers array
-// lists every identity provider whose keys sign a token the service accepts.
+// Config is the trusted providers file: a JSON object that names the sources
+// of the keys that sign a token the service accepts. At least one of Keycloak
+// and Providers is set.
 type Config struct {
-	Providers []Provider `json:"providers"`
+	// Keycloak trusts every realm of one Keycloak.
+	Keycloak *Keycloak `json:"keycloak,omitempty"`
+	// Providers lists the identity providers with one fixed issuer each.
+	Providers []Provider `json:"providers,omitempty"`
 }
 
-// Provider is one trusted identity provider. It names the address of its
-// keys in one of two forms and never both: Issuer, resolved through OIDC
-// discovery to a jwks_uri, or JWKSURI, fetched as it is. Neither the
-// discovery request nor the JWKS request follows a redirect: a 3xx answer
-// fails the fetch.
+// Keycloak is a Keycloak whose realms are all trusted. The realm of a token
+// is the part of its iss after the last slash, for an iss that contains
+// /auth/realms/. The keys of the realm are read through OIDC discovery under
+// URL, whatever host the iss names, so a token cannot choose the server that
+// is asked for keys. The aud of a realm token is not checked.
+type Keycloak struct {
+	// URL is the address of the Keycloak, an absolute http or https URL.
+	URL string `json:"url"`
+	// RequiredRealms lists the realms whose keys [Set.Ready] waits for. Any
+	// other realm is loaded when the first token names it.
+	RequiredRealms []string `json:"requiredRealms,omitempty"`
+	// CAFile is a PEM bundle that replaces the system roots for HTTPS
+	// requests to this Keycloak.
+	CAFile string `json:"caFile,omitempty"`
+}
+
+// Provider is one trusted identity provider with a fixed issuer. Its keys are
+// found through OIDC discovery under Issuer unless JWKSURI names them
+// directly. Neither the discovery request nor the JWKS request follows a
+// redirect: a 3xx answer fails the fetch.
 type Provider struct {
 	// ID names the provider in logs and in the keys it publishes. It is
 	// unique within a Config and uses only letters, digits, '.', '_', and '-'.
 	ID string `json:"id"`
-	// Issuer is the base address of the provider, an absolute http or https
-	// URL. The keys are found through the OIDC discovery document under it,
-	// at /.well-known/openid-configuration.
-	Issuer string `json:"issuer,omitempty"`
+	// Issuer is the iss of the provider's tokens, compared byte for byte, and
+	// an absolute http or https URL. It is unique within a Config. The OIDC
+	// discovery document lies under it, at
+	// /.well-known/openid-configuration.
+	Issuer string `json:"issuer"`
 	// JWKSURI is the address of the provider's JWKS, an absolute http or
-	// https URL.
+	// https URL. With it, the keys are fetched without discovery.
 	JWKSURI string `json:"jwksUri,omitempty"`
 	// Audiences lists the aud values accepted in a token signed by one of the
 	// provider's keys; no entry is empty. An empty list accepts any aud.
@@ -99,22 +119,44 @@ func ParseConfig(data []byte) (Config, error) {
 	return cfg, nil
 }
 
-// Validate returns an error for an empty provider list and for the first
-// entry that breaks a rule of [Provider]; the error names the entry by its
-// index in Providers.
+// Validate returns an error for a Config that names no source of keys, for a
+// [Keycloak] that breaks a rule, and for the first entry that breaks a rule
+// of [Provider]; the error names the entry by its index in Providers.
 func (c Config) Validate() error {
-	if len(c.Providers) == 0 {
-		return errors.New("no providers configured")
+	if c.Keycloak == nil && len(c.Providers) == 0 {
+		return errors.New("neither keycloak nor providers is configured")
 	}
-	seen := make(map[string]bool, len(c.Providers))
+	if c.Keycloak != nil {
+		if err := c.Keycloak.validate(); err != nil {
+			return fmt.Errorf("keycloak: %w", err)
+		}
+	}
+	ids := make(map[string]bool, len(c.Providers))
+	issuers := make(map[string]bool, len(c.Providers))
 	for i, p := range c.Providers {
 		if err := p.validate(); err != nil {
 			return fmt.Errorf("providers[%d]: %w", i, err)
 		}
-		if seen[p.ID] {
+		if ids[p.ID] {
 			return fmt.Errorf("providers[%d]: id %q is used by an earlier provider", i, p.ID)
 		}
-		seen[p.ID] = true
+		ids[p.ID] = true
+		if issuers[p.Issuer] {
+			return fmt.Errorf("providers[%d]: issuer %q is used by an earlier provider", i, p.Issuer)
+		}
+		issuers[p.Issuer] = true
+	}
+	return nil
+}
+
+func (k Keycloak) validate() error {
+	if err := checkHTTPURL(k.URL); err != nil {
+		return fmt.Errorf("url: %w", err)
+	}
+	for _, realm := range k.RequiredRealms {
+		if !validRealm(realm) {
+			return fmt.Errorf("requiredRealms: %q is not a realm name", realm)
+		}
 	}
 	return nil
 }
@@ -125,10 +167,8 @@ func (p Provider) validate() error {
 		return errors.New("id is empty")
 	case !validProviderID.MatchString(p.ID):
 		return fmt.Errorf("id %q has a character other than a letter, a digit, '.', '_', or '-'", p.ID)
-	case p.Issuer == "" && p.JWKSURI == "":
-		return fmt.Errorf("provider %q sets neither issuer nor jwksUri", p.ID)
-	case p.Issuer != "" && p.JWKSURI != "":
-		return fmt.Errorf("provider %q sets both issuer and jwksUri; keep one", p.ID)
+	case p.Issuer == "":
+		return fmt.Errorf("provider %q has no issuer", p.ID)
 	case p.TokenFile != "" && p.JWKSURI == "":
 		return fmt.Errorf("provider %q sets tokenFile without jwksUri; the token is sent only to a jwksUri the configuration names", p.ID)
 	case p.AllowMissingAud && len(p.Audiences) == 0:
@@ -139,12 +179,14 @@ func (p Provider) validate() error {
 			return fmt.Errorf("provider %q lists an empty audience", p.ID)
 		}
 	}
-	address, field := p.Issuer, "issuer"
-	if p.JWKSURI != "" {
-		address, field = p.JWKSURI, "jwksUri"
+	if err := checkHTTPURL(p.Issuer); err != nil {
+		return fmt.Errorf("provider %q issuer: %w", p.ID, err)
 	}
-	if err := checkHTTPURL(address); err != nil {
-		return fmt.Errorf("provider %q %s: %w", p.ID, field, err)
+	if p.JWKSURI == "" {
+		return nil
+	}
+	if err := checkHTTPURL(p.JWKSURI); err != nil {
+		return fmt.Errorf("provider %q jwksUri: %w", p.ID, err)
 	}
 	return nil
 }
