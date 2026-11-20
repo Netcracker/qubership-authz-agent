@@ -501,6 +501,18 @@ for volume in "authz-agent-trusted-providers" "authz-agent-client-credentials"; 
   fi
 done
 
+# CA_CERTIFICATES_SECRET names the Secret the agent Pod mounts read-only at
+# /tmp/cert, and the default leaves /tmp/cert unmounted.
+ca_deployment="$(deployment_of --set CA_CERTIFICATES_SECRET=corporate-ca)"
+ca_volume="$(grep -B1 -E '^ +mountPath: /tmp/cert$' <<<"${ca_deployment}" | awk '$1 == "-" && $2 == "name:" {print $3}' || true)"
+ca_entries="$(grep -A2 -E "^ +- name: ${ca_volume:-none}\$" <<<"${ca_deployment}" || true)"
+ca_summary="secret=$(awk '$1 == "secretName:" {print $2}' <<<"${ca_entries}") readOnly=$(awk '$1 == "readOnly:" {print $2}' <<<"${ca_entries}") default=$(grep -c 'mountPath: /tmp/cert' <<<"$(deployment_of)" || true)"
+if [[ "${ca_summary}" == "secret='corporate-ca' readOnly=true default=0" ]]; then
+  pass "CA_CERTIFICATES_SECRET mounts the named Secret read-only at /tmp/cert, and the default mounts nothing there"
+else
+  fail "CA_CERTIFICATES_SECRET renders ${ca_summary}, expected secret='corporate-ca' readOnly=true default=0"
+fi
+
 # Every gateway route ends on the public port and reaches it under the path the
 # caller sent: a gateway publishes nothing on the internal port.
 mesh="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set MESH_ROUTES_ENABLED=true --show-only templates/mesh-routes.yaml 2>&1 || true)"
@@ -821,6 +833,22 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
     pass "${name}: the root file system is read-only on Kubernetes and writable on OpenShift or when turned off"
   else
     fail "${name}: readOnlyRootFilesystem renders ${ro_summary}, expected k8s=true openshift=false off=false"
+  fi
+
+  # The base image's entrypoint can write to each of these paths when the
+  # container starts. Each path is summarized as the type of the volume
+  # mounted there, or none.
+  read_only_deployment="$(helm template t "${chart}" -f "${SIZING}" --set PAAS_PLATFORM=KUBERNETES --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=true --show-only templates/deployment.yaml 2>&1 || true)"
+  entrypoint_mounts=""
+  for mount_path in /usr/local/share/ca-certificates /etc/ssl/certs /app/nss; do
+    volume_name="$(grep -B1 -E "^ +mountPath: '?${mount_path}'?\$" <<<"${read_only_deployment}" | awk '$1 == "-" && $2 == "name:" {print $3}' || true)"
+    volume_type="$(grep -A1 -E "^ +- name: ${volume_name:-none}\$" <<<"${read_only_deployment}" | grep -oE 'emptyDir|configMap|secret|projected|persistentVolumeClaim' | head -1 || true)"
+    entrypoint_mounts+="${mount_path}=${volume_type:-none} "
+  done
+  if [[ "${entrypoint_mounts}" == "/usr/local/share/ca-certificates=emptyDir /etc/ssl/certs=emptyDir /app/nss=emptyDir " ]]; then
+    pass "${name}: under a read-only root file system the paths the base entrypoint writes are emptyDir volumes"
+  else
+    fail "${name}: under a read-only root file system the paths the base entrypoint writes are mounted as ${entrypoint_mounts}, expected emptyDir at each"
   fi
 done
 

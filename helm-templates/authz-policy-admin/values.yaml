@@ -17,11 +17,9 @@ DEPLOYMENT_VERSION: ''
 # app.kubernetes.io/part-of label.
 APPLICATION_NAME: 'Platform-Core-Security'
 # Read-only root file system for the container, on Kubernetes; on OpenShift the
-# template leaves it writable, as the platform's charts do. Safe at any value:
-# every write of the stub lands on its mounted volume, and the base image's
-# entrypoint rebuilds the CA store only when it finds certificate files under
-# /tmp/cert or the service-account mount, neither of which this chart provides
-# (the Pod mounts no service-account token).
+# template leaves it writable, as the platform's charts do. The stub writes
+# only to its data volume, and where the root is read-only the template mounts
+# emptyDir volumes at the paths the base image's entrypoint writes to.
 READONLY_CONTAINER_FILE_SYSTEM_ENABLED: true
 # The app.kubernetes.io/managed-by label of every object but the Pod template.
 # Cloud-Deployer overrides it (argocd installs set `argocd`).

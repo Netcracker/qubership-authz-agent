@@ -74,6 +74,11 @@ services:
       AUTHZ_PAP_CLIENT_SOURCE_URL: http://authz-policy-admin:18090
       AUTHZ_PAP_CLIENT_PULL_INTERVAL: "${SVT_PAP_PULL_INTERVAL:-2}"
       AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-pull-token
+      # The base image's entrypoint passes SIGTERM on at once rather than after
+      # its default 10 seconds, so the restart before each measured phase
+      # stops the agent within the 10 seconds Compose waits. Nothing on the
+      # stand has to route traffic away from the agent first.
+      SIGTERM_EXIT_DELAY: "0"
     volumes:
       - ./keycloak/trusted-providers.json:/etc/authz/trusted-providers.json:ro
       - ./keycloak/ac-pull-token:/etc/authz/ac-pull-token:ro

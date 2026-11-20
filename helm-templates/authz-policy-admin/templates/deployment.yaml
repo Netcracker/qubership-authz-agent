@@ -1,3 +1,5 @@
+{{- /* Read-only on Kubernetes only, as on the platform's charts. */}}
+{{- $readOnlyRoot := and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}
 # The access-control stub (authz-agent-ADR-0073).
 #
 # Serves the access-control v3 config API from policies uploaded over its own
@@ -74,6 +76,20 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: '{{ .Values.SERVICE_NAME }}-data'
+        {{- if $readOnlyRoot }}
+        # The base image's entrypoint writes to these at every start: the CA
+        # certificates of /tmp/cert to /usr/local/share/ca-certificates, the
+        # rebuilt trust store to /etc/ssl/certs, and, for a uid with no passwd
+        # entry, a passwd file to /app/nss. The image declares them as VOLUMEs,
+        # but not every container runtime makes those writable under a
+        # read-only root file system.
+        - name: ca-certificates
+          emptyDir: {}
+        - name: certs
+          emptyDir: {}
+        - name: nss
+          emptyDir: {}
+        {{- end }}
       containers:
         - name: '{{ .Values.SERVICE_NAME }}'
           image: '{{ .Values.IMAGE_REPOSITORY }}:{{ .Values.TAG }}'
@@ -94,6 +110,14 @@ spec:
           volumeMounts:
             - name: data
               mountPath: '{{ .Values.AUTHZ_POLICY_ADMIN_DATA_DIR }}'
+            {{- if $readOnlyRoot }}
+            - name: ca-certificates
+              mountPath: /usr/local/share/ca-certificates
+            - name: certs
+              mountPath: /etc/ssl/certs
+            - name: nss
+              mountPath: /app/nss
+            {{- end }}
           # An unwritable volume makes the process exit at startup. The startup
           # probe turns that into a fast, obvious CrashLoopBackOff instead of a
           # liveness-driven restart storm.
@@ -130,12 +154,9 @@ spec:
             {{- if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
             runAsGroup: 10001
             {{- end }}
-            # Read-only on Kubernetes only, as on the platform's charts. Safe at
-            # any value: every write of the stub lands on the mounted volume,
-            # and the base image's entrypoint rebuilds the CA store only when
-            # it finds certificate files under /tmp/cert or the service-account
-            # mount, neither of which this Pod has.
-            readOnlyRootFilesystem: {{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}
+            # The stub writes only to its data volume, and the base image's
+            # entrypoint only to the ca-certificates, certs, and nss volumes.
+            readOnlyRootFilesystem: {{ $readOnlyRoot }}
             seccompProfile:
               type: RuntimeDefault
             capabilities:

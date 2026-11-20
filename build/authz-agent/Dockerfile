@@ -23,7 +23,8 @@ RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" \
 FROM ghcr.io/netcracker/qubership-core-base:alpine-2.5.15@sha256:a3af3751d9187ce7f8ffd67a5aa8465fee78056c79f964bfa7727ea00da681da
 COPY --chmod=555 --from=builder /out/authz-agent /usr/local/bin/authz-agent
 USER 10001:10001
-# The binary is the entrypoint rather than a CMD behind the base image's
-# entrypoint script, whose certificate loading is not needed until the service
-# talks TLS itself.
-ENTRYPOINT ["/usr/local/bin/authz-agent"]
+# The binary is the command of the base image's entrypoint. The entrypoint adds
+# the CA certificates found under /tmp/cert to the system trust store, runs the
+# scripts in /app/init.d, and forwards signals to the agent. It holds SIGTERM
+# back for SIGTERM_EXIT_DELAY seconds, 10 by default.
+CMD ["authz-agent"]
