@@ -1,3 +1,8 @@
+# Targets run one at a time, under -j too, so `make e2e` and `make parity` run
+# their stages in the order they list them, and a goal list such as
+# `make e2e-images e2e-restart e2e-suite` runs in the order given.
+.NOTPARALLEL:
+
 # lint: run all linters against the full tree (mirrors CI super-linter checks).
 #
 # Requires: golangci-lint, shellcheck, yamllint, npx (markdownlint-cli2),
@@ -281,11 +286,34 @@ endef
 # The suite Job reads E2E_BASE_URL from the release values. Given explicitly,
 # it is written there before the run; otherwise the run keeps the URL the
 # release has.
+# A Go test binary exits 0 when its -test.run pattern selects no test, no
+# method of TestRuntimeSuite, or only methods that skip, and helm test then
+# reports the Job as passed. So the target also fails when the Job's log has
+# the line `testing: warning: no tests to run`, or has no line containing
+# `--- PASS: TestRuntimeSuite/`. The binary prints the warning unless it ran
+# or skipped at least one test without subtests, such as a step or
+# TestZZZResponseReachabilityCoverage, which has no steps. It prints the PASS
+# line of a method only with -test.v in suite.args. A subset that checks
+# nothing can still pass. Every step it selects may skip, as the steps of
+# TestM2MKeycloak skip unless M2M_KEYCLOAK_PROFILE is true. Or the pattern may
+# misspell a step while its method part also selects
+# TestZZZResponseReachabilityCoverage.
 e2e-suite: $(if $(call given,E2E_BASE_URL),test-stand-files)
 ifneq ($(call given,E2E_BASE_URL),)
 	$(call upgrade-test-stand,$(E2E_KUBECTL),$(E2E_HELM),keycloak,--reuse-values --set suite.env.BASE_URL=$(E2E_BASE_URL) $(E2E_PULL_URL_ARGS))
 endif
 	$(call run-suite,$(E2E_KUBECTL),$(E2E_HELM),runtime-suite,$(E2E_SUITE_TIMEOUT))
+	@log=$$($(E2E_KUBECTL) logs job/runtime-suite) || exit 1; \
+	if printf '%s\n' "$$log" | grep -qx 'testing: warning: no tests to run'; then \
+		reason='The runtime-suite Job succeeded without running a test: its log has the line "testing: warning: no tests to run", which a Go test binary prints when its -test.run pattern selects no test at one of the levels TestRuntimeSuite/<method>/<step>.'; \
+	elif ! printf '%s\n' "$$log" | grep -q -- '--- PASS: TestRuntimeSuite/'; then \
+		reason='The runtime-suite Job succeeded, but no method of TestRuntimeSuite passed: its log has no line containing "--- PASS: TestRuntimeSuite/". Either the -test.run pattern selects no method of TestRuntimeSuite or only methods that skip, or suite.args has no -test.v, without which the binary prints no PASS line; in that case put -test.v back into suite.args in test/k8s/test-stand-values.yaml and run make e2e-harness.'; \
+	else \
+		exit 0; \
+	fi; \
+	run=$$($(E2E_KUBECTL) get job/runtime-suite -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="RUNTIME_SUITE_RUN")].value}'); \
+	printf '%s\n' "$$reason The Job ran with RUNTIME_SUITE_RUN='$$run'. To run a subset, set RUNTIME_SUITE_RUN on the authz-test-stand release to a pattern that selects a method of TestRuntimeSuite that does not skip, such as ^TestRuntimeSuite\$$/^TestCheckResource\$$, and FULL_RUNTIME_SUITE to false; a step part of the pattern has to match a step of that method. Section 6 (Iterating) of docs/local-integration-tests.md has the helm upgrade command. To return to the full run, run make e2e-harness, which resets the release values to test/k8s/test-stand-values.yaml." >&2; \
+	exit 1
 
 # `make e2e-images` rebuilds the local images under the same tags, and a
 # running Pod keeps the old content: the kubelet never re-reads a tag it
@@ -332,7 +360,9 @@ parity-install:
 	$(PARITY_HELM) upgrade --install authz-policy-admin helm-templates/authz-policy-admin -f helm-templates/authz-policy-admin/resource-profiles/dev.yaml -f test/k8s/parity/policy-admin-values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 	$(PARITY_HELM) upgrade --install authz-agent helm-templates/authz-agent -f helm-templates/authz-agent/resource-profiles/dev.yaml -f test/k8s/parity/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
-# As e2e-suite, for PARITY_AC_BASE_URL.
+# The parity Job reads PARITY_AC_BASE_URL from the release values. Given
+# explicitly, it is written there before the run, as e2e-suite does for
+# E2E_BASE_URL.
 parity-suite: $(if $(call given,PARITY_AC_BASE_URL),test-stand-files)
 ifneq ($(call given,PARITY_AC_BASE_URL),)
 	$(call upgrade-test-stand,$(PARITY_KUBECTL),$(PARITY_HELM),idp,--reuse-values --set suite.env.PARITY_AC_BASE_URL=$(PARITY_AC_BASE_URL) $(PARITY_PULL_URL_ARGS))

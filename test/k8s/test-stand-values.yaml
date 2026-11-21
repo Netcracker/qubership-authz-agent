@@ -50,6 +50,8 @@ suite:
   # CMD.
   args:
     - ./runtime.test
+    # The binary prints the --- PASS lines `make e2e-suite` checks only with
+    # -test.v, so the target fails without it.
     - -test.v
     - -test.timeout
     - 600s

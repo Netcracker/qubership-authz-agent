@@ -107,7 +107,7 @@ Step by step, in the order `make e2e` runs them:
 | `e2e-images` | Builds the images above and loads them into the cluster |
 | `e2e-harness` | Generates the realm files (`make test-stand-files`), then installs the test-stand chart: Keycloak, the stubs, the tenant-manager emulator, and the client-credentials Secret; waits until they are Ready. The suite Job is a `helm test` hook, which `e2e-suite` runs |
 | `e2e-install` | `helm upgrade --install` of the stub chart with its dev resource profile and `test/k8s/policy-admin-values.yaml`, then of the agent chart with its dev resource profile and `test/k8s/values.yaml`, each with `--wait` |
-| `e2e-suite` | Runs the suite Job with `helm test`, streams its log, and fails if the Job did not complete |
+| `e2e-suite` | Runs the suite Job with `helm test`, streams its log, and fails if the Job did not complete, ran no test, or passed no method of `TestRuntimeSuite` |
 
 Each step prints a `STEP PASS/FAIL <name> <ms>` line. The Job sets `FULL_RUNTIME_SUITE=true`, so the run ends with the
 two catalog coverage checks. Expected: `--- PASS: TestRuntimeSuite`.
@@ -147,6 +147,11 @@ make e2e-down     # delete the cluster
     --reuse-values --set suite.env.RUNTIME_SUITE_RUN='^TestRuntimeSuite$/^TestCheckResource$' --set-string suite.env.FULL_RUNTIME_SUITE=false
   ```
 
+  `make e2e-suite` fails when the pattern selects no test, as on a misspelled method name or a misspelled step name
+  under a method the pattern names, and when every method it selects skips. Two subsets of `TestRuntimeSuite` check
+  nothing and still pass. In one, every step the pattern selects skips, as the steps of `TestM2MKeycloak` skip unless
+  `M2M_KEYCLOAK_PROFILE` is `true`. In the other, the pattern misspells a step, and its method part also selects
+  `TestZZZResponseReachabilityCoverage`, which has no steps for the step part to filter out.
   `make e2e-harness` restores the values of `test/k8s/test-stand-values.yaml`.
 - Poking at the stack from the host, for example with the Postman collection in `test/`:
 
@@ -194,6 +199,7 @@ The minimum CI gate for compatibility-sensitive changes is listed in [test/readm
 | `go test` → `[build failed]` | `GOROOT` points at a different toolchain than `go` on `PATH`. Unset it or fix your profile (section 2). |
 | `make e2e-cluster` fails | Docker is not running, or your user cannot reach `docker.sock` (section 2). |
 | `make e2e-suite` prints `The runtime-suite container did not start within 180 seconds:`, or `make parity-suite` the same for `parity-suite`, and a Pod in `ErrImageNeverPull` | The images are not in the cluster; run `make e2e-images`. On a slow node whose container does start, raise `SUITE_START_SECONDS` (180). |
+| `make e2e-suite` prints `The runtime-suite Job succeeded without running a test` or `The runtime-suite Job succeeded, but no method of TestRuntimeSuite passed` | `RUNTIME_SUITE_RUN` on the test-stand release selects no test at some level, no method of `TestRuntimeSuite`, or only methods that skip; the message shows the value the Job ran with. Fix the pattern as section 6 shows, or run `make e2e-harness` to restore the full run. `The runtime-suite Job succeeded, but no method of TestRuntimeSuite passed` also appears when `suite.args` lacks `-test.v`: put it back in `suite.args` of `test/k8s/test-stand-values.yaml` and run `make e2e-harness`. |
 | `make e2e-harness` or `make parity-harness` fails with `exists and cannot be imported into the current release: invalid ownership metadata` | The cluster still holds the harness objects an older `make e2e` or `make parity` created with `kubectl apply`. Run `make e2e-down` once, then rerun `make e2e` or `make parity`. |
 | `make e2e-harness` or `make parity-harness` runs out of its 10-minute wait | Check `kubectl -n authz-e2e get pods` (or `-n authz-parity`). A stub or tenant-manager Pod in `ErrImageNeverPull`: the images are not in the cluster, run `make e2e-images`. Keycloak still starting on the first run: the node is still pulling it, rerun the harness target. |
 | `setup.wait_for_agent` fails after Keycloak restarted outside `make e2e-harness` | Keycloak has new realm keys and the agent holds the old ones: `kubectl --context kind-authz-e2e -n authz-e2e rollout restart deploy/authz-agent` (namespace `authz-parity` for the parity stand). |

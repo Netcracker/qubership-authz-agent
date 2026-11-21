@@ -56,12 +56,13 @@ Step by step, in the order `make e2e` runs them:
 | `e2e-images` | Builds the authz-policy-admin image, the agent image with the `paritytest` build tag, which adds the `POST /internal/v1/pull` route the suites call after each upload, pip-stub, the tenant-manager emulator, and the suite images, then loads them into the cluster |
 | `e2e-harness` | Generates the realm files (`test-stand-files`), then installs the test-stand chart with `test-stand-values.yaml` in the namespace: Keycloak, the stubs, the tenant-manager emulator, and the client-credentials Secret; waits until they are Ready. When the upgrade replaces the Keycloak Pod of a stand where the agent is installed, it restarts the agent, which otherwise keeps the old realm keys |
 | `e2e-install` | `helm upgrade --install` of the stub chart with its dev resource profile and `policy-admin-values.yaml`, then of the agent chart with its dev resource profile and `values.yaml`, each with `--wait` |
-| `e2e-suite` | Runs the suite Job with `helm test`, streams its log, and fails if the Job did not complete |
+| `e2e-suite` | Runs the suite Job with `helm test`, streams its log, and fails if the Job did not complete, ran no test, or passed no method of `TestRuntimeSuite` |
 | `e2e-restart` | Restarts the Deployments that run local images and waits for them; needed after `e2e-images` on a running stand, because the tags do not change. Keycloak runs the public image and is not restarted |
 
 The parity targets mirror these: `parity-harness`, `parity-install`,
 `parity-suite`, `parity-restart`, and `parity-logs`, all in `PARITY_NAMESPACE`. `parity` runs the
-cluster and image targets first, then the three.
+cluster and image targets first, then the three. Unlike `e2e-suite`, `parity-suite` fails only when its Job did not
+complete.
 
 `KIND_CLUSTER`, `E2E_NAMESPACE`, `PARITY_NAMESPACE`, and `E2E_ARTIFACTS`
 override the defaults. `E2E_HELM_ARGS` adds arguments to the installs of the agent and authz-policy-admin charts, and
