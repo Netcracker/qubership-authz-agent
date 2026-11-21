@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-o72-scope-bare-outside",
+        "name": "o72-scope-bare-outside set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "o72-scope-bare-outside reader",
+            "policyId": "d88d1078-dc45-bc37-6400-4e488be9879f",
+            "rules": [
+              {
+                "condition": "subject.permissionScope IS NULL OR resource.a == 'y'",
+                "effect": "ALLOW",
+                "name": "o72-scope-bare-outside probe",
+                "ruleId": "7a275ee1-3197-f0c9-a5bf-8014a3fb0c38",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-o72-scope-bare-outside"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-o72-scope-bare-outside"
+          }
+        ],
+        "policySetId": "26d1f2a4-1d6f-2f52-ff20-c7ba93a3f246",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_O72_SCOPE_BARE_OUTSIDE'",
+        "tenantId": "parity-o72-scope-bare-outside",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

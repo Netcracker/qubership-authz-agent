@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66q-deletes-read-raw",
+        "name": "p66q-deletes-read-raw s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66q-deletes-read-raw s reader",
+            "policyId": "112766b5-81fa-515e-b893-20074fc24115",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66q-deletes-read-raw s rule",
+                "ruleId": "e227df29-ab26-b098-0f51-7c6e727e98d8",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'UPDATE'",
+                "tenantId": "parity-p66q-deletes-read-raw"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66q-deletes-read-raw"
+          }
+        ],
+        "policySetId": "6c63afb9-de9c-c1fd-838b-8f8a537f5972",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66Q_DELETES_READ_RAW'",
+        "tenantId": "parity-p66q-deletes-read-raw",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

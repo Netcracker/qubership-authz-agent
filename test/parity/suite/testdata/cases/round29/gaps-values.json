@@ -1,0 +1,664 @@
+{
+ "about": "Values whose default reading no golden checked: jsonPath wildcards, index lists, slices and filters over an object, a scalar, or an element without the key, filter operators over values of another type, and letter case over characters whose upper case is two letters. Each comparison is `<comparison> OR resource.a == 'y'`, asked with resource.a 'n' and 'y': true, false, or the rule ended when both answer false.",
+ "resourceTypePrefix": "PARITY_SUITE_R29G_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29gaps-star-over-object",
+   "about": "resource.o is the object {\"k\": \"v\"}. True if [*] over an object selects its values.",
+   "condition": "resource.o[*] CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-filter-over-object",
+   "about": "resource.o is the object {\"k\": \"v\"}. True if a filter over an object tests the object itself.",
+   "condition": "resource.o[?(@.k == 'v')].k CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-index-list-over-object",
+   "about": "resource.o is an object. An index list over it selects nothing (false, the expected reading) or fails the path (the rule ends).",
+   "condition": "resource.o[0,1] CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "o": {
+       "0": "v"
+      },
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "o": {
+       "0": "v"
+      },
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-index-list-past-the-end",
+   "about": "resource.l is [\"v\"]. True if an index list keeps the indexes that exist; the rule ends if an index past the end fails the path.",
+   "condition": "resource.l[0,5] CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-slice-over-object",
+   "about": "resource.o is an object. A slice over it selects nothing (false, the expected reading) or fails the path (the rule ends).",
+   "condition": "resource.o[0:1] CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "o": {
+       "0": "v"
+      },
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "o": {
+       "0": "v"
+      },
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-slice-without-start",
+   "about": "resource.l is [\"v\", \"w\"]. True if [:1] takes the first element.",
+   "condition": "resource.l[:1] CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-index-after-star-past-a-short-list",
+   "about": "resource.l is [[\"x\", \"v\"], [\"w\"]]. True if [*][1] skips the list that has no index 1; the rule ends if that index past the end fails the path.",
+   "condition": "resource.l[*][1] CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       [
+        "x",
+        "v"
+       ],
+       [
+        "w"
+       ]
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       [
+        "x",
+        "v"
+       ],
+       [
+        "w"
+       ]
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-filter-key-of-a-string-element",
+   "about": "resource.l holds an object with k and a string. True if the filter skips the string; the rule ends if reading @.k of a string fails the path.",
+   "condition": "resource.l[?(@.k == 'v')].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": "v"
+       },
+       "s"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": "v"
+       },
+       "s"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-in-over-an-element-without-the-key",
+   "about": "Item b has no k. True if the filter skips it; the rule ends if a missing key fails the path.",
+   "condition": "resource.l[?(@.k in ['v'])].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": "v"
+       },
+       {
+        "id": "b"
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": "v"
+       },
+       {
+        "id": "b"
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-nin-over-an-element-without-the-key",
+   "about": "Item b has no k. True if nin selects an element without the key.",
+   "condition": "resource.l[?(@.k nin ['w'])].id CONTAINS 'b' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": "v"
+       },
+       {
+        "id": "b"
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": "v"
+       },
+       {
+        "id": "b"
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-size-of-a-string-element",
+   "about": "resource.l holds an object whose k has one item, and a string. True if the filter skips the string.",
+   "condition": "resource.l[?(@.k size 1)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": [
+         "x"
+        ]
+       },
+       "s"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": [
+         "x"
+        ]
+       },
+       "s"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-size-of-an-object",
+   "about": "Item a has k an object with one key. True if size counts the keys of an object.",
+   "condition": "resource.l[?(@.k size 1)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": {
+         "x": "y"
+        }
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": {
+         "x": "y"
+        }
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-regex-flag-i",
+   "about": "Item a has k \"v\". True if the i flag makes /V/ match v.",
+   "condition": "resource.l[?(@.k =~ /V/i)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": "v"
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": "v"
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-regex-over-a-number",
+   "about": "Item a has k the number 5. True if =~ matches the text of a number.",
+   "condition": "resource.l[?(@.k =~ /5/)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": 5
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": 5
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-regex-over-a-boolean",
+   "about": "Item a has k the boolean true. True if =~ matches the text of a boolean.",
+   "condition": "resource.l[?(@.k =~ /true/)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": true
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": true
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-nested-filter-beside-a-string-element",
+   "about": "resource.l holds an object whose k lists {\"j\": \"v\"}, and a string. True if the filter skips the string.",
+   "condition": "resource.l[?(@.k[?(@.j == 'v')])].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": [
+         {
+          "j": "v"
+         }
+        ]
+       },
+       "s"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": [
+         {
+          "j": "v"
+         }
+        ]
+       },
+       "s"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-nested-filter-over-an-object",
+   "about": "Item a has k the object {\"j\": \"v\"}, not a list. True if the inner filter tests the object itself.",
+   "condition": "resource.l[?(@.k[?(@.j == 'v')])].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": {
+         "j": "v"
+        }
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": {
+         "j": "v"
+        }
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-exists-beside-an-element-without-the-key",
+   "about": "Item b has no k. True if [?(@.k)] skips it; the rule ends if a missing key fails the path.",
+   "condition": "resource.l[?(@.k)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": "v"
+       },
+       {
+        "id": "b"
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       {
+        "id": "a",
+        "k": "v"
+       },
+       {
+        "id": "b"
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-sharp-s-equals-capital-sharp-s",
+   "about": "resource.x is the capital sharp s. True if letter case folds letter by letter, upper then lower (Java's equalsIgnoreCase); false if only the upper case counts, which keeps ß as it is. Earlier goldens (vc2) already show that ß and ss differ.",
+   "condition": "resource.x == 'ß' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "x": "ẞ",
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "x": "ẞ",
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-capital-sharp-s-equals-sharp-s",
+   "about": "As above, with the sides swapped.",
+   "condition": "resource.x == 'ẞ' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "x": "ß",
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "x": "ß",
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p71-meta-900",
+        "name": "p71-meta-control-should-first s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p71-meta-control-should-first s reader",
+            "policyId": "6352e3fa-9358-e6e4-32a9-3ddcf394ec0c",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p71-meta-control-should-first s rule",
+                "ruleId": "1dc346e2-201a-293e-ebb3-4b99f764aacd",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p71-meta-control-should-first"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p71-meta-control-should-first"
+          }
+        ],
+        "policySetId": "4aa384f0-6e27-80a8-9523-287c1c32dabd",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P71_META_900'",
+        "tenantId": "parity-p71-meta-control-should-first",
+        "type": "DEFAULT"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p71-meta-control-should-first"
+  ]
+}

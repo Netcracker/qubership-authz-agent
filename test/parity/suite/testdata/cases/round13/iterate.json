@@ -1,0 +1,1656 @@
+{
+ "about": "What an iterate node over zero, one, and two grants gives the sets around it, in check/resource and in the filter. Round 12 answered for a DENY_OVERRIDES node (r12 fn-nested-deny-overrides-iterate-node-*): it does not apply over zero grants, and with scope-set-algorithm this fits one model, in which the node's answer is its set's answer and the set's own algorithm combines the policies inside a pass only. The cases run three times, once per answer of the scope service: no grants, one grant of r1, and two grants of r1 and r2, named by the suffix of the case id. The first case of each run pins the scope service to its answer, and the six after it read the same answer. Every case waits out the scope's cachePeriod before its first request, as permission-scope-wire does, so that a case whose upload was refused does not leave the next one reading a scope cached before the pin. Every case sends the filter on LIST and check/resource on LIST in regions r1 and r2. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone. Legacy profile only.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "r13-node-deny-unless-permit-no-grants",
+   "about": "The round 12 case with the node under DENY_UNLESS_PERMIT: the DENY_OVERRIDES set nested beside the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives DENY and false; a node that does not apply and a node that permits both give allowed==1 and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_UNLESS_PERMIT"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ],
+   "pins": {
+    "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+     "statusCode": 200,
+     "body": {
+      "permissionScope": [
+       {
+        "id": "00000000-0000-0000-0000-000000000101",
+        "isInherited": false,
+        "name": "parity-reader",
+        "type": "USER",
+        "policies": []
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "r13-node-deny-overrides-no-grants",
+   "about": "The round 12 case with the node under DENY_OVERRIDES: the DENY_OVERRIDES set nested beside the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives DENY and false; a node that does not apply and a node that permits both give allowed==1 and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_OVERRIDES"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-node-permit-overrides-no-grants",
+   "about": "The round 12 case with the node under PERMIT_OVERRIDES: the DENY_OVERRIDES set nested beside the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives DENY and false; a node that does not apply and a node that permits both give allowed==1 and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-node-permit-unless-deny-no-grants",
+   "about": "The round 12 case with the node under PERMIT_UNLESS_DENY: the DENY_OVERRIDES set nested beside the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives DENY and false; a node that does not apply and a node that permits both give allowed==1 and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_UNLESS_DENY"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-pass-without-an-applicable-policy-no-grants",
+   "about": "A top-level PERMIT_UNLESS_DENY set over a DENY_OVERRIDES node whose PERMIT_OVERRIDES policy has no rule that applies outside the granted region. In region r2 with the grant r1 the pass has no policy that applies: check/resource is true if the set's algorithm turns that into its permit, and false if the pass does not apply.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     },
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "scoped-region-granted",
+         "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+         "condition": "subject.permissionScope.region CONTAINS resource.region",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-scope-key-no-grant-carries-no-grants",
+   "about": "Reads subject.permissionScope.category, a key no grant carries, under IS EMPTY inside the pass. With a grant, check/resource is true if the missing key reads as an empty list, and false if it reads as an absent attribute (IS EMPTY over an absent key answers false, s7).",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     },
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-under-category-is-empty",
+         "target": "operation == 'LIST'",
+         "condition": "subject.permissionScope.category IS EMPTY",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-set-nested-in-a-pass-no-grants",
+   "about": "Puts the scoped policy in a set nested in the iterating set rather than in the iterating set itself. With the grant r1, check/resource in r1 is true if the nested set sees the grant, and false if it reads the scope as from outside iterate.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     },
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-node-deny-unless-permit-one-grant-r1",
+   "about": "The round 12 case with the node under DENY_UNLESS_PERMIT: the DENY_OVERRIDES set nested beside the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives DENY and false; a node that does not apply and a node that permits both give allowed==1 and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_UNLESS_PERMIT"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ],
+   "pins": {
+    "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+     "statusCode": 200,
+     "body": {
+      "permissionScope": [
+       {
+        "id": "00000000-0000-0000-0000-000000000101",
+        "isInherited": false,
+        "name": "parity-reader",
+        "type": "USER",
+        "policies": [
+         {
+          "scopeItems": [
+           {
+            "key": "region",
+            "values": [
+             {
+              "id": "r1"
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "r13-node-deny-overrides-one-grant-r1",
+   "about": "The round 12 case with the node under DENY_OVERRIDES: the DENY_OVERRIDES set nested beside the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives DENY and false; a node that does not apply and a node that permits both give allowed==1 and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_OVERRIDES"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-node-permit-overrides-one-grant-r1",
+   "about": "The round 12 case with the node under PERMIT_OVERRIDES: the DENY_OVERRIDES set nested beside the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives DENY and false; a node that does not apply and a node that permits both give allowed==1 and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-node-permit-unless-deny-one-grant-r1",
+   "about": "The round 12 case with the node under PERMIT_UNLESS_DENY: the DENY_OVERRIDES set nested beside the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives DENY and false; a node that does not apply and a node that permits both give allowed==1 and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_UNLESS_DENY"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-pass-without-an-applicable-policy-one-grant-r1",
+   "about": "A top-level PERMIT_UNLESS_DENY set over a DENY_OVERRIDES node whose PERMIT_OVERRIDES policy has no rule that applies outside the granted region. In region r2 with the grant r1 the pass has no policy that applies: check/resource is true if the set's algorithm turns that into its permit, and false if the pass does not apply.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     },
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "scoped-region-granted",
+         "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+         "condition": "subject.permissionScope.region CONTAINS resource.region",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-scope-key-no-grant-carries-one-grant-r1",
+   "about": "Reads subject.permissionScope.category, a key no grant carries, under IS EMPTY inside the pass. With a grant, check/resource is true if the missing key reads as an empty list, and false if it reads as an absent attribute (IS EMPTY over an absent key answers false, s7).",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     },
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-under-category-is-empty",
+         "target": "operation == 'LIST'",
+         "condition": "subject.permissionScope.category IS EMPTY",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-set-nested-in-a-pass-one-grant-r1",
+   "about": "Puts the scoped policy in a set nested in the iterating set rather than in the iterating set itself. With the grant r1, check/resource in r1 is true if the nested set sees the grant, and false if it reads the scope as from outside iterate.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     },
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-node-deny-unless-permit-two-grants-r1-and-r2",
+   "about": "The round 12 case with the node under DENY_UNLESS_PERMIT: the DENY_OVERRIDES set nested beside the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives DENY and false; a node that does not apply and a node that permits both give allowed==1 and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_UNLESS_PERMIT"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ],
+   "pins": {
+    "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+     "statusCode": 200,
+     "body": {
+      "permissionScope": [
+       {
+        "id": "00000000-0000-0000-0000-000000000101",
+        "isInherited": false,
+        "name": "parity-reader",
+        "type": "USER",
+        "policies": [
+         {
+          "scopeItems": [
+           {
+            "key": "region",
+            "values": [
+             {
+              "id": "r1"
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "scopeItems": [
+           {
+            "key": "region",
+            "values": [
+             {
+              "id": "r2"
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "r13-node-deny-overrides-two-grants-r1-and-r2",
+   "about": "The round 12 case with the node under DENY_OVERRIDES: the DENY_OVERRIDES set nested beside the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives DENY and false; a node that does not apply and a node that permits both give allowed==1 and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_OVERRIDES"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-node-permit-overrides-two-grants-r1-and-r2",
+   "about": "The round 12 case with the node under PERMIT_OVERRIDES: the DENY_OVERRIDES set nested beside the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives DENY and false; a node that does not apply and a node that permits both give allowed==1 and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-node-permit-unless-deny-two-grants-r1-and-r2",
+   "about": "The round 12 case with the node under PERMIT_UNLESS_DENY: the DENY_OVERRIDES set nested beside the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives DENY and false; a node that does not apply and a node that permits both give allowed==1 and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_UNLESS_DENY"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-pass-without-an-applicable-policy-two-grants-r1-and-r2",
+   "about": "A top-level PERMIT_UNLESS_DENY set over a DENY_OVERRIDES node whose PERMIT_OVERRIDES policy has no rule that applies outside the granted region. In region r2 with the grant r1 the pass has no policy that applies: check/resource is true if the set's algorithm turns that into its permit, and false if the pass does not apply.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     },
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "scoped-region-granted",
+         "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+         "condition": "subject.permissionScope.region CONTAINS resource.region",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-scope-key-no-grant-carries-two-grants-r1-and-r2",
+   "about": "Reads subject.permissionScope.category, a key no grant carries, under IS EMPTY inside the pass. With a grant, check/resource is true if the missing key reads as an empty list, and false if it reads as an absent attribute (IS EMPTY over an absent key answers false, s7).",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     },
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-under-category-is-empty",
+         "target": "operation == 'LIST'",
+         "condition": "subject.permissionScope.category IS EMPTY",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-set-nested-in-a-pass-two-grants-r1-and-r2",
+   "about": "Puts the scoped policy in a set nested in the iterating set rather than in the iterating set itself. With the grant r1, check/resource in r1 is true if the nested set sees the grant, and false if it reads the scope as from outside iterate.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     },
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,158 @@
+{
+ "about": "Where a whole ${subject.isM2M} in requestAttributes fails. In round 37 (r37open-ra-is-m2m) the upload was taken and each request answered 400 without calling the PIP, but every request of that case read the GENERAL first. A GENERAL is called when a condition reads it (round 11), and the call prepares its requestAttributes, so the specification expects a request that does not reach the GENERAL to answer as if it were not there, and a filter that reads it to answer 400.",
+ "resourceTypePrefix": "PARITY_SUITE_R38M_",
+ "pins": {
+  "/api/v1/pip/r38open-m2m-not-read": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-m2m-filter": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "r38open-m2m-not-read": {
+   "name": "subject.parityR38M2mNotRead",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-m2m-not-read",
+   "requestAttributes": {
+    "case": "r38open-m2m-not-read",
+    "x": "${subject.isM2M}"
+   }
+  },
+  "r38open-m2m-filter": {
+   "name": "subject.parityR38M2mFilter",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-m2m-filter",
+   "requestAttributes": {
+    "case": "r38open-m2m-filter",
+    "x": "${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r38openm2m-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r38",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r38open-m2m-not-read",
+   "pips": [
+    "r38open-m2m-not-read"
+   ],
+   "condition": "resource.a == 'y' OR subject.parityR38M2mNotRead == 'v'",
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r38",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r38open-m2m-not-read"
+    },
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r38",
+      "a": "n"
+     }
+    }
+   ],
+   "about": "requestAttributes.x is ${subject.isM2M}, and the condition reads subject.parityR38M2mNotRead second. With a = y the first operand decides: the PIP is not called, and the request is true if the failure comes with the call; 400 if a condition that names the PIP fails before it is evaluated. With a = n the condition reads the PIP and answers 400, as r37open-ra-is-m2m did. pipCalls records whether a = y called it."
+  },
+  {
+   "id": "r38open-m2m-filter",
+   "pips": [
+    "r38open-m2m-filter"
+   ],
+   "condition": "true",
+   "policy": {
+    "rsqlPredicate": "fa=in=(${subject.parityR38M2mFilter})"
+   },
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "pipCalls": "/api/v1/pip/r38open-m2m-filter"
+    }
+   ],
+   "about": "requestAttributes.x is ${subject.isM2M}, and the rsqlPredicate of the simplified policy reads ${subject.parityR38M2mFilter}. The filter answers 400 if the failure fails the whole answer, as a check does; DENY if the filter reads it as a failed PIP, as it reads a PIP that answers 500. pipCalls records whether the PIP was called."
+  },
+  {
+   "id": "r38openm2m-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r38",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

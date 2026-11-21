@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p71-meta-902",
+        "name": "p71-meta-control-may-first s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p71-meta-control-may-first s reader",
+            "policyId": "743ae810-eb8b-35d3-44de-a7fb4f642dce",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p71-meta-control-may-first s rule",
+                "ruleId": "f459b7b6-138d-7119-0b12-ba88b8a2bc12",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p71-meta-control-may-first"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p71-meta-control-may-first"
+          }
+        ],
+        "policySetId": "433e11f8-16f1-d4e9-18bb-4a8b3e61c1bd",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P71_META_902'",
+        "tenantId": "parity-p71-meta-control-may-first",
+        "type": "DEFAULT"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p71-meta-control-may-first"
+  ]
+}

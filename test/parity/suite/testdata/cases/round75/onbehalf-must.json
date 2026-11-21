@@ -1,0 +1,1477 @@
+{
+ "about": "tasks/09 phase 2: the decision for the user found in User Management where the answer of legacy is not known: the placeholders of a filter's predicates for a user and for the M2M caller (LI-12, LI-13), TOKEN in the check of VIEW_AS_ANOTHER_USER with its positive control (LI-10), a FILTERED PIP (LI-11), GENERAL url and requestAttributes, MAPPING, PERMISSION_SCOPE and entitlements. Each case runs in a tenant of its own. Needs the stand of round 63, whose INTERNAL_APIGATEWAY_URL points at user-management-mock.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ob75-must-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_OB75_MUST_CONTROL_FIRST",
+   "tenant": "parity-ob75-must-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-must-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "8702e871-6ecb-8b6d-30f2-c7826b68fddf",
+       "name": "ob75-must-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_MUST_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "7d09791b-2091-afdf-ccde-850532379b43",
+         "name": "ob75-must-control-first reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "65c2289d-99a9-2157-ae1b-77a9e08e837a",
+           "name": "ob75-must-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r75",
+        "c": "n"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-filter-placeholders",
+   "about": "A rule allows READ to anyone with the predicate owner==${subject.id};name==${subject.name} in every dialect. check/filter on behalf of a user found as parity-ob75-user (LI-12: the placeholders of the user, or of the caller), the same with the M2M token (LI-13: decided, or DENY as the documentation calls it unsupported), and the reader's filter without userId as the control.",
+   "resourceType": "PARITY_SUITE_OB75_FILTER_PLACEHOLDERS",
+   "tenant": "parity-ob75-filter-placeholders",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-filter-placeholders"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:filter-as-a-user",
+      "decide:m2m-filter-as-a-user",
+      "decide:filter-as-self"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "3ca05874-cb76-a23d-7605-46ed5d6f3df7",
+       "name": "ob75-filter-placeholders set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_FILTER_PLACEHOLDERS'",
+       "policies": [
+        {
+         "policyId": "76749be2-1333-18f4-6857-9650d5019b64",
+         "name": "ob75-filter-placeholders anyone-set",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "1a940673-43c1-8337-7e6b-f6ca588fd9bf",
+           "name": "ob75-filter-placeholders read-set",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "rsqlPredicate": "owner==${subject.id};name==${subject.name}",
+           "sqlPredicate": "owner=${subject.id} AND name=${subject.name}",
+           "mongodbPredicate": "{ \"owner\": ${subject.id}, \"name\": ${subject.name} }"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "8e56ade5-453f-541c-f2c0-6465731a5c12",
+       "name": "ob75-filter-placeholders authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "a3f691c9-26df-acfb-b8f9-61ed6279b2f0",
+         "name": "ob75-filter-placeholders view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "78606122-6571-7c8d-0e87-2be77e9f54af",
+           "name": "ob75-filter-placeholders view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "filter-as-a-user",
+       "userId": "00000000-0000-0000-0000-000000007501",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "filter": true,
+       "operation": "READ"
+      },
+      {
+       "name": "m2m-filter-as-a-user",
+       "userId": "00000000-0000-0000-0000-000000007502",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "subject": "m2m",
+       "filter": true,
+       "operation": "READ"
+      },
+      {
+       "name": "filter-as-self",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-check-token",
+   "about": "The only rule that allows VIEW_AS_ANOTHER_USER reads the caller's department through a TOKEN PIP (finance in parity-reader's token). The reader asks VIEW_AS_ANOTHER_USER on OnBehalfOfUserAuthorization directly, without userId: true is the positive control round 63 lacked (r63ob-check-token). Then a request with userId: false if the check reads TOKEN as empty (LI-10).",
+   "resourceType": "PARITY_SUITE_OB75_CHECK_TOKEN",
+   "tenant": "parity-ob75-check-token",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityOb75Department",
+       "type": "UUID",
+       "pipType": "TOKEN",
+       "claim": "department",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-check-token"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:authorization-check",
+      "decide:read-as-a-user"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "f9598f54-0289-c9d1-1167-a2f33d8d23bc",
+       "name": "ob75-check-token set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_CHECK_TOKEN'",
+       "policies": [
+        {
+         "policyId": "d4f2e15e-b9b7-100f-1f12-056e28c71427",
+         "name": "ob75-check-token anyone-set",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "f68dbca4-2c88-304a-7805-f984e7187292",
+           "name": "ob75-check-token read-set",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "696abdb9-2b52-d6f1-bf14-2bb5bd1b3cd8",
+       "name": "ob75-check-token authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "3ca07770-b6da-dfb1-d9b9-cef28af0de76",
+         "name": "ob75-check-token view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "8091f062-a7f2-8d69-be73-85c1cadb973f",
+           "name": "ob75-check-token view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "subject.parityOb75Department == 'finance'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "authorization-check",
+       "resource": {
+        "id": "r75"
+       },
+       "type": "OnBehalfOfUserAuthorization",
+       "operation": "VIEW_AS_ANOTHER_USER"
+      },
+      {
+       "name": "read-as-a-user",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007503",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-filtered",
+   "about": "A rule allows READ to anyone when the FILTERED PIP subject.parityOb75Filtered CONTAINS 'r75' (its route answers [\"r75\"]). A request on behalf of a user records the calls of User Management and of the FILTERED route: one lookup, or one more per FILTERED evaluation with another check of VIEW_AS_ANOTHER_USER (LI-11). The reader's request without userId is the control.",
+   "resourceType": "PARITY_SUITE_OB75_FILTERED",
+   "tenant": "parity-ob75-filtered",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityOb75Filtered",
+       "url": "http://pip-mock:8090/api/v1/pip/ob75-filtered",
+       "httpMethod": "POST",
+       "pipType": "FILTERED",
+       "resourceType": "PARITY_SUITE_OB75_FILTERED_ITEMS",
+       "requestAttributes": {
+        "resourceType": "PARITY_SUITE_OB75_FILTERED_ITEMS"
+       },
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-filtered"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-as-a-user",
+      "decide:read-as-self"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "31dccdee-b35c-57ce-97ce-602e234f611d",
+       "name": "ob75-filtered set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_FILTERED'",
+       "policies": [
+        {
+         "policyId": "32a9059f-a942-3be4-2891-be58d11ea09a",
+         "name": "ob75-filtered anyone-set",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "4e22f15a-a0c5-69e2-d94b-bf1c9644004a",
+           "name": "ob75-filtered read-set",
+           "target": "operation == 'READ'",
+           "condition": "subject.parityOb75Filtered CONTAINS 'r75'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "0c81260d-59c6-e6dd-f06e-c7c1ddc0faf9",
+       "name": "ob75-filtered authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "0240f95b-4ec0-1d7f-29c4-f9d757a94d48",
+         "name": "ob75-filtered view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "b8e0702c-de60-dc6d-03a3-c36168c0deef",
+           "name": "ob75-filtered view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-as-a-user",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007504",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "pipCalls": "/api/v1/pip/ob75-filtered",
+       "pins": {
+        "/api/v1/pip/ob75-filtered": {
+         "statusCode": 200,
+         "body": [
+          "r75"
+         ]
+        }
+       }
+      },
+      {
+       "name": "read-as-self",
+       "resource": {
+        "id": "r75"
+       },
+       "pipCalls": "/api/v1/pip/ob75-filtered",
+       "pins": {
+        "/api/v1/pip/ob75-filtered": {
+         "statusCode": 200,
+         "body": [
+          "r75"
+         ]
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-general",
+   "about": "Two GENERAL PIPs in the decision for the user: one whose url ends in ${subject.id} (the route of the user found answers [\"user\"], the reader's [\"caller\"]), one whose requestAttributes carry ${subject.id} and ${subject.name}, recorded by its pip-call golden. Each rule allows READ under its own resource type.",
+   "resourceType": "PARITY_SUITE_OB75_GENERAL",
+   "tenant": "parity-ob75-general",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityOb75Url",
+       "url": "http://pip-mock:8090/api/v1/pip/ob75-url-${subject.id}",
+       "pipType": "GENERAL",
+       "type": "JSON",
+       "jsonPath": "$",
+       "cacheable": false
+      },
+      {
+       "name": "subject.parityOb75Attributes",
+       "url": "http://pip-mock:8090/api/v1/pip/ob75-attributes",
+       "pipType": "GENERAL",
+       "type": "JSON",
+       "jsonPath": "$",
+       "cacheable": false,
+       "httpMethod": "POST",
+       "requestAttributes": {
+        "who": "${subject.id}",
+        "named": "${subject.name}"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-general"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:url-as-a-user",
+      "decide:attributes-as-a-user"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "1777ba26-23c9-2533-95d6-96082a33fd86",
+       "name": "ob75-general url",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_GENERAL_URL'",
+       "policies": [
+        {
+         "policyId": "1008cebb-0348-aebe-418b-dda35238ffa0",
+         "name": "ob75-general anyone-url",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "6c76b25d-1c39-fa69-c223-72dc98cae957",
+           "name": "ob75-general read-url",
+           "target": "operation == 'READ'",
+           "condition": "subject.parityOb75Url CONTAINS 'user'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "25a8a51f-a286-215f-3f10-f01cce501a93",
+       "name": "ob75-general attributes",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_GENERAL_ATTRIBUTES'",
+       "policies": [
+        {
+         "policyId": "0d81171e-f2d3-ccf9-860f-f81e196bd192",
+         "name": "ob75-general anyone-attributes",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "7f2134f4-4dce-0a9a-d33b-28b2b0e13c12",
+           "name": "ob75-general read-attributes",
+           "target": "operation == 'READ'",
+           "condition": "subject.parityOb75Attributes CONTAINS 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "72262e49-bd18-02ce-51d1-c79342db217a",
+       "name": "ob75-general authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "0bedbec7-c8df-2645-d1c0-c7c90ec11f36",
+         "name": "ob75-general view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "05e7242b-fb79-7963-9794-9696422e06bc",
+           "name": "ob75-general view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "url-as-a-user",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007505",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "type": "PARITY_SUITE_OB75_GENERAL_URL",
+       "pins": {
+        "/api/v1/pip/ob75-url-parity-ob75-user": {
+         "statusCode": 200,
+         "body": [
+          "user"
+         ]
+        },
+        "/api/v1/pip/ob75-url-00000000-0000-0000-0000-000000000101": {
+         "statusCode": 200,
+         "body": [
+          "caller"
+         ]
+        },
+        "/api/v1/pip/ob75-attributes": {
+         "statusCode": 200,
+         "body": [
+          "y"
+         ]
+        }
+       }
+      },
+      {
+       "name": "attributes-as-a-user",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007506",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "type": "PARITY_SUITE_OB75_GENERAL_ATTRIBUTES",
+       "pins": {
+        "/api/v1/pip/ob75-url-parity-ob75-user": {
+         "statusCode": 200,
+         "body": [
+          "user"
+         ]
+        },
+        "/api/v1/pip/ob75-url-00000000-0000-0000-0000-000000000101": {
+         "statusCode": 200,
+         "body": [
+          "caller"
+         ]
+        },
+        "/api/v1/pip/ob75-attributes": {
+         "statusCode": 200,
+         "body": [
+          "y"
+         ]
+        }
+       },
+       "pipCalls": "/api/v1/pip/ob75-attributes"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-mapping",
+   "about": "A MAPPING PIP maps the user's role ROLE_PARITY_OB75 (realmRoles of the user found) to PARITY_OB75_USER and the reader's role to PARITY_OB75_CALLER; the rule allows READ when subject.permissions CONTAINS 'PARITY_OB75_USER'. The reader without userId is the control.",
+   "resourceType": "PARITY_SUITE_OB75_MAPPING",
+   "tenant": "parity-ob75-mapping",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissions.parityOb75",
+       "pipType": "MAPPING",
+       "customMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_OB75": [
+          "PARITY_OB75_USER"
+         ],
+         "ROLE_PARITY_READER": [
+          "PARITY_OB75_CALLER"
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-mapping"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-as-a-user",
+      "decide:read-as-self"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "884a8c83-f544-f2c4-f8f9-819f9f432b2b",
+       "name": "ob75-mapping set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_MAPPING'",
+       "policies": [
+        {
+         "policyId": "255f77d1-0d98-920c-0551-89872d18bd29",
+         "name": "ob75-mapping anyone-set",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "1b287e42-64ec-5ddf-7b5c-7506ac35e955",
+           "name": "ob75-mapping read-set",
+           "target": "operation == 'READ'",
+           "condition": "subject.permissions CONTAINS 'PARITY_OB75_USER'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "d3ea17ea-a185-282a-c268-cb71deca52ef",
+       "name": "ob75-mapping authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "5d3639bb-3b0f-e2bc-3005-eac338771872",
+         "name": "ob75-mapping view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "91109ede-ebed-b01e-e997-b52c5fa1e3c4",
+           "name": "ob75-mapping view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-as-a-user",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007507",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       }
+      },
+      {
+       "name": "read-as-self",
+       "resource": {
+        "id": "r75"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-scope",
+   "about": "A PERMISSION_SCOPE PIP and three sets that iterate over subject.permissionScope, each allowing READ under its own resource type when subject.permissionScope.region CONTAINS 'user', 'caller' or 'requested'. The scope service answers the region user for the id of the user found, caller for the reader and requested for the userId of the request: whose scope the decision for the user reads.",
+   "resourceType": "PARITY_SUITE_OB75_SCOPE",
+   "tenant": "parity-ob75-scope",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissionScope",
+       "pipType": "PERMISSION_SCOPE",
+       "url": "http://pip-mock:8090",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-scope"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-user-region-as-a-user",
+      "decide:read-caller-region-as-a-user",
+      "decide:read-requested-region-as-a-user"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "2cd48535-516d-15a6-001b-85d0815b5838",
+       "name": "ob75-scope user",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_SCOPE_USER'",
+       "policies": [
+        {
+         "policyId": "31b7caa4-a526-c04f-bc96-51a3c90d0909",
+         "name": "ob75-scope anyone-user",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "a6276519-16c4-22d3-0ced-e8d2afdc16a5",
+           "name": "ob75-scope read-user",
+           "target": "operation == 'READ'",
+           "condition": "subject.permissionScope.region CONTAINS 'user'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+       }
+      },
+      {
+       "policySetId": "43e74831-cc3c-1e56-c891-3a4068c2e209",
+       "name": "ob75-scope caller",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_SCOPE_CALLER'",
+       "policies": [
+        {
+         "policyId": "e640539a-0918-ae2c-8e23-7b7e583ec34b",
+         "name": "ob75-scope anyone-caller",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "eb6cd4ce-62e9-62c9-afc4-bb02103c0d03",
+           "name": "ob75-scope read-caller",
+           "target": "operation == 'READ'",
+           "condition": "subject.permissionScope.region CONTAINS 'caller'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+       }
+      },
+      {
+       "policySetId": "7df637e5-9180-c3cd-fe2e-9b798404fabe",
+       "name": "ob75-scope requested",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_SCOPE_REQUESTED'",
+       "policies": [
+        {
+         "policyId": "3eaaf37b-5aa9-f576-96d1-b7a536129300",
+         "name": "ob75-scope anyone-requested",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "5cc547f1-25c0-321e-acc5-40c575443610",
+           "name": "ob75-scope read-requested",
+           "target": "operation == 'READ'",
+           "condition": "subject.permissionScope.region CONTAINS 'requested'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+       }
+      },
+      {
+       "policySetId": "419de603-34d7-1dca-8515-8545c52fbc4d",
+       "name": "ob75-scope authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "f16662f1-711f-1834-3e32-3f1a4086993d",
+         "name": "ob75-scope view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "4f6a8bd8-3e0b-1cb1-571c-64ae8dca01d5",
+           "name": "ob75-scope view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-user-region-as-a-user",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007508",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "type": "PARITY_SUITE_OB75_SCOPE_USER",
+       "pins": {
+        "/api/v1/permission-scope/user/parity-ob75-user/policies": {
+         "statusCode": 200,
+         "body": {
+          "permissionScope": [
+           {
+            "id": "parity-ob75-user",
+            "isInherited": false,
+            "name": "parity-ob75",
+            "type": "USER",
+            "policies": [
+             {
+              "scopeItems": [
+               {
+                "key": "region",
+                "values": [
+                 {
+                  "id": "user"
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        },
+        "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+         "statusCode": 200,
+         "body": {
+          "permissionScope": [
+           {
+            "id": "00000000-0000-0000-0000-000000000101",
+            "isInherited": false,
+            "name": "parity-ob75",
+            "type": "USER",
+            "policies": [
+             {
+              "scopeItems": [
+               {
+                "key": "region",
+                "values": [
+                 {
+                  "id": "caller"
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        },
+        "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000007508/policies": {
+         "statusCode": 200,
+         "body": {
+          "permissionScope": [
+           {
+            "id": "00000000-0000-0000-0000-000000007508",
+            "isInherited": false,
+            "name": "parity-ob75",
+            "type": "USER",
+            "policies": [
+             {
+              "scopeItems": [
+               {
+                "key": "region",
+                "values": [
+                 {
+                  "id": "requested"
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        }
+       }
+      },
+      {
+       "name": "read-caller-region-as-a-user",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007508",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "type": "PARITY_SUITE_OB75_SCOPE_CALLER",
+       "pins": {
+        "/api/v1/permission-scope/user/parity-ob75-user/policies": {
+         "statusCode": 200,
+         "body": {
+          "permissionScope": [
+           {
+            "id": "parity-ob75-user",
+            "isInherited": false,
+            "name": "parity-ob75",
+            "type": "USER",
+            "policies": [
+             {
+              "scopeItems": [
+               {
+                "key": "region",
+                "values": [
+                 {
+                  "id": "user"
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        },
+        "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+         "statusCode": 200,
+         "body": {
+          "permissionScope": [
+           {
+            "id": "00000000-0000-0000-0000-000000000101",
+            "isInherited": false,
+            "name": "parity-ob75",
+            "type": "USER",
+            "policies": [
+             {
+              "scopeItems": [
+               {
+                "key": "region",
+                "values": [
+                 {
+                  "id": "caller"
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        },
+        "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000007508/policies": {
+         "statusCode": 200,
+         "body": {
+          "permissionScope": [
+           {
+            "id": "00000000-0000-0000-0000-000000007508",
+            "isInherited": false,
+            "name": "parity-ob75",
+            "type": "USER",
+            "policies": [
+             {
+              "scopeItems": [
+               {
+                "key": "region",
+                "values": [
+                 {
+                  "id": "requested"
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        }
+       }
+      },
+      {
+       "name": "read-requested-region-as-a-user",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007508",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       },
+       "type": "PARITY_SUITE_OB75_SCOPE_REQUESTED",
+       "pins": {
+        "/api/v1/permission-scope/user/parity-ob75-user/policies": {
+         "statusCode": 200,
+         "body": {
+          "permissionScope": [
+           {
+            "id": "parity-ob75-user",
+            "isInherited": false,
+            "name": "parity-ob75",
+            "type": "USER",
+            "policies": [
+             {
+              "scopeItems": [
+               {
+                "key": "region",
+                "values": [
+                 {
+                  "id": "user"
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        },
+        "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+         "statusCode": 200,
+         "body": {
+          "permissionScope": [
+           {
+            "id": "00000000-0000-0000-0000-000000000101",
+            "isInherited": false,
+            "name": "parity-ob75",
+            "type": "USER",
+            "policies": [
+             {
+              "scopeItems": [
+               {
+                "key": "region",
+                "values": [
+                 {
+                  "id": "caller"
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        },
+        "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000007508/policies": {
+         "statusCode": 200,
+         "body": {
+          "permissionScope": [
+           {
+            "id": "00000000-0000-0000-0000-000000007508",
+            "isInherited": false,
+            "name": "parity-ob75",
+            "type": "USER",
+            "policies": [
+             {
+              "scopeItems": [
+               {
+                "key": "region",
+                "values": [
+                 {
+                  "id": "requested"
+                 }
+                ]
+               }
+              ]
+             }
+            ]
+           }
+          ]
+         }
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-entitlements",
+   "about": "The entitlements service answers parity-reader's id only (the file's entitlements). A rule allows READ when subject.entitledResources.of('PARITY_OB75_ENT').as('Owner') CONTAINS 'e75'. On behalf of the user found as parity-ob75-user the service has no answer for the user's id; on behalf of a user whose member id is the reader's, with another userId, it has one for the user's id and none for the userId. The reader without userId is the control.",
+   "resourceType": "PARITY_SUITE_OB75_ENTITLEMENTS",
+   "tenant": "parity-ob75-entitlements",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-entitlements"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-as-a-user",
+      "decide:read-as-a-user-with-the-reader-id",
+      "decide:read-as-self"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "1169e613-eacc-7ee8-81dc-b55b15026832",
+       "name": "ob75-entitlements set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_ENTITLEMENTS'",
+       "policies": [
+        {
+         "policyId": "0487c33a-452b-8f00-346f-5298679b3b09",
+         "name": "ob75-entitlements anyone-set",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "89e48e01-7fb2-7b72-4852-232f69742fd1",
+           "name": "ob75-entitlements read-set",
+           "target": "operation == 'READ'",
+           "condition": "subject.entitledResources.of('PARITY_OB75_ENT').as('Owner') CONTAINS 'e75'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "f6983f59-ef3e-56a1-1c5e-e5a8e3ff1a64",
+       "name": "ob75-entitlements authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "37cd521d-37ce-fe24-490c-9f46b35fe958",
+         "name": "ob75-entitlements view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "0f1cb666-d8da-4067-713f-37321e507351",
+           "name": "ob75-entitlements view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-as-a-user",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007509",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-ob75-user",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       }
+      },
+      {
+       "name": "read-as-a-user-with-the-reader-id",
+       "resource": {
+        "id": "r75"
+       },
+       "userId": "00000000-0000-0000-0000-000000007510",
+       "userManagementCalls": true,
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "00000000-0000-0000-0000-000000000101",
+          "username": "parity-ob75-name",
+          "realmRoles": [
+           "ROLE_PARITY_OB75"
+          ]
+         }
+        }
+       }
+      },
+      {
+       "name": "read-as-self",
+       "resource": {
+        "id": "r75"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ob75-must-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_OB75_MUST_CONTROL_LAST",
+   "tenant": "parity-ob75-must-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-ob75-must-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "b9930039-c564-7f49-2044-99bc064fa86e",
+       "name": "ob75-must-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_OB75_MUST_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "7a8b6b59-6975-8b5e-0b88-80be9e6d9230",
+         "name": "ob75-must-control-last reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "32c27e09-e3d4-4ddc-dd0e-d85a9f59a2d8",
+           "name": "ob75-must-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r75",
+        "c": "n"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "entitlements": {
+  "statusCode": 200,
+  "body": {
+   "entitlements": [
+    {
+     "resourceType": "PARITY_OB75_ENT",
+     "references": [
+      {
+       "name": "Owner",
+       "resources": [
+        {
+         "resourceId": "e75"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

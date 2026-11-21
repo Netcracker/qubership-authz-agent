@@ -1,0 +1,472 @@
+{
+ "about": "Round 75: ${subject.id} in a GENERAL url when the subject's id is empty or null. Incoming-Token the builder wrote (as round 72), default tenant. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_",
+ "standVersion": true,
+ "pins": {
+  "/api/v1/pip/g75-url/": {
+   "statusCode": 200,
+   "body": [
+    "y"
+   ]
+  },
+  "/api/v1/pip/g75-url/null": {
+   "statusCode": 200,
+   "body": [
+    "y"
+   ]
+  },
+  "/api/v1/pip/g75-url/parity-g75-sub": {
+   "statusCode": 200,
+   "body": [
+    "y"
+   ]
+  }
+ },
+ "pips": {
+  "url": {
+   "name": "subject.parityG75Url",
+   "pipType": "GENERAL",
+   "httpMethod": "GET",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/g75-url/${subject.id}"
+  }
+ },
+ "cases": [
+  {
+   "id": "g75-url-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_G75_URL_CONTROL_FIRST",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_URL_CONTROL_FIRST'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-url-sub-empty",
+   "about": "A GENERAL PIP whose url is http://pip-mock:8090/api/v1/pip/g75-url/${subject.id}, for an Incoming-Token the builder wrote beside the M2M token: sub the empty text. The route /api/v1/pip/g75-url/ answers [\"y\"] and records its calls: `subject.parityG75Url == 'y' OR resource.a == 'y'` and the DENY twin. Does legacy call /api/v1/pip/g75-url/ (an empty id goes in as the empty text), /api/v1/pip/g75-url/null (the text null, which answers [\"y\"] too), or nothing (the PIP fails)?",
+   "resourceType": "PARITY_SUITE_G75_URL_SUB_EMPTY",
+   "pips": [
+    "url"
+   ],
+   "sets": [
+    {
+     "key": "general",
+     "target": "resourceType == 'PARITY_SUITE_G75_URL_SUB_EMPTY_GENERAL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-general",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-general",
+         "target": "true",
+         "condition": "subject.parityG75Url == 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "general-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_URL_SUB_EMPTY_GENERAL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-general-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-general-d",
+         "target": "true",
+         "condition": "subject.parityG75Url == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "general-a-n",
+     "type": "PARITY_SUITE_G75_URL_SUB_EMPTY_GENERAL",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcDo4MDgwL2F1dGgvcmVhbG1zL3Bhcml0eSIsInByZWZlcnJlZF91c2VybmFtZSI6InBhcml0eS1taW50ZWQtcmVhZGVyIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIlJPTEVfUEFSSVRZX1JFQURFUiJdfSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IiIsInR5cCI6IkJlYXJlciJ9.vRkZHZiBy9tdpKg3BOs2pPyF45VhdMI55xh_LzY5ksVDkeohrRFeq2PNEYz6Ujll8ACe3w_K0GroyHrcbbu7gyjEp_nqZIHx0-_AVzjZ6mYNsxE1F41i-f1Xzz58J-7lXnbDnOB4gRQzoWcAcIE77YbCuSueYryc_h5vzRVxPvoo0xEjk-rR4xDt_4Xnx1GRLl-68_hW537UfucH13dNAoqTRz4F9Egi00ZaY1wjYc_SbKLPIS-jnUyLCUXXoHg62xqgPgnSxqaOHj9M72N_f7CsdGWUsqihqRBR7UVW-Ic_ZtyPQMUGwrwY4eWDLKOp_6_BSan6WPJB9g254IK_dQ"
+     },
+     "pipCalls": "/api/v1/pip/g75-url/"
+    },
+    {
+     "name": "general-a-y",
+     "type": "PARITY_SUITE_G75_URL_SUB_EMPTY_GENERAL",
+     "resource": {
+      "id": "r75",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcDo4MDgwL2F1dGgvcmVhbG1zL3Bhcml0eSIsInByZWZlcnJlZF91c2VybmFtZSI6InBhcml0eS1taW50ZWQtcmVhZGVyIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIlJPTEVfUEFSSVRZX1JFQURFUiJdfSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IiIsInR5cCI6IkJlYXJlciJ9.vRkZHZiBy9tdpKg3BOs2pPyF45VhdMI55xh_LzY5ksVDkeohrRFeq2PNEYz6Ujll8ACe3w_K0GroyHrcbbu7gyjEp_nqZIHx0-_AVzjZ6mYNsxE1F41i-f1Xzz58J-7lXnbDnOB4gRQzoWcAcIE77YbCuSueYryc_h5vzRVxPvoo0xEjk-rR4xDt_4Xnx1GRLl-68_hW537UfucH13dNAoqTRz4F9Egi00ZaY1wjYc_SbKLPIS-jnUyLCUXXoHg62xqgPgnSxqaOHj9M72N_f7CsdGWUsqihqRBR7UVW-Ic_ZtyPQMUGwrwY4eWDLKOp_6_BSan6WPJB9g254IK_dQ"
+     },
+     "pipCalls": "/api/v1/pip/g75-url/"
+    },
+    {
+     "name": "general-deny",
+     "type": "PARITY_SUITE_G75_URL_SUB_EMPTY_GENERAL_D",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcDo4MDgwL2F1dGgvcmVhbG1zL3Bhcml0eSIsInByZWZlcnJlZF91c2VybmFtZSI6InBhcml0eS1taW50ZWQtcmVhZGVyIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIlJPTEVfUEFSSVRZX1JFQURFUiJdfSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IiIsInR5cCI6IkJlYXJlciJ9.vRkZHZiBy9tdpKg3BOs2pPyF45VhdMI55xh_LzY5ksVDkeohrRFeq2PNEYz6Ujll8ACe3w_K0GroyHrcbbu7gyjEp_nqZIHx0-_AVzjZ6mYNsxE1F41i-f1Xzz58J-7lXnbDnOB4gRQzoWcAcIE77YbCuSueYryc_h5vzRVxPvoo0xEjk-rR4xDt_4Xnx1GRLl-68_hW537UfucH13dNAoqTRz4F9Egi00ZaY1wjYc_SbKLPIS-jnUyLCUXXoHg62xqgPgnSxqaOHj9M72N_f7CsdGWUsqihqRBR7UVW-Ic_ZtyPQMUGwrwY4eWDLKOp_6_BSan6WPJB9g254IK_dQ"
+     },
+     "pipCalls": "/api/v1/pip/g75-url/"
+    }
+   ]
+  },
+  {
+   "id": "g75-url-sub-absent",
+   "about": "A GENERAL PIP whose url is http://pip-mock:8090/api/v1/pip/g75-url/${subject.id}, for an Incoming-Token the builder wrote beside the M2M token: no sub. The route /api/v1/pip/g75-url/ answers [\"y\"] and records its calls: `subject.parityG75Url == 'y' OR resource.a == 'y'` and the DENY twin. Does legacy call /api/v1/pip/g75-url/ (an empty id goes in as the empty text), /api/v1/pip/g75-url/null (the text null, which answers [\"y\"] too), or nothing (the PIP fails)?",
+   "resourceType": "PARITY_SUITE_G75_URL_SUB_ABSENT",
+   "pips": [
+    "url"
+   ],
+   "sets": [
+    {
+     "key": "general",
+     "target": "resourceType == 'PARITY_SUITE_G75_URL_SUB_ABSENT_GENERAL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-general",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-general",
+         "target": "true",
+         "condition": "subject.parityG75Url == 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "general-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_URL_SUB_ABSENT_GENERAL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-general-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-general-d",
+         "target": "true",
+         "condition": "subject.parityG75Url == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "general-a-n",
+     "type": "PARITY_SUITE_G75_URL_SUB_ABSENT_GENERAL",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcDo4MDgwL2F1dGgvcmVhbG1zL3Bhcml0eSIsInByZWZlcnJlZF91c2VybmFtZSI6InBhcml0eS1taW50ZWQtcmVhZGVyIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIlJPTEVfUEFSSVRZX1JFQURFUiJdfSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInR5cCI6IkJlYXJlciJ9.rj_VNGdUYKjiwVfZqNbAaRSexSDZ16mCmuLtZ95bS1lYyVaLUCPJuvPVmAv724SgdHLCHxft92sRzplAqiv4LIyjjsuUr9e8NxyFp8Pecew3DZ1mJV9Mr0YDJMJ2wbXNqATy7S7dWro7pJ_c4G_IjOtS-Caz4KPviOtrOU0vjoW14rmWlVBl1riHgnvj6f3td5plF95zCJBK9AVsMi6rSaroOcDKrcMT-lzP7_NMTdrunDns_PZN8Ft1iojDgly9GRGkNrwm7WvNs2fukAwzlOyxPH4_avR1Wk8C6hkxsHPVyZ9pVSs5nXYcCZBVjKA_Oz5MBgUAtP5hnIWkMZrUPA"
+     },
+     "pipCalls": "/api/v1/pip/g75-url/"
+    },
+    {
+     "name": "general-a-y",
+     "type": "PARITY_SUITE_G75_URL_SUB_ABSENT_GENERAL",
+     "resource": {
+      "id": "r75",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcDo4MDgwL2F1dGgvcmVhbG1zL3Bhcml0eSIsInByZWZlcnJlZF91c2VybmFtZSI6InBhcml0eS1taW50ZWQtcmVhZGVyIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIlJPTEVfUEFSSVRZX1JFQURFUiJdfSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInR5cCI6IkJlYXJlciJ9.rj_VNGdUYKjiwVfZqNbAaRSexSDZ16mCmuLtZ95bS1lYyVaLUCPJuvPVmAv724SgdHLCHxft92sRzplAqiv4LIyjjsuUr9e8NxyFp8Pecew3DZ1mJV9Mr0YDJMJ2wbXNqATy7S7dWro7pJ_c4G_IjOtS-Caz4KPviOtrOU0vjoW14rmWlVBl1riHgnvj6f3td5plF95zCJBK9AVsMi6rSaroOcDKrcMT-lzP7_NMTdrunDns_PZN8Ft1iojDgly9GRGkNrwm7WvNs2fukAwzlOyxPH4_avR1Wk8C6hkxsHPVyZ9pVSs5nXYcCZBVjKA_Oz5MBgUAtP5hnIWkMZrUPA"
+     },
+     "pipCalls": "/api/v1/pip/g75-url/"
+    },
+    {
+     "name": "general-deny",
+     "type": "PARITY_SUITE_G75_URL_SUB_ABSENT_GENERAL_D",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcDo4MDgwL2F1dGgvcmVhbG1zL3Bhcml0eSIsInByZWZlcnJlZF91c2VybmFtZSI6InBhcml0eS1taW50ZWQtcmVhZGVyIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIlJPTEVfUEFSSVRZX1JFQURFUiJdfSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInR5cCI6IkJlYXJlciJ9.rj_VNGdUYKjiwVfZqNbAaRSexSDZ16mCmuLtZ95bS1lYyVaLUCPJuvPVmAv724SgdHLCHxft92sRzplAqiv4LIyjjsuUr9e8NxyFp8Pecew3DZ1mJV9Mr0YDJMJ2wbXNqATy7S7dWro7pJ_c4G_IjOtS-Caz4KPviOtrOU0vjoW14rmWlVBl1riHgnvj6f3td5plF95zCJBK9AVsMi6rSaroOcDKrcMT-lzP7_NMTdrunDns_PZN8Ft1iojDgly9GRGkNrwm7WvNs2fukAwzlOyxPH4_avR1Wk8C6hkxsHPVyZ9pVSs5nXYcCZBVjKA_Oz5MBgUAtP5hnIWkMZrUPA"
+     },
+     "pipCalls": "/api/v1/pip/g75-url/"
+    }
+   ]
+  },
+  {
+   "id": "g75-url-sub-array-empty",
+   "about": "A GENERAL PIP whose url is http://pip-mock:8090/api/v1/pip/g75-url/${subject.id}, for an Incoming-Token the builder wrote beside the M2M token: sub an empty array (an anonymous subject, ECFG incoming_sub_list). The route /api/v1/pip/g75-url/ answers [\"y\"] and records its calls: `subject.parityG75Url == 'y' OR resource.a == 'y'` and the DENY twin. Does legacy call /api/v1/pip/g75-url/ (an empty id goes in as the empty text), /api/v1/pip/g75-url/null (the text null, which answers [\"y\"] too), or nothing (the PIP fails)?",
+   "resourceType": "PARITY_SUITE_G75_URL_SUB_ARRAY_EMPTY",
+   "pips": [
+    "url"
+   ],
+   "sets": [
+    {
+     "key": "general",
+     "target": "resourceType == 'PARITY_SUITE_G75_URL_SUB_ARRAY_EMPTY_GENERAL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-general",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-general",
+         "target": "true",
+         "condition": "subject.parityG75Url == 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "general-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_URL_SUB_ARRAY_EMPTY_GENERAL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-general-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-general-d",
+         "target": "true",
+         "condition": "subject.parityG75Url == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "general-a-n",
+     "type": "PARITY_SUITE_G75_URL_SUB_ARRAY_EMPTY_GENERAL",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcDo4MDgwL2F1dGgvcmVhbG1zL3Bhcml0eSIsInByZWZlcnJlZF91c2VybmFtZSI6InBhcml0eS1taW50ZWQtcmVhZGVyIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIlJPTEVfUEFSSVRZX1JFQURFUiJdfSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6W10sInR5cCI6IkJlYXJlciJ9.IosXsHSrdlfXi1HUxlaeUEFdIvrJpk7aTDLo18XVBkh6dwpqGpYJdt3Bc3_TAujia3YVlXIXdb3gyd8-ArWDiRURteR0QnF2n2Yyosv4NiWJd6w9kKaEEEFNY3KlqRy4e5QJwbwM5aW4XNXIedrPz2XTLyUvx5JXhGZo-lwl5Hoh2qfoEckPUloW090nd-KLDcoA_JIM-gSlajm-ycXXg0h7IuSh4Vek9APAtt1AUZdExQQLUq93veBvxhOCELROGGUhBFNoGDbj3pA6yaNG8eQX95lY3rRfWTNRBAvYduvSilNXVn0xlUNRp-NH3wPvTJ2q7LYU8K-8i33eQUqXtQ"
+     },
+     "pipCalls": "/api/v1/pip/g75-url/"
+    },
+    {
+     "name": "general-a-y",
+     "type": "PARITY_SUITE_G75_URL_SUB_ARRAY_EMPTY_GENERAL",
+     "resource": {
+      "id": "r75",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcDo4MDgwL2F1dGgvcmVhbG1zL3Bhcml0eSIsInByZWZlcnJlZF91c2VybmFtZSI6InBhcml0eS1taW50ZWQtcmVhZGVyIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIlJPTEVfUEFSSVRZX1JFQURFUiJdfSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6W10sInR5cCI6IkJlYXJlciJ9.IosXsHSrdlfXi1HUxlaeUEFdIvrJpk7aTDLo18XVBkh6dwpqGpYJdt3Bc3_TAujia3YVlXIXdb3gyd8-ArWDiRURteR0QnF2n2Yyosv4NiWJd6w9kKaEEEFNY3KlqRy4e5QJwbwM5aW4XNXIedrPz2XTLyUvx5JXhGZo-lwl5Hoh2qfoEckPUloW090nd-KLDcoA_JIM-gSlajm-ycXXg0h7IuSh4Vek9APAtt1AUZdExQQLUq93veBvxhOCELROGGUhBFNoGDbj3pA6yaNG8eQX95lY3rRfWTNRBAvYduvSilNXVn0xlUNRp-NH3wPvTJ2q7LYU8K-8i33eQUqXtQ"
+     },
+     "pipCalls": "/api/v1/pip/g75-url/"
+    },
+    {
+     "name": "general-deny",
+     "type": "PARITY_SUITE_G75_URL_SUB_ARRAY_EMPTY_GENERAL_D",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcDo4MDgwL2F1dGgvcmVhbG1zL3Bhcml0eSIsInByZWZlcnJlZF91c2VybmFtZSI6InBhcml0eS1taW50ZWQtcmVhZGVyIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIlJPTEVfUEFSSVRZX1JFQURFUiJdfSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6W10sInR5cCI6IkJlYXJlciJ9.IosXsHSrdlfXi1HUxlaeUEFdIvrJpk7aTDLo18XVBkh6dwpqGpYJdt3Bc3_TAujia3YVlXIXdb3gyd8-ArWDiRURteR0QnF2n2Yyosv4NiWJd6w9kKaEEEFNY3KlqRy4e5QJwbwM5aW4XNXIedrPz2XTLyUvx5JXhGZo-lwl5Hoh2qfoEckPUloW090nd-KLDcoA_JIM-gSlajm-ycXXg0h7IuSh4Vek9APAtt1AUZdExQQLUq93veBvxhOCELROGGUhBFNoGDbj3pA6yaNG8eQX95lY3rRfWTNRBAvYduvSilNXVn0xlUNRp-NH3wPvTJ2q7LYU8K-8i33eQUqXtQ"
+     },
+     "pipCalls": "/api/v1/pip/g75-url/"
+    }
+   ]
+  },
+  {
+   "id": "g75-url-sub-value",
+   "about": "A GENERAL PIP whose url is http://pip-mock:8090/api/v1/pip/g75-url/${subject.id}, for an Incoming-Token the builder wrote beside the M2M token: sub parity-g75-sub (the control: the route of that value answers). The route /api/v1/pip/g75-url/ answers [\"y\"] and records its calls: `subject.parityG75Url == 'y' OR resource.a == 'y'` and the DENY twin. Does legacy call /api/v1/pip/g75-url/ (an empty id goes in as the empty text), /api/v1/pip/g75-url/null (the text null, which answers [\"y\"] too), or nothing (the PIP fails)?",
+   "resourceType": "PARITY_SUITE_G75_URL_SUB_VALUE",
+   "pips": [
+    "url"
+   ],
+   "sets": [
+    {
+     "key": "general",
+     "target": "resourceType == 'PARITY_SUITE_G75_URL_SUB_VALUE_GENERAL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-general",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-general",
+         "target": "true",
+         "condition": "subject.parityG75Url == 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "general-d",
+     "target": "resourceType == 'PARITY_SUITE_G75_URL_SUB_VALUE_GENERAL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-general-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-general-d",
+         "target": "true",
+         "condition": "subject.parityG75Url == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "general-a-n",
+     "type": "PARITY_SUITE_G75_URL_SUB_VALUE_GENERAL",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcDo4MDgwL2F1dGgvcmVhbG1zL3Bhcml0eSIsInByZWZlcnJlZF91c2VybmFtZSI6InBhcml0eS1taW50ZWQtcmVhZGVyIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIlJPTEVfUEFSSVRZX1JFQURFUiJdfSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6InBhcml0eS1nNzUtc3ViIiwidHlwIjoiQmVhcmVyIn0.4Rd02rzhd2dn9ZSffY6ntxHTuN7C-SRFSuFDIhFdXSSgr-fqz4Kqml6SXhu61gmWCyPSxu-x6PLeMF48ae2WtmtAsvvwVw0Io2tR_yGM4YvzOYIRSNT8uy9OI7PzLtsO8HS4QRBHP-9x7YJE4_Yp0OZ4JHI0ZtyIBjR6NlwTgsADMmVoKd08QLCkPVJSLU5wO4MC-L2mIlwK8WLN_I6GR7eG2L6juTaDDeGVme0zmNEjtioTaI-H4dZ1eZDilgKD7DH1-Pn1KDHq06FraKbyWrALlO_jX-zTfvahzmznoI8l6KiWbV7wJnaVgRNDwb5bdMZ83ld7X7BB4qovFi0s2w"
+     },
+     "pipCalls": "/api/v1/pip/g75-url/parity-g75-sub"
+    },
+    {
+     "name": "general-a-y",
+     "type": "PARITY_SUITE_G75_URL_SUB_VALUE_GENERAL",
+     "resource": {
+      "id": "r75",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcDo4MDgwL2F1dGgvcmVhbG1zL3Bhcml0eSIsInByZWZlcnJlZF91c2VybmFtZSI6InBhcml0eS1taW50ZWQtcmVhZGVyIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIlJPTEVfUEFSSVRZX1JFQURFUiJdfSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6InBhcml0eS1nNzUtc3ViIiwidHlwIjoiQmVhcmVyIn0.4Rd02rzhd2dn9ZSffY6ntxHTuN7C-SRFSuFDIhFdXSSgr-fqz4Kqml6SXhu61gmWCyPSxu-x6PLeMF48ae2WtmtAsvvwVw0Io2tR_yGM4YvzOYIRSNT8uy9OI7PzLtsO8HS4QRBHP-9x7YJE4_Yp0OZ4JHI0ZtyIBjR6NlwTgsADMmVoKd08QLCkPVJSLU5wO4MC-L2mIlwK8WLN_I6GR7eG2L6juTaDDeGVme0zmNEjtioTaI-H4dZ1eZDilgKD7DH1-Pn1KDHq06FraKbyWrALlO_jX-zTfvahzmznoI8l6KiWbV7wJnaVgRNDwb5bdMZ83ld7X7BB4qovFi0s2w"
+     },
+     "pipCalls": "/api/v1/pip/g75-url/parity-g75-sub"
+    },
+    {
+     "name": "general-deny",
+     "type": "PARITY_SUITE_G75_URL_SUB_VALUE_GENERAL_D",
+     "resource": {
+      "id": "r75",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcDo4MDgwL2F1dGgvcmVhbG1zL3Bhcml0eSIsInByZWZlcnJlZF91c2VybmFtZSI6InBhcml0eS1taW50ZWQtcmVhZGVyIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIlJPTEVfUEFSSVRZX1JFQURFUiJdfSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6InBhcml0eS1nNzUtc3ViIiwidHlwIjoiQmVhcmVyIn0.4Rd02rzhd2dn9ZSffY6ntxHTuN7C-SRFSuFDIhFdXSSgr-fqz4Kqml6SXhu61gmWCyPSxu-x6PLeMF48ae2WtmtAsvvwVw0Io2tR_yGM4YvzOYIRSNT8uy9OI7PzLtsO8HS4QRBHP-9x7YJE4_Yp0OZ4JHI0ZtyIBjR6NlwTgsADMmVoKd08QLCkPVJSLU5wO4MC-L2mIlwK8WLN_I6GR7eG2L6juTaDDeGVme0zmNEjtioTaI-H4dZ1eZDilgKD7DH1-Pn1KDHq06FraKbyWrALlO_jX-zTfvahzmznoI8l6KiWbV7wJnaVgRNDwb5bdMZ83ld7X7BB4qovFi0s2w"
+     },
+     "pipCalls": "/api/v1/pip/g75-url/parity-g75-sub"
+    }
+   ]
+  },
+  {
+   "id": "g75-url-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_G75_URL_CONTROL_LAST",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_URL_CONTROL_LAST'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

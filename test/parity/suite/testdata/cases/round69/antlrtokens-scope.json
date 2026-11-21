@@ -1,0 +1,809 @@
+{
+ "about": "Round 69: operands whose kind or bounds the lexer of the condition language decides: a scope key with brackets, subject.permissionScope without a key, a dot at the end of a subject or resource path, the right side of MATCH, spaces inside brackets, a boolean followed by a comma. The PERMISSION_SCOPE is declared with one assignment (region r1, a[0] v, a. v). Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R69T_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         },
+         {
+          "key": "a[0]",
+          "values": [
+           {
+            "id": "v"
+           }
+          ]
+         },
+         {
+          "key": "a.",
+          "values": [
+           {
+            "id": "v"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "cacheable": false,
+   "cachePeriod": 1,
+   "url": "http://pip-mock:8090"
+  }
+ },
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "t69-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-scope-bracket-key",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.permissionScope.a[0] CONTAINS 'v' OR resource.a == 'y'` inside an iterate over subject.permissionScope, a = n and a = y. The scope assignment holds the key a[0] with the value v. True for a = n if the scope key is the whole tail a[0], as the lexer's scope token takes it; false if subject.permissionScope.a[0] is a path from the resource, which the resource does not hold.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScope.a[0] CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-scope-dot-key",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.permissionScope.a. CONTAINS 'v' OR resource.a == 'y'` inside an iterate over subject.permissionScope, a = n and a = y. The scope assignment holds the key a. with the dot and the value v, and no key a. True for a = n if the scope key is the whole tail a. with its dot, as the lexer's scope token takes it; false if the dot at the end is dropped and the key is a.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScope.a. CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-match-subject-bracket",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.v MATCH subject.l[0] OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. subject.l[0] on the right of MATCH is an attribute token, and its text is the pattern: subject.l[0], where the dot is any character and [0] matches 0. True for a = n if the pattern is that text; false if it is the text of a resource path, resource.subject.l[0].",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.v MATCH subject.l[0] OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "v": "subjectXl0"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "v": "subjectXl0"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-subject-attribute",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.1x == 'v' OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. subject.1x is no PIP name for the lexer (a step that starts with a digit) but one attribute token, a path from the resource, which holds subject.1x = v. True for a = n if it is that path; false if it reads an undeclared PIP of that name.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.1x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "subject": {
+       "1x": "v"
+      }
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "subject": {
+       "1x": "v"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-scope-bare-iterate",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.permissionScope IS NULL OR resource.a == 'y'` inside an iterate over subject.permissionScope, a = n and a = y. Inside the iterate. subject.permissionScope without a key is a reference to a PIP of that name for the lexer, and a PERMISSION_SCOPE has no value through a reference: the specification fails the decision for a = n. False for a = n if it reads the whole assignment, which is not null.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScope IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-scope-bare-outside",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.permissionScope IS NULL OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. Outside any iterate, the same reference as scope-bare-iterate. The specification fails the decision under either reading, since it reads the scope outside iterate as a failure too; a 400 says the reference fails the tenant as an undeclared PIP does.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScope IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-scope-dot-path",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.permissionScope. == 'v' OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. With the dot at the end the lexer reads one attribute token, a path from the resource; the resource holds subject.permissionScope = v. True for a = n if it is that path; a read of the scope or of a PIP fails or is false instead.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScope. == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "subject": {
+       "permissionScope": "v"
+      }
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "subject": {
+       "permissionScope": "v"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-match-scope-dot-matches",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.v MATCH subject.permissionScope. OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. The pattern is the text subject.permissionScope. with the dot at the end, and each dot is any character too. The value has 24 characters and matches only if the dot at the end is part of the pattern: true for a = n.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.v MATCH subject.permissionScope. OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "v": "subjectXpermissionScopeY"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "v": "subjectXpermissionScopeY"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-match-scope-dot-short",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.v MATCH subject.permissionScope. OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. The twin of match-scope-dot-matches with the value subject.permissionScope, one character short of the pattern: false for a = n.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.v MATCH subject.permissionScope. OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "v": "subject.permissionScope"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "v": "subject.permissionScope"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-path-trailing-dot",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.x. == 'v' OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. A path with a dot at the end is one attribute token with the dot for the lexer. The specification reads it as resource.x, so true for a = n; false or a failure says the dot reaches the path the evaluator reads.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x. == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": "v"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-path-trailing-dot-key",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.x. == 'v' OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. The twin of path-trailing-dot whose resource holds only the key x. with the dot: true for a = n if the evaluator reads the dot as part of the key.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x. == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x.": "v"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "x.": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-path-trailing-dot-right",
+   "about": "A DENY_UNLESS_PERMIT rule `'v' == resource.x. OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. path-trailing-dot with the path on the right.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "'v' == resource.x. OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": "v"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-index-spaces",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.l[ 0 ] == 'v' OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. Spaces inside the brackets are part of the attribute token for the lexer. The specification reads the index as 0, so true for a = n.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.l[ 0 ] == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "l": [
+       "v"
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "l": [
+       "v"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-index-spaces-right",
+   "about": "A DENY_UNLESS_PERMIT rule `'v' == resource.l[ 0 ] OR resource.a == 'y'` in a set no iterate encloses, a = n and a = y. index-spaces with the path on the right.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "'v' == resource.l[ 0 ] OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "l": [
+       "v"
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "l": [
+       "v"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "t69-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

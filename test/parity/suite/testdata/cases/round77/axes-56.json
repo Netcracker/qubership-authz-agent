@@ -1,0 +1,167 @@
+{
+ "about": "Round 77, task 16: survivor:place simplified-condition | lang idiom_structure_number_text=as_written, moved to place = simplified-condition from round72/filter-number.json (f72-num-list-1e3-double). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R72_FILTER_NUMBER_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ax77-56-f72-num-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-56-f72-num-list-1e3-plain",
+   "about": "An ALLOW rule `resource.x == '[1000]'` under DENY_UNLESS_PERMIT over x = [1e3] as written in the request: true when the structure prints its number as stripTrailingZeros().toPlainString() does.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x == '[1000]'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": [
+       1e3
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-56-f72-num-list-1e3-sci",
+   "about": "An ALLOW rule `resource.x == '[1E+3]'` under DENY_UNLESS_PERMIT over x = [1e3] as written in the request: true when the structure prints its number as BigDecimal.toString() does.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x == '[1E+3]'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": [
+       1e3
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-56-f72-num-list-1e3-double",
+   "about": "An ALLOW rule `resource.x == '[1000.0]'` under DENY_UNLESS_PERMIT over x = [1e3] as written in the request: true when the structure prints its number as Double.toString() does. Task 16 moves it to place = simplified-condition.",
+   "condition": "resource.x == '[1000.0]'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": [
+       1e3
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-56-f72-num-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

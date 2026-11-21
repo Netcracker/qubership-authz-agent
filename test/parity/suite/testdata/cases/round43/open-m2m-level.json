@@ -1,0 +1,314 @@
+{
+ "about": "Which values of the claim level make subject.isM2M true. Round 42 recorded that a user whose token carries level m2m counts as a service account (r42open-m2m-*/level-m2m true). Each case asks the M2M token alone, parity-reader, and the five level users of testdata/realm/round29-pipfield-users.json and round30-level-users.json, whose level is m2m, M2M, external, internal and partner; the runner checks the claim before each of their requests.",
+ "resourceTypePrefix": "PARITY_SUITE_R43ML_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r43openm2mlevel-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r43",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r43open-m2m-level-control",
+   "roles": [
+    "ROLE_PARITY_READER",
+    "ROLE_M2M"
+   ],
+   "condition": "resource.c == 'n'",
+   "about": "Control: a simplified policy for READ with the roles ROLE_PARITY_READER and ROLE_M2M, whose condition holds. Every subject answers true if it reaches the policy by its roles; a false here makes the other cases of the file say nothing for that subject.",
+   "requests": [
+    {
+     "name": "m2m",
+     "resource": {
+      "id": "r43",
+      "c": "n"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r43",
+      "c": "n"
+     }
+    },
+    {
+     "name": "level-m2m",
+     "resource": {
+      "id": "r43",
+      "c": "n"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    },
+    {
+     "name": "level-upper",
+     "resource": {
+      "id": "r43",
+      "c": "n"
+     },
+     "subject": "user:parity-r30-level-upper",
+     "subjectClaims": {
+      "level": "M2M"
+     }
+    },
+    {
+     "name": "level-external",
+     "resource": {
+      "id": "r43",
+      "c": "n"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "level-internal",
+     "resource": {
+      "id": "r43",
+      "c": "n"
+     },
+     "subject": "user:parity-r29-level-internal",
+     "subjectClaims": {
+      "level": "internal"
+     }
+    },
+    {
+     "name": "level-partner",
+     "resource": {
+      "id": "r43",
+      "c": "n"
+     },
+     "subject": "user:parity-r30-level-partner",
+     "subjectClaims": {
+      "level": "partner"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r43open-m2m-level-alone",
+   "roles": [
+    "ROLE_PARITY_READER",
+    "ROLE_M2M"
+   ],
+   "condition": "subject.isM2M",
+   "about": "The same policy with the condition subject.isM2M alone. Round 42: the M2M token and level m2m true, parity-reader false. level-upper false means the stand compares the level as written, so M2M is no service account. level-external true means the levels the stand refuses a remote PIP call for (m2m in any case, and external) count as a service account. The two readings are independent. level-internal and level-partner are the negative controls.",
+   "requests": [
+    {
+     "name": "m2m",
+     "resource": {
+      "id": "r43"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r43"
+     }
+    },
+    {
+     "name": "level-m2m",
+     "resource": {
+      "id": "r43"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    },
+    {
+     "name": "level-upper",
+     "resource": {
+      "id": "r43"
+     },
+     "subject": "user:parity-r30-level-upper",
+     "subjectClaims": {
+      "level": "M2M"
+     }
+    },
+    {
+     "name": "level-external",
+     "resource": {
+      "id": "r43"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "level-internal",
+     "resource": {
+      "id": "r43"
+     },
+     "subject": "user:parity-r29-level-internal",
+     "subjectClaims": {
+      "level": "internal"
+     }
+    },
+    {
+     "name": "level-partner",
+     "resource": {
+      "id": "r43"
+     },
+     "subject": "user:parity-r30-level-partner",
+     "subjectClaims": {
+      "level": "partner"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r43open-m2m-level-beside-or",
+   "roles": [
+    "ROLE_PARITY_READER",
+    "ROLE_M2M"
+   ],
+   "condition": "subject.isM2M OR resource.a == 'y'",
+   "about": "The same policy with subject.isM2M OR resource.a == 'y', asked with a = n, so the answer is subject.isM2M's: the operand beside a connective. It reads the level users as r43open-m2m-level-alone does.",
+   "requests": [
+    {
+     "name": "m2m",
+     "resource": {
+      "id": "r43",
+      "a": "n"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r43",
+      "a": "n"
+     }
+    },
+    {
+     "name": "level-m2m",
+     "resource": {
+      "id": "r43",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    },
+    {
+     "name": "level-upper",
+     "resource": {
+      "id": "r43",
+      "a": "n"
+     },
+     "subject": "user:parity-r30-level-upper",
+     "subjectClaims": {
+      "level": "M2M"
+     }
+    },
+    {
+     "name": "level-external",
+     "resource": {
+      "id": "r43",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "level-internal",
+     "resource": {
+      "id": "r43",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-internal",
+     "subjectClaims": {
+      "level": "internal"
+     }
+    },
+    {
+     "name": "level-partner",
+     "resource": {
+      "id": "r43",
+      "a": "n"
+     },
+     "subject": "user:parity-r30-level-partner",
+     "subjectClaims": {
+      "level": "partner"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r43openm2mlevel-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r43",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

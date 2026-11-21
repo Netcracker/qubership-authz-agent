@@ -1,0 +1,3230 @@
+{
+ "about": "Round 71: lifecycle transitions sent as PATCH, the method the PAP serves for them (PR #42, comment of 2026-10-26 15:44Z); the transitions of rounds 48 to 66 went as POST and answered 500. Each case uploads a set in a tenant of its own (one case in the default tenant), sends transitions with no body, decides after each and deletes its sets last.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p71x-lifecycle-control-first",
+   "about": "Control: an ACTIVE set uploaded in a tenant of its own, decided and read back.",
+   "resourceType": "PARITY_SUITE_P71X_LIFECYCLE_CONTROL_FIRST",
+   "tenant": "parity-p71x-lifecycle-control-first",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71x-lifecycle-control-first"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "c5f60a1f-4853-c520-231b-974ec8f0b783",
+       "name": "p71x-lifecycle-control-first s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71X_LIFECYCLE_CONTROL_FIRST'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "ed33f0d3-fed1-800c-1b7f-b4014f72d352",
+         "name": "p71x-lifecycle-control-first s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "d6bc4890-1b6f-2634-e958-c60503cdd67b",
+           "name": "p71x-lifecycle-control-first s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P71X_LIFECYCLE_CONTROL_FIRST",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71x-lifecycle-control-first",
+      "PARITY_SUITE_P71X_LIFECYCLE_CONTROL_FIRST"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p71l-activate",
+   "about": "A set uploaded INACTIVE, then activate sent as POST, as rounds 48 to 66 sent it, and as PATCH: the status of each, the decision after each and the export read back, where the set holds ACTIVE after the PATCH or what it held before.",
+   "resourceType": "PARITY_SUITE_P71L_ACTIVATE",
+   "tenant": "parity-p71l-activate",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-activate"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "108cc0b7-a3e5-df86-4c0f-ead5a09f695f",
+       "name": "p71l-activate s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_ACTIVATE'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "441f803b-23c7-f73a-3491-4a65e2afaab1",
+         "name": "p71l-activate s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "7aebb6dd-7244-abee-273c-bc11369df71d",
+           "name": "p71l-activate s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "INACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_ACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "108cc0b7-a3e5-df86-4c0f-ead5a09f695f",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_ACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "change-set-status",
+     "args": {
+      "id": "108cc0b7-a3e5-df86-4c0f-ead5a09f695f",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w3-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w3-probe",
+       "type": "PARITY_SUITE_P71L_ACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-activate",
+      "PARITY_SUITE_P71L_ACTIVATE"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "108cc0b7-a3e5-df86-4c0f-ead5a09f695f"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-deactivate",
+   "about": "A set uploaded ACTIVE, then deactivate sent as POST, as rounds 48 to 66 sent it, and as PATCH: the status of each, the decision after each and the export read back, where the set holds INACTIVE after the PATCH or what it held before.",
+   "resourceType": "PARITY_SUITE_P71L_DEACTIVATE",
+   "tenant": "parity-p71l-deactivate",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-deactivate"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "679a7317-953e-455c-e9f7-41c0991f0818",
+       "name": "p71l-deactivate s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_DEACTIVATE'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "3340134e-a702-f138-a431-27b90cb0948f",
+         "name": "p71l-deactivate s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "5f958d07-a60a-e6e3-36a6-147b9442373b",
+           "name": "p71l-deactivate s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_DEACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "679a7317-953e-455c-e9f7-41c0991f0818",
+      "transition": "deactivate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_DEACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "change-set-status",
+     "args": {
+      "id": "679a7317-953e-455c-e9f7-41c0991f0818",
+      "transition": "deactivate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w3-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w3-probe",
+       "type": "PARITY_SUITE_P71L_DEACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-deactivate",
+      "PARITY_SUITE_P71L_DEACTIVATE"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "679a7317-953e-455c-e9f7-41c0991f0818"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-draft",
+   "about": "A set uploaded ACTIVE, then draft sent as POST, as rounds 48 to 66 sent it, and as PATCH: the status of each, the decision after each and the export read back, where the set holds DRAFT after the PATCH or what it held before.",
+   "resourceType": "PARITY_SUITE_P71L_DRAFT",
+   "tenant": "parity-p71l-draft",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-draft"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "c4d383fd-7574-8141-e1d0-28898b20089e",
+       "name": "p71l-draft s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_DRAFT'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "7b75ace9-6ae3-3f57-1460-53bb883e504e",
+         "name": "p71l-draft s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "c7cc48cd-b12d-72e5-1e2a-8dabd83ace09",
+           "name": "p71l-draft s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_DRAFT",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "c4d383fd-7574-8141-e1d0-28898b20089e",
+      "transition": "draft"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_DRAFT",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "change-set-status",
+     "args": {
+      "id": "c4d383fd-7574-8141-e1d0-28898b20089e",
+      "transition": "draft"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w3-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w3-probe",
+       "type": "PARITY_SUITE_P71L_DRAFT",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-draft",
+      "PARITY_SUITE_P71L_DRAFT"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "c4d383fd-7574-8141-e1d0-28898b20089e"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-archive",
+   "about": "A set uploaded ACTIVE, then archive sent as POST, as rounds 48 to 66 sent it, and as PATCH: the status of each, the decision after each and the export read back, where the set holds ARCHIVED after the PATCH or what it held before.",
+   "resourceType": "PARITY_SUITE_P71L_ARCHIVE",
+   "tenant": "parity-p71l-archive",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-archive"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "571675ea-8470-87b5-7dd3-b49436dcd89e",
+       "name": "p71l-archive s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_ARCHIVE'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "a42116cc-fda5-da4a-787a-e48470cc7944",
+         "name": "p71l-archive s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "98aa52e4-a75e-a31c-5280-2dd9faca7ba8",
+           "name": "p71l-archive s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_ARCHIVE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "571675ea-8470-87b5-7dd3-b49436dcd89e",
+      "transition": "archive"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_ARCHIVE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "change-set-status",
+     "args": {
+      "id": "571675ea-8470-87b5-7dd3-b49436dcd89e",
+      "transition": "archive"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w3-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w3-probe",
+       "type": "PARITY_SUITE_P71L_ARCHIVE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-archive",
+      "PARITY_SUITE_P71L_ARCHIVE"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "571675ea-8470-87b5-7dd3-b49436dcd89e"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-from-draft-activate",
+   "about": "A set uploaded DRAFT, then activate as PATCH: the stand owner's probe answered activate and archive from DRAFT with 400 \"Can't change policy set status from 'DRAFT' to ...\"; the decision and the export after it.",
+   "resourceType": "PARITY_SUITE_P71L_FROM_DRAFT_ACTIVATE",
+   "tenant": "parity-p71l-from-draft-activate",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-from-draft-activate"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "dad4090e-b16f-6c6b-5b99-66eac2e5da17",
+       "name": "p71l-from-draft-activate s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_FROM_DRAFT_ACTIVATE'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "93935b5c-039b-f6aa-c232-0d351f3335f6",
+         "name": "p71l-from-draft-activate s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "2d053626-340e-0dfb-1d9a-1c7439316ed7",
+           "name": "p71l-from-draft-activate s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "DRAFT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_FROM_DRAFT_ACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "dad4090e-b16f-6c6b-5b99-66eac2e5da17",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_FROM_DRAFT_ACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-from-draft-activate",
+      "PARITY_SUITE_P71L_FROM_DRAFT_ACTIVATE"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "dad4090e-b16f-6c6b-5b99-66eac2e5da17"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-from-draft-archive",
+   "about": "A set uploaded DRAFT, then archive as PATCH: the stand owner's probe answered activate and archive from DRAFT with 400 \"Can't change policy set status from 'DRAFT' to ...\"; the decision and the export after it.",
+   "resourceType": "PARITY_SUITE_P71L_FROM_DRAFT_ARCHIVE",
+   "tenant": "parity-p71l-from-draft-archive",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-from-draft-archive"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "39d703e4-5e5f-bfca-66a1-6a4b4824342e",
+       "name": "p71l-from-draft-archive s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_FROM_DRAFT_ARCHIVE'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "b56a21f0-2882-7269-0532-ae69ea65217b",
+         "name": "p71l-from-draft-archive s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "08e6ef81-77c7-abc5-713b-482fe42b6795",
+           "name": "p71l-from-draft-archive s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "DRAFT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_FROM_DRAFT_ARCHIVE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "39d703e4-5e5f-bfca-66a1-6a4b4824342e",
+      "transition": "archive"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_FROM_DRAFT_ARCHIVE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-from-draft-archive",
+      "PARITY_SUITE_P71L_FROM_DRAFT_ARCHIVE"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "39d703e4-5e5f-bfca-66a1-6a4b4824342e"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-from-draft-deactivate",
+   "about": "A set uploaded DRAFT, then deactivate as PATCH: the stand owner's probe answered activate and archive from DRAFT with 400 \"Can't change policy set status from 'DRAFT' to ...\"; the decision and the export after it, then activate.",
+   "resourceType": "PARITY_SUITE_P71L_FROM_DRAFT_DEACTIVATE",
+   "tenant": "parity-p71l-from-draft-deactivate",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-from-draft-deactivate"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "77913819-4041-74b4-ca0b-f2c8e04b64dd",
+       "name": "p71l-from-draft-deactivate s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_FROM_DRAFT_DEACTIVATE'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "52e1efc4-d23c-80fe-5caa-327bf7a5d71c",
+         "name": "p71l-from-draft-deactivate s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "cb30b009-46be-4358-a339-3fc177196c2e",
+           "name": "p71l-from-draft-deactivate s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "DRAFT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_FROM_DRAFT_DEACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "77913819-4041-74b4-ca0b-f2c8e04b64dd",
+      "transition": "deactivate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_FROM_DRAFT_DEACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-from-draft-deactivate",
+      "PARITY_SUITE_P71L_FROM_DRAFT_DEACTIVATE"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "change-set-status",
+     "args": {
+      "id": "77913819-4041-74b4-ca0b-f2c8e04b64dd",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w3-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w3-probe",
+       "type": "PARITY_SUITE_P71L_FROM_DRAFT_DEACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-from-draft-deactivate",
+      "PARITY_SUITE_P71L_FROM_DRAFT_DEACTIVATE"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "77913819-4041-74b4-ca0b-f2c8e04b64dd"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-draft-then-activate",
+   "about": "An ACTIVE set moved to DRAFT by a transition, then activated: whether a DRAFT the transition wrote refuses activate as an uploaded DRAFT does.",
+   "resourceType": "PARITY_SUITE_P71L_DRAFT_THEN_ACTIVATE",
+   "tenant": "parity-p71l-draft-then-activate",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-draft-then-activate"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "a61235d6-262f-79f2-6ffe-1484ace99d53",
+       "name": "p71l-draft-then-activate s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_DRAFT_THEN_ACTIVATE'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "7f45e6a4-6392-fd2c-0b7b-0bdd5d3fd1d6",
+         "name": "p71l-draft-then-activate s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "efd334bb-0b88-422f-6ad8-6ddf653f85f5",
+           "name": "p71l-draft-then-activate s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_DRAFT_THEN_ACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "a61235d6-262f-79f2-6ffe-1484ace99d53",
+      "transition": "draft"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_DRAFT_THEN_ACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "change-set-status",
+     "args": {
+      "id": "a61235d6-262f-79f2-6ffe-1484ace99d53",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w3-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w3-probe",
+       "type": "PARITY_SUITE_P71L_DRAFT_THEN_ACTIVATE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-draft-then-activate",
+      "PARITY_SUITE_P71L_DRAFT_THEN_ACTIVATE"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "a61235d6-262f-79f2-6ffe-1484ace99d53"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-same",
+   "about": "An ACTIVE set activated, then deactivated twice: a transition to the status the set holds.",
+   "resourceType": "PARITY_SUITE_P71L_SAME",
+   "tenant": "parity-p71l-same",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-same"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "1566eb37-80df-ca2b-9ead-a6ece9abcfbb",
+       "name": "p71l-same s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_SAME'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "b21176c0-7fd8-80dc-5099-b3ea4c16e2bc",
+         "name": "p71l-same s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "b5508709-2582-bef8-b140-f0e240cc920f",
+           "name": "p71l-same s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_SAME",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "1566eb37-80df-ca2b-9ead-a6ece9abcfbb",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_SAME",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "change-set-status",
+     "args": {
+      "id": "1566eb37-80df-ca2b-9ead-a6ece9abcfbb",
+      "transition": "deactivate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w3-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w3-probe",
+       "type": "PARITY_SUITE_P71L_SAME",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w4",
+     "op": "change-set-status",
+     "args": {
+      "id": "1566eb37-80df-ca2b-9ead-a6ece9abcfbb",
+      "transition": "deactivate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w4-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w4-probe",
+       "type": "PARITY_SUITE_P71L_SAME",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w4-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w4-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w4-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-same",
+      "PARITY_SUITE_P71L_SAME"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "1566eb37-80df-ca2b-9ead-a6ece9abcfbb"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-archived",
+   "about": "A set uploaded ARCHIVED, then activated, and one archived by a transition, then deactivated: whether an archived set comes back.",
+   "resourceType": "PARITY_SUITE_P71L_ARCHIVED",
+   "tenant": "parity-p71l-archived",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-archived"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "ad54261e-aa02-448e-a09a-49e83370e028",
+       "name": "p71l-archived s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_ARCHIVED'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "0fb3f56d-2a13-b7c6-a503-a46440d17c8f",
+         "name": "p71l-archived s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "4c8b4326-5640-fb6e-0dfc-91217247cada",
+           "name": "p71l-archived s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ARCHIVED"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_ARCHIVED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "ad54261e-aa02-448e-a09a-49e83370e028",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_ARCHIVED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-archived",
+      "PARITY_SUITE_P71L_ARCHIVED"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-archived-b"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "16a5df45-6d68-8a14-6cdc-d33a07f9d5d6",
+       "name": "p71l-archived b",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_ARCHIVED'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "eab0cebc-5b66-bf04-c686-c0f92e9f54d4",
+         "name": "p71l-archived b reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "19c333a4-370c-de0f-77d7-854e3424f469",
+           "name": "p71l-archived b rule",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "INACTIVE"
+      }
+     ]
+    },
+    {
+     "name": "w4",
+     "op": "change-set-status",
+     "args": {
+      "id": "16a5df45-6d68-8a14-6cdc-d33a07f9d5d6",
+      "transition": "archive"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w4-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w4-probe",
+       "type": "PARITY_SUITE_P71L_ARCHIVED",
+       "operation": "UPDATE"
+      }
+     ]
+    },
+    {
+     "name": "w4-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w4-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w5",
+     "op": "change-set-status",
+     "args": {
+      "id": "16a5df45-6d68-8a14-6cdc-d33a07f9d5d6",
+      "transition": "deactivate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w5-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w5-probe",
+       "type": "PARITY_SUITE_P71L_ARCHIVED",
+       "operation": "UPDATE"
+      }
+     ]
+    },
+    {
+     "name": "w5-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w5-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w5-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-archived",
+      "PARITY_SUITE_P71L_ARCHIVED"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "ad54261e-aa02-448e-a09a-49e83370e028"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "cleanup-2",
+     "op": "delete-set",
+     "args": {
+      "id": "16a5df45-6d68-8a14-6cdc-d33a07f9d5d6"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-children",
+   "about": "An ACTIVE set with an INACTIVE nested set allowing UPDATE, activated, deactivated and activated again: the nested set's status read back and the decision on UPDATE after each.",
+   "resourceType": "PARITY_SUITE_P71L_CHILDREN",
+   "tenant": "parity-p71l-children",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-children"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "65e43742-7290-dda9-c6f8-f6b68e0795a3",
+       "name": "p71l-children s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_CHILDREN'",
+       "policySets": [
+        {
+         "policySetId": "99100ca9-98f8-20b9-a6d3-3fcc78035899",
+         "name": "p71l-children n",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "resourceType == 'PARITY_SUITE_P71L_CHILDREN'",
+         "policySets": [],
+         "policies": [
+          {
+           "policyId": "5997c32e-19bd-f6b7-2ec8-4ec5b669d1f0",
+           "name": "p71l-children n reader",
+           "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "ruleId": "8bddd773-95ae-16ed-3ea4-ef8beb10c193",
+             "name": "p71l-children n rule",
+             "target": "operation == 'UPDATE'",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "status": "INACTIVE"
+        }
+       ],
+       "policies": [
+        {
+         "policyId": "7a7c0d43-9c1a-5da2-97b0-70494efe4ab3",
+         "name": "p71l-children s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "6a6210c3-3c6d-0c72-5259-159a21985adc",
+           "name": "p71l-children s rule",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_CHILDREN",
+       "operation": "UPDATE"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "65e43742-7290-dda9-c6f8-f6b68e0795a3",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_CHILDREN",
+       "operation": "UPDATE"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-children",
+      "PARITY_SUITE_P71L_CHILDREN"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "change-set-status",
+     "args": {
+      "id": "65e43742-7290-dda9-c6f8-f6b68e0795a3",
+      "transition": "deactivate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w3-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w3-probe",
+       "type": "PARITY_SUITE_P71L_CHILDREN",
+       "operation": "UPDATE"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w4",
+     "op": "change-set-status",
+     "args": {
+      "id": "65e43742-7290-dda9-c6f8-f6b68e0795a3",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w4-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w4-probe",
+       "type": "PARITY_SUITE_P71L_CHILDREN",
+       "operation": "UPDATE"
+      }
+     ]
+    },
+    {
+     "name": "w4-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w4-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w4-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-children",
+      "PARITY_SUITE_P71L_CHILDREN"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "65e43742-7290-dda9-c6f8-f6b68e0795a3"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-customized",
+   "about": "A set whose only rule a CUSTOMER customization moves from UPDATE to READ, deactivated and activated: whether the customization outlives the transitions.",
+   "resourceType": "PARITY_SUITE_P71L_CUSTOMIZED",
+   "tenant": "parity-p71l-customized",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-customized"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "13e1c53d-c385-8cfd-3672-03ed858f5a0e",
+       "name": "p71l-customized s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_CUSTOMIZED'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "d59c894b-abe7-29eb-6372-7ca493675014",
+         "name": "p71l-customized s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "f5a202b4-7bf4-07c2-fd9d-906a692139e5",
+           "name": "p71l-customized s rule",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "13e1c53d-c385-8cfd-3672-03ed858f5a0e",
+       "policies": [
+        {
+         "policyId": "d59c894b-abe7-29eb-6372-7ca493675014",
+         "rules": [
+          {
+           "ruleId": "f5a202b4-7bf4-07c2-fd9d-906a692139e5",
+           "name": "p71l-customized s rule",
+           "effect": "ALLOW",
+           "target": "operation == 'READ'",
+           "condition": "true"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_CUSTOMIZED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "change-set-status",
+     "args": {
+      "id": "13e1c53d-c385-8cfd-3672-03ed858f5a0e",
+      "transition": "deactivate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w3-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w3-probe",
+       "type": "PARITY_SUITE_P71L_CUSTOMIZED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w4",
+     "op": "change-set-status",
+     "args": {
+      "id": "13e1c53d-c385-8cfd-3672-03ed858f5a0e",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w4-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w4-probe",
+       "type": "PARITY_SUITE_P71L_CUSTOMIZED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w4-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w4-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w4-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-customized",
+      "PARITY_SUITE_P71L_CUSTOMIZED"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set-customization",
+     "args": {
+      "id": "13e1c53d-c385-8cfd-3672-03ed858f5a0e",
+      "level": "CUSTOMER",
+      "recursive": "true"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "cleanup-2",
+     "op": "delete-set",
+     "args": {
+      "id": "13e1c53d-c385-8cfd-3672-03ed858f5a0e"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-depth",
+   "about": "A transition that names a nested set's id: deactivate, then the decision on the operation only the nested set allows and the export read back.",
+   "resourceType": "PARITY_SUITE_P71L_DEPTH",
+   "tenant": "parity-p71l-depth",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-depth"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "6e2ee576-8f37-c62f-289f-18e55f2a837b",
+       "name": "p71l-depth s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_DEPTH'",
+       "policySets": [
+        {
+         "policySetId": "b1d999e1-1a73-c18a-2532-2b599eef0d09",
+         "name": "p71l-depth n",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "resourceType == 'PARITY_SUITE_P71L_DEPTH'",
+         "policySets": [],
+         "policies": [
+          {
+           "policyId": "a68c3366-e3f5-97e8-4184-9cb5a2cf6b55",
+           "name": "p71l-depth n reader",
+           "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "ruleId": "a9190dd1-9647-bedd-62f5-6d191e3ce9e9",
+             "name": "p71l-depth n rule",
+             "target": "operation == 'UPDATE'",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "status": "ACTIVE"
+        }
+       ],
+       "policies": [
+        {
+         "policyId": "251654b1-f6ee-2a37-2c01-ba4f4779010a",
+         "name": "p71l-depth s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "6ed60eb2-44ab-4db6-afa2-82ffc3e5563a",
+           "name": "p71l-depth s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_DEPTH",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "b1d999e1-1a73-c18a-2532-2b599eef0d09",
+      "transition": "deactivate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_DEPTH",
+       "operation": "UPDATE"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-depth",
+      "PARITY_SUITE_P71L_DEPTH"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "6e2ee576-8f37-c62f-289f-18e55f2a837b"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-id-case",
+   "about": "A set deactivated through its policySetId in upper case.",
+   "resourceType": "PARITY_SUITE_P71L_ID_CASE",
+   "tenant": "parity-p71l-id-case",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-id-case"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "d8164229-d9f8-b041-f621-f02acd4a02ce",
+       "name": "p71l-id-case s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_ID_CASE'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "dc33dc95-60ec-bf11-7e7a-cbd5e0667a52",
+         "name": "p71l-id-case s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "2460f218-4fdb-3703-2715-d6c581d5ef67",
+           "name": "p71l-id-case s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_ID_CASE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "D8164229-D9F8-B041-F621-F02ACD4A02CE",
+      "transition": "deactivate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_ID_CASE",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-id-case",
+      "PARITY_SUITE_P71L_ID_CASE"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "d8164229-d9f8-b041-f621-f02acd4a02ce"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-order",
+   "about": "A transition of a set before it is uploaded, then the upload INACTIVE, then the same transition: an unknown id, and the order of a transition against the write it depends on.",
+   "resourceType": "PARITY_SUITE_P71L_ORDER",
+   "tenant": "parity-p71l-order",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "change-set-status",
+     "args": {
+      "id": "ea68c163-eaf2-a59d-ef95-315c3566289b",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_ORDER",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-order"
+     },
+     "observe": [
+      "status",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "ea68c163-eaf2-a59d-ef95-315c3566289b",
+       "name": "p71l-order s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_ORDER'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "85f43f29-494c-968b-0280-0b8494a47d75",
+         "name": "p71l-order s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "b8542db6-037b-d182-2276-81db5b0d28f9",
+           "name": "p71l-order s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "INACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_ORDER",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "change-set-status",
+     "args": {
+      "id": "ea68c163-eaf2-a59d-ef95-315c3566289b",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w3-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w3-probe",
+       "type": "PARITY_SUITE_P71L_ORDER",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-order",
+      "PARITY_SUITE_P71L_ORDER"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "ea68c163-eaf2-a59d-ef95-315c3566289b"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-spelled",
+   "about": "Transitions the route does not know, sent as PATCH: parity-unknown, then Deactivate and DEACTIVATE; the decision and the export after the last.",
+   "resourceType": "PARITY_SUITE_P71L_SPELLED",
+   "tenant": "parity-p71l-spelled",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-spelled"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "9bbb8ba5-741e-e6bc-7841-14ece529d027",
+       "name": "p71l-spelled s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_SPELLED'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "88c88ffd-c2e8-39f1-4352-63c5d8bde84c",
+         "name": "p71l-spelled s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "3fe40fda-725c-a182-14e2-701a113d0e54",
+           "name": "p71l-spelled s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_SPELLED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "9bbb8ba5-741e-e6bc-7841-14ece529d027",
+      "transition": "parity-unknown"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_SPELLED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "change-set-status",
+     "args": {
+      "id": "9bbb8ba5-741e-e6bc-7841-14ece529d027",
+      "transition": "Deactivate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w3-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w3-probe",
+       "type": "PARITY_SUITE_P71L_SPELLED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w4",
+     "op": "change-set-status",
+     "args": {
+      "id": "9bbb8ba5-741e-e6bc-7841-14ece529d027",
+      "transition": "DEACTIVATE"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w4-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w4-probe",
+       "type": "PARITY_SUITE_P71L_SPELLED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w4-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w4-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w4-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-spelled",
+      "PARITY_SUITE_P71L_SPELLED"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "9bbb8ba5-741e-e6bc-7841-14ece529d027"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71l-default-tenant",
+   "about": "Deactivate and activate as PATCH in the default tenant, under an externalId of its own: the same transitions as the cases in tenants of their own, in case the PATCH depends on the tenant.",
+   "resourceType": "PARITY_SUITE_P71L_DEFAULT_TENANT",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71l-default-tenant"
+     },
+     "observe": [
+      "status",
+      "decide:w1-probe"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "8fa1c764-ae9d-341c-69f5-ff9ce6925e0f",
+       "name": "p71l-default-tenant s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71L_DEFAULT_TENANT'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "8eef04f3-3744-57c0-15fe-9230ffb46ff2",
+         "name": "p71l-default-tenant s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "0236287e-cbec-a003-6723-c3de21c5036f",
+           "name": "p71l-default-tenant s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-probe",
+       "type": "PARITY_SUITE_P71L_DEFAULT_TENANT",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "change-set-status",
+     "args": {
+      "id": "8fa1c764-ae9d-341c-69f5-ff9ce6925e0f",
+      "transition": "deactivate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w2-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w2-probe",
+       "type": "PARITY_SUITE_P71L_DEFAULT_TENANT",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w2-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-default-tenant",
+      "PARITY_SUITE_P71L_DEFAULT_TENANT"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "change-set-status",
+     "args": {
+      "id": "8fa1c764-ae9d-341c-69f5-ff9ce6925e0f",
+      "transition": "activate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:w3-probe"
+     ],
+     "onRefusal": "continue",
+     "binding": "patch",
+     "requests": [
+      {
+       "name": "w3-probe",
+       "type": "PARITY_SUITE_P71L_DEFAULT_TENANT",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71l-default-tenant",
+      "PARITY_SUITE_P71L_DEFAULT_TENANT"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set",
+     "args": {
+      "id": "8fa1c764-ae9d-341c-69f5-ff9ce6925e0f"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71x-lifecycle-control-last",
+   "about": "Control: an ACTIVE set uploaded in a tenant of its own, decided and read back.",
+   "resourceType": "PARITY_SUITE_P71X_LIFECYCLE_CONTROL_LAST",
+   "tenant": "parity-p71x-lifecycle-control-last",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71x-lifecycle-control-last"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "2144ee8e-a617-e74c-74f2-ab97b2acc32f",
+       "name": "p71x-lifecycle-control-last s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71X_LIFECYCLE_CONTROL_LAST'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "9c5e2829-33ae-6f60-afa8-2c6ca8a8ab3b",
+         "name": "p71x-lifecycle-control-last s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "2295a0a0-8a5b-631f-5d56-dd9491306f86",
+           "name": "p71x-lifecycle-control-last s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P71X_LIFECYCLE_CONTROL_LAST",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71x-lifecycle-control-last",
+      "PARITY_SUITE_P71X_LIFECYCLE_CONTROL_LAST"
+     ]
+    }
+   ]
+  }
+ ]
+}

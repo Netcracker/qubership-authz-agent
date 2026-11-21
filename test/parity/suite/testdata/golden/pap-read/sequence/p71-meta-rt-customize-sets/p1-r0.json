@@ -1,0 +1,40 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "name": "p71-meta-rt-customize-sets s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p71-meta-rt-customize-sets s reader",
+            "policyId": "59201593-eb4f-cf45-1ae0-4c350e1bbaa1",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p71-meta-rt-customize-sets s rule",
+                "ruleId": "1da6b222-89f6-94d0-5191-2a0f09962ce8",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p71-meta-rt-customize-sets"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p71-meta-rt-customize-sets"
+          }
+        ],
+        "policySetId": "ff2e7131-4f52-845d-7d2e-624de418e5f2",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P71_META_199'",
+        "tenantId": "parity-p71-meta-rt-customize-sets",
+        "type": "DEFAULT"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p71-meta-rt-customize-sets"
+  ]
+}

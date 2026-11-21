@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-uuid-tab-after-spaces-space",
+        "name": "p66x-uuid-tab-after-spaces space",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-uuid-tab-after-spaces space reader",
+            "policyId": "b6521f85-e32f-dd12-e597-3f4db8a87065",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-uuid-tab-after-spaces space rule",
+                "ruleId": "d9e63692-910d-7ef9-c624-c2ffcacbc4dc",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-uuid-tab-after-spaces"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-uuid-tab-after-spaces"
+          }
+        ],
+        "policySetId": "00000000-0000-0000-0000-0000000d0c66",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_UUID_TAB_AFTER_SPACES'",
+        "tenantId": "parity-p66x-uuid-tab-after-spaces",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

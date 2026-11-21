@@ -1,0 +1,127 @@
+{
+ "about": "Round 72: ${subject.id} of a service account in a filter. Default tenant; needs the client parity-ts-service of round 69.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "c72-service-id-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "c72-service-id-filter",
+   "about": "An ALLOW rule with rsqlPredicate owner==${subject.id} and sqlPredicate owner = '${subject.id}', filtered by the service account of parity-ts-service (client_id parity-ts-service, sub an id Keycloak generates) and by the suite's service account. owner==parity-ts-service says that the id of a service is its client; an owner equal to a generated id says it is sub, as for a user.",
+   "resourceType": "PARITY_SUITE_C72_SERVICE_ID_FILTER",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_C72_SERVICE_ID_FILTER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "owner==${subject.id}",
+          "sqlPredicate": "owner = '${subject.id}'"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter-as-service",
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service"
+     },
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "filter-as-m2m",
+     "subject": "m2m",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "c72-service-id-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ],
+ "resourceTypePrefix": "PARITY_SUITE_"
+}

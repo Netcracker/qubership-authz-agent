@@ -1,0 +1,301 @@
+{
+ "about": "Round 72: spaces inside a regular expression of a jsonPath filter. The case runs in a tenant of its own. Controls first and last answer true.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "o72-jsonpath-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O72_JSONPATH_CONTROL_FIRST",
+   "tenant": "parity-o72-jsonpath-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-jsonpath-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "bdbd1eb6-d878-d16b-256e-fb2bd4b14325",
+       "name": "o72-jsonpath-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_JSONPATH_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "e1d31633-bce7-2143-c0b7-53a2ea3a4012",
+         "name": "o72-jsonpath-control-first reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "a5b0c1e2-07d5-89ca-7661-64345cba9307",
+           "name": "o72-jsonpath-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-jp-regex-spaces",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.items[?(@.b =~ /[ 0 ]/)].c CONTAINS 'v' OR resource.a == 'y'` over one element whose b is a space (space), 0 (zero) and x (other), each with c = v, a = n and a = y. The regular expression [ 0 ] is the class of a space and 0: true for space and zero, false for other. Without the spaces, [0] is false for space.",
+   "resourceType": "PARITY_SUITE_O72_JP_REGEX_SPACES",
+   "tenant": "parity-o72-jp-regex-spaces",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-jp-regex-spaces"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:space-a-n",
+      "decide:space-a-y",
+      "decide:zero-a-n",
+      "decide:zero-a-y",
+      "decide:other-a-n",
+      "decide:other-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "5f21da2e-361d-fdc3-a3bf-2141ac1c4e21",
+       "name": "o72-jp-regex-spaces set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_JP_REGEX_SPACES'",
+       "policies": [
+        {
+         "policyId": "6c2ed49a-a041-63b7-b2bb-e69196814166",
+         "name": "o72-jp-regex-spaces reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "7f7d4591-a12f-475a-42c6-c613a7a01f48",
+           "name": "o72-jp-regex-spaces probe",
+           "target": "true",
+           "condition": "resource.items[?(@.b =~ /[ 0 ]/)].c CONTAINS 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "space-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "items": [
+         {
+          "b": " ",
+          "c": "v"
+         }
+        ]
+       }
+      },
+      {
+       "name": "space-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "items": [
+         {
+          "b": " ",
+          "c": "v"
+         }
+        ]
+       }
+      },
+      {
+       "name": "zero-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "items": [
+         {
+          "b": "0",
+          "c": "v"
+         }
+        ]
+       }
+      },
+      {
+       "name": "zero-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "items": [
+         {
+          "b": "0",
+          "c": "v"
+         }
+        ]
+       }
+      },
+      {
+       "name": "other-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "items": [
+         {
+          "b": "x",
+          "c": "v"
+         }
+        ]
+       }
+      },
+      {
+       "name": "other-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "items": [
+         {
+          "b": "x",
+          "c": "v"
+         }
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-jsonpath-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O72_JSONPATH_CONTROL_LAST",
+   "tenant": "parity-o72-jsonpath-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-jsonpath-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "029d558b-b5e6-f895-9def-3b1bda28b535",
+       "name": "o72-jsonpath-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_JSONPATH_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "f1cb7ae8-1123-8ca0-5491-d4b22a70ccc3",
+         "name": "o72-jsonpath-control-last reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "96926b44-400e-b199-e0d3-8fa81914c60e",
+           "name": "o72-jsonpath-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}

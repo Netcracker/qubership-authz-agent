@@ -1,0 +1,70 @@
+{
+ "about": "Round 75: the entitlements service answers parity-reader 203 (ECFG ent_status_redirect).",
+ "resourceTypePrefix": "PARITY_SUITE_P75S_",
+ "standVersion": true,
+ "entitlements": {
+  "statusCode": 203,
+  "body": {
+   "entitlements": [
+    {
+     "resourceType": "PARITY_R75_ENT",
+     "references": [
+      {
+       "name": "Owner",
+       "resources": [
+        {
+         "resourceId": "e1"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "pins": {
+  "/api/v1/pip/r75-status-ent-guard": {
+   "statusCode": 200,
+   "body": {
+    "entitlements": [
+     {
+      "resourceType": "PARITY_R75_ENT",
+      "references": [
+       {
+        "name": "Owner",
+        "resources": [
+         {
+          "resourceId": "e9"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "p75e-203",
+   "about": "a-n: true when e1 is granted, false for e9 or a failure.",
+   "condition": "subject.entitledResources.of('PARITY_R75_ENT').as('Owner') CONTAINS 'e1' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

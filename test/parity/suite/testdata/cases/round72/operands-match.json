@@ -1,0 +1,433 @@
+{
+ "about": "Round 72: the right side of MATCH and NOT MATCH: a subject member, subject.x-y read as a pattern or as a path, and a path with two indexes. Each case runs in a tenant of its own. Controls first and last answer true.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "o72-match-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O72_MATCH_CONTROL_FIRST",
+   "tenant": "parity-o72-match-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-match-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "387ab5ff-c041-ca3d-8622-46330307d680",
+       "name": "o72-match-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_MATCH_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "d56926e1-0c3a-fcaa-de04-1af64fad4aa9",
+         "name": "o72-match-control-first reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "88862788-33fd-3833-6902-79be6246748b",
+           "name": "o72-match-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-match-name",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.v MATCH subject.name OR resource.a == 'y'` over v = Parity Reader, the name of the subject, a = n and a = y. A subject member on the right of MATCH is a syntax error: the upload is refused. A reading of the subject's name is true for a = n.",
+   "resourceType": "PARITY_SUITE_O72_MATCH_NAME",
+   "tenant": "parity-o72-match-name",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-match-name"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "45807db7-6226-58da-f702-b4fcac989ede",
+       "name": "o72-match-name set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_MATCH_NAME'",
+       "policies": [
+        {
+         "policyId": "e104d4c9-87bc-2342-667a-4bf69f017054",
+         "name": "o72-match-name reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "8989245a-9bc5-b993-2100-28a71a3b2ce3",
+           "name": "o72-match-name probe",
+           "target": "true",
+           "condition": "resource.v MATCH subject.name OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "v": "Parity Reader"
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "v": "Parity Reader"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-match-dash",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.v MATCH subject.x-y OR resource.a == 'y'`. The requests named pattern hold v = subjectZx-y and no subject member: the text subject.x-y as a pattern (the dot is any character) matches it. The requests named path hold v = q and subject.x-y = q: a path from the resource, whose value is the pattern, matches it. Each reading is true for one of them only.",
+   "resourceType": "PARITY_SUITE_O72_MATCH_DASH",
+   "tenant": "parity-o72-match-dash",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-match-dash"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:pattern-a-n",
+      "decide:pattern-a-y",
+      "decide:path-a-n",
+      "decide:path-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "51a4f7be-ed1e-8224-85bf-2ecdb0ef6f6c",
+       "name": "o72-match-dash set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_MATCH_DASH'",
+       "policies": [
+        {
+         "policyId": "e8834b66-7dba-83bb-8821-f913e2600595",
+         "name": "o72-match-dash reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "4d545514-16c0-d113-1c67-0f886ead6d70",
+           "name": "o72-match-dash probe",
+           "target": "true",
+           "condition": "resource.v MATCH subject.x-y OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "pattern-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "v": "subjectZx-y"
+       }
+      },
+      {
+       "name": "pattern-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "v": "subjectZx-y"
+       }
+      },
+      {
+       "name": "path-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "v": "q",
+        "subject": {
+         "x-y": "q"
+        }
+       }
+      },
+      {
+       "name": "path-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "v": "q",
+        "subject": {
+         "x-y": "q"
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-not-match-two-indexes",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.v NOT MATCH resource.m[0, 1] OR resource.a == 'y'` over v = q and m = [q, r], a = n and a = y. A path with two indexes is accepted on the right; its answer is the question.",
+   "resourceType": "PARITY_SUITE_O72_NOT_MATCH_TWO_INDEXES",
+   "tenant": "parity-o72-not-match-two-indexes",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-not-match-two-indexes"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "1886e580-b51e-12ef-561d-fb56975011c3",
+       "name": "o72-not-match-two-indexes set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_NOT_MATCH_TWO_INDEXES'",
+       "policies": [
+        {
+         "policyId": "91ecfa46-2903-ea37-15d2-54fe9bab9266",
+         "name": "o72-not-match-two-indexes reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "d2346cb9-57ee-e18c-c012-aa3e43877f3a",
+           "name": "o72-not-match-two-indexes probe",
+           "target": "true",
+           "condition": "resource.v NOT MATCH resource.m[0, 1] OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "v": "q",
+        "m": [
+         "q",
+         "r"
+        ]
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "v": "q",
+        "m": [
+         "q",
+         "r"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-match-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O72_MATCH_CONTROL_LAST",
+   "tenant": "parity-o72-match-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-match-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "6ce12301-6a3f-a1a8-263a-e5f52b387814",
+       "name": "o72-match-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_MATCH_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "a5ee2f08-fc73-4136-551b-ecda6bb16857",
+         "name": "o72-match-control-last reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "925c658c-e4f6-b5f0-4171-33217fc8163e",
+           "name": "o72-match-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}

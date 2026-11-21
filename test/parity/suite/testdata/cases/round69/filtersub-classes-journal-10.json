@@ -1,0 +1,335 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {
+  "/api/v1/pip/r28-rsql-list": {
+   "statusCode": 200,
+   "body": [
+    "x",
+    "y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-empty": {
+   "statusCode": 200,
+   "body": []
+  },
+  "/api/v1/pip/r28-rsql-comma": {
+   "statusCode": 200,
+   "body": [
+    "x,y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-semi": {
+   "statusCode": 200,
+   "body": [
+    "x;y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-dq": {
+   "statusCode": 200,
+   "body": [
+    "x\"y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-sq": {
+   "statusCode": 200,
+   "body": [
+    "x'y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-paren": {
+   "statusCode": 200,
+   "body": [
+    "(x)"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-eqeq": {
+   "statusCode": 200,
+   "body": [
+    "x==y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-ne": {
+   "statusCode": 200,
+   "body": [
+    "x!=y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-space": {
+   "statusCode": 200,
+   "body": [
+    "x y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-bs": {
+   "statusCode": 200,
+   "body": [
+    "x\\y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-unicode": {
+   "statusCode": 200,
+   "body": [
+    "é日本"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-star": {
+   "statusCode": 200,
+   "body": [
+    "x*"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-mixed": {
+   "statusCode": 200,
+   "body": [
+    "x",
+    "y==z,w"
+   ]
+  }
+ },
+ "pips": {
+  "gList": {
+   "name": "subject.parityR28List",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-list",
+   "requestAttributes": {
+    "case": "r28-rsql-list"
+   }
+  },
+  "gEmpty": {
+   "name": "subject.parityR28Empty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-empty",
+   "requestAttributes": {
+    "case": "r28-rsql-empty"
+   }
+  },
+  "gComma": {
+   "name": "subject.parityR28Comma",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-comma",
+   "requestAttributes": {
+    "case": "r28-rsql-comma"
+   }
+  },
+  "gSemi": {
+   "name": "subject.parityR28Semi",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-semi",
+   "requestAttributes": {
+    "case": "r28-rsql-semi"
+   }
+  },
+  "gDq": {
+   "name": "subject.parityR28Dq",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-dq",
+   "requestAttributes": {
+    "case": "r28-rsql-dq"
+   }
+  },
+  "gSq": {
+   "name": "subject.parityR28Sq",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-sq",
+   "requestAttributes": {
+    "case": "r28-rsql-sq"
+   }
+  },
+  "gParen": {
+   "name": "subject.parityR28Paren",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-paren",
+   "requestAttributes": {
+    "case": "r28-rsql-paren"
+   }
+  },
+  "gEqEq": {
+   "name": "subject.parityR28EqEq",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-eqeq",
+   "requestAttributes": {
+    "case": "r28-rsql-eqeq"
+   }
+  },
+  "gNe": {
+   "name": "subject.parityR28Ne",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-ne",
+   "requestAttributes": {
+    "case": "r28-rsql-ne"
+   }
+  },
+  "gSpace": {
+   "name": "subject.parityR28Space",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-space",
+   "requestAttributes": {
+    "case": "r28-rsql-space"
+   }
+  },
+  "gBs": {
+   "name": "subject.parityR28Bs",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-bs",
+   "requestAttributes": {
+    "case": "r28-rsql-bs"
+   }
+  },
+  "gUnicode": {
+   "name": "subject.parityR28Unicode",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-unicode",
+   "requestAttributes": {
+    "case": "r28-rsql-unicode"
+   }
+  },
+  "gStar": {
+   "name": "subject.parityR28Star",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-star",
+   "requestAttributes": {
+    "case": "r28-rsql-star"
+   }
+  },
+  "gMixed": {
+   "name": "subject.parityR28Mixed",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-mixed",
+   "requestAttributes": {
+    "case": "r28-rsql-mixed"
+   }
+  },
+  "header": {
+   "name": "subject.parityR28Header",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r28-header",
+   "cacheable": false
+  },
+  "token": {
+   "name": "subject.parityR28Token",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "mapping-meta": {
+   "name": "subject.permissions.PARITY_R28_META",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "p,q",
+      "p\"q",
+      "p==q"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "fs69-c-r28rsql-do-mapping-eq",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==${subject.permissions}. The filter shows how each dialect negates it; tells apart: rsql negation before substitution.",
+   "pips": [
+    "mapping-meta",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList",
+    "gMixed",
+    "gParen",
+    "gSemi",
+    "gSpace",
+    "gSq",
+    "gStar",
+    "gUnicode"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.permissions}",
+          "sqlPredicate": "a=${subject.permissions}",
+          "predicate": "${resourceType}.a.eq(${subject.permissions})",
+          "mongodbPredicate": "{ \"a\": ${subject.permissions} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "a": "p,q"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {}
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {
+      "a": "p==q"
+     }
+    }
+   ]
+  }
+ ]
+}

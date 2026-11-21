@@ -16,10 +16,9 @@ package model
 
 import "encoding/json"
 
-// CheckAccessRequest is the v1 POST /access/v1/check/resource request body,
-// mirroring com.netcracker.security.authorization.abac.model.AbstractCheckAccessRequest
-// (AbstractCheckAccessRequest.java:11-31). Resource is any because the legacy
-// field is Object and the actual shape depends on the policy under test.
+// CheckAccessRequest is the v1 POST /access/v1/check/resource request body.
+// Resource is any because the legacy service accepts any JSON there and the
+// actual shape depends on the policy under test.
 type CheckAccessRequest struct {
 	Operation string `json:"operation"`
 	Type      string `json:"type"`
@@ -27,9 +26,8 @@ type CheckAccessRequest struct {
 }
 
 // CheckAccessRequestWithID is the v1 POST /access/v1/check/resource/bulk
-// entry type, mirroring AbstractCheckAccessRequestWithId (AbstractCheckAccessRequestWithId.java:14-36).
-// ID is a pointer so omitempty drops it from the wire when unset, matching the
-// legacy @JsonInclude(NON_NULL) semantics per D-V item 8.
+// entry type. ID is a pointer so omitempty drops it from the wire when unset,
+// as the legacy service leaves out null fields, per D-V item 8.
 type CheckAccessRequestWithID struct {
 	ID        *string `json:"id,omitempty"`
 	Operation string  `json:"operation"`
@@ -38,8 +36,7 @@ type CheckAccessRequestWithID struct {
 }
 
 // CheckAccessBulkOperationsRequest is the v1
-// POST /access/v1/check/resource/bulk/operations entry type, mirroring
-// AbstractCheckAccessBulkOperationsRequest (AbstractCheckAccessBulkOperationsRequest.java:20-49).
+// POST /access/v1/check/resource/bulk/operations entry type.
 type CheckAccessBulkOperationsRequest struct {
 	ID         *string  `json:"id,omitempty"`
 	Operations []string `json:"operations"`
@@ -47,18 +44,15 @@ type CheckAccessBulkOperationsRequest struct {
 	Resource   any      `json:"resource,omitempty"`
 }
 
-// CheckResourceRequest is the v2 POST /access/v2/check/resource request body,
-// mirroring com.netcracker.security.authorization.abac.api.client.v2.model.request.CheckResourceRequest
-// (CheckResourceRequest.java:12-29).
+// CheckResourceRequest is the v2 POST /access/v2/check/resource request body.
 type CheckResourceRequest struct {
 	Operation string `json:"operation"`
 	Type      string `json:"type"`
 	Resource  any    `json:"resource,omitempty"`
 }
 
-// CheckResourceResponse is the v2 POST /access/v2/check/resource response body,
-// mirroring com.netcracker.security.authorization.abac.api.client.v2.model.response.CheckResourceResponse
-// (CheckResourceResponse.java:16-41). Obligations is json.RawMessage so it can
+// CheckResourceResponse is the v2 POST /access/v2/check/resource response body.
+// Obligations is json.RawMessage so it can
 // be filtered out via cmpopts.IgnoreFields before cmp.Diff runs (D-E); it never
 // participates in parity assertions in Step 3.
 type CheckResourceResponse struct {

@@ -1,0 +1,131 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-move-two-levels",
+        "name": "p66x-move-two-levels own",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-two-levels own reader",
+            "policyId": "de0a4929-fe7b-1ee5-c730-a0efe1cc6e9e",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-move-two-levels own rule",
+                "ruleId": "27559e3d-2b5f-60f8-189e-c24db3aa4e94",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'DELETE'",
+                "tenantId": "parity-p66x-move-two-levels"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-move-two-levels"
+          }
+        ],
+        "policySetId": "803f1f3c-70d8-1037-0d21-06e9aed79702",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-move-two-levels",
+            "name": "p66x-move-two-levels own-c",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-move-two-levels own-c reader",
+                "policyId": "0751b227-af95-b8c6-2738-c3f75d40e63d",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-move-two-levels own-c rule",
+                    "ruleId": "89745972-9316-ad3f-02f4-b1787f182000",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'CREATE'",
+                    "tenantId": "parity-p66x-move-two-levels"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-move-two-levels"
+              }
+            ],
+            "policySetId": "1d8d5312-e147-5d8c-eb70-2f07110eebf2",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_TWO_LEVELS'",
+            "tenantId": "parity-p66x-move-two-levels",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_TWO_LEVELS'",
+        "tenantId": "parity-p66x-move-two-levels",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "name": "p66x-move-two-levels s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-two-levels s reader",
+            "policyId": "227c09dc-2be8-a8ac-a320-6e270deb0f7b",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-move-two-levels s rule",
+                "ruleId": "17dd5b44-f063-27f5-a593-ae5358e85609",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'LIST'",
+                "tenantId": "parity-p66x-move-two-levels-holder"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-move-two-levels"
+          }
+        ],
+        "policySetId": "803f1f3c-70d8-1037-0d21-06e9aed79702",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-two-levels c",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-move-two-levels c reader",
+                "policyId": "e0827dce-ea2b-2a41-153d-a6e039bef69f",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-move-two-levels c rule",
+                    "ruleId": "f2894fbf-9cb9-e690-bd36-b1476d44fa3f",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'LIST'",
+                    "tenantId": "parity-p66x-move-two-levels"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-move-two-levels"
+              }
+            ],
+            "policySetId": "1d8d5312-e147-5d8c-eb70-2f07110eebf2",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_TWO_LEVELS'",
+            "tenantId": "parity-p66x-move-two-levels",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_TWO_LEVELS'",
+        "tenantId": "parity-p66x-move-two-levels",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

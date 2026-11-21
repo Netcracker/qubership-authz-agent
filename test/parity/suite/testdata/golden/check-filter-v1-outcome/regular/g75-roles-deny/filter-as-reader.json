@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_G75_ROLES_DENY.role.in(\"ROLE_PARITY_READER\")).not()",
+    "mongodbFilterCondition": "{ { \"role\": { \"$nin\": [ \"ROLE_PARITY_READER\" ] } } }",
+    "rsqlFilterCondition": "role=out=(\"ROLE_PARITY_READER\")",
+    "sqlFilterCondition": "NOT (role IN ('ROLE_PARITY_READER'))",
+    "customFilterCondition": null
+  }
+}

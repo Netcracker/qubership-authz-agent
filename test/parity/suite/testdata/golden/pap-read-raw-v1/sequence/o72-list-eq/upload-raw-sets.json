@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-o72-list-eq",
+        "name": "o72-list-eq set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "o72-list-eq reader",
+            "policyId": "66bd3a8f-c17c-15b9-c346-5fb38ab38cf8",
+            "rules": [
+              {
+                "condition": "resource.l == resource.m OR resource.a == 'y'",
+                "effect": "ALLOW",
+                "name": "o72-list-eq probe",
+                "ruleId": "0eaeb2c3-6610-8c79-d234-d8e852856faf",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-o72-list-eq"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-o72-list-eq"
+          }
+        ],
+        "policySetId": "f181e1e1-ef31-edba-a278-64d9cef2eb7b",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_O72_LIST_EQ'",
+        "tenantId": "parity-o72-list-eq",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

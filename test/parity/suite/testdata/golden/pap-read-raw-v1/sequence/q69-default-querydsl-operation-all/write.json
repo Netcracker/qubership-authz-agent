@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-q69-default-querydsl-operation-all",
+        "name": "q69-default-querydsl-operation-all set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "q69-default-querydsl-operation-all policy",
+            "policyId": "4a0e0f4b-c467-5abf-d0df-affd7a833fe6",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "q69-default-querydsl-operation-all rule",
+                "ruleId": "3686c47f-ea3b-2844-7a12-7bfba62ed8df",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-q69-default-querydsl-operation-all"
+              }
+            ],
+            "target": "operation == 'ALL'",
+            "tenantId": "parity-q69-default-querydsl-operation-all"
+          }
+        ],
+        "policySetId": "dc77ccf2-50db-1259-c364-17c6905af84f",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_Q69_DEFAULT_QUERYDSL_OPERATION_ALL'",
+        "tenantId": "parity-q69-default-querydsl-operation-all",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

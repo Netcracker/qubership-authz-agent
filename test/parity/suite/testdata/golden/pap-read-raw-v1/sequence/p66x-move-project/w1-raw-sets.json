@@ -1,0 +1,162 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-move-project",
+        "name": "p66x-move-project own",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-project own reader",
+            "policyId": "81e021bd-cb0a-653a-2a9e-b31467d0c707",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-move-project own rule",
+                "ruleId": "f574ad41-2768-e964-4445-137f6e070c34",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'DELETE'",
+                "tenantId": "parity-p66x-move-project"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-move-project"
+          }
+        ],
+        "policySetId": "f8c772a8-090a-e7eb-ffe5-61e8f1f59e81",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-move-project",
+            "name": "p66x-move-project own-c",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-move-project own-c reader",
+                "policyId": "a8ffc87c-3a70-d7db-b9c5-825265704624",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-move-project own-c rule",
+                    "ruleId": "70dc1eeb-6724-e948-154f-493ca6501cae",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'CREATE'",
+                    "tenantId": "parity-p66x-move-project"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-move-project"
+              }
+            ],
+            "policySetId": "e494e70b-1276-5974-6064-3578c730d78e",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_PROJECT'",
+            "tenantId": "parity-p66x-move-project",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_PROJECT'",
+        "tenantId": "parity-p66x-move-project",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-move-project-o",
+        "name": "p66x-move-project o",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-project o reader",
+            "policyId": "ec381946-e8b3-9ece-6129-6d4a29061ae6",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-move-project o rule",
+                "ruleId": "8f5a596b-e303-f814-f6f1-48780459cdb3",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'DELETE'",
+                "tenantId": "parity-p66x-move-project"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-move-project"
+          }
+        ],
+        "policySetId": "39fdcf8a-2a10-dc41-650b-5f553dbd77cd",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_PROJECT'",
+        "tenantId": "parity-p66x-move-project",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "name": "p66x-move-project s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-project s reader",
+            "policyId": "4035415a-b74c-3edb-ce03-4199ca14de9d",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-move-project s rule",
+                "ruleId": "f9f2fe7c-fb07-806a-dc7c-1807a591c186",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-move-project-holder"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-move-project"
+          }
+        ],
+        "policySetId": "f8c772a8-090a-e7eb-ffe5-61e8f1f59e81",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-project c",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-move-project c reader",
+                "policyId": "925ff523-304e-9aea-b5c1-108fba0d74ad",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-move-project c rule",
+                    "ruleId": "7a3d7f33-c6a1-3cf3-1055-f390cf9a98c2",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'LIST'",
+                    "tenantId": "parity-p66x-move-project"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-move-project"
+              }
+            ],
+            "policySetId": "e494e70b-1276-5974-6064-3578c730d78e",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_PROJECT'",
+            "tenantId": "parity-p66x-move-project",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_PROJECT'",
+        "tenantId": "parity-p66x-move-project",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

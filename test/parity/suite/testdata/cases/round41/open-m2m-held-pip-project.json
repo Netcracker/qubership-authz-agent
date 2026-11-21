@@ -1,0 +1,239 @@
+{
+ "about": "Which level of PIP customization makes a condition one the tenant holds: a PROJECT customization puts a whole ${subject.isM2M} into a GENERAL that an uploaded condition names, a CUSTOMER one takes it out again, and the CUSTOMER one is then deleted.",
+ "resourceTypePrefix": "PARITY_SUITE_R41HPP_",
+ "pins": {
+  "/api/v1/pip/r41open-m2m-held-pip-project": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "held": {
+   "name": "subject.parityR41HeldPipProject",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r41open-m2m-held-pip-project",
+   "requestAttributes": {
+    "case": "r41open-m2m-held-pip-project"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r41openm2mheldpipproject-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r41open-m2m-held-pip-project",
+   "pips": [
+    "held"
+   ],
+   "about": "An ACTIVE top-level set whose only rule allows on resource.a == 'y' OR subject.parityR41HeldPipProject == 'v'; the case declares that GENERAL without ${subject.isM2M}. A PROJECT PIP customization adds a whole ${subject.isM2M} to its requestAttributes: project-read-other answers 400 if the tenant reads the PROJECT declaration, true if it reads the uploaded one or ignores the PROJECT level. A CUSTOMER PIP customization then takes it out: customer-read-other answers true if CUSTOMER applies after PROJECT, 400 if PROJECT applies last. The third step deletes the CUSTOMER customization, and uncustomer-read-other answers 400 again if the PROJECT one holds the tenant. The runner deletes both customizations before the last control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y' OR subject.parityR41HeldPipProject == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before-read-a-y",
+     "resource": {
+      "id": "r41",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r41open-m2m-held-pip-project"
+    },
+    {
+     "name": "before-read-other",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     },
+     "type": "PARITY_SUITE_R41HPP_R41OPENM2MHELDPIPPROJECT_CONTROL_FIRST"
+    }
+   ],
+   "customize": [
+    {
+     "name": "project",
+     "level": "PROJECT",
+     "pips": [
+      {
+       "name": "subject.parityR41HeldPipProject",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r41open-m2m-held-pip-project",
+       "requestAttributes": {
+        "case": "r41open-m2m-held-pip-project",
+        "x": "${subject.isM2M}"
+       }
+      }
+     ],
+     "requests": [
+      {
+       "name": "project-read-a-y",
+       "resource": {
+        "id": "r41",
+        "a": "y"
+       },
+       "pipCalls": "/api/v1/pip/r41open-m2m-held-pip-project"
+      },
+      {
+       "name": "project-read-other",
+       "resource": {
+        "id": "r41",
+        "c": "n"
+       },
+       "type": "PARITY_SUITE_R41HPP_R41OPENM2MHELDPIPPROJECT_CONTROL_FIRST"
+      }
+     ]
+    },
+    {
+     "name": "customer",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR41HeldPipProject",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r41open-m2m-held-pip-project",
+       "requestAttributes": {
+        "case": "r41open-m2m-held-pip-project"
+       }
+      }
+     ],
+     "requests": [
+      {
+       "name": "customer-read-a-y",
+       "resource": {
+        "id": "r41",
+        "a": "y"
+       },
+       "pipCalls": "/api/v1/pip/r41open-m2m-held-pip-project"
+      },
+      {
+       "name": "customer-read-other",
+       "resource": {
+        "id": "r41",
+        "c": "n"
+       },
+       "type": "PARITY_SUITE_R41HPP_R41OPENM2MHELDPIPPROJECT_CONTROL_FIRST"
+      }
+     ]
+    },
+    {
+     "name": "delete-customer",
+     "level": "CUSTOMER",
+     "delete": {
+      "pip": "subject.parityR41HeldPipProject"
+     },
+     "requests": [
+      {
+       "name": "uncustomer-read-a-y",
+       "resource": {
+        "id": "r41",
+        "a": "y"
+       },
+       "pipCalls": "/api/v1/pip/r41open-m2m-held-pip-project"
+      },
+      {
+       "name": "uncustomer-read-other",
+       "resource": {
+        "id": "r41",
+        "c": "n"
+       },
+       "type": "PARITY_SUITE_R41HPP_R41OPENM2MHELDPIPPROJECT_CONTROL_FIRST"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r41openm2mheldpipproject-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

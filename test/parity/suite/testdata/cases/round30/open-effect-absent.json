@@ -1,0 +1,321 @@
+{
+ "about": "A rule without an effect. Round 29 found that a customization may replace a rule by one without effect, and that the rule then no longer allows under DENY_UNLESS_PERMIT, where denying and not applying answer alike. Here the policy and the set are PERMIT_UNLESS_DENY: after the replace the check is false if the rule denies and true if it does not apply, and the filter tells a deny term, no term, an allow term and an empty condition apart, with and without a predicate. The last two cases upload a rule without the effect member (omitFields): the load golden says whether the PAP takes it.",
+ "resourceTypePrefix": "PARITY_SUITE_R30O_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r30open-effect-absent-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-replace-without-effect",
+   "about": "The policy's one rule allows (condition true). The import replaces it by the same rule without effect. After: false if it denies, true if it does not apply; the filter DENY or DENY for a deny term, ALLOW for none.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r30"
+     }
+    },
+    {
+     "name": "filter-before",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "probe",
+           "name": "probe without effect",
+           "target": "true",
+           "condition": "true"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r30"
+       }
+      },
+      {
+       "name": "filter-after",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r30open-replace-without-effect-with-predicate",
+   "about": "The policy's one rule allows (condition true, rsqlPredicate p==1). The import replaces it by the same rule without effect. After: false if it denies, true if it does not apply; the filter DENY or p!=1 for a deny term, ALLOW for none.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r30"
+     }
+    },
+    {
+     "name": "filter-before",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "probe",
+           "name": "probe without effect",
+           "target": "true",
+           "condition": "true",
+           "predicates": {
+            "rsqlPredicate": "p==1"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r30"
+       }
+      },
+      {
+       "name": "filter-after",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r30open-upload-without-effect",
+   "about": "The uploaded rule has no effect member. Upload 400 if the PAP requires it; else the check and the filter answer as for the replaced rule.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "omitFields": [
+          "effect"
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r30open-upload-without-effect-with-predicate",
+   "about": "The uploaded rule has no effect member and rsqlPredicate p==1. Upload 400 if the PAP requires it; else the check and the filter answer as for the replaced rule.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "predicates": {
+          "rsqlPredicate": "p==1"
+         },
+         "omitFields": [
+          "effect"
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r30open-effect-absent-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "name": "p66x-move-back own",
+        "policies": [],
+        "policySetId": "2a303145-9d62-3e8e-8155-2284507aa61d",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_BACK'",
+        "tenantId": "parity-p66x-move-back",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

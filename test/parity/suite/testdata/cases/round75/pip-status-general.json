@@ -1,0 +1,4696 @@
+{
+ "about": "Round 75: how access-control reads a GENERAL answer by its status code (ECFG pip_status_*).",
+ "resourceTypePrefix": "PARITY_SUITE_P75S_",
+ "standVersion": true,
+ "pins": {
+  "/api/v1/pip/r75-status-201-x": {
+   "statusCode": 201,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-202-x": {
+   "statusCode": 202,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-203-x": {
+   "statusCode": 203,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-206-x": {
+   "statusCode": 206,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-299-x": {
+   "statusCode": 299,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-300-empty": {
+   "statusCode": 300,
+   "noBody": true
+  },
+  "/api/v1/pip/r75-status-300-loc": {
+   "statusCode": 300,
+   "body": [
+    "x"
+   ],
+   "headers": {
+    "Location": "http://pip-mock:8090/api/v1/pip/r75-status-guard"
+   }
+  },
+  "/api/v1/pip/r75-status-300-x": {
+   "statusCode": 300,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-301-empty": {
+   "statusCode": 301,
+   "noBody": true
+  },
+  "/api/v1/pip/r75-status-301-loc": {
+   "statusCode": 301,
+   "body": [
+    "x"
+   ],
+   "headers": {
+    "Location": "http://pip-mock:8090/api/v1/pip/r75-status-guard"
+   }
+  },
+  "/api/v1/pip/r75-status-301-x": {
+   "statusCode": 301,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-302-empty": {
+   "statusCode": 302,
+   "noBody": true
+  },
+  "/api/v1/pip/r75-status-302-loc": {
+   "statusCode": 302,
+   "body": [
+    "x"
+   ],
+   "headers": {
+    "Location": "http://pip-mock:8090/api/v1/pip/r75-status-guard"
+   }
+  },
+  "/api/v1/pip/r75-status-302-loc-get": {
+   "statusCode": 302,
+   "body": [
+    "x"
+   ],
+   "headers": {
+    "Location": "http://pip-mock:8090/api/v1/pip/r75-status-guard"
+   }
+  },
+  "/api/v1/pip/r75-status-302-x": {
+   "statusCode": 302,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-303-empty": {
+   "statusCode": 303,
+   "noBody": true
+  },
+  "/api/v1/pip/r75-status-303-loc": {
+   "statusCode": 303,
+   "body": [
+    "x"
+   ],
+   "headers": {
+    "Location": "http://pip-mock:8090/api/v1/pip/r75-status-guard"
+   }
+  },
+  "/api/v1/pip/r75-status-303-loc-get": {
+   "statusCode": 303,
+   "body": [
+    "x"
+   ],
+   "headers": {
+    "Location": "http://pip-mock:8090/api/v1/pip/r75-status-guard"
+   }
+  },
+  "/api/v1/pip/r75-status-303-x": {
+   "statusCode": 303,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-304-empty": {
+   "statusCode": 304,
+   "noBody": true
+  },
+  "/api/v1/pip/r75-status-304-loc": {
+   "statusCode": 304,
+   "noBody": true,
+   "headers": {
+    "Location": "http://pip-mock:8090/api/v1/pip/r75-status-guard"
+   }
+  },
+  "/api/v1/pip/r75-status-307-empty": {
+   "statusCode": 307,
+   "noBody": true
+  },
+  "/api/v1/pip/r75-status-307-loc": {
+   "statusCode": 307,
+   "body": [
+    "x"
+   ],
+   "headers": {
+    "Location": "http://pip-mock:8090/api/v1/pip/r75-status-guard"
+   }
+  },
+  "/api/v1/pip/r75-status-307-loc-get": {
+   "statusCode": 307,
+   "body": [
+    "x"
+   ],
+   "headers": {
+    "Location": "http://pip-mock:8090/api/v1/pip/r75-status-guard"
+   }
+  },
+  "/api/v1/pip/r75-status-307-x": {
+   "statusCode": 307,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-308-empty": {
+   "statusCode": 308,
+   "noBody": true
+  },
+  "/api/v1/pip/r75-status-308-loc": {
+   "statusCode": 308,
+   "body": [
+    "x"
+   ],
+   "headers": {
+    "Location": "http://pip-mock:8090/api/v1/pip/r75-status-guard"
+   }
+  },
+  "/api/v1/pip/r75-status-308-x": {
+   "statusCode": 308,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-399-empty": {
+   "statusCode": 399,
+   "noBody": true
+  },
+  "/api/v1/pip/r75-status-399-loc": {
+   "statusCode": 399,
+   "body": [
+    "x"
+   ],
+   "headers": {
+    "Location": "http://pip-mock:8090/api/v1/pip/r75-status-guard"
+   }
+  },
+  "/api/v1/pip/r75-status-399-x": {
+   "statusCode": 399,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-400-x": {
+   "statusCode": 400,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-401-x": {
+   "statusCode": 401,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-409-x": {
+   "statusCode": 409,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-429-x": {
+   "statusCode": 429,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-499-x": {
+   "statusCode": 499,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-502-x": {
+   "statusCode": 502,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-504-x": {
+   "statusCode": 504,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-599-x": {
+   "statusCode": 599,
+   "body": [
+    "x"
+   ]
+  },
+  "/api/v1/pip/r75-status-guard": {
+   "statusCode": 200,
+   "body": [
+    "g"
+   ]
+  }
+ },
+ "pips": {
+  "s201-x": {
+   "name": "subject.parityR75S201x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-201-x",
+   "requestAttributes": {
+    "case": "r75-status-201-x"
+   }
+  },
+  "s202-x": {
+   "name": "subject.parityR75S202x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-202-x",
+   "requestAttributes": {
+    "case": "r75-status-202-x"
+   }
+  },
+  "s203-x": {
+   "name": "subject.parityR75S203x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-203-x",
+   "requestAttributes": {
+    "case": "r75-status-203-x"
+   }
+  },
+  "s206-x": {
+   "name": "subject.parityR75S206x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-206-x",
+   "requestAttributes": {
+    "case": "r75-status-206-x"
+   }
+  },
+  "s299-x": {
+   "name": "subject.parityR75S299x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-299-x",
+   "requestAttributes": {
+    "case": "r75-status-299-x"
+   }
+  },
+  "s300-empty": {
+   "name": "subject.parityR75S300empty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-300-empty",
+   "requestAttributes": {
+    "case": "r75-status-300-empty"
+   }
+  },
+  "s300-loc": {
+   "name": "subject.parityR75S300loc",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-300-loc",
+   "requestAttributes": {
+    "case": "r75-status-300-loc"
+   }
+  },
+  "s300-x": {
+   "name": "subject.parityR75S300x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-300-x",
+   "requestAttributes": {
+    "case": "r75-status-300-x"
+   }
+  },
+  "s301-empty": {
+   "name": "subject.parityR75S301empty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-301-empty",
+   "requestAttributes": {
+    "case": "r75-status-301-empty"
+   }
+  },
+  "s301-loc": {
+   "name": "subject.parityR75S301loc",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-301-loc",
+   "requestAttributes": {
+    "case": "r75-status-301-loc"
+   }
+  },
+  "s301-x": {
+   "name": "subject.parityR75S301x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-301-x",
+   "requestAttributes": {
+    "case": "r75-status-301-x"
+   }
+  },
+  "s302-empty": {
+   "name": "subject.parityR75S302empty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-302-empty",
+   "requestAttributes": {
+    "case": "r75-status-302-empty"
+   }
+  },
+  "s302-loc": {
+   "name": "subject.parityR75S302loc",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-302-loc",
+   "requestAttributes": {
+    "case": "r75-status-302-loc"
+   }
+  },
+  "s302-loc-get": {
+   "name": "subject.parityR75S302locget",
+   "pipType": "GENERAL",
+   "httpMethod": "GET",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-302-loc-get",
+   "requestAttributes": {
+    "case": "r75-status-302-loc-get"
+   }
+  },
+  "s302-x": {
+   "name": "subject.parityR75S302x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-302-x",
+   "requestAttributes": {
+    "case": "r75-status-302-x"
+   }
+  },
+  "s303-empty": {
+   "name": "subject.parityR75S303empty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-303-empty",
+   "requestAttributes": {
+    "case": "r75-status-303-empty"
+   }
+  },
+  "s303-loc": {
+   "name": "subject.parityR75S303loc",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-303-loc",
+   "requestAttributes": {
+    "case": "r75-status-303-loc"
+   }
+  },
+  "s303-loc-get": {
+   "name": "subject.parityR75S303locget",
+   "pipType": "GENERAL",
+   "httpMethod": "GET",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-303-loc-get",
+   "requestAttributes": {
+    "case": "r75-status-303-loc-get"
+   }
+  },
+  "s303-x": {
+   "name": "subject.parityR75S303x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-303-x",
+   "requestAttributes": {
+    "case": "r75-status-303-x"
+   }
+  },
+  "s304-empty": {
+   "name": "subject.parityR75S304empty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-304-empty",
+   "requestAttributes": {
+    "case": "r75-status-304-empty"
+   }
+  },
+  "s304-loc": {
+   "name": "subject.parityR75S304loc",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-304-loc",
+   "requestAttributes": {
+    "case": "r75-status-304-loc"
+   }
+  },
+  "s307-empty": {
+   "name": "subject.parityR75S307empty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-307-empty",
+   "requestAttributes": {
+    "case": "r75-status-307-empty"
+   }
+  },
+  "s307-loc": {
+   "name": "subject.parityR75S307loc",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-307-loc",
+   "requestAttributes": {
+    "case": "r75-status-307-loc"
+   }
+  },
+  "s307-loc-get": {
+   "name": "subject.parityR75S307locget",
+   "pipType": "GENERAL",
+   "httpMethod": "GET",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-307-loc-get",
+   "requestAttributes": {
+    "case": "r75-status-307-loc-get"
+   }
+  },
+  "s307-x": {
+   "name": "subject.parityR75S307x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-307-x",
+   "requestAttributes": {
+    "case": "r75-status-307-x"
+   }
+  },
+  "s308-empty": {
+   "name": "subject.parityR75S308empty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-308-empty",
+   "requestAttributes": {
+    "case": "r75-status-308-empty"
+   }
+  },
+  "s308-loc": {
+   "name": "subject.parityR75S308loc",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-308-loc",
+   "requestAttributes": {
+    "case": "r75-status-308-loc"
+   }
+  },
+  "s308-x": {
+   "name": "subject.parityR75S308x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-308-x",
+   "requestAttributes": {
+    "case": "r75-status-308-x"
+   }
+  },
+  "s399-empty": {
+   "name": "subject.parityR75S399empty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-399-empty",
+   "requestAttributes": {
+    "case": "r75-status-399-empty"
+   }
+  },
+  "s399-loc": {
+   "name": "subject.parityR75S399loc",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-399-loc",
+   "requestAttributes": {
+    "case": "r75-status-399-loc"
+   }
+  },
+  "s399-x": {
+   "name": "subject.parityR75S399x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-399-x",
+   "requestAttributes": {
+    "case": "r75-status-399-x"
+   }
+  },
+  "s400-x": {
+   "name": "subject.parityR75S400x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-400-x",
+   "requestAttributes": {
+    "case": "r75-status-400-x"
+   }
+  },
+  "s401-x": {
+   "name": "subject.parityR75S401x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-401-x",
+   "requestAttributes": {
+    "case": "r75-status-401-x"
+   }
+  },
+  "s409-x": {
+   "name": "subject.parityR75S409x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-409-x",
+   "requestAttributes": {
+    "case": "r75-status-409-x"
+   }
+  },
+  "s429-x": {
+   "name": "subject.parityR75S429x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-429-x",
+   "requestAttributes": {
+    "case": "r75-status-429-x"
+   }
+  },
+  "s499-x": {
+   "name": "subject.parityR75S499x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-499-x",
+   "requestAttributes": {
+    "case": "r75-status-499-x"
+   }
+  },
+  "s502-x": {
+   "name": "subject.parityR75S502x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-502-x",
+   "requestAttributes": {
+    "case": "r75-status-502-x"
+   }
+  },
+  "s504-x": {
+   "name": "subject.parityR75S504x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-504-x",
+   "requestAttributes": {
+    "case": "r75-status-504-x"
+   }
+  },
+  "s599-x": {
+   "name": "subject.parityR75S599x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r75-status-599-x",
+   "requestAttributes": {
+    "case": "r75-status-599-x"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "p75s-control-first",
+   "about": "Control: an ALLOW rule over a resource attribute.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-201-x",
+   "about": "GENERAL subject.parityR75S201x (POST) answers 201 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S201x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-202-x",
+   "about": "GENERAL subject.parityR75S202x (POST) answers 202 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S202x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-203-x",
+   "about": "GENERAL subject.parityR75S203x (POST) answers 203 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S203x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-206-x",
+   "about": "GENERAL subject.parityR75S206x (POST) answers 206 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S206x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-299-x",
+   "about": "GENERAL subject.parityR75S299x (POST) answers 299 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S299x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-300-empty",
+   "about": "GENERAL subject.parityR75S300empty (POST) answers 300 with no body. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S300empty == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-300-empty-null",
+   "about": "As p75s-300-empty, read by IS NULL: true for no value, false for a failure.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S300empty IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "p75"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-300-x",
+   "about": "GENERAL subject.parityR75S300x (POST) answers 300 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S300x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-300-loc",
+   "about": "GENERAL subject.parityR75S300loc (POST) answers 300 with [\"x\"], Location on the guard route, which answers [\"g\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule. a-n records the guard's calls and their method.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S300loc == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r75-status-guard",
+     "pipHeaders": [
+      "request:method"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-301-empty",
+   "about": "GENERAL subject.parityR75S301empty (POST) answers 301 with no body. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S301empty == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-301-empty-null",
+   "about": "As p75s-301-empty, read by IS NULL: true for no value, false for a failure.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S301empty IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "p75"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-301-x",
+   "about": "GENERAL subject.parityR75S301x (POST) answers 301 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S301x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-301-loc",
+   "about": "GENERAL subject.parityR75S301loc (POST) answers 301 with [\"x\"], Location on the guard route, which answers [\"g\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule. a-n records the guard's calls and their method.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S301loc == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r75-status-guard",
+     "pipHeaders": [
+      "request:method"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-302-empty",
+   "about": "GENERAL subject.parityR75S302empty (POST) answers 302 with no body. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S302empty == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-302-empty-null",
+   "about": "As p75s-302-empty, read by IS NULL: true for no value, false for a failure.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S302empty IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "p75"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-302-x",
+   "about": "GENERAL subject.parityR75S302x (POST) answers 302 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S302x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-302-loc",
+   "about": "GENERAL subject.parityR75S302loc (POST) answers 302 with [\"x\"], Location on the guard route, which answers [\"g\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule. a-n records the guard's calls and their method.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S302loc == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r75-status-guard",
+     "pipHeaders": [
+      "request:method"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-303-empty",
+   "about": "GENERAL subject.parityR75S303empty (POST) answers 303 with no body. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S303empty == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-303-empty-null",
+   "about": "As p75s-303-empty, read by IS NULL: true for no value, false for a failure.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S303empty IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "p75"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-303-x",
+   "about": "GENERAL subject.parityR75S303x (POST) answers 303 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S303x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-303-loc",
+   "about": "GENERAL subject.parityR75S303loc (POST) answers 303 with [\"x\"], Location on the guard route, which answers [\"g\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule. a-n records the guard's calls and their method.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S303loc == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r75-status-guard",
+     "pipHeaders": [
+      "request:method"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-307-empty",
+   "about": "GENERAL subject.parityR75S307empty (POST) answers 307 with no body. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S307empty == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-307-empty-null",
+   "about": "As p75s-307-empty, read by IS NULL: true for no value, false for a failure.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S307empty IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "p75"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-307-x",
+   "about": "GENERAL subject.parityR75S307x (POST) answers 307 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S307x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-307-loc",
+   "about": "GENERAL subject.parityR75S307loc (POST) answers 307 with [\"x\"], Location on the guard route, which answers [\"g\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule. a-n records the guard's calls and their method.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S307loc == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r75-status-guard",
+     "pipHeaders": [
+      "request:method"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-308-empty",
+   "about": "GENERAL subject.parityR75S308empty (POST) answers 308 with no body. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S308empty == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-308-empty-null",
+   "about": "As p75s-308-empty, read by IS NULL: true for no value, false for a failure.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S308empty IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "p75"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-308-x",
+   "about": "GENERAL subject.parityR75S308x (POST) answers 308 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S308x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-308-loc",
+   "about": "GENERAL subject.parityR75S308loc (POST) answers 308 with [\"x\"], Location on the guard route, which answers [\"g\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule. a-n records the guard's calls and their method.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S308loc == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r75-status-guard",
+     "pipHeaders": [
+      "request:method"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-399-empty",
+   "about": "GENERAL subject.parityR75S399empty (POST) answers 399 with no body. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S399empty == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-399-empty-null",
+   "about": "As p75s-399-empty, read by IS NULL: true for no value, false for a failure.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S399empty IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "p75"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-399-x",
+   "about": "GENERAL subject.parityR75S399x (POST) answers 399 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S399x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-399-loc",
+   "about": "GENERAL subject.parityR75S399loc (POST) answers 399 with [\"x\"], Location on the guard route, which answers [\"g\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule. a-n records the guard's calls and their method.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S399loc == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r75-status-guard",
+     "pipHeaders": [
+      "request:method"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-304-empty",
+   "about": "GENERAL subject.parityR75S304empty (POST) answers 304 with no body. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S304empty == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-304-empty-null",
+   "about": "As p75s-304-empty, read by IS NULL: true for no value, false for a failure.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S304empty IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "p75"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-304-loc",
+   "about": "GENERAL subject.parityR75S304loc (POST) answers 304 with no body, Location on the guard route, which answers [\"g\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule. a-n records the guard's calls and their method.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S304loc == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r75-status-guard",
+     "pipHeaders": [
+      "request:method"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-304-loc-null",
+   "about": "As p75s-304-loc, read by IS NULL: true for no value, false for a failure.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S304loc IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "p75"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-302-loc-get",
+   "about": "GENERAL subject.parityR75S302locget (GET) answers 302 with [\"x\"], Location on the guard route, which answers [\"g\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule. a-n records the guard's calls and their method.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S302locget == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r75-status-guard",
+     "pipHeaders": [
+      "request:method"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-303-loc-get",
+   "about": "GENERAL subject.parityR75S303locget (GET) answers 303 with [\"x\"], Location on the guard route, which answers [\"g\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule. a-n records the guard's calls and their method.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S303locget == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r75-status-guard",
+     "pipHeaders": [
+      "request:method"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-307-loc-get",
+   "about": "GENERAL subject.parityR75S307locget (GET) answers 307 with [\"x\"], Location on the guard route, which answers [\"g\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule. a-n records the guard's calls and their method.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S307locget == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r75-status-guard",
+     "pipHeaders": [
+      "request:method"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-400-x",
+   "about": "GENERAL subject.parityR75S400x (POST) answers 400 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S400x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-401-x",
+   "about": "GENERAL subject.parityR75S401x (POST) answers 401 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S401x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-409-x",
+   "about": "GENERAL subject.parityR75S409x (POST) answers 409 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S409x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-429-x",
+   "about": "GENERAL subject.parityR75S429x (POST) answers 429 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S429x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-499-x",
+   "about": "GENERAL subject.parityR75S499x (POST) answers 499 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S499x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-502-x",
+   "about": "GENERAL subject.parityR75S502x (POST) answers 502 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S502x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-504-x",
+   "about": "GENERAL subject.parityR75S504x (POST) answers 504 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S504x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-599-x",
+   "about": "GENERAL subject.parityR75S599x (POST) answers 599 with [\"x\"]. a-n: true when the value is x, false for g or a failure; a-y: true unless the failure ends the rule.",
+   "pips": [
+    "s201-x",
+    "s202-x",
+    "s203-x",
+    "s206-x",
+    "s299-x",
+    "s300-empty",
+    "s300-loc",
+    "s300-x",
+    "s301-empty",
+    "s301-loc",
+    "s301-x",
+    "s302-empty",
+    "s302-loc",
+    "s302-loc-get",
+    "s302-x",
+    "s303-empty",
+    "s303-loc",
+    "s303-loc-get",
+    "s303-x",
+    "s304-empty",
+    "s304-loc",
+    "s307-empty",
+    "s307-loc",
+    "s307-loc-get",
+    "s307-x",
+    "s308-empty",
+    "s308-loc",
+    "s308-x",
+    "s399-empty",
+    "s399-loc",
+    "s399-x",
+    "s400-x",
+    "s401-x",
+    "s409-x",
+    "s429-x",
+    "s499-x",
+    "s502-x",
+    "s504-x",
+    "s599-x"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR75S599x == 'x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p75s-control-last",
+   "about": "Control: an ALLOW rule over a resource attribute.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

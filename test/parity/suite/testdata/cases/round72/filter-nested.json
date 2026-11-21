@@ -1,0 +1,291 @@
+{
+ "about": "Round 72: whether bulk reads the nested sets of a set of type SIMPLIFIED, with and without a CUSTOMER customization of the set. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R72_FILTER_NESTED_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "f72-nested-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "f72-nested-bulk",
+   "about": "A set of type SIMPLIFIED whose own policy permits only resource.c == 'zz' and whose nested ACTIVE set permits READ, with no customization: a single check of c = n, then bulk of c = n and c = zz. If bulk reads the nested set, both items are allowed; if not, only c = zz.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "own",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "own-allow",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "nested",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "nested-allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "fields": {
+      "type": "SIMPLIFIED"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "i1",
+        "c": "n"
+       }
+      },
+      {
+       "id": "i2",
+       "operation": "READ",
+       "resource": {
+        "id": "i2",
+        "c": "zz"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "f72-nested-custom",
+   "about": "The same set, asked by a single check and by bulk before and after a CUSTOMER customization that changes the condition of the set's own rule (it still permits only c = zz). A single check that turns false after it says the customization drops the nested set; bulk after it says whether bulk reads the nested set of a customized set.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "own",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "own-allow",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "nested",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "nested-allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "fields": {
+      "type": "SIMPLIFIED"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    },
+    {
+     "name": "bulk-before",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "i1",
+        "c": "n"
+       }
+      },
+      {
+       "id": "i2",
+       "operation": "READ",
+       "resource": {
+        "id": "i2",
+        "c": "zz"
+       }
+      }
+     ]
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "own",
+         "rules": [
+          {
+           "key": "own-allow",
+           "condition": "resource.c == 'zz' OR resource.c == 'zy'"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r33",
+        "c": "n"
+       }
+      },
+      {
+       "name": "bulk-after",
+       "bulk": [
+        {
+         "id": "i1",
+         "operation": "READ",
+         "resource": {
+          "id": "i1",
+          "c": "n"
+         }
+        },
+        {
+         "id": "i2",
+         "operation": "READ",
+         "resource": {
+          "id": "i2",
+          "c": "zz"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "f72-nested-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

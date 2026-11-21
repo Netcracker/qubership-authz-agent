@@ -1,0 +1,128 @@
+[
+  {
+    "_comment": "D1: does a policy that reads a missing attribute stop a sibling policy from allowing?",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_D1",
+    "resourceType": "PARITY_SUITE_SEM_D1",
+    "operation": "READ",
+    "condition": "resource.x == 'v'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d000c"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_D1",
+    "resourceType": "PARITY_SUITE_SEM_D1",
+    "operation": "READ",
+    "condition": "resource.s == 'y'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d000d"
+  },
+  {
+    "_comment": "D2: D1 with the sibling policy uploaded first.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_D2",
+    "resourceType": "PARITY_SUITE_SEM_D2",
+    "operation": "READ",
+    "condition": "resource.s == 'y'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d000e"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_D2",
+    "resourceType": "PARITY_SUITE_SEM_D2",
+    "operation": "READ",
+    "condition": "resource.x == 'v'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d000f"
+  },
+  {
+    "_comment": "D3: AND whose left operand is false before the missing attribute.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_D3",
+    "resourceType": "PARITY_SUITE_SEM_D3",
+    "operation": "READ",
+    "condition": "resource.a == 'n' AND resource.x == 'v'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0010"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_D3",
+    "resourceType": "PARITY_SUITE_SEM_D3",
+    "operation": "READ",
+    "condition": "resource.s == 'y'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0011"
+  },
+  {
+    "_comment": "D4: the failing policy and the allowing policy sit on different roles.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_D4",
+    "resourceType": "PARITY_SUITE_SEM_D4",
+    "operation": "READ",
+    "condition": "resource.x == 'v'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0012"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_D4",
+    "resourceType": "PARITY_SUITE_SEM_D4",
+    "operation": "READ",
+    "condition": "resource.s == 'y'",
+    "roles": [
+      "ROLE_PARITY_REVIEWER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0013"
+  },
+  {
+    "_comment": "D5: filter where one policy reads a TOKEN PIP with no value.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_D5",
+    "resourceType": "PARITY_SUITE_SEM_D5",
+    "operation": "LIST",
+    "condition": "subject.parityNoClaim == 'x'",
+    "rsqlPredicate": "p1==1",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0014"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_D5",
+    "resourceType": "PARITY_SUITE_SEM_D5",
+    "operation": "LIST",
+    "rsqlPredicate": "p2==2",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0015"
+  }
+]

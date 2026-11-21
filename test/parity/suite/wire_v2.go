@@ -51,7 +51,7 @@ func v2QueryExtra() url.Values {
 // (POST /access/v2/check/resource). Parity suite never uses the preview
 // path for row 7; rows 5/9 that need preview use the bulk helpers instead.
 func HelperCheckResourceV2(ctx context.Context, cfg Config, body model.CheckResourceRequest, tokens TokenBundle, opts PerCallOptions) (int, model.CheckResourceResponse, []byte, error) {
-	target := buildURL(cfg.ACBaseURL, v2PathCheckResource, buildQuery(cfg, opts.UserID, v2QueryExtra()))
+	target := buildURL(cfg.ACBaseURL, v2PathCheckResource, buildQuery(cfg, opts, v2QueryExtra()))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
 	if err != nil {
 		return 0, model.CheckResourceResponse{}, nil, err
@@ -75,7 +75,7 @@ func HelperCheckResourcesV2(ctx context.Context, cfg Config, body model.CheckRes
 	if flags.Preview {
 		path = v2PathPreviewBulkOperations
 	}
-	target := buildURL(cfg.ACBaseURL, path, buildQuery(cfg, opts.UserID, v2QueryExtra()))
+	target := buildURL(cfg.ACBaseURL, path, buildQuery(cfg, opts, v2QueryExtra()))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
 	if err != nil {
 		return 0, model.CheckResourcesResponse{}, nil, err
@@ -108,7 +108,7 @@ func HelperFilterV2(ctx context.Context, cfg Config, resourceType, operation str
 	if operation != "" {
 		extra.Set("operation", operation)
 	}
-	target := buildURL(cfg.ACBaseURL, v2PathCheckFilter, buildQuery(cfg, opts.UserID, extra))
+	target := buildURL(cfg.ACBaseURL, v2PathCheckFilter, buildQuery(cfg, opts, extra))
 	req, err := buildRequest(ctx, http.MethodPost, target, nil, tokens, opts)
 	if err != nil {
 		return 0, model.FilterResponse{}, nil, err
@@ -122,4 +122,18 @@ func HelperFilterV2(ctx context.Context, cfg Config, resourceType, operation str
 		return status, decoded, raw, err
 	}
 	return status, decoded, raw, nil
+}
+
+// HelperPostV2 posts body, nil for none, to the v2 path of access-control
+// with the tenant, the userId, and the headers of opts and the query
+// parameters extra, and returns the status and the raw body without decoding
+// it. Unlike the row helpers it sends no obligations parameter of its own:
+// extra carries one when the caller wants one.
+func HelperPostV2(ctx context.Context, cfg Config, path string, extra url.Values, body any, tokens TokenBundle, opts PerCallOptions) (int, []byte, error) {
+	target := buildURL(cfg.ACBaseURL, path, buildQuery(cfg, opts, extra))
+	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
 }

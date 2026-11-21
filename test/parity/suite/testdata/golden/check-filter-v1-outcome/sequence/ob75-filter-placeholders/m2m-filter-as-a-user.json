@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": null,
+    "mongodbFilterCondition": "{ { \"owner\": ${subject.id}, \"name\": service-account-parity-m2m } }",
+    "rsqlFilterCondition": "owner==${subject.id};name==service-account-parity-m2m",
+    "sqlFilterCondition": "owner=${subject.id} AND name=service-account-parity-m2m",
+    "customFilterCondition": null
+  }
+}

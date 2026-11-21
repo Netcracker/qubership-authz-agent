@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+        "externalId": "parity-o72-jsonpath-control-last",
+        "name": "o72-jsonpath-control-last set",
+        "policies": [
+          {
+            "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+            "name": "o72-jsonpath-control-last reader",
+            "policyId": "f1cb7ae8-1123-8ca0-5491-d4b22a70ccc3",
+            "rules": [
+              {
+                "condition": "resource.c == 'zz'",
+                "effect": "DENY",
+                "name": "o72-jsonpath-control-last probe",
+                "ruleId": "96926b44-400e-b199-e0d3-8fa81914c60e",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-o72-jsonpath-control-last"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-o72-jsonpath-control-last"
+          }
+        ],
+        "policySetId": "029d558b-b5e6-f895-9def-3b1bda28b535",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_O72_JSONPATH_CONTROL_LAST'",
+        "tenantId": "parity-o72-jsonpath-control-last",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

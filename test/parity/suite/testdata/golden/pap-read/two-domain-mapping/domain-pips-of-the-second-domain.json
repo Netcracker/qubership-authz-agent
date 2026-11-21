@@ -1,0 +1,22 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "cacheable": false,
+      "customMapping": {
+        "subject.roles": {
+          "ROLE_PARITY_OTHER": [
+            "parity_r10_td_other"
+          ],
+          "ROLE_PARITY_READER": [
+            "parity_r10_td_b"
+          ]
+        }
+      },
+      "domain": "PARITY_ISOLATED_B",
+      "name": "subject.permissions.PARITY_R10_TD_B",
+      "pipType": "MAPPING",
+      "type": "UUID"
+    }
+  ]
+}

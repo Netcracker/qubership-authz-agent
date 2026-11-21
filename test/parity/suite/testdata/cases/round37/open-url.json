@@ -1,0 +1,431 @@
+{
+ "about": "Which builtins of the subject the url of a GENERAL PIP takes. Round 36 refused ${subject.serviceAccount} there, and every golden that took a url placeholder named subject.id. Each case puts one more builtin at the end of the url; the upload is refused (400) if a url takes subject.id only. If it is accepted, the route the builtin's value names answers v, so a = n is true; a value that makes no route the call reaches fails the PIP, and a = n is false.",
+ "resourceTypePrefix": "PARITY_SUITE_R37U_",
+ "pins": {
+  "/api/v1/pip/r37open-url-name-parity-reader": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-url-roles-[ROLE_PARITY_READER]": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-url-type-USER": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-url-permissions-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-url-permissions-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r37open-url-entitled-resources-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-url-entitled-resources-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r37open-url-permission-scope-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-url-permission-scope-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r37open-url-is-m2m-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-url-is-m2m-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r37open-url-is-m2m-false": {
+   "statusCode": 200,
+   "body": [
+    "u"
+   ]
+  }
+ },
+ "pips": {
+  "r37open-url-name": {
+   "name": "subject.parityR37UrlName",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-url-name-${subject.name}",
+   "requestAttributes": {
+    "case": "r37open-url-name"
+   }
+  },
+  "r37open-url-roles": {
+   "name": "subject.parityR37UrlRoles",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-url-roles-${subject.roles}",
+   "requestAttributes": {
+    "case": "r37open-url-roles"
+   }
+  },
+  "r37open-url-type": {
+   "name": "subject.parityR37UrlType",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-url-type-${subject.type}",
+   "requestAttributes": {
+    "case": "r37open-url-type"
+   }
+  },
+  "r37open-url-scopes": {
+   "name": "subject.parityR37UrlScopes",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-url-scopes-${subject.scopes}",
+   "requestAttributes": {
+    "case": "r37open-url-scopes"
+   }
+  },
+  "r37open-url-permissions": {
+   "name": "subject.parityR37UrlPermissions",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-url-permissions-${subject.permissions}",
+   "requestAttributes": {
+    "case": "r37open-url-permissions"
+   }
+  },
+  "r37open-url-entitled-resources": {
+   "name": "subject.parityR37UrlEntitledResources",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-url-entitled-resources-${subject.entitledResources}",
+   "requestAttributes": {
+    "case": "r37open-url-entitled-resources"
+   }
+  },
+  "r37open-url-permission-scope": {
+   "name": "subject.parityR37UrlPermissionScope",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-url-permission-scope-${subject.permissionScope}",
+   "requestAttributes": {
+    "case": "r37open-url-permission-scope"
+   }
+  },
+  "r37open-url-is-m2m": {
+   "name": "subject.parityR37UrlIsM2M",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-url-is-m2m-${subject.isM2M}",
+   "requestAttributes": {
+    "case": "r37open-url-is-m2m"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r37openurl-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r37",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-url-name",
+   "pips": [
+    "r37open-url-name"
+   ],
+   "about": "The url ends in r37open-url-name-${subject.name}; for parity-reader the builtin gives its username, parity-reader. The upload is refused (400) if a url takes ${subject.id} only, accepted if it takes subject.name too. Accepted, the route r37open-url-name-parity-reader answers v, so a = n is true.",
+   "condition": "subject.parityR37UrlName == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-url-name-parity-reader"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-url-roles",
+   "pips": [
+    "r37open-url-roles"
+   ],
+   "about": "The url ends in r37open-url-roles-${subject.roles}; for parity-reader the builtin gives the text of its roles, [ROLE_PARITY_READER]. The upload is refused (400) if a url takes ${subject.id} only, accepted if it takes subject.roles too. Accepted, the route r37open-url-roles-[ROLE_PARITY_READER] answers v, so a = n is true.",
+   "condition": "subject.parityR37UrlRoles == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-url-roles-[ROLE_PARITY_READER]"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-url-type",
+   "pips": [
+    "r37open-url-type"
+   ],
+   "about": "The url ends in r37open-url-type-${subject.type}; for parity-reader the builtin gives its type, USER. The upload is refused (400) if a url takes ${subject.id} only, accepted if it takes subject.type too. Accepted, the route r37open-url-type-USER answers v, so a = n is true.",
+   "condition": "subject.parityR37UrlType == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-url-type-USER"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-url-scopes",
+   "pips": [
+    "r37open-url-scopes"
+   ],
+   "about": "The url ends in r37open-url-scopes-${subject.scopes}; for parity-reader the builtin gives its scopes, [openid, profile, email], whose spaces no url takes. The upload is refused (400) if a url takes ${subject.id} only, accepted if it takes subject.scopes too. Accepted, the call fails and both requests are false.",
+   "condition": "subject.parityR37UrlScopes == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-url-permissions",
+   "pips": [
+    "r37open-url-permissions"
+   ],
+   "about": "The url ends in r37open-url-permissions-${subject.permissions}; for parity-reader the builtin gives no value without a MAPPING declaration. The upload is refused (400) if a url takes ${subject.id} only, accepted if it takes subject.permissions too. Accepted: the route r37open-url-permissions-null answers v, so a = n is true when the placeholder becomes the text null; the route r37open-url-permissions- answers w, so a = n is false and a = y true when it becomes empty; both are false when it stays as written and its braces fail the call. pipCalls counts the calls to the -null route.",
+   "condition": "subject.parityR37UrlPermissions == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-url-permissions-null"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-url-entitled-resources",
+   "pips": [
+    "r37open-url-entitled-resources"
+   ],
+   "about": "The url ends in r37open-url-entitled-resources-${subject.entitledResources}; for parity-reader the builtin gives no value without of() and as(). The upload is refused (400) if a url takes ${subject.id} only, accepted if it takes subject.entitledResources too. Accepted: the route r37open-url-entitled-resources-null answers v, so a = n is true when the placeholder becomes the text null; the route r37open-url-entitled-resources- answers w, so a = n is false and a = y true when it becomes empty; both are false when it stays as written and its braces fail the call. pipCalls counts the calls to the -null route.",
+   "condition": "subject.parityR37UrlEntitledResources == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-url-entitled-resources-null"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-url-permission-scope",
+   "pips": [
+    "r37open-url-permission-scope"
+   ],
+   "about": "The url ends in r37open-url-permission-scope-${subject.permissionScope}; for parity-reader the builtin gives no value outside iterate, and no PERMISSION_SCOPE PIP is declared. The upload is refused (400) if a url takes ${subject.id} only, accepted if it takes subject.permissionScope too. Accepted: the route r37open-url-permission-scope-null answers v, so a = n is true when the placeholder becomes the text null; the route r37open-url-permission-scope- answers w, so a = n is false and a = y true when it becomes empty; both are false when it stays as written and its braces fail the call. pipCalls counts the calls to the -null route.",
+   "condition": "subject.parityR37UrlPermissionScope == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-url-permission-scope-null"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-url-is-m2m",
+   "pips": [
+    "r37open-url-is-m2m"
+   ],
+   "about": "The url ends in r37open-url-is-m2m-${subject.isM2M}; for parity-reader the builtin gives no value in a condition. The upload is refused (400) if a url takes ${subject.id} only, accepted if it takes subject.isM2M too. Accepted: the route r37open-url-is-m2m-null answers v, so a = n is true when the placeholder becomes the text null; the route r37open-url-is-m2m- answers w, so a = n is false and a = y true when it becomes empty; both are false when it stays as written and its braces fail the call. pipCalls counts the calls to the -null route. The route r37open-url-is-m2m-false answers u, so both are false with no call to -null when the builtin becomes the boolean false.",
+   "condition": "subject.parityR37UrlIsM2M == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-url-is-m2m-null"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37openurl-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r37",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

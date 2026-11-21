@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R75_FAILED_ITERATE_V75I_DENY_UNDEFINED_TARGET_BESIDE_GRANTED.region.in(\"r1\")).or(PARITY_SUITE_R75_FAILED_ITERATE_V75I_DENY_UNDEFINED_TARGET_BESIDE_GRANTED.region.in(\"r2\"))",
+    "mongodbFilterCondition": "{ \"$or\": [ { { \"region\": { \"$in\": [ \"r1\" ] } } },{ { \"region\": { \"$in\": [ \"r2\" ] } } } ] }",
+    "rsqlFilterCondition": "(region=in=(\"r1\")),(region=in=(\"r2\"))",
+    "sqlFilterCondition": "(region IN ('r1')) or (region IN ('r2'))",
+    "customFilterCondition": null
+  }
+}

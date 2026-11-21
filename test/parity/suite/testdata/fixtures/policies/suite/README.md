@@ -5,8 +5,9 @@ Expanded simplified-policy / PIP fixtures for the parity test suite
 [20260414-access-control-parity-test-suite-task.md](../../../../../../../docs/handovers/done/20260414-access-control-parity-test-suite-task.md)).
 
 These fixtures are **additive** to the smoke baseline under
-[`../../smoke/`](../../smoke/). `ParitySuite.SetupSuite` seeds the
-smoke simplified fixtures first and this suite pack second, preserving the
+[`../../smoke/`](../../smoke/). `ParitySuite.BeforeTest` seeds them
+before the first `TestRow` test, the smoke simplified fixtures first and this
+suite pack second, preserving the
 legacy ordering that the old compose seeding script used. The suite pack uses
 **distinct** `resourceType` names under the `PARITY_SUITE_*` prefix so there
 is no locator collision per **D-L** of the handover. No fixture in this
@@ -75,7 +76,7 @@ Pattern the fixtures reuse for subject-attribute-to-resource comparison:
 ## Seed channel
 
 [`test/parity/suite/seed.go`](../../../../seed.go) is the active seed helper.
-`SetupSuite` feeds it an embedded `fs.FS` rooted at
+`BeforeTest` feeds it an embedded `fs.FS` rooted at
 `testdata/fixtures/`, and the helper:
 
 1. bulk-loads the smoke simplified PIPs,

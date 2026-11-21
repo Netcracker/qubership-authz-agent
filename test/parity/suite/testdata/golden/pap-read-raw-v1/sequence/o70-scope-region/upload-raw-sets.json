@@ -1,0 +1,42 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-o70-scope-region",
+        "iterate": {
+          "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+          "foreach": "subject.permissionScope"
+        },
+        "name": "o70-scope-region set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "o70-scope-region reader",
+            "policyId": "e35b39a7-da43-7050-1885-c1e707bb4775",
+            "rules": [
+              {
+                "condition": "subject.permissionScope.region CONTAINS 'r1' OR resource.a == 'y'",
+                "effect": "ALLOW",
+                "name": "o70-scope-region probe",
+                "ruleId": "ff86a3a1-3a34-6a6d-9543-dc2b8b91e341",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-o70-scope-region"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-o70-scope-region"
+          }
+        ],
+        "policySetId": "24134692-615b-8160-912c-49220d135931",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_O70_SCOPE_REGION'",
+        "tenantId": "parity-o70-scope-region",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

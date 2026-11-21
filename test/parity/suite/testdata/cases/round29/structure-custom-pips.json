@@ -1,0 +1,1836 @@
+{
+ "about": "PIP customizations through POST /access/v1/pip/customization/import (a customize step with pips, round 29): replace, replace with some fields only, disable, add, the import errors, two levels, two imports at one level, the level parameter, and an import the PIP upload would refuse. The HEADER PIP subject.parityR29Cp reads X-Parity-Cp, which each request sends as w; X-Parity-Cp2 carries v. The rule allows on subject.parityR29Cp CONTAINS 'v' OR resource.a == 'y', so a = n tells whether the customization reached the declaration. The GENERAL PIP answers {\"a\": [\"w\"], \"groups\": [\"v\"]}. The runner deletes the case's PIP customizations (DELETE /access/v1/pip/customization/pip/{name}) before its upload and after its last step.",
+ "resourceTypePrefix": "PARITY_SUITE_R29ST_",
+ "pins": {
+  "/api/v1/pip/r29structure-cpip": {
+   "statusCode": 200,
+   "body": {
+    "a": [
+     "w"
+    ],
+    "groups": [
+     "v"
+    ]
+   }
+  }
+ },
+ "pips": {
+  "header": {
+   "name": "subject.parityR29Cp",
+   "pipType": "HEADER",
+   "header": "X-Parity-Cp"
+  },
+  "other-header": {
+   "name": "subject.parityR29CpOther",
+   "pipType": "HEADER",
+   "header": "X-Parity-Cp-Other"
+  },
+  "general": {
+   "name": "subject.parityR29CpGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip",
+   "type": "JSON",
+   "jsonPath": "$.a",
+   "requestAttributes": {
+    "case": "r29structure-cpip"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29structure-custom-pips-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-replace",
+   "about": "Replaces the HEADER PIP with every field, header now X-Parity-Cp2 (v). a = n after: true if the replace reaches decisions, false if PIP customizations do not.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29Cp",
+       "pipType": "HEADER",
+       "header": "X-Parity-Cp2"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-replace-partial",
+   "about": "Replaces the HEADER PIP with defaultValue v and nothing else. a = n after: false if the omitted fields keep their values (header X-Parity-Cp, w); true if they fall back to their defaults (no header, the default value v).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29Cp",
+       "defaultValue": "v"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-disable",
+   "about": "Disables the HEADER PIP the rule reads (status INACTIVE). After: every check 400 if a loaded set that reads an undeclared PIP fails the checks (round 18), or false for a = n and true for a = y if the PIP is gone and the rule ends; unchanged if the declaration only takes status INACTIVE.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29Cp",
+       "status": "INACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-disable-deny-twin",
+   "about": "The DENY twin: PERMIT_UNLESS_DENY and a DENY rule on subject.parityR29Cp CONTAINS 'zz' OR resource.a == 'y'; the PIP is disabled. a = n after: true if the rule ends, false if the decision fails, 400 if every check fails.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29Cp CONTAINS 'zz' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29Cp",
+       "status": "INACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-add",
+   "about": "Adds a MAPPING PIP subject.permissions.parityR29Cp that grants PARITY_R29_CP to ROLE_PARITY_READER; the rule reads subject.permissions CONTAINS 'PARITY_R29_CP' OR resource.a == 'y'. a = n after: true if the added PIP takes part.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.permissions CONTAINS 'PARITY_R29_CP' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.permissions.parityR29Cp",
+       "pipType": "MAPPING",
+       "customMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_READER": [
+          "PARITY_R29_CP"
+         ]
+        }
+       }
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-invalid-disable-unknown",
+   "about": "Disables a PIP no domain declares beside replacing the HEADER PIP. Import 400 (\"Cannot disable item\"): a = n after false; if accepted, true.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29CpMissing",
+       "status": "INACTIVE"
+      },
+      {
+       "name": "subject.parityR29Cp",
+       "pipType": "HEADER",
+       "header": "X-Parity-Cp2"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-invalid-path-unknown",
+   "about": "An entry with nothing but the name of a PIP no domain declares, beside replacing the HEADER PIP. Import 400 (\"Cannot find referenced item\") if a name alone is a path; if accepted, a = n after true.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29CpMissing"
+      },
+      {
+       "name": "subject.parityR29Cp",
+       "pipType": "HEADER",
+       "header": "X-Parity-Cp2"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-levels",
+   "about": "PROJECT points the HEADER PIP at X-Parity-Cp2 (v), then CUSTOMER at X-Parity-Cp3 (w). a = n after PROJECT: true if PROJECT applies; after CUSTOMER: false if CUSTOMER applies after PROJECT.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "project",
+     "level": "PROJECT",
+     "pips": [
+      {
+       "name": "subject.parityR29Cp",
+       "pipType": "HEADER",
+       "header": "X-Parity-Cp2"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n-project",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y-project",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    },
+    {
+     "name": "customer",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29Cp",
+       "pipType": "HEADER",
+       "header": "X-Parity-Cp3"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-two-imports",
+   "about": "Two CUSTOMER imports: the first points the HEADER PIP at X-Parity-Cp2 (v), the second replaces the other HEADER PIP only. a = n after the second: true if the level keeps the first import, false if the second replaces the whole level.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "first",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29Cp",
+       "pipType": "HEADER",
+       "header": "X-Parity-Cp2"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n-first",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y-first",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    },
+    {
+     "name": "second",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29CpOther",
+       "pipType": "HEADER",
+       "header": "X-Parity-Cp3"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-invalid-level-other",
+   "about": "The import names level PARITY_OTHER. Import 400 if an unknown level is refused; a = n after true if it is read as CUSTOMER.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "PARITY_OTHER",
+     "pips": [
+      {
+       "name": "subject.parityR29Cp",
+       "pipType": "HEADER",
+       "header": "X-Parity-Cp2"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-level-omitted",
+   "about": "The import names no level. Import 200 and a = n after true if the level defaults to CUSTOMER; 400 if the parameter is required.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29Cp",
+       "pipType": "HEADER",
+       "header": "X-Parity-Cp2"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ],
+     "omitLevel": true
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-validate-filtered-without-resource-type",
+   "about": "Adds a FILTERED PIP subject.parityR29CpF.filtered without resourceType, which the PIP upload refuses. Import 400 if the import checks the effective PIPs as an upload, 200 if it checks less than an upload does.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29CpF.filtered",
+       "pipType": "FILTERED",
+       "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-jsonpath-no-dollar",
+   "about": "The GENERAL PIP reads jsonPath $.a (w); a customization replaces its jsonPath with 'groups', without $. a = n after: true if the path selects groups (v), false if it selects nothing.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29CpGeneral CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29CpGeneral",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip",
+       "type": "JSON",
+       "jsonPath": "groups",
+       "requestAttributes": {
+        "case": "r29structure-cpip"
+       }
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-jsonpath-bracket",
+   "about": "The GENERAL PIP reads jsonPath $.a (w); a customization replaces its jsonPath with \"$['groups']\", with a bracket first step. a = n after: true if the path selects groups (v), false if it selects nothing.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29CpGeneral CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29CpGeneral",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip",
+       "type": "JSON",
+       "jsonPath": "$['groups']",
+       "requestAttributes": {
+        "case": "r29structure-cpip"
+       }
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-type",
+   "about": "The GENERAL PIP is of type JSON with jsonPath $.groups (v); a customization replaces its type with UUID. a = n after: true if the jsonPath applies whatever the type, false if only under JSON (then the whole body is the value).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29CpGeneral CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29CpGeneral",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip",
+       "type": "UUID",
+       "jsonPath": "$.groups",
+       "requestAttributes": {
+        "case": "r29structure-cpip"
+       }
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-cpip-headers",
+   "about": "A customization gives the GENERAL PIP headers X-Parity-Cp-Fwd; the request sends X-Parity-Cp-Fwd: fv. pipHeaders records whether the call carried it: fv if the customized declaration forwards it, absent if not.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR29CpGeneral CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    },
+    {
+     "name": "read-before-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "headers": {
+      "X-Parity-Cp": "w",
+      "X-Parity-Cp2": "v",
+      "X-Parity-Cp3": "w"
+     }
+    }
+   ],
+   "pips": [
+    "header",
+    "other-header",
+    "general"
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR29CpGeneral",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip",
+       "type": "JSON",
+       "jsonPath": "$.a",
+       "requestAttributes": {
+        "case": "r29structure-cpip"
+       },
+       "headers": "X-Parity-Cp-Fwd"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-a-n",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w",
+        "X-Parity-Cp-Fwd": "fv"
+       },
+       "pipCalls": "/api/v1/pip/r29structure-cpip",
+       "pipHeaders": [
+        "x-parity-cp-fwd"
+       ]
+      },
+      {
+       "name": "read-after-a-y",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       },
+       "headers": {
+        "X-Parity-Cp": "w",
+        "X-Parity-Cp2": "v",
+        "X-Parity-Cp3": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-pips-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

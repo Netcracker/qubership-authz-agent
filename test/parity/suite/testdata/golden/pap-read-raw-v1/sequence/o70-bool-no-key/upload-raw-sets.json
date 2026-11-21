@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-o70-bool-no-key",
+        "name": "o70-bool-no-key set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "o70-bool-no-key reader",
+            "policyId": "59a35559-43fe-cdba-46fd-717e3793ce59",
+            "rules": [
+              {
+                "condition": "resource.x IN true,false OR resource.a == 'y'",
+                "effect": "ALLOW",
+                "name": "o70-bool-no-key probe",
+                "ruleId": "6bbae237-be7a-1856-21c1-1bbcca4aa266",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-o70-bool-no-key"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-o70-bool-no-key"
+          }
+        ],
+        "policySetId": "9662f0b9-65d2-6233-b5ec-8da6e8387cc5",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_O70_BOOL_NO_KEY'",
+        "tenantId": "parity-o70-bool-no-key",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

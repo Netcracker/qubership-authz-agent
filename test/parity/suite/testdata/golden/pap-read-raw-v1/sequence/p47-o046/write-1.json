@@ -1,0 +1,51 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+        "externalId": "parity-q15-failing-entitlements-in-a-rule-target",
+        "name": "q15-failing-entitlements-in-a-rule-target outer",
+        "policies": [],
+        "policySetId": "e56347c1-8eda-f598-226c-f7ef55f1b166",
+        "policySets": [
+          {
+            "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+            "externalId": "parity-q15-failing-entitlements-in-a-rule-target",
+            "name": "q15-failing-entitlements-in-a-rule-target nested",
+            "policies": [
+              {
+                "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+                "name": "q15-failing-entitlements-in-a-rule-target reader",
+                "policyId": "b521b012-a62f-c00e-a223-8e668d86aa10",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "DENY",
+                    "name": "q15-failing-entitlements-in-a-rule-target deny",
+                    "ruleId": "259c97e4-dd0f-1c1a-d9b7-72abce956eb7",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.entitledResources.of('PARITY_R15_ENT').as('Owner') CONTAINS 'e1'",
+                    "tenantId": "parity-p47-o046"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p47-o046"
+              }
+            ],
+            "policySetId": "b38eb731-983f-2cae-6cbf-2fd4a27b8c93",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "true",
+            "tenantId": "parity-p47-o046",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_R15_Q15_FAILING_ENTITLEMENTS_IN_A_RULE_TARGET'",
+        "tenantId": "parity-p47-o046",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

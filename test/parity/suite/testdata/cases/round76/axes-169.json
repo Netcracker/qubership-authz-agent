@@ -1,0 +1,54 @@
+{
+ "about": "Round 76, task 16: survivor:subject m2m | filter policy DENY_OVERRIDES→not_deny_only, moved to subject = m2m from round29/doc-filter-rsql-units.json (r29doc-filter-or-inside-an-allow-predicate). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R29D_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ax76-169-r29doc-filter-or-inside-an-allow-predicate",
+   "about": "Task 16 moves it to subject = m2m.",
+   "pips": [],
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "a",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1,b==2"
+         }
+        },
+        {
+         "key": "d",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "c==3"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "subject": "m2m"
+    }
+   ]
+  }
+ ]
+}

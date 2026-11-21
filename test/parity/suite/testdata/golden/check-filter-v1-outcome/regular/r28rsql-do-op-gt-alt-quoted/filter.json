@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_DO_OP_GT_ALT_QUOTED.a.gt(\"x==y\")).not()",
+    "mongodbFilterCondition": "{ { \"a\": { \"$gt\": \"x==y\" } } }",
+    "rsqlFilterCondition": "a\u003c=\"x!=y\"",
+    "sqlFilterCondition": "NOT (a\u003e'x==y')",
+    "customFilterCondition": null
+  }
+}

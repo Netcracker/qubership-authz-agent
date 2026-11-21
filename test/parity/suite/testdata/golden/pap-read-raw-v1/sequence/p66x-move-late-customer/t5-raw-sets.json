@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-move-late-customer-o",
+        "name": "p66x-move-late-customer o",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-late-customer o reader",
+            "policyId": "bd713c99-60d0-32e2-e53d-8c0bb5a2f7a5",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-move-late-customer o rule",
+                "ruleId": "b2d29ace-5653-d83a-49c0-9b4316f3c22b",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'DELETE'",
+                "tenantId": "parity-p66x-move-late-customer"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-move-late-customer"
+          }
+        ],
+        "policySetId": "596e88a6-2628-6bb2-f2f1-5f6f0cf7e375",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_LATE_CUSTOMER'",
+        "tenantId": "parity-p66x-move-late-customer",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

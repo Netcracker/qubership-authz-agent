@@ -1,0 +1,338 @@
+{
+ "about": "Customizations the round 29 cases did not send. A set customization whose entry replaces only the set's own fields, then deleted without recursive: round 29 deleted entries that carried a replaced rule. A PIP customization whose list holds a string beside a valid entry, and one whose only entry names a PIP and nothing else. The HEADER PIP reads X-Parity-R30-Cp1 (v); the valid entry points it at X-Parity-R30-Cp2 (w), so a = n is true before and false once that entry applies.",
+ "resourceTypePrefix": "PARITY_SUITE_R30G_",
+ "pins": {},
+ "pips": {
+  "header": {
+   "name": "subject.parityR30Cp",
+   "pipType": "HEADER",
+   "header": "x-parity-r30-cp1",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "r30gaps-custom-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-delete-without-children",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "about": "CUSTOMER replaces the set with a target of another resource type (read after false) and an empty list of policies, and the delete names no recursive. Read after the delete: true if the delete drops an entry without children entries, false if it leaves it.",
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r30"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "name": "set of another type",
+       "status": "ACTIVE",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == '{{resourceType}}_OTHER'",
+       "policies": []
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-import",
+       "resource": {
+        "id": "r30"
+       }
+      }
+     ]
+    },
+    {
+     "name": "delete",
+     "level": "CUSTOMER",
+     "delete": {
+      "key": "set"
+     },
+     "requests": [
+      {
+       "name": "read-after-delete",
+       "resource": {
+        "id": "r30"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-pip-entry-not-an-object",
+   "pips": [
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR30Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "about": "The PIP customization list holds the string \"not an object\" and a full replace of the HEADER PIP. Import 400 and a = n after true if the string refuses the import; 200 and false if it is skipped.",
+   "requests": [
+    {
+     "name": "before-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R30-Cp1": "v",
+      "X-Parity-R30-Cp2": "w"
+     }
+    },
+    {
+     "name": "before-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R30-Cp1": "v",
+      "X-Parity-R30-Cp2": "w"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      "not an object",
+      {
+       "name": "subject.parityR30Cp",
+       "pipType": "HEADER",
+       "header": "x-parity-r30-cp2",
+       "cacheable": false
+      }
+     ],
+     "requests": [
+      {
+       "name": "after-a-n",
+       "resource": {
+        "id": "r30",
+        "a": "n"
+       },
+       "headers": {
+        "X-Parity-R30-Cp1": "v",
+        "X-Parity-R30-Cp2": "w"
+       }
+      },
+      {
+       "name": "after-a-y",
+       "resource": {
+        "id": "r30",
+        "a": "y"
+       },
+       "headers": {
+        "X-Parity-R30-Cp1": "v",
+        "X-Parity-R30-Cp2": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-pip-entry-name-only",
+   "pips": [
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR30Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "about": "The PIP customization's one entry is {\"name\": \"subject.parityR30Cp\"}. Import 200 and a = n after true if an entry with a name only changes nothing; 400 if it is a replace that drops every field.",
+   "requests": [
+    {
+     "name": "before-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R30-Cp1": "v",
+      "X-Parity-R30-Cp2": "w"
+     }
+    },
+    {
+     "name": "before-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R30-Cp1": "v",
+      "X-Parity-R30-Cp2": "w"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR30Cp"
+      }
+     ],
+     "requests": [
+      {
+       "name": "after-a-n",
+       "resource": {
+        "id": "r30",
+        "a": "n"
+       },
+       "headers": {
+        "X-Parity-R30-Cp1": "v",
+        "X-Parity-R30-Cp2": "w"
+       }
+      },
+      {
+       "name": "after-a-y",
+       "resource": {
+        "id": "r30",
+        "a": "y"
+       },
+       "headers": {
+        "X-Parity-R30-Cp1": "v",
+        "X-Parity-R30-Cp2": "w"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-custom-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

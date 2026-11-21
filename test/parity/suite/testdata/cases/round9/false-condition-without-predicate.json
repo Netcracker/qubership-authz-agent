@@ -1,0 +1,140 @@
+{
+ "about": "What check/filter does with an ALLOW rule that has no predicate and a condition over the subject that is false for the reader, alone and beside an ALLOW rule with a predicate. The recorded rule without a predicate lifts the filter when its subject condition holds (filter-rule-with-a-subject-condition-and-no-predicate) and is left out when its condition reads the resource (filter-rule-with-a-resource-condition-and-no-predicate). allow-without-predicate-true-beside-a-predicate is the control, the same pair with the condition true; it is also the only case of an unrestricted ALLOW beside a predicate in one policy, which filter-algebra.json relies on. The agent's converter accepts every set here.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "allow-without-predicate-false-alone",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-under-a-subject-condition",
+         "target": "operation == 'LIST'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "allow-without-predicate-false-beside-a-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-under-a-subject-condition",
+         "target": "operation == 'LIST'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "allow-without-predicate-true-beside-a-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-under-a-subject-condition",
+         "target": "operation == 'LIST'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  }
+ ]
+}

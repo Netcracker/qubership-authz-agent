@@ -1,0 +1,204 @@
+{
+ "about": "What ==, !=, IS NOT EMPTY and IS SUBSET answer over an empty resource array, what NOT CONTAINS answers over a JSON Path that selects nothing, and whether IS EMPTY over an index past the end is false or ends the rule. Over an array of one value == is false and != true (pa-*), and over an empty one they are recorded nowhere; IS NOT EMPTY and IS SUBSET over [] are recorded alone (l9, l4). NOT CONTAINS over an empty selection is recorded on the left of an OR only (np1), which tells a value from an ended rule but not true from false. IS EMPTY over resource.list[5] is recorded alone (np3). == and != are asked alone and through a probe and its control, the others through one of the two, each against a resource with a = y. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone.",
+ "resourceTypePrefix": "PARITY_SUITE_R11_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ea-equals-alone",
+   "condition": "resource.x == 'v'",
+   "requests": [
+    {
+     "name": "x-empty-array",
+     "resource": {
+      "id": "r11-empty",
+      "x": [],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ea-not-equals-alone",
+   "condition": "resource.x != 'v'",
+   "requests": [
+    {
+     "name": "x-empty-array",
+     "resource": {
+      "id": "r11-empty",
+      "x": [],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ea-equals",
+   "condition": "resource.x == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-empty-array",
+     "resource": {
+      "id": "r11-empty",
+      "x": [],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ea-equals-control",
+   "resourceType": "PARITY_SUITE_R11_EA_EQUALS_CTL",
+   "condition": "resource.a == 'y' OR resource.x == 'v'",
+   "requests": [
+    {
+     "name": "x-empty-array",
+     "resource": {
+      "id": "r11-empty",
+      "x": [],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ea-not-equals",
+   "condition": "resource.x != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-empty-array",
+     "resource": {
+      "id": "r11-empty",
+      "x": [],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ea-not-equals-control",
+   "resourceType": "PARITY_SUITE_R11_EA_NOT_EQUALS_CTL",
+   "condition": "resource.a == 'y' OR resource.x != 'v'",
+   "requests": [
+    {
+     "name": "x-empty-array",
+     "resource": {
+      "id": "r11-empty",
+      "x": [],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ea-is-not-empty",
+   "condition": "resource.x IS NOT EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-empty-array",
+     "resource": {
+      "id": "r11-empty",
+      "x": [],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ea-is-not-empty-control",
+   "resourceType": "PARITY_SUITE_R11_EA_IS_NOT_EMPTY_CTL",
+   "condition": "resource.a == 'y' OR resource.x IS NOT EMPTY",
+   "requests": [
+    {
+     "name": "x-empty-array",
+     "resource": {
+      "id": "r11-empty",
+      "x": [],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ea-is-subset",
+   "condition": "resource.x IS SUBSET 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-empty-array",
+     "resource": {
+      "id": "r11-empty",
+      "x": [],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ea-is-subset-control",
+   "resourceType": "PARITY_SUITE_R11_EA_IS_SUBSET_CTL",
+   "condition": "resource.a == 'y' OR resource.x IS SUBSET 'v', 'w'",
+   "requests": [
+    {
+     "name": "x-empty-array",
+     "resource": {
+      "id": "r11-empty",
+      "x": [],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sel-not-contains-alone",
+   "about": "The path selects the id of every item of type zzz from items holding one element of another type, so the selection is empty.",
+   "condition": "resource.items[?(@.type=='zzz')].id NOT CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "r11-selection",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "oob-is-empty",
+   "condition": "resource.list[5] IS EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "index-past-the-end",
+     "resource": {
+      "id": "r11-index",
+      "list": [
+       "a"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "oob-is-empty-control",
+   "resourceType": "PARITY_SUITE_R11_OOB_IS_EMPTY_CTL",
+   "condition": "resource.a == 'y' OR resource.list[5] IS EMPTY",
+   "requests": [
+    {
+     "name": "index-past-the-end",
+     "resource": {
+      "id": "r11-index",
+      "list": [
+       "a"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

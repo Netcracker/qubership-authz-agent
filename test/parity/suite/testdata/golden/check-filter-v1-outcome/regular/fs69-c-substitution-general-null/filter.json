@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_FS69_FS69_C_SUBSTITUTION_GENERAL_NULL.a.eq(${subject.paritySubNull})",
+    "mongodbFilterCondition": "{ { \"a\": ${subject.paritySubNull} } }",
+    "rsqlFilterCondition": "a==${subject.paritySubNull}",
+    "sqlFilterCondition": "a=${subject.paritySubNull}",
+    "customFilterCondition": {
+      "logic": {
+        "path": "bb00cf9f-4da4-c53f-e464-99d2d5fbd4b7"
+      },
+      "data": {
+        "bb00cf9f-4da4-c53f-e464-99d2d5fbd4b7": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": "subject.paritySubNull"
+          }
+        }
+      }
+    }
+  }
+}

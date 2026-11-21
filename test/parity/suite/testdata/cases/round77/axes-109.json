@@ -1,0 +1,301 @@
+{
+ "about": "Round 77, task 16: survivor:route check/filter v1 | cell ABSENT×LE→T, moved to route = check/filter v1 from round16/second-carrier.json (c16-cell-absent-le-0-or). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R16_",
+ "pins": {
+  "/api/v1/pip/r16-not-found": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 16 case"
+   }
+  },
+  "/api/v1/pip/r16-no-match": {
+   "statusCode": 200,
+   "body": {
+    "k": "v"
+   }
+  }
+ },
+ "pips": {
+  "carrier-subject-parityr16notfound": {
+   "name": "subject.parityR16NotFound",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r16-not-found",
+   "requestAttributes": {
+    "case": "r16-not-found"
+   }
+  },
+  "carrier-subject-parityr16missing": {
+   "name": "subject.parityR16Missing",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityMissingClaim",
+   "cacheable": false
+  },
+  "carrier-subject-parityr16nomatch": {
+   "name": "subject.parityR16NoMatch",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r16-no-match",
+   "requestAttributes": {
+    "case": "r16-no-match"
+   },
+   "jsonPath": "$.zz"
+  }
+ },
+ "cases": [
+  {
+   "id": "ax77-109-c16-cell-absent-contains-0-or",
+   "condition": "resource.o.x CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-109-c16-cell-absent-contains-any-0-or",
+   "condition": "resource.o.x CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-109-c16-cell-absent-ge-0-or",
+   "condition": "resource.o.x >= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-109-c16-cell-absent-gt-0-or",
+   "condition": "resource.o.x > 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-109-c16-cell-absent-in-0-or",
+   "condition": "resource.o.x IN 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-109-c16-cell-absent-is-empty-0-or",
+   "condition": "resource.o.x IS EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-109-c16-cell-absent-is-not-empty-0-or",
+   "condition": "resource.o.x IS NOT EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-109-c16-cell-absent-is-not-subset-0-or",
+   "condition": "resource.o.x IS NOT SUBSET 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-109-c16-cell-absent-is-subset-0-or",
+   "condition": "resource.o.x IS SUBSET 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "k": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-109-c16-cell-absent-le-0-or",
+   "condition": "resource.o.x <= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "probe-a-y-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "Task 16 moves it to route = check/filter v1."
+  }
+ ]
+}

@@ -1,0 +1,42 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-o72-scope-key-bracket",
+        "iterate": {
+          "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+          "foreach": "subject.permissionScope"
+        },
+        "name": "o72-scope-key-bracket set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "o72-scope-key-bracket reader",
+            "policyId": "174be9d9-f53a-77ec-ce69-256c87bb111f",
+            "rules": [
+              {
+                "condition": "subject.permissionScope.a] == 'v' OR resource.a == 'y'",
+                "effect": "ALLOW",
+                "name": "o72-scope-key-bracket probe",
+                "ruleId": "398df4b1-1d7b-e208-1b14-5d5a369ad978",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-o72-scope-key-bracket"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-o72-scope-key-bracket"
+          }
+        ],
+        "policySetId": "99a9da80-89b2-4e0c-99a1-6734b9d1005f",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_O72_SCOPE_KEY_BRACKET'",
+        "tenantId": "parity-o72-scope-key-bracket",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

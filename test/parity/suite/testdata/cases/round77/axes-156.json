@@ -1,0 +1,688 @@
+{
+ "about": "Round 77, task 16: survivor:route check/filter v1 | rcell ABSENT×IN→F, moved to route = check/filter v1 from round58/open-single.json (op58-sentinel-not-in-absent). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R58_OPEN_",
+ "pins": {
+  "/api/v1/pip/r58open-num": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r58open-fz": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r58open-sent": {
+   "statusCode": 200,
+   "body": [
+    "m"
+   ]
+  },
+  "/api/v1/pip/r58open-failed": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity sentinel poison"
+   }
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "num": {
+   "name": "subject.parityR58Num",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r58open-num",
+   "requestAttributes": {
+    "case": "r58open-num"
+   }
+  },
+  "fz": {
+   "name": "subject.parityR58Fz",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r58open-fz",
+   "requestAttributes": {
+    "case": "r58open-fz"
+   }
+  },
+  "hdr": {
+   "name": "subject.parityR58Hdr",
+   "pipType": "HEADER",
+   "type": "UUID",
+   "header": "x-parity-r58-hdr",
+   "cacheable": false
+  },
+  "sent": {
+   "name": "subject.parityR58Sent",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r58open-sent",
+   "requestAttributes": {
+    "case": "r58open-sent"
+   }
+  },
+  "failed": {
+   "name": "subject.parityR58Failed",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r58open-failed",
+   "requestAttributes": {
+    "case": "r58open-failed"
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ax77-156-op58-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-156-op58-scalar-body-not-in",
+   "about": "A GENERAL body that is the number 5 on the left of NOT IN a list of texts that holds its text '5'. ALLOW form: the comparison OR resource.a == 'y'.",
+   "pips": [
+    "failed",
+    "fz",
+    "hdr",
+    "num",
+    "scope",
+    "sent"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR58Num NOT IN '5', 'b' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-156-op58-scalar-body-not-in-deny",
+   "about": "A GENERAL body that is the number 5 on the left of NOT IN a list of texts that holds its text '5'. DENY form: the comparison as a DENY rule under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "failed",
+    "fz",
+    "hdr",
+    "num",
+    "scope",
+    "sent"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR58Num NOT IN '5', 'b'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-156-op58-header-not-contains",
+   "about": "A GENERAL body 'v' NOT CONTAINS a HEADER of the two values v and w. ALLOW form: the comparison OR resource.a == 'y'.",
+   "pips": [
+    "failed",
+    "fz",
+    "hdr",
+    "num",
+    "scope",
+    "sent"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR58Fz NOT CONTAINS subject.parityR58Hdr OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r58-hdr": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r58-hdr": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-156-op58-header-not-contains-deny",
+   "about": "A GENERAL body 'v' NOT CONTAINS a HEADER of the two values v and w. DENY form: the comparison as a DENY rule under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "failed",
+    "fz",
+    "hdr",
+    "num",
+    "scope",
+    "sent"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR58Fz NOT CONTAINS subject.parityR58Hdr",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r58-hdr": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-156-op58-jp-huge-number",
+   "about": "A filter of a jsonPath comparing a document number 1e400 with a number of 401 digits: equal as doubles (both infinite), unequal as BigDecimals. ALLOW form: the comparison OR resource.a == 'y'.",
+   "pips": [
+    "failed",
+    "fz",
+    "hdr",
+    "num",
+    "scope",
+    "sent"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.items[?(@.k == 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001)].m CONTAINS 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "items": [
+       {
+        "k": 1e400,
+        "m": "y"
+       }
+      ]
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "items": [
+       {
+        "k": 1e400,
+        "m": "y"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-156-op58-jp-huge-number-deny",
+   "about": "A filter of a jsonPath comparing a document number 1e400 with a number of 401 digits: equal as doubles (both infinite), unequal as BigDecimals. DENY form: the comparison as a DENY rule under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "failed",
+    "fz",
+    "hdr",
+    "num",
+    "scope",
+    "sent"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.items[?(@.k == 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001)].m CONTAINS 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "items": [
+       {
+        "k": 1e400,
+        "m": "y"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-156-op58-match-not-regex",
+   "about": "MATCH with the pattern [a, which no regular expression compiles, over the text [a. ALLOW form: the comparison OR resource.a == 'y'.",
+   "pips": [
+    "failed",
+    "fz",
+    "hdr",
+    "num",
+    "scope",
+    "sent"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x MATCH '[a' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": "[a"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "x": "[a"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-156-op58-match-not-regex-deny",
+   "about": "MATCH with the pattern [a, which no regular expression compiles, over the text [a. DENY form: the comparison as a DENY rule under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "failed",
+    "fz",
+    "hdr",
+    "num",
+    "scope",
+    "sent"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x MATCH '[a'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": "[a"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-156-op58-sentinel-not-in-value",
+   "about": "round 44's sentinel left of NOT IN instead of IN: a GENERAL sentinel (subject.parityR58Sent, answers m) NOT IN a resource list that holds w, beside OR resource.a == 'y'; the call log of the sentinel says whether the left side was read before the collection side ended the comparison (CFG collection_right_first).",
+   "pips": [
+    "failed",
+    "fz",
+    "hdr",
+    "num",
+    "scope",
+    "sent"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR58Sent NOT IN resource.s58list OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "s58list": [
+       "w"
+      ]
+     },
+     "pipCalls": "/api/v1/pip/r58open-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "s58list": [
+       "w"
+      ]
+     },
+     "pipCalls": "/api/v1/pip/r58open-sent"
+    }
+   ]
+  },
+  {
+   "id": "ax77-156-op58-sentinel-not-in-absent",
+   "about": "round 44's sentinel left of NOT IN instead of IN: a GENERAL sentinel (subject.parityR58Sent, answers m) NOT IN an absent resource key, beside OR resource.a == 'y'; the call log of the sentinel says whether the left side was read before the collection side ended the comparison (CFG collection_right_first). Task 16 moves it to route = check/filter v1.",
+   "pips": [
+    "failed",
+    "fz",
+    "hdr",
+    "num",
+    "scope",
+    "sent"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR58Sent NOT IN resource.s58absent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pipCalls": "/api/v1/pip/r58open-sent",
+     "name": "a-n-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "pipCalls": "/api/v1/pip/r58open-sent",
+     "name": "a-y-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "ax77-156-op58-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  }
+ ]
+}

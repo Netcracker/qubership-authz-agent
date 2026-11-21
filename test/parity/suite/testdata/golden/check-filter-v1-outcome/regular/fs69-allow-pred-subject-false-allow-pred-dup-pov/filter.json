@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": null,
+    "mongodbFilterCondition": "{ \"$or\": [ {{ \"q\": 1 }}, {{ \"p\": 1 }} ] }",
+    "rsqlFilterCondition": "q==1,p==1",
+    "sqlFilterCondition": "q=1 OR p=1",
+    "customFilterCondition": null
+  }
+}

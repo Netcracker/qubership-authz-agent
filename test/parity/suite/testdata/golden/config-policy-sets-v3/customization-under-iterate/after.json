@@ -1,0 +1,50 @@
+{
+  "status": 200,
+  "export": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "iterate": {
+          "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+          "foreach": "subject.permissionScope"
+        },
+        "name": "customization-under-iterate set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "customization-under-iterate reader",
+            "policyId": "a8b68cea-95b2-98ad-0fb3-541b133a3472",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "customization-under-iterate probe-allow",
+                "ruleId": "faeb2827-db33-0b26-7db0-0de268a671a9",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'PROBE'",
+                "tenantId": "default"
+              },
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "customization-under-iterate update-allow replaced",
+                "ruleId": "ce2e5f30-9da6-e377-62c1-ff54a8f6a965",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'UPDATE'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "default"
+          }
+        ],
+        "policySetId": "85048824-3b99-0f09-c18e-aa169d852205",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_REG_CUSTOMIZATION_UNDER_ITERATE'",
+        "tenantId": "default",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

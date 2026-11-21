@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R72_FILTER_INACTIVE_F72_INACTIVE_DENY_PRED.fd.eq(4)).not()",
+    "mongodbFilterCondition": "{ { \"fd\": 4 } }",
+    "rsqlFilterCondition": "fd!=4",
+    "sqlFilterCondition": "NOT (fd=4)",
+    "customFilterCondition": null
+  }
+}

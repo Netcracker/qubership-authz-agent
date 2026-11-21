@@ -1,0 +1,242 @@
+{
+ "about": "GENERAL PIPs whose literal url carries a fragment after '#' with a character a URI does not take there (a space, '|'): the route before '#' answers [\"v\"], so the rule is true when the call goes out to it. Control cases first and last.",
+ "resourceTypePrefix": "PARITY_SUITE_R46_HYP_URLS_",
+ "pins": {},
+ "pips": {
+  "obs-subject-parityhypurlbar": {
+   "name": "subject.parityHypUrlBar",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/hy46-url-fragment-bar#a|b",
+   "requestAttributes": {
+    "case": "hy46-url-fragment-bar"
+   }
+  },
+  "obs-subject-parityhypurlfragment": {
+   "name": "subject.parityHypUrlFragment",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/hy46-url-fragment-space#a b",
+   "requestAttributes": {
+    "case": "hy46-url-fragment-space"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "hy46-urls-control-first",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "hy46-url-fragment-space-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityHypUrlFragment == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     },
+     "pins": {
+      "/api/v1/pip/hy46-url-fragment-space": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "y"
+     },
+     "pins": {
+      "/api/v1/pip/hy46-url-fragment-space": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityhypurlbar",
+    "obs-subject-parityhypurlfragment"
+   ]
+  },
+  {
+   "id": "hy46-url-fragment-bar-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityHypUrlBar == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     },
+     "pins": {
+      "/api/v1/pip/hy46-url-fragment-bar": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "y"
+     },
+     "pins": {
+      "/api/v1/pip/hy46-url-fragment-bar": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityhypurlbar",
+    "obs-subject-parityhypurlfragment"
+   ]
+  },
+  {
+   "id": "hy46-urls-control-last",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}

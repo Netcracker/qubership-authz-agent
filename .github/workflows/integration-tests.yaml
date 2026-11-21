@@ -149,6 +149,13 @@ jobs:
       - name: Test the agent's paritytest build
         run: go test -tags paritytest ./components/authz-agent/internal/server/
 
+      # The tagged files of the parity suite also hold tests that need no stand.
+      # TestParitySuite is the one that does; the export-fed tests skip on
+      # the default profile.
+      - name: Test the parity suite without a stand
+        working-directory: test/parity/suite
+        run: go test -tags integration -skip '^TestParitySuite$' ./...
+
   jsonpath-jayway:
     name: jsonPath against Jayway
     runs-on: ubuntu-latest

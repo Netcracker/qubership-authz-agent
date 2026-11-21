@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_R75_FILTER_NODE_TARGETS_V75_ALLOW_ONLY_DUP_PUD.allowed.eq(1)",
+    "mongodbFilterCondition": "{ { \"allowed\": 1 } }",
+    "rsqlFilterCondition": "allowed==1",
+    "sqlFilterCondition": "allowed=1",
+    "customFilterCondition": null
+  }
+}

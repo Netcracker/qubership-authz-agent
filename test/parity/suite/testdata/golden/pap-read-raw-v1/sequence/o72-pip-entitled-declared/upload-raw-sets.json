@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-o72-pip-entitled-declared",
+        "name": "o72-pip-entitled-declared set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "o72-pip-entitled-declared reader",
+            "policyId": "c06abf74-b96c-c2da-14f8-6d548ea1efbd",
+            "rules": [
+              {
+                "condition": "subject.entitledResources CONTAINS 'v' OR resource.a == 'y'",
+                "effect": "ALLOW",
+                "name": "o72-pip-entitled-declared probe",
+                "ruleId": "c6b104e3-e3df-efd2-7be5-07c2f522d2aa",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-o72-pip-entitled-declared"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-o72-pip-entitled-declared"
+          }
+        ],
+        "policySetId": "79acedf3-45ec-2985-1555-0f82aab242b0",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_O72_PIP_ENTITLED_DECLARED'",
+        "tenantId": "parity-o72-pip-entitled-declared",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

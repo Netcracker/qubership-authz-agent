@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-q69-simplified-querydsl-beside-rsql",
+        "name": "q69-simplified-querydsl-beside-rsql set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "q69-simplified-querydsl-beside-rsql policy",
+            "policyId": "66300d25-00d2-4883-80e4-ccb4a75e1789",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "q69-simplified-querydsl-beside-rsql rule",
+                "rsqlPredicate": "a==r69",
+                "ruleId": "b68f4a65-0e63-c431-68fb-f1a73e471603",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-q69-simplified-querydsl-beside-rsql"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-q69-simplified-querydsl-beside-rsql"
+          }
+        ],
+        "policySetId": "1e74ea36-11ca-2cfa-2739-df3b013b8dc8",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_BESIDE_RSQL'",
+        "tenantId": "parity-q69-simplified-querydsl-beside-rsql",
+        "type": "SIMPLIFIED"
+      }
+    ]
+  }
+}

@@ -1,0 +1,53 @@
+{
+ "about": "Round 76, task 16: survivor:subject m2m | filter policy DENY_UNLESS_PERMIT→allow_and_not_deny, moved to subject = m2m from round69/filtersub-grid-deny-pred-subject-true-alone.json (fs69-deny-pred-subject-true-alone-dup-dup). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ax76-170-fs69-deny-pred-subject-true-alone-dup-dup",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "DENY",
+         "condition": "subject.roles CONTAINS 'ROLE_M2M'",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {},
+     "subject": "m2m"
+    }
+   ],
+   "about": "Task 16 moves it to subject = m2m."
+  }
+ ]
+}

@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R72_FILTER_PARENS_F72_PARENS_DENY_AND.fa.eq(1)).and((PARITY_SUITE_R72_FILTER_PARENS_F72_PARENS_DENY_AND.fb.eq(2).and(PARITY_SUITE_R72_FILTER_PARENS_F72_PARENS_DENY_AND.fc.eq(3))).not())",
+    "mongodbFilterCondition": "{ \"$and\": [ { { \"fa\": 1 } }, { { \"fb\": 2, \"fc\": 3 } } ] }",
+    "rsqlFilterCondition": "(fa==1);fb!=2,fc!=3",
+    "sqlFilterCondition": "(fa=1) AND NOT (fb=2 AND fc=3)",
+    "customFilterCondition": null
+  }
+}

@@ -1,0 +1,31 @@
+{
+ "about": "What check/resource answers for a simplified policy whose only predicate names an undeclared placeholder. x20-undeclared-placeholder records the filter, which denies; the decision on the same policy is recorded nowhere. A filter that denies where check/resource allows is the one shape in which the agent would need to mark such a policy. The agent's converter accepts the policy.",
+ "resourceTypePrefix": "PARITY_SUITE_R10_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "x20-undeclared-placeholder-check",
+   "resourceType": "PARITY_SUITE_R10_X20_CHECK",
+   "about": "The policy of x20-undeclared-placeholder on a resource type of its own. The filter is asked again beside check/resource, the control that the policy is the one x20 records.",
+   "operation": "LIST",
+   "policy": {
+    "rsqlPredicate": "owner==${subject.parityUndeclared}"
+   },
+   "requests": [
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r10-x20"
+     }
+    },
+    {
+     "name": "filter",
+     "operation": "LIST",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

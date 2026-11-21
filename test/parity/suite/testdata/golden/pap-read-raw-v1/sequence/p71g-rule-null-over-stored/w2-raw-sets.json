@@ -1,0 +1,37 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "name": "p71g-rule-null-over-stored s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p71g-rule-null-over-stored s reader",
+            "policyId": "053516cf-f890-1fbe-0adb-19a0d792d0b1",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p71g-rule-null-over-stored first rule name",
+                "ruleId": "e643d087-b661-8f7a-8ef6-0ed3594585e2",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p71g-rule-null-over-stored"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p71g-rule-null-over-stored"
+          }
+        ],
+        "policySetId": "18fade08-a6f1-4b25-bb11-b04ea1654231",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P71G_RULE_NULL_OVER_STORED'",
+        "tenantId": "parity-p71g-rule-null-over-stored",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

@@ -1,0 +1,3412 @@
+{
+ "about": "Round 78, task 16: rule conditions over an operand in a special state, asked through check/filter v1 in two forms: an ALLOW rule without predicates whose condition is the probe, and the same rule with `<probe> OR <true for the subject>`, each beside an ALLOW rule with the predicate a==1. T, F, ABORT and ERR of the probe give ALLOW, the predicate or DENY. Each case declares every PIP of the file. The first and the last case are controls.",
+ "resourceTypePrefix": "PARITY_SUITE_R78C_",
+ "pins": {
+  "/api/v1/pip/r78c-null-at": {
+   "statusCode": 200,
+   "body": {
+    "k": null
+   }
+  },
+  "/api/v1/pip/r78c-empty-list": {
+   "statusCode": 200,
+   "body": []
+  },
+  "/api/v1/pip/r78c-null-body": {
+   "statusCode": 200,
+   "body": null
+  },
+  "/api/v1/pip/r78c-empty-list-at": {
+   "statusCode": 200,
+   "body": {
+    "k": []
+   }
+  },
+  "/api/v1/pip/r78c-value": {
+   "statusCode": 200,
+   "body": [
+    "5"
+   ]
+  }
+ },
+ "entitlements": {
+  "statusCode": 200,
+  "body": {
+   "entitlements": [
+    {
+     "resourceType": "PARITY_R78C_ENT",
+     "references": [
+      {
+       "name": "Owner",
+       "resources": [
+        {
+         "resourceId": "e1"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "pips": {
+  "g-null-at": {
+   "name": "subject.parityR78CNullAt",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r78c-null-at",
+   "requestAttributes": {
+    "case": "r78c-null-at"
+   },
+   "jsonPath": "$.k"
+  },
+  "g-empty-list": {
+   "name": "subject.parityR78CEmptyList",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r78c-empty-list",
+   "requestAttributes": {
+    "case": "r78c-empty-list"
+   }
+  },
+  "g-null-body": {
+   "name": "subject.parityR78CNullBody",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r78c-null-body",
+   "requestAttributes": {
+    "case": "r78c-null-body"
+   }
+  },
+  "g-empty-list-at": {
+   "name": "subject.parityR78CEmptyListAt",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r78c-empty-list-at",
+   "requestAttributes": {
+    "case": "r78c-empty-list-at"
+   },
+   "jsonPath": "$.k"
+  },
+  "g-value": {
+   "name": "subject.parityR78CValue",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r78c-value",
+   "requestAttributes": {
+    "case": "r78c-value"
+   }
+  },
+  "header": {
+   "name": "subject.parityR78CHeader",
+   "pipType": "HEADER",
+   "header": "x-parity-r78c-absent",
+   "cacheable": false
+  },
+  "token": {
+   "name": "subject.parityR78CToken",
+   "pipType": "TOKEN",
+   "type": "REGULAR",
+   "claim": "parityR78cMissing",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "r78c-control-first",
+   "about": "Control: an ALLOW rule whose condition is true answers ALLOW.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CONTROL_FIRST",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CONTROL_FIRST'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "check",
+     "resource": {
+      "id": "r78"
+     },
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-g-empty-list-ge-or",
+   "about": "The probe subject.parityR78CEmptyList >= 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_GE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_GE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CEmptyList >= 5 OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-g-empty-list-at-ge-or",
+   "about": "The probe subject.parityR78CEmptyListAt >= 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_AT_GE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_AT_GE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CEmptyListAt >= 5 OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-resource-ge-or",
+   "about": "The probe resource.r78missing >= 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_RESOURCE_GE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_RESOURCE_GE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.r78missing >= 5 OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-bare-name-ge-bare",
+   "about": "The probe subject.name >= 5 on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_BARE_NAME_GE_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_BARE_NAME_GE_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.name >= 5",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-bare-name-ge-or",
+   "about": "The probe subject.name >= 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_BARE_NAME_GE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_BARE_NAME_GE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.name >= 5 OR subject.id IS NOT NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-g-empty-list-gt-or",
+   "about": "The probe subject.parityR78CEmptyList > 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_GT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_GT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CEmptyList > 5 OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-g-empty-list-at-gt-or",
+   "about": "The probe subject.parityR78CEmptyListAt > 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_AT_GT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_AT_GT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CEmptyListAt > 5 OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-resource-gt-or",
+   "about": "The probe resource.r78missing > 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_RESOURCE_GT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_RESOURCE_GT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.r78missing > 5 OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-bare-name-gt-bare",
+   "about": "The probe subject.name > 5 on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_BARE_NAME_GT_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_BARE_NAME_GT_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.name > 5",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-bare-name-gt-or",
+   "about": "The probe subject.name > 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_BARE_NAME_GT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_BARE_NAME_GT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.name > 5 OR subject.id IS NOT NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-g-empty-list-le-or",
+   "about": "The probe subject.parityR78CEmptyList <= 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_LE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_LE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CEmptyList <= 5 OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-g-empty-list-at-le-or",
+   "about": "The probe subject.parityR78CEmptyListAt <= 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_AT_LE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_AT_LE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CEmptyListAt <= 5 OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-resource-le-or",
+   "about": "The probe resource.r78missing <= 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_RESOURCE_LE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_RESOURCE_LE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.r78missing <= 5 OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-bare-name-le-or",
+   "about": "The probe subject.name <= 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_BARE_NAME_LE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_BARE_NAME_LE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.name <= 5 OR subject.id IS NOT NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-g-empty-list-lt-or",
+   "about": "The probe subject.parityR78CEmptyList < 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_LT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_LT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CEmptyList < 5 OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-g-empty-list-at-lt-or",
+   "about": "The probe subject.parityR78CEmptyListAt < 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_AT_LT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_AT_LT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CEmptyListAt < 5 OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-resource-lt-or",
+   "about": "The probe resource.r78missing < 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_RESOURCE_LT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_RESOURCE_LT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.r78missing < 5 OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-bare-name-lt-bare",
+   "about": "The probe subject.name < 5 on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_BARE_NAME_LT_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_BARE_NAME_LT_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.name < 5",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-bare-name-lt-or",
+   "about": "The probe subject.name < 5 on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_BARE_NAME_LT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_BARE_NAME_LT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.name < 5 OR subject.id IS NOT NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-g-empty-list-eq-or",
+   "about": "The probe subject.parityR78CEmptyList == '5' on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_EQ_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_EQ_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CEmptyList == '5' OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-bare-name-eq-or",
+   "about": "The probe subject.name == '5' on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_BARE_NAME_EQ_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_BARE_NAME_EQ_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.name == '5' OR subject.id IS NOT NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-g-empty-list-in-bare",
+   "about": "The probe subject.parityR78CEmptyList IN '5', 'b' on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_IN_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_IN_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CEmptyList IN '5', 'b'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-g-empty-list-in-or",
+   "about": "The probe subject.parityR78CEmptyList IN '5', 'b' on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_IN_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_IN_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CEmptyList IN '5', 'b' OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-entitled-is-empty-bare",
+   "about": "The probe subject.entitledResources.of('PARITY_R78C_NONE').as('Owner') IS EMPTY on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_ENTITLED_IS_EMPTY_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_ENTITLED_IS_EMPTY_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.entitledResources.of('PARITY_R78C_NONE').as('Owner') IS EMPTY",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-g-empty-list-is-null-bare",
+   "about": "The probe subject.parityR78CEmptyList IS NULL on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_IS_NULL_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_G_EMPTY_LIST_IS_NULL_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CEmptyList IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-cell-bare-name-match-bare",
+   "about": "The probe subject.name MATCH a* on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CELL_BARE_NAME_MATCH_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CELL_BARE_NAME_MATCH_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.name MATCH a*",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-at-contains-bare",
+   "about": "The probe subject.parityR78CValue CONTAINS subject.parityR78CEmptyListAt on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_CONTAINS_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_CONTAINS_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue CONTAINS subject.parityR78CEmptyListAt",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-at-contains-or",
+   "about": "The probe subject.parityR78CValue CONTAINS subject.parityR78CEmptyListAt on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_CONTAINS_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_CONTAINS_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue CONTAINS subject.parityR78CEmptyListAt OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-resource-contains-or",
+   "about": "The probe subject.parityR78CValue CONTAINS resource.r78missing on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_RESOURCE_CONTAINS_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_RESOURCE_CONTAINS_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue CONTAINS resource.r78missing OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-resource-eq-bare",
+   "about": "The probe subject.parityR78CValue == resource.r78missing on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_RESOURCE_EQ_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_RESOURCE_EQ_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue == resource.r78missing",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-bare-name-eq-bare",
+   "about": "The probe subject.parityR78CValue == subject.name on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_BARE_NAME_EQ_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_BARE_NAME_EQ_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue == subject.name",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-bare-name-eq-or",
+   "about": "The probe subject.parityR78CValue == subject.name on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_BARE_NAME_EQ_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_BARE_NAME_EQ_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue == subject.name OR subject.id IS NOT NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-ge-bare",
+   "about": "The probe subject.parityR78CValue >= subject.parityR78CEmptyList on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_GE_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_GE_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue >= subject.parityR78CEmptyList",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-ge-or",
+   "about": "The probe subject.parityR78CValue >= subject.parityR78CEmptyList on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_GE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_GE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue >= subject.parityR78CEmptyList OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-at-ge-or",
+   "about": "The probe subject.parityR78CValue >= subject.parityR78CEmptyListAt on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_GE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_GE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue >= subject.parityR78CEmptyListAt OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-resource-ge-or",
+   "about": "The probe subject.parityR78CValue >= resource.r78missing on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_RESOURCE_GE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_RESOURCE_GE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue >= resource.r78missing OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-bare-name-ge-bare",
+   "about": "The probe subject.parityR78CValue >= subject.name on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_BARE_NAME_GE_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_BARE_NAME_GE_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue >= subject.name",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-bare-name-ge-or",
+   "about": "The probe subject.parityR78CValue >= subject.name on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_BARE_NAME_GE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_BARE_NAME_GE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue >= subject.name OR subject.id IS NOT NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-gt-or",
+   "about": "The probe subject.parityR78CValue > subject.parityR78CEmptyList on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_GT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_GT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue > subject.parityR78CEmptyList OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-at-gt-or",
+   "about": "The probe subject.parityR78CValue > subject.parityR78CEmptyListAt on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_GT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_GT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue > subject.parityR78CEmptyListAt OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-resource-gt-or",
+   "about": "The probe subject.parityR78CValue > resource.r78missing on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_RESOURCE_GT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_RESOURCE_GT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue > resource.r78missing OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-bare-name-gt-bare",
+   "about": "The probe subject.parityR78CValue > subject.name on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_BARE_NAME_GT_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_BARE_NAME_GT_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue > subject.name",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-bare-name-gt-or",
+   "about": "The probe subject.parityR78CValue > subject.name on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_BARE_NAME_GT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_BARE_NAME_GT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue > subject.name OR subject.id IS NOT NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-is-subset-or",
+   "about": "The probe subject.parityR78CValue IS SUBSET subject.parityR78CEmptyList on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_IS_SUBSET_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_IS_SUBSET_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue IS SUBSET subject.parityR78CEmptyList OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-permissions-is-subset-bare",
+   "about": "The probe subject.parityR78CValue IS SUBSET subject.permissions on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_PERMISSIONS_IS_SUBSET_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_PERMISSIONS_IS_SUBSET_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue IS SUBSET subject.permissions",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-entitled-is-subset-or",
+   "about": "The probe subject.parityR78CValue IS SUBSET subject.entitledResources.of('PARITY_R78C_NONE').as('Owner') on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_ENTITLED_IS_SUBSET_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_ENTITLED_IS_SUBSET_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue IS SUBSET subject.entitledResources.of('PARITY_R78C_NONE').as('Owner') OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-le-bare",
+   "about": "The probe subject.parityR78CValue <= subject.parityR78CEmptyList on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_LE_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_LE_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue <= subject.parityR78CEmptyList",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-le-or",
+   "about": "The probe subject.parityR78CValue <= subject.parityR78CEmptyList on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_LE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_LE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue <= subject.parityR78CEmptyList OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-at-le-bare",
+   "about": "The probe subject.parityR78CValue <= subject.parityR78CEmptyListAt on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_LE_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_LE_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue <= subject.parityR78CEmptyListAt",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-at-le-or",
+   "about": "The probe subject.parityR78CValue <= subject.parityR78CEmptyListAt on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_LE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_LE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue <= subject.parityR78CEmptyListAt OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-resource-le-or",
+   "about": "The probe subject.parityR78CValue <= resource.r78missing on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_RESOURCE_LE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_RESOURCE_LE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue <= resource.r78missing OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-bare-name-le-or",
+   "about": "The probe subject.parityR78CValue <= subject.name on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_BARE_NAME_LE_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_BARE_NAME_LE_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue <= subject.name OR subject.id IS NOT NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-lt-bare",
+   "about": "The probe subject.parityR78CValue < subject.parityR78CEmptyList on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_LT_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_LT_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue < subject.parityR78CEmptyList",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-lt-or",
+   "about": "The probe subject.parityR78CValue < subject.parityR78CEmptyList on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_LT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_LT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue < subject.parityR78CEmptyList OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-at-lt-bare",
+   "about": "The probe subject.parityR78CValue < subject.parityR78CEmptyListAt on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_LT_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_LT_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue < subject.parityR78CEmptyListAt",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-at-lt-or",
+   "about": "The probe subject.parityR78CValue < subject.parityR78CEmptyListAt on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_LT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_AT_LT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue < subject.parityR78CEmptyListAt OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-resource-lt-or",
+   "about": "The probe subject.parityR78CValue < resource.r78missing on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_RESOURCE_LT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_RESOURCE_LT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue < resource.r78missing OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-bare-name-lt-or",
+   "about": "The probe subject.parityR78CValue < subject.name on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_BARE_NAME_LT_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_BARE_NAME_LT_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue < subject.name OR subject.id IS NOT NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-bare-scopes-contains-any-bare",
+   "about": "The probe subject.parityR78CValue CONTAINS ANY subject.scopes on check/filter, in the bare form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_BARE_SCOPES_CONTAINS_ANY_BARE",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_BARE_SCOPES_CONTAINS_ANY_BARE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue CONTAINS ANY subject.scopes",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-g-empty-list-in-or",
+   "about": "The probe subject.parityR78CValue IN subject.parityR78CEmptyList on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_IN_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_G_EMPTY_LIST_IN_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue IN subject.parityR78CEmptyList OR subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r78c-rcell-bare-scopes-in-or",
+   "about": "The probe subject.parityR78CValue IN subject.scopes on check/filter, in the or form.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_RCELL_BARE_SCOPES_IN_OR",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_RCELL_BARE_SCOPES_IN_OR'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "anyone",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        },
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR78CValue IN subject.scopes OR subject.id IS NOT NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m@parity-ts-bare"
+    }
+   ]
+  },
+  {
+   "id": "r78c-control-last",
+   "about": "Control: an ALLOW rule whose condition is true answers ALLOW.",
+   "pips": [
+    "g-empty-list",
+    "g-empty-list-at",
+    "g-null-at",
+    "g-null-body",
+    "g-value",
+    "header",
+    "token"
+   ],
+   "resourceType": "PARITY_SUITE_R78C_CONTROL_LAST",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R78C_CONTROL_LAST'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "check",
+     "resource": {
+      "id": "r78"
+     },
+     "operation": "READ"
+    }
+   ]
+  }
+ ]
+}

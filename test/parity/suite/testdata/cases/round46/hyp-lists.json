@@ -1,0 +1,299 @@
+{
+ "about": "A GENERAL PIP whose body is a list holding one null, on the left of CONTAINS ANY, in the forms that tell a true, a false, an ended rule and a failed decision apart. Control cases first and last.",
+ "resourceTypePrefix": "PARITY_SUITE_R46_HYP_LISTS_",
+ "pins": {},
+ "pips": {
+  "obs-subject-parityhypgen": {
+   "name": "subject.parityHypGen",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/hyp-gen"
+  }
+ },
+ "cases": [
+  {
+   "id": "hy46-lists-control-first",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "hy46-null-body-contains-any-null-first-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityHypGen CONTAINS ANY resource.r OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "r": [
+       null,
+       "v"
+      ],
+      "id": "obs",
+      "a": "y"
+     },
+     "pins": {
+      "/api/v1/pip/hyp-gen": {
+       "statusCode": 200,
+       "body": [
+        null
+       ]
+      }
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityhypgen"
+   ]
+  },
+  {
+   "id": "hy46-null-body-contains-any-null-first-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityHypGen CONTAINS ANY resource.r",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "r": [
+       null,
+       "v"
+      ],
+      "id": "obs",
+      "a": "n"
+     },
+     "pins": {
+      "/api/v1/pip/hyp-gen": {
+       "statusCode": 200,
+       "body": [
+        null
+       ]
+      }
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityhypgen"
+   ]
+  },
+  {
+   "id": "hy46-null-body-contains-any-null-last-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityHypGen CONTAINS ANY resource.r OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "r": [
+       "v",
+       null
+      ],
+      "id": "obs",
+      "a": "y"
+     },
+     "pins": {
+      "/api/v1/pip/hyp-gen": {
+       "statusCode": 200,
+       "body": [
+        null
+       ]
+      }
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityhypgen"
+   ]
+  },
+  {
+   "id": "hy46-null-body-contains-any-null-last-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityHypGen CONTAINS ANY resource.r",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "r": [
+       "v",
+       null
+      ],
+      "id": "obs",
+      "a": "n"
+     },
+     "pins": {
+      "/api/v1/pip/hyp-gen": {
+       "statusCode": 200,
+       "body": [
+        null
+       ]
+      }
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityhypgen"
+   ]
+  },
+  {
+   "id": "hy46-lists-control-last",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}

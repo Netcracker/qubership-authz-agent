@@ -1,0 +1,632 @@
+{
+ "about": "A failed GENERAL PIP beside a sibling that decides. The readings each case tells apart differ only where the stand reads the failing PIP, so every request is filed under the order class that the call log of /api/v1/pip/r16-failing shows. The reader has two grants, r1 and r2; ry sends {a: y, b: y}, rn sends {a: n}.",
+ "resourceTypePrefix": "PARITY_SUITE_R16_",
+ "pins": {
+  "/api/v1/pip/r16-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 16 case"
+   }
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ],
+      "type": "USER"
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR16Failing",
+   "url": "http://pip-mock:8090/api/v1/pip/r16-failing",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR16Failing"
+   },
+   "cacheable": false
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "o16-01",
+   "about": "Requests are classified by the call log of the failing PIP route. Same tree as o16-05 with every list of children reversed. When the failing PIP was read, answers whether any of these holds: a failed PIP below a DENY_OVERRIDES iterate node counts as deny; a failed PIP below a PERMIT_UNLESS_DENY iterate node counts as deny; a failed PIP below a DENY_UNLESS_PERMIT iterate pass counts as deny; a failed PIP below a DENY_UNLESS_PERMIT iterate pass counts as not applicable; a failed PIP below a PERMIT_OVERRIDES iterate pass counts as deny; a failed PIP below a PERMIT_UNLESS_DENY policy counts as deny; a failed PIP below a PERMIT_UNLESS_DENY set counts as deny; under PERMIT_UNLESS_DENY a terminal sibling wins over a failed PIP in either order.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": []
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s1-s0",
+       "target": "true",
+       "policies": [],
+       "sets": [
+        {
+         "key": "s1-s0-s0",
+         "target": "true",
+         "policies": [
+          {
+           "key": "s1-s0-s0-p0",
+           "target": "true",
+           "rules": [
+            {
+             "key": "s1-s0-s0-p0-r0",
+             "target": "true",
+             "condition": "true",
+             "effect": "DENY"
+            },
+            {
+             "key": "s1-s0-s0-p0-r1",
+             "target": "true",
+             "condition": "subject.parityR16Failing == 'v'",
+             "effect": "DENY"
+            }
+           ],
+           "algorithm": "PERMIT_UNLESS_DENY"
+          }
+         ],
+         "sets": [],
+         "iterate": {
+          "foreach": "subject.permissionScope",
+          "algorithm": "DENY_OVERRIDES"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     },
+     "classifyBy": "/api/v1/pip/r16-failing"
+    }
+   ]
+  },
+  {
+   "id": "o16-02",
+   "about": "Requests are classified by the call log of the failing PIP route. Same tree as o16-06 with every list of children reversed. When the failing PIP was read, answers whether any of these holds: a failed PIP below a DENY_UNLESS_PERMIT iterate node counts as deny; a failed PIP below a DENY_UNLESS_PERMIT iterate node counts as not applicable; a failed PIP below a PERMIT_UNLESS_DENY iterate pass counts as deny; a failed PIP below a PERMIT_OVERRIDES policy counts as deny; a failed PIP below a DENY_OVERRIDES set counts as deny; under PERMIT_OVERRIDES a terminal sibling wins over a failed PIP in either order.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "DENY"
+          },
+          {
+           "key": "s0-s0-p0-r1",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     },
+     "classifyBy": "/api/v1/pip/r16-failing"
+    }
+   ]
+  },
+  {
+   "id": "o16-03",
+   "about": "Requests are classified by the call log of the failing PIP route. Same tree as o16-07 with every list of children reversed. When the failing PIP was read, answers whether any of these holds: a failed PIP below a PERMIT_OVERRIDES iterate node counts as deny; a failed PIP below a DENY_OVERRIDES iterate pass counts as deny; a failed PIP below a DENY_UNLESS_PERMIT iterate pass counts as deny; a failed PIP below a DENY_UNLESS_PERMIT iterate pass counts as not applicable; under DENY_OVERRIDES a terminal sibling wins over a failed PIP in either order; under PERMIT_OVERRIDES a terminal sibling wins over a failed PIP in either order.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": [
+        {
+         "key": "s0-s0-s0",
+         "target": "true",
+         "policies": [
+          {
+           "key": "s0-s0-s0-p0",
+           "target": "true",
+           "rules": [
+            {
+             "key": "s0-s0-s0-p0-r0",
+             "target": "true",
+             "condition": "true",
+             "effect": "ALLOW"
+            },
+            {
+             "key": "s0-s0-s0-p0-r1",
+             "target": "true",
+             "condition": "subject.parityR16Failing == 'v'",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "sets": []
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     },
+     "classifyBy": "/api/v1/pip/r16-failing"
+    }
+   ]
+  },
+  {
+   "id": "o16-04",
+   "about": "Requests are classified by the call log of the failing PIP route. Same tree as o16-08 with every list of children reversed. When the failing PIP was read, answers whether any of these holds: a failed PIP below a DENY_OVERRIDES policy counts as deny; a failed PIP below a PERMIT_OVERRIDES set counts as deny; under PERMIT_OVERRIDES a terminal sibling wins over a failed PIP in either order.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "true",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     },
+     "classifyBy": "/api/v1/pip/r16-failing"
+    }
+   ]
+  },
+  {
+   "id": "o16-05",
+   "about": "Requests are classified by the call log of the failing PIP route. Same tree as o16-01 with every list of children reversed. When the failing PIP was read, answers whether any of these holds: a failed PIP below a DENY_OVERRIDES iterate node counts as deny; a failed PIP below a PERMIT_UNLESS_DENY iterate node counts as deny; a failed PIP below a DENY_UNLESS_PERMIT iterate pass counts as deny; a failed PIP below a DENY_UNLESS_PERMIT iterate pass counts as not applicable; a failed PIP below a PERMIT_OVERRIDES iterate pass counts as deny; a failed PIP below a PERMIT_UNLESS_DENY policy counts as deny; a failed PIP below a PERMIT_UNLESS_DENY set counts as deny; under PERMIT_UNLESS_DENY a terminal sibling wins over a failed PIP in either order.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [],
+       "sets": [
+        {
+         "key": "s0-s0-s0",
+         "target": "true",
+         "policies": [
+          {
+           "key": "s0-s0-s0-p0",
+           "target": "true",
+           "rules": [
+            {
+             "key": "s0-s0-s0-p0-r0",
+             "target": "true",
+             "condition": "subject.parityR16Failing == 'v'",
+             "effect": "DENY"
+            },
+            {
+             "key": "s0-s0-s0-p0-r1",
+             "target": "true",
+             "condition": "true",
+             "effect": "DENY"
+            }
+           ],
+           "algorithm": "PERMIT_UNLESS_DENY"
+          }
+         ],
+         "sets": [],
+         "iterate": {
+          "foreach": "subject.permissionScope",
+          "algorithm": "DENY_OVERRIDES"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     },
+     "classifyBy": "/api/v1/pip/r16-failing"
+    }
+   ]
+  },
+  {
+   "id": "o16-06",
+   "about": "Requests are classified by the call log of the failing PIP route. Same tree as o16-02 with every list of children reversed. When the failing PIP was read, answers whether any of these holds: a failed PIP below a DENY_UNLESS_PERMIT iterate node counts as deny; a failed PIP below a DENY_UNLESS_PERMIT iterate node counts as not applicable; a failed PIP below a PERMIT_UNLESS_DENY iterate pass counts as deny; a failed PIP below a PERMIT_OVERRIDES policy counts as deny; a failed PIP below a DENY_OVERRIDES set counts as deny; under PERMIT_OVERRIDES a terminal sibling wins over a failed PIP in either order.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          },
+          {
+           "key": "s0-s0-p0-r1",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     },
+     "classifyBy": "/api/v1/pip/r16-failing"
+    }
+   ]
+  },
+  {
+   "id": "o16-07",
+   "about": "Requests are classified by the call log of the failing PIP route. Same tree as o16-03 with every list of children reversed. When the failing PIP was read, answers whether any of these holds: a failed PIP below a PERMIT_OVERRIDES iterate node counts as deny; a failed PIP below a DENY_OVERRIDES iterate pass counts as deny; a failed PIP below a DENY_UNLESS_PERMIT iterate pass counts as deny; a failed PIP below a DENY_UNLESS_PERMIT iterate pass counts as not applicable; under DENY_OVERRIDES a terminal sibling wins over a failed PIP in either order; under PERMIT_OVERRIDES a terminal sibling wins over a failed PIP in either order.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": [
+        {
+         "key": "s0-s0-s0",
+         "target": "true",
+         "policies": [
+          {
+           "key": "s0-s0-s0-p0",
+           "target": "true",
+           "rules": [
+            {
+             "key": "s0-s0-s0-p0-r0",
+             "target": "true",
+             "condition": "subject.parityR16Failing == 'v'",
+             "effect": "ALLOW"
+            },
+            {
+             "key": "s0-s0-s0-p0-r1",
+             "target": "true",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "sets": []
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     },
+     "classifyBy": "/api/v1/pip/r16-failing"
+    }
+   ]
+  },
+  {
+   "id": "o16-08",
+   "about": "Requests are classified by the call log of the failing PIP route. Same tree as o16-04 with every list of children reversed. When the failing PIP was read, answers whether any of these holds: a failed PIP below a DENY_OVERRIDES policy counts as deny; a failed PIP below a PERMIT_OVERRIDES set counts as deny; under PERMIT_OVERRIDES a terminal sibling wins over a failed PIP in either order.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     },
+     "classifyBy": "/api/v1/pip/r16-failing"
+    }
+   ]
+  }
+ ]
+}

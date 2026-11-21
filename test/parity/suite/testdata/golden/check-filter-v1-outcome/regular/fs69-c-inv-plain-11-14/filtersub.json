@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_FS69_FS69_C_INV_PLAIN_11_14.f6a.eq(PARITY_SUITE_FS69_FS69_C_INV_PLAIN_11_14)).not()",
+    "mongodbFilterCondition": "{ \"$or\": [ { { \"$or\": [ { \"$and\": [ { \"f2a\": { \"$nin\": [ { \"$uuid\": \"x\" }, { \"$uuid\": \"y\" } ] } }, { \"f2b\": \"v1\" } ] }, { \"f2c\": \"v2\" } ] } },{ \"$or\": [ {{ \"$and\": [ { \"$or\": [ { \"f4a\": { \"$in\": [ \"ROLE_PARITY_READER\" ] } }, { \"f4b\": \"v1\" } ] }, { \"f4c\": \"v2\" } ] }}, {{ \"$or\": [ { \"$and\": [ { \"f3a\": [ { \"$uuid\": \"finance\" } ] }, { \"f3b\": \"v1\" } ] }, { \"f3c\": \"v2\" } ] }} ] } ] }",
+    "rsqlFilterCondition": "f12a==PARITY_SUITE_FS69_FS69_C_INV_PLAIN_11_14;f12b==v1,f12c==v2",
+    "sqlFilterCondition": "(f14a='v0') or (NOT (f5a IN ('ROLE_PARITY_READER') OR f5b='v1'))",
+    "customFilterCondition": null
+  }
+}

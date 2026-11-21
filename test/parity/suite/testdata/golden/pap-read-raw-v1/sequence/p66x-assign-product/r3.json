@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "body": {
+    "pips": [
+      {
+        "cacheable": true,
+        "name": "subject.permissions",
+        "pipType": "MAPPING",
+        "productMapping": {
+          "subject.roles": {
+            "ROLE_PARITY_P66X_PRODUCT": [
+              "parity_p66x_product"
+            ]
+          }
+        },
+        "tenantId": "parity-p66x-assign-product",
+        "type": "UUID"
+      }
+    ]
+  }
+}

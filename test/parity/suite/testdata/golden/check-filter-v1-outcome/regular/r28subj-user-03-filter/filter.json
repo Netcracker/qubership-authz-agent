@@ -1,0 +1,24 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "x.t.eq(x y).and(x.n.eq(parity-r28-u3))",
+    "mongodbFilterCondition": "{ { \"t\": x y, \"n\": parity-r28-u3 } }",
+    "rsqlFilterCondition": "t==x y;n==parity-r28-u3",
+    "sqlFilterCondition": "t=x y AND n=parity-r28-u3",
+    "customFilterCondition": {
+      "logic": {
+        "path": "f2013d76-b790-ad9b-a0fa-e946e5ae3b12"
+      },
+      "data": {
+        "f2013d76-b790-ad9b-a0fa-e946e5ae3b12": {
+          "predicate": "t:${i};n:${n}",
+          "params": {
+            "i": "x y",
+            "n": "parity-r28-u3"
+          }
+        }
+      }
+    }
+  }
+}

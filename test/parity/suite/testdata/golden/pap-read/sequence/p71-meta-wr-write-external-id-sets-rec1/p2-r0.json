@@ -1,0 +1,198 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+        "description": "true",
+        "externalId": "parity-p71-meta-293",
+        "name": "rp58-067 s1",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "rp58-067 p2",
+            "policyId": "58561411-3413-2cc4-de80-bf52744095aa",
+            "rules": [
+              {
+                "condition": "subject.permissions CONTAINS 'p1'",
+                "effect": "USE_FILTER_CONDITION",
+                "mongodbPredicate": "{ \"f5a\": \"v0\" }",
+                "name": "rp58-067 r5",
+                "ruleId": "2d35ee07-0953-bd56-4dcc-e93141615362",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+              },
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "rp58-067 r3",
+                "rsqlPredicate": "f3a=in=(${subject.parityP71Meta293RP66Meta087RR29PairsGen})",
+                "ruleId": "2e4a94d6-bedf-cb66-2eae-12a67e7f8079",
+                "ruleType": "DEFAULT",
+                "target": "subject.permissions CONTAINS 'p1'",
+                "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+              },
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "rp58-067 r6",
+                "rsqlPredicate": "f3a=in=(${subject.parityP71Meta293RP66Meta087RR29PairsGen})",
+                "ruleId": "8490a4f1-7d70-272c-2d43-51835838248b",
+                "ruleType": "DEFAULT",
+                "target": "subject.permissions CONTAINS 'p1'",
+                "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+              }
+            ],
+            "target": "false",
+            "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+          },
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "rp58-067 p7",
+            "policyId": "9a92d344-dd27-c2e5-1628-015db8cef942",
+            "rules": [
+              {
+                "condition": "true",
+                "customPredicate": {
+                  "params": {
+                    "p0": "subject.parityP71Meta293RP66Meta087RR29PairsHdr",
+                    "p1": "subject.parityP71Meta293RP66Meta087RR29PairsTok"
+                  },
+                  "predicate": "[{\"value\":${p0},\"property\":\"f8a\",\"operator\":\"in\"},{\"value\":${p1},\"property\":\"f8a\",\"operator\":\"in\"}]"
+                },
+                "effect": "ALLOW",
+                "name": "rp58-067 r10",
+                "ruleId": "5377a9b2-da31-8b85-cdf5-c0219040d877",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+              },
+              {
+                "condition": "true",
+                "customPredicate": {
+                  "params": {
+                    "p0": "subject.parityP71Meta293RP66Meta087RR29PairsHdr",
+                    "p1": "subject.parityP71Meta293RP66Meta087RR29PairsTok"
+                  },
+                  "predicate": "[{\"value\":${p0},\"property\":\"f8a\",\"operator\":\"in\"},{\"value\":${p1},\"property\":\"f8a\",\"operator\":\"in\"}]"
+                },
+                "effect": "ALLOW",
+                "name": "rp58-067 r8",
+                "ruleId": "dc1d1151-da5f-2a29-9fd6-f5c8a60d7fb9",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+              }
+            ],
+            "target": "true",
+            "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+          }
+        ],
+        "policySetId": "cd18fd9c-dfce-89b4-60d8-6cd78d8db942",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P71_META_293'",
+        "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+        "description": "true",
+        "externalId": "parity-p71-meta-293",
+        "name": "rp58-067 s35",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "rp58-067 p36",
+            "policyId": "6c018ac4-e426-ff61-7fca-e9980460fe43",
+            "rules": [
+              {
+                "condition": "subject.permissions CONTAINS 'p1'",
+                "effect": "USE_FILTER_CONDITION",
+                "mongodbPredicate": "{ \"f5a\": \"v0\" }",
+                "name": "rp58-067 r39",
+                "ruleId": "2289b98b-0bae-c8f0-c9e7-b26155beac26",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+              },
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "rp58-067 r37",
+                "rsqlPredicate": "f3a=in=(${subject.parityP71Meta293RP66Meta087RR29PairsGen})",
+                "ruleId": "8513f94e-25c7-4cc5-6ab3-cf0452551e35",
+                "ruleType": "DEFAULT",
+                "target": "subject.permissions CONTAINS 'p1'",
+                "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+              },
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "rp58-067 r38",
+                "rsqlPredicate": "f3a=in=(${subject.parityP71Meta293RP66Meta087RR29PairsGen})",
+                "ruleId": "89255fe3-61f8-43e3-b8b4-9f70e404024a",
+                "ruleType": "DEFAULT",
+                "target": "subject.permissions CONTAINS 'p1'",
+                "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+              }
+            ],
+            "target": "false",
+            "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+          },
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "rp58-067 p40",
+            "policyId": "03dc1e1e-09bd-0313-ee99-d2d3ca964678",
+            "rules": [
+              {
+                "condition": "true",
+                "customPredicate": {
+                  "params": {
+                    "p0": "subject.parityP71Meta293RP66Meta087RR29PairsHdr",
+                    "p1": "subject.parityP71Meta293RP66Meta087RR29PairsTok"
+                  },
+                  "predicate": "[{\"value\":${p0},\"property\":\"f8a\",\"operator\":\"in\"},{\"value\":${p1},\"property\":\"f8a\",\"operator\":\"in\"}]"
+                },
+                "effect": "ALLOW",
+                "name": "rp58-067 r41",
+                "ruleId": "a495e3d8-dcf2-0852-5767-cb17b4fc7227",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+              },
+              {
+                "condition": "true",
+                "customPredicate": {
+                  "params": {
+                    "p0": "subject.parityP71Meta293RP66Meta087RR29PairsHdr",
+                    "p1": "subject.parityP71Meta293RP66Meta087RR29PairsTok"
+                  },
+                  "predicate": "[{\"value\":${p0},\"property\":\"f8a\",\"operator\":\"in\"},{\"value\":${p1},\"property\":\"f8a\",\"operator\":\"in\"}]"
+                },
+                "effect": "ALLOW",
+                "name": "rp58-067 r42",
+                "ruleId": "d425e13f-bd26-95e5-abcb-92eeb5c0072f",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+              }
+            ],
+            "target": "true",
+            "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1"
+          }
+        ],
+        "policySetId": "67579bfc-a058-befe-104a-027d99cc3fb2",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P71_META_293'",
+        "tenantId": "parity-p71-meta-wr-write-external-id-sets-rec1",
+        "type": "DEFAULT"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p71-meta-wr-write-external-id-sets-rec1"
+  ]
+}

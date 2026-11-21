@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "((PARITY_SUITE_FS69_FS69_C_INV_PLAIN_11_12.f19a.eq(00000000-0000-0000-0000-000000000101)).and(PARITY_SUITE_FS69_FS69_C_INV_PLAIN_11_12.f19b.eq(\"v1\"))).not()",
+    "mongodbFilterCondition": "{ \"$or\": [ { { \"$and\": [ { \"$or\": [ { \"f12a\": { \"$in\": [ \"ROLE_PARITY_READER\" ] } }, { \"f12b\": \"v1\" } ] }, { \"f12c\": \"v2\" } ] } },{{ \"$or\": [ { \"f19a\": 00000000-0000-0000-0000-000000000101 }, { \"f19b\": \"v1\" } ] }}, {{ \"$or\": [ { \"f18a\": { \"$nin\": [ { \"$uuid\": \"x\" }, { \"$uuid\": \"y\" } ] } }, { \"f18b\": \"v1\" } ] }},{ { \"$and\": [ { \"$or\": [ { \"f16a\": { \"$in\": [ { \"$uuid\": \"p1\" }, { \"$uuid\": \"p2\" } ] } }, { \"f16b\": \"v1\" } ] }, { \"f16c\": \"v2\" } ] } } ] }",
+    "rsqlFilterCondition": "f19a!=00000000-0000-0000-0000-000000000101,f19b!=v1",
+    "sqlFilterCondition": "((f20a IN ('x', 'y') OR f20b='v1') AND f20c='v2') AND NOT (f19a=00000000-0000-0000-0000-000000000101 AND f19b='v1')",
+    "customFilterCondition": null
+  }
+}

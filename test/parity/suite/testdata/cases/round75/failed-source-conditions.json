@@ -1,0 +1,1266 @@
+{
+  "about": "Round 75 candidates (LI-2-resource): a rule whose condition a failed GENERAL source leaves unknown denies the resource whole where its target and the targets above it hold, whatever its effect and beside any permitting neighbour; where the condition's value does not depend on the source there is no failure. check/resource of single rows, check/filter, and bulk of two resources, one of which the failure reaches. Controls first and last answer true.",
+  "resourceTypePrefix": "PARITY_SUITE_R75_FAILED_SOURCE_",
+  "pins": {
+    "/api/v1/pip/r75-failed": {
+      "statusCode": 500,
+      "body": {
+        "error": "parity round 75 failed source"
+      }
+    }
+  },
+  "pips": {
+    "failed": {
+      "name": "subject.parityR75Failed",
+      "url": "http://pip-mock:8090/api/v1/pip/r75-failed",
+      "httpMethod": "POST",
+      "pipType": "GENERAL",
+      "requestAttributes": {
+        "case": "r75-failed"
+      },
+      "cacheable": false
+    }
+  },
+  "cases": [
+    {
+      "id": "v75f-control-first",
+      "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "PERMIT_UNLESS_DENY",
+          "policies": [
+            {
+              "key": "reader",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "PERMIT_UNLESS_DENY",
+              "rules": [
+                {
+                  "key": "deny",
+                  "target": "true",
+                  "condition": "resource.c == 'zz'",
+                  "effect": "DENY"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "read",
+          "resource": {
+            "id": "r75",
+            "c": "n"
+          }
+        }
+      ]
+    },
+    {
+      "id": "v75f-allow-failed-beside-allow-do",
+      "about": "DENY_OVERRIDES: an ALLOW rule without a predicate whose condition reads only the failed source, beside an ALLOW rule with allowed==1. Does the failure deny every row, in the check and in the filter?",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "true",
+                  "condition": "subject.parityR75Failed == 'v'",
+                  "effect": "ALLOW"
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 0
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-allow-failed-pred-beside-allow-do",
+      "about": "As allow-failed-beside-allow-do, the failing ALLOW rule with a predicate of its own (owner==1): its condition fails on every row. Does the filter keep allowed==1, its own predicate, or deny?",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "true",
+                  "condition": "subject.parityR75Failed == 'v'",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "owner==1",
+                    "sqlPredicate": "owner=1",
+                    "predicate": "${resourceType}.owner.eq(1)",
+                    "mongodbPredicate": "\"owner\": 1"
+                  }
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1,
+            "owner": 1
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 1,
+            "owner": 0
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-deny-failed-pred-pud",
+      "about": "PERMIT_UNLESS_DENY: a DENY rule with the predicate owner==1 whose condition reads the failed source, alone. Legacy's filter ignores the condition of a rule with a predicate; check/resource fails the decision on every row. Is the filter owner!=1 or DENY?",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "PERMIT_UNLESS_DENY",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "PERMIT_UNLESS_DENY",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "true",
+                  "condition": "subject.parityR75Failed == 'v'",
+                  "effect": "DENY",
+                  "predicates": {
+                    "rsqlPredicate": "owner==1",
+                    "sqlPredicate": "owner=1",
+                    "predicate": "${resourceType}.owner.eq(1)",
+                    "mongodbPredicate": "\"owner\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "owner": 1
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "owner": 0
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-false-and-failed-beside-allow-do",
+      "about": "The failed source after a false atom of the subject: the AND is false whatever the source gives, so the check has no failure to answer and the neighbour permits rows with allowed = 1.",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "true",
+                  "condition": "subject.roles CONTAINS 'ROLE_PARITY_NONE' AND subject.parityR75Failed == 'v'",
+                  "effect": "ALLOW"
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 0
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-failed-and-false-beside-allow-do",
+      "about": "The failed source before a false atom of the subject: legacy reads the source first and fails the decision; the AND is false whatever the source gives (LI-1), so the agent permits rows with allowed = 1.",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "true",
+                  "condition": "subject.parityR75Failed == 'v' AND subject.roles CONTAINS 'ROLE_PARITY_NONE'",
+                  "effect": "ALLOW"
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 0
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-failed-or-true-beside-allow-do",
+      "about": "The failed source OR a true atom of the subject (p3c-failed-pip-or-true in a policy): legacy fails the decision, the agent's OR is true whatever the source gives.",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "true",
+                  "condition": "subject.parityR75Failed == 'v' OR subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                  "effect": "ALLOW"
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 0
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-failed-and-row-beside-allow-do",
+      "about": "The failed source AND an atom of the resource: unknown on rows with a = 'y', false on rows with a = 'n'. Does the failure deny only the resources where the condition is unknown, also in one bulk request?",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "true",
+                  "condition": "subject.parityR75Failed == 'v' AND resource.a == 'y'",
+                  "effect": "ALLOW"
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1,
+            "a": "y"
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 1,
+            "a": "n"
+          }
+        },
+        {
+          "name": "row-3",
+          "operation": "READ",
+          "resource": {
+            "id": "row-3",
+            "allowed": 0,
+            "a": "n"
+          }
+        },
+        {
+          "name": "bulk",
+          "bulk": [
+            {
+              "id": "by",
+              "operation": "READ",
+              "resource": {
+                "id": "by",
+                "allowed": 1,
+                "a": "y"
+              }
+            },
+            {
+              "id": "bn",
+              "operation": "READ",
+              "resource": {
+                "id": "bn",
+                "allowed": 1,
+                "a": "n"
+              }
+            }
+          ]
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-failed-or-row-beside-allow-do",
+      "about": "The failed source OR an atom of the resource: true on rows with a = 'y', unknown on the others. Does the failure deny exactly the rows with a != 'y', whatever the neighbour allows, in the check, the filter, and bulk?",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "true",
+                  "condition": "subject.parityR75Failed == 'v' OR resource.a == 'y'",
+                  "effect": "ALLOW"
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1,
+            "a": "y"
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 1,
+            "a": "n"
+          }
+        },
+        {
+          "name": "row-3",
+          "operation": "READ",
+          "resource": {
+            "id": "row-3",
+            "allowed": 0,
+            "a": "y"
+          }
+        },
+        {
+          "name": "bulk",
+          "bulk": [
+            {
+              "id": "by",
+              "operation": "READ",
+              "resource": {
+                "id": "by",
+                "allowed": 1,
+                "a": "y"
+              }
+            },
+            {
+              "id": "bn",
+              "operation": "READ",
+              "resource": {
+                "id": "bn",
+                "allowed": 1,
+                "a": "n"
+              }
+            }
+          ]
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-failed-and-number-beside-allow-do",
+      "about": "The failed source AND resource.n != 5: unknown on rows with n other than 5. Does the failure deny those rows and leave rows with n = 5 to the neighbour?",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "true",
+                  "condition": "subject.parityR75Failed == 'v' AND resource.n != 5",
+                  "effect": "ALLOW"
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1,
+            "n": 5
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 1,
+            "n": 6
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-failed-and-greater-beside-allow-do",
+      "about": "The failed source AND resource.n > 1: unknown on rows with n above 1. The agent's filter has no text for that comparison and denies every row; does the check deny only rows with n above 1?",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "true",
+                  "condition": "subject.parityR75Failed == 'v' AND resource.n > 1",
+                  "effect": "ALLOW"
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1,
+            "n": 1
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 1,
+            "n": 2
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-row-target-failed-beside-allow-do",
+      "about": "DENY_OVERRIDES: an ALLOW rule whose target is resource.a == 'y' and whose condition reads only the failed source, beside a rule that permits rows with allowed = 1. The check denies rows with a = 'y' only; does the filter deny them too?",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "resource.a == 'y'",
+                  "condition": "subject.parityR75Failed == 'v'",
+                  "effect": "ALLOW"
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1,
+            "a": "y"
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 1,
+            "a": "n"
+          }
+        },
+        {
+          "name": "row-3",
+          "operation": "READ",
+          "resource": {
+            "id": "row-3",
+            "allowed": 0,
+            "a": "n"
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-policy-row-target-failed-beside-allow-do",
+      "about": "DENY_OVERRIDES: a policy whose target is resource.a == 'y' holds an ALLOW rule over the failed source; a neighbouring policy permits rows with allowed = 1. The check denies rows with a = 'y' only; does the filter deny only those rather than every row?",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "resource.a == 'y'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "true",
+                  "condition": "subject.parityR75Failed == 'v'",
+                  "effect": "ALLOW"
+                }
+              ]
+            },
+            {
+              "key": "open",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1,
+            "a": "y"
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 1,
+            "a": "n"
+          }
+        },
+        {
+          "name": "row-3",
+          "operation": "READ",
+          "resource": {
+            "id": "row-3",
+            "allowed": 0,
+            "a": "n"
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-deny-row-target-failed-beside-allow-do",
+      "about": "As row-target-failed-beside-allow-do with a DENY rule: the check denies rows with a = 'y' only; does the filter deny only those rather than every row?",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "resource.a == 'y'",
+                  "condition": "subject.parityR75Failed == 'v'",
+                  "effect": "DENY"
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1,
+            "a": "y"
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 1,
+            "a": "n"
+          }
+        },
+        {
+          "name": "row-3",
+          "operation": "READ",
+          "resource": {
+            "id": "row-3",
+            "allowed": 0,
+            "a": "n"
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-set-row-target-failed-beside-allow-do",
+      "about": "DENY_OVERRIDES at the top: a nested set whose target is resource.a == 'y' holds an ALLOW rule over the failed source; a neighbouring policy permits rows with allowed = 1. The check denies rows with a = 'y' only; does the filter deny only those?",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "open",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ],
+          "sets": [
+            {
+              "key": "nested",
+              "target": "resource.a == 'y'",
+              "algorithm": "DENY_OVERRIDES",
+              "policies": [
+                {
+                  "key": "pol",
+                  "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                  "algorithm": "DENY_OVERRIDES",
+                  "rules": [
+                    {
+                      "key": "probe",
+                      "target": "true",
+                      "condition": "subject.parityR75Failed == 'v'",
+                      "effect": "ALLOW"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1,
+            "a": "y"
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 1,
+            "a": "n"
+          }
+        },
+        {
+          "name": "row-3",
+          "operation": "READ",
+          "resource": {
+            "id": "row-3",
+            "allowed": 0,
+            "a": "n"
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-greater-target-failed-beside-allow-do",
+      "about": "As row-target-failed-beside-allow-do with the target resource.n > 1: the agent's filter has no text for that comparison and denies every row; does the check deny only rows with n above 1?",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "resource.n > 1",
+                  "condition": "subject.parityR75Failed == 'v'",
+                  "effect": "ALLOW"
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "filter",
+          "filter": true,
+          "operation": "READ"
+        },
+        {
+          "name": "row-1",
+          "operation": "READ",
+          "resource": {
+            "id": "row-1",
+            "allowed": 1,
+            "n": 1
+          }
+        },
+        {
+          "name": "row-2",
+          "operation": "READ",
+          "resource": {
+            "id": "row-2",
+            "allowed": 1,
+            "n": 2
+          }
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-row-and-failed-beside-allow-do",
+      "about": "As failed-and-row-beside-allow-do, the atom of the resource first: legacy does not read the source where a = 'n'. One bulk request of a resource each way.",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "DENY_OVERRIDES",
+          "policies": [
+            {
+              "key": "pol",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "DENY_OVERRIDES",
+              "rules": [
+                {
+                  "key": "probe",
+                  "target": "true",
+                  "condition": "resource.a == 'y' AND subject.parityR75Failed == 'v'",
+                  "effect": "ALLOW"
+                },
+                {
+                  "key": "open",
+                  "target": "true",
+                  "condition": "true",
+                  "effect": "ALLOW",
+                  "predicates": {
+                    "rsqlPredicate": "allowed==1",
+                    "sqlPredicate": "allowed=1",
+                    "predicate": "${resourceType}.allowed.eq(1)",
+                    "mongodbPredicate": "\"allowed\": 1"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "bulk",
+          "bulk": [
+            {
+              "id": "by",
+              "operation": "READ",
+              "resource": {
+                "id": "by",
+                "allowed": 1,
+                "a": "y"
+              }
+            },
+            {
+              "id": "bn",
+              "operation": "READ",
+              "resource": {
+                "id": "bn",
+                "allowed": 1,
+                "a": "n"
+              }
+            }
+          ]
+        }
+      ],
+      "pips": [
+        "failed"
+      ]
+    },
+    {
+      "id": "v75f-control-last",
+      "about": "Control: as control-first, at the end of the function.",
+      "sets": [
+        {
+          "key": "set",
+          "target": "resourceType == '{{resourceType}}'",
+          "algorithm": "PERMIT_UNLESS_DENY",
+          "policies": [
+            {
+              "key": "reader",
+              "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+              "algorithm": "PERMIT_UNLESS_DENY",
+              "rules": [
+                {
+                  "key": "deny",
+                  "target": "true",
+                  "condition": "resource.c == 'zz'",
+                  "effect": "DENY"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "requests": [
+        {
+          "name": "read",
+          "resource": {
+            "id": "r75",
+            "c": "n"
+          }
+        }
+      ]
+    }
+  ],
+  "standVersion": true
+}
