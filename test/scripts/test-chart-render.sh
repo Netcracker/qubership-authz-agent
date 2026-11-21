@@ -33,7 +33,8 @@ STUB_CHART_DIR="${ROOT_DIR}/helm-templates/authz-policy-admin"
 # the renders that go without it.
 SIZING="$(mktemp)"
 sentinel="$(mktemp)"
-trap 'rm -f "${SIZING}" "${sentinel}"' EXIT
+large="$(mktemp)"
+trap 'rm -f "${SIZING}" "${sentinel}" "${large}"' EXIT
 printf 'CPU_REQUEST: 350m\nCPU_LIMIT: 400m\nMEMORY_REQUEST: 364Mi\nMEMORY_LIMIT: 700Mi\n' >"${SIZING}"
 
 require_cmd() {
@@ -976,6 +977,69 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
       pass "${name} refuses LOG_LEVEL '${bad_level}'"
     fi
   done
+done
+
+# ── Integers reach the agent in decimal digits ───────────────────────────
+
+# Helm reads a number in a values file as a float and prints 1000000 as 1e+06,
+# which the agent cannot read as an integer.
+duration_settings=(
+  AUTHZ_JWKS_HTTP_TIMEOUT
+  AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL
+  AUTHZ_PAP_CLIENT_PULL_INTERVAL
+  AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT
+)
+retry_count_settings=(
+  AUTHZ_JWKS_HTTP_RETRIES
+  AUTHZ_ENTITLEMENTS_HTTP_RETRIES
+)
+printf '%s: 1000000\n' "${duration_settings[@]}" >"${large}"
+for name in "${duration_settings[@]}"; do
+  rendered="$(env_value "${name}" -f "${large}")"
+  if [[ "${rendered}" == "1000000" ]]; then
+    pass "${name}: 1000000 from a values file renders as 1000000"
+  else
+    fail "${name}: 1000000 from a values file rendered as '${rendered}', expected 1000000"
+  fi
+done
+# Under the schema of PR #279 a retry count is at most 100, and Helm prints a
+# number that small in decimal digits with or without authz-agent.integer.
+# -1000000 also stays under that maximum, and Helm prints it as -1e+06 without
+# the helper, so the retry counts take it with the schema skipped.
+printf '%s: -1000000\n' "${retry_count_settings[@]}" >"${large}"
+for name in "${retry_count_settings[@]}"; do
+  rendered="$(env_value "${name}" --skip-schema-validation -f "${large}")"
+  if [[ "${rendered}" == "-1000000" ]]; then
+    pass "${name}: -1000000 from a values file renders as -1000000"
+  else
+    fail "${name}: -1000000 from a values file rendered as '${rendered}', expected -1000000"
+  fi
+done
+
+# A value other than a whole number below 2^53 in magnitude reaches the agent
+# as Helm prints it. 2s from --set is a string, and 1.5 from a values file is a
+# float that is not whole. Helm holds 9007199254740993 as the float
+# 9007199254740992 and prints it as 9.007199254740992e+15, which the agent
+# cannot read as an integer, rather than as the integer 9007199254740992, which
+# the operator did not set.
+for name in "${duration_settings[@]}" "${retry_count_settings[@]}"; do
+  rendered="$(env_value "${name}" --skip-schema-validation --set "${name}=2s")"
+  if [[ "${rendered}" == "2s" ]]; then
+    pass "${name}: 2s renders as given"
+  else
+    fail "${name}: 2s rendered as '${rendered}', expected 2s"
+  fi
+done
+for case in "1.5:1.5" "9007199254740991:9007199254740991" "9007199254740993:9.007199254740992e+15" \
+  "-9007199254740991:-9007199254740991" "-9007199254740993:-9.007199254740992e+15"; do
+  given="${case%%:*}" expected="${case#*:}"
+  printf 'AUTHZ_PAP_CLIENT_PULL_INTERVAL: %s\n' "${given}" >"${large}"
+  rendered="$(env_value AUTHZ_PAP_CLIENT_PULL_INTERVAL --skip-schema-validation -f "${large}")"
+  if [[ "${rendered}" == "${expected}" ]]; then
+    pass "AUTHZ_PAP_CLIENT_PULL_INTERVAL: ${given} from a values file renders as ${expected}"
+  else
+    fail "AUTHZ_PAP_CLIENT_PULL_INTERVAL: ${given} from a values file rendered as '${rendered}', expected ${expected}"
+  fi
 done
 
 echo
