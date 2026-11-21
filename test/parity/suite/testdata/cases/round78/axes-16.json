@@ -1,0 +1,216 @@
+{
+ "about": "Round 78, task 16: survivor:route check/filter v1 | cell PIP_EMPTY×EQ→T, moved to route = check/filter v1 from round35/gaps-pips.json (r35gaps-header-default-empty). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R35G_",
+ "pins": {
+  "/api/v1/pip/r35gaps-raw": {
+   "statusCode": 200,
+   "bodyRaw": "\"v\""
+  },
+  "/api/v1/pip/r35gaps-null": {
+   "statusCode": 200,
+   "body": {
+    "value": null
+   }
+  }
+ },
+ "pips": {
+  "raw": {
+   "name": "subject.parityR35Raw",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r35gaps-raw",
+   "requestAttributes": {
+    "case": "r35gaps-raw"
+   }
+  },
+  "null": {
+   "name": "subject.parityR35Null",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r35gaps-null",
+   "requestAttributes": {
+    "case": "r35gaps-null"
+   },
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "header-default-empty": {
+   "name": "subject.parityR35HeaderEmpty",
+   "pipType": "HEADER",
+   "header": "X-Parity-R35-Absent",
+   "defaultValue": "",
+   "cacheable": false
+  },
+  "header-commas": {
+   "name": "subject.parityR35HeaderCommas",
+   "pipType": "HEADER",
+   "header": "X-Parity-R35-Commas",
+   "defaultValue": "v",
+   "cacheable": false
+  },
+  "token-descendant": {
+   "name": "subject.parityR35Descendant",
+   "pipType": "TOKEN",
+   "claim": "$..parityR35None",
+   "defaultValue": "v",
+   "cacheable": false
+  },
+  "mapping-list": {
+   "name": "subject.permissions.parityR35",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": [
+     "PARITY_R35_LISTED"
+    ]
+   }
+  },
+  "mapping-good": {
+   "name": "subject.permissions.parityR35",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R35_MAPPED"
+     ]
+    }
+   }
+  },
+  "header-no-key": {
+   "name": "subject.parityR35NoHeader",
+   "pipType": "HEADER",
+   "cacheable": false
+  },
+  "token-no-key": {
+   "name": "subject.parityR35NoClaim",
+   "pipType": "TOKEN",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "ax78-16-r35gaps-pips-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r35",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax78-16-r35gaps-general-raw-json-string",
+   "pips": [
+    "raw"
+   ],
+   "about": "The route answers the raw text \"v\" (a JSON string, quotes included) with Content-Type application/json: the bytes a body \"v\" gives. a = n false if it reads as a JSON string body does (ok-general-string-*: a null body); true if the string is the value.",
+   "condition": "subject.parityR35Raw == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax78-16-r35gaps-general-jsonpath-selects-null",
+   "pips": [
+    "null"
+   ],
+   "about": "The route answers {\"value\": null}, and the jsonPath $.value selects null. a = y true if that reads as a null body, as a jsonPath that selects nothing does; both false if the PIP fails.",
+   "condition": "subject.parityR35Null == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax78-16-r35gaps-header-default-empty",
+   "pips": [
+    "header-default-empty"
+   ],
+   "about": "A HEADER PIP whose header the request does not send and whose defaultValue is \"\". a = n false if the PIP has no value (== '' over a HEADER without a value is false); true if its value is the empty string. Task 16 moves it to route = check/filter v1.",
+   "condition": "subject.parityR35HeaderEmpty == '' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read-a-y-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "ax78-16-r35gaps-mapping-table-a-list-control",
+   "pips": [
+    "mapping-good"
+   ],
+   "about": "Positive control of r35gaps-mapping-table-a-list: the MAPPING declaration with an object as the table of subject.roles. a = n true.",
+   "condition": "subject.permissions CONTAINS 'PARITY_R35_MAPPED' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read-a-y-check-filter-v1",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  }
+ ]
+}

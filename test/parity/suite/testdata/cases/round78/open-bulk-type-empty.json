@@ -1,0 +1,149 @@
+{
+ "about": "Round 78: a bulk item whose type is the empty string. The first and the last case are controls.",
+ "resourceTypePrefix": "PARITY_SUITE_O78_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "o78-bulk-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r78",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78-bulk-type-empty",
+   "about": "Sets allow READ to anyone on the case's type. Each request carries an item whose type is the empty string beside a plain item, on check/resource/bulk and on bulk/operations v1. Round 75 answered 400 for the whole request when the type is null; whether the empty string is refused the same way, read as the request's type or as a type of its own is not asked.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "any",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "bulk-type-empty",
+     "bulk": [
+      {
+       "id": "odd",
+       "type": "",
+       "operation": "READ",
+       "resource": {
+        "id": "odd"
+       }
+      },
+      {
+       "id": "plain",
+       "operation": "READ",
+       "resource": {
+        "id": "plain"
+       }
+      }
+     ]
+    },
+    {
+     "name": "operations-type-empty",
+     "bulkOperations": [
+      {
+       "id": "odd",
+       "type": "",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "odd"
+       }
+      },
+      {
+       "id": "plain",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "plain"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o78-bulk-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r78",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}
