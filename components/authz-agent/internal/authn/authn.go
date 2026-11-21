@@ -129,6 +129,9 @@ type Manager struct {
 	log      Logger
 	client   *http.Client
 	resolver *realmResolver
+	// lookupOff makes fetch log only once that the realm lookup is off, at
+	// the first fetch of a non-empty list of providers.
+	lookupOff sync.Once
 
 	mu          sync.Mutex
 	status      Status
@@ -371,6 +374,11 @@ func (a artifacts) status(mode string, configured int) Status {
 // configuration order, so the candidates of a kid shared by two providers
 // keep a fixed order.
 func (m *Manager) fetch(providers []Provider) artifacts {
+	if m.resolver == nil && len(providers) > 0 {
+		m.lookupOff.Do(func() {
+			m.log.Infof("trusted providers: AUTHZ_TENANT_MANAGER_URL is empty, so a realm written by its tenant display name is not resolved")
+		})
+	}
 	out := artifacts{jwksByKid: map[string][]candidate{}}
 	for i, p := range providers {
 		result, keys := m.fetchProvider(p, i)

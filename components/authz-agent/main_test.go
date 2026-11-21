@@ -84,18 +84,18 @@ func TestReport(t *testing.T) {
 // string, where configloader alone would fall back to the default; an
 // unset variable takes the default, and a set one is returned as set.
 func TestGet(t *testing.T) {
-	t.Setenv("AUTHZ_TENANT_MANAGER_URL", "")
-	if got := get("authz.tenant.manager.url", "http://tenant-manager:8080"); got != "" {
+	t.Setenv("AUTHZ_TRUSTED_PROVIDERS_FILE", "")
+	if got := get("authz.trusted.providers.file", authn.DefaultFile); got != "" {
 		t.Errorf("get() with the variable empty = %q, want empty", got)
 	}
-	if got := get("authz.tenant.manager.unset", "fallback"); got != "fallback" {
+	if got := get("authz.trusted.providers.unset", "fallback"); got != "fallback" {
 		t.Errorf("get() with the variable unset = %q, want the fallback", got)
 	}
-	t.Setenv("AUTHZ_TENANT_MANAGER_URL", "http://tm:1")
+	t.Setenv("AUTHZ_TRUSTED_PROVIDERS_FILE", "/p.json")
 	// init read the environment before t.Setenv; a fresh Init sees the value.
 	configloader.Init(configloader.EnvPropertySource())
-	if got := get("authz.tenant.manager.url", "http://tenant-manager:8080"); got != "http://tm:1" {
-		t.Errorf("get() with the variable set = %q, want http://tm:1", got)
+	if got := get("authz.trusted.providers.file", authn.DefaultFile); got != "/p.json" {
+		t.Errorf("get() with the variable set = %q, want /p.json", got)
 	}
 }
 
