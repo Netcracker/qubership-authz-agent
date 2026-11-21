@@ -76,7 +76,6 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		"authz.tenant.manager.url":                "",
 		"authz.pap.client.source.url":             "http://policy-admin:18090/",
 		"authz.pap.client.pull.interval":          "2",
-		"authz.pap.client.token.file":             "/t",
 		"authz.m2m.token.url":                     "http://idp/token",
 		"authz.m2m.client.id.file":                "/id",
 		"authz.m2m.client.secret.file":            "/secret",
@@ -90,8 +89,19 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		t.Errorf("pull from env = %+v", cfg.Pull)
 	}
 	if cfg.M2M.TokenURL != "http://idp/token" || cfg.M2M.ClientIDFile != "/id" || cfg.M2M.ClientSecretFile != "/secret" ||
-		cfg.M2M.RenewBefore != 30*time.Second || cfg.M2M.TokenFile != "/t" {
+		cfg.M2M.RenewBefore != 30*time.Second {
 		t.Errorf("m2m from env = %+v", cfg.M2M)
+	}
+}
+
+// TestLoadConfig_NetcrackerTokenFileIsFixed: the token file of ADR-0096 R6
+// has no setting, so no key moves it and no empty key clears it.
+func TestLoadConfig_NetcrackerTokenFileIsFixed(t *testing.T) {
+	for _, value := range []string{"/t", ""} {
+		cfg := loadConfig(func(string, string) string { return value })
+		if got, want := cfg.M2M.TokenFile, "/var/run/secrets/tokens/netcracker/token"; got != want {
+			t.Errorf("loadConfig with every key set to %q: TokenFile = %q, want %q", value, got, want)
+		}
 	}
 }
 
