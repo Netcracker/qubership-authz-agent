@@ -44,8 +44,8 @@ in `Incoming-Token`. Today Go fetches the keys of the trusted providers into the
 code that loads keys and the Rego that checks claims, and a request with a bad token is evaluated before it is refused.
 
 Every tenant has its own realm in one Keycloak, and the name of the realm is the identifier of the tenant. A token of a
-realm names that realm in `iss`: `<address>/auth/realms/<realm>`. The agent runs in Kubernetes and on plain Linux, where
-no tenant-manager may exist.
+realm names that realm in `iss`: `<address>/auth/realms/<realm>`. An installation serves at most 3 tenants. The agent
+runs in Kubernetes and on plain Linux, where no tenant-manager may exist.
 
 This record and ADR-0092 to ADR-0096 replace the numbers ADR-0084 to ADR-0086, which are retired. ADR-0084 became
 ADR-0091, ADR-0092, and ADR-0095, ADR-0085 became ADR-0093 and the realms of ADR-0091, and ADR-0086 became ADR-0094 and
@@ -313,9 +313,10 @@ Negative:
 - A token without `iat` passes the current policies, and an `iat` up to 300 seconds in the future passes for every
   token. This record refuses a token without `iat`, so a provider that does not set it cannot be used, and it checks a
   future `iat` only for a Kubernetes token.
-- The limits of 10 loads a minute and 1000 realms have no measurement behind them. They fit the one or two tenants of
-  most production installations. After a restart, a Pod of an installation with more than 10 active realms refuses the
-  tokens of the realms past the limit, for about one minute per 10 realms.
+- The limits of 10 loads a minute and 1000 realms have no measurement behind them. They fit an installation of at most 3
+  tenants, whose realms take at most 3 of the 10 loads a minute that R33 allows. After a restart or a scale-out, a Pod
+  of an installation with more than 10 active realms refuses the tokens of the realms past the limit, for about one
+  minute per 10 realms.
 
 Follow-ups:
 
