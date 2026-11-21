@@ -1,0 +1,148 @@
+{
+ "about": "Round 78: a GENERAL that answers 204, without a body and with [\"x\"], read by == 'x' and IS NULL in the OR form (a = n, a = y) and in the DENY form under PERMIT_UNLESS_DENY (ECFG pip_status_success). The first and the last case are controls.",
+ "resourceTypePrefix": "PARITY_SUITE_R78S_",
+ "pins": {
+  "/api/v1/pip/r78o-status-204-empty": {
+   "statusCode": 204,
+   "noBody": true
+  },
+  "/api/v1/pip/r78o-status-204-x": {
+   "statusCode": 204,
+   "body": [
+    "x"
+   ]
+  }
+ },
+ "pips": {
+  "s204-empty": {
+   "name": "subject.parityR78O204Empty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r78o-status-204-empty",
+   "requestAttributes": {
+    "case": "r78o-204-empty"
+   }
+  },
+  "s204-x": {
+   "name": "subject.parityR78O204X",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r78o-status-204-x",
+   "requestAttributes": {
+    "case": "r78o-204-x"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "o78-pip-204-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r78",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78s-204-empty-eq-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR78O204Empty == 'x'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "s204-empty",
+    "s204-x"
+   ]
+  },
+  {
+   "id": "o78-pip-204-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r78",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

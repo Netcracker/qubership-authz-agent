@@ -1,0 +1,148 @@
+{
+ "about": "Round 78, task 16: survivor:subject m2m | engine children_eval policy=short_circuit, moved to subject = m2m from round22/order-levels.json (o22-rules-deny-unless-permit). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R22O_",
+ "pins": {
+  "/api/v1/pip/r22-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 22 case"
+   }
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR22Failing",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r22-failing",
+   "requestAttributes": {
+    "case": "r22-failing"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "ax78-12-o22-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax78-12-o22-rules-deny-unless-permit",
+   "about": "Two ALLOW rules of one DENY_UNLESS_PERMIT policy in a DENY_UNLESS_PERMIT set: fails, declared first, and allow. Task 16 moves it to subject = m2m.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_M2M'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "fails",
+         "target": "true",
+         "condition": "subject.parityR22Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22"
+     },
+     "classifyBy": "/api/v1/pip/r22-failing",
+     "subject": "m2m"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/r22-failing",
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "ax78-12-o22-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}
