@@ -21,9 +21,11 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"io/fs"
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -49,6 +51,12 @@ const composite = `{
   }
 }`
 
+// withoutComposite is the topology of an installation outside a composite.
+const withoutComposite = `{"cloudProvider": "OnPrem"}`
+
+// emptyComposite is a composite whose domains name no origin or peer.
+const emptyComposite = `{"composite": {"baseline": {"controller": "bg-ctl"}, "satellites": [null, {"origin": ""}]}}`
+
 // writeTopology writes content to a topology file in a new directory and
 // returns its path.
 func writeTopology(t *testing.T, content string) string {
@@ -60,10 +68,8 @@ func writeTopology(t *testing.T, content string) string {
 	return path
 }
 
-// The service's own namespace, own, is not in the topology and is the
-// control: a parsed topology replaces it rather than adding to it.
 func TestAllowlist_AllowsTheOriginAndPeerOfEveryDomain(t *testing.T) {
-	a := New(Options{TopologyFile: writeTopology(t, composite), Namespace: "own"})
+	a := New(Options{TopologyFile: writeTopology(t, composite)})
 	tests := []struct {
 		namespace string
 		want      bool
@@ -74,7 +80,6 @@ func TestAllowlist_AllowsTheOriginAndPeerOfEveryDomain(t *testing.T) {
 		{"sat-peer", true},
 		{"solo", true},
 		{"bg-ctl", false},
-		{"own", false},
 		{"", false},
 	}
 	for _, tt := range tests {
@@ -91,13 +96,17 @@ func TestAllowlist_AllowsTheSatellitesOfACompositeWithoutABaseline(t *testing.T)
 	}
 }
 
-func TestAllowlist_AllowsItsOwnNamespaceAloneWithoutATopology(t *testing.T) {
+func TestAllowlist_AlwaysAllowsItsOwnNamespace(t *testing.T) {
 	tests := []struct {
 		name string
 		file string
 	}{
 		{"missing file", filepath.Join(t.TempDir(), "absent")},
 		{"file that is not JSON", writeTopology(t, "composite: yes")},
+		{"file without a composite", writeTopology(t, withoutComposite)},
+		{"composite that names no namespace", writeTopology(t, emptyComposite)},
+		{"composite that does not name it", writeTopology(t, composite)},
+		{"composite with satellites and no baseline", writeTopology(t, `{"composite": {"satellites": [{"origin": "sat-origin"}]}}`)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -105,24 +114,28 @@ func TestAllowlist_AllowsItsOwnNamespaceAloneWithoutATopology(t *testing.T) {
 			if !a.Allows("own") {
 				t.Errorf("Allows(%q) = false, want true", "own")
 			}
-			if a.Allows("base-origin") {
-				t.Errorf("Allows(%q) = true, want false", "base-origin")
+			if a.Allows("other") {
+				t.Errorf("Allows(%q) = true, want false", "other")
 			}
 		})
 	}
 }
 
-func TestAllowlist_AllowsNoneWithoutATopologyOrAnOwnNamespace(t *testing.T) {
-	a := New(Options{TopologyFile: filepath.Join(t.TempDir(), "absent")})
-	if a.Allows("") {
-		t.Errorf("Allows(%q) = true, want false", "")
+func TestAllowlist_AllowsNoneWithoutACompositeOrAnOwnNamespace(t *testing.T) {
+	tests := []struct {
+		name string
+		file string
+	}{
+		{"missing file", filepath.Join(t.TempDir(), "absent")},
+		{"file without a composite", writeTopology(t, withoutComposite)},
 	}
-}
-
-func TestAllowlist_AllowsNoneForATopologyWithoutAComposite(t *testing.T) {
-	a := New(Options{TopologyFile: writeTopology(t, `{"cloudProvider": "OnPrem"}`), Namespace: "own"})
-	if a.Allows("own") {
-		t.Errorf("Allows(%q) = true, want false", "own")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := New(Options{TopologyFile: tt.file})
+			if a.Allows("") {
+				t.Errorf("Allows(%q) = true, want false", "")
+			}
+		})
 	}
 }
 
@@ -174,22 +187,35 @@ func TestAllowlist_RunReadsTheFileAgainOnTheInterval(t *testing.T) {
 	}
 }
 
-// recordingLogger keeps every warning it receives.
+// recordingLogger keeps every warning it receives and every error among
+// the warnings' arguments.
 type recordingLogger struct {
 	mu       sync.Mutex
 	messages []string
+	causes   []error
 }
 
-func (l *recordingLogger) Warnf(format string, _ ...any) {
+func (l *recordingLogger) Warnf(format string, args ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.messages = append(l.messages, format)
+	for _, arg := range args {
+		if err, ok := arg.(error); ok {
+			l.causes = append(l.causes, err)
+		}
+	}
 }
 
 func (l *recordingLogger) count() int {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	return len(l.messages)
+}
+
+func (l *recordingLogger) loggedCauses() []error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return slices.Clone(l.causes)
 }
 
 // The file stays missing across three reads; the fallback is reported once.
@@ -203,20 +229,99 @@ func TestAllowlist_WarnsOnceWhileTheTopologyIsMissing(t *testing.T) {
 	}
 }
 
+func TestAllowlist_WarnsOnlyWhenTheTopologyCannotBeReadOrParsedOrItsCompositeNamesNoNamespace(t *testing.T) {
+	tests := []struct {
+		name string
+		file string
+		want int
+	}{
+		{"missing file", filepath.Join(t.TempDir(), "absent"), 1},
+		{"file that is not JSON", writeTopology(t, "composite: yes"), 1},
+		{"composite that names no namespace", writeTopology(t, emptyComposite), 1},
+		{"file without a composite", writeTopology(t, withoutComposite), 0},
+		{"composite", writeTopology(t, composite), 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			log := &recordingLogger{}
+			New(Options{TopologyFile: tt.file, Namespace: "own", Log: log})
+			if got := log.count(); got != tt.want {
+				t.Errorf("warnings = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestAllowlist_WarnsWithTheCause(t *testing.T) {
+	tests := []struct {
+		name string
+		file string
+		want error
+	}{
+		{"missing file", filepath.Join(t.TempDir(), "absent"), fs.ErrNotExist},
+		{"composite that names no namespace", writeTopology(t, emptyComposite), errNoNamespace},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			log := &recordingLogger{}
+			New(Options{TopologyFile: tt.file, Namespace: "own", Log: log})
+			if causes := log.loggedCauses(); len(causes) != 1 || !errors.Is(causes[0], tt.want) {
+				t.Errorf("warning causes = %v, want one that is %v", causes, tt.want)
+			}
+		})
+	}
+}
+
 func TestAllowlist_WarnsAgainWhenTheTopologyGoesAwayAgain(t *testing.T) {
-	log := &recordingLogger{}
-	path := filepath.Join(t.TempDir(), "data")
-	a := New(Options{TopologyFile: path, Namespace: "own", Log: log})
-	if err := os.WriteFile(path, []byte(composite), 0o600); err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name    string
+		content string
+	}{
+		{"composite", composite},
+		{"file without a composite", withoutComposite},
 	}
-	a.reload()
-	if err := os.Remove(path); err != nil {
-		t.Fatal(err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			log := &recordingLogger{}
+			path := filepath.Join(t.TempDir(), "data")
+			a := New(Options{TopologyFile: path, Namespace: "own", Log: log})
+			if err := os.WriteFile(path, []byte(tt.content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			a.reload()
+			if err := os.Remove(path); err != nil {
+				t.Fatal(err)
+			}
+			a.reload()
+			if got := log.count(); got != 2 {
+				t.Errorf("warnings = %d, want 2: one for each time the file went missing", got)
+			}
+		})
 	}
-	a.reload()
-	if got := log.count(); got != 2 {
-		t.Errorf("warnings = %d, want 2: one for each time the file went missing", got)
+}
+
+func TestAllowlist_WarnsAgainWhenTheCauseChanges(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+	}{
+		{"file that is not JSON", "composite: yes"},
+		{"composite that names no namespace", emptyComposite},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			log := &recordingLogger{}
+			path := filepath.Join(t.TempDir(), "data")
+			a := New(Options{TopologyFile: path, Namespace: "own", Log: log})
+			if err := os.WriteFile(path, []byte(tt.content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			a.reload()
+			a.reload()
+			if got := log.count(); got != 2 {
+				t.Errorf("warnings = %d, want 2: one for the missing file and one for the %s", got, tt.name)
+			}
+		})
 	}
 }
 
@@ -295,7 +400,7 @@ func TestAllowlist_AdmitChecksTheTokensOfTheNamedProviders(t *testing.T) {
 		{"allowed namespace", "kubernetes",
 			map[string]any{"kubernetes.io": map[string]any{"namespace": "sat-peer"}}, ""},
 		{"namespace outside the topology", "kubernetes",
-			map[string]any{"kubernetes.io": map[string]any{"namespace": "own"}}, verify.CodeNamespaceNotAllowed},
+			map[string]any{"kubernetes.io": map[string]any{"namespace": "other"}}, verify.CodeNamespaceNotAllowed},
 		{"no kubernetes.io claim", "kubernetes",
 			map[string]any{"sub": "system:serviceaccount:own:agent"}, verify.CodeNamespaceNotAllowed},
 		{"kubernetes.io that is a string", "kubernetes",
@@ -305,11 +410,11 @@ func TestAllowlist_AdmitChecksTheTokensOfTheNamedProviders(t *testing.T) {
 		{"Namespace that differs in case", "kubernetes",
 			map[string]any{"kubernetes.io": map[string]any{"Namespace": "sat-peer"}}, verify.CodeNamespaceNotAllowed},
 		{"namespace outside the topology beside a Namespace inside it", "kubernetes",
-			map[string]any{"kubernetes.io": json.RawMessage(`{"namespace": "own", "Namespace": "sat-peer"}`)}, verify.CodeNamespaceNotAllowed},
+			map[string]any{"kubernetes.io": json.RawMessage(`{"namespace": "other", "Namespace": "sat-peer"}`)}, verify.CodeNamespaceNotAllowed},
 		{"namespace given twice, the last time as a number", "kubernetes",
 			map[string]any{"kubernetes.io": json.RawMessage(`{"namespace": "sat-peer", "namespace": 5}`)}, verify.CodeNamespaceNotAllowed},
 		{"another provider's token", "cloud-common",
-			map[string]any{"kubernetes.io": map[string]any{"namespace": "own"}}, ""},
+			map[string]any{"kubernetes.io": map[string]any{"namespace": "other"}}, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

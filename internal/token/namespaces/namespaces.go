@@ -13,16 +13,17 @@
 // limitations under the License.
 
 // Package namespaces decides which Kubernetes namespaces a service account
-// token may come from. The allowed namespaces are the origin and the peer
-// namespace of the composite baseline and of every satellite in the
-// topology file. [Allowlist.Admit] applies them to the tokens of chosen
-// providers as [verify.Options.Admit], and [Allowlist.Run] keeps them
-// current.
+// token may come from. The allowed namespaces are the service's own
+// namespace and the origin and the peer namespace of the composite baseline
+// and of every satellite in the topology file.
+// [Allowlist.Admit] applies them to the tokens of chosen providers as
+// [verify.Options.Admit], and [Allowlist.Run] keeps them current.
 package namespaces
 
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"slices"
@@ -48,9 +49,8 @@ type Logger interface {
 type Options struct {
 	// TopologyFile is the JSON file that describes the composite topology.
 	TopologyFile string
-	// Namespace is the service's own namespace. It is the only namespace
-	// allowed while the topology file cannot be read or parsed; once the
-	// file parses, it is allowed only if the topology names it.
+	// Namespace is the service's own namespace. It is always allowed, beside
+	// the namespaces the topology file names; an empty Namespace adds none.
 	Namespace string
 	// RefreshInterval is how often [Allowlist.Run] reads the file again.
 	RefreshInterval time.Duration
@@ -64,11 +64,12 @@ type Allowlist struct {
 	opts    Options
 	allowed atomic.Pointer[map[string]bool]
 
-	// reading serializes reads of the topology file and guards fallback.
+	// reading serializes reads of the topology file and guards fault.
 	reading sync.Mutex
-	// fallback is whether the last read fell back to Options.Namespace; the
-	// warning is logged when that starts, not on every read.
-	fallback bool
+	// fault is the cause of the last warning, kept until a read finds
+	// another cause or none, so that a cause is logged when it appears
+	// rather than on every read.
+	fault string
 }
 
 // New reads the topology file and returns an Allowlist of the namespaces it
@@ -171,31 +172,54 @@ type domain struct {
 	Peer   string `json:"peer"`
 }
 
-// load reads the allowed namespaces from the topology file. A file that
-// cannot be read or parsed allows the service's own namespace alone, or
-// none when Options.Namespace is empty; a file without a composite allows
-// none.
+// errNoNamespace is the cause logged for a composite whose domains name no
+// origin or peer namespace.
+var errNoNamespace = errors.New("composite names no origin or peer namespace")
+
+// load returns Options.Namespace, unless it is empty, together with the
+// namespaces the topology file names. A file that cannot be read or parsed,
+// or whose composite names no origin or peer namespace, names none and is
+// logged; the same cause is logged again only after a read that finds
+// another cause or none. A file without a composite names none and is not
+// logged: it describes an installation outside a composite.
 func (a *Allowlist) load() map[string]bool {
-	raw, err := os.ReadFile(a.opts.TopologyFile)
-	if err == nil {
-		var t topology
-		if err = json.Unmarshal(raw, &t); err == nil {
-			a.fallback = false
-			return t.namespaces()
-		}
+	allowed, err := a.read()
+	if a.opts.Namespace != "" {
+		allowed[a.opts.Namespace] = true
 	}
-	if !a.fallback {
+	var cause string
+	if err != nil {
+		cause = err.Error()
+	}
+	if cause != "" && cause != a.fault {
 		if a.opts.Namespace == "" {
 			a.opts.Log.Warnf("topology file %s: %v; allowing no namespace", a.opts.TopologyFile, err)
 		} else {
 			a.opts.Log.Warnf("topology file %s: %v; allowing namespace %q alone", a.opts.TopologyFile, err, a.opts.Namespace)
 		}
 	}
-	a.fallback = true
-	if a.opts.Namespace == "" {
-		return map[string]bool{}
+	a.fault = cause
+	return allowed
+}
+
+// read returns the origin and the peer namespace of every domain of the
+// composite in the topology file. When the file cannot be read or parsed,
+// or its composite names no origin or peer namespace, it returns an empty
+// map and the cause.
+func (a *Allowlist) read() (map[string]bool, error) {
+	raw, err := os.ReadFile(a.opts.TopologyFile)
+	if err != nil {
+		return map[string]bool{}, err
 	}
-	return map[string]bool{a.opts.Namespace: true}
+	var t topology
+	if err = json.Unmarshal(raw, &t); err != nil {
+		return map[string]bool{}, err
+	}
+	named := t.namespaces()
+	if t.Composite != nil && len(named) == 0 {
+		return named, errNoNamespace
+	}
+	return named, nil
 }
 
 func (t topology) namespaces() map[string]bool {
