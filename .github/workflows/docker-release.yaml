@@ -53,7 +53,7 @@ jobs:
     steps:
       - name: "Check if tag exists"
         id: check_tag
-        uses: netcracker/qubership-workflow-hub/actions/tag-action@cf536587a99a23b3614aa4db4bdbf13cf36059b6  # v2.8.3
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@b72b7f047fdb44ac85035f87b4d15d1cbdf2cb15  # v3.0.0
         with:
           tag-name: 'v${{ inputs.release }}'
           ref: ${{ github.ref }}
@@ -80,7 +80,7 @@ jobs:
       # docker-config-resolver the template names, with stricter validation.
       - name: "Resolve docker config"
         id: resolve
-        uses: netcracker/qubership-workflow-hub/actions/config-resolver@cf536587a99a23b3614aa4db4bdbf13cf36059b6 # v2.8.3
+        uses: netcracker/qubership-workflow-hub/actions/config-resolver@b72b7f047fdb44ac85035f87b4d15d1cbdf2cb15 # v3.0.0
         with:
           file-path: ${{ env.CONFIG_FILE }}
 
@@ -92,7 +92,7 @@ jobs:
       contents: write
     steps:
       - name: "Create Tag"
-        uses: netcracker/qubership-workflow-hub/actions/tag-action@cf536587a99a23b3614aa4db4bdbf13cf36059b6  # v2.8.3
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@b72b7f047fdb44ac85035f87b4d15d1cbdf2cb15  # v3.0.0
         with:
           tag-name: 'v${{ inputs.release }}'
           ref: ${{ github.ref }}
@@ -117,7 +117,7 @@ jobs:
       # A dry run has pushed no tag, so it builds the branch the run started
       # from; a release builds the tag just created.
       - name: "Docker build and publish"
-        uses: netcracker/qubership-workflow-hub/actions/docker-action@cf536587a99a23b3614aa4db4bdbf13cf36059b6  # v2.8.3
+        uses: netcracker/qubership-workflow-hub/actions/docker-action@b72b7f047fdb44ac85035f87b4d15d1cbdf2cb15  # v3.0.0
         with:
           ref: ${{ inputs.dry-run && github.ref || format('v{0}', inputs.release) }}
           download-artifact: false
@@ -139,7 +139,7 @@ jobs:
       contents: write
     steps:
       - name: "Delete Tag"
-        uses: netcracker/qubership-workflow-hub/actions/tag-action@cf536587a99a23b3614aa4db4bdbf13cf36059b6  # v2.8.3
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@b72b7f047fdb44ac85035f87b4d15d1cbdf2cb15  # v3.0.0
         with:
           tag-name: 'v${{ inputs.release }}'
           ref: ${{ github.ref }}
