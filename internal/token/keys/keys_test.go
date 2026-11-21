@@ -22,6 +22,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -474,6 +475,65 @@ func TestRefresh_AProviderListedAfterAFailingOneTakesItsNewKeys(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// A 3xx whose Location header does not parse fails in http.Client.Do, with a
+// text that holds the header twice. Refresh returns an error that prints the
+// method and the URL, then that text quoted and cut, and the provider keeps
+// its key. The whole text used to reach the log, more than 8 KB for this 4 KB
+// header. The cut leaves under 500 bytes, so the bound of 1000 holds without
+// pinning net/http's wording past its first words.
+func TestRefresh_CutsTheErrorOfAMalformedRedirect(t *testing.T) {
+	idp := newIdP(t, ecJWK(t, "old", nil))
+	set := mustLoad(t, testOptions(), direct("realm", idp))
+	idp.redirect("/%zz" + strings.Repeat("é", 2048))
+
+	err := set.Refresh(context.Background())
+	if err == nil {
+		t.Fatal("Refresh() error = nil, want the error of the malformed redirect")
+	}
+	prefix := `provider "realm" keeps its previous keys: Get "` + idp.srv.URL + `/jwks": "failed to parse Location header `
+	if msg := err.Error(); !strings.HasPrefix(msg, prefix) || !strings.HasSuffix(msg, `"...`) || len(msg) >= 1000 {
+		t.Errorf("Refresh() error = %s (%d bytes), want %s and a quoted cut ending in \"..., under 1000 bytes", msg, len(msg), prefix)
+	}
+	if _, ok := set.Lookup("old"); !ok {
+		t.Errorf("Lookup(%q) found nothing, want the key loaded before the redirect", "old")
+	}
+}
+
+// requestError prints the method and the URL of a *url.Error and quotes its
+// cause: whole up to 200 runes, and its first 200 runes with "..." after them
+// when it is longer. The quoting escapes control characters, and the cut
+// counts runes, not bytes.
+func TestRequestError_CutsTheCauseTo200Runes(t *testing.T) {
+	tests := []struct {
+		name, cause, wantCause string
+	}{
+		{"cause of exactly 200 runes", strings.Repeat("a", 200), `"` + strings.Repeat("a", 200) + `"`},
+		{"cause of 201 runes", strings.Repeat("a", 200) + "b", `"` + strings.Repeat("a", 200) + `"...`},
+		{"cause of 2048 two-byte runes", strings.Repeat("é", 2048), `"` + strings.Repeat("é", 200) + `"...`},
+		{"cause with a line break", "connect:\nrefused", `"connect:\nrefused"`},
+		{"cause of 201 runes after a line break", "\n" + strings.Repeat("a", 200), `"\n` + strings.Repeat("a", 199) + `"...`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := &requestError{err: &url.Error{Op: "Get", URL: "https://idp.example/jwks", Err: errors.New(tt.cause)}}
+			want := `Get "https://idp.example/jwks": ` + tt.wantCause
+			if got := err.Error(); got != want {
+				t.Errorf("Error() = %s, want %s", got, want)
+			}
+		})
+	}
+}
+
+// An error that is not a *url.Error has no method or URL to print, so
+// requestError quotes and cuts its whole text.
+func TestRequestError_CutsTheWholeTextOfAnotherError(t *testing.T) {
+	err := &requestError{err: errors.New(strings.Repeat("a", 200) + "b")}
+	want := `"` + strings.Repeat("a", 200) + `"...`
+	if got := err.Error(); got != want {
+		t.Errorf("Error() = %s, want %s", got, want)
 	}
 }
 
