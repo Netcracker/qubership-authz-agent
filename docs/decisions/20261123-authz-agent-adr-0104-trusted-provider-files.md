@@ -30,7 +30,7 @@ kichasov
   ADR-0091 or of ADR-0094, as ADR-0091 R60 and step 1 of ADR-0095 R1 do, those checks include R21, R26, and R27 of this
   record. In the rules of ADR-0091 on loading keys, a provider as a source of keys is an `exact` provider, and a realm
   in `keycloak.requiredRealms` is a realm that `readinessRealms` names, so the required sources in ADR-0091 R14, R16,
-  R17, R35, and R39 are those of R25 of this record. ADR-0091 R2 and R72 set and read the section `keycloak`, which R3
+  R17, and R35 are those of R25 of this record. ADR-0091 R2 and R72 set and read the section `keycloak`, which R3
   of this record refuses; R3 takes precedence until a record of the chart and a record of a private CA replace them.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
   ADR-0092 R6, R7, and R21, the M2M test of each kind of token, and ADR-0092 R11 to R14, the kinds of token that each
@@ -390,14 +390,14 @@ Negative:
   cluster, where ADR-0094 R4 read it from the token for the API server, so in `k8s` a wrong value refuses every
   caller of a Pod that is ready.
 - A provider `identity-provider` without `readinessRealms` has no required source, so the Pod becomes ready before any
-  realm has loaded keys, and a wrong `jwksUri` shows only in the refusals of its tokens (R13, R25; ADR-0091 R38,
-  R39).
+  realm has loaded keys, and a wrong `jwksUri` shows only in the refusals of its tokens and in the warnings of
+  ADR-0091 R81 (R13, R25; ADR-0091 R23, R38, R39, R81).
 - Outside Kubernetes the agent starts in `hybrid` or `k8s` when the provider files hold a provider `kubernetes`
   without `jwksBearerTokenFile` (R7, R14). Only `legacy` is supported there, and the agent does not check it.
 - A provider `kubernetes` without `jwksBearerTokenFile` requests its keys without a token. A standard cluster refuses
   that request (ADR-0094 Context), and the Pod stays not ready (ADR-0091 R19).
 - A name in `readinessRealms` that the Keycloak does not hold, such as the display name of a tenant, keeps the Pod not
-  ready until the file changes (R12; ADR-0091 R19, R39).
+  ready until the file changes (R12; ADR-0091 R14, R19).
 - A change of a provider file takes effect only at the next start (R5).
 - A token of an `exact` provider `identity-provider` is an identity-provider token (R22), so the M2M test of ADR-0092 R6
   and R21 applies to it, where ADR-0092 R8 kept the tokens of a provider outside the realms of the Keycloak from being
