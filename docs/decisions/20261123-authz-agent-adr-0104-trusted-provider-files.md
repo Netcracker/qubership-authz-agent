@@ -19,13 +19,12 @@ kichasov
 
 #### Related ADRs
 
-This record replaces every statement of ADR-0091, ADR-0092, ADR-0094, ADR-0095, and ADR-0096, and of ADR-0101, which
-#235 proposes, that disagrees with it.
-In the statements that stay in those records, the provider files of this record take the place of the trusted providers
-file, the provider `kubernetes` takes the place of the marked provider, an identity-provider token (R22) takes the place
-of a realm token, and no token is a file token. Where those records name the checks of ADR-0091 or of ADR-0094, as
-ADR-0091 R60 and step 1 of ADR-0095 R1 do, those checks include R21, R26, and R27 of this record. The Follow-ups name
-the edits that bring those records in line with this one.
+This record replaces every statement that disagrees with it in ADR-0091, ADR-0092, ADR-0094, ADR-0095, and ADR-0096, and
+in ADR-0101, which #235 proposes. In the statements that stay in those records, the provider files of this record take
+the place of the trusted providers file, the provider `kubernetes` takes the place of the marked provider, an
+identity-provider token (R22) takes the place of a realm token, and no token is a file token. Where those records name
+the checks of ADR-0091 or of ADR-0094, as ADR-0091 R60 and step 1 of ADR-0095 R1 do, those checks include R21, R26, and
+R27 of this record. The Follow-ups name the edits that bring those records in line with this one.
 
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   the checks of a token and the keys that readiness waits for (ADR-0091 R14, R19). The provider files name the issuers,
