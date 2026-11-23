@@ -57,9 +57,9 @@ jobs:
 
       # Installs the OPA CLI at the version mise.toml pins, and only that tool.
       - name: Install OPA
-        uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
+        uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
-          version: 2026.11.7
+          version: 2026.11.8
           install_args: aqua:open-policy-agent/opa
 
       - name: Run policy tests
@@ -108,9 +108,9 @@ jobs:
 
       # Installs hadolint, kubeconform, and trivy at the versions mise.toml pins.
       - name: Install hadolint, kubeconform, and trivy
-        uses: jdx/mise-action@d5574b52816a478f9d4e6529a3f6ff17a8a36785 # v5.2.8
+        uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5.2.9
         with:
-          version: 2026.11.7
+          version: 2026.11.8
 
       - name: Lint the Dockerfiles and the rendered charts
         run: bash test/scripts/lint-images-and-charts.sh
@@ -188,7 +188,7 @@ jobs:
       # Java 17 runs the Gradle 7.4.2 of JsonPath; 21, the last one listed,
       # is the default for the rest.
       - name: Set up Java
-        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: temurin
           java-version: |
