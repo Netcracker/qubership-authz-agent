@@ -24,7 +24,8 @@ kichasov
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   verifies the tokens that this record accepts, and defines realm token, file token, and Kubernetes token.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
-  ADR-0093 R1, the tenant that a caller that is not M2M is compared with.
+  ADR-0093 R1, the tenant that a caller that is not M2M is compared with, and ADR-0093 R22, the 503 that takes the
+  place of the 403 of R4 before the default tenant is translated.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
     the marked provider and the checks of a Kubernetes token.
 - [authz-agent-ADR-0095: Refuse a check request before policy evaluation](20261029-authz-agent-adr-0095-refuse-before-policy-evaluation.md):
@@ -65,7 +66,8 @@ token that is not M2M to its own tenant.
 - **R3** (`handler`). An M2M token in `Authorization` may name any tenant.
 - **R4** (`handler`). A token in `Authorization` that is not M2M may reach only the tenant of its own non-empty
   `tenant-id` claim, or the default tenant when it has no such claim. Any other tenant gets 403 with
-  `CALLER_TENANT_MISMATCH` before policy evaluation.
+  `CALLER_TENANT_MISMATCH` before policy evaluation. The exception is a caller that ADR-0093 R22 refuses with 503
+  before the agent translates the name of the default tenant.
 - **R5** (`handler`). The comparison of R4 uses the tenant of the decision of ADR-0093 R1, so that an `Incoming-Token`
   cannot move the caller out of its tenant.
 
@@ -74,11 +76,10 @@ token that is not M2M to its own tenant.
 - **R6** (`verify`). A realm token is an M2M token when `realm_access.roles` holds `ROLE_M2M`, compared byte for byte.
 - **R21** (`verify`). A realm token is an M2M token when `level` is `m2m` or `key-manager`, compared without regard to
   case.
-- **R7** (`verify`). A Kubernetes token is an M2M token. ADR-0094 R16 refuses one whose `sub` does not start with
-  `system:serviceaccount`.
+- **R7** (`verify`). A Kubernetes token is an M2M token.
 - **R8** (`verify`). A file token is not an M2M token, because its claims are whatever that provider signs.
-- **R9** (`verify`). The token verification computes this test once and returns the result, as ADR-0091 R54 states.
-- **R10** (`handler`, `policy`). Every reader, `subject.isM2M` among them, reads that result.
+- **R10** (`handler`, `policy`). Every reader of the M2M test, `subject.isM2M` among them, reads the result that the
+  token verification returns under ADR-0091 R54.
 
 #### M2M modes
 
@@ -99,8 +100,6 @@ token that is not M2M to its own tenant.
   still hold a realm token or a file token in `k8s`.
 - **R15** (`startup`). The value of `M2M_AUTH_MODE` is compared without regard to case, and an empty value means
   `legacy`, as an unset one does. Any other value stops the start, with or without the chart.
-- **R16** (`startup`). Outside Kubernetes the only mode is `legacy`, because there is no API server. In the other modes
-  ADR-0094 R5 stops the start when the token for the API server is missing.
 
 #### Other routes
 
@@ -115,8 +114,8 @@ token that is not M2M to its own tenant.
 
 A check route needs a verified caller, not a caller of a particular kind. The M2M test decides what a caller may reach
 instead of whether it may call (R3, R4), so a service whose Keycloak client issues neither `ROLE_M2M` nor a `level`
-keeps working and stays inside its own tenant. Computing the test once keeps the check of a caller and the policies from
-disagreeing about one token (R9, R10).
+keeps working and stays inside its own tenant. Reading the one result that the verification returns keeps the check of a
+caller and the policies from disagreeing about one token (R10).
 
 `k8s` exists to check a migration: an installation switches it on and sees which services still call with a realm token
 or a file token (R13). It is not planned for production.
@@ -144,11 +143,13 @@ Negative:
 
 - A client-credentials token without `ROLE_M2M` and without `level` is treated as a user token, so it reaches only its
   own or the default tenant.
+- Outside Kubernetes the agent starts only in `legacy`, because there is no token for the API server (ADR-0094 R5).
 - The decisions of a request cannot be downloaded from the agent. Issue #223 tracks how they are read.
 - Comparing with the tenant of the decision changes the answer of two requests that no golden covers:
   - A caller that is not M2M and has no `tenant-id`, such as a client-credentials token without `ROLE_M2M`, forwards the
     `Incoming-Token` of a user of tenant T. Without that header it is the golden `no-claim-names-no-tenant`, 200 in the
-    default tenant. Here the tenant of the decision is T, so the caller gets 403 `CALLER_TENANT_MISMATCH`.
+    default tenant. Here the tenant of the decision is T, so after the translation of the default tenant (ADR-0093 R22)
+    the caller gets 403 `CALLER_TENANT_MISMATCH`.
   - A user of tenant A sends a token in `Authorization`, `tenant_id=B`, and an `Incoming-Token` with `tenant-id` A.
     Without that header it is the golden `claim-a-names-tenant-b`, 403. Here the decision is computed in A, with 200.
 
