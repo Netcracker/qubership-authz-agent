@@ -19,9 +19,9 @@
 // a token that names another source than the one that signed it finds no key
 // there or fails on its signature. The header names the algorithm and the key,
 // and only a token whose signature that key accepts has its aud, exp, nbf, and
-// iat checked. A refused token yields an [*Error] whose [Code] names the
-// reason; a verified one is a [*Token], which keeps the payload as its issuer
-// signed it.
+// iat checked, and, for a Kubernetes token, its sub. A refused token yields an
+// [*Error] whose [Code] names the reason; a verified one is a [*Token], which
+// keeps the payload as its issuer signed it.
 //
 // A verified token is cached by the SHA-256 digest of its compact form
 // until it expires, so a token presented again costs a map lookup.
@@ -96,6 +96,10 @@ const (
 	// [keys.KubernetesID] counts as a provider with that mode and the one
 	// value netcracker.
 	CodeAudienceInvalid Code = "TOKEN_AUDIENCE_INVALID"
+	// CodeSubjectInvalid marks a Kubernetes token without a sub, with a sub
+	// that is not a string, or with a sub that does not start with
+	// system:serviceaccount:.
+	CodeSubjectInvalid Code = "TOKEN_SUBJECT_INVALID"
 	// CodeNamespaceNotAllowed marks a Kubernetes token from a namespace the
 	// service does not accept, one that names no namespace, and every
 	// Kubernetes token of a [Verifier] without [Options.Admit].
@@ -139,7 +143,7 @@ type Token struct {
 // Standard holds the claims a policy input is usually built from. Each field
 // is the JSON text of its claim exactly as the payload carries it, or nil
 // when the payload has no such claim. Verify checks neither the presence
-// nor the type of any of them.
+// nor the type of any of them, except the sub of a Kubernetes token.
 type Standard struct {
 	// Subject is the sub claim.
 	Subject json.RawMessage
@@ -280,11 +284,11 @@ func New(source KeyFinder, opts Options) *Verifier {
 // prefix, and returns the verified token. The checks run in this order, and
 // the first that fails is returned as an [*Error]: the format of the token and
 // of its header, the alg, the kid, the format of the payload, the key that the
-// iss and the kid select, the signature, aud, exp, nbf, and iat. A token
-// without a kid is refused before any key is looked up, so it starts no load.
-// The payload is parsed before the signature verifies, but of its claims only
-// iss is used, so a forged token whose key is found is refused with
-// [CodeSignatureInvalid] whatever its other claims say.
+// iss and the kid select, the signature, aud, exp, nbf, iat, and, for a
+// Kubernetes token, sub. A token without a kid is refused before any key is
+// looked up, so it starts no load. The payload is parsed before the signature
+// verifies, but of its claims only iss is used, so a forged token whose key is
+// found is refused with [CodeSignatureInvalid] whatever its other claims say.
 //
 // When no loaded key matches, Verify waits for the reload that
 // [KeyFinder.LookupOrReload] may start, until the reload ends or ctx ends.
@@ -344,6 +348,9 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	}
 	expiry, err := checkTimes(claims, key.Source, v.opts.now(), v.opts.Leeway)
 	if err != nil {
+		return nil, err
+	}
+	if err := checkSubject(claims, key.Source); err != nil {
 		return nil, err
 	}
 	tok := &Token{

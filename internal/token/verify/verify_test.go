@@ -433,11 +433,13 @@ func TestVerify_AcceptsATokenWhoseKeyAReloadBringsWhileItsContextLasts(t *testin
 func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 	long := strings.Repeat("x", 1000)
 	s := newSigner(t, "k1", matchAny("account"))
+	kubernetes := newSigner(t, "k2", providerOf(keys.KubernetesID))
 	tests := []struct {
 		name string
 		raw  string
 		want Code
 	}{
+		{"sub", kubernetes.sign(t, claimsAt(start, map[string]any{"sub": long})), CodeSubjectInvalid},
 		{"kid", unsigned(t, map[string]any{"alg": "ES256", "kid": long}, claimsAt(start, nil)), CodeKIDUnknown},
 		{"iss", unsigned(t, map[string]any{"alg": "ES256", "kid": "k1"}, claimsAt(start, map[string]any{"iss": long})), CodeIssuerUnknown},
 		{"alg", unsigned(t, map[string]any{"alg": long, "kid": "k1"}, claimsAt(start, nil)), CodeAlgNotAllowed},
@@ -446,7 +448,7 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v, _ := newVerifier(newFakeKeys(s))
+			v := newAdmittingVerifier(newFakeKeys(s, kubernetes))
 			_, err := v.Verify(t.Context(), tt.raw)
 			if codeOf(err) != tt.want {
 				t.Fatalf("Verify() error = %v, want code %s", err, tt.want)
@@ -610,8 +612,8 @@ func TestVerify_RefusesAnIATInTheFutureOnlyForAKubernetesToken(t *testing.T) {
 		{"single identity-provider, iat past the leeway", keys.IdentityProviderID, "", map[string]any{"iat": ahead}, ""},
 		{"single identity-provider with the claims of a service account, iat past the leeway", keys.IdentityProviderID, "",
 			map[string]any{"iat": ahead, "sub": "system:serviceaccount:ns-1:sa-1", "kubernetes.io": map[string]any{"namespace": "ns-1"}}, ""},
-		{"kubernetes, iat past the leeway", keys.KubernetesID, "", map[string]any{"iat": ahead}, CodeIATInvalid},
-		{"kubernetes, iat exactly the leeway ahead", keys.KubernetesID, "", map[string]any{"iat": start.Add(DefaultLeeway).Unix()}, ""},
+		{"kubernetes, iat past the leeway", keys.KubernetesID, "", map[string]any{"iat": ahead, "sub": serviceAccountSub}, CodeIATInvalid},
+		{"kubernetes, iat exactly the leeway ahead", keys.KubernetesID, "", map[string]any{"iat": start.Add(DefaultLeeway).Unix(), "sub": serviceAccountSub}, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -651,11 +653,89 @@ func TestVerify_RefusesATokenThatExpiresBeforeItIsIssued(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newSigner(t, "k1", tt.provider)
 			v, _ := newVerifier(newFakeKeys(s))
-			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"exp": tt.exp.Unix(), "iat": tt.iat.Unix()})))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"exp": tt.exp.Unix(), "iat": tt.iat.Unix(), "sub": serviceAccountSub})))
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
 			}
 		})
+	}
+}
+
+func TestVerify_RefusesAKubernetesTokenWhoseSubLacksTheServiceAccountPrefix(t *testing.T) {
+	kubernetes := providerOf(keys.KubernetesID)
+	tests := []struct {
+		name     string
+		provider *keys.Provider
+		sub      any
+		want     Code
+	}{
+		{"service account", kubernetes, serviceAccountSub, ""},
+		{"the prefix alone", kubernetes, "system:serviceaccount:", ""},
+		{"the prefix without its colon", kubernetes, "system:serviceaccount", CodeSubjectInvalid},
+		{"the group of the service accounts of a namespace", kubernetes, "system:serviceaccounts:ns", CodeSubjectInvalid},
+		{"another name", kubernetes, "user-1", CodeSubjectInvalid},
+		{"the prefix after other text", kubernetes, "user:system:serviceaccount:ns:app", CodeSubjectInvalid},
+		{"the prefix in another case", kubernetes, "System:ServiceAccount:ns:app", CodeSubjectInvalid},
+		{"the prefix cut short", kubernetes, "system:serviceaccoun", CodeSubjectInvalid},
+		{"sub that is a number", kubernetes, 5, CodeSubjectInvalid},
+		{"no sub", kubernetes, nil, CodeSubjectInvalid},
+		{"another name in a token of identity-provider", providerOf(keys.IdentityProviderID), "user-1", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", tt.provider)
+			v := newAdmittingVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"sub": tt.sub})))
+			if codeOf(err) != tt.want {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
+	}
+}
+
+func TestVerify_NamesWhyItRefusesTheSubOfAKubernetesToken(t *testing.T) {
+	s := newSigner(t, "k1", providerOf(keys.KubernetesID))
+	tests := []struct {
+		name string
+		sub  any
+		want string
+	}{
+		{"no sub", nil, `token has no sub claim, and provider "kubernetes" issues only service account tokens, whose sub starts with system:serviceaccount:`},
+		{"sub that is a number", 5, `claim sub is not a string, and provider "kubernetes" issues only service account tokens, whose sub starts with system:serviceaccount:`},
+		{"sub that is null", json.RawMessage("null"), `claim sub is not a string, and provider "kubernetes" issues only service account tokens, whose sub starts with system:serviceaccount:`},
+		{"sub without the prefix", "user-1", `sub "user-1" does not start with system:serviceaccount:, and provider "kubernetes" issues only service account tokens`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := newAdmittingVerifier(newFakeKeys(s)).Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"sub": tt.sub})))
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Errorf("Verify() error = %v, want one that contains %q", err, tt.want)
+			}
+		})
+	}
+}
+
+// A token refused for its sub stays out of the cache, so the second
+// presentation is checked again rather than served as a verified token.
+func TestVerify_RefusesTheSameKubernetesTokenForItsSubEachTime(t *testing.T) {
+	s := newSigner(t, "k1", providerOf(keys.KubernetesID))
+	v := newAdmittingVerifier(newFakeKeys(s))
+	raw := s.sign(t, claimsAt(start, map[string]any{"sub": "user-1"}))
+	for _, call := range []string{"first", "second"} {
+		if _, err := v.Verify(t.Context(), raw); codeOf(err) != CodeSubjectInvalid {
+			t.Errorf("Verify(), %s call: error = %v, want code %s", call, err, CodeSubjectInvalid)
+		}
+	}
+}
+
+// The sub is checked after the lifetime, so a token that also lacks exp gets
+// the code of exp.
+func TestVerify_RefusesOnTheLifetimeBeforeTheSub(t *testing.T) {
+	s := newSigner(t, "k1", providerOf(keys.KubernetesID))
+	v := newAdmittingVerifier(newFakeKeys(s))
+	_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"sub": "user-1", "exp": nil})))
+	if codeOf(err) != CodeExpMissing {
+		t.Errorf("Verify() error = %v, want code %s", err, CodeExpMissing)
 	}
 }
 
