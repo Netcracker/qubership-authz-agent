@@ -11,7 +11,9 @@ kichasov
 
 #### Participants and approvers
 
-- The project architect (`mr-joom`) approves this record.
+- The project architect (`mr-joom`) approves this record. On 2026-11-23 the architect and the owner of the policy
+  decision code agreed to drop the M2M modes, so the Docker target runs without a marked provider rather than in
+  `legacy` (R5, R8).
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
 
 #### Related ADRs
@@ -22,17 +24,16 @@ kichasov
   the term stops the start; ADR-0091 R14, readiness; ADR-0091 R44, the leeway against the clock; ADR-0091 R64, the
   removal of `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`; and ADR-0091 R78, `IDENTITY_PROVIDER_URL`, which the agent does not read.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
-  ADR-0092 R15, a value of `M2M_AUTH_MODE` that stops the start; ADR-0092 R16, `legacy` as the only M2M mode outside
-  Kubernetes.
+  ADR-0092 R15, which has the agent leave `M2M_AUTH_MODE` unread, as #345 rewrites it.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
   ADR-0093 R11 and R14, the default tenant with and without tenant-manager.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
-  the topology file and the token for the API server, which exist only in a cluster.
+  the topology file and the token for the API server, which exist only in a cluster, and ADR-0094 R5, which requires
+  that token wherever the trusted providers file holds the marked provider, as #345 rewrites it.
 - [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
   ADR-0096 R1, `AUTHZ_M2M_TOKEN_SOURCE`, which the agent reads itself; ADR-0096 R3, how the agent reads that setting,
   which R6 follows for every value from a list; ADR-0096 R5, the token endpoint that `client-credentials` requires;
-  ADR-0096 R7, which files the agent leaves unread with each value; ADR-0096 R8, the pair of that setting and the M2M
-  mode that stops the start.
+  ADR-0096 R7, which files the agent leaves unread with each value.
 - [authz-agent-ADR-0106: Trust a private CA only through the system roots of the base image](https://github.com/Netcracker/qubership-authz-agent/pull/330),
   proposed in #330: ADR-0106 R1, the system roots that every HTTPS request of the agent verifies against.
 
@@ -59,7 +60,7 @@ example.
   `internal` reads by name, `LOGGING_LEVEL_ROOT` included. A variable that only a test, the Go runtime, or the standard
   library reads, such as `GOMEMLIMIT` or `HTTPS_PROXY`, is not one, and neither is `LOG_LEVEL`, which R30 governs.
 - **Settings table**: the table under `## Configuration` in `components/authz-agent/README.md`.
-- **Stops the start**: as ADR-0091 defines it.
+- **Marked provider**, **stops the start**: as ADR-0091 defines them.
 
 ### Rules
 
@@ -70,9 +71,9 @@ example.
 
 #### Configuration
 
-- **R5** (`startup`). In the M2M mode `legacy`, the agent starts, becomes ready, and serves on the Docker target with
-  environment variables and mounted files alone: no Kubernetes API server, no service account token, and no topology
-  file.
+- **R5** (`startup`). With a trusted providers file that holds no marked provider, the agent starts, becomes ready,
+  and serves on the Docker target with environment variables and mounted files alone: no Kubernetes API server, no
+  service account token, and no topology file.
 - **R6** (`startup`, `client`). Before it serves a request, on every target, the agent checks the value of every agent
   variable and stops the start on a value that the row of the variable in the settings table does not accept, with a
   message that names the variable and the values its row accepts. The agent reads an integer as decimal digits with an
@@ -96,12 +97,12 @@ example.
 #### The Compose example and the Docker page
 
 - **R8** (`docker`). The Compose example runs the agent from its release image, mounts the trusted providers file at
-  `/etc/authz` and the client credentials at `/etc/secret`, and holds an example trusted providers file.
+  `/etc/authz` and the client credentials at `/etc/secret`, and holds an example trusted providers file without a
+  marked provider.
 - **R9** (`docker`, `startup`). The environment file of the Compose example lists every agent variable with a comment.
   It gives each variable that the configuration of the example requires a placeholder, such as an address under
   `example.com`, gives every other variable that has a default the default of its row in the settings table, and leaves
-  each remaining variable commented out. It sets `M2M_AUTH_MODE` to `legacy` and `AUTHZ_M2M_TOKEN_SOURCE` to
-  `client-credentials`.
+  each remaining variable commented out. It sets `AUTHZ_M2M_TOKEN_SOURCE` to `client-credentials`.
 - **R10** (`docker`). The Compose example gives the agent a stop grace period of 30 seconds.
 - **R11** (`docker`). The Compose example declares a healthcheck on `/ready` of the internal surface, which passes only
   while `/ready` reports the agent ready.
@@ -132,19 +133,18 @@ page shows how to make the credentials readable to that uid without making them 
 (R29).
 
 On the Docker target nothing but the agent checks its configuration. The token for the API server and the topology file
-exist only in a cluster, so ADR-0092 R16 leaves `legacy` as the only mode outside Kubernetes, and R5 requires that mode
-to work with neither. A mistyped value of any agent variable stops the start, as an unknown mode does under
-ADR-0092 R15, so an operator learns of it at once rather than running with a default they did not choose (R6). The
-settings table keeps the list in one file, so a new variable joins it in the change that adds it (R21). A variable can
-be optional and still have no default, so a row gives the default and whether the variable is required separately (R21).
-A number that its destination type cannot hold would overflow instead of being refused, so its range ends within that
-type, and the row gives the bound (R21). A variable that the values of others require, such as `AUTHZ_M2M_TOKEN_URL`
-with `AUTHZ_M2M_TOKEN_SOURCE=client-credentials` under ADR-0096 R5, is marked in its row, and R20 stops the start
-without it; a pair that a record forbids, such as the one of ADR-0096 R8, stops the start as that record says. R6 reads
-a value from a list as ADR-0096 R3 reads `AUTHZ_M2M_TOKEN_SOURCE`, so that no setting accepts a spelling another one
-refuses. The platform logger reads `LOG_LEVEL` when `LOGGING_LEVEL_ROOT` is unset or empty, and runs at `info` with only
-a warning when it cannot parse the value. So the root log level has one name, `LOGGING_LEVEL_ROOT`, and a non-empty
-`LOG_LEVEL` stops the start (R30).
+exist only in a cluster, and ADR-0094 R5 requires that token wherever the trusted providers file holds the marked
+provider. So the example's file holds none, and R5 requires the agent to work without either (R8). A mistyped value of
+any agent variable stops the start, so an operator learns of it at once rather than running with a default they did not
+choose (R6). The settings table keeps the list in one file, so a new variable joins it in the change that adds it (R21).
+A variable can be optional and still have no default, so a row gives the default and whether the variable is required
+separately (R21). A number that its destination type cannot hold would overflow instead of being refused, so its range
+ends within that type, and the row gives the bound (R21). A variable that the values of others require, such as
+`AUTHZ_M2M_TOKEN_URL` with `AUTHZ_M2M_TOKEN_SOURCE=client-credentials` under ADR-0096 R5, is marked in its row, and R20
+stops the start without it. R6 reads a value from a list as ADR-0096 R3 reads `AUTHZ_M2M_TOKEN_SOURCE`, so that no
+setting accepts a spelling another one refuses. The platform logger reads `LOG_LEVEL` when `LOGGING_LEVEL_ROOT` is unset
+or empty, and runs at `info` with only a warning when it cannot parse the value. So the root log level has one name,
+`LOGGING_LEVEL_ROOT`, and a non-empty `LOG_LEVEL` stops the start (R30).
 
 A default address such as `http://tenant-manager:8080` names a service that only some networks have, whether the name
 belongs to a Kubernetes Service or to a Compose service. With an address of tenant-manager the agent stays not ready
@@ -210,5 +210,6 @@ Negative:
   and a realm named by a tenant's display name as written (R7).
 - Releases before 1.0, v0.1.0 included, carry no stable API or configuration commitment, so the release notes of each
   release that implements R6, R7, or R30 list what it changes for an installation without the chart.
-- On the Docker target only `legacy` works, so services that call with Kubernetes tokens cannot use such an agent
-  (ADR-0092 R16).
+- On the Docker target the trusted providers file holds no marked provider, so no token is a Kubernetes token, and
+  services that call with tokens that the API server signs cannot use such an agent (R5, R8). Such a token gets
+  `TOKEN_ISSUER_UNKNOWN` when its `iss` falls under ADR-0091 R11.
