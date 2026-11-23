@@ -16,6 +16,7 @@ package verify
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -174,6 +175,58 @@ func TestVerify_ChecksATokenAgainstTheKeyOfTheRealmItNames(t *testing.T) {
 				t.Errorf("KeyID() = %q, want %q", tok.KeyID(), tt.wantKID)
 			}
 		})
+	}
+}
+
+// statusVerifier returns a Verifier whose one provider is a realms provider
+// whose server answers every request with status.
+func statusVerifier(t *testing.T, status int) *Verifier {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(status)
+	}))
+	t.Cleanup(srv.Close)
+	provider := keys.Provider{
+		ID:             keys.IdentityProviderID,
+		Type:           keys.Realms,
+		IssuerTemplate: "https://public.example" + realmsPath + "{realm}",
+		JWKSURI:        srv.URL + realmsPath + "{realm}/jwks",
+		Audience:       keys.Audience{Mode: keys.Ignore},
+	}
+	set, err := keys.New(keys.Config{Providers: []keys.Provider{provider}}, keys.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, _ := newVerifier(set)
+	return v
+}
+
+// The server of the provider answers 503 to every request, so the first load
+// of the realm that the token names fails, and the token has no key.
+func TestVerify_RefusesATokenWhoseKeysCannotBeLoadedWithTheReason(t *testing.T) {
+	v := statusVerifier(t, http.StatusServiceUnavailable)
+	s := newSigner(t, "k1", providerOf("unused"))
+	_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"iss": "https://public.example" + realmsPath + "a"})))
+	verr, ok := errors.AsType[*Error](err)
+	if !ok || verr.Code != CodeKeysUnavailable {
+		t.Fatalf("Verify() error = %v, want code %q", err, CodeKeysUnavailable)
+	}
+	if want := `the token with kid "k1" cannot be checked: the last load of the source failed`; !strings.Contains(verr.Detail, want) {
+		t.Errorf("Detail = %q, want it to contain %q", verr.Detail, want)
+	}
+	if verr.ProviderID != "" || verr.Realm != "" {
+		t.Errorf("ProviderID, Realm = %q, %q, want both empty before the signature verifies", verr.ProviderID, verr.Realm)
+	}
+}
+
+// The server of the provider answers 404 to every request, as for a realm that
+// Keycloak does not hold, so the first load of the realm ends in a 404.
+func TestVerify_RefusesATokenOfARealmThatAnswers404AsAnUnknownKID(t *testing.T) {
+	v := statusVerifier(t, http.StatusNotFound)
+	s := newSigner(t, "k1", providerOf("unused"))
+	_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"iss": "https://public.example" + realmsPath + "a"})))
+	if codeOf(err) != CodeKIDUnknown {
+		t.Errorf("Verify() error = %v, want code %q", err, CodeKIDUnknown)
 	}
 }
 

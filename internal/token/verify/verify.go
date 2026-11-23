@@ -70,8 +70,15 @@ const (
 	CodeIssuerUnknown Code = "TOKEN_ISSUER_UNKNOWN"
 	// CodeKIDMissing marks a token whose header has no kid, or an empty one.
 	CodeKIDMissing Code = "TOKEN_KID_MISSING"
-	// CodeKIDUnknown marks a token whose kid no loaded key of its source has.
+	// CodeKIDUnknown marks a token whose kid no loaded key of its source has,
+	// where the load that the lookup counts got a JWKS or HTTP 404, as
+	// [keys.Set.LookupOrReload] describes.
 	CodeKIDUnknown Code = "TOKEN_KID_UNKNOWN"
+	// CodeKeysUnavailable marks a token whose kid no loaded key of its source
+	// has, where the load that the lookup counts failed, or where the lookup
+	// counts none, as [keys.ErrKeysUnavailable] states. An outage of the
+	// server of a provider is one cause.
+	CodeKeysUnavailable Code = "TOKEN_KEYS_UNAVAILABLE"
 	// CodeSignatureInvalid marks a token whose signature does not verify
 	// with the key its iss and kid select.
 	CodeSignatureInvalid Code = "TOKEN_SIGNATURE_INVALID"
@@ -262,7 +269,8 @@ func (t *Token) Expiry() time.Time { return t.expiry }
 // KeyFinder finds the signing key a token asks for; [*keys.Set] implements it.
 // Every key that its methods return has a [keys.Source.Provider]. Both methods
 // report a key they cannot return with [keys.ErrIssuerUnknown] or
-// [keys.ErrKeyUnknown].
+// [keys.ErrKeyUnknown], and LookupOrReload also with
+// [keys.ErrKeysUnavailable].
 type KeyFinder interface {
 	// Lookup returns the key q names from the keys already loaded, without
 	// waiting.
@@ -348,8 +356,8 @@ func New(source KeyFinder, opts Options) *Verifier {
 // When no loaded key matches, Verify waits for the reload that
 // [KeyFinder.LookupOrReload] may start, until the reload ends or ctx ends.
 // When ctx ends first, the key is looked up among the keys loaded by then, and
-// a token still without a key is refused with [CodeKIDUnknown], not with
-// ctx.Err().
+// a token still without a key is refused with [CodeKIDUnknown] or
+// [CodeKeysUnavailable], not with ctx.Err().
 //
 // A token verified earlier that has not expired is served from the cache,
 // as the *Token the earlier call returned, while [KeyFinder.Lookup] returns
@@ -465,7 +473,20 @@ func lookupFailure(q keys.Query, claims map[string]json.RawMessage, err error) *
 		}
 		return fail(CodeIssuerUnknown, "iss %s matches no trusted provider", cut(q.Issuer, maxIssuerBytes))
 	}
+	if errors.Is(err, keys.ErrKeysUnavailable) {
+		return fail(CodeKeysUnavailable, "the keys of iss %s are not available, so the token with kid %s cannot be checked: %s", shortIssuer(q.Issuer), short(q.KID), unavailableReason(err))
+	}
 	return fail(CodeKIDUnknown, "no key of iss %s has kid %s", shortIssuer(q.Issuer), short(q.KID))
+}
+
+// unavailableReason returns the reason of the [*keys.UnavailableError] in err,
+// and "no reason given" when err holds none, as from a [KeyFinder] that returns
+// the bare [keys.ErrKeysUnavailable].
+func unavailableReason(err error) string {
+	if unavailable, ok := errors.AsType[*keys.UnavailableError](err); ok {
+		return unavailable.Reason
+	}
+	return "no reason given"
 }
 
 // cached returns the cached token for digest when it has not expired and its

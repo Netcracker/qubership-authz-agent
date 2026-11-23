@@ -16,6 +16,7 @@ package keys
 
 import (
 	"context"
+	"errors"
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
@@ -49,7 +50,20 @@ func (g *gatedReload) reload(ctx context.Context) {
 // newGated returns a gatedReload and an onDemand that runs it.
 func newGated() (*gatedReload, *onDemand) {
 	g := &gatedReload{release: make(chan struct{})}
-	return g, &onDemand{load: g.reload, interval: time.Minute, loads: newWindowLimit(maxLoadsPerMinute)}
+	current := &atomic.Pointer[loadResult]{}
+	current.Store(&loadResult{})
+	return g, &onDemand{load: g.reload, current: current, interval: time.Minute, loads: newWindowLimit(maxLoadsPerMinute)}
+}
+
+// waitIn runs o.wait(ctx) in a new goroutine and returns a channel that gets
+// its error once it returns.
+func waitIn(ctx context.Context, o *onDemand) <-chan error {
+	done := make(chan error, 1)
+	go func() {
+		_, err := o.wait(ctx)
+		done <- err
+	}()
+	return done
 }
 
 // The joining caller asks while the reload that the starting caller started
@@ -57,18 +71,29 @@ func newGated() (*gatedReload, *onDemand) {
 func TestOnDemand_ACallerDuringAReloadWaitsForIt(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		g, o := newGated()
-		var starter, joiner atomic.Bool
-		go func() { o.wait(t.Context()); starter.Store(true) }()
+		starter := waitIn(t.Context(), o)
 		synctest.Wait()
-		go func() { o.wait(t.Context()); joiner.Store(true) }()
+		joiner := waitIn(t.Context(), o)
 		synctest.Wait()
-		if joiner.Load() {
-			t.Errorf("the joining wait returned while the reload was held")
+		select {
+		case err := <-joiner:
+			t.Errorf("the joining wait returned %v while the reload was held", err)
+		default:
 		}
 		close(g.release)
 		synctest.Wait()
-		if !starter.Load() || !joiner.Load() {
-			t.Errorf("after the reload ended: starting wait returned = %t, joining wait = %t, want both", starter.Load(), joiner.Load())
+		for _, w := range []struct {
+			name string
+			done <-chan error
+		}{{"starting", starter}, {"joining", joiner}} {
+			select {
+			case err := <-w.done:
+				if err != nil {
+					t.Errorf("the %s wait returned %v after the reload ended, want nil", w.name, err)
+				}
+			default:
+				t.Errorf("the %s wait did not return after the reload ended", w.name)
+			}
 		}
 		if got := g.runs.Load(); got != 1 {
 			t.Errorf("reloads = %d, want 1", got)
@@ -82,15 +107,21 @@ func TestOnDemand_ACallerWhoseContextEndsStopsWaitingAndTheReloadGoesOn(t *testi
 	synctest.Test(t, func(t *testing.T) {
 		g, o := newGated()
 		ctx, cancel := context.WithCancel(context.WithValue(t.Context(), callerKey{}, "caller"))
-		var returned atomic.Bool
-		go func() { o.wait(ctx); returned.Store(true) }()
+		done := waitIn(ctx, o)
 		synctest.Wait()
-		if returned.Load() {
-			t.Errorf("wait returned while the reload was held and its context lasted")
+		select {
+		case err := <-done:
+			t.Errorf("wait returned %v while the reload was held and its context lasted", err)
+		default:
 		}
 		cancel()
 		synctest.Wait()
-		if !returned.Load() {
+		select {
+		case err := <-done:
+			if !errors.Is(err, context.Canceled) {
+				t.Errorf("wait() error = %v after its context ended, want %v", err, context.Canceled)
+			}
+		default:
 			t.Errorf("wait did not return after its context ended")
 		}
 		close(g.release)

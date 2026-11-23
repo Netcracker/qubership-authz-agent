@@ -651,7 +651,7 @@ func TestVerify_AcceptsATokenWhoseKeyAReloadBringsWhileItsContextLasts(t *testin
 		want Code
 	}{
 		{"context that lasts", t.Context(), ""},
-		{"context that has ended", ended, CodeKIDUnknown},
+		{"context that has ended", ended, CodeKeysUnavailable},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -664,6 +664,52 @@ func TestVerify_AcceptsATokenWhoseKeyAReloadBringsWhileItsContextLasts(t *testin
 				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
 			}
 		})
+	}
+}
+
+// unavailableKeys is a KeyFinder whose sources never answer.
+type unavailableKeys struct{}
+
+func (unavailableKeys) Lookup(keys.Query) (keys.Key, error) { return keys.Key{}, keys.ErrKeyUnknown }
+
+func (unavailableKeys) LookupOrReload(context.Context, keys.Query) (keys.Key, error) {
+	return keys.Key{}, &keys.UnavailableError{Reason: "the last load of the source failed"}
+}
+
+// The iss is 97 bytes long, so the detail quotes its start and its end, and
+// the kid is 1000 bytes long. TestVerify_CutsSenderValuesInTheDetail and
+// TestVerify_CutsALongIssInTheDetail hold the other codes, whose
+// KeyFinders answer.
+func TestVerify_CutsTheSenderValuesInTheDetailOfKeysThatAreNotAvailable(t *testing.T) {
+	const long = "https://keycloak.security.svc.cluster.local:8443/auth/realms/tenant-0123456789abcdefghijklmnopqrs"
+	const longQuoted = `"https://keycloak.security.svc.cl"..."ster.local:8443/auth/realms/tenant-0123456789abcdefghijklmnopqrs"`
+	v, _ := newVerifier(unavailableKeys{})
+	_, err := v.Verify(t.Context(), unsigned(t, map[string]any{"alg": "ES256", "kid": strings.Repeat("x", 1000)}, claimsAt(start, map[string]any{"iss": long})))
+	if codeOf(err) != CodeKeysUnavailable {
+		t.Fatalf("Verify() error = %v, want code %q", err, CodeKeysUnavailable)
+	}
+	if !strings.Contains(err.Error(), "iss "+longQuoted) {
+		t.Errorf("Verify() error = %q, want it to quote the iss as %s", err, longQuoted)
+	}
+	if size := len(err.Error()); size > 400 {
+		t.Errorf("Verify() error is %d bytes, want at most 400: %.120s...", size, err)
+	}
+}
+
+// fakeKeys reports the kid it does not hold under an ended context with the
+// bare keys.ErrKeysUnavailable, which carries no reason.
+func TestVerify_SaysThatTheKeyFinderGaveNoReasonForKeysItCannotLoad(t *testing.T) {
+	ended, cancel := context.WithCancel(t.Context())
+	cancel()
+	s := newSigner(t, "rotated", providerOf("realm"))
+	v, _ := newVerifier(newFakeKeys())
+	_, err := v.Verify(ended, s.sign(t, claimsAt(start, nil)))
+	verr, ok := errors.AsType[*Error](err)
+	if !ok || verr.Code != CodeKeysUnavailable {
+		t.Fatalf("Verify() error = %v, want code %q", err, CodeKeysUnavailable)
+	}
+	if want := `the token with kid "rotated" cannot be checked: no reason given`; !strings.HasSuffix(verr.Detail, want) {
+		t.Errorf("Detail = %q, want it to end with %q", verr.Detail, want)
 	}
 }
 
