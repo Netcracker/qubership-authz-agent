@@ -12,13 +12,15 @@ kichasov
 #### Participants and approvers
 
 - The project architect (`mr-joom`) approves this record, and with it the departures from earlier answers that it
-  records, agreed on 2026-11-19 and 2026-11-23.
+  records, agreed on 2026-11-19 and 2026-11-23. On 2026-11-23 the architect and the owner of the policy decision code
+  also agreed to drop the M2M modes, so no rule of this record depends on `M2M_AUTH_MODE`.
 - The owner of the policy decision code (`vlsi`) reviews this record.
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
 
 #### Related ADRs
 
-This record replaces every statement of ADR-0091, ADR-0092, ADR-0094, ADR-0095, and ADR-0096 that disagrees with it.
+This record replaces every statement of ADR-0091, ADR-0092, ADR-0094, ADR-0095, and ADR-0096, and of ADR-0101, which
+#235 proposes, that disagrees with it.
 In the statements that stay in those records, the provider files of this record take the place of the trusted providers
 file, the provider `kubernetes` takes the place of the marked provider, an identity-provider token (R22) takes the place
 of a realm token, and no token is a file token. Where those records name the checks of ADR-0091 or of ADR-0094, as
@@ -29,11 +31,11 @@ the edits that bring those records in line with this one.
   the checks of a token and the keys that readiness waits for (ADR-0091 R14, R19). The provider files name the issuers,
   the address of the keys, and the audience.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
-  the M2M test of each kind of token (ADR-0092 R6, R7, R21) and the kinds of token each M2M mode accepts (ADR-0092 R11
-  to R14), where the `id` of the provider decides the kind (R22).
+  the M2M test of each kind of token (ADR-0092 R6, R7, R21) and the kinds of token that `Authorization` accepts
+  (ADR-0092 R11, which #345 rewrites without M2M modes), where the `id` of the provider decides the kind (R22).
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
-  the M2M modes that require the provider `kubernetes` (ADR-0094 R1), the checks of a Kubernetes token (ADR-0094 R16,
-  R17), and the limits on the address of its keys (ADR-0094 R10, R32).
+  the checks of a Kubernetes token (ADR-0094 R16, R17), and the limits on the address of its keys (ADR-0094 R10,
+  R32).
 - [authz-agent-ADR-0095: Refuse a check request before policy evaluation](20261029-authz-agent-adr-0095-refuse-before-policy-evaluation.md):
   the index of reason codes (ADR-0095 R16), to which R27 adds `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED`, and the answer to a
   request whose `Incoming-Token` this record refuses (ADR-0095 R3, and R18, which #226 adds).
@@ -369,9 +371,9 @@ namespace check. Whatever address the provider files name, R27 refuses such a to
 every service account token from the TokenRequest API carries (Context). Where the provider names an in-cluster
 address, which every cluster gives its API server, the provider stops the start under R15, so the mistake shows at the
 start and not only in refusals. The claim never makes a token a Kubernetes token: R22 still decides the kind, and R27
-only adds a refusal. In `legacy`, which has no provider `kubernetes`, every token from the TokenRequest
-API is refused under R21 or R27, whatever the provider files hold. A token from a Secret has no `exp`, so ADR-0091 R44
-refuses it.
+only adds a refusal. Where the provider files hold no provider `kubernetes`, as outside Kubernetes, every token from
+the TokenRequest API is refused under R21 or R27, whatever the other providers hold. A token from a Secret has no `exp`,
+so ADR-0091 R44 refuses it.
 
 `iss` names the signer, and RFC 7519, section 2, compares such values as case-sensitive strings with no
 canonicalization. Comparing all of it, the host included, means a token that names another server starts no load, and
@@ -428,11 +430,11 @@ the default token of a Pod, passes in neither (R26).
 - **A6. Take the issuer of the provider `kubernetes` from the token for the API server.** Rejected by R6: the provider
   file states the issuer, and the token for the API server is optional, so the agent cannot rely on it to learn the
   issuer. This reverses ADR-0094 R4 and the answer on the issuer of the API server in the questionnaire of 2026-11-03.
-- **A7. Require the token for the API server in the modes `hybrid` and `k8s`.** Rejected by R6: a cluster that serves
-  its keys to an anonymous request needs no token, and the Pod then holds no credential for the API server. This
-  reverses ADR-0094 R5, and with it the reason that ADR-0092 gives for `legacy` as the only mode outside Kubernetes.
+- **A7. Require the token for the API server wherever the provider files hold the provider `kubernetes`.** Rejected by
+  R6: a cluster that serves its keys to an anonymous request needs no token, and the Pod then holds no credential for
+  the API server. This reverses ADR-0094 R5.
 - **A8. Drop the provider `kubernetes` when the file that its `jwksBearerTokenFile` names is missing.** Rejected by
-  R14: the readiness probe would pass while the agent refuses every Kubernetes token, and in `k8s` every caller.
+  R14: the readiness probe would pass while the agent refuses every token that the API server signs.
 - **A9. Give `readinessRealms` the default `cloud-common`.** Rejected by R13: the agent would carry the name of a realm
   of the platform's Keycloak, and a file for any other server would have to work around it. This reverses ADR-0091
   R15.
@@ -454,10 +456,6 @@ the default token of a Pod, passes in neither (R26).
   Consequences that a provider `identity-provider` whose issuer is an API server accepts the token of any Pod.**
   Rejected by R27: the safety of the agent would
   depend on the operator recognizing the API server under every address it has.
-- **A15. Refuse a token under R27 with `TOKEN_KIND_NOT_ALLOWED` of ADR-0092 R13.** Rejected by R27: under R22 the token
-  is an identity-provider token, which `Authorization` accepts in `legacy` and `hybrid`, and ADR-0095 keeps
-  `TOKEN_KIND_NOT_ALLOWED` to show which services still call with such a token in `k8s`. A code of its own points at a
-  provider file that names an API server.
 - **A16. Give every provider a limit of its own on the tokens it accepts, such as the namespaces of the installation
   for the API server of the agent's cluster, in place of a kind of token.** Rejected by R22 and R27: no installation
   needs the tokens of another cluster in this stage, and such a limit would change ADR-0094 well beyond one rule. A
@@ -483,13 +481,11 @@ Negative:
   R21, R23).
 - A wrong `issuer.value` leaves the Pod ready: the keys of the provider still load from `jwksUri`, and every token of
   the provider gets `TOKEN_ISSUER_UNKNOWN` (R19, R21). For the provider `kubernetes` the issuer is a value set for each
-  cluster, where ADR-0094 R4 read it from the token for the API server, so in `k8s` a wrong value refuses every
-  caller of a Pod that is ready.
+  cluster, where ADR-0094 R4 read it from the token for the API server, so a wrong value refuses every token that the
+  API server signs, in a Pod that is ready.
 - A provider `identity-provider` without `readinessRealms` has no required source, so the Pod becomes ready before any
   realm has loaded keys, and a wrong `jwksUri` shows only in the refusals of its tokens and in the warnings of
   ADR-0091 R81 (R13, R25; ADR-0091 R23, R38, R39, R81).
-- Outside Kubernetes the agent starts in `hybrid` or `k8s` when the provider files hold a provider `kubernetes`
-  without `jwksBearerTokenFile` (R6, R14). Only `legacy` is supported there, and the agent does not check it.
 - A provider `kubernetes` without `jwksBearerTokenFile` requests its keys without a token. A standard cluster refuses
   that request (ADR-0094 Context), and the Pod stays not ready (ADR-0091 R19).
 - A name in `readinessRealms` that the Keycloak does not hold, such as the display name of a tenant, keeps the Pod not
@@ -505,9 +501,9 @@ Negative:
 - R15 recognizes the API server only by the hosts of an in-cluster address. A provider `identity-provider` whose
   `issuer.value` equals the issuer of an API server and whose `issuer.value` and `jwksUri` are not in-cluster
   addresses, as with the public issuer and keys of a managed cluster, passes R15. Where no provider `kubernetes` has the
-  same `issuer.value` (R17), as in `legacy` or for the API server of another cluster, the agent starts. R27 then
-  refuses every token whose source is that provider and that holds the claim `kubernetes.io`, and the mistake shows
-  only in those refusals.
+  same `issuer.value` (R17), as without a provider `kubernetes` or for the API server of another cluster, the agent
+  starts. R27 then refuses every token whose source is that provider and that holds the claim `kubernetes.io`, and the
+  mistake shows only in those refusals.
 - A token that a signer other than an API server issues and that holds the claim `kubernetes.io`, such as a Keycloak
   token with a mapper that adds it, is refused (R27).
 - A provider `kubernetes` without `jwksBearerTokenFile` may name the issuer and the keys of the API server of another
@@ -526,16 +522,19 @@ Follow-ups:
   an issuer that is not an https URL drop their sentences on discovery and on the setting of ADR-0094 R9. Every
   Justification sentence, alternative, consequence, and Related ADRs line of ADR-0091 to ADR-0096 that cites a statement
   this record replaces, or names realm tokens and file tokens, is rewritten, among them ADR-0091 A2 and A8, ADR-0094 A1
-  and A4 to A9, the Justification and A5 of ADR-0095, and the terms and the Justification of ADR-0096. The Justification
-  of ADR-0094 adds that R27 of this record uses the claim `kubernetes.io` only to refuse a token. The item of the
-  ADR-0094 Consequences on `legacy` cites R27 of this record. ADR-0092 R12 applies only to a token whose `iss` matches
-  no provider. ADR-0095 R16 lists `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED` with R27 of this record.
-- ADR-0092, and ADR-0101, which #235 proposes, state that only `legacy` is supported outside Kubernetes and that the
-  agent does not check it.
+  and A4 to A9, and the terms and the Justification of ADR-0096. The Justification of ADR-0094 adds that R27 of this
+  record uses the claim `kubernetes.io` only to refuse a token. The item of the ADR-0094 Consequences on a trusted
+  providers file without the marked provider cites R21 and R27 of this record. ADR-0095 R16 lists
+  `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED` with R27 of this record.
 - ADR-0091 R2 and R72 and ADR-0094 R9 set or read members of the trusted providers file that R6 of this record removes,
   ADR-0094 R2 and R30 decide what the chart mounts and writes for the provider `kubernetes`, and ADR-0094 R7 and R27 and
   the term Cluster CA name the CA of requests that this record replaces. A record of the chart and a record of a private
   CA take their place.
 - `docs/decisions/README.md` names the provider files in the row of the layer `keys`, and this record as the one that
   defines the words for providers, realms, sources, issuers, and the two kinds of token.
-- The Compose example of ADR-0101, which #235 proposes, mounts the provider directory at `/etc/authz/providers`.
+- ADR-0101, which #235 proposes, uses the terms of this record and drops the statements it replaces. Its Compose
+  example mounts the provider directory at `/etc/authz/providers`, and every statement that names a trusted providers
+  file or the marked provider names provider files or the provider `kubernetes`. Every reason that cites ADR-0094 R5,
+  which A7 reverses, cites R25 instead: a provider `kubernetes` is a required source, and on the Docker target no API
+  server serves its keys, so the agent stays not ready. Every citation of a rule that this record replaces, such as
+  ADR-0091 R11, cites the rule of this record that takes its place.
