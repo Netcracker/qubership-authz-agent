@@ -218,12 +218,17 @@ AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL: 30
 #     re-reads it every fifteen seconds, and a file that holds no token stops
 #     the start. The chart mounts no Secret and passes no token endpoint.
 #
-# The services that receive the token accept it by their own M2M mode: in k8s
-# they refuse the token of client-credentials, and in legacy the Kubernetes
-# token that token-file sends with this chart.
+# Choose the token that the services receiving it accept: a service that
+# accepts only Kubernetes tokens refuses the token of client-credentials, and a
+# service that refuses Kubernetes tokens refuses the one token-file sends with
+# this chart. Neither the chart nor the agent checks the choice. A recipient
+# that refuses the token answers 401: a failed policy pull keeps the agent not
+# ready, and a failed PIP call leaves the decisions that need its value
+# without it.
 #
-# The chart does not read KUBERNETES_M2M_ENABLED, which the platform deprecates
-# in favor of M2M_AUTH_MODE, and accepts any value of it.
+# The chart reads neither KUBERNETES_M2M_ENABLED, which the platform
+# deprecates, nor M2M_AUTH_MODE, which the platform's deployer passes to every
+# application, and accepts any value of either.
 #
 # KEYCLOAK ROLES REQUIRED (deployer note — NOT a chart field):
 #   The Keycloak client for authz-agent must carry realm roles:
