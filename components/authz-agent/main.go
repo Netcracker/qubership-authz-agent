@@ -117,9 +117,7 @@ func main() {
 	srv := server.Register(internal, eng, opts)
 	srv.RegisterPublic(public)
 
-	if puller != nil {
-		go puller.Run(ctx)
-	}
+	go puller.Run(ctx)
 	if providers != nil {
 		go providers.Run(ctx)
 	}
