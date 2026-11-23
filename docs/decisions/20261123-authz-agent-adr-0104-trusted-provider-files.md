@@ -73,7 +73,7 @@ will match the configured `issuer.value` as a whole, and the keys will come only
 - **Provider file**: an entry of the provider directory that R2 makes one.
 - **Provider**: an element of the `providers` array of a provider file.
 - **Provider `identity-provider`**, **provider `kubernetes`**: the provider whose `id` is that value.
-- **`exact` provider**, **`realm-template` provider**: a provider whose `issuer.type` is that value.
+- **`exact` provider**, **`realm-template` provider**: a provider whose `issuer.type` (R6) is that value.
 - **Realm**: a `realm-template` provider together with one realm name that R20 accepts.
 - **Source**: an `exact` provider or a realm, as a place that keys are read from.
 - **Required source**: a source that R25 names.
@@ -91,48 +91,156 @@ will match the configured `issuer.value` as a whole, and the keys will come only
 - **R2** (`keys`). Every entry directly in the provider directory whose name ends in `.json` and does not start with `.`
   is a provider file, unless it is a directory or a symbolic link to one. The agent reads a provider file through a
   symbolic link, reads no directory, and skips every other entry of the provider directory.
-- **R3** (`keys`). A provider file holds one JSON object whose only member is `providers`, an array. A provider file
-  that the agent cannot read, or that holds anything else, stops the start.
+- **R3** (`keys`). A provider file stops the start when the agent cannot read it, when its content is not a JSON text
+  under RFC 8259, or when one of its objects holds two members with the same name.
 - **R4** (`keys`). The providers of all provider files form one list. A provider directory that is missing or cannot
   be read, and a list without a provider, stop the start.
 - **R5** (`startup`). The agent reads the provider directory and the provider files only at start.
 
+#### The format of a provider file
+
+- **R6** (`keys`). A provider file is valid under this JSON Schema, draft 2020-12. A provider file that the schema does
+  not accept stops the start.
+
+  ```json
+  {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Provider file",
+    "type": "object",
+    "properties": {
+      "providers": {"type": "array", "items": {"$ref": "#/$defs/provider"}}
+    },
+    "required": ["providers"],
+    "additionalProperties": false,
+    "$defs": {
+      "provider": {
+        "type": "object",
+        "properties": {
+          "id": {"enum": ["identity-provider", "kubernetes"]}
+        },
+        "required": ["id"],
+        "allOf": [
+          {
+            "if": {"properties": {"id": {"const": "identity-provider"}}},
+            "then": {"$ref": "#/$defs/identityProvider"}
+          },
+          {
+            "if": {"properties": {"id": {"const": "kubernetes"}}},
+            "then": {"$ref": "#/$defs/kubernetesProvider"}
+          }
+        ]
+      },
+      "identityProvider": {
+        "type": "object",
+        "properties": {
+          "id": {"const": "identity-provider"},
+          "issuer": {"$ref": "#/$defs/issuer"},
+          "jwksUri": {"$ref": "#/$defs/jwksUri"},
+          "readinessRealms": {
+            "description": "Realms that are required sources (R12, R13, R25).",
+            "type": "array",
+            "items": {"type": "string"}
+          },
+          "audience": {"$ref": "#/$defs/audience"}
+        },
+        "required": ["id", "issuer", "jwksUri", "audience"],
+        "additionalProperties": false,
+        "if": {"properties": {"issuer": {"properties": {"type": {"const": "realm-template"}}}}},
+        "then": {
+          "properties": {"jwksUri": {"$ref": "#/$defs/realmTemplateUrl"}}
+        },
+        "else": {
+          "properties": {"jwksUri": {"$ref": "#/$defs/url"}, "readinessRealms": false}
+        }
+      },
+      "kubernetesProvider": {
+        "type": "object",
+        "properties": {
+          "id": {"const": "kubernetes"},
+          "issuer": {
+            "$ref": "#/$defs/issuer",
+            "properties": {"type": {"const": "exact"}}
+          },
+          "jwksUri": {
+            "description": "ADR-0094 R32 allows only https.",
+            "allOf": [{"$ref": "#/$defs/jwksUri"}, {"$ref": "#/$defs/url"}]
+          },
+          "jwksBearerTokenFile": {
+            "description": "The absolute path of the file whose token goes with the requests for the keys (R14, R24).",
+            "type": "string",
+            "pattern": "^/"
+          },
+          "audience": {
+            "$ref": "#/$defs/audience",
+            "properties": {"mode": {"const": "matchAny"}}
+          }
+        },
+        "required": ["id", "issuer", "jwksUri", "audience"],
+        "additionalProperties": false
+      },
+      "issuer": {
+        "description": "The iss of the tokens of the provider (R19).",
+        "type": "object",
+        "properties": {
+          "type": {"enum": ["exact", "realm-template"]},
+          "value": {"type": "string", "minLength": 1}
+        },
+        "required": ["type", "value"],
+        "additionalProperties": false,
+        "if": {"properties": {"type": {"const": "realm-template"}}},
+        "then": {
+          "properties": {"value": {"$ref": "#/$defs/realmTemplateUrl"}}
+        },
+        "else": {
+          "properties": {"value": {"not": {"pattern": "\\{realm\\}"}}}
+        }
+      },
+      "audience": {
+        "description": "The check of aud (R26).",
+        "type": "object",
+        "properties": {
+          "mode": {"enum": ["matchAny", "skipValidation"]},
+          "values": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1}
+          }
+        },
+        "required": ["mode"],
+        "additionalProperties": false,
+        "if": {"properties": {"mode": {"const": "matchAny"}}},
+        "then": {"required": ["values"]},
+        "else": {"properties": {"values": false}}
+      },
+      "jwksUri": {
+        "description": "The address of the keys (R23).",
+        "type": "string",
+        "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://"
+      },
+      "url": {
+        "description": "An absolute URL of printable ASCII characters, without a space, a fragment, {, or }.",
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9+.-]*://[^/?#{}]+([/?][^#{}]*)?$",
+        "not": {"pattern": "[^\\x21-\\x7e]"}
+      },
+      "realmTemplateUrl": {
+        "description": "Like url, except that it holds {realm} once, as one whole path segment.",
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9+.-]*://[^/?#{}]+(/[^/?#{}]*)*/\\{realm\\}(/[^/?#{}]*)*(\\?[^#{}]*)?$",
+        "not": {"pattern": "[^\\x21-\\x7e]"}
+      }
+    }
+  }
+  ```
+
 #### The members of a provider
 
-- **R6** (`keys`). The `id` of a provider is the string `identity-provider` or `kubernetes`. Any other `id` stops the
-  start.
-- **R7** (`keys`). A provider holds every member that this table marks as required for its `id`, may hold a member that
-  it marks as optional, and holds no other member. A member with the value `null` breaks this rule. A provider that
-  breaks this rule stops the start, so a provider that still holds one of the members `audiences`, `allowMissingAud`,
-  `caFile`, `tokenFile`, `kubernetes`, or `required` stops it too:
-
-  | Member | Provider `identity-provider` | Provider `kubernetes` |
-  | --- | --- | --- |
-  | `id` | Required | Required |
-  | `issuer` | Required | Required |
-  | `jwksUri` | Required | Required |
-  | `jwksBearerTokenFile` | Not allowed | Optional |
-  | `readinessRealms` | Optional in a `realm-template` provider, not allowed in an `exact` one | Not allowed |
-  | `audience` | Required | Required |
-
-- **R8** (`keys`). `issuer` is an object with the members `type` and `value` and no other. `type` is `exact` or
-  `realm-template`, and the provider `kubernetes` takes only `exact`. `value` is a non-empty string. Any other
-  `issuer`, a string among them, stops the start.
-- **R9** (`keys`). In a `realm-template` provider, `issuer.value` and `jwksUri` are each an absolute URL that holds
-  `{realm}` exactly once, as a whole segment of its path, so `{realm}` in the host or in part of a segment breaks this
-  rule. In an `exact` provider, neither of them holds `{realm}`. A provider that breaks this rule stops the start.
-- **R10** (`keys`). `jwksUri` is an absolute URL with the scheme `http` or `https`. Any other `jwksUri` stops the start.
-  ADR-0094 R32 allows only `https` in the provider `kubernetes`.
-- **R11** (`keys`). `audience` is either `{"mode": "matchAny", "values": [...]}`, where `values` is a non-empty array of
-  non-empty strings, or `{"mode": "skipValidation"}`, which holds no `values`. The provider `kubernetes` takes only
-  `matchAny`. Any other `audience` stops the start.
-- **R12** (`keys`). `readinessRealms` is an array of strings. Each of them is a realm name as it stands in place of
-  `{realm}` in `iss` after percent-decoding. The agent uses each name as written and resolves none of them through
-  tenant-manager or another service. Any other `readinessRealms`, and a name that R20 does not accept, stop the start.
+- **R12** (`keys`). Each name in `readinessRealms` is a realm name as it stands in place of `{realm}` in `iss` after
+  percent-decoding. The agent uses each name as written and resolves none of them through tenant-manager or another
+  service. A name that R20 does not accept stops the start.
 - **R13** (`keys`). A provider without `readinessRealms` names no realm as required, and the agent adds no realm of its
   own, `cloud-common` included.
-- **R14** (`keys`). `jwksBearerTokenFile` is the absolute path of a file. Any other `jwksBearerTokenFile`, and one whose
-  file the agent cannot read at start, stop the start.
+- **R14** (`keys`). A `jwksBearerTokenFile` whose file the agent cannot read at start stops the start.
 - **R15** (`keys`). A provider `identity-provider` whose `issuer.value` or `jwksUri` is an in-cluster address stops the
   start.
 
@@ -144,12 +252,12 @@ will match the configured `issuer.value` as a whole, and the keys will come only
   `iss`, matches the `realm-template` one under R19. Two `realm-template` providers overlap when their `issuer.value`
   have the same scheme, host, and port and the same number of path segments, and are equal in each segment where
   neither holds `{realm}`.
-- **R18** (`keys`). An error that stops the start under R3, R4, or R6 to R17 names the provider directory or the
-  provider file at fault. An error under R3 names each member of the provider file other than `providers`, such as
-  `keycloak`. Where the error concerns a provider, it names the provider by its `id`, or by its position in `providers`
-  where the provider has no `id` that is a string, and it names the member at fault. An error under R16 or R17 names
-  both providers, each with its provider file. An error about `jwksBearerTokenFile` in the provider
-  `identity-provider` also says that the provider of Kubernetes tokens has the `id` `kubernetes`.
+- **R18** (`keys`). An error that stops the start under R3, R4, R6, or R12 to R17 names the provider directory or the
+  provider file at fault. An error about a member of a provider file other than `providers` names each such member.
+  Where the error concerns a provider, it names the provider by its `id`, or by its position in `providers` where the
+  provider has no `id` that is a string, and it names the member at fault. An error under R16 or R17 names both
+  providers, each with its provider file. An error about `jwksBearerTokenFile` in the provider `identity-provider` also
+  says that the provider of Kubernetes tokens has the `id` `kubernetes`.
 
 #### The source of a token
 
@@ -229,6 +337,10 @@ A token with `iss` `http://identity-provider:8080/auth/realms/a%20b` selects the
 requests at `http://identity-provider:8080/auth/realms/a%20b/protocol/openid-connect/certs`. In Go, `url.PathEscape`
 escapes the name, and `os.Stat` on an entry follows a symbolic link.
 
+Both files are valid under the schema of R6, and a JSON Schema validator for draft 2020-12 can check a file against it.
+The patterns of the schema use only syntax that ECMA-262 and Go's `regexp` read alike. ECMA-262 is the dialect that
+draft 2020-12 names for `pattern`.
+
 ### Justification
 
 A fixed directory gives the agent one place to look and a deployment one place to mount, with no setting that the
@@ -238,9 +350,14 @@ keeps its data in hidden directories and links each key into them (R2). Reading 
 providers of a process for its lifetime, and a change of the files restarts the Pods through the checksum of ADR-0091
 R13 (R5).
 
+A JSON Schema states the format of a provider file in one place, in a notation that validators and editors read,
+and the other rules state what the agent does with each member (R6). R20 stays outside the schema, because R19 applies
+it to the realm name in an `iss` as well, and its limit counts bytes, where `maxLength` of JSON Schema counts characters
+(R12, R20).
+
 A member that the agent ignored would be a setting that the operator relies on and the agent does not apply. Stopping
 the start shows the mistake before any token is accepted, and a file in the former format cannot run with members that
-the agent no longer reads, such as `allowMissingAud` or `caFile` (R3, R7 to R14).
+the agent no longer reads, such as `allowMissingAud` or `caFile` (R3, R6).
 
 The `id` decides the kind of a token, and with the kind the checks that other records attach to it: the namespace of
 ADR-0094 R17, the M2M test of ADR-0092 R6, R7, and R21, and the future `iat` of ADR-0091 R48 (R6, R22). With two
@@ -267,24 +384,24 @@ A token selects its source but names no address: the keys come from the `jwksUri
 cannot send the agent to a server of its choosing (R23). A configured `jwksUri` needs no discovery document, whose
 server would choose the address of the keys, and it works where the issuer of the API server cannot be reached from
 inside the cluster (ADR-0094 Context). `{realm}` stands for one whole path segment, and R20 keeps the decoded name from
-adding a segment, a query, or a fragment, so the name stays inside its segment of the address (R9, R20, R23).
+adding a segment, a query, or a fragment, so the name stays inside its segment of the address (R6, R20, R23).
 
 The agent holds nothing specific to Keycloak: the path `/auth/realms/`, the path of the keys, and the realm
 `cloud-common` come from the provider files, so a Keycloak without `/auth` needs another file and no change of the agent
-(R9, R13, R19, R23).
+(R6, R13, R19, R23).
 
 The required sources are the ones that the configuration names: an `exact` provider and the realms in
 `readinessRealms` (R25). Every other realm loads on its first token. The names are the realm names that tokens carry,
 because the agent runs where no tenant-manager exists (R12).
 
 The token in `jwksBearerTokenFile` grants access to the API server, so only the provider `kubernetes` may name one, and
-it goes only with the requests for the keys of that provider (R7, R24). A cluster that serves its keys to an anonymous
+it goes only with the requests for the keys of that provider (R6, R24). A cluster that serves its keys to an anonymous
 request needs no token, so the member is optional. A member that names a file the Pod does not hold is a fault of the
 deployment that no wait repairs, so it stops the start (R14). An operator who sets `jwksBearerTokenFile` on the
 provider `identity-provider` most likely meant the provider of Kubernetes tokens, so the error names its `id` (R18).
 
 `audience` has no default, so the file states whether `aud` is checked. The platform's Keycloak has no audience mapper
-that names the services of an installation, so a file for it sets `skipValidation`, which R11 allows. The check of a
+that names the services of an installation, so a file for it sets `skipValidation`, which R6 allows. The check of a
 provider is the same in both headers, so a Kubernetes token that the API server issued for another audience, such as
 the default token of a Pod, passes in neither (R26).
 
@@ -308,11 +425,10 @@ the default token of a Pod, passes in neither (R26).
   a token that names any server would start a load at the configured Keycloak, and the `iss` of a verified token could
   name a server that the configuration does not. This reverses ADR-0091 R3 and the answer on the trusted realms in the
   questionnaire of 2026-11-03.
-- **A6. Take the issuer of the provider `kubernetes` from the token for the API server.** Rejected by R7 and R8: the
-  provider file states the issuer, and the token for the API server is optional, so the agent cannot rely on it to
-  learn the issuer. This reverses ADR-0094 R4 and the answer on the issuer of the API server in the questionnaire of
-  2026-11-03.
-- **A7. Require the token for the API server in the modes `hybrid` and `k8s`.** Rejected by R7: a cluster that serves
+- **A6. Take the issuer of the provider `kubernetes` from the token for the API server.** Rejected by R6: the provider
+  file states the issuer, and the token for the API server is optional, so the agent cannot rely on it to learn the
+  issuer. This reverses ADR-0094 R4 and the answer on the issuer of the API server in the questionnaire of 2026-11-03.
+- **A7. Require the token for the API server in the modes `hybrid` and `k8s`.** Rejected by R6: a cluster that serves
   its keys to an anonymous request needs no token, and the Pod then holds no credential for the API server. This
   reverses ADR-0094 R5, and with it the reason that ADR-0092 gives for `legacy` as the only mode outside Kubernetes.
 - **A8. Drop the provider `kubernetes` when the file that its `jwksBearerTokenFile` names is missing.** Rejected by
@@ -323,10 +439,10 @@ the default token of a Pod, passes in neither (R26).
 - **A10. Resolve the names in `readinessRealms` through tenant-manager, as for `AUTHZ_IDP_REALMS`.** Rejected by R12:
   the agent runs where no tenant-manager exists, and a token carries the realm name, not the display name of its
   tenant.
-- **A11. Never check the `aud` of a Keycloak token, whatever the provider file states.** Rejected by R11 and R26: the
-  provider file decides for each provider and in both headers, so a Keycloak that adds an audience for the services
-  gets the check without a change of the agent. This reverses ADR-0091 R49 and departs from the answer on the `aud` of
-  a Keycloak token in the questionnaire of 2026-11-03.
+- **A11. Never check the `aud` of a Keycloak token, whatever the provider file states.** Rejected by R6 and R26: the
+  provider file decides for each provider and in both headers, so a Keycloak that adds an audience for the services gets
+  the check without a change of the agent. This reverses ADR-0091 R49 and departs from the answer on the `aud` of a
+  Keycloak token in the questionnaire of 2026-11-03.
 - **A12. Let one `iss` match two providers, and prefer one of them.** Rejected by R17: the source of a token would
   depend on a rule of precedence that an operator has to know. This reverses the precedence of a provider over the
   realm rule in ADR-0091 R7.
@@ -351,13 +467,13 @@ the default token of a Pod, passes in neither (R26).
 
 Positive:
 
-- A Keycloak without `/auth`, or at another address, needs another provider file and no change of the agent (R9, R19,
+- A Keycloak without `/auth`, or at another address, needs another provider file and no change of the agent (R6, R19,
   R23).
 
 Negative:
 
-- A file in the format of ADR-0091 stops the start (R3, R7, R8), so the agent, the chart, and the test stands move to
-  the provider files in one change.
+- A file in the format of ADR-0091 stops the start (R6), so the agent, the chart, and the test stands move to the
+  provider files in one change.
 - An `iss` that differs from `issuer.value` in any byte, such as another case of the host, an explicit default port,
   or a trailing slash, gets `TOKEN_ISSUER_UNKNOWN` (R19, R21). A Keycloak whose tokens name it at another address
   than `issuer.value`, such as its public address, needs that address in `issuer.value`, and a Keycloak that issues
@@ -373,7 +489,7 @@ Negative:
   realm has loaded keys, and a wrong `jwksUri` shows only in the refusals of its tokens and in the warnings of
   ADR-0091 R81 (R13, R25; ADR-0091 R23, R38, R39, R81).
 - Outside Kubernetes the agent starts in `hybrid` or `k8s` when the provider files hold a provider `kubernetes`
-  without `jwksBearerTokenFile` (R7, R14). Only `legacy` is supported there, and the agent does not check it.
+  without `jwksBearerTokenFile` (R6, R14). Only `legacy` is supported there, and the agent does not check it.
 - A provider `kubernetes` without `jwksBearerTokenFile` requests its keys without a token. A standard cluster refuses
   that request (ADR-0094 Context), and the Pod stays not ready (ADR-0091 R19).
 - A name in `readinessRealms` that the Keycloak does not hold, such as the display name of a tenant, keeps the Pod not
@@ -384,7 +500,7 @@ Negative:
   M2M tokens.
 - No rule of this record names the CA that the requests of R23 trust. ADR-0091 R2 and R72, the member `caFile` of
   ADR-0091 R6, and ADR-0094 R7 and R27 named one for the requests that this record replaces, and a `caFile` now stops
-  the start under R3 or R7 of this record. An https `jwksUri` whose certificate a private CA or the cluster CA signs
+  the start under R6 of this record. An https `jwksUri` whose certificate a private CA or the cluster CA signs
   therefore works only once the agent trusts that CA in another way.
 - R15 recognizes the API server only by the hosts of an in-cluster address. A provider `identity-provider` whose
   `issuer.value` equals the issuer of an API server and whose `issuer.value` and `jwksUri` are not in-cluster
@@ -395,7 +511,7 @@ Negative:
 - A token that a signer other than an API server issues and that holds the claim `kubernetes.io`, such as a Keycloak
   token with a mapper that adds it, is refused (R27).
 - A provider `kubernetes` without `jwksBearerTokenFile` may name the issuer and the keys of the API server of another
-  cluster, because ADR-0094 R10 limits the address of its keys only when that member is set (R7, R24). The tokens of
+  cluster, because ADR-0094 R10 limits the address of its keys only when that member is set (R6, R24). The tokens of
   that cluster are then Kubernetes tokens, which R27 does not refuse, and ADR-0094 R17 compares only the names of their
   namespaces, which another cluster can also use.
 - An `Incoming-Token` with an `aud` that its provider does not accept fails the check of R26, and the request gets the
@@ -416,10 +532,10 @@ Follow-ups:
   no provider. ADR-0095 R16 lists `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED` with R27 of this record.
 - ADR-0092, and ADR-0101, which #235 proposes, state that only `legacy` is supported outside Kubernetes and that the
   agent does not check it.
-- ADR-0091 R2 and R72 and ADR-0094 R9 set or read members of the trusted providers file that R3 and R7 of this record
-  remove, ADR-0094 R2 and R30 decide what the chart mounts and writes for the provider `kubernetes`, and ADR-0094 R7
-  and R27 and the term Cluster CA name the CA of requests that this record replaces. A record of the chart and a record
-  of a private CA take their place.
+- ADR-0091 R2 and R72 and ADR-0094 R9 set or read members of the trusted providers file that R6 of this record removes,
+  ADR-0094 R2 and R30 decide what the chart mounts and writes for the provider `kubernetes`, and ADR-0094 R7 and R27 and
+  the term Cluster CA name the CA of requests that this record replaces. A record of the chart and a record of a private
+  CA take their place.
 - `docs/decisions/README.md` names the provider files in the row of the layer `keys`, and this record as the one that
   defines the words for providers, realms, sources, issuers, and the two kinds of token.
 - The Compose example of ADR-0101, which #235 proposes, mounts the provider directory at `/etc/authz/providers`.
