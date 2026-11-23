@@ -70,6 +70,10 @@ const (
 // 9223372036, about 292 years.
 const maxSeconds = math.MaxInt64 / int64(time.Second)
 
+// tokenURLKey is the key of AUTHZ_M2M_TOKEN_URL, the token endpoint of
+// client-credentials.
+const tokenURLKey = "authz.m2m.token.url"
+
 // The values of AUTHZ_M2M_TOKEN_SOURCE, which chooses the token the agent
 // sends.
 const (
@@ -117,7 +121,7 @@ func loadConfig(get lookup) (config, error) {
 			HTTPTimeout: pull.DefaultHTTPTimeout,
 		},
 		M2M: m2m.Config{
-			TokenURL:         s.httpURL("authz.m2m.token.url"),
+			TokenURL:         s.httpURL(tokenURLKey),
 			ClientIDFile:     get("authz.m2m.client.id.file", m2m.DefaultClientIDFile),
 			ClientSecretFile: get("authz.m2m.client.secret.file", m2m.DefaultClientSecretFile),
 			RenewBefore:      s.seconds("authz.m2m.renew.before.seconds", 0, m2m.DefaultRenewBefore),
@@ -150,8 +154,8 @@ func loadConfig(get lookup) (config, error) {
 		s.requireToken("authz.pap.client.token.file", cfg.M2M.TokenFile)
 	// The raw value is tested, so that a token endpoint of the wrong form,
 	// refused where it was read, is not refused again as missing.
-	case s.get("authz.m2m.token.url", "") == "":
-		s.refuse("authz.m2m.token.url", "",
+	case s.get(tokenURLKey, "") == "":
+		s.refuse(tokenURLKey, "",
 			"the http or https URL of the token endpoint, required while AUTHZ_M2M_TOKEN_SOURCE is client-credentials, "+
 				"which is its default; AUTHZ_M2M_TOKEN_SOURCE=token-file sends a token from a file instead")
 	}

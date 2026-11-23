@@ -242,6 +242,10 @@ done
 # whole block is compared, so a rollingUpdate left under Recreate would show.
 strategy_of() { deployment_of "$@" | sed -n '/^  strategy:/,/^  selector:/p' | sed '$d'; }
 
+# deployment_kind is the line every render that produced a Deployment carries;
+# a render that failed carries Helm's error instead.
+deployment_kind='kind: Deployment'
+
 # Renders a chart and prints the value of one environment variable without its
 # YAML quotes, "" when the chart renders none. A single-quoted or unquoted value
 # prints as written, and a double-quoted one with \" and \\ read as " and \, the
@@ -492,7 +496,7 @@ for env_name in AUTHZ_M2M_TOKEN_URL AUTHZ_M2M_CLIENT_ID_FILE AUTHZ_M2M_CLIENT_SE
 done
 # A token endpoint set beside token-file is not passed: the agent sends no
 # request to it.
-token_file_url="$(env_value AUTHZ_M2M_TOKEN_URL "${token_file[@]}" --set-string AUTHZ_M2M_TOKEN_URL=http://keycloak:8080/realms/cloud-common/protocol/openid-connect/token)"
+token_file_url="$(env_value AUTHZ_M2M_TOKEN_URL "${token_file[@]}" --set-string AUTHZ_M2M_TOKEN_URL=https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token)"
 if [[ -z "${token_file_url}" ]]; then
   pass "a set AUTHZ_M2M_TOKEN_URL does not reach the agent with token-file"
 else
@@ -525,7 +529,7 @@ for set_value in "" token-file client-credentials; do
 done
 for value in Token-File kubernetes ""; do
   refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set-string "AUTHZ_M2M_TOKEN_SOURCE=${value}" 2>&1 || true)"
-  if [[ "${refused}" == *"AUTHZ_M2M_TOKEN_SOURCE"*"client-credentials"*"token-file"* && "${refused}" != *"kind: Deployment"* ]]; then
+  if [[ "${refused}" == *"AUTHZ_M2M_TOKEN_SOURCE"*"client-credentials"*"token-file"* && "${refused}" != *"${deployment_kind}"* ]]; then
     pass "the values schema refuses AUTHZ_M2M_TOKEN_SOURCE='${value}'"
   else
     fail "the values schema must refuse AUTHZ_M2M_TOKEN_SOURCE='${value}', got: $(head -3 <<<"${refused}")"
@@ -583,26 +587,26 @@ expect_token_url "a trailing slash on IDENTITY_PROVIDER_URL leaves one slash bef
   "https://identity-provider:8443/auth/realms/cloud-common/protocol/openid-connect/token" \
   "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL=https://identity-provider:8443/
 expect_token_url "a set AUTHZ_M2M_TOKEN_URL reaches the agent as it is, in place of the endpoint built from IDENTITY_PROVIDER_URL" \
-  "http://keycloak:8080/realms/cloud-common/protocol/openid-connect/token" \
-  --set-string AUTHZ_M2M_TOKEN_URL=http://keycloak:8080/realms/cloud-common/protocol/openid-connect/token
+  "https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token" \
+  --set-string AUTHZ_M2M_TOKEN_URL=https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token
 # RFC 3986 allows ' in a URL, so the endpoint is quoted for YAML whatever it
 # holds; " and \ are not URL characters, and the agent refuses them, but the
 # chart still renders them as given.
 expect_token_url "a set AUTHZ_M2M_TOKEN_URL with an apostrophe reaches the agent as it is" \
-  "http://keycloak:8080/tok'en" --set-string "AUTHZ_M2M_TOKEN_URL=http://keycloak:8080/tok'en"
+  "https://keycloak:8443/tok'en" --set-string "AUTHZ_M2M_TOKEN_URL=https://keycloak:8443/tok'en"
 expect_token_url "a set AUTHZ_M2M_TOKEN_URL with a double quote reaches the agent as it is" \
-  'http://keycloak:8080/a"b' --set-string 'AUTHZ_M2M_TOKEN_URL=http://keycloak:8080/a"b'
+  'https://keycloak:8443/a"b' --set-string 'AUTHZ_M2M_TOKEN_URL=https://keycloak:8443/a"b'
 expect_token_url "a set AUTHZ_M2M_TOKEN_URL with a backslash reaches the agent as it is" \
-  'http://keycloak:8080/a\b' --set-json 'AUTHZ_M2M_TOKEN_URL="http://keycloak:8080/a\\b"'
+  'https://keycloak:8443/a\b' --set-json 'AUTHZ_M2M_TOKEN_URL="https://keycloak:8443/a\\b"'
 expect_token_url "an IDENTITY_PROVIDER_URL with an apostrophe builds AUTHZ_M2M_TOKEN_URL as it is" \
   "http://identity-provider:8080/o'k/auth/realms/cloud-common/protocol/openid-connect/token" \
   "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=http://identity-provider:8080/o'k"
 # The chart builds nothing from IDENTITY_PROVIDER_URL beside a set
 # AUTHZ_M2M_TOKEN_URL and an explicit provider list, so an empty one renders.
 expect_token_url "an empty IDENTITY_PROVIDER_URL renders beside a set AUTHZ_M2M_TOKEN_URL and an explicit provider list" \
-  "http://keycloak:8080/realms/cloud-common/protocol/openid-connect/token" \
+  "https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token" \
   "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL= \
-  --set-string AUTHZ_M2M_TOKEN_URL=http://keycloak:8080/realms/cloud-common/protocol/openid-connect/token
+  --set-string AUTHZ_M2M_TOKEN_URL=https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token
 for row in "|is empty" "identity-provider:8080|has no http or https scheme" "10.0.0.5:8080|has no http or https scheme" \
   "ftp://identity-provider|has no http or https scheme" "http://:8080|has no host" "http:/identity-provider:8080|has no host" \
   "http://admin:s3cret@[::1|has no host"; do
@@ -610,7 +614,7 @@ for row in "|is empty" "identity-provider:8080|has no http or https scheme" "10.
   refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}" 2>&1 || true)"
   if [[ "${refused}" == *"IDENTITY_PROVIDER_URL ${rule}. ${token_use} Set it to"* ]]; then
     pass "IDENTITY_PROVIDER_URL '${url}' is refused, since it ${rule}, while the chart builds the token endpoint from it"
-  elif [[ "${refused}" == *"kind: Deployment"* ]]; then
+  elif [[ "${refused}" == *"${deployment_kind}"* ]]; then
     fail "IDENTITY_PROVIDER_URL '${url}' must be refused as one that ${rule}, and the chart rendered AUTHZ_M2M_TOKEN_URL '$(env_value AUTHZ_M2M_TOKEN_URL "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}")'"
   else
     fail "IDENTITY_PROVIDER_URL '${url}' must be refused as one that ${rule}, got: $(head -3 <<<"${refused}")"
@@ -647,7 +651,7 @@ for url in "http://user@identity-provider:8080" "http://identity-provider:80a" \
   fi
 done
 m2m_without_idp="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL= "${token_file[@]}" 2>&1 || true)"
-if [[ "${m2m_without_idp}" == *"kind: Deployment"* ]]; then
+if [[ "${m2m_without_idp}" == *"${deployment_kind}"* ]]; then
   pass "an empty IDENTITY_PROVIDER_URL renders with token-file, which builds no token endpoint"
 else
   fail "an empty IDENTITY_PROVIDER_URL must render with token-file, got: $(head -3 <<<"${m2m_without_idp}")"
@@ -662,7 +666,7 @@ for row in "|is empty" "identity-provider:8080|has no http or https scheme" "htt
   refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${m2m_on[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}" 2>&1 || true)"
   if [[ "${refused}" == *"IDENTITY_PROVIDER_URL ${rule}. ${issuer_use} Set it to"* ]]; then
     pass "IDENTITY_PROVIDER_URL '${url}' is refused with token-file, since it ${rule}, while the chart builds the issuers from it"
-  elif [[ "${refused}" == *"kind: Deployment"* ]]; then
+  elif [[ "${refused}" == *"${deployment_kind}"* ]]; then
     fail "IDENTITY_PROVIDER_URL '${url}' must be refused with token-file as one that ${rule}, and the chart rendered the issuers $(yq_providers <<<"${refused}" | jq -c '[.providers[].issuer]' 2>&1 || true)"
   else
     fail "IDENTITY_PROVIDER_URL '${url}' must be refused with token-file as one that ${rule}, got: $(head -3 <<<"${refused}")"
@@ -1044,7 +1048,7 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
   all_on=(-f "${SIZING}" --set MESH_ROUTES_ENABLED=true --set MONITORING_ENABLED=true)
   by_resource_name="$(helm template t "${chart}" "${all_on[@]}" --set "DEPLOYMENT_RESOURCE_NAME=${name}-renamed" 2>&1 || true)"
   by_service_name="$(helm template t "${chart}" "${all_on[@]}" --set "SERVICE_NAME=${name}-renamed" 2>&1 || true)"
-  if [[ "${by_resource_name}" == *"kind: Deployment"* && "${by_resource_name}" != *"${name}-renamed"* && "${by_service_name}" == *"name: '${name}-renamed'"* ]]; then
+  if [[ "${by_resource_name}" == *"${deployment_kind}"* && "${by_resource_name}" != *"${name}-renamed"* && "${by_service_name}" == *"name: '${name}-renamed'"* ]]; then
     pass "${name}: DEPLOYMENT_RESOURCE_NAME renames no object, and SERVICE_NAME does"
   else
     fail "${name}: with DEPLOYMENT_RESOURCE_NAME=${name}-renamed the render carries: $(grep -n -- "${name}-renamed" <<<"${by_resource_name}" | head -3 | paste -sd'|' - || true); with SERVICE_NAME renamed the Deployment is $(field "${by_service_name}" name:)"
