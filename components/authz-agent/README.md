@@ -83,8 +83,8 @@ source, and the PIPs. It reads them when the container starts. To give the agent
 2. Set the chart value [`CA_CERTIFICATES_SECRET`](../../helm-templates/authz-agent/values.yaml) to the name of that
    Secret, `corporate-ca` here. The Pod mounts the Secret at `/tmp/cert`.
 3. After you replace or remove a certificate in the Secret, recreate the Pod, for example with
-   `kubectl rollout restart deployment/authz-agent`. A restart of the container is not enough to drop a removed
-   certificate: the entrypoint's copies stay in an `emptyDir` volume of the Pod.
+   `kubectl rollout restart deployment/authz-agent`. A restart of the container can leave a removed certificate
+   trusted: the entrypoint never deletes its copies, and they stay in an `emptyDir` volume of the Pod.
 
 A file under `/tmp/cert` with one of those suffixes that holds no PEM certificate is skipped, and the agent starts
 without it. The entrypoint logs `Error process certificates file <path>: invalid certificates file data format.`
