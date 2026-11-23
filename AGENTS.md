@@ -9,7 +9,7 @@ caller and PIPs. Reading a byte once per nesting level or per item of another ar
 keeps it linear. Cost should stay polynomial in policy size. Input too big or too deep fails its request or load, not
 the process. The Rego in `policies/` stays exempt.
 
-A production installation serves at most 3 tenants and up to 2000 policies, a subject holds up to 1200 permissions, and
+A production installation serves at most 3 tenants and up to 10000 policies, a subject holds up to 1200 permissions, and
 a bulk request carries 20 to 50 items. A request, bulk included, has a budget of 5 ms. Size designs, limits, and caches
 for these numbers. In a review, leave out a cost that appears only beyond them, such as the start time of an
 installation with 100 tenants. This covers cost only: a correctness defect, such as one tenant reading the policies of
