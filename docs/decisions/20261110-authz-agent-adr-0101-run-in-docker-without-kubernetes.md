@@ -34,8 +34,7 @@ kichasov
   ADR-0096 R7, which files the agent leaves unread with each value; ADR-0096 R8, the pair of that setting and the M2M
   mode that stops the start.
 - [authz-agent-ADR-0106: Trust a private CA only through the system roots of the base image](https://github.com/Netcracker/qubership-authz-agent/pull/330),
-  proposed in #330: ADR-0106 R1, the system roots that every HTTPS request of the agent verifies against; ADR-0106 R6,
-  the CAs under `/tmp/cert` that the image adds to those roots, on the Docker target as well.
+  proposed in #330: ADR-0106 R1, the system roots that every HTTPS request of the agent verifies against.
 
 ## Context
 
@@ -126,11 +125,11 @@ example.
 ### Justification
 
 The agent calls Keycloak, the PIPs, and the policy source over HTTPS and verifies their certificates against the system
-roots alone (ADR-0106 R1). An operator puts a private CA under `/tmp/cert`, the image adds it to those roots
-(ADR-0106 R6), and the Docker page shows how (R14). The agent needs neither root nor a writable root file system, and R4
-keeps it so. Under R4 the agent may run as a uid that owns none of the files the operator mounts. A bind mount keeps the
-owner and mode of each file, so the Docker page shows how to make the credentials readable to that uid without making
-them readable to every user of the host (R29).
+roots alone (ADR-0106 R1). An installation with a private CA puts it under `/tmp/cert`, and the Docker page shows how
+(R14). The agent needs neither root nor a writable root file system, and R4 keeps it so. Under R4 the agent may run as a
+uid that owns none of the files the operator mounts. A bind mount keeps the owner and mode of each file, so the Docker
+page shows how to make the credentials readable to that uid without making them readable to every user of the host
+(R29).
 
 On the Docker target nothing but the agent checks its configuration. The token for the API server and the topology file
 exist only in a cluster, so ADR-0092 R16 leaves `legacy` as the only mode outside Kubernetes, and R5 requires that mode
