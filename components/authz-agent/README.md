@@ -48,7 +48,7 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials |
 | `AUTHZ_M2M_RENEW_BEFORE_SECONDS` | `60` | How long before its expiry the token is refreshed |
 | `AUTHZ_PAP_CLIENT_TOKEN_FILE` | `/var/run/secrets/tokens/netcracker/token` | The token file, read every 15 seconds, when there is no token endpoint; the default is where the platform's charts mount the netcracker-audience projected token |
-| `SIGTERM_EXIT_DELAY` | `10` | Read by the entrypoint of the image, not by the agent: seconds between `SIGTERM` and its delivery to the agent; see [Stopping the agent](#stopping-the-agent) |
+| `SIGTERM_EXIT_DELAY` | `10` | Read by the entrypoint of the image, not by the agent, and not set by the chart: seconds between `SIGTERM` and its delivery to the agent; see [Stopping the agent](#stopping-the-agent) |
 
 A variable set to the empty string switches its feature off where the table says so; an unset variable takes the
 default.
@@ -102,7 +102,9 @@ requests.
 
 On `SIGTERM`, the entrypoint of the base image waits `SIGTERM_EXIT_DELAY` seconds before it passes the signal on, which
 gives a Kubernetes Service time to stop sending requests to the Pod. The agent then takes up to 10 seconds to finish the
-requests in flight. Where nothing has to stop routing requests to the agent first, set `SIGTERM_EXIT_DELAY` to `0`.
+requests in flight. Where nothing has to stop routing requests to the agent first, as on the SVT Compose stand, set
+`SIGTERM_EXIT_DELAY` to `0` in the container's environment. The chart does not set it, so a Pod waits the default 10
+seconds.
 
 ## Running it
 
