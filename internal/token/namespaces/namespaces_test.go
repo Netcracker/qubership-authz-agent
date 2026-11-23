@@ -162,6 +162,20 @@ func TestAllowlist_KeepsTheNamespacesUntilTheFileIsReadAgain(t *testing.T) {
 	}
 }
 
+func TestAllowlist_KeepsItsOwnNamespaceAfterTheTopologyDropsIt(t *testing.T) {
+	path := writeTopology(t, `{"composite": {"baseline": {"origin": "own", "peer": "gone"}}}`)
+	a := New(Options{TopologyFile: path, Namespace: "own"})
+	if err := os.WriteFile(path, []byte(`{"composite": {"baseline": {"origin": "new-origin"}}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	a.reload()
+	for namespace, want := range map[string]bool{"own": true, "new-origin": true, "gone": false} {
+		if got := a.Allows(namespace); got != want {
+			t.Errorf("Allows(%q) after the file is read again = %t, want %t", namespace, got, want)
+		}
+	}
+}
+
 func TestAllowlist_RunReadsTheFileAgainOnTheInterval(t *testing.T) {
 	path := writeTopology(t, `{"composite": {"baseline": {"origin": "first"}}}`)
 	a := New(Options{TopologyFile: path, RefreshInterval: 10 * time.Millisecond})
@@ -237,6 +251,7 @@ func TestAllowlist_WarnsOnlyWhenTheTopologyCannotBeReadOrParsedOrItsCompositeNam
 		{"missing file", filepath.Join(t.TempDir(), "absent"), 1},
 		{"file that is not JSON", writeTopology(t, "composite: yes"), 1},
 		{"composite that names no namespace", writeTopology(t, emptyComposite), 1},
+		{"composite whose satellites name no namespace beside a baseline that does", writeTopology(t, `{"composite": {"baseline": {"origin": "base-origin"}, "satellites": [null, {"originNamespace": "sat-origin"}]}}`), 0},
 		{"file without a composite", writeTopology(t, withoutComposite), 0},
 		{"composite", writeTopology(t, composite), 0},
 	}
