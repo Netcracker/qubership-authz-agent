@@ -20,10 +20,12 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -31,6 +33,7 @@ import (
 
 	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/engine"
+	"authz-agent/components/authz-agent/internal/m2m"
 	"authz-agent/components/authz-agent/internal/pull"
 )
 
@@ -78,6 +81,110 @@ func TestReport(t *testing.T) {
 	if r := report(providers, idle); !r.Healthy || !r.Loaded {
 		t.Errorf("report with no providers and the pull disabled = %+v, want healthy and loaded", r)
 	}
+}
+
+// TestNewPuller_ReturnsWhileTheTokenSourceRunsUntilCtxEnds: the token source
+// is observed through data.m2m.bearerToken. While ctx lasts, a change of the
+// file reaches it within one WatchInterval; a change made after ctx ended
+// does not.
+func TestNewPuller_ReturnsWhileTheTokenSourceRunsUntilCtxEnds(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		eng := newEngine(t)
+		file := filepath.Join(t.TempDir(), "token")
+		writeToken(t, file, "first")
+		cfg := config{M2M: m2m.Config{TokenFile: file, WatchInterval: time.Second}}
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+
+		returned := make(chan struct{})
+		go func() {
+			newPuller(ctx, cfg, eng)
+			close(returned)
+		}()
+		synctest.Wait()
+		select {
+		case <-returned:
+		default:
+			t.Fatal("newPuller has not returned with the token source running")
+		}
+		if got := m2mToken(t, eng); got != "first" {
+			t.Errorf("data.m2m.bearerToken after newPuller = %q, want %q", got, "first")
+		}
+
+		writeToken(t, file, "second")
+		time.Sleep(time.Second)
+		synctest.Wait()
+		if got := m2mToken(t, eng); got != "second" {
+			t.Errorf("data.m2m.bearerToken one interval after the file changed = %q, want %q", got, "second")
+		}
+
+		cancel()
+		synctest.Wait()
+		writeToken(t, file, "third")
+		time.Sleep(time.Second)
+		synctest.Wait()
+		if got := m2mToken(t, eng); got != "second" {
+			t.Errorf("data.m2m.bearerToken one interval after ctx ended and the file changed = %q, want %q", got, "second")
+		}
+	})
+}
+
+// TestNewPuller_FetchesWithTheTokenFromTheFile: the first pull of
+// [pull.Puller.Run] waits up to 15 seconds for the source's first token, so
+// the test needs no wait of its own. The 20 seconds the test allows outlast
+// that wait, so a puller whose source never delivers a token fails on the
+// Authorization header rather than on the time limit.
+func TestNewPuller_FetchesWithTheTokenFromTheFile(t *testing.T) {
+	authorization := make(chan string, 1)
+	policySource := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/access/v3/config/policySets" {
+			select {
+			case authorization <- r.Header.Get("Authorization"):
+			default:
+			}
+		}
+		_, _ = w.Write([]byte("[]"))
+	}))
+	defer policySource.Close()
+	file := filepath.Join(t.TempDir(), "token")
+	writeToken(t, file, "agent-token")
+	cfg := config{
+		Pull: pull.Config{SourceURL: policySource.URL, Interval: time.Hour},
+		M2M:  m2m.Config{TokenFile: file},
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	puller := newPuller(ctx, cfg, newEngine(t))
+	go puller.Run(ctx)
+	select {
+	case got := <-authorization:
+		if got != "Bearer agent-token" {
+			t.Errorf("Authorization of the policy sets request = %q, want %q", got, "Bearer agent-token")
+		}
+	case <-time.After(20 * time.Second):
+		t.Fatal("no request for the policy sets reached the policy source within 20 seconds")
+	}
+}
+
+// writeToken writes token to file, replacing what the file held.
+func writeToken(t *testing.T, file, token string) {
+	t.Helper()
+	if err := os.WriteFile(file, []byte(token), 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// m2mToken returns data.m2m.bearerToken from eng, or "" while it is
+// undefined.
+func m2mToken(t *testing.T, eng *engine.Engine) string {
+	t.Helper()
+	value, _, err := eng.Eval(context.Background(), []string{"m2m", "bearerToken"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	token, _ := value.(string)
+	return token
 }
 
 // TestGet: a variable set to the empty string is returned as the empty
