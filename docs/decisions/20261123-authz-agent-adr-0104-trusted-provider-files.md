@@ -18,48 +18,28 @@ kichasov
 
 #### Related ADRs
 
+This record replaces every statement of ADR-0091, ADR-0092, ADR-0094, ADR-0095, and ADR-0096 that disagrees with it.
+In the statements that stay in those records, the provider files of this record take the place of the trusted providers
+file, the provider `kubernetes` takes the place of the marked provider, an identity-provider token (R22) takes the place
+of a realm token, and no token is a file token. Where those records name the checks of ADR-0091 or of ADR-0094, as
+ADR-0091 R60 and step 1 of ADR-0095 R1 do, those checks include R21, R26, and R27 of this record. The Follow-ups name
+the edits that bring those records in line with this one.
+
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
-  this record replaces these statements of ADR-0091: the terms Trusted providers file, Provider, Marked provider,
-  Realm, Source, Required source, Realm token, File token, Kubernetes token, and Issuer, and the words "discovery
-  included" of the term Load; ADR-0091 R73, the shape of the file; ADR-0091 R1 and ADR-0091 R3 to R12, the issuers, the
-  fields of a provider, the match of `iss`, and the address of the keys; ADR-0091 R15, the default `cloud-common`;
-  ADR-0091 R49 and R50, the check of `aud`; and ADR-0091 R66, unknown fields. In every term and rule of ADR-0091 to
-  ADR-0096 that stays, the provider files of this record together take the place of the trusted providers file, the
-  provider `kubernetes` takes the place of the marked provider, the identity-provider token of R22 of this record
-  takes the place of the realm token, and no token is a file token. Where such a term or rule names the checks of
-  ADR-0091 or of ADR-0094, as ADR-0091 R60 and step 1 of ADR-0095 R1 do, those checks include R21, R26, and R27 of this
-  record. In the rules of ADR-0091 on loading keys, a provider as a source of keys is an `exact` provider, and a realm
-  in `keycloak.requiredRealms` is a realm that `readinessRealms` names, so the required sources in ADR-0091 R14, R16,
-  R17, and R35 are those of R25 of this record. ADR-0091 R2 and R72 set and read the section `keycloak`, which R3
-  of this record refuses; R3 takes precedence until a record of the chart and a record of a private CA replace them.
+  the checks of a token and the keys that readiness waits for (ADR-0091 R14, R19). The provider files name the issuers,
+  the address of the keys, and the audience.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
-  ADR-0092 R6, R7, and R21, the M2M test of each kind of token, and ADR-0092 R11 to R14, the kinds of token that each
-  M2M mode accepts. This record replaces ADR-0092 R8, which keeps a file token from being an M2M token. It limits
-  ADR-0092 R12 to a token whose `iss` matches no provider (R21): a token that the API server signed and whose `iss`
-  matches a provider other than `kubernetes` takes its keys from that provider (R23) and is refused under R27, or under
-  ADR-0091 R44 when it comes from a Secret. This record also replaces the reason that ADR-0092 R16 gives for `legacy` as
-  the only mode outside Kubernetes: a missing token for the API server stops the start in another mode.
-  Pull request #265 moves R16 to the Consequences of ADR-0092.
+  the M2M test of each kind of token (ADR-0092 R6, R7, R21) and the kinds of token each M2M mode accepts (ADR-0092 R11
+  to R14), where the `id` of the provider decides the kind (R22).
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
-  this record replaces these statements of ADR-0094: the fixed path in the term Token for the API server, which becomes
-  the file that `jwksBearerTokenFile` names, and the member `tokenFile` of ADR-0094 R10 and R29, which becomes
-  `jwksBearerTokenFile`; ADR-0094 R4, the issuer from that token; ADR-0094 R5, the token that `hybrid` and `k8s`
-  require, and the item of the ADR-0094 Consequences that says a missing token stops a Pod; ADR-0094 R6 to R8; the
-  sentences of ADR-0094 R32 on discovery and on the setting of ADR-0094 R9; the item of the ADR-0094 Consequences that
-  says an issuer that is not an https URL stops a Pod; the provider that the example of ADR-0094 R9 shows, in a format
-  that R7 of this record refuses; ADR-0094 R11, the audiences of the provider; ADR-0094 R12, where that token goes,
-  which R24 of this record takes over; ADR-0094 R13, a provider at the address of the API server; and ADR-0094 R14, the
-  fixed audience `netcracker`. ADR-0094 R1 ties the provider `kubernetes` to the M2M modes, ADR-0094 R10 and R32 limit
-  the address of its keys, and ADR-0094 R16 and R17 check its tokens.
+  the M2M modes that require the provider `kubernetes` (ADR-0094 R1), the checks of a Kubernetes token (ADR-0094 R16,
+  R17), and the limits on the address of its keys (ADR-0094 R10, R32).
 - [authz-agent-ADR-0095: Refuse a check request before policy evaluation](20261029-authz-agent-adr-0095-refuse-before-policy-evaluation.md):
-  ADR-0095 R16, the index of the reason codes, in which this record replaces the rules of `TOKEN_ISSUER_UNKNOWN`
-  (ADR-0091 R5 and R11) with R21 of this record, and the rules of `TOKEN_AUDIENCE_MISSING` and `TOKEN_AUDIENCE_INVALID`
-  (ADR-0091 R50 and ADR-0094 R14) with R26 of this record. R27 of this record adds the code
-  `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED` to that index. ADR-0095 R3 and R18 decide the answer to a request whose
-  `Incoming-Token` fails; #226 adds ADR-0095 R18.
+  the index of reason codes (ADR-0095 R16), to which R27 adds `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED`, and the answer to a
+  request whose `Incoming-Token` this record refuses (ADR-0095 R3, and R18, which #226 adds).
 - [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
-  the agent's realm token of ADR-0096, the token that the agent obtains from the realm `cloud-common`, which is an
-  identity-provider token under R22 of this record.
+  the agent's realm token, which the agent obtains from the realm `cloud-common` and which is an identity-provider token
+  under R22.
 
 ## Context
 
@@ -423,16 +403,17 @@ Negative:
 
 Follow-ups:
 
-- ADR-0091, ADR-0092, ADR-0094, ADR-0095, and ADR-0096 drop the statements that this record replaces and use its
-  terms. ADR-0091 R19 cites R14 of this record in place of ADR-0094 R5, ADR-0091 R29 cites R19 to R21 of this record
-  in place of ADR-0091 R5, ADR-0091 R54 names the kinds of R22 of this record, and ADR-0091 R64 adds
-  `AUTHZ_TRUSTED_PROVIDERS_FILE` to the settings that go away. Every Justification sentence, alternative, consequence,
-  and Related ADRs line of ADR-0091 to ADR-0096 that cites a statement this record replaces, or names realm tokens and
-  file tokens, is rewritten, among them ADR-0091 A2 and A8, ADR-0094 A1 and A4 to A9, the Justification and A5 of
-  ADR-0095, and the terms and the Justification of ADR-0096. The Justification of ADR-0094 adds that R27 of this
-  record uses the claim `kubernetes.io` only to refuse a token. The item of the ADR-0094 Consequences on `legacy` cites
-  R27 of this record. ADR-0092 R12 applies only to a token whose `iss` matches no provider. ADR-0095 R16 lists
-  `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED` with R27 of this record.
+- ADR-0091, ADR-0092, ADR-0094, ADR-0095, and ADR-0096 drop the statements that this record replaces and use its terms.
+  ADR-0091 R19 cites R14 of this record in place of ADR-0094 R5, ADR-0091 R29 cites R19 to R21 of this record in place
+  of ADR-0091 R5, ADR-0091 R54 names the kinds of R22 of this record, and ADR-0091 R64 adds
+  `AUTHZ_TRUSTED_PROVIDERS_FILE` to the settings that go away. ADR-0094 R32 and the item of the ADR-0094 Consequences on
+  an issuer that is not an https URL drop their sentences on discovery and on the setting of ADR-0094 R9. Every
+  Justification sentence, alternative, consequence, and Related ADRs line of ADR-0091 to ADR-0096 that cites a statement
+  this record replaces, or names realm tokens and file tokens, is rewritten, among them ADR-0091 A2 and A8, ADR-0094 A1
+  and A4 to A9, the Justification and A5 of ADR-0095, and the terms and the Justification of ADR-0096. The Justification
+  of ADR-0094 adds that R27 of this record uses the claim `kubernetes.io` only to refuse a token. The item of the
+  ADR-0094 Consequences on `legacy` cites R27 of this record. ADR-0092 R12 applies only to a token whose `iss` matches
+  no provider. ADR-0095 R16 lists `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED` with R27 of this record.
 - ADR-0092, and ADR-0101, which #235 proposes, state that only `legacy` is supported outside Kubernetes and that the
   agent does not check it.
 - ADR-0091 R2 and R72 and ADR-0094 R9 set or read members of the trusted providers file that R3 and R7 of this record
