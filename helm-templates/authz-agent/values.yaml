@@ -56,9 +56,12 @@ READONLY_CONTAINER_FILE_SYSTEM_ENABLED: true
 # those servers presents a certificate that a private CA signed.
 #
 # The Pod mounts the Secret read-only at /tmp/cert, and the certificates are read
-# when the container starts, so a certificate replaced in the Secret is trusted
-# after the next restart of the Pod. A name with no Secret behind it keeps the
-# new Pod in ContainerCreating with the event:
+# when the container starts, so a certificate added or replaced in the Secret is
+# trusted once the Pod is recreated, as by `kubectl rollout restart`. A
+# certificate removed from the Secret stays trusted until then: the base image's
+# entrypoint copies each certificate into an emptyDir volume, and a restart of
+# the container keeps that volume. A name with no Secret behind it keeps the new
+# Pod in ContainerCreating with the event:
 #   MountVolume.SetUp failed for volume "ca-certificates-secret" : secret "<name>" not found
 CA_CERTIFICATES_SECRET: ''
 # The app.kubernetes.io/managed-by label of every object but the Pod template.
