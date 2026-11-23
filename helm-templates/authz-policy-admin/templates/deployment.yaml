@@ -76,20 +76,19 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: '{{ .Values.SERVICE_NAME }}-data'
-        {{- if $readOnlyRoot }}
         # The base image's entrypoint writes to these at every start: the CA
         # certificates of /tmp/cert to /usr/local/share/ca-certificates, the
         # rebuilt trust store to /etc/ssl/certs, and, for a uid with no passwd
-        # entry, a passwd file to /app/nss. The image declares them as VOLUMEs,
-        # but not every container runtime makes those writable under a
-        # read-only root file system.
+        # entry, a passwd file to /app/nss. They are mounted whatever the root
+        # file system: in the image those directories are writable only by uid
+        # 10001 and the root group, and not every container runtime makes the
+        # image's VOLUMEs writable under a read-only root file system.
         - name: ca-certificates
           emptyDir: {}
         - name: certs
           emptyDir: {}
         - name: nss
           emptyDir: {}
-        {{- end }}
       containers:
         - name: '{{ .Values.SERVICE_NAME }}'
           image: '{{ .Values.IMAGE_REPOSITORY }}:{{ .Values.TAG }}'
@@ -110,14 +109,12 @@ spec:
           volumeMounts:
             - name: data
               mountPath: '{{ .Values.AUTHZ_POLICY_ADMIN_DATA_DIR }}'
-            {{- if $readOnlyRoot }}
             - name: ca-certificates
               mountPath: /usr/local/share/ca-certificates
             - name: certs
               mountPath: /etc/ssl/certs
             - name: nss
               mountPath: /app/nss
-            {{- end }}
           # An unwritable volume makes the process exit at startup. The startup
           # probe turns that into a fast, obvious CrashLoopBackOff instead of a
           # liveness-driven restart storm.

@@ -836,20 +836,29 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
   fi
 
   # The base image's entrypoint can write to each of these paths when the
-  # container starts. Each path is summarized as the type of the volume
-  # mounted there, or none.
-  read_only_deployment="$(helm template t "${chart}" -f "${SIZING}" --set PAAS_PLATFORM=KUBERNETES --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=true --show-only templates/deployment.yaml 2>&1 || true)"
-  entrypoint_mounts=""
-  for mount_path in /usr/local/share/ca-certificates /etc/ssl/certs /app/nss; do
-    volume_name="$(grep -B1 -E "^ +mountPath: '?${mount_path}'?\$" <<<"${read_only_deployment}" | awk '$1 == "-" && $2 == "name:" {print $3}' || true)"
-    volume_type="$(grep -A1 -E "^ +- name: ${volume_name:-none}\$" <<<"${read_only_deployment}" | grep -oE 'emptyDir|configMap|secret|projected|persistentVolumeClaim' | head -1 || true)"
-    entrypoint_mounts+="${mount_path}=${volume_type:-none} "
+  # container starts, whether the root file system is read-only or not: a
+  # writable root does not make the image's directories writable to a uid
+  # other than 10001 outside the root group. Each path is summarized as the
+  # type of the volume mounted there, or none.
+  for root in read-only-on-kubernetes writable-when-turned-off writable-on-openshift; do
+    case "${root}" in
+      read-only-on-kubernetes) root_args=(--set PAAS_PLATFORM=KUBERNETES --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=true) ;;
+      writable-when-turned-off) root_args=(--set PAAS_PLATFORM=KUBERNETES --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=false) ;;
+      writable-on-openshift) root_args=(--set PAAS_PLATFORM=OPENSHIFT) ;;
+    esac
+    root_deployment="$(helm template t "${chart}" -f "${SIZING}" "${root_args[@]}" --show-only templates/deployment.yaml 2>&1 || true)"
+    entrypoint_mounts=""
+    for mount_path in /usr/local/share/ca-certificates /etc/ssl/certs /app/nss; do
+      volume_name="$(grep -B1 -E "^ +mountPath: '?${mount_path}'?\$" <<<"${root_deployment}" | awk '$1 == "-" && $2 == "name:" {print $3}' || true)"
+      volume_type="$(grep -A1 -E "^ +- name: ${volume_name:-none}\$" <<<"${root_deployment}" | grep -oE 'emptyDir|configMap|secret|projected|persistentVolumeClaim' | head -1 || true)"
+      entrypoint_mounts+="${mount_path}=${volume_type:-none} "
+    done
+    if [[ "${entrypoint_mounts}" == "/usr/local/share/ca-certificates=emptyDir /etc/ssl/certs=emptyDir /app/nss=emptyDir " ]]; then
+      pass "${name}: with the root file system ${root}, the paths the base entrypoint writes are emptyDir volumes"
+    else
+      fail "${name}: with the root file system ${root}, the paths the base entrypoint writes are mounted as ${entrypoint_mounts}, expected emptyDir at each"
+    fi
   done
-  if [[ "${entrypoint_mounts}" == "/usr/local/share/ca-certificates=emptyDir /etc/ssl/certs=emptyDir /app/nss=emptyDir " ]]; then
-    pass "${name}: under a read-only root file system the paths the base entrypoint writes are emptyDir volumes"
-  else
-    fail "${name}: under a read-only root file system the paths the base entrypoint writes are mounted as ${entrypoint_mounts}, expected emptyDir at each"
-  fi
 done
 
 # A DEPLOYMENT_RESOURCE_NAME the deployer still passes renames no object of
