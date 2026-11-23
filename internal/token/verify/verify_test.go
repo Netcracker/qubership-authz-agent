@@ -60,6 +60,31 @@ func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
 	}
 }
 
+func TestToken_ProviderIDAndRealmAreReturnedSeparately(t *testing.T) {
+	tests := []struct {
+		name  string
+		id    string
+		realm string
+	}{
+		{"realm of identity-provider", keys.IdentityProviderID, "tenant-1"},
+		{"single identity-provider", keys.IdentityProviderID, ""},
+		{"kubernetes", keys.KubernetesID, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", providerOf(tt.id))
+			s.key.Source.Realm = tt.realm
+			tok := mustVerify(t, newAdmittingVerifier(newFakeKeys(s)), s.sign(t, claimsAt(start, map[string]any{"sub": serviceAccountSub})))
+			if got := tok.ProviderID(); got != tt.id {
+				t.Errorf("ProviderID() = %q, want %q", got, tt.id)
+			}
+			if got := tok.Realm(); got != tt.realm {
+				t.Errorf("Realm() = %q, want %q", got, tt.realm)
+			}
+		})
+	}
+}
+
 func TestToken_KubernetesHoldsOnlyForAKeyOfTheProviderKubernetes(t *testing.T) {
 	tests := []struct {
 		name  string

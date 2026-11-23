@@ -187,11 +187,11 @@ type Source struct {
 	Realm string
 }
 
-// ID names s in a result or a log line: the [Provider.ID] of a single
-// provider, or realm/ followed by the name of a realm. A realm name is up to
-// 255 bytes taken from a token, so the ID of a realm can hold spaces and
-// quotes, and code that puts an ID into a log line, an event, or a metric
-// label quotes or bounds it.
+// ID names s in a log line, and [Set.Refresh] orders the lines of its error by
+// it: the [Provider.ID] of a single provider, or realm/ followed by the name of
+// a realm. A realm name is up to 255 bytes taken from a token, so the ID of a
+// realm can hold spaces and quotes, and code that puts an ID into a log line,
+// an event, or a metric label quotes or bounds it.
 func (s Source) ID() string {
 	if s.Realm != "" {
 		return realmIDPrefix + s.Realm

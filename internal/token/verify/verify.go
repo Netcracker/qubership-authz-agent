@@ -130,6 +130,7 @@ type Token struct {
 	claims     map[string]json.RawMessage
 	standard   Standard
 	providerID string
+	realm      string
 	kubernetes bool
 	keyID      string
 	issuer     string
@@ -186,11 +187,15 @@ func (t *Token) Standard() Standard {
 	}
 }
 
-// ProviderID returns the [keys.Source.ID] of the source whose key verified the
-// token: the [keys.Provider.ID] of a single provider, or realm/<name> for a
-// realm of a realms provider. A realm name is the token's text, so a
-// caller that logs the id quotes it.
+// ProviderID returns the [keys.Provider.ID] of the provider whose key verified
+// the token, for a token of a realm too.
 func (t *Token) ProviderID() string { return t.providerID }
+
+// Realm returns the name of the realm whose key verified the token, the part of
+// its iss in place of {realm}, percent-decoded, and "" for a token of a single
+// provider. A realm name is the token's text, so a caller that logs it quotes
+// it.
+func (t *Token) Realm() string { return t.realm }
 
 // Kubernetes reports whether the token is a Kubernetes token: whether the key
 // that verified it is a key of the provider [keys.KubernetesID].
@@ -358,7 +363,8 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 		payload:    payload,
 		claims:     claims,
 		standard:   standardOf(claims),
-		providerID: key.Source.ID(),
+		providerID: key.Source.Provider.ID,
+		realm:      key.Source.Realm,
 		kubernetes: key.Source.Kubernetes(),
 		keyID:      key.ID,
 		issuer:     query.Issuer,
