@@ -19,7 +19,8 @@ kichasov
 - [authz-agent-ADR-0080: Replace Envoy, the Lua filters, and the OPA container with one Go service that embeds OPA](20260907-authz-agent-adr-0080-single-go-service-with-embedded-opa.md):
   this record supersedes its statement that the check family keeps its legacy error bodies, for a 401 and a 403 (R6).
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
-  the checks of a token, each with its reason code, and ADR-0091 R38, keys that could not be loaded.
+  the checks of a token, each with its reason code, and ADR-0091 R23 and R38, the code of a token whose key is not
+  found.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
   ADR-0092 R1 and R2, the refusals of a missing or wrong token, ADR-0092 R11, the kinds of token, and ADR-0092 R4, a
   caller outside its tenant.
@@ -97,8 +98,8 @@ and the reason code in the audit and a metric.
   | 401 | `TOKEN_ALG_NOT_ALLOWED` | ADR-0091 R41 |
   | 401 | `TOKEN_ISSUER_UNKNOWN` | ADR-0091 R5, R11; ADR-0092 R12 |
   | 401 | `TOKEN_KID_MISSING` | ADR-0091 R22 |
-  | 401 | `TOKEN_KID_UNKNOWN` | ADR-0091 R23 |
-  | 401 | `TOKEN_REALM_UNKNOWN` | ADR-0091 R35, R39 |
+  | 401 | `TOKEN_KID_UNKNOWN` | ADR-0091 R23, R39 |
+  | 401 | `TOKEN_REALM_UNKNOWN` | ADR-0091 R23, R39 |
   | 401 | `TOKEN_SIGNATURE_INVALID` | ADR-0091 R43 |
   | 401 | `TOKEN_AUDIENCE_MISSING`, `TOKEN_AUDIENCE_INVALID` | ADR-0091 R50; ADR-0094 R14 |
   | 401 | `TOKEN_EXP_MISSING`, `TOKEN_EXPIRED`, `TOKEN_NOT_YET_VALID` | ADR-0091 R44, R45 |
@@ -107,7 +108,7 @@ and the reason code in the audit and a metric.
   | 401 | `TOKEN_NAMESPACE_NOT_ALLOWED` | ADR-0094 R25 |
   | 401 | `TOKEN_SUBJECT_INVALID` | ADR-0094 R16 |
   | 403 | `CALLER_TENANT_MISMATCH` | ADR-0092 R4 |
-  | 503 | `TOKEN_KEYS_UNAVAILABLE` | ADR-0091 R37, R38, for either header |
+  | 503 | `TOKEN_KEYS_UNAVAILABLE` | ADR-0091 R23, R37, R38, for either header |
   | 503 | `DEFAULT_TENANT_NOT_TRANSLATED` | ADR-0093 R22 |
 
 ### Justification
@@ -129,7 +130,7 @@ one, which is what that mode is for.
 
 - **A1. Carry `reasonCode` in the response body.** Rejected by R6: a caller gains nothing it can act on, and the error
   would be formatted in two places.
-- **A2. Report missing keys as `TOKEN_KID_UNKNOWN`.** Rejected by ADR-0091 R38: an outage of Keycloak would look like a
+- **A2. Report missing keys as `TOKEN_KID_UNKNOWN`.** Rejected by ADR-0091 R23: an outage of Keycloak would look like a
   token with an invented `kid`.
 - **A3. Answer 401 for keys that cannot be loaded.** Rejected by R2: that is the status of a bad token. With an empty
   body a caller cannot tell the two apart, and a client that reacts to a 401 by fetching a new token and retrying adds

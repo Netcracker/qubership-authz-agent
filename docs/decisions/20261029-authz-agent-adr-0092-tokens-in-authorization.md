@@ -62,7 +62,7 @@ token that is not M2M to its own tenant.
 - **R1** (`handler`). `Authorization` is required on the check routes. A missing header gets 401 with `TOKEN_MISSING`,
   and a header that is not `Bearer` gets 401 with `TOKEN_SCHEME_INVALID`, both before policy evaluation.
 - **R2** (`handler`). A token in `Authorization` that fails verification gets 401 before policy evaluation. The
-  exception is `TOKEN_KEYS_UNAVAILABLE` of ADR-0091 R38, which gets the 503 of ADR-0095 R2.
+  exception is `TOKEN_KEYS_UNAVAILABLE` of ADR-0091 R23, which gets the 503 of ADR-0095 R2.
 - **R3** (`handler`). An M2M token in `Authorization` may name any tenant.
 - **R4** (`handler`). A token in `Authorization` that is not M2M may reach only the tenant of its own non-empty
   `tenant-id` claim, or the default tenant when it has no such claim. Any other tenant gets 403 with
