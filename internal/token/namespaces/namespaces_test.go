@@ -218,7 +218,6 @@ func (l *recordingLogger) loggedCauses() []error {
 	return slices.Clone(l.causes)
 }
 
-// The file stays missing across three reads; the fallback is reported once.
 func TestAllowlist_WarnsOnceWhileTheTopologyIsMissing(t *testing.T) {
 	log := &recordingLogger{}
 	a := New(Options{TopologyFile: filepath.Join(t.TempDir(), "absent"), Namespace: "own", Log: log})
