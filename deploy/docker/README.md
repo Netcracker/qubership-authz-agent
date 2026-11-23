@@ -1,9 +1,9 @@
 # Run authz-agent under Docker
 
-`compose.yaml` runs the agent from its image with Docker Compose, without Kubernetes, on `linux/amd64` or
-`linux/arm64`. Outside Kubernetes the agent works in the M2M mode `legacy`, so it accepts the tokens of the providers
-in `authz/trusted-providers.json` and no Kubernetes service account token. It gets its own token from the identity
-provider with client credentials.
+`compose.yaml` runs the agent from its image with Docker Compose, without Kubernetes, on `linux/amd64` or `linux/arm64`.
+The agent accepts the tokens of the providers in `authz/trusted-providers.json`, and no provider in that file serves the
+keys of a Kubernetes API server, so the agent refuses a Kubernetes service account token. It gets its own token from the
+identity provider with client credentials.
 
 | File | What it holds |
 | --- | --- |
@@ -119,5 +119,4 @@ the container restarts: once Keycloak answers, run `docker compose restart authz
 
 `agent.env` sets every variable of the [configuration table](../../components/authz-agent/README.md#configuration),
 and the table describes each of them. Each holds its default or a placeholder, except `SIGTERM_EXIT_DELAY`, which this
-example sets to `0` (see [Stop and restart](#stop-and-restart)). `agent.env` also sets `M2M_AUTH_MODE`, which the agent
-does not read yet and the table does not list.
+example sets to `0` (see [Stop and restart](#stop-and-restart)).
