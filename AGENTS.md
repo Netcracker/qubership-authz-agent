@@ -13,8 +13,8 @@ A production installation serves at most 3 tenants and up to 2000 policies, a su
 a bulk request carries 20 to 50 items. A request, bulk included, has a budget of 5 ms. Size designs, limits, and caches
 for these numbers. In a review, leave out a cost that appears only beyond them, such as the start time of an
 installation with 100 tenants. This covers cost only: a correctness defect, such as one tenant reading the policies of
-another, stays in scope. A count that a caller chooses, such as the items of a bulk request, the tenant a request names,
-or the realm in an `iss` claim, needs a bound at any size.
+another, stays in scope. A count that a caller or a PIP controls, such as the items of a bulk request, the bytes of a
+PIP response, the tenants that requests name, or the realms in `iss` claims, needs a bound at any size.
 
 Tests: Go `testing` from the standard library, with `testing/synctest` for code that waits on goroutines or timers. testify is used only in `test/integration/testify` and `test/parity/suite`, and go-cmp only in `test/parity/suite`; new tests elsewhere use neither. Mutation: mutago, through `make mutation-diff`.
 
