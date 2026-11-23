@@ -97,7 +97,8 @@ const (
 	// value netcracker.
 	CodeAudienceInvalid Code = "TOKEN_AUDIENCE_INVALID"
 	// CodeNamespaceNotAllowed marks a Kubernetes token from a namespace the
-	// service does not accept, or one that names no namespace.
+	// service does not accept, one that names no namespace, and every
+	// Kubernetes token of a [Verifier] without [Options.Admit].
 	CodeNamespaceNotAllowed Code = "TOKEN_NAMESPACE_NOT_ALLOWED"
 )
 
@@ -125,6 +126,7 @@ type Token struct {
 	claims     map[string]json.RawMessage
 	standard   Standard
 	providerID string
+	kubernetes bool
 	keyID      string
 	issuer     string
 	expiry     time.Time
@@ -186,6 +188,10 @@ func (t *Token) Standard() Standard {
 // caller that logs the id quotes it.
 func (t *Token) ProviderID() string { return t.providerID }
 
+// Kubernetes reports whether the token is a Kubernetes token: whether the key
+// that verified it is a key of the provider [keys.KubernetesID].
+func (t *Token) Kubernetes() bool { return t.kubernetes }
+
 // KeyID returns the kid of the key that verified the token.
 func (t *Token) KeyID() string { return t.keyID }
 
@@ -229,7 +235,9 @@ type Options struct {
 	// verified now or taken from the cache, and the *Error it returns
 	// refuses the token. It holds the checks whose answer can change while
 	// a token stays cached, such as the namespaces a Kubernetes token may
-	// come from.
+	// come from. Without Admit, Verify refuses every token for which
+	// [Token.Kubernetes] reports true, since nothing then checks its
+	// namespace.
 	Admit func(*Token) *Error
 
 	// now is the clock the claims are checked against.
@@ -287,7 +295,8 @@ func New(source KeyFinder, opts Options) *Verifier {
 // A token verified earlier that has not expired is served from the cache,
 // as the *Token the earlier call returned, while [KeyFinder.Lookup] returns
 // the same key for its issuer and kid. [Options.Admit] then runs on the token
-// either way.
+// either way; without Admit, a Kubernetes token is refused with
+// [CodeNamespaceNotAllowed].
 func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	now := v.opts.now()
 	digest := sha256.Sum256([]byte(raw))
@@ -298,10 +307,14 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 			return nil, err
 		}
 	}
-	if v.opts.Admit != nil {
-		if err := v.opts.Admit(tok); err != nil {
-			return nil, err
+	if v.opts.Admit == nil {
+		if tok.Kubernetes() {
+			return nil, fail(CodeNamespaceNotAllowed, "a Kubernetes token of provider %q needs a namespace check, and the verifier has none", tok.ProviderID())
 		}
+		return tok, nil
+	}
+	if err := v.opts.Admit(tok); err != nil {
+		return nil, err
 	}
 	return tok, nil
 }
@@ -339,6 +352,7 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 		claims:     claims,
 		standard:   standardOf(claims),
 		providerID: key.Source.ID(),
+		kubernetes: key.Source.Kubernetes(),
 		keyID:      key.ID,
 		issuer:     query.Issuer,
 		expiry:     expiry,

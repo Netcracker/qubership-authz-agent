@@ -257,11 +257,11 @@ func (o oneKey) LookupOrReload(_ context.Context, q keys.Query) (keys.Key, error
 	return o.Lookup(q)
 }
 
-// verifierFor returns a Verifier that trusts one EC key of provider and runs
-// admit, and a function that signs a token with that key whose claims are the
-// aud netcracker, which a Kubernetes token needs, an unexpired iat and exp, and
-// fields.
-func verifierFor(t *testing.T, provider string, admit func(*verify.Token) *verify.Error) (*verify.Verifier, func(fields map[string]any) string) {
+// verifierFor returns a Verifier that trusts one EC key of the provider with id
+// and runs admit, and a function that signs a token with that key whose claims
+// are an iss, the aud netcracker, which a Kubernetes token needs, a service
+// account sub, an unexpired iat and exp, and fields.
+func verifierFor(t *testing.T, id string, admit func(*verify.Token) *verify.Error) (*verify.Verifier, func(fields map[string]any) string) {
 	t.Helper()
 	private, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
@@ -271,11 +271,11 @@ func verifierFor(t *testing.T, provider string, admit func(*verify.Token) *verif
 	if err != nil {
 		t.Fatal(err)
 	}
-	key := keys.Key{Source: keys.Source{Provider: &keys.Provider{ID: provider, Audience: keys.Audience{Mode: keys.Ignore}}}, ID: "k1", JWK: public}
+	key := keys.Key{Source: keys.Source{Provider: &keys.Provider{ID: id, Audience: keys.Audience{Mode: keys.Ignore}}}, ID: "k1", JWK: public}
 	v := verify.New(oneKey{key}, verify.Options{Admit: admit})
 	sign := func(fields map[string]any) string {
 		now := time.Now()
-		claims := map[string]any{"iss": "https://issuer.example", "aud": "netcracker", "iat": now.Unix(), "exp": now.Add(time.Hour).Unix()}
+		claims := map[string]any{"iss": "https://issuer.example", "aud": "netcracker", "sub": "system:serviceaccount:ns:app", "iat": now.Unix(), "exp": now.Add(time.Hour).Unix()}
 		maps.Copy(claims, fields)
 		payload, err := json.Marshal(claims)
 		if err != nil {
@@ -294,7 +294,34 @@ func verifierFor(t *testing.T, provider string, admit func(*verify.Token) *verif
 	return v, sign
 }
 
-func TestAllowlist_AdmitChecksTheTokensOfTheNamedProviders(t *testing.T) {
+// A token without a namespace and one from a namespace outside the topology get
+// the same code, so the Detail tells them apart.
+func TestAllowlist_AdmitNamesWhyItRefusesAKubernetesToken(t *testing.T) {
+	a := New(Options{TopologyFile: writeTopology(t, composite), Namespace: "own"})
+	const noNamespace = "token names no kubernetes.io namespace"
+	tests := []struct {
+		name   string
+		claims map[string]any
+		want   string
+	}{
+		{"no kubernetes.io claim", map[string]any{}, noNamespace},
+		{"kubernetes.io that is a string", map[string]any{"kubernetes.io": "sat-peer"}, noNamespace},
+		{"namespace that is not a string", map[string]any{"kubernetes.io": map[string]any{"namespace": 5}}, noNamespace},
+		{"namespace outside the topology", map[string]any{"kubernetes.io": map[string]any{"namespace": "own"}}, `namespace "own" is not an allowed namespace`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, sign := verifierFor(t, keys.KubernetesID, a.Admit)
+			_, err := v.Verify(t.Context(), sign(tt.claims))
+			var refused *verify.Error
+			if !errors.As(err, &refused) || refused.Detail != tt.want {
+				t.Errorf("Verify() error = %v, want a *verify.Error with the Detail %q", err, tt.want)
+			}
+		})
+	}
+}
+
+func TestAllowlist_AdmitChecksTheTokensOfTheProviderKubernetes(t *testing.T) {
 	a := New(Options{TopologyFile: writeTopology(t, composite), Namespace: "own"})
 	tests := []struct {
 		name     string
@@ -302,28 +329,28 @@ func TestAllowlist_AdmitChecksTheTokensOfTheNamedProviders(t *testing.T) {
 		claims   map[string]any
 		want     verify.Code
 	}{
-		{"allowed namespace", "kubernetes",
+		{"allowed namespace", keys.KubernetesID,
 			map[string]any{"kubernetes.io": map[string]any{"namespace": "sat-peer"}}, ""},
-		{"namespace outside the topology", "kubernetes",
+		{"namespace outside the topology", keys.KubernetesID,
 			map[string]any{"kubernetes.io": map[string]any{"namespace": "own"}}, verify.CodeNamespaceNotAllowed},
-		{"no kubernetes.io claim", "kubernetes",
+		{"no kubernetes.io claim", keys.KubernetesID,
 			map[string]any{"sub": "system:serviceaccount:own:agent"}, verify.CodeNamespaceNotAllowed},
-		{"kubernetes.io that is a string", "kubernetes",
+		{"kubernetes.io that is a string", keys.KubernetesID,
 			map[string]any{"kubernetes.io": "sat-peer"}, verify.CodeNamespaceNotAllowed},
-		{"namespace that is not a string", "kubernetes",
+		{"namespace that is not a string", keys.KubernetesID,
 			map[string]any{"kubernetes.io": map[string]any{"namespace": 5}}, verify.CodeNamespaceNotAllowed},
-		{"Namespace that differs in case", "kubernetes",
+		{"Namespace that differs in case", keys.KubernetesID,
 			map[string]any{"kubernetes.io": map[string]any{"Namespace": "sat-peer"}}, verify.CodeNamespaceNotAllowed},
-		{"namespace outside the topology beside a Namespace inside it", "kubernetes",
+		{"namespace outside the topology beside a Namespace inside it", keys.KubernetesID,
 			map[string]any{"kubernetes.io": json.RawMessage(`{"namespace": "own", "Namespace": "sat-peer"}`)}, verify.CodeNamespaceNotAllowed},
-		{"namespace given twice, the last time as a number", "kubernetes",
+		{"namespace given twice, the last time as a number", keys.KubernetesID,
 			map[string]any{"kubernetes.io": json.RawMessage(`{"namespace": "sat-peer", "namespace": 5}`)}, verify.CodeNamespaceNotAllowed},
-		{"another provider's token", "cloud-common",
+		{"identity-provider token", keys.IdentityProviderID,
 			map[string]any{"kubernetes.io": map[string]any{"namespace": "own"}}, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v, sign := verifierFor(t, tt.provider, a.Admit("kubernetes"))
+			v, sign := verifierFor(t, tt.provider, a.Admit)
 			_, err := v.Verify(t.Context(), sign(tt.claims))
 			var got verify.Code
 			var refused *verify.Error
