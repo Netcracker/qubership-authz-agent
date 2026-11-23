@@ -116,10 +116,10 @@ func TestLoadConfig_EnvironmentOnly(t *testing.T) {
 }
 
 // TestLoadConfig_LoopsOnTheServicesOwn: with a token endpoint, the one value
-// it needs, the service takes the trusted providers file and the token file
-// from their default paths and leaves the addresses of the policy source and
-// of tenant-manager empty, which keeps the policy pull and the realm lookup
-// off; each key of the loops is read from its variable.
+// it needs, the service takes its files from their default paths and leaves
+// the address of every other service it calls empty, which keeps the policy
+// pull and the realm lookup off; each key of the loops is read from its
+// variable.
 func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	cfg, err := loadConfig(fromMap(map[string]string{"authz.m2m.token.url": "http://idp/token"}))
 	if err != nil {
