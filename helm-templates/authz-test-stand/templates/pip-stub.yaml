@@ -61,8 +61,12 @@ spec:
             periodSeconds: 2
           securityContext:
             {{- include "authz-test-stand.containerSecurityContext" true | nindent 12 }}
+          {{- $resources := $.Values.pipStub.resources }}
+          {{- if hasKey $instance "resources" }}
+          {{- $resources = $instance.resources }}
+          {{- end }}
           resources:
-            {{- toYaml ($instance.resources | default $.Values.pipStub.resources) | nindent 12 }}
+            {{- toYaml $resources | nindent 12 }}
           {{- if $instance.config }}
           volumeMounts:
             - name: config

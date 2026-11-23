@@ -40,7 +40,7 @@
 // GET /pip-stub/calls returns the recorded requests, oldest first: the latest
 // maxCalls of them since the last /pip-stub/reset. Its Pip-Stub-Calls-Dropped
 // header counts the older requests that are no longer in the list.
-// /pip-stub/health answers 200 and serves the readiness probe.
+// GET /pip-stub/health answers 200 and serves the readiness probe.
 package main
 
 import (
@@ -59,17 +59,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// ── Legacy path-routing model (unchanged wire contract) ──────────────────────
+// ── Legacy path-routing model (extended additively) ──────────────────────────
 
 type pipResponse struct {
 	StatusCode int    `json:"statusCode"`
 	Body       any    `json:"body"`
 	BodyRaw    string `json:"bodyRaw,omitempty"`
-	// Headers are set on the answer after Content-Type, so a route can
+	// Headers are set on the response after Content-Type, so a route can
 	// replace it and can send Location or Content-Encoding.
 	Headers map[string]string `json:"headers,omitempty"`
-	// NoBody sends the answer without a body, where a null Body sends the
-	// text null.
+	// NoBody sends the response without a body, ignoring Body and BodyRaw.
+	// Without NoBody, a response with neither BodyRaw nor Body sends the text
+	// null.
 	NoBody bool `json:"noBody,omitempty"`
 }
 
@@ -106,8 +107,9 @@ const maxCalls = 2000
 // the returned list lacks the oldest calls.
 const callsDroppedHeader = "Pip-Stub-Calls-Dropped"
 
-// callJournal keeps the latest limit requests in arrival order. Once full, each
-// new request replaces the oldest one and increments dropped.
+// callJournal keeps the latest limit requests in the order handlePIP records
+// them. Once full, each new request replaces the oldest one and increments
+// dropped.
 type callJournal struct {
 	limit   int
 	records []callRecord
@@ -119,17 +121,17 @@ func newCallJournal(limit int) *callJournal {
 	return &callJournal{limit: limit}
 }
 
-func (j *callJournal) add(rec callRecord) {
+// add records rec and reports whether it is the first record the journal
+// dropped an older one for since the last reset.
+func (j *callJournal) add(rec callRecord) (firstDrop bool) {
 	if len(j.records) < j.limit {
 		j.records = append(j.records, rec)
-		return
-	}
-	if j.dropped == 0 {
-		log.Printf("call journal is full at %d records; dropping the oldest calls until /pip-stub/reset", j.limit)
+		return false
 	}
 	j.records[j.oldest] = rec
 	j.oldest = (j.oldest + 1) % j.limit
 	j.dropped++
+	return j.dropped == 1
 }
 
 // snapshot returns a copy of the kept records, oldest first.
@@ -192,11 +194,20 @@ var (
 
 func main() {
 	port := envOr("PIP_STUB_PORT", "8090")
-	configPath := envOr("PIP_STUB_CONFIG", "")
+	handler := newStub(envOr("PIP_STUB_CONFIG", ""))
 
+	addr := "0.0.0.0:" + port
+	log.Printf("pip-stub listening on %s with %d path-routes and %d rules", addr, len(routes), len(rules))
+	log.Fatal(http.ListenAndServe(addr, handler))
+}
+
+// newStub replaces the stub's state with a fresh one, loads the rules from
+// configPath when it is not empty, and returns the handler that main serves.
+func newStub(configPath string) http.Handler {
 	routes = make(map[string]*pipRoute)
 	calls = newCallJournal(maxCalls)
 	counters = make(map[string]int)
+	rules = nil
 	ruleCounter = make(map[string]int)
 	compiledRe = make(map[string]*regexp.Regexp)
 
@@ -206,15 +217,13 @@ func main() {
 
 	loadDefaultRoutes()
 
-	http.HandleFunc("/pip-stub/health", handleHealth)
-	http.HandleFunc("/pip-stub/calls", handleCalls)
-	http.HandleFunc("/pip-stub/reset", handleReset)
-	http.HandleFunc("/pip-stub/configure", handleConfigure)
-	http.HandleFunc("/", handlePIP)
-
-	addr := "0.0.0.0:" + port
-	log.Printf("pip-stub listening on %s with %d path-routes and %d rules", addr, len(routes), len(rules))
-	log.Fatal(http.ListenAndServe(addr, nil))
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /pip-stub/health", handleHealth)
+	mux.HandleFunc("/pip-stub/calls", handleCalls)
+	mux.HandleFunc("/pip-stub/reset", handleReset)
+	mux.HandleFunc("/pip-stub/configure", handleConfigure)
+	mux.HandleFunc("/", handlePIP)
+	return mux
 }
 
 func loadDefaultRoutes() {
@@ -278,11 +287,19 @@ func handlePIP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mu.Lock()
-	calls.add(rec)
+	firstDrop, limit := calls.add(rec), calls.limit
+	// unlock releases mu and only then logs the first dropped call, so a slow
+	// log sink holds up no other request and the response waits for no lock.
+	unlock := func() {
+		mu.Unlock()
+		if firstDrop {
+			log.Printf("call journal reached %d records and dropped its oldest call; it keeps dropping them until /pip-stub/reset", limit)
+		}
+	}
 
 	// 1. Rule engine (first fully-matching rule wins).
 	if resp, ok := matchRule(rec); ok {
-		mu.Unlock()
+		unlock()
 		writeRespond(w, resp, rec)
 		return
 	}
@@ -296,9 +313,8 @@ func handlePIP(w http.ResponseWriter, r *http.Request) {
 		route, ok = routes[key]
 	}
 	if !ok || len(route.Responses) == 0 {
-		mu.Unlock()
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = fmt.Fprintf(w, `{"error":"no rule or route for %s"}`, r.URL.Path)
+		unlock()
+		writeJSONError(w, http.StatusNotFound, "no rule or route for "+r.URL.Path)
 		return
 	}
 	idx := counters[key]
@@ -307,7 +323,7 @@ func handlePIP(w http.ResponseWriter, r *http.Request) {
 	}
 	counters[key] = idx + 1
 	resp := route.Responses[idx]
-	mu.Unlock()
+	unlock()
 
 	status := resp.StatusCode
 	if status == 0 {
@@ -465,9 +481,18 @@ func handleConfigure(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	decoder.UseNumber()
 	if err := decoder.Decode(&cfg); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprintf(w, `{"error":"%s"}`, err.Error())
+		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
+	}
+	// A JSON object may name one header twice in different case, and setting
+	// both would leave the response to map iteration order.
+	for _, route := range cfg {
+		for _, resp := range route.Responses {
+			if name := repeatedHeader(resp.Headers); name != "" {
+				writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("route %s sets header %s more than once", route.Path, name))
+				return
+			}
+		}
 	}
 	mu.Lock()
 	for i := range cfg {
@@ -479,6 +504,28 @@ func handleConfigure(w http.ResponseWriter, r *http.Request) {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+// writeJSONError answers status with {"error": message}, JSON-encoded, so a
+// path or a decoder message that holds a quote stays inside the string.
+func writeJSONError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
+}
+
+// repeatedHeader returns the canonical name of a header that headers names
+// more than once, ignoring case, or "" when every name is distinct.
+func repeatedHeader(headers map[string]string) string {
+	seen := make(map[string]bool, len(headers))
+	for name := range headers {
+		canonical := http.CanonicalHeaderKey(name)
+		if seen[canonical] {
+			return canonical
+		}
+		seen[canonical] = true
+	}
+	return ""
+}
 
 // flattenHeaders lowercases header names (case-insensitive matching) and joins
 // multi-value headers with ", " — the last-value-wins convention is avoided so
