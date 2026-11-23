@@ -55,6 +55,11 @@ type PipStubResponse struct {
 	StatusCode int    `json:"statusCode"`
 	Body       any    `json:"body,omitempty"`
 	BodyRaw    string `json:"bodyRaw,omitempty"`
+	// Headers are set on the answer after Content-Type, which they may
+	// replace: Location for a redirect, Content-Encoding.
+	Headers map[string]string `json:"headers,omitempty"`
+	// NoBody sends the answer without a body; a null Body sends the text null.
+	NoBody bool `json:"noBody,omitempty"`
 }
 
 // pipStubRoute mirrors pipstub's pipRoute struct.
