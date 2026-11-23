@@ -739,6 +739,36 @@ func TestVerify_RefusesOnTheLifetimeBeforeTheSub(t *testing.T) {
 	}
 }
 
+// Every token holds the claim kubernetes.io. The verifier has no Admit, so a
+// token of the provider kubernetes whose sub passes is refused by the
+// namespace check.
+func TestVerify_RunsTheKubernetesChecksOnlyOnATokenOfTheProviderKubernetes(t *testing.T) {
+	tests := []struct {
+		name  string
+		id    string
+		realm string
+		sub   string
+		want  Code
+	}{
+		{"single identity-provider", keys.IdentityProviderID, "", "user-1", ""},
+		{"realm of identity-provider", keys.IdentityProviderID, "tenant-1", "user-1", ""},
+		{"kubernetes, sub of a user", keys.KubernetesID, "", "user-1", CodeSubjectInvalid},
+		{"kubernetes, sub of a service account", keys.KubernetesID, "", serviceAccountSub, CodeNamespaceNotAllowed},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", providerOf(tt.id))
+			s.key.Source.Realm = tt.realm
+			v, _ := newVerifier(newFakeKeys(s))
+			claims := claimsAt(start, map[string]any{"sub": tt.sub, "kubernetes.io": map[string]any{"namespace": "ns"}})
+			_, err := v.Verify(t.Context(), s.sign(t, claims))
+			if got := codeOf(err); got != tt.want || (tt.want == "" && err != nil) {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
+	}
+}
+
 func TestVerify_ToleratesTheLeewayAroundItsLifetime(t *testing.T) {
 	s := newSigner(t, "k1", providerOf("realm"))
 	within := DefaultLeeway - time.Second
