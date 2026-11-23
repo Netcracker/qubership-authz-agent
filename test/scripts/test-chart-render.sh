@@ -455,16 +455,16 @@ expect_env_as_set() {
 expect_env_as_set AUTHZ_TRUSTED_PROVIDERS_FILE AUTHZ_TRUSTED_PROVIDERS_FILE \
   $'/etc/authz/a\'b"c\\d: #e.json' $'/etc/authz/a\'b"c\\d: #e.json'
 expect_env_as_set AUTHZ_TENANT_MANAGER_URL AUTHZ_TENANT_MANAGER_URL \
-  $'http://tenant-manager:8080/a\'b"c\\d: #e' $'http://tenant-manager:8080/a\'b"c\\d: #e'
+  $'https://tenant-manager:8443/a\'b"c\\d: #e' $'https://tenant-manager:8443/a\'b"c\\d: #e'
 expect_env_as_set AUTHZ_PAP_CLIENT_SOURCE_URL AUTHZ_PAP_CLIENT_SOURCE_URL \
-  $'http://access-control:8080/a\'b"c\\d: #e' $'http://access-control:8080/a\'b"c\\d: #e'
+  $'https://access-control:8443/a\'b"c\\d: #e' $'https://access-control:8443/a\'b"c\\d: #e'
 expect_env_as_set AUTHZ_PAP_CLIENT_TOKEN_FILE AUTHZ_PAP_CLIENT_TOKEN_FILE \
   $'/var/run/secrets/a\'b"c\\d: #e/token' $'/var/run/secrets/a\'b"c\\d: #e/token'
 expect_env_as_set AUTHZ_ENTITLEMENTS_URL AUTHZ_ENTITLEMENTS_URL \
-  $'http://entitlements:8080/a\'b"c\\d: #e' $'http://entitlements:8080/a\'b"c\\d: #e'
+  $'https://entitlements:8443/a\'b"c\\d: #e' $'https://entitlements:8443/a\'b"c\\d: #e'
 expect_env_as_set IDENTITY_PROVIDER_URL AUTHZ_M2M_TOKEN_URL \
-  $'http://identity-provider:8080/a\'b"c\\d: #e' \
-  $'http://identity-provider:8080/a\'b"c\\d: #e/auth/realms/cloud-common/protocol/openid-connect/token'
+  $'https://identity-provider:8443/a\'b"c\\d: #e' \
+  $'https://identity-provider:8443/a\'b"c\\d: #e/auth/realms/cloud-common/protocol/openid-connect/token'
 
 # ── The agent Pod (authz-agent-ADR-0080) ─────────────────────────────────
 #
