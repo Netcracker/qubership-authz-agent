@@ -48,11 +48,10 @@ func TestLoadConfig_EnvironmentOnly(t *testing.T) {
 	}
 }
 
-// TestLoadConfig_LoopsOnTheServicesOwn: on its own the service takes the
-// trusted providers file and the token file from their default paths and
-// leaves the addresses of the policy source and of tenant-manager empty,
-// which keeps the policy pull and the realm lookup off; each key of the
-// loops is read with the spellings the pap-client accepted.
+// TestLoadConfig_LoopsOnTheServicesOwn: on its own the service takes its
+// files from their default paths and leaves the address of every service
+// it calls empty, which keeps the policy pull and the realm lookup off;
+// each key of the loops is read with the spellings the pap-client accepted.
 func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	cfg := loadConfig(fromMap(map[string]string{}))
 	wantAuthn := authn.Config{File: "/etc/authz/trusted-providers.json", Required: true, HTTPTimeout: 5 * time.Second, HTTPRetries: 3,

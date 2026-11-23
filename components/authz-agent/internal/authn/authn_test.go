@@ -139,13 +139,8 @@ func providersFile(t *testing.T, content string) string {
 
 func newManager(t *testing.T, file string, required bool, tenantManager string) (*Manager, *store) {
 	t.Helper()
-	return newManagerLogging(t, file, required, tenantManager, quiet{})
-}
-
-func newManagerLogging(t *testing.T, file string, required bool, tenantManager string, log Logger) (*Manager, *store) {
-	t.Helper()
 	st := &store{}
-	m := New(Config{File: file, Required: required, HTTPTimeout: 2 * time.Second, HTTPRetries: 1, TenantManagerURL: tenantManager}, st, log)
+	m := New(Config{File: file, Required: required, HTTPTimeout: 2 * time.Second, HTTPRetries: 1, TenantManagerURL: tenantManager}, st, quiet{})
 	return m, st
 }
 
@@ -374,76 +369,92 @@ func TestNewRealmResolver_LooksUpOnlyWithAnAddress(t *testing.T) {
 	}
 }
 
-// infos keeps the text of every info record it receives.
-type infos []string
-
-func (l *infos) Infof(format string, args ...any) { *l = append(*l, fmt.Sprintf(format, args...)) }
-func (*infos) Warnf(string, ...any)               {}
-
-// lookupOff counts the records that say the realm lookup is off.
-func (l infos) lookupOff() int {
-	n := 0
-	for _, r := range l {
-		if strings.Contains(r, "AUTHZ_TENANT_MANAGER_URL is empty") {
-			n++
-		}
-	}
-	return n
-}
-
-// TestBootstrap_LogsThatTheRealmLookupIsOff: a start with providers and no
-// tenant-manager address logs that a realm written by its tenant display
-// name is not resolved; a start with an address, or with no providers,
-// does not.
-func TestBootstrap_LogsThatTheRealmLookupIsOff(t *testing.T) {
-	srv := idp(t)
-	oneProvider := fmt.Sprintf(`{"providers":[{"id":"a","issuer":"%s/realms/a"}]}`, srv.URL)
+func TestIssuerRealm(t *testing.T) {
 	for _, tt := range []struct {
-		name, address, providers string
-		want                     int
+		name, issuer, prefix, segment string
+		ok                            bool
 	}{
-		{"no address", "", oneProvider, 1},
-		{"a blank address", "  ", oneProvider, 1},
-		{"an address", "http://tm:8080", oneProvider, 0},
-		{"no address and no providers", "", `{"providers":[]}`, 0},
+		{"a realm path", "https://kc.example.com/auth/realms/default", "https://kc.example.com/auth/realms", "default", true},
+		{"a realm path with a trailing slash", "https://kc.example.com/auth/realms/default/", "https://kc.example.com/auth/realms", "default", true},
+		{"a bare host", "https://login.example.com", "", "", false},
+		{"a bare host with a trailing slash", "https://login.example.com/", "", "", false},
+		{"no slash", "idp", "", "", false},
+		{"a URL that does not parse", "http://[::1/realms/default", "", "", false},
+		{"a query", "https://kc.example.com/realms/a?next=/b", "", "", false},
+		{"an empty query", "https://kc.example.com/realms/a?", "", "", false},
+		{"a fragment", "https://kc.example.com/realms/a#/b", "", "", false},
+		{"a last segment that is no realm name", "https://kc.example.com/realms/de fault", "", "", false},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			var log infos
-			m, _ := newManagerLogging(t, providersFile(t, tt.providers), true, tt.address, &log)
-			m.Bootstrap(context.Background())
-			if got := log.lookupOff(); got != tt.want {
-				t.Errorf("Bootstrap() with the address %q and %s logged the lookup off %d times, want %d; info records: %q", tt.address, tt.providers, got, tt.want, log)
+			prefix, segment, ok := issuerRealm(tt.issuer)
+			if prefix != tt.prefix || segment != tt.segment || ok != tt.ok {
+				t.Errorf("issuerRealm(%q) = %q, %q, %t, want %q, %q, %t", tt.issuer, prefix, segment, ok, tt.prefix, tt.segment, tt.ok)
 			}
 		})
 	}
 }
 
-// TestReload_LogsThatTheRealmLookupIsOffOnce: without a tenant-manager
-// address, the first reload that brings providers logs that the realm
-// lookup is off, and a later one does not log it again.
-func TestReload_LogsThatTheRealmLookupIsOffOnce(t *testing.T) {
-	srv := idp(t)
-	file := providersFile(t, `{"providers":[]}`)
-	var log infos
-	m, _ := newManagerLogging(t, file, false, "", &log)
-	m.Bootstrap(context.Background())
-	for _, step := range []struct {
-		name, providers string
-		want            int
+// TestResolveIssuer_LooksUpOnlyAPathSegment: an issuer with no path is
+// returned as configured and tenant-manager is not asked about its host.
+func TestResolveIssuer_LooksUpOnlyAPathSegment(t *testing.T) {
+	for _, tt := range []struct {
+		name, issuer, want string
+		resolved           bool
+		asked              []string
 	}{
-		{"another empty list", `{"providers": []}`, 0},
-		{"one provider", fmt.Sprintf(`{"providers":[{"id":"a","issuer":"%s/realms/a"}]}`, srv.URL), 1},
-		{"two providers", fmt.Sprintf(`{"providers":[{"id":"a","issuer":"%s/realms/a"},{"id":"b","issuer":"%s/realms/b"}]}`, srv.URL, srv.URL), 1},
+		{"a bare host", "https://login.example.com", "https://login.example.com", false, nil},
+		{"a realm path", "https://kc.example.com/realms/default", "https://kc.example.com/realms/a", true, []string{"default"}},
 	} {
-		if err := os.WriteFile(file, []byte(step.providers), 0o600); err != nil {
-			t.Fatal(err)
-		}
-		if changed, err := m.Reload(context.Background()); !changed || err != nil {
-			t.Fatalf("Reload() after writing %s = %v, %v; want true, nil", step.name, changed, err)
-		}
-		if got := log.lookupOff(); got != step.want {
-			t.Errorf("after the reload with %s the lookup off was logged %d times, want %d; info records: %q", step.name, got, step.want, log)
-		}
+		t.Run(tt.name, func(t *testing.T) {
+			var asked []string
+			tenantManager := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				asked = append(asked, r.URL.Query().Get("dns"))
+				_, _ = w.Write([]byte("a\n"))
+			}))
+			defer tenantManager.Close()
+			got, resolved := newRealmResolver(tenantManager.URL, &http.Client{Timeout: 2 * time.Second}, quiet{}).resolveIssuer(tt.issuer)
+			if got != tt.want || resolved != tt.resolved {
+				t.Errorf("resolveIssuer(%q) = %q, %t, want %q, %t", tt.issuer, got, resolved, tt.want, tt.resolved)
+			}
+			if !reflect.DeepEqual(asked, tt.asked) {
+				t.Errorf("resolveIssuer(%q) asked tenant-manager for %q, want %q", tt.issuer, asked, tt.asked)
+			}
+		})
+	}
+}
+
+// TestBootstrap_NamesTheEmptyTenantManagerURLInTheDiscoveryFailure: with
+// no address of tenant-manager, a discovery failure for an issuer whose last
+// path segment has the shape of a realm name says that the segment was not
+// looked up; with an address, or with no such segment, the failure says
+// nothing of it.
+func TestBootstrap_NamesTheEmptyTenantManagerURLInTheDiscoveryFailure(t *testing.T) {
+	srv := idp(t)
+	tenantManager := httptest.NewServer(http.NotFoundHandler())
+	defer tenantManager.Close()
+	for _, tt := range []struct {
+		name, issuer, address, want string
+	}{
+		{"no address", srv.URL + "/realms/default", "",
+			"unable to fetch OIDC discovery document for provider 'p' from " + srv.URL + "/realms/default/.well-known/openid-configuration" +
+				", and 'default' was not looked up as a tenant display name because AUTHZ_TENANT_MANAGER_URL is empty"},
+		{"an address", srv.URL + "/realms/default", tenantManager.URL,
+			"unable to fetch OIDC discovery document for provider 'p' from " + srv.URL + "/realms/default/.well-known/openid-configuration"},
+		{"no address and a last segment that is no realm name", srv.URL + "/realms/de fault", "",
+			"unable to fetch OIDC discovery document for provider 'p' from " + srv.URL + "/realms/de fault/.well-known/openid-configuration"},
+		{"no address and an issuer with no slash", "idp", "",
+			"unable to fetch OIDC discovery document for provider 'p' from idp/.well-known/openid-configuration"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			m, _ := newManager(t, providersFile(t, fmt.Sprintf(`{"providers":[{"id":"p","issuer":%q}]}`, tt.issuer)), false, tt.address)
+			status := m.Bootstrap(context.Background())
+			if len(status.Providers) != 1 {
+				t.Fatalf("Bootstrap() providers = %+v, want one", status.Providers)
+			}
+			if got := status.Providers[0].FailureReason; got != tt.want {
+				t.Errorf("failureReason for the issuer %q and the address %q = %q, want %q", tt.issuer, tt.address, got, tt.want)
+			}
+		})
 	}
 }
 
