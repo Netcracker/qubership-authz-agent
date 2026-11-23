@@ -19,9 +19,8 @@ kichasov
 - [authz-agent-ADR-0080: Replace Envoy, the Lua filters, and the OPA container with one Go service that embeds OPA](20260907-authz-agent-adr-0080-single-go-service-with-embedded-opa.md):
   the one image of the agent that this record runs outside Kubernetes.
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
-  the term stops the start; ADR-0091 R2, the CA of the requests to Keycloak; ADR-0091 R14, readiness; ADR-0091 R44,
-  the leeway against the clock; ADR-0091 R64, the removal of `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`; and ADR-0091 R78,
-  `IDENTITY_PROVIDER_URL`, which the agent does not read.
+  the term stops the start; ADR-0091 R14, readiness; ADR-0091 R44, the leeway against the clock; ADR-0091 R64, the
+  removal of `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`; and ADR-0091 R78, `IDENTITY_PROVIDER_URL`, which the agent does not read.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
   ADR-0092 R15, a value of `M2M_AUTH_MODE` that stops the start; ADR-0092 R16, `legacy` as the only M2M mode outside
   Kubernetes.
@@ -34,6 +33,9 @@ kichasov
   which R6 follows for every value from a list; ADR-0096 R5, the token endpoint that `client-credentials` requires;
   ADR-0096 R7, which files the agent leaves unread with each value; ADR-0096 R8, the pair of that setting and the M2M
   mode that stops the start.
+- [authz-agent-ADR-0106: Trust a private CA only through the system roots of the base image](https://github.com/Netcracker/qubership-authz-agent/pull/330),
+  proposed in #330: ADR-0106 R1, the system roots that every HTTPS request of the agent verifies against; ADR-0106 R6,
+  the CAs under `/tmp/cert` that the image adds to those roots, on the Docker target as well.
 
 ## Context
 
@@ -66,11 +68,6 @@ example.
 
 - **R4** (`image`, `startup`). On the Docker target, running as any uid in group 0, with a read-only root file system
   and all Linux capabilities dropped, changes neither whether the agent starts nor whether it becomes ready.
-- **R19** (`image`). On the Docker target, under the restrictions of R4, an agent started from the release image adds
-  the CA certificates in the `.crt`, `.cer`, and `.pem` files under `/tmp/cert` at its start to the system roots of the
-  image. Every HTTPS call of the agent that trusts the system roots trusts those certificates too, and refuses a server
-  whose certificate was not signed by a CA that the call trusts. Where `keycloak.caFile` holds a CA (ADR-0091 R2), a
-  call to that Keycloak trusts that CA instead.
 
 #### Configuration
 
@@ -128,12 +125,12 @@ example.
 
 ### Justification
 
-The agent calls Keycloak, the PIPs, and the policy source over HTTPS. An installation with a private CA needs the
-release image to trust that CA under the same restrictions as the rest of its run, and the Docker page shows an operator
-how (R14, R19). The agent needs neither root nor a writable root file system, and R4 keeps it so. Under R4 the agent may
-run as a uid that owns none of the files the operator mounts. A bind mount keeps the owner and mode of each file, so the
-Docker page shows how to make the credentials readable to that uid without making them readable to every user of the
-host (R29).
+The agent calls Keycloak, the PIPs, and the policy source over HTTPS and verifies their certificates against the system
+roots alone (ADR-0106 R1). An operator puts a private CA under `/tmp/cert`, the image adds it to those roots
+(ADR-0106 R6), and the Docker page shows how (R14). The agent needs neither root nor a writable root file system, and R4
+keeps it so. Under R4 the agent may run as a uid that owns none of the files the operator mounts. A bind mount keeps the
+owner and mode of each file, so the Docker page shows how to make the credentials readable to that uid without making
+them readable to every user of the host (R29).
 
 On the Docker target nothing but the agent checks its configuration. The token for the API server and the topology file
 exist only in a cluster, so ADR-0092 R16 leaves `legacy` as the only mode outside Kubernetes, and R5 requires that mode
