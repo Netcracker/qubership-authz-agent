@@ -19,8 +19,6 @@ import (
 	"context"
 	"crypto"
 	"crypto/sha256"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -38,8 +36,7 @@ import (
 	"github.com/lestrrat-go/jwx/v3/jwk"
 )
 
-// maxResponseBytes bounds the body of a discovery document and of a JWKS,
-// 1 MiB (1048576 bytes).
+// maxResponseBytes bounds the body of a JWKS, 1 MiB (1048576 bytes).
 const maxResponseBytes = 1 << 20
 
 // maxListedSkippedKeys bounds the skipped keys whose reasons a warning or an
@@ -103,8 +100,9 @@ func curveOf(key jwk.Key) string {
 // fetcher downloads the signing keys of one source.
 type fetcher struct {
 	source Source
-	// address is the address discovery runs under: the Issuer of a provider,
-	// or the address of a realm under [Keycloak.URL].
+	// address is the address of the JWKS: the jwksUri of an exact provider,
+	// or the jwksUri of a realm-template provider with the realm name in place
+	// of {realm}.
 	address string
 	client  *http.Client
 	log     Logger
@@ -116,102 +114,56 @@ type fetcher struct {
 	skipped entrySum
 }
 
-// jwksURI returns the [Provider.JWKSURI] of a provider, and "" for a realm.
-func (f *fetcher) jwksURI() string {
-	if f.source.Provider == nil {
-		return ""
-	}
-	return f.source.Provider.JWKSURI
-}
-
-// tokenFile returns the [Provider.TokenFile] of a provider, and "" for a realm.
-func (f *fetcher) tokenFile() string {
-	if f.source.Provider == nil {
-		return ""
-	}
-	return f.source.Provider.TokenFile
-}
-
-// newClient builds the HTTP client for one server: the proxy settings of the
-// environment, timeout per request, caFile as the only trusted roots when it
-// is set, and no redirect followed. [http.Client] forwards the bearer token
-// of [Provider.TokenFile] to a redirect target on the same host or a
-// subdomain of it, whatever its port or scheme, so a redirect ends the
-// request as a failure instead. owner names the server in an error.
-func newClient(owner, caFile string, timeout time.Duration) (*http.Client, error) {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	if caFile != "" {
-		pem, err := os.ReadFile(caFile)
-		if err != nil {
-			return nil, fmt.Errorf("%s caFile: %w", owner, err)
-		}
-		roots := x509.NewCertPool()
-		if !roots.AppendCertsFromPEM(pem) {
-			return nil, fmt.Errorf("%s caFile %s holds no PEM certificate", owner, caFile)
-		}
-		transport.TLSClientConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
-	}
+// newClient builds the HTTP client of one provider: the proxy settings and
+// the trusted roots of the environment, timeout per request, and no redirect
+// followed. [http.Client] forwards the bearer token of
+// [Provider.JWKSBearerTokenFile] to a redirect target on the same host or a
+// subdomain of it, whatever its port or scheme, so a redirect ends the request
+// as a failure instead.
+func newClient(timeout time.Duration) *http.Client {
 	return &http.Client{
-		Transport: transport,
+		Transport: http.DefaultTransport.(*http.Transport).Clone(),
 		Timeout:   timeout,
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
-	}, nil
+	}
 }
 
 // errNoUsableKey reports a JWKS that parses and holds no usable signing key.
 // A reload that gets it removes the keys of the source.
 var errNoUsableKey = errors.New("no usable signing key")
 
-// fetch downloads the JWKS of the source, through discovery unless a provider
-// names a JWKSURI, and returns its signing keys. It fails when a request
-// fails or answers a status other than 2xx, when a document is not the JSON
-// it should be, and when the JWKS lists two different keys under one kid;
-// a JWKS without a usable signing key fails with errNoUsableKey.
+// fetch downloads the JWKS of the source and returns its signing keys. It
+// fails when the request fails or answers a status other than 2xx, when the
+// body is longer than maxResponseBytes or is not the JSON of a JWKS, and when
+// the JWKS lists two different keys under one kid; a JWKS without a usable
+// signing key fails with errNoUsableKey.
 func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
-	uri := f.jwksURI()
-	if uri == "" {
-		discovery := strings.TrimRight(f.address, "/") + "/.well-known/openid-configuration"
-		body, err := f.get(ctx, discovery)
-		if err != nil {
-			return nil, err
-		}
-		var doc struct {
-			JWKSURI string `json:"jwks_uri"`
-		}
-		if err := json.Unmarshal(body, &doc); err != nil {
-			return nil, fmt.Errorf("discovery document %s: %w", discovery, err)
-		}
-		if doc.JWKSURI == "" {
-			return nil, fmt.Errorf("discovery document %s has no jwks_uri", discovery)
-		}
-		uri = doc.JWKSURI
-	}
-	body, err := f.get(ctx, uri)
+	body, err := f.get(ctx)
 	if err != nil {
 		return nil, err
 	}
 	keys, err := f.parseJWKS(body)
 	if err != nil {
-		return nil, fmt.Errorf("JWKS %s: %w", uri, err)
+		return nil, fmt.Errorf("JWKS %s: %w", f.address, err)
 	}
 	return keys, nil
 }
 
-// get returns the body of a 2xx response to a GET of url, with the bearer token
-// of the [Provider.TokenFile] of a provider that sets one. Any other status, a
-// redirect included, is an error.
-func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+// get returns the body of a 2xx response to a GET of the address, with the
+// bearer token of the [Provider.JWKSBearerTokenFile] of a provider that sets
+// one. Any other status, a redirect included, is an error.
+func (f *fetcher) get(ctx context.Context) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, f.address, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Accept", "application/json")
-	if path := f.tokenFile(); path != "" {
+	if path := f.source.Provider.JWKSBearerTokenFile; path != "" {
 		token, err := readToken(path)
 		if err != nil {
-			return nil, fmt.Errorf("%s tokenFile: %w", f.source.label(), err)
+			return nil, fmt.Errorf("%s jwksBearerTokenFile: %w", f.source.label(), err)
 		}
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
@@ -222,13 +174,13 @@ func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 	defer func() { _ = resp.Body.Close() }()
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes+1))
 	if err != nil {
-		return nil, fmt.Errorf("GET %s: read body: %w", url, err)
+		return nil, fmt.Errorf("GET %s: read body: %w", f.address, err)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("GET %s: HTTP %d", url, resp.StatusCode)
+		return nil, fmt.Errorf("GET %s: HTTP %d", f.address, resp.StatusCode)
 	}
 	if len(body) > maxResponseBytes {
-		return nil, fmt.Errorf("GET %s: response is longer than %d bytes", url, maxResponseBytes)
+		return nil, fmt.Errorf("GET %s: response is longer than %d bytes", f.address, maxResponseBytes)
 	}
 	return body, nil
 }

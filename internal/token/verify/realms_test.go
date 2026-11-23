@@ -28,22 +28,19 @@ import (
 
 const realmsPath = "/auth/realms/"
 
-// keycloakOf serves the OIDC discovery document and the JWKS of each realm of
-// realms, whose keys are the public keys of the signers, each with its kid and
-// the x5t that thumbprints holds for that kid, and returns the address of the
-// server.
-func keycloakOf(t *testing.T, realms map[string][]*signer, thumbprints map[string]string) string {
+// keycloakOf serves the JWKS of each realm of realms, whose keys are the
+// public keys of the signers, each with its kid and the x5t that thumbprints
+// holds for that kid. The JWKS of the realm r is at
+// /auth/realms/r/protocol/openid-connect/certs. It returns the realm-template
+// provider identity-provider of that server, whose tokens name the address
+// https://public.example.
+func keycloakOf(t *testing.T, realms map[string][]*signer, thumbprints map[string]string) keys.Provider {
 	t.Helper()
-	var srv *httptest.Server
-	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		realm, rest, _ := strings.Cut(strings.TrimPrefix(r.URL.Path, realmsPath), "/")
 		signers, ok := realms[realm]
-		if !ok {
+		if !ok || rest != "protocol/openid-connect/certs" {
 			http.NotFound(w, r)
-			return
-		}
-		if rest == ".well-known/openid-configuration" {
-			_ = json.NewEncoder(w).Encode(map[string]string{"jwks_uri": srv.URL + realmsPath + realm + "/jwks"})
 			return
 		}
 		published := make([]jwk.Key, 0, len(signers))
@@ -60,7 +57,12 @@ func keycloakOf(t *testing.T, realms map[string][]*signer, thumbprints map[strin
 		_ = json.NewEncoder(w).Encode(map[string]any{"keys": published})
 	}))
 	t.Cleanup(srv.Close)
-	return srv.URL
+	return keys.Provider{
+		ID:       keys.IdentityProviderID,
+		Issuer:   keys.Issuer{Type: keys.RealmTemplate, Value: "https://public.example" + realmsPath + "{realm}"},
+		JWKSURI:  srv.URL + realmsPath + "{realm}/protocol/openid-connect/certs",
+		Audience: keys.Audience{Mode: keys.SkipValidation},
+	}
 }
 
 // These tokens go through a real [keys.Set], because the choice of the key is
@@ -69,15 +71,15 @@ func keycloakOf(t *testing.T, realms map[string][]*signer, thumbprints map[strin
 // a token signed in one realm that names the other selects a key that did not
 // sign it.
 func TestVerify_ChecksATokenAgainstTheKeyOfTheRealmItNames(t *testing.T) {
-	realmA := newSigner(t, "k1", &keys.Provider{ID: "unused"})
-	realmB := newSigner(t, "k1", &keys.Provider{ID: "unused"})
-	first := newSigner(t, "first", &keys.Provider{ID: "unused"})
-	second := newSigner(t, "second", &keys.Provider{ID: "unused"})
-	url := keycloakOf(t,
+	realmA := newSigner(t, "k1", providerOf("unused"))
+	realmB := newSigner(t, "k1", providerOf("unused"))
+	first := newSigner(t, "first", providerOf("unused"))
+	second := newSigner(t, "second", providerOf("unused"))
+	provider := keycloakOf(t,
 		map[string][]*signer{"a": {realmA}, "b": {realmB}, "two": {first, second}},
 		map[string]string{"k1": "dGh1bWI", "first": "Zmlyc3Q", "second": "c2Vjb25k"},
 	)
-	set, err := keys.New(keys.Config{Keycloak: &keys.Keycloak{URL: url}}, keys.Options{})
+	set, err := keys.New(keys.Config{Providers: []keys.Provider{provider}}, keys.Options{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,6 +118,11 @@ func TestVerify_ChecksATokenAgainstTheKeyOfTheRealmItNames(t *testing.T) {
 		},
 		{"kid in a realm that does not exist", realmA.sign(t, claimsAt(start, map[string]any{"iss": public + "ghost"})), CodeKIDUnknown, ""},
 		{"iss outside Keycloak", realmA.sign(t, claimsAt(start, map[string]any{"iss": "https://other.example/oidc"})), CodeIssuerUnknown, ""},
+		{
+			"iss of the realm that signed it under the address of the server",
+			realmA.sign(t, claimsAt(start, map[string]any{"iss": provider.JWKSURI[:strings.Index(provider.JWKSURI, "{realm}")] + "a"})),
+			CodeIssuerUnknown, "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -134,9 +141,9 @@ func TestVerify_ChecksATokenAgainstTheKeyOfTheRealmItNames(t *testing.T) {
 // The first token of a realm loads the keys of the realm. A second token with
 // another sub is a cache miss, so its key comes from the keys loaded then.
 func TestVerify_AcceptsASecondTokenOfALoadedRealm(t *testing.T) {
-	realmA := newSigner(t, "k1", &keys.Provider{ID: "unused"})
-	url := keycloakOf(t, map[string][]*signer{"a": {realmA}}, map[string]string{"k1": "dGh1bWI"})
-	set, err := keys.New(keys.Config{Keycloak: &keys.Keycloak{URL: url}}, keys.Options{})
+	realmA := newSigner(t, "k1", providerOf("unused"))
+	provider := keycloakOf(t, map[string][]*signer{"a": {realmA}}, map[string]string{"k1": "dGh1bWI"})
+	set, err := keys.New(keys.Config{Providers: []keys.Provider{provider}}, keys.Options{})
 	if err != nil {
 		t.Fatal(err)
 	}

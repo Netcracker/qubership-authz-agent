@@ -63,10 +63,10 @@ const (
 	// accept.
 	CodeAlgNotAllowed Code = "TOKEN_ALG_NOT_ALLOWED"
 	// CodeIssuerUnknown marks a token whose iss is missing, is not a string,
-	// or names neither a provider of the configuration nor a realm. An iss
-	// names a realm when the configuration has a Keycloak and the iss contains
-	// /auth/realms/ with a realm name after its last slash, whatever its host
-	// and whether that realm exists, as [keys.Keycloak] states.
+	// or matches no provider: it equals the issuer.value of no exact provider
+	// byte for byte, and no realm-template provider matches it with a valid
+	// realm name in place of {realm}, as [keys.Provider] states. A realm-template
+	// provider matches an iss whether or not the realm exists.
 	CodeIssuerUnknown Code = "TOKEN_ISSUER_UNKNOWN"
 	// CodeKIDMissing marks a token whose header has no kid, or an empty one.
 	CodeKIDMissing Code = "TOKEN_KID_MISSING"
@@ -86,10 +86,11 @@ const (
 	// CodeIATInvalid marks a token whose iat is in the future.
 	CodeIATInvalid Code = "TOKEN_IAT_INVALID"
 	// CodeAudienceMissing marks a token without an aud claim from a provider
-	// that requires one.
+	// whose audience mode is [keys.MatchAny].
 	CodeAudienceMissing Code = "TOKEN_AUDIENCE_MISSING"
-	// CodeAudienceInvalid marks a token whose aud names none of the
-	// provider's audiences, or is neither a string nor an array of strings.
+	// CodeAudienceInvalid marks a token from a provider whose audience mode is
+	// [keys.MatchAny] and whose aud names none of the audience values, or is
+	// neither a string nor an array of strings.
 	CodeAudienceInvalid Code = "TOKEN_AUDIENCE_INVALID"
 	// CodeNamespaceNotAllowed marks a Kubernetes token from a namespace the
 	// service does not accept, or one that names no namespace.
@@ -176,9 +177,9 @@ func (t *Token) Standard() Standard {
 }
 
 // ProviderID returns the [keys.Source.ID] of the source whose key verified the
-// token: a [keys.Provider.ID] of the configuration, or realm/<name> for a realm
-// of a Keycloak. A realm name is the token's text, so a caller that logs the id
-// quotes it.
+// token: the [keys.Provider.ID] of an exact provider, or realm/<name> for a
+// realm of a realm-template provider. A realm name is the token's text, so a
+// caller that logs the id quotes it.
 func (t *Token) ProviderID() string { return t.providerID }
 
 // KeyID returns the kid of the key that verified the token.
@@ -191,7 +192,8 @@ func (t *Token) Issuer() string { return t.issuer }
 func (t *Token) Expiry() time.Time { return t.expiry }
 
 // KeyFinder finds the signing key a token asks for; [*keys.Set] implements it.
-// Both methods report a key they cannot return with [keys.ErrIssuerUnknown] or
+// Every key that its methods return has a [keys.Source.Provider]. Both methods
+// report a key they cannot return with [keys.ErrIssuerUnknown] or
 // [keys.ErrKeyUnknown].
 type KeyFinder interface {
 	// Lookup returns the key q names from the keys already loaded, without
@@ -345,8 +347,9 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 // lookupFailure returns the [*Error] for err, the error a [KeyFinder] returned
 // for q. Each [Error.Detail] quotes the sender's text through [short].
 func lookupFailure(q keys.Query, err error) *Error {
-	if errors.Is(err, keys.ErrIssuerUnknown) {
-		return fail(CodeIssuerUnknown, "iss %s names no trusted provider and no Keycloak realm", short(q.Issuer))
+	switch {
+	case errors.Is(err, keys.ErrIssuerUnknown):
+		return fail(CodeIssuerUnknown, "iss %s matches no trusted provider", short(q.Issuer))
 	}
 	return fail(CodeKIDUnknown, "no key of iss %s has kid %s", short(q.Issuer), short(q.KID))
 }

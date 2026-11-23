@@ -31,10 +31,11 @@ import (
 	"time"
 )
 
-// fakeTransport answers the requests of a Keycloak and of providers in memory,
-// so that the tests of this package run on the fake clock of a synctest bubble,
-// where a real socket never counts as idle. Every provider publishes the JWKS
-// jwks, and so does every realm unless realms is set.
+// fakeTransport answers the JWKS requests of the realms of a Keycloak and of
+// providers in memory, so that the tests of this package run on the fake clock
+// of a synctest bubble, where a real socket never counts as idle. Every
+// provider publishes the JWKS jwks, and so does every realm unless realms is
+// set.
 type fakeTransport struct {
 	mu sync.Mutex
 	// jwks is the JWKS of every provider, and of every realm unless realms is
@@ -44,8 +45,9 @@ type fakeTransport struct {
 	// the name as it appears in an address, and a realm it does not hold
 	// answers 404.
 	realms map[string][]json.RawMessage
-	// discoveries lists the escaped path of every discovery request, in order.
-	discoveries []string
+	// requests lists the escaped path of every request, in order, and
+	// addresses the whole URL of each.
+	requests, addresses []string
 	// down, when true, fails every request.
 	down bool
 	// status, when it holds a host, answers every request to that host with
@@ -53,7 +55,7 @@ type fakeTransport struct {
 	status map[string]int
 	// hold, when non-nil, holds every JWKS response until it is closed.
 	hold chan struct{}
-	// fetches counts the JWKS requests, and active those that run now.
+	// fetches counts the JWKS responses, and active those that run now.
 	fetches, active int
 	// fetched holds the time of the last JWKS request to each address.
 	fetched map[string]time.Time
@@ -71,11 +73,9 @@ func newFakeTransport(t *testing.T) *fakeTransport {
 func (f *fakeTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	path := r.URL.EscapedPath()
 	f.mu.Lock()
+	f.requests = append(f.requests, path)
+	f.addresses = append(f.addresses, r.URL.String())
 	down, status := f.down, f.status[r.URL.Host]
-	discovery := strings.HasSuffix(path, "/.well-known/openid-configuration")
-	if discovery {
-		f.discoveries = append(f.discoveries, path)
-	}
 	jwks, known := f.jwks, true
 	if f.realms != nil && r.URL.Host == keycloakHost {
 		realm, _, _ := strings.Cut(strings.TrimPrefix(path, realmsPath), "/")
@@ -92,10 +92,6 @@ func (f *fakeTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: status, Body: http.NoBody}, nil
 	case !known:
 		return &http.Response{StatusCode: http.StatusNotFound, Body: http.NoBody}, nil
-	case discovery:
-		address, _ := strings.CutSuffix(r.URL.String(), "/.well-known/openid-configuration")
-		body, err := json.Marshal(map[string]string{"jwks_uri": address + "/jwks"})
-		return response(body), err
 	}
 	f.mu.Lock()
 	f.fetches++
@@ -132,11 +128,31 @@ func (f *fakeTransport) publish(t *testing.T, keys ...json.RawMessage) {
 }
 
 // keycloakHost is the host of the Keycloak of [newKeycloakTransport], and
-// keycloakURL its address.
+// keycloakURL its address. realmsPath starts the path of every realm there.
 const (
 	keycloakHost = "keycloak.test"
 	keycloakURL  = "http://" + keycloakHost
+	realmsPath   = "/auth/realms/"
 )
+
+// keycloakProvider is the realm-template provider identity-provider of the
+// Keycloak at keycloakURL, whose tokens name the address public.example, and
+// which requires the realms in readiness.
+func keycloakProvider(readiness ...string) Provider {
+	return Provider{
+		ID:              IdentityProviderID,
+		Issuer:          Issuer{Type: RealmTemplate, Value: "https://public.example" + realmsPath + "{realm}"},
+		JWKSURI:         keycloakURL + realmsPath + "{realm}/protocol/openid-connect/certs",
+		ReadinessRealms: readiness,
+		Audience:        skipAudience,
+	}
+}
+
+// jwksPath is the path of the JWKS of realm at the Keycloak of
+// keycloakProvider, as escaped in a request.
+func jwksPath(realm string) string {
+	return realmsPath + realm + "/protocol/openid-connect/certs"
+}
 
 // newKeycloakTransport returns a fakeTransport whose Keycloak holds no realm
 // yet.
@@ -161,20 +177,20 @@ func (f *fakeTransport) removeRealm(realm string) {
 	delete(f.realms, realm)
 }
 
-// loadCount returns how many discovery requests have arrived.
+// loadCount returns how many requests have arrived.
 func (f *fakeTransport) loadCount() int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	return len(f.discoveries)
+	return len(f.requests)
 }
 
-// loadsOf returns how many discovery requests asked for realm.
+// loadsOf returns how many requests asked for the JWKS of realm.
 func (f *fakeTransport) loadsOf(realm string) int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	want := realmsPath + realm + "/.well-known/openid-configuration"
+	want := jwksPath(realm)
 	count := 0
-	for _, path := range f.discoveries {
+	for _, path := range f.requests {
 		if path == want {
 			count++
 		}
@@ -182,17 +198,25 @@ func (f *fakeTransport) loadsOf(realm string) int {
 	return count
 }
 
-// paths returns the escaped path of every discovery request, in order.
+// urls returns the URL of every request, in order.
+func (f *fakeTransport) urls() []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.addresses)
+}
+
+// paths returns the escaped path of every request, in order.
 func (f *fakeTransport) paths() []string {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	return slices.Clone(f.discoveries)
+	return slices.Clone(f.requests)
 }
 
-// keycloakSet returns a Set of opts whose Keycloak is the one of kc.
+// keycloakSet returns a Set of opts whose one provider is keycloakProvider,
+// reached through kc.
 func keycloakSet(t *testing.T, kc *fakeTransport, opts Options) *Set {
 	t.Helper()
-	return bubbleSetOf(t, Config{Keycloak: &Keycloak{URL: keycloakURL}}, opts, kc)
+	return bubbleSetOf(t, Config{Providers: []Provider{keycloakProvider()}}, opts, kc)
 }
 
 // setStatus answers every request to host with status, or with the JWKS again
@@ -221,12 +245,11 @@ func (f *fakeTransport) fetchTimes() map[string]time.Time {
 	return maps.Clone(f.fetched)
 }
 
-// bubbleSet returns a Set that requires the realm cloud-common of a Keycloak
-// reached through transport, with no other option set.
+// bubbleSet returns a Set that requires the realm cloud-common of the Keycloak
+// of keycloakProvider, reached through transport, with no other option set.
 func bubbleSet(t *testing.T, transport http.RoundTripper, log Logger) *Set {
 	t.Helper()
-	cfg := Config{Keycloak: &Keycloak{URL: "http://keycloak.test", RequiredRealms: []string{"cloud-common"}}}
-	return bubbleSetOf(t, cfg, Options{Log: log}, transport)
+	return bubbleSetOf(t, Config{Providers: []Provider{keycloakProvider("cloud-common")}}, Options{Log: log}, transport)
 }
 
 // bubbleSetOf returns a Set of cfg and opts whose every source is reached
@@ -234,17 +257,19 @@ func bubbleSet(t *testing.T, transport http.RoundTripper, log Logger) *Set {
 func bubbleSetOf(t *testing.T, cfg Config, opts Options, transport http.RoundTripper) *Set {
 	t.Helper()
 	set := mustNew(t, cfg, opts)
-	if set.keycloakClient != nil {
-		set.keycloakClient.Transport = transport
+	for _, p := range set.templates {
+		p.client.Transport = transport
 	}
-	for _, src := range set.providers {
+	for _, src := range set.exact {
 		src.fetcher.client.Transport = transport
 	}
 	return set
 }
 
-// providerOf is a provider of the fake host idp.test.
-func providerOf(id string) Provider { return Provider{ID: id, Issuer: "http://idp.test"} }
+// providerOf is an exact provider with id of the fake host idp.test.
+func providerOf(id string) Provider {
+	return Provider{ID: id, Issuer: Issuer{Type: Exact, Value: "http://idp.test"}, JWKSURI: "http://idp.test/jwks", Audience: skipAudience}
+}
 
 // runSet starts Run with a context of its own and returns the function that
 // ends it and waits for Run to return.
@@ -320,8 +345,7 @@ func TestRun_ReloadsEachSourceAtATimeOfItsOwnWithinATenthOfTheInterval(t *testin
 		for i := range names {
 			names[i] = fmt.Sprintf("realm-%d", i)
 		}
-		set := mustNew(t, Config{Keycloak: &Keycloak{URL: "http://keycloak.test", RequiredRealms: names}}, Options{})
-		set.keycloakClient.Transport = transport
+		set := bubbleSetOf(t, Config{Providers: []Provider{keycloakProvider(names...)}}, Options{}, transport)
 		ctx, cancel := context.WithCancel(t.Context())
 		done := make(chan struct{})
 		started := time.Now()
@@ -460,7 +484,7 @@ func TestRun_ReloadsOnTheInterval(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		transport := newFakeTransport(t)
 		transport.publish(t, ecJWK(t, "old", nil))
-		provider := providerOf("realm")
+		provider := providerOf(IdentityProviderID)
 		set := bubbleSetOf(t, Config{Providers: []Provider{provider}}, Options{}, transport)
 		if err := set.Refresh(t.Context()); err != nil {
 			t.Fatalf("Refresh() error = %v", err)
@@ -509,7 +533,7 @@ func TestRun_RetriesARequiredSourceUntilItHasAKey(t *testing.T) {
 				transport := newFakeTransport(t)
 				tt.fail(t, transport)
 				log := &warnRecorder{}
-				set := bubbleSetOf(t, Config{Providers: []Provider{providerOf("realm")}}, Options{Log: log}, transport)
+				set := bubbleSetOf(t, Config{Providers: []Provider{providerOf(IdentityProviderID)}}, Options{Log: log}, transport)
 				stop := runSet(t, set)
 				defer stop()
 				time.Sleep(1500 * time.Millisecond)
@@ -526,9 +550,57 @@ func TestRun_RetriesARequiredSourceUntilItHasAKey(t *testing.T) {
 				if !set.Ready() {
 					t.Errorf("Ready() after the attempt at 3 s = false, want true")
 				}
+				if got := log.count("retrying in"); got != 2 {
+					t.Errorf("warnings about a retry after the attempt at 3 s found the key = %d, want 2; warnings: %q", got, log.warnings)
+				}
 			})
 		})
 	}
+}
+
+// The JWKS request of the required provider waits until its context ends, so
+// the attempt fails only because Run ends.
+func TestRun_WarnsAboutNoRetryWhenItsContextEndsDuringAnAttempt(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		transport := roundTripper(func(r *http.Request) (*http.Response, error) {
+			<-r.Context().Done()
+			return nil, r.Context().Err()
+		})
+		log := &warnRecorder{}
+		set := bubbleSetOf(t, Config{Providers: []Provider{providerOf(KubernetesID)}}, Options{Log: log}, transport)
+		stop := runSet(t, set)
+		synctest.Wait()
+		stop()
+		if got := log.count("retrying in"); got != 0 {
+			t.Errorf("warnings about a retry after Run ended = %d, want 0; warnings: %q", got, log.warnings)
+		}
+	})
+}
+
+// The provider kubernetes, which is required, stays down, and the realm
+// tenant-1 loaded its key before Run started. The hourly reload of the realm
+// still takes the key it rotated in.
+func TestRun_ReloadsEveryHourWhileARequiredSourceStaysDown(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		kc := newKeycloakTransport(t)
+		kc.publishRealm("tenant-1", ecJWK(t, "k1", nil))
+		kc.setStatus("idp.test", http.StatusServiceUnavailable)
+		set := bubbleSetOf(t, Config{Providers: []Provider{keycloakProvider(), providerOf(KubernetesID)}}, Options{}, kc)
+		if _, err := lookupRealm(t, set, "tenant-1"); err != nil {
+			t.Fatalf("LookupOrReload(realm tenant-1) error = %v", err)
+		}
+		kc.publishRealm("tenant-1", ecJWK(t, "rotated", nil))
+		stop := runSet(t, set)
+		defer stop()
+		time.Sleep(time.Hour + 6*time.Minute + time.Second)
+		synctest.Wait()
+		if _, err := set.Lookup(Query{Issuer: iss("tenant-1"), KID: "rotated"}); err != nil {
+			t.Errorf("Lookup(the rotated key) after the hourly reload error = %v, want none", err)
+		}
+		if set.Ready() {
+			t.Errorf("Ready() = true while the required provider is down, want false")
+		}
+	})
 }
 
 // The pause before the next attempt lasts an hour, so only the end of the
@@ -538,7 +610,7 @@ func TestRun_ReturnsWhenItsContextEndsDuringARetryPause(t *testing.T) {
 		transport := newFakeTransport(t)
 		transport.setStatus("idp.test", http.StatusServiceUnavailable)
 		log := &warnRecorder{}
-		set := bubbleSetOf(t, Config{Providers: []Provider{providerOf("realm")}}, Options{firstRetryDelay: time.Hour, Log: log}, transport)
+		set := bubbleSetOf(t, Config{Providers: []Provider{providerOf(IdentityProviderID)}}, Options{firstRetryDelay: time.Hour, Log: log}, transport)
 		stop := runSet(t, set)
 		synctest.Wait()
 		if got := log.count("retrying in 1h0m0s"); got != 1 {
@@ -556,7 +628,7 @@ func TestRun_LogsAScheduledReloadThatFails(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		transport := newFakeTransport(t)
 		log := &warnRecorder{}
-		set := bubbleSetOf(t, Config{Providers: []Provider{providerOf("realm")}}, Options{Log: log}, transport)
+		set := bubbleSetOf(t, Config{Providers: []Provider{providerOf(IdentityProviderID)}}, Options{Log: log}, transport)
 		if err := set.Refresh(t.Context()); err != nil {
 			t.Fatalf("Refresh() error = %v", err)
 		}
@@ -576,7 +648,7 @@ func TestRun_LogsAScheduledReloadThatFails(t *testing.T) {
 func TestLookupOrReload_StopsWaitingWhenItsContextEnds(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		transport := newFakeTransport(t)
-		provider := providerOf("realm")
+		provider := providerOf(IdentityProviderID)
 		set := bubbleSetOf(t, Config{Providers: []Provider{provider}}, Options{}, transport)
 		if err := set.Refresh(t.Context()); err != nil {
 			t.Fatalf("Refresh() error = %v", err)
@@ -587,7 +659,7 @@ func TestLookupOrReload_StopsWaitingWhenItsContextEnds(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		cancel()
 		started := time.Now()
-		if _, err := set.LookupOrReload(ctx, Query{Issuer: provider.Issuer, KID: "key-2"}); !errors.Is(err, ErrKeyUnknown) {
+		if _, err := set.LookupOrReload(ctx, Query{Issuer: provider.Issuer.Value, KID: "key-2"}); !errors.Is(err, ErrKeyUnknown) {
 			t.Errorf("LookupOrReload(%q) with an ended context error = %v while the reload was held, want %v", "key-2", err, ErrKeyUnknown)
 		}
 		if got := time.Since(started); got != 0 {
@@ -605,7 +677,7 @@ func TestLookupOrReload_StopsWaitingWhenItsContextEnds(t *testing.T) {
 func TestLookupOrReload_StopsWaitingAfterTheReloadWait(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		transport := newFakeTransport(t)
-		provider := providerOf("realm")
+		provider := providerOf(IdentityProviderID)
 		set := bubbleSetOf(t, Config{Providers: []Provider{provider}}, Options{ReloadWait: 20 * time.Millisecond}, transport)
 		if err := set.Refresh(t.Context()); err != nil {
 			t.Fatalf("Refresh() error = %v", err)
@@ -614,7 +686,7 @@ func TestLookupOrReload_StopsWaitingAfterTheReloadWait(t *testing.T) {
 		hold := make(chan struct{})
 		transport.setHold(hold)
 		started := time.Now()
-		if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "key-2"}); !errors.Is(err, ErrKeyUnknown) {
+		if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer.Value, KID: "key-2"}); !errors.Is(err, ErrKeyUnknown) {
 			t.Errorf("LookupOrReload(%q) error = %v while the reload was held, want %v", "key-2", err, ErrKeyUnknown)
 		}
 		if got := time.Since(started); got != 20*time.Millisecond {
@@ -633,7 +705,7 @@ func TestLookupOrReload_StopsWaitingAfterTheReloadWait(t *testing.T) {
 func TestLookupOrReload_CallersOfANewRealmShareOneLoad(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		transport := newFakeTransport(t)
-		set := bubbleSetOf(t, Config{Keycloak: &Keycloak{URL: "http://keycloak.test"}}, Options{}, transport)
+		set := bubbleSetOf(t, Config{Providers: []Provider{keycloakProvider()}}, Options{}, transport)
 		hold := make(chan struct{})
 		transport.setHold(hold)
 		errs := make([]error, 32)
@@ -661,10 +733,7 @@ func TestRun_LoadsARequiredRealmAndReadinessWaitsForEveryRequiredSource(t *testi
 	synctest.Test(t, func(t *testing.T) {
 		transport := newFakeTransport(t)
 		transport.setStatus("idp.test", http.StatusServiceUnavailable)
-		cfg := Config{
-			Keycloak:  &Keycloak{URL: "http://keycloak.test", RequiredRealms: []string{"cloud-common"}},
-			Providers: []Provider{providerOf("kubernetes")},
-		}
+		cfg := Config{Providers: []Provider{keycloakProvider("cloud-common"), providerOf(KubernetesID)}}
 		set := bubbleSetOf(t, cfg, Options{}, transport)
 		stop := runSet(t, set)
 		defer stop()
@@ -673,8 +742,8 @@ func TestRun_LoadsARequiredRealmAndReadinessWaitsForEveryRequiredSource(t *testi
 		if err != nil {
 			t.Errorf("Lookup(the key of the required realm) error = %v, want none", err)
 		}
-		if want := (Source{Realm: "cloud-common"}); key.Source != want {
-			t.Errorf("Lookup(the key of the required realm).Source = %+v, want %+v", key.Source, want)
+		if key.Source.Realm != "cloud-common" || key.Source.Provider == nil || key.Source.Provider.ID != IdentityProviderID {
+			t.Errorf("Lookup(the key of the required realm).Source = %+v, want the realm cloud-common of provider %q", key.Source, IdentityProviderID)
 		}
 		if set.Ready() {
 			t.Errorf("Ready() = true while the provider is down, want false")
@@ -688,34 +757,14 @@ func TestRun_LoadsARequiredRealmAndReadinessWaitsForEveryRequiredSource(t *testi
 	})
 }
 
-// The issuer of the provider also has the form of a realm of the Keycloak, and
-// the Keycloak is not asked.
-func TestLookupOrReload_PrefersAProviderToARealmOfTheSameIssuer(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		kc := newKeycloakTransport(t)
-		provider := Provider{ID: "external", Issuer: "https://idp.example/auth/realms/external", JWKSURI: "http://idp.test/jwks"}
-		set := bubbleSetOf(t, Config{Keycloak: &Keycloak{URL: keycloakURL}, Providers: []Provider{provider}}, testOptions(), kc)
-		key, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "k1"})
-		if err != nil {
-			t.Fatalf("LookupOrReload() error = %v", err)
-		}
-		if got := key.Source.ID(); got != "external" {
-			t.Errorf("Source.ID() = %q, want %q", got, "external")
-		}
-		if got := kc.loadCount(); got != 0 {
-			t.Errorf("discovery requests = %d, want 0", got)
-		}
-	})
-}
-
 // The provider publishes key-2 after the first load, as a rotation does;
 // key-1 is the control that the first load already loaded, which comes back
 // without a request.
 func TestLookupOrReload_ReloadsForAKIDNoLoadedKeyHas(t *testing.T) {
 	tests := []struct {
-		name        string
-		kid         string
-		discoveries int
+		name     string
+		kid      string
+		requests int
 	}{
 		{"kid of the first load", "key-1", 1},
 		{"kid published after the first load", "key-2", 2},
@@ -725,21 +774,21 @@ func TestLookupOrReload_ReloadsForAKIDNoLoadedKeyHas(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				transport := newFakeTransport(t)
 				transport.publish(t, ecJWK(t, "key-1", nil))
-				provider := providerOf("realm")
+				provider := providerOf(IdentityProviderID)
 				set := bubbleSetOf(t, Config{Providers: []Provider{provider}}, testOptions(), transport)
 				if err := set.Refresh(t.Context()); err != nil {
 					t.Fatalf("Refresh() error = %v", err)
 				}
 				transport.publish(t, ecJWK(t, "key-1", nil), ecJWK(t, "key-2", nil))
-				key, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: tt.kid})
+				key, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer.Value, KID: tt.kid})
 				if err != nil {
 					t.Fatalf("LookupOrReload(%q) error = %v, want none", tt.kid, err)
 				}
-				if key.ID != tt.kid || key.Source.Provider == nil || key.Source.Provider.ID != "realm" || key.JWK == nil {
-					t.Errorf("LookupOrReload(%q) = key %q of %+v with JWK %v, want key %q of provider %q", tt.kid, key.ID, key.Source, key.JWK, tt.kid, "realm")
+				if key.ID != tt.kid || key.Source.Provider == nil || key.Source.Provider.ID != IdentityProviderID || key.JWK == nil {
+					t.Errorf("LookupOrReload(%q) = key %q of %+v with JWK %v, want key %q of provider %q", tt.kid, key.ID, key.Source, key.JWK, tt.kid, IdentityProviderID)
 				}
-				if got := transport.loadCount(); got != tt.discoveries {
-					t.Errorf("discovery requests after LookupOrReload(%q) = %d, want %d", tt.kid, got, tt.discoveries)
+				if got := transport.loadCount(); got != tt.requests {
+					t.Errorf("JWKS requests after LookupOrReload(%q) = %d, want %d", tt.kid, got, tt.requests)
 				}
 			})
 		})
@@ -747,22 +796,22 @@ func TestLookupOrReload_ReloadsForAKIDNoLoadedKeyHas(t *testing.T) {
 }
 
 // The provider publishes key-2 after the first on-demand load, within the
-// minute in which no other one starts. The discovery requests count every
-// load, the one of Refresh included.
+// minute in which no other one starts. The JWKS requests count every load, the
+// one of Refresh included.
 func TestLookupOrReload_ReloadsAProviderAtMostOnceAMinute(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		transport := newFakeTransport(t)
 		transport.publish(t, ecJWK(t, "key-1", nil))
-		provider := providerOf("realm")
+		provider := providerOf(IdentityProviderID)
 		set := bubbleSetOf(t, Config{Providers: []Provider{provider}}, testOptions(), transport)
 		if err := set.Refresh(t.Context()); err != nil {
 			t.Fatalf("Refresh() error = %v", err)
 		}
-		lookup := func(kid string, wantFound bool, wantDiscoveries int) {
+		lookup := func(kid string, wantFound bool, wantRequests int) {
 			t.Helper()
-			_, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: kid})
-			if got := transport.loadCount(); (err == nil) != wantFound || got != wantDiscoveries {
-				t.Errorf("LookupOrReload(%q) error = %v with %d discovery requests, want found = %t with %d", kid, err, got, wantFound, wantDiscoveries)
+			_, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer.Value, KID: kid})
+			if got := transport.loadCount(); (err == nil) != wantFound || got != wantRequests {
+				t.Errorf("LookupOrReload(%q) error = %v with %d JWKS requests, want found = %t with %d", kid, err, got, wantFound, wantRequests)
 			}
 		}
 		lookup("unknown", false, 2)
@@ -790,13 +839,13 @@ func TestLookupOrReload_WarnsWhenTheReloadFails(t *testing.T) {
 				log := &warnRecorder{}
 				opts := testOptions()
 				opts.Log = log
-				set := bubbleSetOf(t, Config{Providers: []Provider{providerOf("realm")}}, opts, transport)
+				set := bubbleSetOf(t, Config{Providers: []Provider{providerOf(IdentityProviderID)}}, opts, transport)
 				if err := set.Refresh(t.Context()); err != nil {
 					t.Fatalf("Refresh() error = %v", err)
 				}
 				transport.setStatus("idp.test", tt.status)
 				_, _ = set.LookupOrReload(t.Context(), Query{Issuer: "http://idp.test", KID: "unknown"})
-				if got := log.matches("on-demand load", `provider "realm"`); got != tt.warned {
+				if got := log.matches("on-demand load", `provider "identity-provider"`); got != tt.warned {
 					t.Errorf("warned = %t, want %t; warnings: %q", got, tt.warned, log.warnings)
 				}
 			})
@@ -839,7 +888,7 @@ func TestLookupOrReload_KeepsAThousandRealmsByDefault(t *testing.T) {
 			t.Errorf("LookupOrReload(realm tenant-1000) error = %v, want %v", err, ErrKeyUnknown)
 		}
 		if got := kc.loadsOf("tenant-1000"); got != 0 {
-			t.Errorf("discovery requests for realm tenant-1000 = %d, want 0", got)
+			t.Errorf("JWKS requests for realm tenant-1000 = %d, want 0", got)
 		}
 	})
 }
@@ -850,7 +899,7 @@ func TestLookupOrReload_KeepsAThousandRealmsByDefault(t *testing.T) {
 // that runs the search waits for it, and the test fails.
 func lookupRealmWhileHolding(t *testing.T, set *Set, held, realm string) error {
 	t.Helper()
-	src, ok := set.knownRealm(held)
+	src, ok := set.knownRealm(realmKey{set.templates[0], held})
 	if !ok {
 		t.Fatalf("the Set holds no realm %s", held)
 	}
@@ -938,8 +987,8 @@ func TestLookupOrReload_RefusesARealmAtTheLimitWithoutASearchBeforeTheNextFailed
 }
 
 // The required realm and the provider fail beside three of the four realms
-// outside keycloak.requiredRealms. Realms b and d are deleted from Keycloak and
-// keep their keys, and realm c publishes only an encryption key and has no keys
+// outside readinessRealms. Realms b and d are deleted from Keycloak and keep
+// their keys, and realm c publishes only an encryption key and has no keys
 // left.
 func TestRefresh_GivesEachProviderAndRequiredRealmALineAndSumsUpTheOtherRealms(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
@@ -948,10 +997,7 @@ func TestRefresh_GivesEachProviderAndRequiredRealmALineAndSumsUpTheOtherRealms(t
 		for _, realm := range append([]string{"cloud-common"}, named...) {
 			kc.publishRealm(realm, ecJWK(t, "k1", nil))
 		}
-		cfg := Config{
-			Keycloak:  &Keycloak{URL: keycloakURL, RequiredRealms: []string{"cloud-common"}},
-			Providers: []Provider{providerOf("idp")},
-		}
+		cfg := Config{Providers: []Provider{keycloakProvider("cloud-common"), providerOf(KubernetesID)}}
 		set := bubbleSetOf(t, cfg, testOptions(), kc)
 		for _, realm := range named {
 			if _, err := lookupRealm(t, set, realm); err != nil {
@@ -971,9 +1017,9 @@ func TestRefresh_GivesEachProviderAndRequiredRealmALineAndSumsUpTheOtherRealms(t
 			t.Fatal("Refresh() error = nil, want the failures")
 		}
 		want := []string{
-			`provider "idp" keeps its previous keys: `,
-			`realm "cloud-common" keeps its previous keys: `,
-			`3 of 4 realms outside keycloak.requiredRealms did not reload, 1 of them without keys; the first by name: realm "b" keeps its previous keys: `,
+			`provider "kubernetes" keeps its previous keys: `,
+			`realm "cloud-common" of provider "identity-provider" keeps its previous keys: `,
+			`3 of 4 realms outside readinessRealms did not reload, 1 of them without keys; the first by name: realm "b" of provider "identity-provider" keeps its previous keys: `,
 		}
 		lines := strings.Split(err.Error(), "\n")
 		if len(lines) != len(want) {

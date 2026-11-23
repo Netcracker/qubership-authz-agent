@@ -23,7 +23,6 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -39,26 +38,23 @@ import (
 	"github.com/lestrrat-go/jwx/v3/jwk"
 )
 
-// fakeIdP serves an OIDC discovery document at /.well-known/openid-configuration
-// that points at /jwks, and the JWKS there. Every field set through its
-// methods takes effect on the next request.
+// fakeIdP serves a JWKS at /jwks. Every field set through its methods takes
+// effect on the next request.
 type fakeIdP struct {
 	srv *httptest.Server
 
 	mu sync.Mutex
 	// keys is the JWKS the provider publishes.
 	keys []json.RawMessage
-	// discovery and jwks replace the documents served, when non-nil.
-	discovery []byte
-	jwks      []byte
+	// jwks replaces the document served, when non-nil.
+	jwks []byte
 	// status, when non-zero, answers every request.
 	status int
 	// failures is how many of the next requests get 503.
 	failures int
 	// token, when set, is the bearer token a request has to carry.
-	token     string
-	lastAuth  string
-	discovers int
+	token    string
+	lastAuth string
 }
 
 func newIdP(t *testing.T, keys ...json.RawMessage) *fakeIdP {
@@ -96,23 +92,14 @@ func (idp *fakeIdP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	var body []byte
-	switch r.URL.Path {
-	case "/.well-known/openid-configuration":
-		idp.discovers++
-		body = idp.discovery
-		if body == nil {
-			body, _ = json.Marshal(map[string]string{"jwks_uri": idp.srv.URL + "/jwks"})
-		}
-	case "/jwks":
-		body = idp.jwks
-		if body == nil {
-			body, _ = json.Marshal(map[string]any{"keys": idp.keys})
-		}
-	default:
+	if r.URL.Path != "/jwks" {
 		idp.mu.Unlock()
 		http.NotFound(w, r)
 		return
+	}
+	body := idp.jwks
+	if body == nil {
+		body, _ = json.Marshal(map[string]any{"keys": idp.keys})
 	}
 	idp.mu.Unlock()
 	_, _ = w.Write(body)
@@ -137,33 +124,19 @@ func (idp *fakeIdP) setStatus(status int) {
 	idp.status = status
 }
 
-func (idp *fakeIdP) discoveries() int {
-	idp.mu.Lock()
-	defer idp.mu.Unlock()
-	return idp.discovers
-}
-
 func (idp *fakeIdP) authorization() string {
 	idp.mu.Lock()
 	defer idp.mu.Unlock()
 	return idp.lastAuth
 }
 
-// caFile writes the server certificate of a TLS fakeIdP as a PEM file.
-func (idp *fakeIdP) caFile(t *testing.T) string {
-	t.Helper()
-	block := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: idp.srv.Certificate().Raw})
-	return writeFile(t, "ca.pem", string(block))
-}
+// skipAudience is the audience of a provider whose aud is not checked.
+var skipAudience = Audience{Mode: SkipValidation}
 
-// issuer is a provider found through the discovery document of idp.
-func issuer(id string, idp *fakeIdP) Provider {
-	return Provider{ID: id, Issuer: idp.srv.URL}
-}
-
-// direct is a provider whose JWKS is fetched from idp without discovery.
-func direct(id string, idp *fakeIdP) Provider {
-	return Provider{ID: id, Issuer: idp.srv.URL, JWKSURI: idp.srv.URL + "/jwks"}
+// exactOf is an exact provider with id whose issuer.value is the address of
+// idp and whose JWKS idp serves.
+func exactOf(id string, idp *fakeIdP) Provider {
+	return Provider{ID: id, Issuer: Issuer{Type: Exact, Value: idp.srv.URL}, JWKSURI: idp.srv.URL + "/jwks", Audience: skipAudience}
 }
 
 // ecJWK returns the public JWK of a new P-256 key with kid, alg ES256, and
@@ -304,20 +277,25 @@ func mustNew(t *testing.T, cfg Config, opts Options) *Set {
 	return set
 }
 
-// loaded reports whether set holds a key under kid for the issuer of p.
+// loaded reports whether set holds a key under kid for the issuer of p, an
+// exact provider.
 func loaded(set *Set, p Provider, kid string) bool {
-	_, err := set.Lookup(Query{Issuer: p.Issuer, KID: kid})
+	_, err := set.Lookup(Query{Issuer: p.Issuer.Value, KID: kid})
 	return err == nil
 }
 
-// warnRecorder is a Logger that keeps the warnings.
+// warnRecorder is a Logger that keeps the warnings and the informational
+// messages.
 type warnRecorder struct {
 	mu       sync.Mutex
 	warnings []string
+	infos    []string
 }
 
-func (r *warnRecorder) Infof(string, ...any) {
-	// Informational messages are not recorded.
+func (r *warnRecorder) Infof(format string, args ...any) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.infos = append(r.infos, fmt.Sprintf(format, args...))
 }
 
 func (r *warnRecorder) Warnf(format string, args ...any) {

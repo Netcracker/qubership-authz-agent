@@ -83,22 +83,20 @@ func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, p
 	return time.Unix(int64(whole), int64(fraction*float64(time.Second))), true, nil
 }
 
-// checkAudience applies the audiences of the provider of from. The aud of a
-// realm token is not checked, and with no audiences listed every token passes.
-// Otherwise aud, a string or an array of strings, has to name one of them
-// exactly, and a token without aud passes only when the provider sets
-// AllowMissingAud.
+// checkAudience applies the audience of the provider of from, the same for an
+// exact provider and for each of its realms. The mode [keys.SkipValidation]
+// lets every token pass. Any other mode, [keys.MatchAny] or an unset one,
+// requires aud, a string or an array of strings, to name one of the audience
+// values exactly.
 func checkAudience(claims map[string]json.RawMessage, from keys.Source) error {
 	p := from.Provider
-	if p == nil || len(p.Audiences) == 0 {
+	if p.Audience.Mode == keys.SkipValidation {
 		return nil
 	}
+	values := p.Audience.Values
 	raw, present := claims["aud"]
 	if !present {
-		if p.AllowMissingAud {
-			return nil
-		}
-		return fail(CodeAudienceMissing, "token has no aud claim, and provider %q requires one of %q", p.ID, p.Audiences)
+		return fail(CodeAudienceMissing, "token has no aud claim, and provider %q requires one of %q", p.ID, values)
 	}
 	var audiences []string
 	switch v := decode(raw).(type) {
@@ -116,11 +114,11 @@ func checkAudience(claims map[string]json.RawMessage, from keys.Source) error {
 		return fail(CodeAudienceInvalid, "aud is neither a string nor an array of strings")
 	}
 	for _, aud := range audiences {
-		if slices.Contains(p.Audiences, aud) {
+		if slices.Contains(values, aud) {
 			return nil
 		}
 	}
-	return fail(CodeAudienceInvalid, "aud %s names none of %q, the audiences of provider %q", shortList(audiences), p.Audiences, p.ID)
+	return fail(CodeAudienceInvalid, "aud %s names none of %q, the audience values of provider %q", shortList(audiences), values, p.ID)
 }
 
 // decode parses raw, the JSON text of a claim, with numbers as

@@ -13,12 +13,12 @@
 // limitations under the License.
 
 // Package keys holds the signing keys of the trusted sources and finds the key
-// a token asks for. A source is a [Provider] with a fixed iss, or a realm of a
-// [Keycloak]. A realm that the configuration does not require is loaded when
-// the first token names it.
+// a token asks for. A source is an exact [Provider], or a realm of a
+// realm-template provider, which the iss of a token names. A realm outside
+// [Provider.ReadinessRealms] is loaded when the first token names it.
 //
-// [ReadConfig] reads the trusted providers file, and [New] builds a [Set] from
-// it. [Set.Run] loads the keys of the required sources, retrying until they
+// [ReadDir] reads the provider files, and [New] builds a [Set] from them.
+// [Set.Run] loads the keys of the required sources, retrying until they
 // arrive, and reloads every source on an interval, which also drops the keys a
 // source no longer publishes. [Set.Ready] reports whether the required
 // keys have arrived; keys that do not arrive stop nothing but readiness.
@@ -66,16 +66,18 @@ const (
 	// to load is not asked for again.
 	reloadInterval = time.Minute
 	// maxLoadsPerMinute bounds the loads a [Set] starts for the tokens it
-	// sees, over all its sources, per loadWindow. It bounds what a stream of
-	// invented realms and kids costs Keycloak. A token that needs a load past
-	// the bound is checked against the keys already loaded.
+	// sees, over all the sources of one provider, per loadWindow. It bounds
+	// what a stream of invented realms and kids costs the server of the
+	// provider. A token that needs a load past the bound is checked against
+	// the keys already loaded.
 	maxLoadsPerMinute = 10
 	// loadWindow is the time over which maxLoadsPerMinute counts loads.
 	loadWindow = time.Minute
 	// defaultMaxRealms bounds the realms a [Set] keeps.
 	defaultMaxRealms = 1000
 	// reloadConcurrency bounds the sources [Set.Refresh] fetches at a time,
-	// so a reload of every realm does not send them all at once to Keycloak.
+	// so a reload of every realm does not send them all at once to one
+	// server.
 	reloadConcurrency = 8
 	// jitterShare is the share of [Options.RefreshInterval], as a divisor,
 	// that bounds the delay of one source in a reload of [Set.Run].
@@ -84,8 +86,7 @@ const (
 
 // Errors of [Set.Lookup] and [Set.LookupOrReload], matched with [errors.Is].
 var (
-	// ErrIssuerUnknown reports an issuer that is neither a [Provider] of the
-	// configuration nor a realm of its [Keycloak].
+	// ErrIssuerUnknown reports an issuer that matches no [Provider].
 	ErrIssuerUnknown = errors.New("issuer is not trusted")
 	// ErrKeyUnknown reports that no loaded key of the source has the kid.
 	ErrKeyUnknown = errors.New("no loaded key has the kid")
@@ -108,7 +109,7 @@ type Logger interface {
 // Options tunes how a [Set] fetches and reloads keys. A zero field takes its
 // default.
 type Options struct {
-	// HTTPTimeout bounds one discovery or JWKS request.
+	// HTTPTimeout bounds one JWKS request.
 	HTTPTimeout time.Duration
 	// RefreshInterval is how often [Set.Run] reloads the keys.
 	RefreshInterval time.Duration
@@ -175,36 +176,36 @@ type Key struct {
 	alg string
 }
 
-// Source is a place that keys are read from: a realm of the [Keycloak] or an
-// entry of [Config.Providers]. Exactly one of Realm and Provider is set.
+// Source is a place that keys are read from: an exact provider, or a realm of
+// a realm-template provider.
 type Source struct {
-	// Realm is the name of a realm: the part of a token's iss after the last
-	// slash, percent-decoded. Its keys are read under [Keycloak.URL], whatever
-	// host the iss names. It is "" for a provider.
-	Realm string
-	// Provider is the entry of the configuration, nil for a realm.
+	// Provider is the provider of the source. A [Key] that a [Set] returns
+	// always has one.
 	Provider *Provider
+	// Realm is the name of a realm, the part of a token's iss in place of
+	// {realm}, percent-decoded. It is "" for an exact provider.
+	Realm string
 }
 
-// ID names s in a result or a log line: the [Provider.ID] of a provider, or
-// realm/ followed by the name of a realm. A realm name is up to 255 bytes of
-// any text but a slash, taken from a token, so the ID of a realm can hold
-// spaces, quotes, and control characters, and code that puts an ID into a log
-// line, an event, or a metric label quotes or bounds it.
+// ID names s in a result or a log line: the [Provider.ID] of an exact
+// provider, or realm/ followed by the name of a realm. A realm name is up to
+// 255 bytes taken from a token, so the ID of a realm can hold spaces and
+// quotes, and code that puts an ID into a log line, an event, or a metric
+// label quotes or bounds it.
 func (s Source) ID() string {
-	if s.Provider != nil {
-		return s.Provider.ID
+	if s.Realm != "" {
+		return realmIDPrefix + s.Realm
 	}
-	return realmIDPrefix + s.Realm
+	return s.Provider.ID
 }
 
-// label names s in a log line or an error of this package: realm "<name>" for
-// a realm, provider "<id>" for a provider.
+// label names s in a log line or an error of this package: realm "<name>" of
+// provider "<id>" for a realm, provider "<id>" for an exact provider.
 func (s Source) label() string {
-	if s.Provider != nil {
-		return fmt.Sprintf("provider %q", s.Provider.ID)
+	if s.Realm != "" {
+		return fmt.Sprintf("realm %q of provider %q", s.Realm, s.Provider.ID)
 	}
-	return fmt.Sprintf("realm %q", s.Realm)
+	return fmt.Sprintf("provider %q", s.Provider.ID)
 }
 
 // Allows reports whether a token whose header names alg may be verified
@@ -235,24 +236,20 @@ func AcceptsAlgorithm(alg string) bool {
 // use, and [Set.Lookup] never waits for a reload.
 type Set struct {
 	opts Options
-	// providers holds the sources of [Config.Providers] by issuer. It does
+	// exact holds the sources of the exact providers by issuer.value. It does
 	// not change after New.
-	providers map[string]*source
-	// keycloakURL is [Keycloak.URL], "" without a Keycloak.
-	keycloakURL string
-	// keycloakClient is the one client of every realm, so the realms share
-	// its connections.
-	keycloakClient *http.Client
-	// loads is the limit of [maxLoadsPerMinute] on the on-demand loads.
-	loads *windowLimit
+	exact map[string]*source
+	// templates holds the realm-template providers. It does not change after
+	// New.
+	templates []*trusted
 	// warnings admits one warning a minute about a refused load, because a
 	// stream of tokens can reach that refusal on every request.
 	warnings *windowLimit
 
 	// realmsMu guards realms and nextDrop.
 	realmsMu sync.RWMutex
-	// realms holds the sources of the realms by realm name.
-	realms map[string]*source
+	// realms holds the sources of the realms.
+	realms map[realmKey]*source
 	// nextDrop is the time before which [Set.dropFailedRealms] does not search
 	// the realms. Each search of dropFailedRealms sets it, and
 	// [Set.realmSource] lowers it to a minute after each realm it adds, when
@@ -260,47 +257,58 @@ type Set struct {
 	nextDrop time.Time
 }
 
+// trusted is what the sources of one provider share.
+type trusted struct {
+	provider *Provider
+	// client is the one client of the provider, so its sources share its
+	// connections.
+	client *http.Client
+	// loads is the limit of [maxLoadsPerMinute] on the on-demand loads of the
+	// sources of this provider.
+	loads *windowLimit
+	// issuer and jwks split the issuer.value and the jwksUri of a
+	// realm-template provider at {realm}. They are zero in an exact provider.
+	issuer, jwks template
+}
+
+// loadLimitReason says that the limit of on-demand loads of t refused a load.
+func (t *trusted) loadLimitReason() string {
+	return fmt.Sprintf("the agent started %d on-demand loads of provider %q in the last minute, the most it allows for one provider", maxLoadsPerMinute, t.provider.ID)
+}
+
 // New returns a [Set] for cfg, with no keys loaded yet. It fails when cfg
-// breaks [Config.Validate] and when a caFile cannot be read.
+// breaks [Config.Validate].
 func New(cfg Config, opts Options) (*Set, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
 	opts = opts.withDefaults()
 	s := &Set{
-		opts:      opts,
-		providers: make(map[string]*source, len(cfg.Providers)),
-		loads:     newWindowLimit(maxLoadsPerMinute),
-		warnings:  newWindowLimit(1),
-		realms:    make(map[string]*source),
+		opts:     opts,
+		exact:    make(map[string]*source, len(cfg.Providers)),
+		warnings: newWindowLimit(1),
+		realms:   make(map[realmKey]*source),
 	}
 	for _, p := range cfg.Providers {
-		client, err := newClient(fmt.Sprintf("provider %q", p.ID), p.CAFile, opts.HTTPTimeout)
-		if err != nil {
-			return nil, err
+		t := &trusted{provider: &p, client: newClient(opts.HTTPTimeout), loads: newWindowLimit(maxLoadsPerMinute)}
+		if p.Issuer.Type == Exact {
+			s.exact[p.Issuer.Value] = s.newSource(t, Source{Provider: t.provider}, p.JWKSURI, true)
+			continue
 		}
-		s.providers[p.Issuer] = s.newSource(Source{Provider: &p}, p.Issuer, client, true)
-	}
-	if cfg.Keycloak == nil {
-		return s, nil
-	}
-	client, err := newClient("keycloak", cfg.Keycloak.CAFile, opts.HTTPTimeout)
-	if err != nil {
-		return nil, err
-	}
-	s.keycloakURL = cfg.Keycloak.URL
-	s.keycloakClient = client
-	for _, name := range cfg.Keycloak.RequiredRealms {
-		s.realms[name] = s.newSource(Source{Realm: name}, s.realmAddress(name), client, true)
+		t.issuer, t.jwks = splitTemplate(p.Issuer.Value), splitTemplate(p.JWKSURI)
+		s.templates = append(s.templates, t)
+		for _, name := range p.ReadinessRealms {
+			s.realms[realmKey{t, name}] = s.newSource(t, Source{Provider: t.provider, Realm: name}, t.jwks.with(name), true)
+		}
 	}
 	return s, nil
 }
 
-// newSource returns a source that reads the keys of from through client, with
-// discovery under address unless a provider names its JWKSURI.
-func (s *Set) newSource(from Source, address string, client *http.Client, required bool) *source {
+// newSource returns a source of the provider t that reads the keys of from at
+// the JWKS address.
+func (s *Set) newSource(t *trusted, from Source, address string, required bool) *source {
 	src := &source{
-		fetcher:  &fetcher{source: from, address: address, client: client, log: s.opts.Log},
+		fetcher:  &fetcher{source: from, address: address, client: t.client, log: s.opts.Log},
 		required: required,
 	}
 	src.onDemand = onDemand{
@@ -310,9 +318,9 @@ func (s *Set) newSource(from Source, address string, client *http.Client, requir
 			}
 		},
 		interval: reloadInterval,
-		loads:    s.loads,
+		loads:    t.loads,
 		refused: func(now time.Time) {
-			s.warnOnce(now, "trusted providers: %s is not reloaded, and tokens that need a new key of it are refused for now: the agent started %d on-demand loads in the last minute, the most it allows", src.label(), maxLoadsPerMinute)
+			s.warnOnce(now, "trusted providers: %s is not reloaded, and tokens that need a new key of it are refused for now: %s", src.label(), t.loadLimitReason())
 		},
 	}
 	return src
@@ -326,9 +334,9 @@ func (s *Set) warnOnce(now time.Time, format string, args ...any) {
 }
 
 // Ready reports whether every required source has loaded a usable key: each
-// [Config.Providers] entry and each of [Keycloak.RequiredRealms]. Once true,
-// it stays true, also when a reload later removes those keys, so a Keycloak
-// that fails does not take a running service out of rotation.
+// exact provider, and each realm of [Provider.ReadinessRealms]. Once true, it
+// stays true, also when a reload later removes those keys, so a server that
+// fails does not take a running service out of rotation.
 func (s *Set) Ready() bool {
 	for _, src := range s.sources() {
 		if src.required && !src.loaded.Load() {
@@ -341,27 +349,27 @@ func (s *Set) Ready() bool {
 // sources returns every source of the Set at the time of the call.
 func (s *Set) sources() []*source {
 	out := s.realmSources()
-	for _, src := range s.providers {
+	for _, src := range s.exact {
 		out = append(out, src)
 	}
 	return out
 }
 
 // Lookup returns the key q names from the keys loaded last, without a request.
-// It returns [ErrIssuerUnknown] for an issuer that is neither a [Provider] nor
-// a realm of the [Keycloak], and [ErrKeyUnknown] when no loaded key has q.KID.
+// It returns [ErrIssuerUnknown] for an issuer that matches no provider, and
+// [ErrKeyUnknown] when no loaded key has q.KID.
 func (s *Set) Lookup(q Query) (Key, error) {
-	src, realm, err := s.resolve(q.Issuer)
+	src, t, realm, err := s.resolve(q.Issuer)
 	if err != nil {
 		return Key{}, err
 	}
 	if src == nil {
 		var ok bool
-		if src, ok = s.knownRealm(realm); !ok {
+		if src, ok = s.knownRealm(realmKey{t, realm}); !ok {
 			return Key{}, ErrKeyUnknown
 		}
 	}
-	return src.find(q.KID)
+	return src.lookup(q.KID)
 }
 
 // LookupOrReload returns the key q names. When no loaded key of the source of
@@ -372,66 +380,62 @@ func (s *Set) Lookup(q Query) (Key, error) {
 //
 // Callers that ask while such a load runs wait for it rather than start
 // another. One source loads at most once a minute this way, a [Set] starts at
-// most 10 such loads a minute over all its sources, and it keeps at most 1000
-// realms. When a limit refuses a load, the key is looked up among the keys
-// already loaded and no request is sent. A load that fails logs a warning and
-// keeps the previous keys of the source, unless it got a JWKS without a usable
-// key, which removes them. A load goes on after the wait ends.
+// most 10 such loads a minute over the sources of one provider, and it keeps
+// at most 1000 realms. When a limit refuses a load, the key is looked up among
+// the keys already loaded and no request is sent. A load that fails logs a
+// warning and keeps the previous keys of the source, unless it got a JWKS
+// without a usable key, which removes them. A load goes on after the wait
+// ends.
 func (s *Set) LookupOrReload(ctx context.Context, q Query) (Key, error) {
 	src, err := s.sourceFor(ctx, q.Issuer)
 	if err != nil {
 		return Key{}, err
 	}
-	key, err := src.find(q.KID)
-	if !errors.Is(err, ErrKeyUnknown) {
-		return key, err
+	if key, ok := src.find(q.KID); ok {
+		return key, nil
 	}
 	ctx, cancel := context.WithTimeout(ctx, s.opts.ReloadWait)
 	defer cancel()
 	src.onDemand.wait(ctx)
-	return src.find(q.KID)
+	return src.lookup(q.KID)
 }
 
 // sourceFor returns the source of issuer, adding a realm no token named
 // before.
 func (s *Set) sourceFor(ctx context.Context, issuer string) (*source, error) {
-	src, realm, err := s.resolve(issuer)
+	src, t, realm, err := s.resolve(issuer)
 	if err != nil || src != nil {
 		return src, err
 	}
-	return s.realmSource(ctx, realm)
+	return s.realmSource(ctx, t, realm)
 }
 
-// resolve returns the source of the provider whose issuer is issuer, or else,
-// with a nil source, the name of the realm issuer names on the configured
-// Keycloak. It returns [ErrIssuerUnknown] when issuer names neither.
-func (s *Set) resolve(issuer string) (*source, string, error) {
-	if src, ok := s.providers[issuer]; ok {
-		return src, "", nil
+// resolve returns the source of the exact provider whose issuer.value is
+// issuer, or else, with a nil source, the realm-template provider that issuer
+// matches and the realm name it puts in place of {realm}. It returns
+// [ErrIssuerUnknown] when issuer matches no provider. [Config.Validate] lets
+// no issuer match two providers.
+func (s *Set) resolve(issuer string) (*source, *trusted, string, error) {
+	if src, ok := s.exact[issuer]; ok {
+		return src, nil, "", nil
 	}
-	name, ok := s.keycloakRealm(issuer)
-	if !ok {
-		return nil, "", ErrIssuerUnknown
+	for _, t := range s.templates {
+		if name, ok := t.issuer.realm(issuer); ok {
+			return nil, t, name, nil
+		}
 	}
-	return nil, name, nil
-}
-
-// keycloakRealm returns the realm issuer names on the configured Keycloak.
-func (s *Set) keycloakRealm(issuer string) (string, bool) {
-	if s.keycloakURL == "" {
-		return "", false
-	}
-	return realmOf(issuer)
+	return nil, nil, "", ErrIssuerUnknown
 }
 
 // Refresh fetches the keys of every source once and replaces the loaded keys
 // with them, as [Set.LookupOrReload] does for one source. The returned error
-// has a line for each provider and each required realm whose reload did not
-// load a usable key, in the order of their [Source.ID]. When a realm outside
-// [Keycloak.RequiredRealms] fails, the error ends with one line for all such
-// realms, because all realms share one Keycloak and any sender can name a
-// realm. That line counts the failed realms and those of them without keys,
-// and quotes the error of the failed realm whose name sorts first. Eight
+// has a line for each exact provider and each required realm whose reload did
+// not load a usable key, in the order of their [Source.ID]. When a realm
+// outside [Provider.ReadinessRealms] fails, the error ends with one line for
+// all such realms, because the realms of a provider share its server and any
+// sender can name a realm. That line counts the failed realms and those of
+// them without keys, and quotes the error of the failed realm whose name sorts
+// first. Eight
 // sources fetch at a time. The Set drops a realm that is not required and never
 // loaded a usable key a minute after its last load started, rather than asking
 // for it again; a realm that loaded keys once keeps its place.
@@ -475,7 +479,7 @@ func joinReloadErrors(sources []*source, errs []error) error {
 	var others otherRealms
 	for i, src := range sources {
 		from := src.fetcher.source
-		if from.Provider == nil && !src.required {
+		if from.Realm != "" && !src.required {
 			others.add(src, errs[i])
 			continue
 		}
@@ -495,7 +499,7 @@ func joinReloadErrors(sources []*source, errs []error) error {
 }
 
 // otherRealms sums up the reloads of the realms outside
-// [Keycloak.RequiredRealms], which [Set.Refresh] reports in one line.
+// [Provider.ReadinessRealms], which [Set.Refresh] reports in one line.
 type otherRealms struct {
 	// total counts the realms.
 	total int
@@ -516,7 +520,7 @@ func (r *otherRealms) add(src *source, err error) {
 		return
 	}
 	r.failed++
-	if src.current.Load() == nil {
+	if len(src.last().keys) == 0 {
 		r.keyless++
 	}
 	if name := src.fetcher.source.Realm; r.firstErr == nil || name < r.firstName {
@@ -529,7 +533,7 @@ func (r *otherRealms) line() error {
 	if r.failed == 0 {
 		return nil
 	}
-	return fmt.Errorf("%d of %d realms outside keycloak.requiredRealms did not reload, %d of them without keys; the first by name: %w", r.failed, r.total, r.keyless, r.firstErr)
+	return fmt.Errorf("%d of %d realms outside readinessRealms did not reload, %d of them without keys; the first by name: %w", r.failed, r.total, r.keyless, r.firstErr)
 }
 
 // Run loads the required sources, retrying each with growing pauses until it

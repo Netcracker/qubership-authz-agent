@@ -116,6 +116,18 @@ type signer struct {
 	key     keys.Key
 }
 
+// providerOf returns a provider with id whose tokens pass without an aud
+// check.
+func providerOf(id string) *keys.Provider {
+	return &keys.Provider{ID: id, Audience: keys.Audience{Mode: keys.SkipValidation}}
+}
+
+// matchAny returns a provider with the id realm whose tokens pass the aud
+// check when their aud names one of values.
+func matchAny(values ...string) *keys.Provider {
+	return &keys.Provider{ID: "realm", Audience: keys.Audience{Mode: keys.MatchAny, Values: values}}
+}
+
 // newSigner returns an ES256 signer whose key provider publishes under kid.
 func newSigner(t *testing.T, kid string, provider *keys.Provider) *signer {
 	t.Helper()

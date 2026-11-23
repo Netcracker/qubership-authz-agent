@@ -270,7 +270,7 @@ func verifierFor(t *testing.T, provider string, admit func(*verify.Token) *verif
 	if err != nil {
 		t.Fatal(err)
 	}
-	key := keys.Key{Source: keys.Source{Provider: &keys.Provider{ID: provider}}, ID: "k1", JWK: public}
+	key := keys.Key{Source: keys.Source{Provider: &keys.Provider{ID: provider, Audience: keys.Audience{Mode: keys.SkipValidation}}}, ID: "k1", JWK: public}
 	v := verify.New(oneKey{key}, verify.Options{Admit: admit})
 	sign := func(fields map[string]any) string {
 		now := time.Now()

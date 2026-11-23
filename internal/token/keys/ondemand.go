@@ -28,7 +28,8 @@ import (
 type onDemand struct {
 	load     func(context.Context)
 	interval time.Duration
-	// loads is the limit this onDemand shares with the others of a [Set].
+	// loads is the limit this onDemand shares with the other sources of its
+	// provider.
 	loads *windowLimit
 	// refused runs when loads refuses a load that interval allows.
 	refused func(now time.Time)
