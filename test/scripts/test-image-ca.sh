@@ -40,8 +40,9 @@ PUBLIC_JWKS_URI="https://www.googleapis.com/oauth2/v3/certs"
 WAIT_SECONDS=60
 
 require_cmd() {
-  if ! command -v "$1" >/dev/null 2>&1; then
-    echo "error: required command not found: $1" >&2
+  local cmd="$1"
+  if ! command -v "${cmd}" >/dev/null 2>&1; then
+    echo "error: required command not found: ${cmd}" >&2
     exit 1
   fi
 }
@@ -150,21 +151,22 @@ run_agent() {
 
 # running <container>: succeeds while the container runs.
 running() {
-  [[ "$(docker inspect --format '{{.State.Running}}' "$1" 2>/dev/null)" == true ]]
+  local container="$1"
+  [[ "$(docker inspect --format '{{.State.Running}}' "${container}" 2>/dev/null)" == true ]]
 }
 
 # bootstrap_line <container>: waits until the agent logs the outcome of its
 # first bootstrap and prints that line, or prints nothing once the container
 # has stopped or after WAIT_SECONDS.
 bootstrap_line() {
-  local deadline=$((SECONDS + WAIT_SECONDS)) line
+  local container="$1" deadline=$((SECONDS + WAIT_SECONDS)) line
   while ((SECONDS < deadline)); do
-    line="$(docker logs "$1" 2>&1 | grep -o 'trusted providers: [0-9]* of [0-9]* providers bootstrapped' | head -1 || true)"
+    line="$(docker logs "${container}" 2>&1 | grep -o 'trusted providers: [0-9]* of [0-9]* providers bootstrapped' | head -1 || true)"
     if [[ -n "${line}" ]]; then
       echo "${line}"
       return
     fi
-    running "$1" || return 0
+    running "${container}" || return 0
     sleep 1
   done
 }
@@ -173,14 +175,14 @@ bootstrap_line() {
 # listener answers at all, or prints none once the container has stopped or
 # after WAIT_SECONDS.
 health() {
-  local deadline=$((SECONDS + WAIT_SECONDS)) status
+  local container="$1" deadline=$((SECONDS + WAIT_SECONDS)) status
   while ((SECONDS < deadline)); do
-    status="$(docker exec "$1" curl -s -m 2 -o /dev/null -w '%{http_code}' localhost:8181/health 2>/dev/null || true)"
+    status="$(docker exec "${container}" curl -s -m 2 -o /dev/null -w '%{http_code}' localhost:8181/health 2>/dev/null || true)"
     if [[ -n "${status}" && "${status}" != 000 ]]; then
       echo "${status}"
       return
     fi
-    running "$1" || break
+    running "${container}" || break
     sleep 1
   done
   echo none
