@@ -61,13 +61,8 @@ func (r *realmResolver) resolveIssuer(issuer string) (string, bool) {
 	if r == nil {
 		return issuer, false
 	}
-	trimmed := strings.TrimRight(issuer, "/")
-	idx := strings.LastIndex(trimmed, "/")
-	if idx < 0 || idx == len(trimmed)-1 {
-		return issuer, false
-	}
-	prefix, segment := trimmed[:idx], trimmed[idx+1:]
-	if !realmSegment.MatchString(segment) {
+	prefix, segment, ok := issuerRealm(issuer)
+	if !ok {
 		return issuer, false
 	}
 	resolved, ok := r.resolve(segment)
@@ -75,6 +70,26 @@ func (r *realmResolver) resolveIssuer(issuer string) (string, bool) {
 		return issuer, false
 	}
 	return prefix + "/" + resolved, true
+}
+
+// issuerRealm returns the last segment of the URL path of issuer and the
+// part of issuer before that segment, with trailing slashes ignored. ok is
+// false when issuer does not parse as a URL, has a query or a fragment, or
+// has no slash in its path, which includes a bare host such as
+// https://login.example.com. ok is also false when the segment does not
+// have the shape of a realm name.
+func issuerRealm(issuer string) (prefix, segment string, ok bool) {
+	trimmed := strings.TrimRight(issuer, "/")
+	u, err := url.Parse(trimmed)
+	idx := strings.LastIndex(trimmed, "/")
+	if err != nil || u.Path == "" || u.RawQuery != "" || u.Fragment != "" || idx == -1 {
+		return "", "", false
+	}
+	prefix, segment = trimmed[:idx], trimmed[idx+1:]
+	if !realmSegment.MatchString(segment) {
+		return "", "", false
+	}
+	return prefix, segment, true
 }
 
 // resolve maps a display name to a realm name; ok is false when the name
