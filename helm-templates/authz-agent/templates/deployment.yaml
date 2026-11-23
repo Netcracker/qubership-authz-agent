@@ -134,15 +134,15 @@ spec:
               protocol: TCP
           env:
             - name: LOGGING_LEVEL_ROOT
-              value: '{{ .Values.LOG_LEVEL }}'
+              value: {{ .Values.LOG_LEVEL | quote }}
             - name: AUTHZ_PUBLIC_ADDR
               value: "0.0.0.0:8080"
             - name: AUTHZ_HTTP_ADDR
               value: "0.0.0.0:8181"
             - name: AUTHZ_TRUSTED_PROVIDERS_FILE
-              value: '{{ .Values.AUTHZ_TRUSTED_PROVIDERS_FILE }}'
+              value: {{ .Values.AUTHZ_TRUSTED_PROVIDERS_FILE | quote }}
             - name: AUTHZ_JWKS_BOOTSTRAP_REQUIRED
-              value: '{{ include "authz-agent.jwksBootstrapRequired" . }}'
+              value: {{ include "authz-agent.jwksBootstrapRequired" . | quote }}
             - name: AUTHZ_JWKS_HTTP_TIMEOUT
               value: '{{ .Values.AUTHZ_JWKS_HTTP_TIMEOUT }}'
             - name: AUTHZ_JWKS_HTTP_RETRIES
@@ -150,18 +150,18 @@ spec:
             - name: AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL
               value: '{{ .Values.AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL }}'
             - name: AUTHZ_TENANT_MANAGER_URL
-              value: '{{ .Values.AUTHZ_TENANT_MANAGER_URL }}'
+              value: {{ .Values.AUTHZ_TENANT_MANAGER_URL | quote }}
             - name: AUTHZ_PAP_CLIENT_SOURCE_URL
-              value: '{{ include "authz-agent.papSourceURL" . }}'
+              value: {{ include "authz-agent.papSourceURL" . | quote }}
             - name: AUTHZ_PAP_CLIENT_PULL_INTERVAL
               value: '{{ .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL }}'
             - name: AUTHZ_PAP_CLIENT_TOKEN_FILE
-              value: '{{ .Values.AUTHZ_PAP_CLIENT_TOKEN_FILE }}'
+              value: {{ .Values.AUTHZ_PAP_CLIENT_TOKEN_FILE | quote }}
             {{- if not .Values.KUBERNETES_M2M_ENABLED }}
             # Client credentials: the service obtains its M2M token itself
             # and refreshes it before it expires.
             - name: AUTHZ_M2M_TOKEN_URL
-              value: '{{ .Values.IDENTITY_PROVIDER_URL }}/auth/realms/cloud-common/protocol/openid-connect/token'
+              value: {{ printf "%s/auth/realms/cloud-common/protocol/openid-connect/token" (.Values.IDENTITY_PROVIDER_URL | default "") | quote }}
             - name: AUTHZ_M2M_CLIENT_ID_FILE
               value: /etc/secret/username
             - name: AUTHZ_M2M_CLIENT_SECRET_FILE
@@ -170,7 +170,7 @@ spec:
               value: "60"
             {{- end }}
             - name: AUTHZ_ENTITLEMENTS_URL
-              value: '{{ .Values.AUTHZ_ENTITLEMENTS_URL }}'
+              value: {{ .Values.AUTHZ_ENTITLEMENTS_URL | quote }}
             - name: AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT
               value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT }}'
             - name: AUTHZ_ENTITLEMENTS_HTTP_RETRIES

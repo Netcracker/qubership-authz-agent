@@ -242,16 +242,40 @@ done
 # whole block is compared, so a rollingUpdate left under Recreate would show.
 strategy_of() { deployment_of "$@" | sed -n '/^  strategy:/,/^  selector:/p' | sed '$d'; }
 
-# Renders a chart and returns the value of one environment variable, "" when
-# the chart renders none. The empty string is what the absent case has to
-# produce: an unguarded grep ends the whole run under `set -e`, and a suite
-# that stops says less than one that names the check that failed.
+# Renders the Deployment of a chart and prints the value of one environment
+# variable as the Deployment carries it to the API server, "" when the chart
+# sets none. Helm parses the rendered manifest itself, with fromYaml in a
+# throwaway chart, so a value prints the same whichever YAML quoting the
+# template writes it in. A value that is neither a string nor null, which the
+# Kubernetes schema does not allow for an environment variable, prints as
+# `not a string: ` and its JSON. A render that fails prints the first lines of
+# Helm's error, and a manifest that fromYaml cannot parse prints
+# `fromYaml failed: ` and its error, so a check that prints the value it
+# compared shows why it failed. None of these outputs ends the run under
+# `set -e`: a suite that stops says less than one that names the check that
+# failed.
 env_value_of() {
-  local chart="$1" name="$2"
+  local chart="$1" name="$2" render decoder
   shift 2
-  helm template t "${chart}" -f "${SIZING}" "$@" 2>&1 \
-    | grep -A1 "name: ${name}$" \
-    | awk -F"'" '/value:/ && !seen {print $2; seen=1}' || true
+  if ! render="$(helm template t "${chart}" -f "${SIZING}" "$@" --show-only templates/deployment.yaml 2>&1)"; then
+    echo "helm template failed: $(head -3 <<<"${render}" | paste -sd ' ' -)"
+    return
+  fi
+  decoder="$(mktemp -d)"
+  mkdir "${decoder}/templates"
+  printf 'apiVersion: v2\nname: decoder\nversion: 0.0.0\n' >"${decoder}/Chart.yaml"
+  printf '%s\n' "${render}" >"${decoder}/deployment.yaml"
+  printf '%s\n' '{{ .Files.Get "deployment.yaml" | fromYaml | toJson }}' >"${decoder}/templates/decoded.yaml"
+  helm template d "${decoder}" 2>&1 | tail -n 1 \
+    | jq -r --arg name "${name}" '
+        if .Error then "fromYaml failed: \(.Error)"
+        else first(.spec.template.spec.containers[]?.env[]? | select(.name == $name) | .value) as $v
+          | if ($v | type) == "string" then $v
+            elif $v == null then ""
+            else "not a string: \($v | tojson)"
+            end
+        end' 2>&1 || true
+  rm -rf "${decoder}"
 }
 
 env_value() {
@@ -406,6 +430,41 @@ if helm template t "${CHART_DIR}" -f "${SIZING}" --set-json 'AUTHZ_IDP_REALMS=["
 else
   pass "a duplicated realm is rejected"
 fi
+
+# ── String settings reach the Deployment as set ──────────────────────────
+#
+# The schema types these settings as strings with no pattern, and a URL may
+# hold an apostrophe, one of the sub-delims of RFC 3986. Each test value holds
+# what breaks a YAML string written without escapes. The apostrophe ends a
+# value written between single quotes. The double quote ends a value written
+# between double quotes, and the backslash starts an escape there. A value
+# written with no quotes breaks on the colon followed by a space and on the
+# space followed by `#`; a colon or a `#` elsewhere in its middle is safe. The
+# value goes in through --set-json, which keeps the backslash that --set would
+# read as an escape.
+expect_env_as_set() {
+  local key="$1" env_name="$2" value="$3" expected="$4" got
+  got="$(env_value "${env_name}" --set-json "${key}=$(jq -cn --arg v "${value}" '$v')")"
+  if [[ "${got}" == "${expected}" ]]; then
+    pass "${key}=${value} reaches ${env_name} as set"
+  else
+    fail "${key}=${value} renders ${env_name} as: ${got}; expected: ${expected}"
+  fi
+}
+
+expect_env_as_set AUTHZ_TRUSTED_PROVIDERS_FILE AUTHZ_TRUSTED_PROVIDERS_FILE \
+  $'/etc/authz/a\'b"c\\d: #e.json' $'/etc/authz/a\'b"c\\d: #e.json'
+expect_env_as_set AUTHZ_TENANT_MANAGER_URL AUTHZ_TENANT_MANAGER_URL \
+  $'http://tenant-manager:8080/a\'b"c\\d: #e' $'http://tenant-manager:8080/a\'b"c\\d: #e'
+expect_env_as_set AUTHZ_PAP_CLIENT_SOURCE_URL AUTHZ_PAP_CLIENT_SOURCE_URL \
+  $'http://access-control:8080/a\'b"c\\d: #e' $'http://access-control:8080/a\'b"c\\d: #e'
+expect_env_as_set AUTHZ_PAP_CLIENT_TOKEN_FILE AUTHZ_PAP_CLIENT_TOKEN_FILE \
+  $'/var/run/secrets/a\'b"c\\d: #e/token' $'/var/run/secrets/a\'b"c\\d: #e/token'
+expect_env_as_set AUTHZ_ENTITLEMENTS_URL AUTHZ_ENTITLEMENTS_URL \
+  $'http://entitlements:8080/a\'b"c\\d: #e' $'http://entitlements:8080/a\'b"c\\d: #e'
+expect_env_as_set IDENTITY_PROVIDER_URL AUTHZ_M2M_TOKEN_URL \
+  $'http://identity-provider:8080/a\'b"c\\d: #e' \
+  $'http://identity-provider:8080/a\'b"c\\d: #e/auth/realms/cloud-common/protocol/openid-connect/token'
 
 # ── The agent Pod (authz-agent-ADR-0080) ─────────────────────────────────
 #
