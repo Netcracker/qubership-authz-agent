@@ -76,7 +76,7 @@ token that is not M2M to its own tenant.
   case.
 - **R7** (`verify`). A Kubernetes token is an M2M token. ADR-0094 R16 refuses one whose `sub` does not start with
   `system:serviceaccount`.
-- **R8** (`verify`). A file token is not an M2M token.
+- **R8** (`verify`). A file token is not an M2M token, because its claims are whatever that provider signs.
 - **R9** (`verify`). The token verification computes this test once and returns the result, as ADR-0091 R54 states.
 - **R10** (`handler`, `policy`). Every reader, `subject.isM2M` among them, reads that result.
 
@@ -117,9 +117,6 @@ A check route needs a verified caller, not a caller of a particular kind. The M2
 instead of whether it may call (R3, R4), so a service whose Keycloak client issues neither `ROLE_M2M` nor a `level`
 keeps working and stays inside its own tenant. Computing the test once keeps the check of a caller and the policies from
 disagreeing about one token (R9, R10).
-
-`level` and `realm_access.roles` carry the meaning of R6 and R21 only in a realm token, and a provider may sign either
-claim with a meaning of its own, so a file token is never an M2M token (R8).
 
 `k8s` exists to check a migration: an installation switches it on and sees which services still call with a realm token
 or a file token (R13). It is not planned for production.
