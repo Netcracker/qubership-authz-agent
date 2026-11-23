@@ -120,6 +120,23 @@ func fail(code Code, format string, args ...any) *Error {
 	return &Error{Code: code, Detail: fmt.Sprintf(format, args...)}
 }
 
+// Kind is the kind of a verified token. The name of a provider is its key in
+// the providers object of a provider file, and the name of the provider whose
+// signing key verified the token decides the kind: no member of the provider,
+// its type included, and no claim of the token changes it.
+type Kind string
+
+// Kinds of a verified token.
+const (
+	// KindIdentityProvider marks a token that a key of the provider
+	// [keys.IdentityProviderID] verified, whether the provider is single or the
+	// key belongs to one of its realms.
+	KindIdentityProvider Kind = "identity-provider"
+	// KindKubernetes marks a token that a key of the provider
+	// [keys.KubernetesID] verified.
+	KindKubernetes Kind = "kubernetes"
+)
+
 // Token is a verified token. Nothing changes a Token after Verify returns
 // it, and every method that returns JSON text returns a copy, so one Token is
 // safe to read from many goroutines, and the cache shares it between the
@@ -131,7 +148,8 @@ type Token struct {
 	standard   Standard
 	providerID string
 	realm      string
-	kubernetes bool
+	kind       Kind
+	m2m        bool
 	keyID      string
 	issuer     string
 	expiry     time.Time
@@ -197,9 +215,21 @@ func (t *Token) ProviderID() string { return t.providerID }
 // it.
 func (t *Token) Realm() string { return t.realm }
 
+// Kind returns the kind of the token.
+func (t *Token) Kind() Kind { return t.kind }
+
 // Kubernetes reports whether the token is a Kubernetes token: whether the key
 // that verified it is a key of the provider [keys.KubernetesID].
-func (t *Token) Kubernetes() bool { return t.kubernetes }
+func (t *Token) Kubernetes() bool { return t.kind == KindKubernetes }
+
+// IsM2M reports whether the token is a machine-to-machine token. Every token of
+// [KindKubernetes] is one, because [Verifier.Verify] refuses such a token unless
+// its sub starts with system:serviceaccount:, the prefix of the sub that the API
+// server issues for a service account. A token of [KindIdentityProvider] is one
+// when its level claim is m2m or key-manager, compared without regard to case,
+// or when its realm_access.roles array holds the string ROLE_M2M, compared
+// exactly. A level or a role that is not a string does not make a token M2M.
+func (t *Token) IsM2M() bool { return t.m2m }
 
 // KeyID returns the kid of the key that verified the token.
 func (t *Token) KeyID() string { return t.keyID }
@@ -358,14 +388,17 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	if err := checkSubject(claims, key.Source); err != nil {
 		return nil, err
 	}
+	standard := standardOf(claims)
+	kind := kindOf(key.Source)
 	tok := &Token{
 		raw:        raw,
 		payload:    payload,
 		claims:     claims,
-		standard:   standardOf(claims),
+		standard:   standard,
 		providerID: key.Source.Provider.ID,
 		realm:      key.Source.Realm,
-		kubernetes: key.Source.Kubernetes(),
+		kind:       kind,
+		m2m:        isM2M(kind, standard),
 		keyID:      key.ID,
 		issuer:     query.Issuer,
 		expiry:     expiry,

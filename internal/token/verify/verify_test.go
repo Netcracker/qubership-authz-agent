@@ -108,6 +108,92 @@ func TestToken_KubernetesHoldsOnlyForAKeyOfTheProviderKubernetes(t *testing.T) {
 	}
 }
 
+// Verify computes the result of the M2M test once and returns it, as ADR-0091
+// R54 states, so IsM2M decodes no claim.
+func TestToken_IsM2MAllocatesNothing(t *testing.T) {
+	s := newSignerFrom(t, "k1", keys.Source{Provider: providerOf(keys.IdentityProviderID), Realm: "r"})
+	tok := mustVerify(t, newAdmittingVerifier(newFakeKeys(s)), s.sign(t, claimsAt(start, map[string]any{"level": "m2m", "realm_access": map[string]any{"roles": []string{"ROLE_M2M"}}})))
+	if allocs := testing.AllocsPerRun(100, func() { _ = tok.IsM2M() }); allocs != 0 {
+		t.Errorf("IsM2M() allocates %v times per call, want 0", allocs)
+	}
+}
+
+func TestToken_IsM2MFollowsTheLevelTheRolesAndTheProvider(t *testing.T) {
+	roles := func(values ...any) map[string]any {
+		return map[string]any{"realm_access": map[string]any{"roles": values}}
+	}
+	realm := keys.Source{Provider: providerOf(keys.IdentityProviderID), Realm: "r"}
+	single := keys.Source{Provider: providerOf(keys.IdentityProviderID)}
+	kubernetes := keys.Source{Provider: providerOf(keys.KubernetesID)}
+	tests := []struct {
+		name   string
+		source keys.Source
+		fields map[string]any
+		want   bool
+	}{
+		{"neither a level nor roles", realm, nil, false},
+		{"level m2m", realm, map[string]any{"level": "m2m"}, true},
+		{"level m2m in upper case", realm, map[string]any{"level": "M2M"}, true},
+		{"level key-manager", realm, map[string]any{"level": "key-manager"}, true},
+		{"level key-manager in mixed case", realm, map[string]any{"level": "Key-Manager"}, true},
+		{"level of a user", realm, map[string]any{"level": "user"}, false},
+		{"level external", realm, map[string]any{"level": "external"}, false},
+		{"level with a trailing space", realm, map[string]any{"level": "m2m "}, false},
+		{"level that is a number", realm, map[string]any{"level": 2}, false},
+		{"level that is an array", realm, map[string]any{"level": []string{"m2m"}}, false},
+		{"the role among others", realm, roles("offline_access", "ROLE_M2M"), true},
+		{"the role beside a value that is not a string", realm, roles(1, "ROLE_M2M"), true},
+		{"the role in lower case", realm, roles("role_m2m"), false},
+		{"a longer role that starts with it", realm, roles("ROLE_M2M_ADMIN"), false},
+		{"no roles in the array", realm, roles(), false},
+		{"roles that are a string", realm, map[string]any{"realm_access": map[string]any{"roles": "ROLE_M2M"}}, false},
+		{"realm_access that is not an object", realm, map[string]any{"realm_access": "ROLE_M2M"}, false},
+		{"the role at the top level", realm, map[string]any{"roles": []string{"ROLE_M2M"}}, false},
+		{"service account sub on a realm token", realm, map[string]any{"sub": serviceAccountSub}, false},
+		{"single identity-provider token with level m2m", single, map[string]any{"level": "m2m"}, true},
+		{"single identity-provider token with the role", single, roles("ROLE_M2M"), true},
+		{"single identity-provider token with neither", single, nil, false},
+		{"single identity-provider token with a service account sub", single, map[string]any{"sub": serviceAccountSub}, false},
+		{"Kubernetes token", kubernetes, map[string]any{"sub": serviceAccountSub}, true},
+		{"Kubernetes token with the level of a user", kubernetes, map[string]any{"sub": serviceAccountSub, "level": "user"}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSignerFrom(t, "k1", tt.source)
+			v := newAdmittingVerifier(newFakeKeys(s))
+			tok := mustVerify(t, v, s.sign(t, claimsAt(start, tt.fields)))
+			if got := tok.IsM2M(); got != tt.want {
+				t.Errorf("IsM2M() = %t, want %t", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestToken_KindFollowsTheIDOfTheProvider(t *testing.T) {
+	atAPIServer := providerOf(keys.IdentityProviderID)
+	atAPIServer.JWKSURI = "https://kubernetes.default.svc/openid/v1/jwks"
+	tests := []struct {
+		name   string
+		source keys.Source
+		want   Kind
+	}{
+		{"key of a realm of identity-provider", keys.Source{Provider: providerOf(keys.IdentityProviderID), Realm: "r"}, KindIdentityProvider},
+		{"key of the single identity-provider", keys.Source{Provider: providerOf(keys.IdentityProviderID)}, KindIdentityProvider},
+		{"key of an identity-provider whose jwksUri is at the API server", keys.Source{Provider: atAPIServer}, KindIdentityProvider},
+		{"key of kubernetes", keys.Source{Provider: providerOf(keys.KubernetesID)}, KindKubernetes},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSignerFrom(t, "k1", tt.source)
+			v := newAdmittingVerifier(newFakeKeys(s))
+			tok := mustVerify(t, v, s.sign(t, claimsAt(start, map[string]any{"sub": serviceAccountSub})))
+			if got := tok.Kind(); got != tt.want {
+				t.Errorf("Kind() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 // verifyPayload verifies a token of testIssuer whose payload is the members of
 // the JSON object members plus an iat and an exp, signed by a key of a
 // provider that skips the aud check, at start.

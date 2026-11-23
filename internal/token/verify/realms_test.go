@@ -66,6 +66,44 @@ func keycloakOf(t *testing.T, realms map[string][]*signer, thumbprints map[strin
 	}
 }
 
+// The provider identity-provider is either a realms or a single provider,
+// never both in one configuration, so each row builds a Set of its own on one
+// server.
+func TestVerify_AppliesTheM2MTestToEveryIdentityProviderToken(t *testing.T) {
+	realmB := newSigner(t, "k1", providerOf("unused"))
+	realms := keycloakOf(t, map[string][]*signer{"b": {realmB}}, map[string]string{"k1": "dGh1bWI"})
+	const iss = "https://public.example" + realmsPath + "b"
+	single := realms
+	single.Type, single.Issuer, single.IssuerTemplate = keys.Single, iss, ""
+	single.JWKSURI = strings.Replace(realms.JWKSURI, "{realm}", "b", 1)
+	tests := []struct {
+		name     string
+		provider keys.Provider
+	}{
+		{"realm b of the realms provider", realms},
+		{"single provider with the iss of realm b", single},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			set, err := keys.New(keys.Config{Providers: []keys.Provider{tt.provider}}, keys.Options{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			v, _ := newVerifier(set)
+			tok, err := v.Verify(t.Context(), realmB.sign(t, claimsAt(start, map[string]any{"iss": iss, "level": "m2m"})))
+			if err != nil {
+				t.Fatalf("Verify() error = %v", err)
+			}
+			if got := tok.Kind(); got != KindIdentityProvider {
+				t.Errorf("Kind() = %q, want %q", got, KindIdentityProvider)
+			}
+			if !tok.IsM2M() {
+				t.Error("IsM2M() = false, want true")
+			}
+		})
+	}
+}
+
 // These tokens go through a real [keys.Set], because the choice of the key is
 // the behavior: which issuer a token names, and which key of that issuer its
 // header selects. Realms a and b publish the same kid and have one key each, so
