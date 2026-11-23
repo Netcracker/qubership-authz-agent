@@ -143,12 +143,6 @@ spec:
               value: '{{ .Values.AUTHZ_TRUSTED_PROVIDERS_FILE }}'
             - name: AUTHZ_JWKS_BOOTSTRAP_REQUIRED
               value: '{{ include "authz-agent.jwksBootstrapRequired" . }}'
-            {{- /*
-            Helm reads a number in a values file as a float and prints one of
-            1000000 or more in exponent form, such as 1e+06, which the agent
-            cannot read as an integer. int64 prints each integer setting in
-            decimal digits.
-            */}}
             - name: AUTHZ_JWKS_HTTP_TIMEOUT
               value: {{ .Values.AUTHZ_JWKS_HTTP_TIMEOUT | int64 | quote }}
             - name: AUTHZ_JWKS_HTTP_RETRIES
