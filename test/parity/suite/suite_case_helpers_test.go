@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"os"
 	"sort"
 	"time"
 
@@ -471,8 +470,8 @@ func (s *ParitySuite) comparesWithTheUnclassifiedGolden(id ParityEndpointID, sub
 	if !isAuthzAgentProfile(s.cfg.Profile) {
 		return false
 	}
-	_, err := os.Stat(s.comparator.GoldenPath(id, subCase))
-	return err == nil
+	_, ok, err := s.comparator.Recorded(id, subCase)
+	return err == nil && ok
 }
 
 // pipCalls counts the calls pip-mock received on route since its call log was

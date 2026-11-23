@@ -18,8 +18,6 @@ package paritysuite
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -101,17 +99,11 @@ type ownerFixture struct {
 
 func (fx ownerFixture) write(dir, name string, v any) {
 	fx.t.Helper()
-	path := filepath.Join(fx.root, dir, "regular", "c1", name+".json")
 	raw, err := json.Marshal(v)
 	if err != nil {
 		fx.t.Fatal(err)
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		fx.t.Fatal(err)
-	}
-	if err := os.WriteFile(path, raw, 0o644); err != nil {
-		fx.t.Fatal(err)
-	}
+	writeGolden(fx.t, fx.root, dir+"/regular/c1/"+name, string(raw))
 }
 
 // cases runs regularOwnerDecisionCases over a file whose case c1 has the
@@ -280,14 +272,8 @@ func readsX(id, tenant string) any {
 func legacyPointCases(t *testing.T, sets []any, tenant string, status int) []ownerDecisionCase {
 	t.Helper()
 	root := t.TempDir()
-	path := filepath.Join(root, "check-resource-v1-outcome", "sequence", "c1", "check.json")
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatal(err)
-	}
 	raw, _ := json.Marshal(model.CheckResourceOutcome{Status: status})
-	if err := os.WriteFile(path, raw, 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeGolden(t, root, "check-resource-v1-outcome/sequence/c1/check", string(raw))
 	lc := legacyExportCase{file: "owner.json", id: "c1", resourceType: "RT", tenant: tenant,
 		points: []legacyExportPoint{{step: "write", policySets: sets, pips: []any{},
 			decisions: []legacyDecision{{request: isolatedRequest{name: "check", operation: "READ"},

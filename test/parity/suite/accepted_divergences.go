@@ -20,8 +20,8 @@ import (
 	"strings"
 )
 
-// acceptedDivergenceRoot holds one file per accepted divergence, mirroring the
-// layout under testdata/golden. It is deliberately a separate tree: the golden
+// acceptedDivergenceRoot holds one file per accepted divergence, at
+// <golden key>.json. It is deliberately a separate tree: the golden
 // directory is immutable evidence recorded from live access-control, and mixing
 // "what the agent does instead" into it would blur that line.
 const acceptedDivergenceRoot = "testdata/accepted-divergences"
@@ -113,16 +113,10 @@ func acceptedDivergenceFor(id ParityEndpointID, subCase string) (AcceptedDiverge
 	return d, ok
 }
 
-// acceptedDivergencePath maps a golden path to its accepted-divergence
-// counterpart, keeping the same relative layout under the separate root.
-func acceptedDivergencePath(goldenRoot, goldenPath string) string {
-	rel, err := filepath.Rel(goldenRoot, goldenPath)
-	if err != nil {
-		// Fall back to the base name rather than failing the case for a path quirk;
-		// a missing file is reported clearly by the caller either way.
-		rel = filepath.Base(goldenPath)
-	}
-	return filepath.Join(acceptedDivergenceRoot, rel)
+// acceptedDivergencePath returns the file of the accepted answer of the golden
+// key: <acceptedDivergenceRoot>/<key>.json.
+func acceptedDivergencePath(key string) string {
+	return filepath.Join(acceptedDivergenceRoot, filepath.FromSlash(key)+".json")
 }
 
 // AcceptedDivergenceDriftError is returned when a case is registered as an

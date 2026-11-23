@@ -226,7 +226,7 @@ func replayFunctions(t *testing.T, fns []exportFunction, goldens map[string]stri
 	writeFile(t, filepath.Join(dir, "exports", "denies.json"), `{"policySets":["d"],"pips":[]}`)
 	goldenDir := filepath.Join(dir, "golden")
 	for path, text := range goldens {
-		writeFile(t, filepath.Join(goldenDir, path), text)
+		writeGolden(t, goldenDir, strings.TrimSuffix(path, ".json"), text)
 	}
 	exports, err := openBundleExports(dir)
 	if err != nil {

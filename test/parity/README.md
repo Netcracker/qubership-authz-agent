@@ -19,6 +19,43 @@ rationale). The goldens are evidence of which cases the authz-agent matches
 the legacy service on; they are not a test oracle that can be refreshed
 without access to the original service.
 
+## Golden files
+
+Each recorded answer has a golden key, `<api>/<subCase>`, such as
+`check-resource-v1-outcome/regular/some-case/allow`: the row's golden directory and the sub-case the test compares
+under. The answers are grouped into files under `suite/testdata/golden/`:
+
+| Key | File | Content |
+| --- | --- | --- |
+| Third segment is the id of a case in `suite/testdata/cases/<round>/<name>.json` | `suite/testdata/golden/<round>/<name>.json` | An object from case id to an object from the key without its case id (`check-resource-v1-outcome/regular/allow`) to the answer |
+| Any other key: the goldens of the Go tests, and `api-version/<test function>` for a case file that records the stand's version | `suite/testdata/golden/go/<api>.json` | An object from the key without its `<api>/` prefix to the answer |
+
+Keys are sorted, and an answer of up to 100 bytes of compact JSON stays on one line, so recording one answer changes
+only its lines. `TestGoldenFilesAreInTheirFilesAndCanonical` fails when a file is not in that form, or holds a key that
+belongs in another file: the golden of a case that was deleted, renamed, or moved to another case file. Its message names
+the file the entry belongs in; move the entry there, or delete it with the case. A key in `go/<api>.json` belongs to no
+case file, so a golden a renamed or deleted Go test left behind is not detected. A key with no entry is not recorded: a
+case that compares through `requirePendingGolden` skips on it.
+
+A mismatch writes the answer the run got to the `.observed.json` file beside the golden file, in the same form and under
+the same key; Git ignores these files.
+
+`suite/tools/goldens` converts between these files and a tree of one file per answer, `<key>.json`, the form the
+specification repository reads and a recording tool may write. Run it from `test/parity/suite`:
+
+```bash
+go run ./tools/goldens split -out DIR
+```
+
+```bash
+go run ./tools/goldens merge -in DIR
+```
+
+`split` writes every answer to `DIR/<key>.json`. `merge` records every `DIR/<key>.json` in the golden files, replacing
+an answer already recorded under that key and keeping the others; `-observed` also takes `<key>.observed.json` files as
+answers, and refuses a key that has both files. Both take `-root` for another golden directory; the case files that
+place each key are read from the `cases` directory beside it, and both refuse a root that has none.
+
 ## Prerequisites
 
 1. **Docker**, **kind**, **kubectl**, and **helm** on the host, in the versions
@@ -215,12 +252,12 @@ equality in place.
 
 Some cases are written before access-control has answered them, so that the answers can be recorded on a live
 access-control outside this repository. Such a case compares through `requirePendingGolden` instead of
-`requireGolden`: while its golden file is missing, it skips and prints the answer it got, for example
+`requireGolden`: while its golden is not recorded, it skips and prints the answer it got, for example
 `golden check-resource-v1/semantics/s2b-neq-attribute-absent is not recorded yet; the authz-agent profile answered false`. Once the
 golden is committed, the case compares like any other. A case that uses `requireGolden` still fails when its golden is
 missing.
 
-| Test | What it asks access-control | Goldens under `suite/testdata/golden/` |
+| Test | What it asks access-control | Golden keys (see [Golden files](#golden-files)) |
 | --- | --- | --- |
 | `TestRow02CheckResourceV1MissingResourceAttribute`, `…MissingAttributeUnderOr`, `…MissingAttributeBesideAllowingPolicy`, `…MissingPIPAttribute`, `…FailedGeneralPIP`, `…GeneralPIPJsonPathMatchesNothing`, `…ExpressionShape` | What a condition answers when an attribute it reads is missing, and how `OR`, `AND`, and long expressions evaluate | `check-resource-v1/semantics/`, `pip-call/semantics/` |
 | `TestRow06CheckFilterV1MissingPIPAttribute` | Which predicate survives when a policy reads a TOKEN PIP with no value | `check-filter-v1/semantics/` |
@@ -701,11 +738,13 @@ test/parity/
 └── suite/                               (Go/testify parity suite)
     ├── Dockerfile                       (suite image for the kind run)
     ├── config.go
-    ├── compare.go                       (golden read/diff; no write/record path)
+    ├── compare.go                       (golden read/diff)
+    ├── golden_store.go                  (the golden files: one per case file, see Golden files)
+    ├── tools/goldens/                   (split and merge the golden files)
     ├── accepted_divergences.go
     ├── export_fed.go                    (the export-fed profile: bundle reader, export source, replayer)
     ├── testdata/
-    │   ├── golden/                      (129 committed golden JSON files)
+    │   ├── golden/                      (recorded answers, one file per case file)
     │   ├── pap-operations.json          (the PAP operations a case step names; generated)
     │   └── fixtures/                    (seed policies and PIPs)
     └── test_row*.go                     (one file per parity endpoint row)

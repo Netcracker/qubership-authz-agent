@@ -1,0 +1,74 @@
+{
+  "allow-baseline": {
+    "calculationResult": "ALLOW",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "anon": {
+    "calculationResult": "DENY",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "deny-incoming": {
+    "calculationResult": "DENY",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "full-use-filter": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_FULL_FILTER.ownerId.eq(\"00000000-0000-0000-0000-000000000101\")",
+    "mongodbFilterCondition": "{ { \"ownerId\": \"00000000-0000-0000-0000-000000000101\" } }",
+    "rsqlFilterCondition": "ownerId==00000000-0000-0000-0000-000000000101",
+    "sqlFilterCondition": "owner_id=00000000-0000-0000-0000-000000000101",
+    "customFilterCondition": null
+  },
+  "general-pip-dict": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "id=in=(\"row10-dict-2\", \"row10-dict-1\");amount=le=\"1000\"",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "general-pip-list": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "id=in=(\"row10-list-2\", \"row10-list-1\")",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "header-pip": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "region==\"parity-allow\"",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "rls-happy": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "ownerId==00000000-0000-0000-0000-000000000101",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "token-pip": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "department==\"finance\"",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  }
+}

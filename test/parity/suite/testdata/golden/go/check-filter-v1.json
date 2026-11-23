@@ -1,0 +1,162 @@
+{
+  "agg-ols-plus-rls": {
+    "calculationResult": "ALLOW",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "agg-two-predicates": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "ownerId==00000000-0000-0000-0000-000000000101,status==PUBLIC",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "allow-baseline": {
+    "calculationResult": "ALLOW",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "anon": {
+    "calculationResult": "DENY",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "clang-filter-rsql-compound": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "amount=lt=1000;status=in=(OPEN,PENDING)",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "deny-incoming": {
+    "calculationResult": "DENY",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "full-use-filter": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_FULL_FILTER.ownerId.eq(\"00000000-0000-0000-0000-000000000101\")",
+    "mongodbFilterCondition": "{ { \"ownerId\": \"00000000-0000-0000-0000-000000000101\" } }",
+    "rsqlFilterCondition": "ownerId==00000000-0000-0000-0000-000000000101",
+    "sqlFilterCondition": "owner_id=00000000-0000-0000-0000-000000000101",
+    "customFilterCondition": null
+  },
+  "general-array-into-sql": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "id IN ('row6-sql-1', 'row6-sql-2')",
+    "customFilterCondition": null
+  },
+  "general-pip-dict": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "id=in=(\"row6-dict-1\", \"row6-dict-2\");amount=le=\"1000\"",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "general-pip-list": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "id=in=(\"row6-list-1\", \"row6-list-2\")",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "general-scalar-boolean-substitution": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "archived==\"false\"",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "general-scalar-number-substitution": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "amount=lt=\"1000\"",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "general-scalar-special-chars": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "tag==\"red,blue;green('q')\"x\"\"",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "general-scalar-substitution": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "status==\"OPEN\"",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "header-pip": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "region==\"parity-allow\"",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "header-scalar-into-mongodb": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "{ { \"region\": \"[ { \"$uuid\": \"parity-allow\" } ]\" } }",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "multi-pip-one-template": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "tier==\"gold\";amount=lt=\"1000\"",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "rls-happy": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "ownerId==00000000-0000-0000-0000-000000000101",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "token-pip": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "department==\"finance\"",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "token-scalar-into-sql": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "department=''finance''",
+    "customFilterCondition": null
+  }
+}

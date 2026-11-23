@@ -18,8 +18,6 @@ package paritysuite
 
 import (
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -42,17 +40,11 @@ func newLegacyFixture(t *testing.T) legacyFixture {
 
 func (fx legacyFixture) write(dir, step string, v any) {
 	fx.t.Helper()
-	path := filepath.Join(fx.root, dir, "sequence", "legacy-case", step+".json")
 	raw, err := json.Marshal(v)
 	if err != nil {
 		fx.t.Fatal(err)
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		fx.t.Fatal(err)
-	}
-	if err := os.WriteFile(path, raw, 0o644); err != nil {
-		fx.t.Fatal(err)
-	}
+	writeGolden(fx.t, fx.root, dir+"/sequence/legacy-case/"+step, string(raw))
 }
 
 // status records the status golden of a write step of operation op.

@@ -18,9 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
-	"path/filepath"
 	"reflect"
 	"slices"
 	"sort"
@@ -50,13 +48,10 @@ func NewGoldenComparator(_ Config) *GoldenComparator {
 	}
 }
 
-// GoldenPath constructs the full on-disk path for a golden file at
-// <goldenRoot>/<row-meta-dir>/<subCase>.json. Callers pass subCase as
-// "allow-incoming" or "token-pip/allow" — the latter form is the D-X sub-case
-// directory convention.
-func (gc *GoldenComparator) GoldenPath(id ParityEndpointID, subCase string) string {
-	meta := Meta(id)
-	return filepath.Join(gc.goldenRoot, meta.GoldenDir, subCase+".json")
+// Recorded returns the golden of row id under subCase, and reports whether one
+// is recorded.
+func (gc *GoldenComparator) Recorded(id ParityEndpointID, subCase string) (json.RawMessage, bool, error) {
+	return goldensAt(gc.goldenRoot).Lookup(GoldenKey(id, subCase))
 }
 
 // Compare asserts parity between the actual (freshly-decoded) response and
@@ -66,19 +61,21 @@ func (gc *GoldenComparator) GoldenPath(id ParityEndpointID, subCase string) stri
 // NewGoldenTarget factory; passing the wrong type is a test-authoring
 // bug and panics fast at compare time.
 func (gc *GoldenComparator) Compare(id ParityEndpointID, subCase string, actual any) error {
-	goldenPath := gc.GoldenPath(id, subCase)
+	key := GoldenKey(id, subCase)
+	goldens := goldensAt(gc.goldenRoot)
+	where := goldens.Where(key)
 
-	raw, err := os.ReadFile(goldenPath)
-	if errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("%w: %s", ErrGoldenNotRecorded, goldenPath)
-	}
+	raw, ok, err := goldens.Lookup(key)
 	if err != nil {
-		return fmt.Errorf("read golden %s: %w", goldenPath, err)
+		return fmt.Errorf("read golden %s: %w", where, err)
+	}
+	if !ok {
+		return fmt.Errorf("%w: %s", ErrGoldenNotRecorded, where)
 	}
 
 	expected := NewGoldenTarget(id)
 	if err := json.Unmarshal(raw, expected); err != nil {
-		return fmt.Errorf("unmarshal golden %s: %w", goldenPath, err)
+		return fmt.Errorf("unmarshal golden %s: %w", where, err)
 	}
 
 	if reflect.TypeOf(actual) != reflect.TypeOf(expected) {
@@ -90,11 +87,11 @@ func (gc *GoldenComparator) Compare(id ParityEndpointID, subCase string, actual 
 
 	opts := compareOptionsFor(id)
 	if diff := cmp.Diff(expected, actual, opts...); diff != "" {
-		gc.writeObservedSidecar(goldenPath, actual)
+		gc.writeObservedSidecar(key, actual)
 		if accepted, ok := acceptedDivergenceFor(id, subCase); ok {
-			return gc.compareAgainstAccepted(id, subCase, goldenPath, actual, accepted, opts)
+			return gc.compareAgainstAccepted(id, subCase, where, actual, accepted, opts)
 		}
-		return &GoldenMismatchError{GoldenPath: goldenPath, Diff: diff}
+		return &GoldenMismatchError{GoldenPath: where, Diff: diff}
 	}
 	return nil
 }
@@ -111,7 +108,7 @@ func (gc *GoldenComparator) compareAgainstAccepted(
 	accepted AcceptedDivergence,
 	opts []cmp.Option,
 ) error {
-	acceptedPath := acceptedDivergencePath(gc.goldenRoot, goldenPath)
+	acceptedPath := acceptedDivergencePath(GoldenKey(id, subCase))
 
 	raw, err := os.ReadFile(acceptedPath)
 	if err != nil {
@@ -142,14 +139,15 @@ func (gc *GoldenComparator) compareAgainstAccepted(
 	return nil
 }
 
-func (gc *GoldenComparator) writeObservedSidecar(goldenPath string, actual any) {
-	observedPath := strings.TrimSuffix(goldenPath, ".json") + ".observed.json"
-	encoded, err := json.MarshalIndent(actual, "", "  ")
+// writeObservedSidecar records actual under key in the .observed.json file
+// beside the golden file that holds key. A failure to write it is ignored: the
+// mismatch error carries the diff either way.
+func (gc *GoldenComparator) writeObservedSidecar(key string, actual any) {
+	encoded, err := json.Marshal(actual)
 	if err != nil {
 		return
 	}
-	_ = os.MkdirAll(filepath.Dir(observedPath), 0o755)
-	_ = os.WriteFile(observedPath, append(encoded, '\n'), 0o644)
+	_ = observedAt(gc.goldenRoot).Put(map[string]json.RawMessage{key: encoded})
 }
 
 // compareOptionsFor returns the cmp.Option set for a given row per D-M. The
@@ -400,8 +398,8 @@ func normalizeRsqlInElements(expr string) string {
 	return out.String()
 }
 
-// ErrGoldenNotRecorded is returned by [GoldenComparator.Compare] when no golden
-// file exists for the case. A case whose golden is expected to exist treats it
+// ErrGoldenNotRecorded is returned by [GoldenComparator.Compare] when no answer
+// is recorded under the golden key of the case. A case whose golden is expected to exist treats it
 // as a failure; a case written ahead of its golden capture skips on it (see
 // requirePendingGolden).
 var ErrGoldenNotRecorded = errors.New("golden not recorded")

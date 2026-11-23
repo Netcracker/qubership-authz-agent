@@ -21,8 +21,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
-	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -67,13 +65,7 @@ func runRegularCasesAgainst(t *testing.T, refuse map[int]int, domainGoldens map[
 
 	goldenRoot := t.TempDir()
 	for id, status := range domainGoldens {
-		golden := filepath.Join(goldenRoot, "load-simplified-policies-v1", "regular", id, "declare-the-domain.json")
-		if err := os.MkdirAll(filepath.Dir(golden), 0o755); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(golden, []byte(fmt.Sprintf(`{"status": %d}`, status)), 0o600); err != nil {
-			t.Fatal(err)
-		}
+		writeGolden(t, goldenRoot, "load-simplified-policies-v1/regular/"+id+"/declare-the-domain", fmt.Sprintf(`{"status": %d}`, status))
 	}
 
 	cfg := Config{ACBaseURL: srv.URL, TenantID: "t", Profile: "legacy"}

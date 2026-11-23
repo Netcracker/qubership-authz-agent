@@ -18,13 +18,9 @@ package paritysuite
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/fs"
 	"maps"
 	"net/http"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -377,24 +373,31 @@ func asLegacyExportSet(set map[string]any, tenant string) map[string]any {
 // subCase in a directory of decision outcomes (one whose name ends in
 // -outcome), and reports whether one is recorded.
 func decisionStatus(root, subCase string) (int, bool, error) {
-	matches, err := filepath.Glob(filepath.Join(root, "*-outcome", subCase+".json"))
-	if err != nil || len(matches) == 0 {
-		return 0, false, err
+	var dirs []string
+	for _, meta := range rowMetas {
+		if strings.HasSuffix(meta.GoldenDir, "-outcome") && !slices.Contains(dirs, meta.GoldenDir) {
+			dirs = append(dirs, meta.GoldenDir)
+		}
 	}
-	raw, err := os.ReadFile(matches[0])
-	if errors.Is(err, fs.ErrNotExist) {
-		return 0, false, nil
+	slices.Sort(dirs)
+	for _, dir := range dirs {
+		key := dir + "/" + subCase
+		raw, ok, err := goldensAt(root).Lookup(key)
+		if err != nil {
+			return 0, false, err
+		}
+		if !ok {
+			continue
+		}
+		var out struct {
+			Status int `json:"status"`
+		}
+		if err := json.Unmarshal(raw, &out); err != nil {
+			return 0, false, fmt.Errorf("decode the status of %s: %w", key, err)
+		}
+		return out.Status, true, nil
 	}
-	if err != nil {
-		return 0, false, err
-	}
-	var out struct {
-		Status int `json:"status"`
-	}
-	if err := json.Unmarshal(raw, &out); err != nil {
-		return 0, false, fmt.Errorf("decode the status of %s: %w", matches[0], err)
-	}
-	return out.Status, true, nil
+	return 0, false, nil
 }
 
 // dependsOnForms reports whether the decision d failed in legacy because of

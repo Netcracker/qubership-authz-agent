@@ -38,16 +38,44 @@ func TestCompare_MissingGoldenIsReportedAsNotRecorded(t *testing.T) {
 	}
 }
 
+func TestCompare_AKeyMissingFromAFileOfOtherAnswersIsNotRecorded(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	writeGolden(t, root, "check-resource-v1/recorded", "true")
+	gc := &GoldenComparator{goldenRoot: root}
+	decision := true
+
+	err := gc.Compare(PSUITE_ROW_2_CHECK_RESOURCE_V1, "never-recorded", &decision)
+
+	if !errors.Is(err, ErrGoldenNotRecorded) {
+		t.Fatalf("Compare of a key absent from go/check-resource-v1.json: want ErrGoldenNotRecorded, got %v", err)
+	}
+}
+
+// A mismatch records the answer it got under the golden's key, in the
+// .observed.json file beside the golden file.
+func TestCompare_AMismatchRecordsTheAnswerBesideTheGoldenFile(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	writeGolden(t, root, "check-resource-v1/recorded-false", "false")
+	gc := &GoldenComparator{goldenRoot: root}
+	decision := true
+
+	_ = gc.Compare(PSUITE_ROW_2_CHECK_RESOURCE_V1, "recorded-false", &decision)
+
+	got, err := os.ReadFile(filepath.Join(root, "go", "check-resource-v1.observed.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "{\n  \"recorded-false\": true\n}\n"; string(got) != want {
+		t.Errorf("go/check-resource-v1.observed.json =\n%s\nwant\n%s", got, want)
+	}
+}
+
 func TestCompare_MismatchingGoldenIsNotReportedAsNotRecorded(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	dir := filepath.Join(root, "check-resource-v1")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "recorded-false.json"), []byte("false\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeGolden(t, root, "check-resource-v1/recorded-false", "false")
 	gc := &GoldenComparator{goldenRoot: root}
 	decision := true
 
@@ -107,14 +135,8 @@ func TestCompare_RefusalMessageIsIgnored(t *testing.T) {
 	}
 	for _, o := range outcomes {
 		root := t.TempDir()
-		dir := filepath.Join(root, o.dir, "regular")
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			t.Fatal(err)
-		}
 		for name, golden := range goldens {
-			if err := os.WriteFile(filepath.Join(dir, name+".json"), []byte(golden), 0o644); err != nil {
-				t.Fatal(err)
-			}
+			writeGolden(t, root, o.dir+"/regular/"+name, golden)
 		}
 		gc := &GoldenComparator{goldenRoot: root}
 		for _, tc := range cases {
@@ -135,14 +157,8 @@ func TestCompare_RefusalMessageIsIgnored(t *testing.T) {
 func TestCompare_AnErrorGoldenComparesItsStatusAndNotItsBody(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	dir := filepath.Join(root, "pap-error-v1", "sequence", "c")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
-	}
 	golden := `{"status": 400, "body": {"message": "Policy 'p-1' is invalid"}}`
-	if err := os.WriteFile(filepath.Join(dir, "s.json"), []byte(golden), 0o644); err != nil {
-		t.Fatal(err)
-	}
+	writeGolden(t, root, "pap-error-v1/sequence/c/s", golden)
 	gc := &GoldenComparator{goldenRoot: root}
 	cases := []struct {
 		name     string

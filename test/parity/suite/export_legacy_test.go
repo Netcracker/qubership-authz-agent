@@ -19,13 +19,9 @@ package paritysuite
 import (
 	"crypto/sha256"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/fs"
 	"maps"
 	"net/http"
-	"os"
-	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
@@ -262,11 +258,8 @@ func mergedPins(file, own map[string]PipStubResponse) map[string]PipStubResponse
 // stepStatus reads the status golden of a write step, and reports whether it
 // is recorded.
 func stepStatus(root string, id ParityEndpointID, subCase string) (int, bool, error) {
-	raw, err := os.ReadFile(filepath.Join(root, Meta(id).GoldenDir, subCase+".json"))
-	if errors.Is(err, fs.ErrNotExist) {
-		return 0, false, nil
-	}
-	if err != nil {
+	raw, ok, err := goldensAt(root).Lookup(GoldenKey(id, subCase))
+	if err != nil || !ok {
 		return 0, false, err
 	}
 	var out model.PolicyLoadOutcome
@@ -281,11 +274,8 @@ func stepStatus(root string, id ParityEndpointID, subCase string) (int, bool, er
 // not answered with 200 and the document, its status (-1 for a 200 without
 // the document) in place of the elements.
 func rawExportRead(root, subCase, doc string) (elements []any, recorded bool, failed int, err error) {
-	raw, err := os.ReadFile(filepath.Join(root, Meta(PSUITE_PAP_READ_RAW).GoldenDir, subCase+".json"))
-	if errors.Is(err, fs.ErrNotExist) {
-		return nil, false, 0, nil
-	}
-	if err != nil {
+	raw, found, err := goldensAt(root).Lookup(GoldenKey(PSUITE_PAP_READ_RAW, subCase))
+	if err != nil || !found {
 		return nil, false, 0, err
 	}
 	var out model.PapReadRawOutcome
@@ -754,8 +744,8 @@ func legacyExportDocuments(p legacyExportPoint, canary string) (json.RawMessage,
 func legacyGoldenPaths(root string, id ParityEndpointID, subCase string) []string {
 	dir := Meta(id).GoldenDir
 	exists := func(sub string) bool {
-		_, err := os.Stat(filepath.Join(root, dir, sub+".json"))
-		return err == nil
+		_, ok, err := goldensAt(root).Lookup(dir + "/" + sub)
+		return err == nil && ok
 	}
 	if exists(subCase) {
 		return []string{dir + "/" + subCase + ".json"}

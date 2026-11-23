@@ -796,11 +796,17 @@ func checkKnownUser(lt *labelTokens) error {
 	return nil
 }
 
-// readGoldenTarget reads the golden at path under dir into the target of row id.
+// readGoldenTarget reads the golden under dir that path names, as
+// "<golden key>.json", into the target of row id.
 func readGoldenTarget(dir string, id ParityEndpointID, path string) (any, error) {
-	raw, err := os.ReadFile(filepath.Join(dir, path))
+	goldens := goldensAt(dir)
+	key := strings.TrimSuffix(path, ".json")
+	raw, ok, err := goldens.Lookup(key)
 	if err != nil {
 		return nil, err
+	}
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", ErrGoldenNotRecorded, goldens.Where(key))
 	}
 	target := NewGoldenTarget(id)
 	if err := json.Unmarshal(raw, target); err != nil {
