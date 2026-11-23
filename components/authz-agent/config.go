@@ -70,23 +70,33 @@ const (
 // 9223372036, about 292 years.
 const maxSeconds = math.MaxInt64 / int64(time.Second)
 
+// The values of AUTHZ_M2M_TOKEN_SOURCE, which chooses the token the agent
+// sends.
+const (
+	clientCredentialsSource = "client-credentials"
+	tokenFileSource         = "token-file"
+)
+
+// tokenSources lists the values of AUTHZ_M2M_TOKEN_SOURCE.
+var tokenSources = []string{clientCredentialsSource, tokenFileSource}
+
 // maxRetries is the largest number of attempts per request that
 // AUTHZ_JWKS_HTTP_RETRIES and AUTHZ_ENTITLEMENTS_HTTP_RETRIES accept. The
 // chart's values schema has the same maximum.
 const maxRetries = 100
 
 // loadConfig builds the configuration from the environment. A number, a
-// boolean, a log level, a listen address, or a token file path that is empty
-// takes its default, as an unset one does, and an empty URL turns its
-// feature off, except AUTHZ_M2M_TOKEN_URL while KUBERNETES_M2M_ENABLED is
-// false, which is its default. Any other file path is used as set, empty
-// included, without a check. LOGGING_LEVEL_ROOT and LOG_LEVEL are only
-// checked: the platform logger reads them itself. The error names every
+// boolean, a value from a list, a listen address, or a token file path that
+// is empty takes its default, as an unset one does, and an empty URL turns
+// its feature off, except AUTHZ_M2M_TOKEN_URL while AUTHZ_M2M_TOKEN_SOURCE is
+// client-credentials, which is its default. Any other file path is used as
+// set, empty included, without a check. LOGGING_LEVEL_ROOT and LOG_LEVEL are
+// only checked: the platform logger reads them itself. The error names every
 // variable whose value is not of its form or out of its range, with the
-// values that variable accepts. With KUBERNETES_M2M_ENABLED false it also
-// names an unset or empty AUTHZ_M2M_TOKEN_URL, and with true an
-// AUTHZ_PAP_CLIENT_TOKEN_FILE whose file holds no token, with the reason;
-// with a refused KUBERNETES_M2M_ENABLED it names neither. It names LOG_LEVEL
+// values that variable accepts. With AUTHZ_M2M_TOKEN_SOURCE client-credentials
+// it also names an unset or empty AUTHZ_M2M_TOKEN_URL, and with token-file an
+// AUTHZ_PAP_CLIENT_TOKEN_FILE whose file holds no token, with the reason; with
+// a refused AUTHZ_M2M_TOKEN_SOURCE it names neither. It names LOG_LEVEL
 // whenever that variable is not empty.
 func loadConfig(get lookup) (config, error) {
 	s := settings{get: get}
@@ -122,25 +132,28 @@ func loadConfig(get lookup) (config, error) {
 	if url := strings.TrimRight(s.httpURL("authz.entitlements.url"), "/"); url != "" {
 		cfg.Pull.Entitlements = &pips.EntitlementsConfig{URL: url, HTTPTimeoutSeconds: int(timeout / time.Second), HTTPRetries: retries}
 	}
-	// KUBERNETES_M2M_ENABLED chooses the token the agent sends. true sends the
-	// projected token of the netcracker audience in AUTHZ_PAP_CLIENT_TOKEN_FILE;
-	// false sends the token of the realm cloud-common from AUTHZ_M2M_TOKEN_URL.
-	// With true the agent sends no request to AUTHZ_M2M_TOKEN_URL, and with
-	// false it does not open AUTHZ_PAP_CLIENT_TOKEN_FILE. An endpoint that is
-	// not an http or https URL has been refused already, whichever value is set.
+	// AUTHZ_M2M_TOKEN_SOURCE chooses the token the agent sends. token-file
+	// sends the content of AUTHZ_PAP_CLIENT_TOKEN_FILE; client-credentials
+	// sends the token it obtains from AUTHZ_M2M_TOKEN_URL with the client
+	// credentials. With token-file the agent sends no request to
+	// AUTHZ_M2M_TOKEN_URL and reads neither credentials file, and with
+	// client-credentials it does not open AUTHZ_PAP_CLIENT_TOKEN_FILE. An
+	// endpoint that is not an http or https URL has been refused already,
+	// whichever value is set.
 	refusedBefore := len(s.refused)
-	kubernetesToken := s.boolean("kubernetes.m2m.enabled", false)
+	source := cmp.Or(s.fromList("authz.m2m.token.source", tokenSources), clientCredentialsSource)
 	switch {
 	case len(s.refused) > refusedBefore:
 		// A refused value chooses no token source, so neither one is checked.
-	case kubernetesToken:
+	case source == tokenFileSource:
 		cfg.M2M.TokenURL = ""
 		s.requireToken("authz.pap.client.token.file", cfg.M2M.TokenFile)
 	// The raw value is tested, so that a token endpoint of the wrong form,
 	// refused where it was read, is not refused again as missing.
 	case s.get("authz.m2m.token.url", "") == "":
 		s.refuse("authz.m2m.token.url", "",
-			"the http or https URL of the token endpoint of the realm cloud-common, required while KUBERNETES_M2M_ENABLED is false, which is its default")
+			"the http or https URL of the token endpoint, required while AUTHZ_M2M_TOKEN_SOURCE is client-credentials, "+
+				"which is its default; AUTHZ_M2M_TOKEN_SOURCE=token-file sends a token from a file instead")
 	}
 	// The platform logger reads LOGGING_LEVEL_ROOT itself and falls back to
 	// info where the value is not a level name; fromList refuses such a value.
@@ -159,7 +172,7 @@ func loadConfig(get lookup) (config, error) {
 
 // settings reads the values that loadConfig checks, and records each value
 // that it refuses. For an empty or refused value, a method returns its
-// fallback; httpURL returns "", and fromList returns nothing.
+// fallback; httpURL and fromList return "".
 type settings struct {
 	get     lookup
 	refused []string
@@ -208,19 +221,20 @@ func (s *settings) boolean(key string, fallback bool) bool {
 	return fallback
 }
 
-// fromList refuses a non-empty value that is not one of values without
-// regard to case.
-func (s *settings) fromList(key string, values []string) {
+// fromList returns the member of values that the value of key matches
+// without regard to case, and refuses a non-empty value that matches none.
+func (s *settings) fromList(key string, values []string) string {
 	raw := s.get(key, "")
 	if raw == "" {
-		return
+		return ""
 	}
 	for _, v := range values {
 		if strings.EqualFold(raw, v) {
-			return
+			return v
 		}
 	}
 	s.refuse(key, raw, "one of "+strings.Join(values, ", "))
+	return ""
 }
 
 // address reads a listen address <host>:<port>, whose host is empty, an IP
@@ -344,7 +358,7 @@ func (s *settings) requireToken(key, path string) {
 	if errors.As(err, &pathErr) {
 		reason = pathErr.Err.Error()
 	}
-	s.refused = append(s.refused, fmt.Sprintf("%s=%q: %s, and KUBERNETES_M2M_ENABLED=true sends the token in this file", variable(key), path, reason))
+	s.refused = append(s.refused, fmt.Sprintf("%s=%q: %s, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file", variable(key), path, reason))
 }
 
 func (s *settings) refuse(key, raw, accepted string) {

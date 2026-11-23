@@ -53,6 +53,12 @@ func fileHolding(t *testing.T, content string, perm os.FileMode) string {
 	return path
 }
 
+// missingEndpoint is the refusal of an unset or empty AUTHZ_M2M_TOKEN_URL
+// with AUTHZ_M2M_TOKEN_SOURCE client-credentials, its default.
+const missingEndpoint = `AUTHZ_M2M_TOKEN_URL="": expected the http or https URL of the token endpoint, ` +
+	`required while AUTHZ_M2M_TOKEN_SOURCE is client-credentials, which is its default; ` +
+	`AUTHZ_M2M_TOKEN_SOURCE=token-file sends a token from a file instead`
+
 // tokenFile writes a token to a new file and returns its path, which differs
 // from call to call.
 func tokenFile(t *testing.T) string {
@@ -61,7 +67,7 @@ func tokenFile(t *testing.T) string {
 }
 
 // load is loadConfig over values with a token endpoint and an existing token
-// file added, so that either value of KUBERNETES_M2M_ENABLED loads; a key of
+// file added, so that either value of AUTHZ_M2M_TOKEN_SOURCE loads; a key of
 // values replaces the added one.
 func load(t *testing.T, values map[string]string) (config, error) {
 	t.Helper()
@@ -391,7 +397,7 @@ func TestLoadConfig_EmptyValuesTakeTheDefaults(t *testing.T) {
 		"authz.tenant.manager.url":                "",
 		"authz.pap.client.source.url":             "",
 		"authz.entitlements.url":                  "",
-		"kubernetes.m2m.enabled":                  "",
+		"authz.m2m.token.source":                  "",
 	}
 	want, err := loadConfig(fromMap(map[string]string{"authz.m2m.token.url": "http://idp/token"}))
 	if err != nil {
@@ -414,11 +420,11 @@ func TestLoadConfig_RefusesEveryInvalidValueInOneError(t *testing.T) {
 				`LOGGING_LEVEL_ROOT="verbose": expected one of debug, info, warn, error, fatal`},
 		{"a timeout and no token endpoint", map[string]string{"authz.jwks.http.timeout": "0", "authz.m2m.token.url": ""},
 			`AUTHZ_JWKS_HTTP_TIMEOUT="0": expected an integer number of seconds from 1 to 9223372036; ` +
-				`AUTHZ_M2M_TOKEN_URL="": expected the http or https URL of the token endpoint of the realm cloud-common, required while KUBERNETES_M2M_ENABLED is false, which is its default`},
-		{"a timeout and no token file with KUBERNETES_M2M_ENABLED",
-			map[string]string{"authz.jwks.http.timeout": "0", "kubernetes.m2m.enabled": "true", "authz.pap.client.token.file": missing},
+				missingEndpoint},
+		{"a timeout and no token file with token-file",
+			map[string]string{"authz.jwks.http.timeout": "0", "authz.m2m.token.source": "token-file", "authz.pap.client.token.file": missing},
 			`AUTHZ_JWKS_HTTP_TIMEOUT="0": expected an integer number of seconds from 1 to 9223372036; ` +
-				`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + missing + `": no such file or directory, and KUBERNETES_M2M_ENABLED=true sends the token in this file`},
+				`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + missing + `": no such file or directory, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := refusal(t, tt.values); got != tt.want {
@@ -452,48 +458,48 @@ func TestLoadConfig_PinsTheEntitlementsPIPOnlyWithAURL(t *testing.T) {
 	}
 }
 
-func TestLoadConfig_KubernetesM2MReadsTheTokenFileAlone(t *testing.T) {
+func TestLoadConfig_TokenFileReadsTheTokenFileAlone(t *testing.T) {
 	file := tokenFile(t)
 	cfg := mustLoad(t, map[string]string{
-		"kubernetes.m2m.enabled":      "TRUE",
+		"authz.m2m.token.source":      "TOKEN-FILE",
 		"authz.m2m.token.url":         "http://idp/token",
 		"authz.pap.client.token.file": file,
 	})
 	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != file {
-		t.Errorf("loadConfig() with KUBERNETES_M2M_ENABLED=TRUE took the token from %q and %q, want the file %q alone",
+		t.Errorf("loadConfig() with AUTHZ_M2M_TOKEN_SOURCE=TOKEN-FILE took the token from %q and %q, want the file %q alone",
 			cfg.M2M.TokenURL, cfg.M2M.TokenFile, file)
 	}
 }
 
-func TestLoadConfig_WithoutKubernetesM2MAnUnsetTokenEndpointIsRefused(t *testing.T) {
-	want := `AUTHZ_M2M_TOKEN_URL="": expected the http or https URL of the token endpoint of the realm cloud-common, required while KUBERNETES_M2M_ENABLED is false, which is its default`
+func TestLoadConfig_ByDefaultAnUnsetTokenEndpointIsRefused(t *testing.T) {
+	want := missingEndpoint
 	if _, err := loadConfig(fromMap(map[string]string{})); err == nil || err.Error() != want {
 		t.Errorf("loadConfig() with no variable set returned %v, want %q", err, want)
 	}
 }
 
-func TestLoadConfig_KubernetesM2MNeedsNoTokenEndpoint(t *testing.T) {
+func TestLoadConfig_TokenFileNeedsNoTokenEndpoint(t *testing.T) {
 	file := tokenFile(t)
 	cfg := mustLoad(t, map[string]string{
-		"kubernetes.m2m.enabled":      "true",
+		"authz.m2m.token.source":      "token-file",
 		"authz.m2m.token.url":         "",
 		"authz.pap.client.token.file": file,
 	})
 	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != file {
-		t.Errorf("loadConfig() with KUBERNETES_M2M_ENABLED=true and no token endpoint took the token from %q and %q, want the file %q alone",
+		t.Errorf("loadConfig() with AUTHZ_M2M_TOKEN_SOURCE=token-file and no token endpoint took the token from %q and %q, want the file %q alone",
 			cfg.M2M.TokenURL, cfg.M2M.TokenFile, file)
 	}
 }
 
-func TestLoadConfig_WithoutKubernetesM2MTheTokenEndpointAloneIsRead(t *testing.T) {
+func TestLoadConfig_ClientCredentialsReadsTheTokenEndpointAlone(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "missing")
 	for _, tt := range []struct {
 		name   string
 		values map[string]string
 	}{
 		{"unset", map[string]string{"authz.pap.client.token.file": missing}},
-		{"false", map[string]string{"kubernetes.m2m.enabled": "false", "authz.pap.client.token.file": missing}},
-		{"false in capitals", map[string]string{"kubernetes.m2m.enabled": "FALSE", "authz.pap.client.token.file": missing}},
+		{"client-credentials", map[string]string{"authz.m2m.token.source": "client-credentials", "authz.pap.client.token.file": missing}},
+		{"client-credentials in capitals", map[string]string{"authz.m2m.token.source": "CLIENT-CREDENTIALS", "authz.pap.client.token.file": missing}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := mustLoad(t, tt.values).M2M.TokenURL; got != "http://idp/token" {
@@ -513,22 +519,22 @@ func TestLoadConfig_RefusesATokenSourceItCannotUse(t *testing.T) {
 		values map[string]string
 		want   string
 	}{
-		{"no token endpoint without KUBERNETES_M2M_ENABLED", map[string]string{"authz.m2m.token.url": ""},
-			`AUTHZ_M2M_TOKEN_URL="": expected the http or https URL of the token endpoint of the realm cloud-common, required while KUBERNETES_M2M_ENABLED is false, which is its default`},
-		{"a misspelled KUBERNETES_M2M_ENABLED and no token endpoint", map[string]string{"kubernetes.m2m.enabled": "ture", "authz.m2m.token.url": ""},
-			`KUBERNETES_M2M_ENABLED="ture": expected true or false`},
-		{"a token endpoint without a scheme without KUBERNETES_M2M_ENABLED", map[string]string{"authz.m2m.token.url": "idp/token"},
+		{"no token endpoint with client-credentials, the default", map[string]string{"authz.m2m.token.url": ""},
+			missingEndpoint},
+		{"a misspelled AUTHZ_M2M_TOKEN_SOURCE and no token endpoint", map[string]string{"authz.m2m.token.source": "tokenfile", "authz.m2m.token.url": ""},
+			`AUTHZ_M2M_TOKEN_SOURCE="tokenfile": expected one of client-credentials, token-file`},
+		{"a token endpoint without a scheme with client-credentials", map[string]string{"authz.m2m.token.url": "idp/token"},
 			`AUTHZ_M2M_TOKEN_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
-		{"a token endpoint without a scheme with KUBERNETES_M2M_ENABLED", map[string]string{"kubernetes.m2m.enabled": "true", "authz.m2m.token.url": "idp/token"},
+		{"a token endpoint without a scheme with token-file", map[string]string{"authz.m2m.token.source": "token-file", "authz.m2m.token.url": "idp/token"},
 			`AUTHZ_M2M_TOKEN_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
-		{"no token file with KUBERNETES_M2M_ENABLED", map[string]string{"kubernetes.m2m.enabled": "true", "authz.pap.client.token.file": missing},
-			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + missing + `": no such file or directory, and KUBERNETES_M2M_ENABLED=true sends the token in this file`},
-		{"an empty token file with KUBERNETES_M2M_ENABLED", map[string]string{"kubernetes.m2m.enabled": "true", "authz.pap.client.token.file": empty},
-			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + empty + `": holds no token, and KUBERNETES_M2M_ENABLED=true sends the token in this file`},
-		{"a token file of white space alone with KUBERNETES_M2M_ENABLED", map[string]string{"kubernetes.m2m.enabled": "true", "authz.pap.client.token.file": blank},
-			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + blank + `": holds no token, and KUBERNETES_M2M_ENABLED=true sends the token in this file`},
-		{"a directory for the token file with KUBERNETES_M2M_ENABLED", map[string]string{"kubernetes.m2m.enabled": "true", "authz.pap.client.token.file": directory},
-			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + directory + `": is not a regular file, and KUBERNETES_M2M_ENABLED=true sends the token in this file`},
+		{"no token file with token-file", map[string]string{"authz.m2m.token.source": "token-file", "authz.pap.client.token.file": missing},
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + missing + `": no such file or directory, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`},
+		{"an empty token file with token-file", map[string]string{"authz.m2m.token.source": "token-file", "authz.pap.client.token.file": empty},
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + empty + `": holds no token, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`},
+		{"a token file of white space alone with token-file", map[string]string{"authz.m2m.token.source": "token-file", "authz.pap.client.token.file": blank},
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + blank + `": holds no token, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`},
+		{"a directory for the token file with token-file", map[string]string{"authz.m2m.token.source": "token-file", "authz.pap.client.token.file": directory},
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + directory + `": is not a regular file, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := refusal(t, tt.values); got != tt.want {
@@ -538,29 +544,29 @@ func TestLoadConfig_RefusesATokenSourceItCannotUse(t *testing.T) {
 	}
 }
 
-func TestLoadConfig_KubernetesM2MRefusesATokenFileItCannotRead(t *testing.T) {
+func TestLoadConfig_TokenFileRefusesAFileItCannotRead(t *testing.T) {
 	if os.Geteuid() == 0 {
 		t.Skip("root reads a file of mode 0000")
 	}
 	file := fileHolding(t, "token", 0o000)
-	values := map[string]string{"kubernetes.m2m.enabled": "true", "authz.pap.client.token.file": file}
-	want := `AUTHZ_PAP_CLIENT_TOKEN_FILE="` + file + `": permission denied, and KUBERNETES_M2M_ENABLED=true sends the token in this file`
+	values := map[string]string{"authz.m2m.token.source": "token-file", "authz.pap.client.token.file": file}
+	want := `AUTHZ_PAP_CLIENT_TOKEN_FILE="` + file + `": permission denied, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`
 	if got := refusal(t, values); got != want {
 		t.Errorf("loadConfig(%v) refused with %q, want %q", values, got, want)
 	}
 }
 
-func TestLoadConfig_KubernetesM2MChecksTheDefaultTokenFileForAnUnsetOrEmptyPath(t *testing.T) {
+func TestLoadConfig_TokenFileChecksTheDefaultPathForAnUnsetOrEmptyOne(t *testing.T) {
 	if _, err := os.Stat(m2m.DefaultTokenFile); !errors.Is(err, fs.ErrNotExist) {
 		t.Skipf("os.Stat(%s) = %v, and the refusal below expects no such file", m2m.DefaultTokenFile, err)
 	}
-	want := `AUTHZ_PAP_CLIENT_TOKEN_FILE="/var/run/secrets/tokens/netcracker/token": no such file or directory, and KUBERNETES_M2M_ENABLED=true sends the token in this file`
+	want := `AUTHZ_PAP_CLIENT_TOKEN_FILE="/var/run/secrets/tokens/netcracker/token": no such file or directory, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`
 	for _, tt := range []struct {
 		name   string
 		values map[string]string
 	}{
-		{"unset", map[string]string{"kubernetes.m2m.enabled": "true"}},
-		{"empty", map[string]string{"kubernetes.m2m.enabled": "true", "authz.pap.client.token.file": ""}},
+		{"unset", map[string]string{"authz.m2m.token.source": "token-file"}},
+		{"empty", map[string]string{"authz.m2m.token.source": "token-file", "authz.pap.client.token.file": ""}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			if _, err := loadConfig(fromMap(tt.values)); err == nil || err.Error() != want {

@@ -344,8 +344,9 @@ var (
 // CheckTokenFile returns nil when the file at path holds a token, the content
 // that a [Source] without a TokenURL publishes. Otherwise it returns why it
 // does not: an [*fs.PathError] for a path that names nothing, a file the
-// process cannot read, or anything but a regular file, and an error that
-// names no path for a file that is empty or holds white space alone.
+// process cannot read, or anything but a regular file after symbolic links
+// are followed, and an error that names no path for a file that is empty or
+// holds white space alone.
 func CheckTokenFile(path string) error {
 	token, err := readToken(path)
 	if err == nil && token == "" {

@@ -17,16 +17,14 @@
 package runtimetest
 
 // TestM2MKeycloak validates end-to-end policy pull with a Keycloak-issued
-// client_credentials token, exercising the full path:
+// client_credentials token: the agent obtains the token from Keycloak and sends
+// it in the Authorization header of the policy pull to authz-policy-admin.
 //
-//	AUTHZ_M2M_TOKEN_URL → client_credentials grant → the agent's token →
-//	Authorization header of the pull → authz-policy-admin → OPA policies.
-//
-// The tests run only when M2M_KEYCLOAK_PROFILE=true, which the kind stand
-// sets because its agent runs with KUBERNETES_M2M_ENABLED=false against the
-// stand's Keycloak. Against an agent that sends a static token file, such as
-// the SVT stand's, the steps are skipped via t.Skip() so the catalog coverage
-// check passes.
+// The tests run only when M2M_KEYCLOAK_PROFILE=true. The kind harness sets it,
+// because there the test stand provisions the client credentials and the
+// agent's token endpoint is the harness Keycloak. Against an agent with a static
+// M2M token the steps are skipped via t.Skip() so the catalog coverage check
+// passes.
 //
 // Test client: cloud-common realm / test-app-client (client_credentials)
 func (s *RuntimeSuite) TestM2MKeycloak() {

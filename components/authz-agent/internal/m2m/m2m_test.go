@@ -71,6 +71,38 @@ func writeFile(t *testing.T, name, content string) string {
 	return path
 }
 
+// projectedToken lays out a token as the kubelet lays out a projected volume,
+// token -> ..data/token and ..data -> ..<timestamp>, and returns the path of
+// token.
+func projectedToken(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.Mkdir(filepath.Join(dir, "..2026_11_23_00_00_00.000000001"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "..2026_11_23_00_00_00.000000001", "token"), []byte("a\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("..2026_11_23_00_00_00.000000001", filepath.Join(dir, "..data")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join("..data", "token"), filepath.Join(dir, "token")); err != nil {
+		t.Fatal(err)
+	}
+	return filepath.Join(dir, "token")
+}
+
+// symlink creates a symbolic link to target in a new directory and returns
+// the path of the link.
+func symlink(t *testing.T, target string) string {
+	t.Helper()
+	link := filepath.Join(t.TempDir(), "link")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	return link
+}
+
 // waitFor polls cond for up to two seconds.
 func waitFor(t *testing.T, what string, cond func() bool) {
 	t.Helper()
@@ -416,6 +448,9 @@ func TestCheckTokenFile(t *testing.T) {
 		{"white space alone", writeFile(t, "token", " \n"), errNoToken},
 		{"a missing file", filepath.Join(dir, "missing"), fs.ErrNotExist},
 		{"a directory", dir, errNotRegular},
+		{"a projected volume, links to a token", projectedToken(t), nil},
+		{"a link to a directory", symlink(t, dir), errNotRegular},
+		{"a dangling link", symlink(t, filepath.Join(dir, "missing")), fs.ErrNotExist},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := CheckTokenFile(tt.path); !errors.Is(err, tt.want) {
