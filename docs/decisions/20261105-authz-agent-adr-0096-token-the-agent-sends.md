@@ -11,7 +11,8 @@ kichasov
 
 #### Participants and approvers
 
-- The project architect (`mr-joom`) approves this record.
+- The project architect (`mr-joom`) approves this record. On 2026-11-23 the architect and the owner of the policy
+  decision code agreed to drop the M2M modes, and with them the rules that refused `client-credentials` in `k8s`.
 - The owner of the policy decision code (`vlsi`) returned the questionnaire of 2026-11-03 and reviewed this record on
   2026-11-05.
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
@@ -19,8 +20,8 @@ kichasov
 #### Related ADRs
 
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
-  ADR-0092 R11, the M2M modes, which decide what the agent accepts; ADR-0092 R12, the refusal in `legacy` of a token
-  that the API server signed; and ADR-0092 R15, how the agent reads the mode.
+  ADR-0092 R11, the tokens that the agent accepts, and ADR-0092 R15, which has the agent leave `M2M_AUTH_MODE` unread,
+  as #345 rewrites them.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
   ADR-0093 R11, the call to tenant-manager, and ADR-0093 R7, the `Tenant` header of outgoing calls.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
@@ -28,6 +29,8 @@ kichasov
   tokens the agent accepts.
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   ADR-0091 R14, the readiness conditions that the policy pull and the default tenant feed.
+- [authz-agent-ADR-0105: Configure the two providers through the chart values](https://github.com/Netcracker/qubership-authz-agent/pull/332),
+  proposed in #332: ADR-0105 R1, which has the chart leave `M2M_AUTH_MODE` unread.
 
 ## Context
 
@@ -47,9 +50,9 @@ chart sets `AUTHZ_M2M_TOKEN_URL` and mounts the client credentials, and with `tr
 empty, and it has to run without the chart as well. `KUBERNETES_M2M_ENABLED` is also a deployment parameter of the
 platform, which deprecates it in favor of `M2M_AUTH_MODE`.
 
-`M2M_AUTH_MODE` of ADR-0092 decides which tokens the agent accepts. The services of an installation accept tokens by its
-M2M mode, which ADR-0092 R11 and R12 define for the agent: in `k8s` they accept only Kubernetes tokens, and in `legacy`
-they refuse a token that the API server signed.
+The platform's deployer passes `M2M_AUTH_MODE` to every service of an installation, and the services that read it
+accept tokens by it: in `k8s` only Kubernetes tokens, and in `legacy` no token that the API server signed. The agent
+does not read it (ADR-0092 R15).
 
 A PIP declaration can set headers today: `setHeaders` and `forwardHeaders` take precedence over the agent's token, and
 `forwardHeaders` can forward the caller's `Authorization`.
@@ -75,10 +78,9 @@ We will choose the token the agent sends with the setting `AUTHZ_M2M_TOKEN_SOURC
 
 - **R1** (`startup`). The agent reads `AUTHZ_M2M_TOKEN_SOURCE` from its environment, `client-credentials` by default.
 - **R2** (`startup`). `client-credentials` sends the agent's client credentials token, and `token-file` sends the
-  content of the agent's token file without the white space around it. `M2M_AUTH_MODE` does not change which one the
-  agent sends.
+  content of the agent's token file without the white space around it.
 - **R3** (`startup`). The value is compared without regard to case, and an empty value means `client-credentials`, the
-  default of R1. Any other value stops the start, as ADR-0092 R15 does for the mode.
+  default of R1. Any other value stops the start.
 - **R4** (`chart`). The chart passes the value `AUTHZ_M2M_TOKEN_SOURCE` to the container under the same name,
   `client-credentials` by default. Its values schema accepts `client-credentials` and `token-file` alone.
 - **R17** (`chart`). The chart does not read `KUBERNETES_M2M_ENABLED`, and its values schema accepts that key with any
@@ -93,11 +95,6 @@ We will choose the token the agent sends with the setting `AUTHZ_M2M_TOKEN_SOURC
   `token-file` it sends no request to `AUTHZ_M2M_TOKEN_URL`, reads neither of the files that `AUTHZ_M2M_CLIENT_ID_FILE`
   and `AUTHZ_M2M_CLIENT_SECRET_FILE` name, and a set value of any of these three settings is no reason for it to stop
   the start.
-- **R8** (`startup`). `client-credentials` in the mode `k8s` stops the start, with a message that names both settings.
-  No other pair of `AUTHZ_M2M_TOKEN_SOURCE` and the mode is a reason to stop the start.
-- **R9** (`chart`). The chart refuses to render `client-credentials` in the mode `k8s`, with a message that names both
-  settings, and no other pair of the two is a reason for it to refuse to render. It compares the mode without regard to
-  case.
 
 #### What the chart mounts and passes
 
@@ -130,17 +127,17 @@ We will choose the token the agent sends with the setting `AUTHZ_M2M_TOKEN_SOURC
 
 ### Justification
 
-Accepting a kind of token and choosing which token to send are separate decisions, so `hybrid` can start sending the
-token for `netcracker` on its own (R2). The values name how the agent gets its token, not who signs it. A token
-endpoint reached with client credentials need not belong to Keycloak, and the agent does not parse the token in its
-file (R2, R6). Reading the value in the agent gives a deployment without the chart the same rule (R1).
+The agent accepts every kind of token (ADR-0092 R11), so choosing which token to send is a decision of its own, and an
+installation switches to the token for `netcracker` when its recipients accept it (R2). The values name how the agent
+gets its token, not who signs it. A token endpoint reached with client credentials need not belong to Keycloak, and the
+agent does not parse the token in its file (R2, R6). Reading the value in the agent gives a deployment without the
+chart the same rule (R1).
 
-In `k8s` the services that receive the agent's token accept only Kubernetes tokens, and no token endpoint reached with
-client credentials issues one. So the agent and the chart stop `client-credentials` in that mode at the start, and the
-operator does not have to find it out from failing calls (R8, R9). The agent cannot tell what its token file holds. The
-file may hold a token that the recipients in `legacy` accept, such as the static token of a test stand whose stubs
-accept any token, so no pair with `token-file` is a reason for the agent to stop the start or for the chart to refuse to
-render (R8, R9).
+Whoever installs the agent chooses the token that its recipients accept. The agent does not read the mode by which the
+recipients accept tokens (ADR-0092 R15), and it cannot tell what its token file holds: the file may hold a token that
+the recipients in `legacy` accept, such as the static token of a test stand whose stubs accept any token. So no value
+that R3 accepts stops the start because of what the recipients accept, and a wrong choice shows at the rollout: the
+recipients answer 401, the policy pull fails, and the agent stays not ready (R15; ADR-0091 R14).
 
 The deployment puts the agent's token file in place before the container starts: the kubelet writes a projected volume,
 and Docker binds a file. A file that is missing, unreadable, or empty at the start is therefore an error of the
@@ -163,18 +160,20 @@ schema does not refuse a deployment that still passes it (R17).
 A PIP address comes from the policy configuration. A declaration that replaced the token could send a caller's token to
 that address, and the recipient would see the caller and not the agent (R11).
 
-The other token would rarely help, because the services of an installation accept what its mode allows, and a retry
+The other token would rarely help, because the services of an installation accept tokens by their own mode, and a retry
 would hide a token that the recipient refuses (R16).
 
 ### Alternatives considered
 
-- **A1. Choose the token by `M2M_AUTH_MODE` alone.** Rejected by R2: the mode would decide both what the agent accepts
-  and what it sends, so `hybrid` could not start sending the token for `netcracker` on its own.
+- **A1. Choose the token by `M2M_AUTH_MODE`.** Rejected by R1 and R2: the agent does not read `M2M_AUTH_MODE`
+  (ADR-0092 R15), and an installation in `hybrid` could not choose when to start sending the token for `netcracker`.
 - **A2. Let an unset value follow `M2M_AUTH_MODE`.** Rejected by R1: the setting would have a third state, and an
   operator could not tell from `values.yaml` which token the agent sends.
 - **A3. Keep the value in the chart alone.** Rejected by R1: the agent has to run without the chart as well.
-- **A4. Refuse `token-file` in `legacy`.** Rejected by R8 and R9: the agent cannot tell what its token file holds, and
-  the file may hold a token that the recipients in `legacy` accept. An earlier version of R8 refused this pair.
+- **A4. Stop the start, and refuse to render, on a pair of `AUTHZ_M2M_TOKEN_SOURCE` and `M2M_AUTH_MODE` that the
+  recipients refuse, such as `client-credentials` in `k8s`.** Rejected by ADR-0092 R15 and ADR-0105 R1: neither the
+  agent nor the chart reads `M2M_AUTH_MODE`, and a wrong choice shows at the rollout (R15). Earlier versions of R8 and
+  R9 refused `client-credentials` in `k8s`, and before that `token-file` in `legacy`.
 - **A5. Let a PIP declaration set these headers.** Rejected by R11: the token of a caller would reach an address from
   the policy configuration, and a PIP could answer for another tenant than the decision.
 - **A6. Let a setting name the file that `token-file` reads.** Rejected by R6: a deployment puts the token at the path
@@ -198,17 +197,19 @@ would hide a token that the recipient refuses (R16).
 
 Negative:
 
-- Switching an installation to `k8s` takes a second setting, `AUTHZ_M2M_TOKEN_SOURCE` set to `token-file` (R2, R8).
-- A deployment that sets `KUBERNETES_M2M_ENABLED=true` and not `AUTHZ_M2M_TOKEN_SOURCE` gets `client-credentials`
-  (R4, R17). In `k8s` the chart refuses to render it (R9), and in the other modes it needs the Secret
-  `<SERVICE_NAME>-client-credentials` (R18), until it sets `AUTHZ_M2M_TOKEN_SOURCE` to `token-file`.
+- An installation whose recipients accept only Kubernetes tokens, as in `k8s`, sets `AUTHZ_M2M_TOKEN_SOURCE` to
+  `token-file` itself (R2).
+- No value of `AUTHZ_M2M_TOKEN_SOURCE` that R3 accepts stops the start because of what the recipients accept. Where the
+  recipients refuse the agent's token, such as the token for `netcracker` in `legacy` or the client credentials token in
+  `k8s`, every call that carries it fails, and a policy pull that fails keeps the agent not ready through ADR-0091 R14
+  (R2, R15).
+- A deployment that sets `KUBERNETES_M2M_ENABLED=true` and not `AUTHZ_M2M_TOKEN_SOURCE` gets `client-credentials`, and
+  needs the Secret `<SERVICE_NAME>-client-credentials`, until it sets `AUTHZ_M2M_TOKEN_SOURCE` to `token-file` (R4,
+  R17, R18).
 - An agent without the chart that reads its token file with `AUTHZ_M2M_TOKEN_URL` empty stops the start until it sets
   `AUTHZ_M2M_TOKEN_SOURCE` to `token-file` (R1, R5).
-- In `legacy`, `token-file` with the token for `netcracker` does not stop the start. The recipients refuse that token,
-  so every call that carries it fails, and a policy pull that fails keeps the agent not ready through ADR-0091 R14
-  (R8, R15).
 - With `client-credentials`, an installation whose Keycloak serves its realms without `/auth` sets
   `AUTHZ_M2M_TOKEN_URL`. Without it the agent stays not ready (R14, R19).
 - A PIP that forwards the caller's `Authorization` or `Tenant` receives the agent's token and the tenant of the decision
   instead.
-- In `k8s` the agent sends PIPs the token for `netcracker` in place of its client credentials token (R8).
+- With `token-file` the agent sends PIPs the token for `netcracker` in place of its client credentials token (R2).
