@@ -845,6 +845,10 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
       read-only-on-kubernetes) root_args=(--set PAAS_PLATFORM=KUBERNETES --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=true) ;;
       writable-when-turned-off) root_args=(--set PAAS_PLATFORM=KUBERNETES --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=false) ;;
       writable-on-openshift) root_args=(--set PAAS_PLATFORM=OPENSHIFT) ;;
+      *)
+        fail "${name}: the root file system ${root} has no render arguments in this case statement"
+        continue
+        ;;
     esac
     root_deployment="$(helm template t "${chart}" -f "${SIZING}" "${root_args[@]}" --show-only templates/deployment.yaml 2>&1 || true)"
     entrypoint_mounts=""
