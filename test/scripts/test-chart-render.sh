@@ -242,40 +242,62 @@ done
 # whole block is compared, so a rollingUpdate left under Recreate would show.
 strategy_of() { deployment_of "$@" | sed -n '/^  strategy:/,/^  selector:/p' | sed '$d'; }
 
-# Renders the Deployment of a chart and prints the value of one environment
-# variable as the Deployment carries it to the API server, "" when the chart
-# sets none. Helm parses the rendered manifest itself, with fromYaml in a
-# throwaway chart, so a value prints the same whichever YAML quoting the
-# template writes it in. A value that is neither a string nor null, which the
-# Kubernetes schema does not allow for an environment variable, prints as
-# `not a string: ` and its JSON. A render that fails prints the first lines of
-# Helm's error, and a manifest that fromYaml cannot parse prints
-# `fromYaml failed: ` and its error, so a check that prints the value it
-# compared shows why it failed. None of these outputs ends the run under
-# `set -e`: a suite that stops says less than one that names the check that
-# failed.
-env_value_of() {
-  local chart="$1" name="$2" render decoder
-  shift 2
-  if ! render="$(helm template t "${chart}" -f "${SIZING}" "$@" --show-only templates/deployment.yaml 2>&1)"; then
-    echo "helm template failed: $(head -3 <<<"${render}" | paste -sd ' ' -)"
-    return
-  fi
+# Renders a chart and prints its documents as one JSON object, {"docs": [...]},
+# each document parsed by fromYaml in a throwaway chart. fromYaml rather than a
+# YAML tool such as yq keeps the suite on helm and jq, and parses with the YAML
+# library that Helm itself uses for manifests. A document that fromYaml cannot
+# parse becomes an object that holds the parser's message under "Error". A
+# render that fails prints `helm template failed: ` and the first lines of
+# Helm's error instead, which is not JSON. Helm's warnings on a render that
+# passes stay out of the documents.
+decoded_render() {
+  local chart="$1" decoder
+  shift
   decoder="$(mktemp -d)"
   mkdir "${decoder}/templates"
-  printf 'apiVersion: v2\nname: decoder\nversion: 0.0.0\n' >"${decoder}/Chart.yaml"
-  printf '%s\n' "${render}" >"${decoder}/deployment.yaml"
-  printf '%s\n' '{{ .Files.Get "deployment.yaml" | fromYaml | toJson }}' >"${decoder}/templates/decoded.yaml"
-  helm template d "${decoder}" 2>&1 | tail -n 1 \
-    | jq -r --arg name "${name}" '
-        if .Error then "fromYaml failed: \(.Error)"
-        else first(.spec.template.spec.containers[]?.env[]? | select(.name == $name) | .value) as $v
-          | if ($v | type) == "string" then $v
-            elif $v == null then ""
-            else "not a string: \($v | tojson)"
-            end
-        end' 2>&1 || true
+  if helm template t "${chart}" -f "${SIZING}" "$@" >"${decoder}/render.yaml" 2>"${decoder}/helm.err"; then
+    printf 'apiVersion: v2\nname: decoder\nversion: 0.0.0\n' >"${decoder}/Chart.yaml"
+    cat >"${decoder}/templates/decoded.yaml" <<'TEMPLATE'
+{{- $docs := list -}}
+{{- range regexSplit "(?m)^---$" (.Files.Get "render.yaml") -1 -}}
+{{- if trim . }}{{ $docs = append $docs (fromYaml .) }}{{ end -}}
+{{- end -}}
+{{ toJson (dict "docs" $docs) }}
+TEMPLATE
+    helm template d "${decoder}" 2>&1 | tail -n 1
+  else
+    echo "helm template failed: $(head -3 "${decoder}/helm.err" | paste -sd ' ' -)"
+  fi
   rm -rf "${decoder}"
+}
+
+# Renders the Deployment of a chart and prints the value of one environment
+# variable as Helm sends it to the API server, "" when the chart sets none. A
+# value prints the same whichever YAML quoting the template writes it in. A
+# value that is neither a string nor null, which the Kubernetes schema does not
+# allow for an environment variable, prints as `not a string: ` and its JSON. A
+# render that fails prints the first lines of Helm's error, and a manifest that
+# fromYaml cannot parse prints `fromYaml failed: ` and its message, so a check
+# that prints the value it compared shows why it failed. None of these outputs
+# ends the run under `set -e`: a suite that stops says less than one that names
+# the check that failed.
+env_value_of() {
+  local chart="$1" name="$2" decoded
+  shift 2
+  decoded="$(decoded_render "${chart}" "$@" --show-only templates/deployment.yaml)"
+  if [[ "${decoded}" != "{"* ]]; then
+    printf '%s\n' "${decoded}"
+    return
+  fi
+  jq -r --arg name "${name}" '
+    .docs[0] as $d
+    | if $d.Error then "fromYaml failed: \($d.Error)"
+      else first($d.spec.template.spec.containers[]?.env[]? | select(.name == $name) | .value) as $v
+        | if ($v | type) == "string" then $v
+          elif $v == null then ""
+          else "not a string: \($v | tojson)"
+          end
+      end' <<<"${decoded}" 2>&1 || true
 }
 
 env_value() {
@@ -431,40 +453,208 @@ else
   pass "a duplicated realm is rejected"
 fi
 
-# ── String settings reach the Deployment as set ──────────────────────────
+# ── Free string settings reach the chart's objects as set ────────────────
 #
-# The schema types these settings as strings with no pattern, and a URL may
-# hold an apostrophe, one of the sub-delims of RFC 3986. Each test value holds
-# what breaks a YAML string written without escapes. The apostrophe ends a
-# value written between single quotes. The double quote ends a value written
-# between double quotes, and the backslash starts an escape there. A value
-# written with no quotes breaks on the colon followed by a space and on the
-# space followed by `#`; a colon or a `#` elsewhere in its middle is safe. The
-# value goes in through --set-json, which keeps the backslash that --set would
-# read as an escape.
-expect_env_as_set() {
-  local key="$1" env_name="$2" value="$3" expected="$4" got
-  got="$(env_value "${env_name}" --set-json "${key}=$(jq -cn --arg v "${value}" '$v')")"
-  if [[ "${got}" == "${expected}" ]]; then
-    pass "${key}=${value} reaches ${env_name} as set"
+# A top-level setting of values.schema.json of type string with no enum,
+# pattern, or format is free text: the schema accepts any character in it, and
+# a URL may hold an apostrophe, one of the sub-delims of RFC 3986. Each such
+# setting gets a marker, its own name in square brackets followed by a fragment
+# that breaks a YAML string written without escapes. The apostrophe ends a value
+# written between single quotes. The double quote ends a value written between
+# double quotes, and the backslash starts an escape there. A value written with
+# no quotes breaks on the colon followed by a space and on the space followed
+# by `#`; a colon or a `#` elsewhere in its middle is safe.
+#
+# The chart is rendered with every marker set, once in each variant: the
+# defaults, each boolean setting true and false, and each value of each enum
+# setting. Every render has to pass. Every marker has to arrive whole in some
+# string of some render, and a string of a JSON document that a string holds,
+# such as the trusted-providers document, counts. No string may hold the start
+# of a marker, its name in brackets, without the rest. A free string setting
+# added to the schema is checked without an edit here.
+#
+# Every other setting keeps its default or the dev profile's value in every
+# render, so the check does not see a template branch that only another value
+# opens: an empty checked string, a non-empty value of a setting the check
+# leaves out (DEPLOYMENT_SESSION_ID or DEPLOYMENT_VERSION, for example), or
+# another value of an integer, integerOrString, or array setting. Nor does it
+# see a setting nested in an array or an object, a string that only two
+# variants together render, or which field carries a value. For one setting a
+# check below pins the field: IDENTITY_PROVIDER_URL arrives as the prefix of
+# the AUTHZ_M2M_TOKEN_URL environment variable.
+string_fragment=$'a\'b"c\\d: #e'
+
+# The free string settings the check leaves out, with the field each one fills;
+# an entry that names no free string setting of the schema fails the check.
+# Each field has a fixed form that takes no apostrophe, double quote, or
+# backslash, and no colon or `#` next to a space: a name, a label, an image
+# reference, a quantity, a number or a percentage, or a version that the
+# deployer sets. Most of the settings come from the platform's common
+# properties schema, whose entries the chart keeps as that schema has them:
+# the deployer refuses a chart whose entry for a common property differs. So a
+# pattern in values.schema.json cannot refuse these characters for them.
+strings_not_checked=(
+  "NAMESPACE: the namespace of the objects"
+  "SERVICE_NAME: the names of the objects, and a label value"
+  "APPLICATION_NAME: a label value"
+  "MANAGED_BY: a label value"
+  "DEPLOYMENT_SESSION_ID: a label value"
+  "ARTIFACT_DESCRIPTOR_VERSION: a label value"
+  "DEPLOYMENT_VERSION: the blue-green version of the mesh routes, such as v2"
+  "IMAGE_REPOSITORY: the image reference"
+  "TAG: the image reference"
+  "MEMORY_REQUEST: a resource quantity"
+  "MEMORY_LIMIT: a resource quantity"
+  "DEPLOYMENT_STRATEGY_MAXSURGE: a number or a percentage, written without quotes so that a number stays a number"
+  "DEPLOYMENT_STRATEGY_MAXUNAVAILABLE: a number or a percentage, written without quotes so that a number stays a number"
+  "CLOUD_TOPOLOGY_KEY: a label key, written without quotes"
+)
+
+free_strings="$(jq -r '.properties | to_entries[]
+  | select(.value.type == "string" and (.value | has("enum") or has("pattern") or has("format") | not))
+  | .key' "${CHART_DIR}/values.schema.json")"
+not_checked_keys="$(printf '%s\n' "${strings_not_checked[@]}" | sed 's/:.*//')"
+while IFS= read -r key; do
+  if ! grep -qxF "${key}" <<<"${free_strings}"; then
+    fail "${key} is left out of the string check, but values.schema.json has no free string setting of that name"
+  fi
+done <<<"${not_checked_keys}"
+checked_strings="$(grep -vxF -f <(printf '%s\n' "${not_checked_keys}") <<<"${free_strings}" || true)"
+
+variants=("")
+while IFS= read -r variant; do
+  variants+=("${variant}")
+done < <(jq -r '.properties | to_entries[]
+  | if .value.type == "boolean" then "\(.key)=true", "\(.key)=false"
+    elif .value.enum then .key as $key | .value.enum[] | "\($key)=\(tojson)"
+    else empty end' "${CHART_DIR}/values.schema.json")
+
+# Renders the agent chart in one variant with the given arguments added. The
+# variant is "" for the defaults or KEY=<JSON value>. --set-json keeps an enum
+# value that looks like a number or holds a comma as one string, where --set
+# would not. The dev profile sets HPA_MAX_REPLICAS, which the variant
+# HPA_ENABLED=true needs to render.
+render_variant() {
+  local variant="$1"
+  shift
+  if [[ -n "${variant}" ]]; then
+    decoded_render "${CHART_DIR}" -f "${CHART_DIR}/resource-profiles/dev.yaml" --set-json "${variant}" "$@"
   else
-    fail "${key}=${value} renders ${env_name} as: ${got}; expected: ${expected}"
+    decoded_render "${CHART_DIR}" -f "${CHART_DIR}/resource-profiles/dev.yaml" "$@"
   fi
 }
 
-expect_env_as_set AUTHZ_TRUSTED_PROVIDERS_FILE AUTHZ_TRUSTED_PROVIDERS_FILE \
-  $'/etc/authz/a\'b"c\\d: #e.json' $'/etc/authz/a\'b"c\\d: #e.json'
-expect_env_as_set AUTHZ_TENANT_MANAGER_URL AUTHZ_TENANT_MANAGER_URL \
-  $'https://tenant-manager:8443/a\'b"c\\d: #e' $'https://tenant-manager:8443/a\'b"c\\d: #e'
-expect_env_as_set AUTHZ_PAP_CLIENT_SOURCE_URL AUTHZ_PAP_CLIENT_SOURCE_URL \
-  $'https://access-control:8443/a\'b"c\\d: #e' $'https://access-control:8443/a\'b"c\\d: #e'
-expect_env_as_set AUTHZ_PAP_CLIENT_TOKEN_FILE AUTHZ_PAP_CLIENT_TOKEN_FILE \
-  $'/var/run/secrets/a\'b"c\\d: #e/token' $'/var/run/secrets/a\'b"c\\d: #e/token'
-expect_env_as_set AUTHZ_ENTITLEMENTS_URL AUTHZ_ENTITLEMENTS_URL \
-  $'https://entitlements:8443/a\'b"c\\d: #e' $'https://entitlements:8443/a\'b"c\\d: #e'
-expect_env_as_set IDENTITY_PROVIDER_URL AUTHZ_M2M_TOKEN_URL \
-  $'https://identity-provider:8443/a\'b"c\\d: #e' \
-  $'https://identity-provider:8443/a\'b"c\\d: #e/auth/realms/cloud-common/protocol/openid-connect/token'
+# The --set-json argument that sets one setting to its marker.
+string_marker_arg() {
+  printf '%s=%s' "$1" "$(jq -cn --arg v "[$1]${string_fragment}" '$v')"
+}
+
+if [[ -z "${checked_strings}" ]]; then
+  fail "values.schema.json has no free string setting left for the string check"
+elif (( ${#variants[@]} < 2 )); then
+  fail "values.schema.json gives the string check no variant beyond the defaults"
+else
+  marker_args=()
+  while IFS= read -r key; do
+    marker_args+=(--set-json "$(string_marker_arg "${key}")")
+  done <<<"${checked_strings}"
+
+  whole_strings=""
+  failed_strings=""
+  for variant in "${variants[@]}"; do
+    shown="${variant:-the defaults}"
+    decoded="$(render_variant "${variant}" "${marker_args[@]}")"
+    if [[ "${decoded}" != "{"* ]]; then
+      bare="$(render_variant "${variant}")"
+      if [[ "${bare}" != "{"* ]]; then
+        fail "the chart does not render with ${shown}, with no marker set: ${bare}"
+        continue
+      fi
+      # Name the settings that fail the render on their own, and check the
+      # others with their markers alone.
+      rest_args=()
+      while IFS= read -r key; do
+        one="$(render_variant "${variant}" --set-json "$(string_marker_arg "${key}")")"
+        if [[ "${one}" == "{"* ]]; then
+          rest_args+=(--set-json "$(string_marker_arg "${key}")")
+        elif ! grep -qxF "${key}" <<<"${failed_strings}"; then
+          failed_strings+="${key}"$'\n'
+          fail "the marker [${key}]${string_fragment} fails the render with ${shown}: ${one}"
+        fi
+      done <<<"${checked_strings}"
+      if (( ${#rest_args[@]} == 0 )); then
+        continue
+      fi
+      decoded="$(render_variant "${variant}" "${rest_args[@]}")"
+      if [[ "${decoded}" != "{"* ]]; then
+        fail "the chart renders with ${shown} and each marker alone, but not with all of them: ${decoded}"
+        continue
+      fi
+    fi
+    while IFS=' ' read -r state key detail; do
+      case "${state}" in
+        whole)
+          whole_strings+="${key}"$'\n'
+          ;;
+        cut)
+          if ! grep -qxF "${key}" <<<"${failed_strings}"; then
+            failed_strings+="${key}"$'\n'
+            fail "the marker [${key}]${string_fragment} arrives cut short with ${shown}: ${detail}"
+          fi
+          ;;
+        unparsed)
+          fail "fromYaml cannot parse a document rendered with ${shown}: ${key} ${detail}"
+          ;;
+      esac
+    done < <(jq -r --arg keys "${checked_strings}" --arg fragment "${string_fragment}" '
+      # The strings of a value, with a string that holds a JSON object or
+      # array replaced by the strings inside it.
+      def leaves: .. | strings | (fromjson? // null) as $j
+        | if ($j | type) == "object" or ($j | type) == "array" then $j | leaves else . end;
+      (.docs[] | select(type == "object" and has("Error")) | "unparsed \(.Error)"),
+      ([.docs[] | leaves] as $s
+        | ($keys | split("\n") | map(select(. != "")))[] as $k
+        | "[\($k)]\($fragment)" as $m
+        | (if any($s[]; contains($m)) then "whole \($k)" else empty end),
+          (first($s[] | select(contains("[\($k)]") and (contains($m) | not)))
+            | "cut \($k) \(tojson | .[0:200])"))' <<<"${decoded}")
+  done
+
+  while IFS= read -r key; do
+    if grep -qxF "${key}" <<<"${failed_strings}"; then
+      continue
+    elif grep -qxF "${key}" <<<"${whole_strings}"; then
+      pass "the marker [${key}]${string_fragment} renders in all ${#variants[@]} variants and arrives whole in at least one"
+    else
+      fail "the marker [${key}]${string_fragment} arrives in no string of the ${#variants[@]} variants; render ${key}, or leave it out of the string check with its field"
+    fi
+  done <<<"${checked_strings}"
+fi
+
+# IDENTITY_PROVIDER_URL is the prefix of the token endpoint from which the
+# agent requests its own token.
+idp_url="https://identity-provider:8443/${string_fragment}"
+expected="${idp_url}/auth/realms/cloud-common/protocol/openid-connect/token"
+token_url="$(env_value AUTHZ_M2M_TOKEN_URL --set-json "IDENTITY_PROVIDER_URL=$(jq -cn --arg v "${idp_url}" '$v')")"
+if [[ "${token_url}" == "${expected}" ]]; then
+  pass "IDENTITY_PROVIDER_URL=${idp_url} reaches AUTHZ_M2M_TOKEN_URL as the prefix of the token path"
+else
+  fail "IDENTITY_PROVIDER_URL=${idp_url} renders AUTHZ_M2M_TOKEN_URL as: ${token_url}; expected: ${expected}"
+fi
+
+# The chart renders with IDENTITY_PROVIDER_URL unset when
+# AUTHZ_TRUSTED_PROVIDERS is set. AUTHZ_M2M_TOKEN_URL is then the bare token
+# path, which no token request can use; this check pins only that its prefix is
+# empty rather than %!s(<nil>).
+unset_idp="$(env_value AUTHZ_M2M_TOKEN_URL \
+  --set-json 'AUTHZ_TRUSTED_PROVIDERS=[{"id":"kc","jwksUri":"https://kc:8443/certs"}]' \
+  --set IDENTITY_PROVIDER_URL=null)"
+expected="/auth/realms/cloud-common/protocol/openid-connect/token"
+if [[ "${unset_idp}" == "${expected}" ]]; then
+  pass "an unset IDENTITY_PROVIDER_URL leaves an empty prefix on AUTHZ_M2M_TOKEN_URL"
+else
+  fail "an unset IDENTITY_PROVIDER_URL renders AUTHZ_M2M_TOKEN_URL as: ${unset_idp}; expected: ${expected}, where printf without default \"\" prints %!s(<nil>) for the prefix"
+fi
 
 # ── The agent Pod (authz-agent-ADR-0080) ─────────────────────────────────
 #
