@@ -11,7 +11,8 @@ kichasov
 
 #### Participants and approvers
 
-- The owner of the policy decision code (`vlsi`) approves this record.
+- The owner of the policy decision code (`vlsi`) approves this record. On 2026-11-23 the owner and the project
+  architect (`mr-joom`) agreed to drop the M2M modes, and with them `TOKEN_KIND_NOT_ALLOWED`.
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
 
 #### Related ADRs
@@ -21,10 +22,10 @@ kichasov
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   the checks of a token, each with its reason code, and ADR-0091 R38, keys that could not be loaded.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
-  ADR-0092 R1 and R2, the refusals of a missing or wrong token, ADR-0092 R11, the kinds of token, and ADR-0092 R4, a
-  caller outside its tenant.
+  ADR-0092 R1 and R2, the refusals of a missing or wrong token, and ADR-0092 R4, a caller outside its tenant.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
-  ADR-0093 R1, the tenant that the steps of this record compare with.
+  ADR-0093 R1, the tenant that the steps of this record compare with, and ADR-0093 R22, the 503 in steps 4 and 5
+  before the default tenant is translated.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
   ADR-0094 R14, R16 to R18, and R25, the refusals of a Kubernetes token.
 
@@ -49,8 +50,7 @@ and the reason code in the audit and a metric.
 #### The steps before policy evaluation
 
 - **R1** (`handler`). The agent runs these steps in this order:
-  1. Read and verify the token in `Authorization`: ADR-0092 R1, the checks of ADR-0091 and ADR-0094, and then the kind
-     of token of ADR-0092 R11.
+  1. Read and verify the token in `Authorization`: ADR-0092 R1 and the checks of ADR-0091 and ADR-0094.
   2. Verify the token in `Incoming-Token`.
   3. Take the tenant of the decision (ADR-0093 R1) and log a mismatch (ADR-0093 R8).
   4. Compare a caller that is not M2M with that tenant (ADR-0092 R4, R5).
@@ -59,14 +59,15 @@ and the reason code in the audit and a metric.
 - **R3** (`handler`). A failure in step 2 does not end the request, and policy evaluation gets the reason code of the
   failure. The exception is `TOKEN_KEYS_UNAVAILABLE`, which ends the request with a 503, because the tenant of step 3
   cannot be known.
-- **R4** (`handler`). A refusal in step 4 is a 403.
+- **R4** (`handler`). A refusal in step 4 is a 403, or a 503 for `DEFAULT_TENANT_NOT_TRANSLATED` of ADR-0093 R22.
 - **R5** (`handler`). In step 5 a tenant without data or with a rejected snapshot gets the deny of ADR-0093 R16 or R18
-  from Go.
+  from Go. The exception is a request that ADR-0093 R22 refuses in step 5 with a 503 for
+  `DEFAULT_TENANT_NOT_TRANSLATED`.
 
 #### Refusals
 
 - **R6** (`handler`). A refusal has an empty body.
-- **R7** (`handler`). A 503 carries `Retry-After: 60`, the minute in which a source is not asked again.
+- **R7** (`handler`). A 503 carries `Retry-After: 60`.
 - **R8** (`handler`). A 401 carries `WWW-Authenticate: Bearer` for `TOKEN_MISSING` and `TOKEN_SCHEME_INVALID`, and
   `WWW-Authenticate: Bearer error="invalid_token"` for every other code, as RFC 6750 requires. These reveal nothing
   beyond the status.
@@ -93,18 +94,18 @@ and the reason code in the audit and a metric.
   | 401 | `TOKEN_MISSING`, `TOKEN_SCHEME_INVALID` | ADR-0092 R1 |
   | 401 | `TOKEN_FORMAT_INVALID` | ADR-0091 R40 |
   | 401 | `TOKEN_ALG_NOT_ALLOWED` | ADR-0091 R41 |
-  | 401 | `TOKEN_ISSUER_UNKNOWN` | ADR-0091 R5, R11; ADR-0092 R12 |
+  | 401 | `TOKEN_ISSUER_UNKNOWN` | ADR-0091 R5, R11 |
   | 401 | `TOKEN_KID_MISSING` | ADR-0091 R22 |
   | 401 | `TOKEN_KID_UNKNOWN` | ADR-0091 R23, R39 |
   | 401 | `TOKEN_SIGNATURE_INVALID` | ADR-0091 R43 |
   | 401 | `TOKEN_AUDIENCE_MISSING`, `TOKEN_AUDIENCE_INVALID` | ADR-0091 R50; ADR-0094 R14 |
   | 401 | `TOKEN_EXP_MISSING`, `TOKEN_EXPIRED`, `TOKEN_NOT_YET_VALID` | ADR-0091 R44, R45 |
   | 401 | `TOKEN_IAT_MISSING`, `TOKEN_IAT_INVALID` | ADR-0091 R46, R47, R48 |
-  | 401 | `TOKEN_KIND_NOT_ALLOWED` | ADR-0092 R13 |
   | 401 | `TOKEN_NAMESPACE_NOT_ALLOWED` | ADR-0094 R25 |
   | 401 | `TOKEN_SUBJECT_INVALID` | ADR-0094 R16 |
   | 403 | `CALLER_TENANT_MISMATCH` | ADR-0092 R4 |
   | 503 | `TOKEN_KEYS_UNAVAILABLE` | ADR-0091 R37, R38, for either header |
+  | 503 | `DEFAULT_TENANT_NOT_TRANSLATED` | ADR-0093 R22 |
 
 ### Justification
 
@@ -116,9 +117,9 @@ looks, under the `X-Request-Id` (R9, R10).
 
 A code of its own for keys that could not be loaded keeps an outage of Keycloak from reading like an invented token. The
 503 says that the fault is not the caller's token, and `Retry-After` keeps a client from adding traffic during the
-outage (R2, R7). A user token whose keys cannot be loaded ends the request, because otherwise the same request would
-move to another tenant for as long as the outage lasts (R3). A code of its own for a realm token or a file token in
-`k8s` shows which services still call with one, which is what that mode is for.
+outage (R2, R7). Its 60 seconds is the minute in which a source of keys is not asked again. A user token whose keys
+cannot be loaded ends the request, because otherwise the same request would move to another tenant for as long as the
+outage lasts (R3).
 
 ### Alternatives considered
 
@@ -131,8 +132,6 @@ move to another tenant for as long as the outage lasts (R3). A code of its own f
   traffic at the worst moment.
 - **A4. Evaluate a request whose user token failed for that reason.** Rejected by R3: the decision would move to the
   tenant the request names or to the default tenant, and move back when the keys arrive.
-- **A5. Report a realm token or a file token in `k8s` as `TOKEN_ISSUER_UNKNOWN`.** Rejected by ADR-0092 R13: a service
-  that still has to migrate would look like a token of an unknown issuer.
 
 ## Consequences
 
