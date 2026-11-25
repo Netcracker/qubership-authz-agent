@@ -20,8 +20,7 @@ kichasov
 #### Related ADRs
 
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
-  ADR-0092 R11, the tokens that the agent accepts, and ADR-0092 R15, which has the agent leave `M2M_AUTH_MODE` unread,
-  as #345 rewrites them.
+  ADR-0092 R11, the tokens that the agent accepts, and ADR-0092 R15, which has the agent leave `M2M_AUTH_MODE` unread.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
   ADR-0093 R11, the call to tenant-manager, and ADR-0093 R7, the `Tenant` header of outgoing calls.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
