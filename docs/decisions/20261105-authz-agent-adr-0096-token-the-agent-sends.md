@@ -14,7 +14,7 @@ kichasov
 - The project architect (`mr-joom`) approves this record. On 2026-11-23 the architect and the owner of the policy
   decision code agreed to drop the M2M modes, and with them the rules that refused `client-credentials` in `k8s`.
 - The owner of the policy decision code (`vlsi`) returned the questionnaire of 2026-11-03 and reviewed this record on
-  2026-11-05.
+  2026-11-05 and 2026-11-25.
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
 
 #### Related ADRs
@@ -31,6 +31,9 @@ kichasov
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](https://github.com/Netcracker/qubership-authz-agent/pull/329),
   proposed in #329: the term Kubernetes token (ADR-0104 R22), and ADR-0104 R14, under which the agent stops the start
   when it cannot read the token for the API server.
+- [authz-agent-ADR-0101: Run the agent in Docker without Kubernetes](https://github.com/Netcracker/qubership-authz-agent/pull/235),
+  proposed in #235: ADR-0101 R6, which checks the value of every agent variable and may refuse a setting that R20 of
+  this record leaves unread, and ADR-0101 R9, the token source of the Compose example.
 
 ## Context
 
@@ -59,13 +62,13 @@ A PIP declaration can set headers today: `setHeaders` and `forwardHeaders` take 
 
 ## Decision
 
-We will choose the token the agent sends with the setting `AUTHZ_M2M_TOKEN_SOURCE`, which the agent reads itself:
-`client-credentials`, the default, or `token-file`.
+We will choose the token the agent sends with the setting `AUTHZ_OUTGOING_TOKEN_SOURCE`, which the agent reads
+itself: `client-credentials`, the default, or `token-file`.
 
 ### Terms
 
 - **The agent's client credentials token**: the token that the agent obtains with client credentials from the token
-  endpoint in `AUTHZ_M2M_TOKEN_URL`.
+  endpoint in `AUTHZ_OUTGOING_TOKEN_URL`.
 - **The agent's token file**: `/var/run/secrets/tokens/netcracker/token`, the path of the token for `netcracker` of
   ADR-0094.
 - **The agent's token**: the token that R2 has the agent present to the recipients of R10.
@@ -77,35 +80,38 @@ We will choose the token the agent sends with the setting `AUTHZ_M2M_TOKEN_SOURC
 
 #### The setting
 
-- **R1** (`startup`). The agent reads `AUTHZ_M2M_TOKEN_SOURCE` from its environment, `client-credentials` by default.
+- **R1** (`startup`). The agent reads `AUTHZ_OUTGOING_TOKEN_SOURCE` from its environment, `client-credentials` by
+  default.
 - **R2** (`startup`). `client-credentials` sends the agent's client credentials token, and `token-file` sends the
   content of the agent's token file without the white space around it.
 - **R3** (`startup`). The value is compared without regard to case, and an empty value means `client-credentials`, the
   default of R1. Any other value stops the start.
-- **R4** (`chart`). The chart passes the value `AUTHZ_M2M_TOKEN_SOURCE` to the container under the same name,
+- **R4** (`chart`). The chart passes the value `AUTHZ_OUTGOING_TOKEN_SOURCE` to the container under the same name,
   `client-credentials` by default. Its values schema accepts `client-credentials` and `token-file` alone.
 - **R17** (`chart`). The chart does not read `KUBERNETES_M2M_ENABLED`, and its values schema accepts that key with any
   value.
-- **R5** (`startup`). `client-credentials` takes the token endpoint from `AUTHZ_M2M_TOKEN_URL` and the client id and the
-  client secret from the files that `AUTHZ_M2M_CLIENT_ID_FILE` and `AUTHZ_M2M_CLIENT_SECRET_FILE` name. An empty
-  endpoint stops the start.
-- **R6** (`startup`). With `token-file` the agent reads the agent's token file, and stops the start when that file is
-  missing, cannot be read by the agent, is not a regular file once symbolic links are followed, or is empty or holds
-  only white space. The agent does not parse the token in the file, so no other content of the file stops the start.
-- **R7** (`startup`, `client`). With `client-credentials` the agent does not read the agent's token file. With
-  `token-file` it sends no request to `AUTHZ_M2M_TOKEN_URL`, reads neither of the files that `AUTHZ_M2M_CLIENT_ID_FILE`
-  and `AUTHZ_M2M_CLIENT_SECRET_FILE` name, and a set value of any of these three settings is no reason for it to stop
-  the start.
 
-#### What the chart mounts and passes
+#### What each value reads, and what the chart mounts and passes
 
-- **R18** (`chart`). With `client-credentials` the chart mounts the Secret `<SERVICE_NAME>-client-credentials`, passes
-  `AUTHZ_M2M_CLIENT_ID_FILE` and `AUTHZ_M2M_CLIENT_SECRET_FILE` with the paths of the files of that Secret, and passes
-  the token endpoint of R19. With `token-file` it mounts no such Secret, passes none of these three settings, and a set
-  value `AUTHZ_M2M_TOKEN_URL` is no reason for it to refuse to render.
-- **R19** (`chart`). With `client-credentials` the chart passes the value `AUTHZ_M2M_TOKEN_URL`, empty by default, to
-  the container under the same name. In place of an empty value it passes `IDENTITY_PROVIDER_URL`, less one trailing
-  `/`, followed by `/auth/realms/cloud-common/protocol/openid-connect/token`.
+- **R20** (`startup`, `client`, `chart`). For each value of `AUTHZ_OUTGOING_TOKEN_SOURCE`, this table gives the inputs
+  that the agent reads and the ones that the chart mounts or passes. An input that the table marks unread for a value
+  is one that the agent with that value does not use: it sends no request to an unread token endpoint and opens no
+  unread file. A set value of a setting that names an unread input stops the start only where ADR-0101 R6 refuses that
+  value, and that refusal takes precedence over this rule.
+
+  | Input | `client-credentials` | `token-file` |
+  | --- | --- | --- |
+  | The token endpoint in `AUTHZ_OUTGOING_TOKEN_URL` | Read. An unset or empty value stops the start. | Unread. |
+  | The client id and the client secret, in the files that `AUTHZ_OUTGOING_CLIENT_ID_FILE` and `AUTHZ_OUTGOING_CLIENT_SECRET_FILE` name | Read at each fetch of the agent's client credentials token. A file that the agent cannot read fails that fetch: at the start R14 applies, and later R13. | Unread. |
+  | How long before its expiry the agent renews its client credentials token, in `AUTHZ_OUTGOING_RENEW_BEFORE_SECONDS` | Read. | Unread. |
+  | The agent's token file | Unread. | Read. A file that is missing, that the agent cannot read, that is not a regular file once symbolic links are followed, or that is empty or holds only white space stops the start. The agent does not parse the token, so no other content of the file stops the start. |
+  | In the chart, the Secret `<SERVICE_NAME>-client-credentials` | Mounted, and `AUTHZ_OUTGOING_CLIENT_ID_FILE` and `AUTHZ_OUTGOING_CLIENT_SECRET_FILE` passed with the paths of its files. | Not mounted, and neither file setting passed. |
+  | In the chart, the value `AUTHZ_OUTGOING_TOKEN_URL` | Passed as R19 gives it. | Not passed. A set value is no reason to refuse to render. |
+
+- **R19** (`chart`). Where R20 has the chart pass the token endpoint, the chart passes the value
+  `AUTHZ_OUTGOING_TOKEN_URL`, empty by default, to the container under the same name. In place of an empty value it
+  passes `IDENTITY_PROVIDER_URL`, less one trailing `/`, followed by
+  `/auth/realms/cloud-common/protocol/openid-connect/token`.
 
 #### The recipients
 
@@ -131,24 +137,33 @@ We will choose the token the agent sends with the setting `AUTHZ_M2M_TOKEN_SOURC
 The agent accepts every kind of token (ADR-0092 R11), so choosing which token to send is a decision of its own, and an
 installation switches to the token for `netcracker` when its recipients accept it (R2). The values name how the agent
 gets its token, not who signs it. A token endpoint reached with client credentials need not belong to Keycloak, and the
-agent does not parse the token in its file (R2, R6). Reading the value in the agent gives a deployment without the
+agent does not parse the token in its file (R2, R20). Reading the value in the agent gives a deployment without the
 chart the same rule (R1).
+
+The values schema accepts the two values only as R4 spells them, as it accepts the levels of `LOG_LEVEL` only in
+lowercase, so every values file spells a value one way. A deployment without the chart sets the variable by hand, so
+the agent compares the value without regard to case and reads an empty value as the default, and ADR-0101 R6 reads
+every value from a list the same way (R3, R4).
 
 Whoever installs the agent chooses the token that its recipients accept. The agent does not read the mode by which the
 recipients accept tokens (ADR-0092 R15), and it cannot tell what its token file holds: the file may hold a token that
 the recipients in `legacy` accept, such as the static token of a test stand whose stubs accept any token. So no value
-that R3 accepts stops the start because of what the recipients accept, and a wrong choice shows at the rollout: the
-recipients answer 401, the policy pull fails, and the agent stays not ready (R15; ADR-0091 R14).
+that R3 accepts stops the start because of what the recipients accept. A wrong choice shows at the rollout where the
+policy source or tenant-manager refuses the token: they answer 401, the policy pull or the translation of the default
+tenant fails, and the agent stays not ready (R15; ADR-0091 R14). Where only a PIP, entitlements, or User Management
+refuses it, the agent turns ready and denies the resources that depend on that recipient (R13).
 
 The deployment puts the agent's token file in place before the container starts: the kubelet writes a projected volume,
 and Docker binds a file. A file that is missing, unreadable, or empty at the start is therefore an error of the
 deployment that no wait repairs, like a token for the API server that the agent cannot read (ADR-0104 R14). A Keycloak
-that does not answer can recover, so the agent waits for it instead (R6, R14).
+that does not answer can recover, so the agent waits for it instead (R14, R20).
 
 The client secret leaves the agent only in requests to the token endpoint of `client-credentials`. With `token-file` the
 agent needs neither the endpoint nor the credentials, so the chart mounts no Secret and the Secret need not exist.
-Switching `AUTHZ_M2M_TOKEN_SOURCE` then takes one setting, also where an environment file lists every setting of the
-agent (R7, R18).
+Switching `AUTHZ_OUTGOING_TOKEN_SOURCE` then takes one setting, also where an environment file lists every setting of
+the agent (R20). A value that ADR-0101 R6 refuses still stops the start, because that check treats every agent variable
+alike, and the operator learns of a mistyped token endpoint at once rather than when switching back to
+`client-credentials`.
 
 Building the token endpoint from `IDENTITY_PROVIDER_URL` lets one value move the agent to a Keycloak on another host
 that keeps the platform's paths. A Keycloak without `/auth` needs the endpoint written out. The chart value has the name
@@ -171,46 +186,62 @@ would hide a token that the recipient refuses (R16).
 - **A2. Let an unset value follow `M2M_AUTH_MODE`.** Rejected by R1: the setting would have a third state, and an
   operator could not tell from `values.yaml` which token the agent sends.
 - **A3. Keep the value in the chart alone.** Rejected by R1: the agent has to run without the chart as well.
-- **A4. Stop the start, and refuse to render, on a pair of `AUTHZ_M2M_TOKEN_SOURCE` and `M2M_AUTH_MODE` that the
+- **A4. Stop the start, and refuse to render, on a pair of `AUTHZ_OUTGOING_TOKEN_SOURCE` and `M2M_AUTH_MODE` that the
   recipients refuse, such as `client-credentials` in `k8s`.** Rejected by ADR-0092 R15: whether the agent starts does
-  not depend on `M2M_AUTH_MODE`, with or without the chart, and a wrong choice shows at the rollout (R15). Earlier
-  versions of R8 and R9 refused `client-credentials` in `k8s`, and before that `token-file` in `legacy`.
+  not depend on `M2M_AUTH_MODE`, with or without the chart, and a wrong choice fails the calls that carry the token
+  (R13, R15). Earlier versions of R8 and R9 refused `client-credentials` in `k8s`, and before that `token-file` in
+  `legacy`.
 - **A5. Let a PIP declaration set these headers.** Rejected by R11: the token of a caller would reach an address from
   the policy configuration, and a PIP could answer for another tenant than the decision.
-- **A6. Let a setting name the file that `token-file` reads.** Rejected by R6: a deployment puts the token at the path
+- **A6. Let a setting name the file that `token-file` reads.** Rejected by R20: a deployment puts the token at the path
   ADR-0094 names, as the chart's projected volume does, and a setting that the mount does not follow points the agent at
-  a file that does not exist. An earlier version of R6 had this setting.
+  a file that does not exist. An earlier version of this record had this setting.
 - **A7. Choose the token with `KUBERNETES_M2M_ENABLED`.** Rejected by R2 and R17: the platform deprecates that parameter
   in favor of `M2M_AUTH_MODE`, and a value named after Kubernetes does not describe a token file that holds another
   token. An earlier version of this record made the agent read it.
 - **A8. Name the values after an issuer, as `keycloak` and `kubernetes`, after a protocol, as `oauth2` and `oidc`, or
   after the platform's identity provider, as `identity-provider`.** Rejected by R2: the agent does not parse the token
-  in its file, so it cannot name the issuer, and a protocol name does not tell the two ways apart.
+  in its file, so it cannot name the issuer. A protocol name such as `oauth2` or `oidc` covers every grant of that
+  protocol, while `client-credentials` names the one grant the agent uses, the client credentials grant of OAuth 2.0.
 - **A9. Build the token endpoint from `IDENTITY_PROVIDER_URL` alone.** Rejected by R19: a Keycloak that serves its
   realms without `/auth` answers that endpoint with 404, and the agent stays not ready (R14).
-- **A10. Refuse a set `AUTHZ_M2M_TOKEN_URL` with `token-file`.** Rejected by R7 and R18: switching
-  `AUTHZ_M2M_TOKEN_SOURCE` would take two changes, and with `token-file` the agent sends the client secret nowhere
-  either way.
-- **A11. Stop the start only on a missing token file.** Rejected by R6: an empty or unreadable file is the same error of
-  the deployment, and the agent would start without a token and stay not ready, with only warnings in its log.
+- **A10. Refuse a set `AUTHZ_OUTGOING_TOKEN_URL` that ADR-0101 R6 accepts with `token-file`.** Rejected by R20:
+  switching `AUTHZ_OUTGOING_TOKEN_SOURCE` would take two changes, and with `token-file` the agent sends the client
+  secret nowhere either way.
+- **A11. Stop the start only on a missing token file.** Rejected by R20: an empty or unreadable file is the same error
+  of the deployment, and the agent would start without a token and stay not ready, with only warnings in its log.
+- **A12. Send the token file whenever `AUTHZ_OUTGOING_TOKEN_URL` is empty, with no setting that chooses the token.**
+  Rejected by R1 and R20: a token endpoint lost from a configuration would switch the agent to another token without a
+  message, while with `client-credentials` an empty endpoint stops the start. An earlier version of the agent chose
+  the token this way.
+- **A13. Keep the prefix `AUTHZ_M2M_` of the earlier settings, as in `AUTHZ_M2M_TOKEN_URL`.** Rejected by R1 and R20:
+  ADR-0092 defines an M2M token as a kind of token that the agent accepts, and `M2M_AUTH_MODE` covers both the tokens a
+  service accepts and the tokens it sends, so a reader could take `AUTHZ_M2M_*` for settings of the tokens the agent
+  accepts. With `token-file` the agent's token need not be an M2M token either.
 
 ## Consequences
 
 Negative:
 
-- An installation whose recipients accept only Kubernetes tokens, as in `k8s`, sets `AUTHZ_M2M_TOKEN_SOURCE` to
+- An installation whose recipients accept only Kubernetes tokens, as in `k8s`, sets `AUTHZ_OUTGOING_TOKEN_SOURCE` to
   `token-file` itself (R2).
-- No value of `AUTHZ_M2M_TOKEN_SOURCE` that R3 accepts stops the start because of what the recipients accept. Where the
-  recipients refuse the agent's token, such as the token for `netcracker` in `legacy` or the client credentials token in
-  `k8s`, every call that carries it fails, and a policy pull that fails keeps the agent not ready through ADR-0091 R14
-  (R2, R15).
-- A deployment that sets `KUBERNETES_M2M_ENABLED=true` and not `AUTHZ_M2M_TOKEN_SOURCE` gets `client-credentials`, and
-  needs the Secret `<SERVICE_NAME>-client-credentials`, until it sets `AUTHZ_M2M_TOKEN_SOURCE` to `token-file` (R4,
-  R17, R18).
-- An agent without the chart that reads its token file with `AUTHZ_M2M_TOKEN_URL` empty stops the start until it sets
-  `AUTHZ_M2M_TOKEN_SOURCE` to `token-file` (R1, R5).
+- No value of `AUTHZ_OUTGOING_TOKEN_SOURCE` that R3 accepts stops the start because of what the recipients accept. Where
+  the recipients refuse the agent's token, such as the token for `netcracker` in `legacy` or the client credentials
+  token in `k8s`, every call that carries it fails, and a failed policy pull or translation of the default tenant keeps
+  the agent not ready through ADR-0091 R14 (R2, R15). Where only a PIP, entitlements, or User Management refuses it, the
+  agent turns ready and denies the resources that depend on that recipient (R13).
+- Outside Kubernetes nothing renews the agent's token file on its own. The agent reads the file again (R12), so a
+  process that the operator runs can renew it. Without one, `token-file` serves only a token that outlives the run of
+  the agent, such as the static token of a test stand, and a deployment without Kubernetes uses `client-credentials`,
+  as the Compose example does (ADR-0101 R9).
+- A deployment that sets `KUBERNETES_M2M_ENABLED=true` and not `AUTHZ_OUTGOING_TOKEN_SOURCE` gets `client-credentials`,
+  and needs the Secret `<SERVICE_NAME>-client-credentials`, until it sets `AUTHZ_OUTGOING_TOKEN_SOURCE` to `token-file`
+  (R4, R17, R20).
+- An agent without the chart that reads its token file with the token endpoint empty stops the start until it sets
+  `AUTHZ_OUTGOING_TOKEN_SOURCE` to `token-file` (R1, R20).
 - With `client-credentials`, an installation whose Keycloak serves its realms without `/auth` sets
-  `AUTHZ_M2M_TOKEN_URL`. Without it the agent stays not ready (R14, R19).
+  `AUTHZ_OUTGOING_TOKEN_URL`. Without it the agent stays not ready (R14, R19).
 - A PIP that forwards the caller's `Authorization` or `Tenant` receives the agent's token and the tenant of the decision
   instead.
-- With `token-file` the agent sends PIPs the token for `netcracker` in place of its client credentials token (R2).
+- With `token-file` the agent sends PIPs the content of its token file, such as the token for `netcracker`, in place
+  of its client credentials token (R2).

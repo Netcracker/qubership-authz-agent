@@ -94,7 +94,7 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	}
 }
 
-// TestLoadConfig_NetcrackerTokenFileIsFixed: the token file of ADR-0096 R6
+// TestLoadConfig_NetcrackerTokenFileIsFixed: the agent's token file of ADR-0096
 // has no setting, so no key moves it and no empty key clears it.
 func TestLoadConfig_NetcrackerTokenFileIsFixed(t *testing.T) {
 	for _, value := range []string{"/t", ""} {
