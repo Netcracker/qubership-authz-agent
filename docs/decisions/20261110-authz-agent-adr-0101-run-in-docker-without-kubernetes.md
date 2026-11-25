@@ -27,6 +27,9 @@ kichasov
   ADR-0093 R11 and R13, the translation of the default tenant through tenant-manager with the agent's token.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
   the topology file and the token for the API server, which exist only in a cluster.
+- [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
+  the agent's token and the agent's client credentials token, as
+  [#338](https://github.com/Netcracker/qubership-authz-agent/pull/338) defines them.
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](https://github.com/Netcracker/qubership-authz-agent/pull/329),
   proposed in #329: the provider directory and the provider files (ADR-0104 R1, R2), the reading of the provider files
   at start alone (ADR-0104 R5), the two providers and their types (ADR-0104 R6), the required sources (ADR-0104 R25),
@@ -65,6 +68,7 @@ runtime, or the operator, or record it as lost. The repository ships an example 
 - **Internal surface**: the listener whose address `AUTHZ_HTTP_ADDR` sets.
 - **Stops the start**: as ADR-0091 defines it.
 - **Agent variable**: as ADR-0107 defines it.
+- **The agent's token**, **the agent's client credentials token**: as ADR-0096 defines them.
 - **Provider directory**, **provider file**, **provider `identity-provider`**, **provider `kubernetes`**, **`realms`
   provider**, **`single` provider**, **required source**, **Kubernetes token**: as ADR-0104 defines them.
 - **Token for the API server**, **topology file**: as ADR-0094 defines them.
@@ -206,7 +210,7 @@ Negative:
   a container or a host, and one that a policy declares with an `http` URL on another host receives the agent's token in
   clear text: the duties of R33 cover the addresses that the operator sets, and not the declarations in the policies.
 - On the container target the operator writes the address of Keycloak in the provider file, once for the issuers and
-  once for the keys, and again as the token endpoint of the agent's client credentials (ADR-0091 R78).
+  once for the keys, and again as the token endpoint of the agent's client credentials token (ADR-0091 R78).
 - Where the provider files on the container target hold no provider `kubernetes`, as R5 allows, no token is a Kubernetes
   token, and services that call with tokens that an API server signs cannot use such an agent (R5). Such a token is
   refused under ADR-0104 R21 or R27.
