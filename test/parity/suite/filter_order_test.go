@@ -22,167 +22,208 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-// Two answers of one policy set that list the terms of an operator in another
-// order, at any depth, canonicalize to one text. The texts are the recorded
-// deny-predicates-under-deny-overrides and filter-four-groups-on-one-type
-// answers with their terms permuted at every level.
-func TestCanonicalFilterDialects_TermOrderDoesNotReachTheComparison(t *testing.T) {
+func sqlCanon(s string) string     { return canonicalInfix(s, sqlDialect) }
+func rsqlCanon(s string) string    { return canonicalInfix(s, rsqlDialect) }
+func mongodbCanon(s string) string { return canonicalInfix(s, mongodbDialect) }
+func customCanon(s string) string  { return string(canonicalJSON(json.RawMessage(s))) }
+
+// A filterOrderCase is two texts of one filter dialect and the canonicalizer of
+// that dialect.
+type filterOrderCase struct {
+	name         string
+	canonicalize func(string) string
+	left, right  string
+}
+
+// The operands of a logical operator and the elements of a list that stands
+// for a set compare without regard to their order, in every dialect, whatever
+// the letter case of the keyword and the white space before the bracket. Most
+// texts are recorded answers with their terms permuted.
+func TestCanonicalFilter_UnorderedListsCompareEqual(t *testing.T) {
 	t.Parallel()
-	cases := []struct {
-		name         string
-		canonicalize func(string) string
-		recorded     string
-		permuted     string
-	}{
-		{
-			name:         "rsql terms of an AND and of a bracketed OR",
-			canonicalize: func(s string) string { return canonicalInfix(s, rsqlDialect) },
-			recorded:     "(b==2,a==1);c!=3;d!=4",
-			permuted:     "d!=4;(a==1,b==2);c!=3",
-		},
-		{
-			name:         "rsql bracketed groups of four sources",
-			canonicalize: func(s string) string { return canonicalInfix(s, rsqlDialect) },
-			recorded:     "(regular1==1),(simplified1==1,simplified2==2),(regular2==2)",
-			permuted:     "(simplified2==2,simplified1==1),(regular2==2),(regular1==1)",
-		},
-		{
-			name:         "sql terms under NOT and in a bracketed OR",
-			canonicalize: func(s string) string { return canonicalInfix(s, sqlDialect) },
-			recorded:     "(b=2 OR a=1) AND NOT (c=3) AND NOT (d=4)",
-			permuted:     "NOT (d=4) AND (a=1 OR b=2) AND NOT (c=3)",
-		},
-		{
-			name:         "mongodb elements of $and and of a nested $or",
-			canonicalize: infixCanon(mongodbSeparators),
-			recorded:     `{ "$and": [ { "$or": [ {{ "b": 2 }}, {{ "a": 1 }} ] }, {{ "c": 3 }}, {{ "d": 4 }} ] }`,
-			permuted:     `{ "$and": [ {{ "d": 4 }}, { "$or": [ {{ "a": 1 }}, {{ "b": 2 }} ] }, {{ "c": 3 }} ] }`,
-		},
-		{
-			name:         "method chain operands of and and of a nested or",
-			canonicalize: canonicalMethodChain,
-			recorded:     "((T.b.eq(2)).or(T.a.eq(1))).and((T.c.eq(3)).not()).and((T.d.eq(4)).not())",
-			permuted:     "((T.d.eq(4)).not()).and((T.a.eq(1)).or(T.b.eq(2))).and((T.c.eq(3)).not())",
-		},
-		{
-			name:         "sql IN list elements",
-			canonicalize: func(s string) string { return canonicalInfix(s, sqlDialect) },
-			recorded:     "perms IN ('parity_other_permission', 'parity_permission') AND a=1",
-			permuted:     "a=1 AND perms IN ('parity_permission', 'parity_other_permission')",
-		},
-		{
-			name:         "method chain in-call arguments",
-			canonicalize: canonicalMethodChain,
-			recorded:     `(T.id.in("b", "a")).and(T.x.eq(1))`,
-			permuted:     `(T.x.eq(1)).and(T.id.in("a", "b"))`,
-		},
-		{
-			name:         "mongodb values of $in and of an array nested in them",
-			canonicalize: infixCanon(mongodbSeparators),
-			recorded:     `{ "f": { "$in": [ [ { "$uuid": "h1" }, { "$uuid": "h2" } ], [ "R" ] ] } }`,
-			permuted:     `{ "f": { "$in": [ [ "R" ], [ { "$uuid": "h2" }, { "$uuid": "h1" } ] ] } }`,
-		},
-		{
-			name:         "mongodb list of values substituted for a field",
-			canonicalize: infixCanon(mongodbSeparators),
-			recorded:     `{ { "a": [ { "$uuid": "b" }, { "$uuid": "a" } ] } }`,
-			permuted:     `{ { "a": [ { "$uuid": "a" }, { "$uuid": "b" } ] } }`,
-		},
-		{
-			name:         "method chain list of values substituted into eq",
-			canonicalize: canonicalMethodChain,
-			recorded:     `(T.a.eq("b", "a")).or(T.x.eq(1))`,
-			permuted:     `(T.x.eq(1)).or(T.a.eq("a", "b"))`,
-		},
-		{
-			name:         "rsql in-clause elements",
-			canonicalize: func(s string) string { return canonicalInfix(s, rsqlDialect) },
-			recorded:     `id=in=("row10-dict-1", "row10-dict-2");amount=le="1000"`,
-			permuted:     `amount=le="1000";id=in=("row10-dict-2", "row10-dict-1")`,
-		},
+	cases := []filterOrderCase{
+		{name: "sql operands of AND under NOT and of a bracketed OR", canonicalize: sqlCanon,
+			left:  "(a=1 OR b=2) AND NOT (c=3) AND NOT (d=4)",
+			right: "NOT (d=4) AND (b=2 OR a=1) AND NOT (c=3)"},
+		{name: "sql operands of a lower-case or", canonicalize: sqlCanon,
+			left:  "(f14a='v0') or (NOT (f5a IN ('R') OR f5b='v1'))",
+			right: "(NOT (f5b='v1' OR f5a IN ('R'))) OR (f14a='v0')"},
+		{name: "sql IN list elements", canonicalize: sqlCanon,
+			left:  "perms IN ('parity_other_permission', 'parity_permission') AND a=1",
+			right: "a=1 AND perms IN ('parity_permission', 'parity_other_permission')"},
+		{name: "sql lower-case in with a space before the bracket", canonicalize: sqlCanon,
+			left:  "k in ('x', 'y')",
+			right: "k in ('y', 'x')"},
+		{name: "sql NOT IN list elements", canonicalize: sqlCanon,
+			left:  "k NOT IN ('x', 'y')",
+			right: "k NOT IN ('y','x')"},
+		{name: "sql operands of AND beside a BETWEEN, whose AND joins nothing", canonicalize: sqlCanon,
+			left:  "a BETWEEN 1 AND 2 AND b=3",
+			right: "b=3 and a BETWEEN 1 AND 2"},
+		{name: "sql operands of a lower-case and beside a lower-case between", canonicalize: sqlCanon,
+			left:  "a between 1 and 2 and b=3",
+			right: "b=3 and a between 1 and 2"},
+		{name: "sql operands of AND beside a bracketed BETWEEN", canonicalize: sqlCanon,
+			left:  "(a BETWEEN 1 AND 2 AND c=4) AND b=3",
+			right: "b=3 AND (c=4 AND a BETWEEN 1 AND 2)"},
+		{name: "sql OR right after a closing quote", canonicalize: sqlCanon,
+			left:  "a='v'OR b=1",
+			right: "b=1 OR a='v'"},
+		{name: "sql backslash before a closing quote", canonicalize: sqlCanon,
+			left:  `a='x\' OR b=1`,
+			right: `b=1 OR a='x\'`},
+		{name: "rsql operands of AND and of a bracketed OR", canonicalize: rsqlCanon,
+			left:  "(b==2,a==1);c!=3;d!=4",
+			right: "d!=4;(a==1,b==2);c!=3"},
+		{name: "rsql bracketed groups of four sources", canonicalize: rsqlCanon,
+			left:  "(allowed==1),((region=in=(\"r1\")),(region=in=(\"r2\")))",
+			right: "((region=in=(\"r2\")),(region=in=(\"r1\"))),(allowed==1)"},
+		{name: "rsql =in= elements", canonicalize: rsqlCanon,
+			left:  `id=in=("row10-dict-1", "row10-dict-2");amount=le="1000"`,
+			right: `amount=le="1000";id=in=("row10-dict-2", "row10-dict-1")`},
+		{name: "rsql =out= elements with a space before the bracket", canonicalize: rsqlCanon,
+			left:  `f1a=out= ("p1", "p2")`,
+			right: `f1a=out= ("p2", "p1")`},
+		{name: "rsql escaped quote inside a string", canonicalize: rsqlCanon,
+			left:  `q=='a\',b';r!=1`,
+			right: `r!=1;q=='a\',b'`},
+		{name: "rsql escaped backslash before a closing quote", canonicalize: rsqlCanon,
+			left:  `q=='a\\';r!=1`,
+			right: `r!=1;q=='a\\'`},
+		{name: "mongodb elements of $and and of a nested $or", canonicalize: mongodbCanon,
+			left:  `{ "$and": [ { "$or": [ {{ "b": 2 }}, {{ "a": 1 }} ] }, {{ "c": 3 }}, {{ "d": 4 }} ] }`,
+			right: `{ "$and": [ {{ "d": 4 }}, { "$or": [ {{ "a": 1 }}, {{ "b": 2 }} ] }, {{ "c": 3 }} ] }`},
+		{name: "mongodb values of $in and of $nin", canonicalize: mongodbCanon,
+			left:  `{ "$or": [ { "a": { "$in": [ { "$uuid": "h1" }, { "$uuid": "h2" } ] } }, { "b": { "$nin": [ "x", "y" ] } } ] }`,
+			right: `{ "$or": [ { "b": { "$nin": [ "y", "x" ] } }, { "a": { "$in": [ { "$uuid": "h2" }, { "$uuid": "h1" } ] } } ] }`},
+		{name: "mongodb elements of $nor", canonicalize: mongodbCanon,
+			left:  `{ "$nor": [ {{ "b": 2 }}, {{ "a": 1 }} ] }`,
+			right: `{ "$nor": [ {{ "a": 1 }}, {{ "b": 2 }} ] }`},
+		{name: "mongodb $in with white space before the colon", canonicalize: mongodbCanon,
+			left:  `{ "a": { "$in" : [ "x", "y" ] } }`,
+			right: `{ "a": { "$in" : [ "y", "x" ] } }`},
+		{name: "custom apply of an OR node and of a lower-case and node", canonicalize: customCanon,
+			left:  `{"logic":{"op":"OR","apply":[{"path":"p2"},{"op":"and","apply":[{"path":"p3"},{"path":"p1"}]}]}}`,
+			right: `{"logic":{"apply":[{"apply":[{"path":"p1"},{"path":"p3"}],"op":"and"},{"path":"p2"}],"op":"OR"}}`},
+		{name: "custom apply of an OR node under a NOT node", canonicalize: customCanon,
+			left:  `{"logic":{"op":"NOT","apply":[{"op":"OR","apply":[{"path":"p2"},{"path":"p1"}]}]}}`,
+			right: `{"logic":{"op":"NOT","apply":[{"op":"OR","apply":[{"path":"p1"},{"path":"p2"}]}]}}`},
+		{name: "method chain or call with a space after the dot", canonicalize: canonicalMethodChain,
+			left:  "(T.a.eq(1)). or (T.b.eq(2))",
+			right: "(T.b.eq(2)).or(T.a.eq(1))"},
+		{name: "method chain escaped quote inside an argument", canonicalize: canonicalMethodChain,
+			left:  `(T.a.eq("x\").or(")).or(T.b.eq(2))`,
+			right: `(T.b.eq(2)).or(T.a.eq("x\").or("))`},
+		{name: "method chain operands of and and of a nested or", canonicalize: canonicalMethodChain,
+			left:  "((T.b.eq(2)).or(T.a.eq(1))).and((T.c.eq(3)).not()).and((T.d.eq(4)).not())",
+			right: "((T.d.eq(4)).not()).and((T.a.eq(1)).or(T.b.eq(2))).and((T.c.eq(3)).not())"},
+		{name: "method chain in and notIn arguments", canonicalize: canonicalMethodChain,
+			left:  `(T.id.in("b", "a")).and(T.x.notIn("d", "c"))`,
+			right: `(T.x.notIn("c", "d")).and(T.id.in("a", "b"))`},
+		{name: "method chain or call in another case and with a space", canonicalize: canonicalMethodChain,
+			left:  "(T.a.eq(1)).OR (T.b.eq(2))",
+			right: "(T.b.eq(2)).or(T.a.eq(1))"},
+		{name: "method chain mixing or and and groups the leading run", canonicalize: canonicalMethodChain,
+			left:  "T.b.eq(2).or(T.a.eq(1)).and(T.c.eq(3))",
+			right: "T.c.eq(3).and(T.a.eq(1).or(T.b.eq(2)))"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			if got, want := tc.canonicalize(tc.permuted), tc.canonicalize(tc.recorded); got != want {
-				t.Errorf("canonical(%q) = %q, want canonical(%q) = %q", tc.permuted, got, tc.recorded, want)
+			if got, want := tc.canonicalize(tc.right), tc.canonicalize(tc.left); got != want {
+				t.Errorf("canonical(%q) = %q, want canonical(%q) = %q", tc.right, got, tc.left, want)
 			}
 		})
 	}
 }
 
-// Sorting the terms of an operator keeps the brackets that bind them, so two
-// expressions that group the same terms differently stay apart.
-func TestCanonicalFilterDialects_GroupingStaysApart(t *testing.T) {
+// Every list that is neither the operands of a logical operator nor a set of
+// values keeps its order, as does the grouping of the operands: the arguments
+// of a function or a comparison, a literal array, the members of a MongoDB
+// object, and every array of a customFilterCondition other than the apply array
+// of an OR or an AND. The letter case of a function name and white space before
+// its bracket do not make its arguments a set.
+func TestCanonicalFilter_OrderedListsStayApart(t *testing.T) {
 	t.Parallel()
-	cases := []struct {
-		name         string
-		canonicalize func(string) string
-		left, right  string
-	}{
-		{
-			name:         "rsql OR inside the AND against AND inside the OR",
-			canonicalize: func(s string) string { return canonicalInfix(s, rsqlDialect) },
-			left:         "(a==1,b==2);c==3",
-			right:        "a==1,(b==2;c==3)",
-		},
-		{
-			name:         "method chain and of an or against or of an and",
-			canonicalize: canonicalMethodChain,
-			left:         "(T.a.eq(1).or(T.b.eq(2))).and(T.c.eq(3))",
-			right:        "(T.a.eq(1).and(T.b.eq(2))).or(T.c.eq(3))",
-		},
-		{
-			name:         "method chain mixing and with or keeps its order",
-			canonicalize: canonicalMethodChain,
-			left:         "T.b.eq(2).or(T.a.eq(1)).and(T.c.eq(3))",
-			right:        "T.a.eq(1).and(T.c.eq(3)).or(T.b.eq(2))",
-		},
-		{
-			name:         "rsql quoted separator is not a term boundary",
-			canonicalize: func(s string) string { return canonicalInfix(s, rsqlDialect) },
-			left:         `name=="b,a";x==1`,
-			right:        `name=="a,b";x==1`,
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			if got := tc.canonicalize(tc.left); got == tc.canonicalize(tc.right) {
-				t.Errorf("canonical(%q) = canonical(%q) = %q, want them apart", tc.left, tc.right, got)
-			}
-		})
-	}
-}
-
-// The arguments of an SQL function and the bounds of an RSQL range keep their
-// order, so two answers that pass them in another order stay apart. The terms
-// of the operator around such a group are still sorted.
-func TestCanonicalFilterDialects_ArgumentOrderStaysApart(t *testing.T) {
-	t.Parallel()
-	cases := []struct {
-		name         string
-		canonicalize func(string) string
-		left, right  string
-	}{
-		{
-			name:         "sql arguments of COALESCE",
-			canonicalize: infixCanon(sqlDialect),
-			left:         "COALESCE(owner, delegate) = 'u' AND a=1",
-			right:        "a=1 AND COALESCE(delegate, owner) = 'u'",
-		},
-		{
-			name:         "sql arguments of SUBSTRING",
-			canonicalize: infixCanon(sqlDialect),
-			left:         "SUBSTRING(name, 1, 3) = 'abc'",
-			right:        "SUBSTRING(name, 3, 1) = 'abc'",
-		},
-		{
-			name:         "rsql bounds of between",
-			canonicalize: infixCanon(rsqlDialect),
-			left:         "age=between=(18,65);a==1",
-			right:        "a==1;age=between=(65,18)",
-		},
+	cases := []filterOrderCase{
+		{name: "sql arguments of COALESCE", canonicalize: sqlCanon,
+			left:  "COALESCE(owner, delegate) = 'u' AND a=1",
+			right: "a=1 AND COALESCE(delegate, owner) = 'u'"},
+		{name: "sql arguments of SUBSTRING", canonicalize: sqlCanon,
+			left:  "SUBSTRING(name, 1, 3) = 'abc'",
+			right: "SUBSTRING(name, 3, 1) = 'abc'"},
+		{name: "sql arguments of SUBSTRING with a space before the bracket", canonicalize: sqlCanon,
+			left:  "SUBSTRING (name, 1, 3) = 'abc'",
+			right: "SUBSTRING (name, 3, 1) = 'abc'"},
+		{name: "sql arguments of a lower-case function with a space before the bracket", canonicalize: sqlCanon,
+			left:  "substring (name, 1, 3) = 'abc' OR a=1",
+			right: "a=1 OR substring (name, 3, 1) = 'abc'"},
+		{name: "sql operands of a comparison", canonicalize: sqlCanon,
+			left:  "a < b",
+			right: "b < a"},
+		{name: "sql values after a comparison", canonicalize: sqlCanon,
+			left:  "a='a', 'b'",
+			right: "a='b', 'a'"},
+		{name: "sql OR inside the AND against AND inside the OR", canonicalize: sqlCanon,
+			left:  "(a=1 OR b=2) AND c=3",
+			right: "a=1 OR (b=2 AND c=3)"},
+		{name: "sql OR inside a quoted string", canonicalize: sqlCanon,
+			left:  "a='x OR y' AND b=1",
+			right: "b=1 AND a='y OR x'"},
+		{name: "sql bounds of two BETWEEN ranges", canonicalize: sqlCanon,
+			left:  "x BETWEEN 1 AND 5 AND y BETWEEN 2 AND 3",
+			right: "x BETWEEN 1 AND 3 AND y BETWEEN 2 AND 5"},
+		{name: "rsql bounds of between", canonicalize: rsqlCanon,
+			left:  "age=between=(18,65);a==1",
+			right: "a==1;age=between=(65,18)"},
+		{name: "rsql bounds of an upper-case between with a space before the bracket", canonicalize: rsqlCanon,
+			left:  "age=BETWEEN= (18,65)",
+			right: "age=BETWEEN= (65,18)"},
+		{name: "rsql OR inside the AND against AND inside the OR", canonicalize: rsqlCanon,
+			left:  "(a==1,b==2);c==3",
+			right: "a==1,(b==2;c==3)"},
+		{name: "rsql quoted separator is not a term boundary", canonicalize: rsqlCanon,
+			left:  `name=="b,a";x==1`,
+			right: `name=="a,b";x==1`},
+		{name: "mongodb literal array", canonicalize: mongodbCanon,
+			left:  `{"tags":["a","b"]}`,
+			right: `{"tags":["b","a"]}`},
+		{name: "mongodb array of values substituted for a field", canonicalize: mongodbCanon,
+			left:  `{ { "a": [ { "$uuid": "b" }, { "$uuid": "a" } ] } }`,
+			right: `{ { "a": [ { "$uuid": "a" }, { "$uuid": "b" } ] } }`},
+		{name: "mongodb arguments of $substr", canonicalize: mongodbCanon,
+			left:  `{ "$expr": { "$eq": [ { "$substr": [ "$name", 1, 3 ] }, "abc" ] } }`,
+			right: `{ "$expr": { "$eq": [ { "$substr": [ "$name", 3, 1 ] }, "abc" ] } }`},
+		{name: "mongodb operands of $eq", canonicalize: mongodbCanon,
+			left:  `{ "$expr": { "$eq": [ "$a", "$b" ] } }`,
+			right: `{ "$expr": { "$eq": [ "$b", "$a" ] } }`},
+		{name: "mongodb arguments of an aggregation $in", canonicalize: mongodbCanon,
+			left:  `{ "$expr": { "$in": [ "$a", "$b" ] } }`,
+			right: `{ "$expr": { "$in": [ "$b", "$a" ] } }`},
+		{name: "mongodb members of an object", canonicalize: mongodbCanon,
+			left:  `{ "a": 1, "b": 2 }`,
+			right: `{ "b": 2, "a": 1 }`},
+		{name: "custom positional array", canonicalize: customCanon,
+			left:  `{"substr":["name",1,3]}`,
+			right: `{"substr":["name",3,1]}`},
+		{name: "custom params list", canonicalize: customCanon,
+			left:  `{"data":{"p1":{"predicate":"region:${p}","params":{"p":["r2","r1"]}}}}`,
+			right: `{"data":{"p1":{"predicate":"region:${p}","params":{"p":["r1","r2"]}}}}`},
+		{name: "custom apply of an OR node outside the logic tree", canonicalize: customCanon,
+			left:  `{"logic":{"path":"p1"},"data":{"p1":{"op":"OR","apply":["r1","r2"]}}}`,
+			right: `{"logic":{"path":"p1"},"data":{"p1":{"op":"OR","apply":["r2","r1"]}}}`},
+		{name: "custom apply of a node other than OR and AND", canonicalize: customCanon,
+			left:  `{"logic":{"op":"SUB","apply":[{"path":"p1"},{"path":"p2"}]}}`,
+			right: `{"logic":{"op":"SUB","apply":[{"path":"p2"},{"path":"p1"}]}}`},
+		{name: "method chain arguments of eq", canonicalize: canonicalMethodChain,
+			left:  `(T.a.eq("b", "a")).or(T.x.eq(1))`,
+			right: `(T.x.eq(1)).or(T.a.eq("a", "b"))`},
+		{name: "method chain and of an or against or of an and", canonicalize: canonicalMethodChain,
+			left:  "(T.a.eq(1).or(T.b.eq(2))).and(T.c.eq(3))",
+			right: "(T.a.eq(1).and(T.b.eq(2))).or(T.c.eq(3))"},
+		{name: "method chain mixing and with or groups by the order of the calls", canonicalize: canonicalMethodChain,
+			left:  "T.b.eq(2).or(T.a.eq(1)).and(T.c.eq(3))",
+			right: "T.a.eq(1).and(T.c.eq(3)).or(T.b.eq(2))"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -195,13 +236,12 @@ func TestCanonicalFilterDialects_ArgumentOrderStaysApart(t *testing.T) {
 }
 
 // Two integers that a float64 cannot tell apart stay apart in a
-// customFilterCondition, while the operands of an OR node and the values of a
-// params list are still sorted.
+// customFilterCondition, while the operands of an OR node are still sorted.
 func TestCanonicalJSON_KeepsTheDigitsOfANumber(t *testing.T) {
 	t.Parallel()
 	left := `{"logic":{"op":"OR","apply":[{"path":"p1"},{"path":"p2"}]},"params":{"p":["a","b"],"n":9007199254740992}}`
-	right := `{"logic":{"op":"OR","apply":[{"path":"p2"},{"path":"p1"}]},"params":{"p":["b","a"],"n":9007199254740993}}`
-	control := `{"logic":{"op":"OR","apply":[{"path":"p2"},{"path":"p1"}]},"params":{"p":["b","a"],"n":9007199254740992}}`
+	right := `{"logic":{"op":"OR","apply":[{"path":"p2"},{"path":"p1"}]},"params":{"p":["a","b"],"n":9007199254740993}}`
+	control := `{"logic":{"op":"OR","apply":[{"path":"p2"},{"path":"p1"}]},"params":{"p":["a","b"],"n":9007199254740992}}`
 	if got := canonicalJSON(json.RawMessage(left)); string(got) == string(canonicalJSON(json.RawMessage(right))) {
 		t.Errorf("canonicalJSON(%s) = canonicalJSON(%s) = %s, want them apart", left, right, got)
 	}
