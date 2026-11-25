@@ -102,7 +102,7 @@ spec:
         - name: trusted-providers
           configMap:
             name: '{{ .Values.SERVICE_NAME }}-trusted-providers'
-        {{- if eq (include "authz-agent.m2mTokenSource" .) "token-file" }}
+        {{- if eq (include "authz-agent.outgoingTokenSource" .) "token-file" }}
         # The platform's layout for projected tokens, which its charts mount
         # at /var/run/secrets/tokens with one directory per audience and its
         # Go library reads from there; netcracker is the audience for M2M
@@ -157,18 +157,18 @@ spec:
               value: '{{ .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL }}'
             - name: AUTHZ_PAP_CLIENT_TOKEN_FILE
               value: '{{ .Values.AUTHZ_PAP_CLIENT_TOKEN_FILE }}'
-            - name: AUTHZ_M2M_TOKEN_SOURCE
-              value: '{{ include "authz-agent.m2mTokenSource" . }}'
-            {{- if eq (include "authz-agent.m2mTokenSource" .) "client-credentials" }}
-            # Client credentials: the service obtains its M2M token itself
-            # and refreshes it before it expires.
-            - name: AUTHZ_M2M_TOKEN_URL
-              value: {{ include "authz-agent.m2mTokenURL" . | quote }}
-            - name: AUTHZ_M2M_CLIENT_ID_FILE
+            - name: AUTHZ_OUTGOING_TOKEN_SOURCE
+              value: '{{ include "authz-agent.outgoingTokenSource" . }}'
+            {{- if eq (include "authz-agent.outgoingTokenSource" .) "client-credentials" }}
+            # Client credentials: the service obtains its client credentials
+            # token itself and refreshes it before it expires.
+            - name: AUTHZ_OUTGOING_TOKEN_URL
+              value: {{ include "authz-agent.outgoingTokenURL" . | quote }}
+            - name: AUTHZ_OUTGOING_CLIENT_ID_FILE
               value: /etc/secret/username
-            - name: AUTHZ_M2M_CLIENT_SECRET_FILE
+            - name: AUTHZ_OUTGOING_CLIENT_SECRET_FILE
               value: /etc/secret/password
-            - name: AUTHZ_M2M_RENEW_BEFORE_SECONDS
+            - name: AUTHZ_OUTGOING_RENEW_BEFORE_SECONDS
               value: "60"
             {{- end }}
             - name: AUTHZ_ENTITLEMENTS_URL
@@ -181,7 +181,7 @@ spec:
             - name: trusted-providers
               mountPath: /etc/authz
               readOnly: true
-            {{- if eq (include "authz-agent.m2mTokenSource" .) "token-file" }}
+            {{- if eq (include "authz-agent.outgoingTokenSource" .) "token-file" }}
             - name: projected-tokens
               mountPath: /var/run/secrets/tokens
               readOnly: true

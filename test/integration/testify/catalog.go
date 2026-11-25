@@ -164,7 +164,7 @@ var Catalog = []StepEntry{
 
 	// ── m2m_keycloak ────────────────────────────────────────────────────
 	// These steps run only when M2M_KEYCLOAK_PROFILE=true, as the kind
-	// harness sets it. Against an agent with a static M2M token they are
+	// harness sets it. Against an agent with a static token they are
 	// skipped — the step body calls t.Skip() so the catalog coverage check
 	// still passes.
 	{"m2m_keycloak.pull_succeeds_with_keycloak_token", "admin", epCheckResource, "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},

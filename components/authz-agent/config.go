@@ -70,18 +70,18 @@ const (
 // 9223372036, about 292 years.
 const maxSeconds = math.MaxInt64 / int64(time.Second)
 
-// tokenURLKey is the key of AUTHZ_M2M_TOKEN_URL, the token endpoint of
+// tokenURLKey is the key of AUTHZ_OUTGOING_TOKEN_URL, the token endpoint of
 // client-credentials.
-const tokenURLKey = "authz.m2m.token.url"
+const tokenURLKey = "authz.outgoing.token.url"
 
-// The values of AUTHZ_M2M_TOKEN_SOURCE, which chooses the token the agent
+// The values of AUTHZ_OUTGOING_TOKEN_SOURCE, which chooses the token the agent
 // sends.
 const (
 	clientCredentialsSource = "client-credentials"
 	tokenFileSource         = "token-file"
 )
 
-// tokenSources lists the values of AUTHZ_M2M_TOKEN_SOURCE.
+// tokenSources lists the values of AUTHZ_OUTGOING_TOKEN_SOURCE.
 var tokenSources = []string{clientCredentialsSource, tokenFileSource}
 
 // maxRetries is the largest number of attempts per request that
@@ -90,17 +90,18 @@ var tokenSources = []string{clientCredentialsSource, tokenFileSource}
 const maxRetries = 100
 
 // loadConfig builds the configuration from the environment. A number, a
-// boolean, a value from a list, a listen address, or a token file path that
-// is empty takes its default, as an unset one does, and an empty URL turns
-// its feature off, except AUTHZ_M2M_TOKEN_URL while AUTHZ_M2M_TOKEN_SOURCE is
-// client-credentials, which is its default. Any other file path is used as
-// set, empty included, without a check. LOGGING_LEVEL_ROOT and LOG_LEVEL are
-// only checked: the platform logger reads them itself. The error names every
-// variable whose value is not of its form or out of its range, with the
-// values that variable accepts. With AUTHZ_M2M_TOKEN_SOURCE client-credentials
-// it also names an unset or empty AUTHZ_M2M_TOKEN_URL, and with token-file an
+// boolean, a value from a list, a listen address, or a token file path that is
+// empty takes its default, as an unset one does, and an empty URL turns its
+// feature off, except AUTHZ_OUTGOING_TOKEN_URL while
+// AUTHZ_OUTGOING_TOKEN_SOURCE is client-credentials, which is its default. Any
+// other file path is used as set, empty included, without a check.
+// LOGGING_LEVEL_ROOT and LOG_LEVEL are only checked: the platform logger reads
+// them itself. The error names every variable whose value is not of its form or
+// out of its range, with the values that variable accepts. With
+// AUTHZ_OUTGOING_TOKEN_SOURCE client-credentials it also names an unset or
+// empty AUTHZ_OUTGOING_TOKEN_URL, and with token-file an
 // AUTHZ_PAP_CLIENT_TOKEN_FILE whose file holds no token, with the reason; with
-// a refused AUTHZ_M2M_TOKEN_SOURCE it names neither. It names LOG_LEVEL
+// a refused AUTHZ_OUTGOING_TOKEN_SOURCE it names neither. It names LOG_LEVEL
 // whenever that variable is not empty.
 func loadConfig(get lookup) (config, error) {
 	s := settings{get: get}
@@ -122,9 +123,9 @@ func loadConfig(get lookup) (config, error) {
 		},
 		M2M: m2m.Config{
 			TokenURL:         s.httpURL(tokenURLKey),
-			ClientIDFile:     get("authz.m2m.client.id.file", m2m.DefaultClientIDFile),
-			ClientSecretFile: get("authz.m2m.client.secret.file", m2m.DefaultClientSecretFile),
-			RenewBefore:      s.seconds("authz.m2m.renew.before.seconds", 0, m2m.DefaultRenewBefore),
+			ClientIDFile:     get("authz.outgoing.client.id.file", m2m.DefaultClientIDFile),
+			ClientSecretFile: get("authz.outgoing.client.secret.file", m2m.DefaultClientSecretFile),
+			RenewBefore:      s.seconds("authz.outgoing.renew.before.seconds", 0, m2m.DefaultRenewBefore),
 			TokenFile:        cmp.Or(get("authz.pap.client.token.file", ""), m2m.DefaultTokenFile),
 			WatchInterval:    m2m.DefaultWatchInterval,
 		},
@@ -136,16 +137,16 @@ func loadConfig(get lookup) (config, error) {
 	if url := strings.TrimRight(s.httpURL("authz.entitlements.url"), "/"); url != "" {
 		cfg.Pull.Entitlements = &pips.EntitlementsConfig{URL: url, HTTPTimeoutSeconds: int(timeout / time.Second), HTTPRetries: retries}
 	}
-	// AUTHZ_M2M_TOKEN_SOURCE chooses the token the agent sends. token-file
+	// AUTHZ_OUTGOING_TOKEN_SOURCE chooses the token the agent sends. token-file
 	// sends the content of AUTHZ_PAP_CLIENT_TOKEN_FILE; client-credentials
-	// sends the token it obtains from AUTHZ_M2M_TOKEN_URL with the client
+	// sends the token it obtains from AUTHZ_OUTGOING_TOKEN_URL with the client
 	// credentials. With token-file the agent sends no request to
-	// AUTHZ_M2M_TOKEN_URL and reads neither credentials file, and with
+	// AUTHZ_OUTGOING_TOKEN_URL and reads neither credentials file, and with
 	// client-credentials it does not open AUTHZ_PAP_CLIENT_TOKEN_FILE. An
 	// endpoint that is not an http or https URL has been refused already,
 	// whichever value is set.
 	refusedBefore := len(s.refused)
-	source := cmp.Or(s.fromList("authz.m2m.token.source", tokenSources), clientCredentialsSource)
+	source := cmp.Or(s.fromList("authz.outgoing.token.source", tokenSources), clientCredentialsSource)
 	switch {
 	case len(s.refused) > refusedBefore:
 		// A refused value chooses no token source, so neither one is checked.
@@ -156,8 +157,8 @@ func loadConfig(get lookup) (config, error) {
 	// refused where it was read, is not refused again as missing.
 	case s.get(tokenURLKey, "") == "":
 		s.refuse(tokenURLKey, "",
-			"the http or https URL of the token endpoint, required while AUTHZ_M2M_TOKEN_SOURCE is client-credentials, "+
-				"which is its default; AUTHZ_M2M_TOKEN_SOURCE=token-file sends a token from a file instead")
+			"the http or https URL of the token endpoint, required while AUTHZ_OUTGOING_TOKEN_SOURCE is client-credentials, "+
+				"which is its default; AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends a token from a file instead")
 	}
 	// The platform logger reads LOGGING_LEVEL_ROOT itself and falls back to
 	// info where the value is not a level name; fromList refuses such a value.
@@ -362,7 +363,7 @@ func (s *settings) requireToken(key, path string) {
 	if errors.As(err, &pathErr) {
 		reason = pathErr.Err.Error()
 	}
-	s.refused = append(s.refused, fmt.Sprintf("%s=%q: %s, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file", variable(key), path, reason))
+	s.refused = append(s.refused, fmt.Sprintf("%s=%q: %s, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file", variable(key), path, reason))
 }
 
 func (s *settings) refuse(key, raw, accepted string) {

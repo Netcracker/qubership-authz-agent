@@ -478,16 +478,16 @@ for row in "${CHART_DIR}:ghcr.io/netcracker/qubership-authz-agent" "${STUB_CHART
 done
 
 # The agent's token, which a platform install takes through a projected
-# service-account token with AUTHZ_M2M_TOKEN_SOURCE=token-file. The default
+# service-account token with AUTHZ_OUTGOING_TOKEN_SOURCE=token-file. The default
 # above does not render it.
-token_file=(--set AUTHZ_M2M_TOKEN_SOURCE=token-file)
+token_file=(--set AUTHZ_OUTGOING_TOKEN_SOURCE=token-file)
 k8s_m2m="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${token_file[@]}")"
 if [[ "${k8s_m2m}" == *"serviceAccountToken"* && "${k8s_m2m}" != *"-client-credentials"* ]]; then
   pass "the agent Pod takes the projected token and no Secret with token-file"
 else
   fail "the agent Pod must take the projected token and no Secret with token-file"
 fi
-for env_name in AUTHZ_M2M_TOKEN_URL AUTHZ_M2M_CLIENT_ID_FILE AUTHZ_M2M_CLIENT_SECRET_FILE; do
+for env_name in AUTHZ_OUTGOING_TOKEN_URL AUTHZ_OUTGOING_CLIENT_ID_FILE AUTHZ_OUTGOING_CLIENT_SECRET_FILE; do
   if [[ "${k8s_m2m}" != *"name: ${env_name}"* ]]; then
     pass "the agent Pod gets no ${env_name} with token-file"
   else
@@ -496,11 +496,11 @@ for env_name in AUTHZ_M2M_TOKEN_URL AUTHZ_M2M_CLIENT_ID_FILE AUTHZ_M2M_CLIENT_SE
 done
 # A token endpoint set beside token-file is not passed: the agent sends no
 # request to it.
-token_file_url="$(env_value AUTHZ_M2M_TOKEN_URL "${token_file[@]}" --set-string AUTHZ_M2M_TOKEN_URL=https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token)"
+token_file_url="$(env_value AUTHZ_OUTGOING_TOKEN_URL "${token_file[@]}" --set-string AUTHZ_OUTGOING_TOKEN_URL=https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token)"
 if [[ -z "${token_file_url}" ]]; then
-  pass "a set AUTHZ_M2M_TOKEN_URL does not reach the agent with token-file"
+  pass "a set AUTHZ_OUTGOING_TOKEN_URL does not reach the agent with token-file"
 else
-  fail "a set AUTHZ_M2M_TOKEN_URL reached the agent as '${token_file_url}' with token-file"
+  fail "a set AUTHZ_OUTGOING_TOKEN_URL reached the agent as '${token_file_url}' with token-file"
 fi
 # The token lands where the platform's charts put the netcracker-audience
 # token, and the service is pointed at that file.
@@ -515,24 +515,38 @@ if [[ "${all_manifests}" == *"-client-credentials"* && "${all_manifests}" != *"s
 else
   fail "the agent Pod must take the client-credentials Secret and no projected token by default"
 fi
+# By default the agent gets the files of the client-credentials Secret and the
+# renewal margin under the names it reads.
+for pair in AUTHZ_OUTGOING_CLIENT_ID_FILE=/etc/secret/username \
+  AUTHZ_OUTGOING_CLIENT_SECRET_FILE=/etc/secret/password \
+  AUTHZ_OUTGOING_RENEW_BEFORE_SECONDS=60; do
+  env_name="${pair%%=*}"
+  expected="${pair#*=}"
+  rendered="$(env_value "${env_name}")"
+  if [[ "${rendered}" == "${expected}" ]]; then
+    pass "a default install passes ${env_name}=${expected}"
+  else
+    fail "a default install renders ${env_name} as '${rendered}', expected ${expected}"
+  fi
+done
 
-# The agent chooses its token by AUTHZ_M2M_TOKEN_SOURCE itself, so the chart
-# passes the value, the default as well as a value set at install.
+# The agent chooses its token by AUTHZ_OUTGOING_TOKEN_SOURCE itself, so the
+# chart passes the value, the default as well as a value set at install.
 for set_value in "" token-file client-credentials; do
   expected="${set_value:-client-credentials}"
-  rendered="$(env_value AUTHZ_M2M_TOKEN_SOURCE ${set_value:+--set AUTHZ_M2M_TOKEN_SOURCE=${set_value}})"
+  rendered="$(env_value AUTHZ_OUTGOING_TOKEN_SOURCE ${set_value:+--set AUTHZ_OUTGOING_TOKEN_SOURCE=${set_value}})"
   if [[ "${rendered}" == "${expected}" ]]; then
-    pass "AUTHZ_M2M_TOKEN_SOURCE${set_value:+=${set_value}} reaches the agent as ${expected}"
+    pass "AUTHZ_OUTGOING_TOKEN_SOURCE${set_value:+=${set_value}} reaches the agent as ${expected}"
   else
-    fail "AUTHZ_M2M_TOKEN_SOURCE${set_value:+=${set_value}} rendered as '${rendered}', expected ${expected}"
+    fail "AUTHZ_OUTGOING_TOKEN_SOURCE${set_value:+=${set_value}} rendered as '${rendered}', expected ${expected}"
   fi
 done
 for value in Token-File kubernetes ""; do
-  refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set-string "AUTHZ_M2M_TOKEN_SOURCE=${value}" 2>&1 || true)"
-  if [[ "${refused}" == *"AUTHZ_M2M_TOKEN_SOURCE"*"client-credentials"*"token-file"* && "${refused}" != *"${deployment_kind}"* ]]; then
-    pass "the values schema refuses AUTHZ_M2M_TOKEN_SOURCE='${value}'"
+  refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set-string "AUTHZ_OUTGOING_TOKEN_SOURCE=${value}" 2>&1 || true)"
+  if [[ "${refused}" == *"AUTHZ_OUTGOING_TOKEN_SOURCE"*"client-credentials"*"token-file"* && "${refused}" != *"${deployment_kind}"* ]]; then
+    pass "the values schema refuses AUTHZ_OUTGOING_TOKEN_SOURCE='${value}'"
   else
-    fail "the values schema must refuse AUTHZ_M2M_TOKEN_SOURCE='${value}', got: $(head -3 <<<"${refused}")"
+    fail "the values schema must refuse AUTHZ_OUTGOING_TOKEN_SOURCE='${value}', got: $(head -3 <<<"${refused}")"
   fi
 done
 
@@ -548,65 +562,66 @@ for value in true false yes; do
   fi
 done
 
-# With AUTHZ_M2M_TOKEN_SOURCE client-credentials and AUTHZ_M2M_TOKEN_URL empty,
-# their defaults, the chart builds AUTHZ_M2M_TOKEN_URL from
-# IDENTITY_PROVIDER_URL. Most renders below set an explicit provider list, so
-# that the chart builds only the token endpoint from IDENTITY_PROVIDER_URL. A
-# refusal names the problem, then gives one sentence for each value the chart
-# builds, then the remedy, which starts with "Set it to". Each check matches the
-# message from the problem to the start of the remedy, so a refusal that names
-# one value too many or too few fails it.
-token_use="While AUTHZ_M2M_TOKEN_SOURCE is client-credentials and AUTHZ_M2M_TOKEN_URL is empty, their defaults, the chart builds the agent's token endpoint AUTHZ_M2M_TOKEN_URL from it."
+# With AUTHZ_OUTGOING_TOKEN_SOURCE client-credentials and
+# AUTHZ_OUTGOING_TOKEN_URL empty, their defaults, the chart builds
+# AUTHZ_OUTGOING_TOKEN_URL from IDENTITY_PROVIDER_URL. Most renders below set an
+# explicit provider list, so that the chart builds only the token endpoint from
+# IDENTITY_PROVIDER_URL. A refusal names the problem, then gives one sentence
+# for each value the chart builds, then the remedy, which starts with "Set it
+# to". Each check matches the message from the problem to the start of the
+# remedy, so a refusal that names one value too many or too few fails it.
+token_use="While AUTHZ_OUTGOING_TOKEN_SOURCE is client-credentials and AUTHZ_OUTGOING_TOKEN_URL is empty, their defaults, the chart builds the agent's token endpoint AUTHZ_OUTGOING_TOKEN_URL from it."
 issuer_use="While AUTHZ_TRUSTED_PROVIDERS is empty, its default, the chart builds the issuer of each realm in AUTHZ_IDP_REALMS from it."
 kc_provider=(--set-json 'AUTHZ_TRUSTED_PROVIDERS=[{"id":"kc","issuer":"https://kc.example.com/auth/realms/kc"}]')
 expect_token_url() {
   local label="$1" expected="$2"
   shift 2
   local got
-  got="$(env_value AUTHZ_M2M_TOKEN_URL "$@")"
+  got="$(env_value AUTHZ_OUTGOING_TOKEN_URL "$@")"
   if [[ "${got}" == "${expected}" ]]; then
     pass "${label}"
   elif [[ -z "${got}" ]]; then
-    fail "${label}: the render sets no AUTHZ_M2M_TOKEN_URL: $(head -3 <<<"$(deployment_of "$@")")"
+    fail "${label}: the render sets no AUTHZ_OUTGOING_TOKEN_URL: $(head -3 <<<"$(deployment_of "$@")")"
   else
-    fail "${label}: AUTHZ_M2M_TOKEN_URL is '${got}', expected ${expected}"
+    fail "${label}: AUTHZ_OUTGOING_TOKEN_URL is '${got}', expected ${expected}"
   fi
 }
-expect_token_url "a default install builds AUTHZ_M2M_TOKEN_URL from the default IDENTITY_PROVIDER_URL" \
+expect_token_url "a default install builds AUTHZ_OUTGOING_TOKEN_URL from the default IDENTITY_PROVIDER_URL" \
   "http://identity-provider:8080/auth/realms/cloud-common/protocol/openid-connect/token"
-expect_token_url "an https IDENTITY_PROVIDER_URL with a port builds AUTHZ_M2M_TOKEN_URL beside an explicit provider list" \
+expect_token_url "an https IDENTITY_PROVIDER_URL with a port builds AUTHZ_OUTGOING_TOKEN_URL beside an explicit provider list" \
   "https://identity-provider:8443/auth/realms/cloud-common/protocol/openid-connect/token" \
   "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL=https://identity-provider:8443
-expect_token_url "an IDENTITY_PROVIDER_URL with an upper-case scheme builds AUTHZ_M2M_TOKEN_URL" \
+expect_token_url "an IDENTITY_PROVIDER_URL with an upper-case scheme builds AUTHZ_OUTGOING_TOKEN_URL" \
   "HTTP://identity-provider:8080/auth/realms/cloud-common/protocol/openid-connect/token" \
   "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL=HTTP://identity-provider:8080
-expect_token_url "an IPv6 IDENTITY_PROVIDER_URL builds AUTHZ_M2M_TOKEN_URL" \
+expect_token_url "an IPv6 IDENTITY_PROVIDER_URL builds AUTHZ_OUTGOING_TOKEN_URL" \
   "https://[fd00::1]:8443/auth/realms/cloud-common/protocol/openid-connect/token" \
   "${kc_provider[@]}" --set-string 'IDENTITY_PROVIDER_URL=https://[fd00::1]:8443'
-expect_token_url "a trailing slash on IDENTITY_PROVIDER_URL leaves one slash before auth in AUTHZ_M2M_TOKEN_URL" \
+expect_token_url "a trailing slash on IDENTITY_PROVIDER_URL leaves one slash before auth in AUTHZ_OUTGOING_TOKEN_URL" \
   "https://identity-provider:8443/auth/realms/cloud-common/protocol/openid-connect/token" \
   "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL=https://identity-provider:8443/
-expect_token_url "a set AUTHZ_M2M_TOKEN_URL reaches the agent as it is, in place of the endpoint built from IDENTITY_PROVIDER_URL" \
+expect_token_url "a set AUTHZ_OUTGOING_TOKEN_URL reaches the agent as it is, in place of the endpoint built from IDENTITY_PROVIDER_URL" \
   "https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token" \
-  --set-string AUTHZ_M2M_TOKEN_URL=https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token
+  --set-string AUTHZ_OUTGOING_TOKEN_URL=https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token
 # RFC 3986 allows ' in a URL, so the endpoint is quoted for YAML whatever it
 # holds; " and \ are not URL characters, and the agent refuses them, but the
 # chart still renders them as given.
-expect_token_url "a set AUTHZ_M2M_TOKEN_URL with an apostrophe reaches the agent as it is" \
-  "https://keycloak:8443/tok'en" --set-string "AUTHZ_M2M_TOKEN_URL=https://keycloak:8443/tok'en"
-expect_token_url "a set AUTHZ_M2M_TOKEN_URL with a double quote reaches the agent as it is" \
-  'https://keycloak:8443/a"b' --set-string 'AUTHZ_M2M_TOKEN_URL=https://keycloak:8443/a"b'
-expect_token_url "a set AUTHZ_M2M_TOKEN_URL with a backslash reaches the agent as it is" \
-  'https://keycloak:8443/a\b' --set-json 'AUTHZ_M2M_TOKEN_URL="https://keycloak:8443/a\\b"'
-expect_token_url "an IDENTITY_PROVIDER_URL with an apostrophe builds AUTHZ_M2M_TOKEN_URL as it is" \
+expect_token_url "a set AUTHZ_OUTGOING_TOKEN_URL with an apostrophe reaches the agent as it is" \
+  "https://keycloak:8443/tok'en" --set-string "AUTHZ_OUTGOING_TOKEN_URL=https://keycloak:8443/tok'en"
+expect_token_url "a set AUTHZ_OUTGOING_TOKEN_URL with a double quote reaches the agent as it is" \
+  'https://keycloak:8443/a"b' --set-string 'AUTHZ_OUTGOING_TOKEN_URL=https://keycloak:8443/a"b'
+expect_token_url "a set AUTHZ_OUTGOING_TOKEN_URL with a backslash reaches the agent as it is" \
+  'https://keycloak:8443/a\b' --set-json 'AUTHZ_OUTGOING_TOKEN_URL="https://keycloak:8443/a\\b"'
+expect_token_url "an IDENTITY_PROVIDER_URL with an apostrophe builds AUTHZ_OUTGOING_TOKEN_URL as it is" \
   "http://identity-provider:8080/o'k/auth/realms/cloud-common/protocol/openid-connect/token" \
   "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=http://identity-provider:8080/o'k"
 # The chart builds nothing from IDENTITY_PROVIDER_URL beside a set
-# AUTHZ_M2M_TOKEN_URL and an explicit provider list, so an empty one renders.
-expect_token_url "an empty IDENTITY_PROVIDER_URL renders beside a set AUTHZ_M2M_TOKEN_URL and an explicit provider list" \
+# AUTHZ_OUTGOING_TOKEN_URL and an explicit provider list, so an empty one
+# renders.
+expect_token_url "an empty IDENTITY_PROVIDER_URL renders beside a set AUTHZ_OUTGOING_TOKEN_URL and an explicit provider list" \
   "https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token" \
   "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL= \
-  --set-string AUTHZ_M2M_TOKEN_URL=https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token
+  --set-string AUTHZ_OUTGOING_TOKEN_URL=https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token
 for row in "|is empty" "identity-provider:8080|has no http or https scheme" "10.0.0.5:8080|has no http or https scheme" \
   "ftp://identity-provider|has no http or https scheme" "http://:8080|has no host" "http:/identity-provider:8080|has no host" \
   "http://admin:s3cret@[::1|has no host"; do
@@ -615,7 +630,7 @@ for row in "|is empty" "identity-provider:8080|has no http or https scheme" "10.
   if [[ "${refused}" == *"IDENTITY_PROVIDER_URL ${rule}. ${token_use} Set it to"* ]]; then
     pass "IDENTITY_PROVIDER_URL '${url}' is refused, since it ${rule}, while the chart builds the token endpoint from it"
   elif [[ "${refused}" == *"${deployment_kind}"* ]]; then
-    fail "IDENTITY_PROVIDER_URL '${url}' must be refused as one that ${rule}, and the chart rendered AUTHZ_M2M_TOKEN_URL '$(env_value AUTHZ_M2M_TOKEN_URL "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}")'"
+    fail "IDENTITY_PROVIDER_URL '${url}' must be refused as one that ${rule}, and the chart rendered AUTHZ_OUTGOING_TOKEN_URL '$(env_value AUTHZ_OUTGOING_TOKEN_URL "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}")'"
   else
     fail "IDENTITY_PROVIDER_URL '${url}' must be refused as one that ${rule}, got: $(head -3 <<<"${refused}")"
   fi
@@ -658,7 +673,7 @@ else
 fi
 
 # With AUTHZ_TRUSTED_PROVIDERS empty, the chart builds the issuer of each realm
-# from IDENTITY_PROVIDER_URL, whatever AUTHZ_M2M_TOKEN_SOURCE is. With
+# from IDENTITY_PROVIDER_URL, whatever AUTHZ_OUTGOING_TOKEN_SOURCE is. With
 # token-file, the chart builds only the issuers from IDENTITY_PROVIDER_URL.
 m2m_on=("${token_file[@]}")
 for row in "|is empty" "identity-provider:8080|has no http or https scheme" "http://:8080|has no host"; do

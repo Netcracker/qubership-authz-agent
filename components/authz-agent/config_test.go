@@ -53,11 +53,11 @@ func fileHolding(t *testing.T, content string, perm os.FileMode) string {
 	return path
 }
 
-// missingEndpoint is the refusal of an unset or empty AUTHZ_M2M_TOKEN_URL
-// with AUTHZ_M2M_TOKEN_SOURCE client-credentials, its default.
-const missingEndpoint = `AUTHZ_M2M_TOKEN_URL="": expected the http or https URL of the token endpoint, ` +
-	`required while AUTHZ_M2M_TOKEN_SOURCE is client-credentials, which is its default; ` +
-	`AUTHZ_M2M_TOKEN_SOURCE=token-file sends a token from a file instead`
+// missingEndpoint is the refusal of an unset or empty AUTHZ_OUTGOING_TOKEN_URL
+// with AUTHZ_OUTGOING_TOKEN_SOURCE client-credentials, its default.
+const missingEndpoint = `AUTHZ_OUTGOING_TOKEN_URL="": expected the http or https URL of the token endpoint, ` +
+	`required while AUTHZ_OUTGOING_TOKEN_SOURCE is client-credentials, which is its default; ` +
+	`AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends a token from a file instead`
 
 // tokenFile writes a token to a new file and returns its path, which differs
 // from call to call.
@@ -67,11 +67,11 @@ func tokenFile(t *testing.T) string {
 }
 
 // load is loadConfig over values with a token endpoint and an existing token
-// file added, so that either value of AUTHZ_M2M_TOKEN_SOURCE loads; a key of
-// values replaces the added one.
+// file added, so that either value of AUTHZ_OUTGOING_TOKEN_SOURCE loads; a key
+// of values replaces the added one.
 func load(t *testing.T, values map[string]string) (config, error) {
 	t.Helper()
-	merged := map[string]string{"authz.m2m.token.url": "http://idp/token", "authz.pap.client.token.file": tokenFile(t)}
+	merged := map[string]string{"authz.outgoing.token.url": "http://idp/token", "authz.pap.client.token.file": tokenFile(t)}
 	for key, value := range values {
 		merged[key] = value
 	}
@@ -121,7 +121,7 @@ func TestLoadConfig_EnvironmentOnly(t *testing.T) {
 // pull and the realm lookup off; each key of the loops is read from its
 // variable.
 func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
-	cfg, err := loadConfig(fromMap(map[string]string{"authz.m2m.token.url": "http://idp/token"}))
+	cfg, err := loadConfig(fromMap(map[string]string{"authz.outgoing.token.url": "http://idp/token"}))
 	if err != nil {
 		t.Fatalf("loadConfig() with a token endpoint alone error = %v, want none", err)
 	}
@@ -149,10 +149,10 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		"authz.pap.client.source.url":             "http://policy-admin:18090/",
 		"authz.pap.client.pull.interval":          "2",
 		"authz.pap.client.token.file":             "/t",
-		"authz.m2m.token.url":                     "http://idp/token",
-		"authz.m2m.client.id.file":                "/id",
-		"authz.m2m.client.secret.file":            "/secret",
-		"authz.m2m.renew.before.seconds":          "30",
+		"authz.outgoing.token.url":                "http://idp/token",
+		"authz.outgoing.client.id.file":           "/id",
+		"authz.outgoing.client.secret.file":       "/secret",
+		"authz.outgoing.renew.before.seconds":     "30",
 	})
 	if cfg.Authn.File != "/p.json" || cfg.Authn.Required || cfg.Authn.HTTPTimeout != 2*time.Second || cfg.Authn.HTTPRetries != 20 ||
 		cfg.Authn.ReloadInterval != 0 || cfg.Authn.TenantManagerURL != "http://tm:8080" {
@@ -189,8 +189,8 @@ func TestLoadConfig_RefusesAnInvalidValue(t *testing.T) {
 			`AUTHZ_JWKS_HTTP_TIMEOUT=" 5": expected an integer number of seconds from 1 to 9223372036`},
 		{"seconds below the minimum", "authz.jwks.http.timeout", "0",
 			`AUTHZ_JWKS_HTTP_TIMEOUT="0": expected an integer number of seconds from 1 to 9223372036`},
-		{"negative seconds", "authz.m2m.renew.before.seconds", "-1",
-			`AUTHZ_M2M_RENEW_BEFORE_SECONDS="-1": expected an integer number of seconds from 0 to 9223372036`},
+		{"negative seconds", "authz.outgoing.renew.before.seconds", "-1",
+			`AUTHZ_OUTGOING_RENEW_BEFORE_SECONDS="-1": expected an integer number of seconds from 0 to 9223372036`},
 		{"more seconds than a duration holds", "authz.pap.client.pull.interval", "9223372037",
 			`AUTHZ_PAP_CLIENT_PULL_INTERVAL="9223372037": expected an integer number of seconds from 0 to 9223372036`},
 		{"an entitlements timeout without an entitlements URL", "authz.entitlements.http.timeout", "0",
@@ -247,10 +247,10 @@ func TestLoadConfig_RefusesAnInvalidValue(t *testing.T) {
 			`AUTHZ_HTTP_ADDR="agent..local:8181": expected <host>:<port>, with the host empty, an IP address, or a host name and the port from 0 to 65535, such as 0.0.0.0:8181`},
 		{"a URL without a scheme", "authz.tenant.manager.url", "tenant-manager:8080",
 			`AUTHZ_TENANT_MANAGER_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
-		{"a path with no scheme", "authz.m2m.token.url", "/auth/realms/cloud-common/protocol/openid-connect/token",
-			`AUTHZ_M2M_TOKEN_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
-		{"a URL with an empty host", "authz.m2m.token.url", "http://:8080/token",
-			`AUTHZ_M2M_TOKEN_URL has no host: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
+		{"a path with no scheme", "authz.outgoing.token.url", "/auth/realms/cloud-common/protocol/openid-connect/token",
+			`AUTHZ_OUTGOING_TOKEN_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
+		{"a URL with an empty host", "authz.outgoing.token.url", "http://:8080/token",
+			`AUTHZ_OUTGOING_TOKEN_URL has no host: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
 		{"a URL of another scheme", "authz.pap.client.source.url", "ftp://authz-policy-admin",
 			`AUTHZ_PAP_CLIENT_SOURCE_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
 		{"a URL with a query", "authz.entitlements.url", "http://entitlements:8080?x=1",
@@ -265,8 +265,8 @@ func TestLoadConfig_RefusesAnInvalidValue(t *testing.T) {
 			`AUTHZ_TENANT_MANAGER_URL does not parse as a URL: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
 		{"a URL port above 65535", "authz.tenant.manager.url", "http://tenant-manager:65536",
 			`AUTHZ_TENANT_MANAGER_URL has a port outside 1 to 65535: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
-		{"URL port 0", "authz.m2m.token.url", "https://idp:0/token",
-			`AUTHZ_M2M_TOKEN_URL has a port outside 1 to 65535: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
+		{"URL port 0", "authz.outgoing.token.url", "https://idp:0/token",
+			`AUTHZ_OUTGOING_TOKEN_URL has a port outside 1 to 65535: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
 		{"a space before a URL", "authz.entitlements.url", " http://entitlements:8080",
 			`AUTHZ_ENTITLEMENTS_URL holds a space or another character outside RFC 3986: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
 		{"a space after a URL path", "authz.entitlements.url", "http://entitlements:8080/ ",
@@ -298,7 +298,7 @@ func TestLoadConfig_ReadsAnAcceptedValue(t *testing.T) {
 			func(c config) any { return c.Pull.Interval }, time.Duration(0)},
 		{"the most seconds a duration holds", "authz.trusted.providers.reload.interval", "9223372036",
 			func(c config) any { return c.Authn.ReloadInterval }, 9223372036 * time.Second},
-		{"seconds with a plus sign", "authz.m2m.renew.before.seconds", "+30",
+		{"seconds with a plus sign", "authz.outgoing.renew.before.seconds", "+30",
 			func(c config) any { return c.M2M.RenewBefore }, 30 * time.Second},
 		{"the minimum of a count", "authz.jwks.http.retries", "1",
 			func(c config) any { return c.Authn.HTTPRetries }, 1},
@@ -324,7 +324,7 @@ func TestLoadConfig_ReadsAnAcceptedValue(t *testing.T) {
 			func(c config) any { return c.Authn.TenantManagerURL }, "http://tenant-manager:65535"},
 		{"a URL with port 1", "authz.tenant.manager.url", "http://tenant-manager:1",
 			func(c config) any { return c.Authn.TenantManagerURL }, "http://tenant-manager:1"},
-		{"a URL with an IPv6 host", "authz.m2m.token.url", "http://[::1]:8080/token",
+		{"a URL with an IPv6 host", "authz.outgoing.token.url", "http://[::1]:8080/token",
 			func(c config) any { return c.M2M.TokenURL }, "http://[::1]:8080/token"},
 		{"a URL with a percent-encoded space in its path", "authz.pap.client.source.url", "http://authz-policy-admin:18090/a%20b",
 			func(c config) any { return c.Pull.SourceURL }, "http://authz-policy-admin:18090/a%20b"},
@@ -387,7 +387,7 @@ func TestLoadConfig_EmptyValuesTakeTheDefaults(t *testing.T) {
 		"authz.jwks.http.retries":                 "",
 		"authz.trusted.providers.reload.interval": "",
 		"authz.pap.client.pull.interval":          "",
-		"authz.m2m.renew.before.seconds":          "",
+		"authz.outgoing.renew.before.seconds":     "",
 		"authz.entitlements.http.timeout":         "",
 		"authz.entitlements.http.retries":         "",
 		"logging.level.root":                      "",
@@ -397,9 +397,9 @@ func TestLoadConfig_EmptyValuesTakeTheDefaults(t *testing.T) {
 		"authz.tenant.manager.url":                "",
 		"authz.pap.client.source.url":             "",
 		"authz.entitlements.url":                  "",
-		"authz.m2m.token.source":                  "",
+		"authz.outgoing.token.source":             "",
 	}
-	want, err := loadConfig(fromMap(map[string]string{"authz.m2m.token.url": "http://idp/token"}))
+	want, err := loadConfig(fromMap(map[string]string{"authz.outgoing.token.url": "http://idp/token"}))
 	if err != nil {
 		t.Fatalf("loadConfig() with a token endpoint alone error = %v, want none", err)
 	}
@@ -418,13 +418,13 @@ func TestLoadConfig_RefusesEveryInvalidValueInOneError(t *testing.T) {
 		{"a timeout and a log level", map[string]string{"authz.jwks.http.timeout": "0", "logging.level.root": "verbose"},
 			`AUTHZ_JWKS_HTTP_TIMEOUT="0": expected an integer number of seconds from 1 to 9223372036; ` +
 				`LOGGING_LEVEL_ROOT="verbose": expected one of debug, info, warn, error, fatal`},
-		{"a timeout and no token endpoint", map[string]string{"authz.jwks.http.timeout": "0", "authz.m2m.token.url": ""},
+		{"a timeout and no token endpoint", map[string]string{"authz.jwks.http.timeout": "0", "authz.outgoing.token.url": ""},
 			`AUTHZ_JWKS_HTTP_TIMEOUT="0": expected an integer number of seconds from 1 to 9223372036; ` +
 				missingEndpoint},
 		{"a timeout and no token file with token-file",
-			map[string]string{"authz.jwks.http.timeout": "0", "authz.m2m.token.source": "token-file", "authz.pap.client.token.file": missing},
+			map[string]string{"authz.jwks.http.timeout": "0", "authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": missing},
 			`AUTHZ_JWKS_HTTP_TIMEOUT="0": expected an integer number of seconds from 1 to 9223372036; ` +
-				`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + missing + `": no such file or directory, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`},
+				`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + missing + `": no such file or directory, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := refusal(t, tt.values); got != tt.want {
@@ -461,12 +461,12 @@ func TestLoadConfig_PinsTheEntitlementsPIPOnlyWithAURL(t *testing.T) {
 func TestLoadConfig_TokenFileReadsTheTokenFileAlone(t *testing.T) {
 	file := tokenFile(t)
 	cfg := mustLoad(t, map[string]string{
-		"authz.m2m.token.source":      "TOKEN-FILE",
-		"authz.m2m.token.url":         "http://idp/token",
+		"authz.outgoing.token.source": "TOKEN-FILE",
+		"authz.outgoing.token.url":    "http://idp/token",
 		"authz.pap.client.token.file": file,
 	})
 	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != file {
-		t.Errorf("loadConfig() with AUTHZ_M2M_TOKEN_SOURCE=TOKEN-FILE took the token from %q and %q, want the file %q alone",
+		t.Errorf("loadConfig() with AUTHZ_OUTGOING_TOKEN_SOURCE=TOKEN-FILE took the token from %q and %q, want the file %q alone",
 			cfg.M2M.TokenURL, cfg.M2M.TokenFile, file)
 	}
 }
@@ -481,12 +481,12 @@ func TestLoadConfig_ByDefaultAnUnsetTokenEndpointIsRefused(t *testing.T) {
 func TestLoadConfig_TokenFileNeedsNoTokenEndpoint(t *testing.T) {
 	file := tokenFile(t)
 	cfg := mustLoad(t, map[string]string{
-		"authz.m2m.token.source":      "token-file",
-		"authz.m2m.token.url":         "",
+		"authz.outgoing.token.source": "token-file",
+		"authz.outgoing.token.url":    "",
 		"authz.pap.client.token.file": file,
 	})
 	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != file {
-		t.Errorf("loadConfig() with AUTHZ_M2M_TOKEN_SOURCE=token-file and no token endpoint took the token from %q and %q, want the file %q alone",
+		t.Errorf("loadConfig() with AUTHZ_OUTGOING_TOKEN_SOURCE=token-file and no token endpoint took the token from %q and %q, want the file %q alone",
 			cfg.M2M.TokenURL, cfg.M2M.TokenFile, file)
 	}
 }
@@ -498,8 +498,8 @@ func TestLoadConfig_ClientCredentialsReadsTheTokenEndpointAlone(t *testing.T) {
 		values map[string]string
 	}{
 		{"unset", map[string]string{"authz.pap.client.token.file": missing}},
-		{"client-credentials", map[string]string{"authz.m2m.token.source": "client-credentials", "authz.pap.client.token.file": missing}},
-		{"client-credentials in capitals", map[string]string{"authz.m2m.token.source": "CLIENT-CREDENTIALS", "authz.pap.client.token.file": missing}},
+		{"client-credentials", map[string]string{"authz.outgoing.token.source": "client-credentials", "authz.pap.client.token.file": missing}},
+		{"client-credentials in capitals", map[string]string{"authz.outgoing.token.source": "CLIENT-CREDENTIALS", "authz.pap.client.token.file": missing}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := mustLoad(t, tt.values).M2M.TokenURL; got != "http://idp/token" {
@@ -519,22 +519,22 @@ func TestLoadConfig_RefusesATokenSourceItCannotUse(t *testing.T) {
 		values map[string]string
 		want   string
 	}{
-		{"no token endpoint with client-credentials, the default", map[string]string{"authz.m2m.token.url": ""},
+		{"no token endpoint with client-credentials, the default", map[string]string{"authz.outgoing.token.url": ""},
 			missingEndpoint},
-		{"a misspelled AUTHZ_M2M_TOKEN_SOURCE and no token endpoint", map[string]string{"authz.m2m.token.source": "tokenfile", "authz.m2m.token.url": ""},
-			`AUTHZ_M2M_TOKEN_SOURCE="tokenfile": expected one of client-credentials, token-file`},
-		{"a token endpoint without a scheme with client-credentials", map[string]string{"authz.m2m.token.url": "idp/token"},
-			`AUTHZ_M2M_TOKEN_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
-		{"a token endpoint without a scheme with token-file", map[string]string{"authz.m2m.token.source": "token-file", "authz.m2m.token.url": "idp/token"},
-			`AUTHZ_M2M_TOKEN_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
-		{"no token file with token-file", map[string]string{"authz.m2m.token.source": "token-file", "authz.pap.client.token.file": missing},
-			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + missing + `": no such file or directory, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`},
-		{"an empty token file with token-file", map[string]string{"authz.m2m.token.source": "token-file", "authz.pap.client.token.file": empty},
-			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + empty + `": holds no token, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`},
-		{"a token file of white space alone with token-file", map[string]string{"authz.m2m.token.source": "token-file", "authz.pap.client.token.file": blank},
-			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + blank + `": holds no token, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`},
-		{"a directory for the token file with token-file", map[string]string{"authz.m2m.token.source": "token-file", "authz.pap.client.token.file": directory},
-			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + directory + `": is not a regular file, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`},
+		{"a misspelled AUTHZ_OUTGOING_TOKEN_SOURCE and no token endpoint", map[string]string{"authz.outgoing.token.source": "tokenfile", "authz.outgoing.token.url": ""},
+			`AUTHZ_OUTGOING_TOKEN_SOURCE="tokenfile": expected one of client-credentials, token-file`},
+		{"a token endpoint without a scheme with client-credentials", map[string]string{"authz.outgoing.token.url": "idp/token"},
+			`AUTHZ_OUTGOING_TOKEN_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
+		{"a token endpoint without a scheme with token-file", map[string]string{"authz.outgoing.token.source": "token-file", "authz.outgoing.token.url": "idp/token"},
+			`AUTHZ_OUTGOING_TOKEN_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
+		{"no token file with token-file", map[string]string{"authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": missing},
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + missing + `": no such file or directory, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`},
+		{"an empty token file with token-file", map[string]string{"authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": empty},
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + empty + `": holds no token, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`},
+		{"a token file of white space alone with token-file", map[string]string{"authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": blank},
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + blank + `": holds no token, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`},
+		{"a directory for the token file with token-file", map[string]string{"authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": directory},
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + directory + `": is not a regular file, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := refusal(t, tt.values); got != tt.want {
@@ -549,8 +549,8 @@ func TestLoadConfig_TokenFileRefusesAFileItCannotRead(t *testing.T) {
 		t.Skip("root reads a file of mode 0000")
 	}
 	file := fileHolding(t, "token", 0o000)
-	values := map[string]string{"authz.m2m.token.source": "token-file", "authz.pap.client.token.file": file}
-	want := `AUTHZ_PAP_CLIENT_TOKEN_FILE="` + file + `": permission denied, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`
+	values := map[string]string{"authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": file}
+	want := `AUTHZ_PAP_CLIENT_TOKEN_FILE="` + file + `": permission denied, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`
 	if got := refusal(t, values); got != want {
 		t.Errorf("loadConfig(%v) refused with %q, want %q", values, got, want)
 	}
@@ -560,13 +560,13 @@ func TestLoadConfig_TokenFileChecksTheDefaultPathForAnUnsetOrEmptyOne(t *testing
 	if _, err := os.Stat(m2m.DefaultTokenFile); !errors.Is(err, fs.ErrNotExist) {
 		t.Skipf("os.Stat(%s) = %v, and the refusal below expects no such file", m2m.DefaultTokenFile, err)
 	}
-	want := `AUTHZ_PAP_CLIENT_TOKEN_FILE="/var/run/secrets/tokens/netcracker/token": no such file or directory, and AUTHZ_M2M_TOKEN_SOURCE=token-file sends the token in this file`
+	want := `AUTHZ_PAP_CLIENT_TOKEN_FILE="/var/run/secrets/tokens/netcracker/token": no such file or directory, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`
 	for _, tt := range []struct {
 		name   string
 		values map[string]string
 	}{
-		{"unset", map[string]string{"authz.m2m.token.source": "token-file"}},
-		{"empty", map[string]string{"authz.m2m.token.source": "token-file", "authz.pap.client.token.file": ""}},
+		{"unset", map[string]string{"authz.outgoing.token.source": "token-file"}},
+		{"empty", map[string]string{"authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": ""}},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			if _, err := loadConfig(fromMap(tt.values)); err == nil || err.Error() != want {

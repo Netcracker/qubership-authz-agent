@@ -122,7 +122,7 @@ func TestStart_StopsAndNamesTheVariable(t *testing.T) {
 			agent := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestStart_StopsAndNamesTheVariable$")
 			agent.Env = append(childEnvironment(), "AUTHZ_AGENT_TEST_RUN_MAIN=1", "LOGGING_LEVEL_ROOT="+tt.level,
 				"AUTHZ_HTTP_ADDR=127.0.0.1:0", "AUTHZ_PUBLIC_ADDR=127.0.0.1:0",
-				"AUTHZ_TRUSTED_PROVIDERS_FILE=", "AUTHZ_M2M_TOKEN_URL=http://127.0.0.1:1/token")
+				"AUTHZ_TRUSTED_PROVIDERS_FILE=", "AUTHZ_OUTGOING_TOKEN_URL=http://127.0.0.1:1/token")
 			agent.Env = append(agent.Env, tt.env...)
 			out, err := agent.CombinedOutput()
 			var exit *exec.ExitError

@@ -93,30 +93,31 @@ route in the shape access-control's clients expect.
 Cross-value guards. These combinations render superficially valid manifests but
 do nothing useful at runtime — they fail at template time instead.
 
-Note on AUTHZ_M2M_TOKEN_SOURCE=client-credentials, the default: The Secret
+Note on AUTHZ_OUTGOING_TOKEN_SOURCE=client-credentials, the default: The Secret
 '{{ .Values.SERVICE_NAME }}-client-credentials' MUST exist before helm install.
 It is provisioned externally by the platform (security-scripts or manual creation
 with label core.netcracker.com/secret-type=m2m). If the Secret is missing, the
-agent cannot obtain its M2M token, the pull loop never authenticates, and the
-Pod stays NotReady indefinitely. Helm cannot verify Secret existence at template
-time.
+agent cannot obtain its client credentials token, the pull loop never
+authenticates, and the Pod stays NotReady indefinitely. Helm cannot verify
+Secret existence at template time.
 */}}
 {{/*
-authz-agent.m2mTokenSource is AUTHZ_M2M_TOKEN_SOURCE, which the values schema
-limits to client-credentials and token-file.
+authz-agent.outgoingTokenSource is AUTHZ_OUTGOING_TOKEN_SOURCE, which the values
+schema limits to client-credentials and token-file.
 */}}
-{{- define "authz-agent.m2mTokenSource" -}}
-{{- .Values.AUTHZ_M2M_TOKEN_SOURCE | default "client-credentials" -}}
+{{- define "authz-agent.outgoingTokenSource" -}}
+{{- .Values.AUTHZ_OUTGOING_TOKEN_SOURCE | default "client-credentials" -}}
 {{- end -}}
 
 {{/*
-authz-agent.m2mTokenURL is the token endpoint of client-credentials: the value
-AUTHZ_M2M_TOKEN_URL where it is set, and otherwise IDENTITY_PROVIDER_URL, less
-one trailing slash, followed by the token path of the realm cloud-common.
+authz-agent.outgoingTokenURL is the token endpoint of client-credentials: the
+value AUTHZ_OUTGOING_TOKEN_URL where it is set, and otherwise
+IDENTITY_PROVIDER_URL, less one trailing slash, followed by the token path of
+the realm cloud-common.
 */}}
-{{- define "authz-agent.m2mTokenURL" -}}
-{{- if .Values.AUTHZ_M2M_TOKEN_URL -}}
-{{- .Values.AUTHZ_M2M_TOKEN_URL -}}
+{{- define "authz-agent.outgoingTokenURL" -}}
+{{- if .Values.AUTHZ_OUTGOING_TOKEN_URL -}}
+{{- .Values.AUTHZ_OUTGOING_TOKEN_URL -}}
 {{- else -}}
 {{- .Values.IDENTITY_PROVIDER_URL | default "" | toString | trimSuffix "/" -}}/auth/realms/cloud-common/protocol/openid-connect/token
 {{- end -}}
@@ -146,23 +147,23 @@ not, since the policies render either way.
 {{- end -}}
 {{/*
 The chart builds two values from IDENTITY_PROVIDER_URL. With
-AUTHZ_M2M_TOKEN_SOURCE client-credentials and AUTHZ_M2M_TOKEN_URL empty, the
-Deployment sets AUTHZ_M2M_TOKEN_URL to it followed by the token path of the
-realm cloud-common, whatever AUTHZ_TRUSTED_PROVIDERS holds. With
+AUTHZ_OUTGOING_TOKEN_SOURCE client-credentials and AUTHZ_OUTGOING_TOKEN_URL
+empty, the Deployment sets AUTHZ_OUTGOING_TOKEN_URL to it followed by the token
+path of the realm cloud-common, whatever AUTHZ_TRUSTED_PROVIDERS holds. With
 AUTHZ_TRUSTED_PROVIDERS empty, the trusted-providers ConfigMap gets the issuer
 `<base>/auth/realms/<realm>` for each realm in AUTHZ_IDP_REALMS, whatever
-AUTHZ_M2M_TOKEN_SOURCE is. Where the
-chart builds either one, this check refuses a value that is empty or has no http
-or https scheme or no host. The message has one sentence for each value built,
-naming the setting that makes the chart build it.
+AUTHZ_OUTGOING_TOKEN_SOURCE is. Where the chart builds either one, this check
+refuses a value that is empty or has no http or https scheme or no host. The
+message has one sentence for each value built, naming the setting that makes the
+chart build it.
 
 The agent refuses such a token endpoint when it starts, with an error that names
-AUTHZ_M2M_TOKEN_URL, which the operator did not set when the chart builds it,
-so this check names IDENTITY_PROVIDER_URL instead. Like that error, the check leaves the value out
-of the message, because a URL can hold a password. The agent accepts such an
-issuer and fails its discovery, so the provider never bootstraps. A generated
-cloud-common provider is marked required, and without it the agent returns 503
-on /health and /ready.
+AUTHZ_OUTGOING_TOKEN_URL, which the operator did not set when the chart builds
+it, so this check names IDENTITY_PROVIDER_URL instead. Like that error, the
+check leaves the value out of the message, because a URL can hold a password.
+The agent accepts such an issuer and fails its discovery, so the provider never
+bootstraps. A generated cloud-common provider is marked required, and without it
+the agent returns 503 on /health and /ready.
 
 The scheme and the host are read with regexMatch, which returns false for a
 value it does not match and never stops the render with an error. urlParse would
@@ -179,8 +180,8 @@ start, and the discovery of an issuer with a port that is not a number, or with
 a newline, fails.
 */}}
 {{- $uses := list -}}
-{{- if and (eq (include "authz-agent.m2mTokenSource" .) "client-credentials") (not .Values.AUTHZ_M2M_TOKEN_URL) -}}
-{{- $uses = append $uses "While AUTHZ_M2M_TOKEN_SOURCE is client-credentials and AUTHZ_M2M_TOKEN_URL is empty, their defaults, the chart builds the agent's token endpoint AUTHZ_M2M_TOKEN_URL from it." -}}
+{{- if and (eq (include "authz-agent.outgoingTokenSource" .) "client-credentials") (not .Values.AUTHZ_OUTGOING_TOKEN_URL) -}}
+{{- $uses = append $uses "While AUTHZ_OUTGOING_TOKEN_SOURCE is client-credentials and AUTHZ_OUTGOING_TOKEN_URL is empty, their defaults, the chart builds the agent's token endpoint AUTHZ_OUTGOING_TOKEN_URL from it." -}}
 {{- end -}}
 {{- if and (not .Values.AUTHZ_TRUSTED_PROVIDERS) .Values.AUTHZ_IDP_REALMS -}}
 {{- $uses = append $uses "While AUTHZ_TRUSTED_PROVIDERS is empty, its default, the chart builds the issuer of each realm in AUTHZ_IDP_REALMS from it." -}}

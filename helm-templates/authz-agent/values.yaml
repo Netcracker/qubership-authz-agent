@@ -103,9 +103,9 @@ AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
 #
 # The chart reads it in two places. While AUTHZ_TRUSTED_PROVIDERS below is
 # empty, it builds the issuer `<base>/auth/realms/<realm>` for each realm in
-# AUTHZ_IDP_REALMS. While AUTHZ_M2M_TOKEN_SOURCE is client-credentials and
-# AUTHZ_M2M_TOKEN_URL is empty, their defaults, it sets the agent's token
-# endpoint AUTHZ_M2M_TOKEN_URL to
+# AUTHZ_IDP_REALMS. While AUTHZ_OUTGOING_TOKEN_SOURCE is client-credentials and
+# AUTHZ_OUTGOING_TOKEN_URL is empty, their defaults, it sets the agent's token
+# endpoint AUTHZ_OUTGOING_TOKEN_URL to
 # `<base>/auth/realms/cloud-common/protocol/openid-connect/token`, with or
 # without AUTHZ_TRUSTED_PROVIDERS. Where the chart builds either one,
 # `helm template` and `helm install` fail on a value that is not an http or
@@ -202,13 +202,14 @@ AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL: 30
 # The agent's own token, which it sends on the policy pull and on its calls to
 # PIPs (authz-agent-ADR-0096).
 #
-# AUTHZ_M2M_TOKEN_SOURCE chooses how the agent gets it, and the chart passes the
-# value to the agent under the same name:
+# AUTHZ_OUTGOING_TOKEN_SOURCE chooses how the agent gets it, and the chart
+# passes the value to the agent under the same name:
 #
 #   client-credentials (DEFAULT):
-#     The agent obtains a token with client credentials from AUTHZ_M2M_TOKEN_URL,
-#     with the credentials mounted from the Secret below, and renews it before it
-#     expires. The chart mounts that Secret and passes the endpoint.
+#     The agent obtains a token with client credentials from
+#     AUTHZ_OUTGOING_TOKEN_URL, with the credentials mounted from the Secret
+#     below, and renews it before it expires. The chart mounts that Secret and
+#     passes the endpoint.
 #
 #   token-file:
 #     A Kubernetes projected ServiceAccount token (audience=netcracker,
@@ -239,8 +240,8 @@ AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL: 30
 #   detects the client-credentials Secret — NOT by manual admin-API assignment
 #   (Netcracker's Keycloak level-SPI rejects that with "role levels mixed").
 #
-# SECRET PREREQUISITE (AUTHZ_M2M_TOKEN_SOURCE=client-credentials — INSTALL
-# PREREQUISITE):
+# SECRET PREREQUISITE (AUTHZ_OUTGOING_TOKEN_SOURCE=client-credentials —
+# INSTALL PREREQUISITE):
 #   The Secret {{ .Values.SERVICE_NAME }}-client-credentials MUST exist before
 #   helm install / helm upgrade.  The chart only mounts this Secret; it does NOT
 #   create it.  If the Secret is missing the agent cannot obtain its token, the
@@ -264,23 +265,23 @@ AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL: 30
 #     every sync.  Existing M2M secrets on the stand (access-control, tenant-manager,
 #     etc.) carry no ArgoCD tracking annotations; the platform intentionally keeps
 #     them outside Helm-managed resources for exactly this reason.
-AUTHZ_M2M_TOKEN_SOURCE: client-credentials
-# AUTHZ_M2M_TOKEN_URL: the token endpoint of client-credentials. Empty (default)
-#   builds it from IDENTITY_PROVIDER_URL as
+AUTHZ_OUTGOING_TOKEN_SOURCE: client-credentials
+# AUTHZ_OUTGOING_TOKEN_URL: the token endpoint of client-credentials. Empty
+#   (default) builds it from IDENTITY_PROVIDER_URL as
 #   `<IDENTITY_PROVIDER_URL>/auth/realms/cloud-common/protocol/openid-connect/token`.
 #   Set it where Keycloak serves its realms without /auth, as Keycloak 17 and
 #   later do by default:
 #   http://keycloak:8080/realms/cloud-common/protocol/openid-connect/token. The
 #   chart passes a set value as it is, and with token-file passes none.
-AUTHZ_M2M_TOKEN_URL: ''
+AUTHZ_OUTGOING_TOKEN_URL: ''
 
 # Policy delivery configuration (authz-agent-ADR-0071).
 #
 # The agent fetches policies and PIPs from access-control's v3 config API on a
-# configurable interval and publishes them into OPA without a Pod restart.  The
-# Bearer token is the agent's own token that AUTHZ_M2M_TOKEN_SOURCE chooses: the
-# projected token in AUTHZ_PAP_CLIENT_TOKEN_FILE, or the token it obtains from
-# AUTHZ_M2M_TOKEN_URL.
+# configurable interval and publishes them into OPA without a Pod restart. The
+# Bearer token is the agent's own token that AUTHZ_OUTGOING_TOKEN_SOURCE
+# chooses: the projected token in AUTHZ_PAP_CLIENT_TOKEN_FILE, or the token it
+# obtains from AUTHZ_OUTGOING_TOKEN_URL.
 #
 # PAP is the Policy Administration Point, the service the policies come from;
 # the AUTHZ_PAP_CLIENT_* settings configure the agent as its client.
@@ -295,10 +296,10 @@ AUTHZ_PAP_CLIENT_SOURCE_URL: ''
 #   Same semantic as AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL.
 AUTHZ_PAP_CLIENT_PULL_INTERVAL: 30
 # AUTHZ_PAP_CLIENT_TOKEN_FILE: the file the agent reads its token from with
-#   AUTHZ_M2M_TOKEN_SOURCE=token-file; with client-credentials the agent does
-#   not read it. The chart mounts the netcracker-audience projected token at the
-#   default path alone, so with token-file keep the default: a path that holds
-#   no token stops the start.
+#   AUTHZ_OUTGOING_TOKEN_SOURCE=token-file; with client-credentials the agent
+#   does not read it. The chart mounts the netcracker-audience projected token
+#   at the default path alone, so with token-file keep the default: a path that
+#   holds no token stops the start.
 AUTHZ_PAP_CLIENT_TOKEN_FILE: /var/run/secrets/tokens/netcracker/token
 
 # Entitlements resolver.
