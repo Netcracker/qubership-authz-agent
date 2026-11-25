@@ -291,11 +291,12 @@ const (
 
 // allowanceOf returns what target allows, where target is the golden target of
 // a decision row: a row whose golden records what a check, a bulk check, or a
-// filter allowed. It reads it as a set of grants that two targets of one row can be compared by: a check
-// grant for an allowed check, each allowed id of a bulk check, each pair of an
-// operation and an id it allows, the filter conditions of every dialect of a
-// USE_FILTER_CONDITION result, as one grant, and every row for ALLOW. A refused answer and
-// DENY allow nothing. ok is false for a target that is not of a decision row.
+// filter allowed. The result is a set of grants, so two targets of one row can
+// be compared grant by grant: a check grant for an allowed check, each allowed
+// id of a bulk check, each pair of an operation and an id it allows, one grant
+// for the filter conditions of every dialect of a USE_FILTER_CONDITION result,
+// and the every-row grant for ALLOW. A refused answer and DENY allow nothing.
+// ok is false for a target that is not of a decision row.
 func allowanceOf(target any) (grants map[grant]bool, ok bool) {
 	grants = map[grant]bool{}
 	allowCheck := func(allowed bool) {

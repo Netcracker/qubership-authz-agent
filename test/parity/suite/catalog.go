@@ -116,9 +116,9 @@ type RowMeta struct {
 }
 
 // rowMetas is keyed by ParityEndpointID. IgnoreObligations is set for the v2
-// rows 7 to 10, which send obligations=false. SortSlices is set for the rows
-// 3, 4, 5, 8, and 9, whose lists the stand writes in insertion order and the
-// client reads as a set, so the comparator sorts them before cmp.Diff.
+// rows 7 to 10, which send obligations=false. SortSlices is set for every row
+// whose answer holds lists of ids, which the stand writes in insertion order
+// and the client reads as a set, so the comparator sorts them before cmp.Diff.
 var rowMetas = map[ParityEndpointID]RowMeta{
 	PSUITE_ROW_1_API_VERSION: {
 		ID: PSUITE_ROW_1_API_VERSION, Name: "api-version", HTTPMethod: "GET",

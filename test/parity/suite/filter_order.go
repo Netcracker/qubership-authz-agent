@@ -27,10 +27,13 @@ import (
 	"authz-agent/test/parity/suite/model"
 )
 
+// normalizeFilterOrder applies the order rewrite to every dialect of a filter
+// answer, and returns v unchanged for any other golden type.
+//
 // Access-control joins the predicates of the rules that apply to a filter request
 // in an order that differs from one run to the next, at every level of the
 // expression: the terms of one OR, the terms of one AND, and the bracketed groups
-// of nested sets and of simplified policies. The functions here rewrite each
+// of nested sets and of simplified policies. normalizeFilterOrder rewrites each
 // filter dialect into a canonical form in which that order does not reach the
 // comparison. The form is for comparison only; the golden on disk keeps the text
 // the stand answered.
@@ -63,9 +66,6 @@ import (
 // without the stand's spacing, and a chain of method calls is written back as a
 // chain after sorting. Both sides of a comparison pass through the same rewrite,
 // so only the difference between them matters.
-
-// normalizeFilterOrder applies the order rewrite to every dialect of a filter
-// answer, and returns v unchanged for any other golden type.
 func normalizeFilterOrder(v any) any {
 	switch typed := v.(type) {
 	case *model.OldFilterEvaluationResult:
@@ -222,7 +222,7 @@ var (
 )
 
 // canonicalInfix rewrites an infix filter expression of the dialect d into the
-// form in which the lists that the package comment calls unordered are sorted.
+// form in which the lists that [normalizeFilterOrder] calls unordered are sorted.
 // The text is split at the first logical operator of d that occurs outside
 // brackets and quotes; its operands are canonicalized in turn, trimmed, sorted,
 // and joined with that operator. Text that no logical operator splits keeps its
@@ -394,8 +394,8 @@ func joinTerms(parts []string, sep string, sorted bool, canonicalize func(string
 }
 
 // canonicalMethodChain rewrites the method chain of filterCondition, such as
-// first.and(second).or(third), into the form in which the lists that the
-// package comment calls unordered are sorted. The chain is split at every and
+// first.and(second).or(third), into the form in which the lists that
+// [normalizeFilterOrder] calls unordered are sorted. The chain is split at every and
 // and or call outside brackets and quotes, and evaluates from left to right:
 // a run of calls of one method joins its operands into one OR or AND, and that
 // operation becomes the first operand of the next run. The operands of each run

@@ -24,8 +24,8 @@ import (
 )
 
 // Row 7 drives POST /access/v2/check/resource?obligations=false. The v2
-// response shape carries {decision, obligations}; Obligations is filtered
-// by cmpopts.IgnoreFields at compare time per D-E.
+// response shape carries {decision, obligations}; the comparator leaves
+// Obligations out, since the request asks for none (IgnoreObligations).
 
 func (s *ParitySuite) TestRow07CheckResourceV2AllowIncoming() {
 	ctx := context.Background()

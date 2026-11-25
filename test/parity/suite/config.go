@@ -20,7 +20,7 @@ import (
 )
 
 // Config holds every PARITY_* env-var the suite consumes. Defaults align with
-// the local port block (PARITY_AC_PORT=28090, PARITY_PIP_PORT=28091,
+// the local port block (PARITY_AC_PORT=28090, PARITY_PIP_PORT=28191,
 // PARITY_IDP_PORT=25557) so a developer running the suite on a freshly
 // bootstrapped local stack does not need to export anything.
 type Config struct {
@@ -62,11 +62,11 @@ type Config struct {
 
 	// PipMockControlURL is the base URL of the pip-mock service on the
 	// host-published port — used for POST /pip-stub/configure and
-	// GET /pip-stub/reset. Default http://localhost:28091.
+	// GET /pip-stub/reset. Default http://localhost:28191.
 	PipMockControlURL string
 
 	// EAMockControlURL is the base URL of the entitlements-mock service of
-	// the parity harness. Default http://localhost:28092.
+	// the parity harness. Default http://localhost:28192.
 	EAMockControlURL string
 
 	// UMMockControlURL is the base URL of the user-management-mock service,

@@ -24,7 +24,7 @@ import (
 // Row 10 drives POST /access/v2/check/filter?obligations=false. Same
 // underlying RLS fixture as row 6 (rls-filter.json on PARITY_ORDER/LIST).
 // The v2 response schema adds an Obligations block that the comparator
-// filters out at cmp.Diff time per D-E.
+// leaves out, since the request asks for none (IgnoreObligations).
 func (s *ParitySuite) TestRow10CheckFilterV2RlsHappy() {
 	ctx := context.Background()
 

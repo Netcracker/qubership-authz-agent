@@ -365,8 +365,8 @@ endif
 #                    legacy access-control accepts and then fails every
 #                    decision on (an iterate block it never evaluates, a
 #                    condition that reads an undeclared PIP). The agent has to
-#                    take the export, name the set in /health, and refuse the
-#                    decisions with 200.
+#                    take the export, name the set in /health, and answer the
+#                    decisions with 200 and nothing allowed.
 #
 # legacy and owner-decisions read the goldens of the parity suite image and need
 # no bundle. Each check has a target of its own, parity-export,
