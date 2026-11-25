@@ -78,10 +78,13 @@ the suite image built from [`suite/Dockerfile`](suite/Dockerfile)), then:
 | `parity-install` | `helm upgrade --install` of the stub chart with its dev resource profile and [`test/k8s/parity/policy-admin-values.yaml`](../k8s/parity/policy-admin-values.yaml), then of the agent chart with its dev resource profile and [`test/k8s/parity/values.yaml`](../k8s/parity/values.yaml) |
 | `parity-suite` | The suite Job of the test-stand release, run by `helm test`; its log is streamed |
 
-Expected result: every case matches its golden or an accepted divergence (see [Goldens, accepted divergences, and the
-divergence backlog](#goldens-accepted-divergences-and-the-divergence-backlog)), and the cases that wait for a golden are
-skipped (see [Cases waiting for a golden](#cases-waiting-for-a-golden)). CI runs the same targets (job `Parity on kind`
-in `.github/workflows/integration-tests.yaml`).
+A case passes when the agent's answer matches its golden or an accepted divergence (see [Goldens, accepted divergences,
+and the divergence backlog](#goldens-accepted-divergences-and-the-divergence-backlog)), fails when it matches neither,
+and skips while its golden waits to be recorded (see [Cases waiting for a golden](#cases-waiting-for-a-golden)). The
+agent still differs from legacy on cases that no accepted divergence covers, so `make parity` ends with failing cases
+and a non-zero exit code. To tell a regression of your change from those, compare the failing cases with a run of the
+base branch. CI runs the same targets in the job `Parity on kind` (`.github/workflows/integration-tests.yaml`), which
+is not part of `CI gate`.
 
 The suite addresses `authz-agent`, `idp`, `pip-mock`, `entitlements-mock`, and `user-management-mock` by Service
 name; nothing is published on the host. To look at the stack from the host, port-forward, for example
@@ -239,11 +242,10 @@ the management endpoints too, which is why the probes hit `/auth/health/ready`.
 
 ## Goldens, accepted divergences, and the divergence backlog
 
-The committed goldens represent the legacy service's answers. The
-authz-agent is expected to match all of them; cases where it intentionally
-differs are listed in
+The committed goldens represent the legacy service's answers. A case where
+the authz-agent answers differently fails, unless the difference is listed in
 [`suite/accepted_divergences.go`](suite/accepted_divergences.go) with a
-recorded rationale (decision ID + reason string).
+recorded rationale (decision ID and reason string).
 
 When authz-agent behaviour changes in a way that affects a previously-green
 case:

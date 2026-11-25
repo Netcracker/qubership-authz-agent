@@ -102,8 +102,9 @@ suite:
     - -test.run
     - ^TestParitySuite$
   # Seconds the Job may run. Keep it no lower than -test.timeout in args, and
-  # no higher than the `helm test --timeout` (on kind, E2E_SUITE_TIMEOUT or
-  # PARITY_SUITE_TIMEOUT in the Makefile).
+  # no higher than the `helm test --timeout` (on kind, E2E_SUITE_TIMEOUT,
+  # PARITY_SUITE_TIMEOUT, or PARITY_EXPORT_SUITE_TIMEOUT_<check> in the
+  # Makefile).
   activeDeadlineSeconds: 900
   # Plain variables, by name.
   env: {}
