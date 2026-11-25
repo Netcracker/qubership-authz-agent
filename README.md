@@ -239,7 +239,7 @@ make parity        # harness, chart, suite in namespace authz-parity
 make parity-logs   # artifacts into test/artifacts/kind/parity/
 ```
 
-Expected: 135/135 PASS. This is what CI runs (job `Parity on kind`).
+This is what CI runs (job `Parity on kind`).
 
 ## Development
 

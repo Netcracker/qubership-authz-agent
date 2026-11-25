@@ -53,9 +53,9 @@ RUN mkdir -p /out/realms/e2e /out/realms/parity /out/pip-stub \
  && find clients -name '*.json' -print0 | sort -z | xargs -0 -r cat \
   | jq --slurpfile clients /dev/stdin '.clients += [$clients[][]]' \
       parity-with-users.json > /out/realms/parity/parity-realm.json \
- && jq -e '[.clients[].clientId] | length == (unique | length)' /out/realms/parity/parity-realm.json \
- && jq -e '[.users[].username] | length == (unique | length)' /out/realms/parity/parity-realm.json \
- && jq -e '[.users[].id | select(.)] | length == (unique | length)' /out/realms/parity/parity-realm.json \
+ && jq -e '[.clients[].clientId] | group_by(.) | map(select(length > 1)[0]) | length == 0 or ("clientId declared more than once in test/k8s/parity/idp-seed/parity-realm.json and test/parity/suite/testdata/realm-clients/: " + join(", ") + "\n" | halt_error)' /out/realms/parity/parity-realm.json \
+ && jq -e '[.users[].username] | group_by(.) | map(select(length > 1)[0]) | length == 0 or ("username declared more than once in test/k8s/parity/idp-seed/parity-realm.json and test/parity/suite/testdata/realm/: " + join(", ") + "\n" | halt_error)' /out/realms/parity/parity-realm.json \
+ && jq -e '[.users[].id | select(.)] | group_by(.) | map(select(length > 1)[0]) | length == 0 or ("user id declared more than once in test/k8s/parity/idp-seed/parity-realm.json and test/parity/suite/testdata/realm/: " + join(", ") + "\n" | halt_error)' /out/realms/parity/parity-realm.json \
  && cp pip-stub/* /out/pip-stub/
 
 FROM scratch AS chart-files

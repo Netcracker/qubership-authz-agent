@@ -16,7 +16,7 @@ quay.io); no external infrastructure is required beyond Docker.
 | Pipstub module unit tests | `cd test/integration/pipstub && go test -count=1 ./...` | 0 | PASS | — |
 | Chart render | `helm template` of `helm-templates/authz-agent` and `helm-templates/authz-policy-admin`, each with its dev resource profile | 0 | one Deployment with one container each | `test/scripts/test-chart-render.sh` asserts what both renders have to carry |
 | Runtime suite on kind | `make e2e` | 0 | 19 groups PASS | Includes the `m2m_keycloak.*` steps and both catalog coverage checks |
-| Parity replay on kind | `make parity` | 0 | 135/135 PASS | Replays frozen goldens — see `test/parity/README.md` for what the goldens pin |
+| Parity replay on kind | `make parity` | 0 | the result of the `Parity on kind` job | Replays frozen goldens — see `test/parity/README.md` for what the goldens pin |
 
 ## Environment Notes
 

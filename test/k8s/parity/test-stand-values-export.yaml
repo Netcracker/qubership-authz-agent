@@ -6,13 +6,15 @@
 pipStub:
   instances:
     # A PIP stub with no rule set that serves the v3 configuration export the
-    # suite mounts. The agent of the profile pulls /access/v3/config/policySets
-    # and /access/v3/config/pips from it (values-export.yaml) instead of from
-    # authz-policy-admin. `make parity-export-harness` configures an empty
-    # export until the suite mounts the first one.
+    # suite configures on it. The agent of the profile pulls
+    # /access/v3/config/policySets and /access/v3/config/pips from it
+    # (values-export.yaml) instead of from authz-policy-admin.
+    # `make parity-export-harness` configures an empty export until the suite
+    # configures the first one.
     export-source:
       port: 8090
-      # A mounted export of a whole stand is kept in memory.
+      # export-source keeps the export it serves in memory, and an export of
+      # a whole stand is large.
       resources:
         requests:
           cpu: 50m
@@ -23,9 +25,9 @@ pipStub:
           ephemeral-storage: 128Mi
 
 # TestExportFedAgent against the export bundle the image carries under
-# testdata/export-bundle. Each mounted export waits for a pull, which the
-# suite requests at PARITY_AGENT_PULL_URL; PARITY_EXPORT_RUN narrows the run to
-# the test functions it matches.
+# testdata/export-bundle. Each export the suite configures waits for a pull,
+# which the suite requests at PARITY_AGENT_PULL_URL; PARITY_EXPORT_RUN narrows
+# the run to the test functions it matches.
 suite:
   name: parity-export
   # The suite image with the bundle, from `make parity-export-image`; the
