@@ -64,7 +64,8 @@ We will choose the token the agent sends with the boolean setting `KUBERNETES_M2
 - **R4** (`chart`). The chart passes the value of the same name to the container, `false` by default.
 - **R5** (`startup`). `false` takes the token endpoint from `AUTHZ_M2M_TOKEN_URL`, and an empty endpoint stops the
   start.
-- **R6** (`startup`). `true` reads the token for `netcracker` from its file, and a missing file stops the start.
+- **R6** (`startup`). `true` reads the token for `netcracker` at the path ADR-0094 Terms gives, and a missing file
+  stops the start.
 - **R7** (`startup`). With `false` the agent does not read that file.
 - **R8** (`startup`). `false` in `k8s` and `true` in `legacy` stop the start with a message.
 - **R9** (`chart`). The values schema refuses the same pairs, with a message that names both settings, and compares the
