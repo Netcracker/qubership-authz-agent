@@ -241,7 +241,7 @@ func (s *RuntimeSuite) TestEntitlementsRuntime() {
 // without the entitlements-mock service, the integration suite fails
 // loudly on this check instead of silently skipping ENT coverage.
 func entitlementsMockReachable(cfg RuntimeConfig) bool {
-	req, err := http.NewRequest(http.MethodGet, cfg.EntitlementsMockURL+"/pip-stub/calls", nil)
+	req, err := http.NewRequest(http.MethodGet, cfg.EntitlementsMockURL+"/pip-stub/health", nil)
 	if err != nil {
 		return false
 	}
