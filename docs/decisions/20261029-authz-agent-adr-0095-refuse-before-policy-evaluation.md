@@ -28,13 +28,15 @@ kichasov
   ADR-0093 R1, the tenant that the steps of this record compare with, and ADR-0093 R22, the 503 in steps 4 and 5
   before the default tenant is translated.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
-  ADR-0094 R14, R16 to R18, and R25, the refusals of a Kubernetes token.
+  ADR-0094 R16 to R18 and R25, the refusals of a Kubernetes token.
+- [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](20261123-authz-agent-adr-0104-trusted-provider-files.md):
+  ADR-0104 R21, R26, and R27, the refusals of a token by its issuer, its audience, and the claim `kubernetes.io`.
 
 ## Context
 
-A check request carries a caller's token, optionally a user's token, and a tenant. ADR-0091 to ADR-0094 decide how each
-is verified and what each may reach, and each of them can refuse the request. The tenant depends on the verified
-`Incoming-Token`, and the check of a caller depends on the tenant, so the steps need one order.
+A check request carries a caller's token, optionally a user's token, and a tenant. ADR-0091 to ADR-0094 and ADR-0104
+decide how each is verified and what each may reach, and each of them can refuse the request. The tenant depends on the
+verified `Incoming-Token`, and the check of a caller depends on the tenant, so the steps need one order.
 
 ## Decision
 
@@ -51,8 +53,8 @@ and the reason code in the audit and a metric.
 #### The steps before policy evaluation
 
 - **R1** (`handler`). The agent runs these steps in this order:
-  1. Read and verify the token in `Authorization`: ADR-0092 R1 and the checks of ADR-0091 and ADR-0094.
-  2. Verify the token in `Incoming-Token`.
+  1. Read and verify the token in `Authorization`: ADR-0092 R1 and the checks of ADR-0091, ADR-0094, and ADR-0104.
+  2. Verify the token in `Incoming-Token`: the checks of ADR-0091, ADR-0094, and ADR-0104.
   3. Take the tenant of the decision (ADR-0093 R1) and log a mismatch (ADR-0093 R8).
   4. Compare a caller that is not M2M with that tenant (ADR-0092 R4, R5).
   5. Choose the policies of that tenant and evaluate them.
@@ -95,15 +97,16 @@ and the reason code in the audit and a metric.
   | 401 | `TOKEN_MISSING`, `TOKEN_SCHEME_INVALID` | ADR-0092 R1 |
   | 401 | `TOKEN_FORMAT_INVALID` | ADR-0091 R40 |
   | 401 | `TOKEN_ALG_NOT_ALLOWED` | ADR-0091 R41, R79 |
-  | 401 | `TOKEN_ISSUER_UNKNOWN` | ADR-0091 R5, R11 |
+  | 401 | `TOKEN_ISSUER_UNKNOWN` | ADR-0104 R21 |
   | 401 | `TOKEN_KID_MISSING` | ADR-0091 R22 |
   | 401 | `TOKEN_KID_UNKNOWN` | ADR-0091 R23, R39 |
   | 401 | `TOKEN_SIGNATURE_INVALID` | ADR-0091 R43 |
-  | 401 | `TOKEN_AUDIENCE_MISSING`, `TOKEN_AUDIENCE_INVALID` | ADR-0091 R50; ADR-0094 R14 |
+  | 401 | `TOKEN_AUDIENCE_MISSING`, `TOKEN_AUDIENCE_INVALID` | ADR-0104 R26 |
   | 401 | `TOKEN_EXP_MISSING`, `TOKEN_EXPIRED`, `TOKEN_NOT_YET_VALID` | ADR-0091 R44, R45 |
   | 401 | `TOKEN_IAT_MISSING`, `TOKEN_IAT_INVALID` | ADR-0091 R46, R47, R48 |
   | 401 | `TOKEN_NAMESPACE_NOT_ALLOWED` | ADR-0094 R25 |
   | 401 | `TOKEN_SUBJECT_INVALID` | ADR-0094 R16 |
+  | 401 | `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED` | ADR-0104 R27 |
   | 403 | `CALLER_TENANT_MISMATCH` | ADR-0092 R4 |
   | 503 | `TOKEN_KEYS_UNAVAILABLE` | ADR-0091 R23, R37, R38, for either header |
   | 503 | `DEFAULT_TENANT_NOT_TRANSLATED` | ADR-0093 R22 |

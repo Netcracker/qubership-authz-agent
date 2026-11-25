@@ -5,9 +5,10 @@ a person or an agent can check a change against each rule. Earlier records are p
 
 ## Read a record with numbered rules
 
-- **Terms** define the words the rules depend on. A term keeps one meaning in every record. ADR-0091 defines the words
-  for tokens, providers, and keys that the other records share.
-- **R1, R2** are the rules. Outside its record, cite a rule with its record, as `ADR-0091 R7`, because each record
+- **Terms** define the words the rules depend on. A term keeps one meaning in every record. ADR-0104 defines the words
+  for providers, realms, sources, issuers, and the two kinds of token, and ADR-0091 the words for keys and loads, which
+  the other records share.
+- **R1, R2** are the rules. Outside its record, cite a rule with its record, as `ADR-0091 R22`, because each record
   numbers its own rules. A number is never reused, so a rule added later can sit out of order under its topic.
 - **A1, A2** are rejected alternatives, each with the rule that rejects it. Code that implements one violates the
   record.
@@ -18,7 +19,7 @@ A rule names the layer where its check runs, or two layers, in parentheses:
 
 | Layer | Holds | Code |
 | --- | --- | --- |
-| `keys` | The trusted providers file, reading and holding signing keys | `internal/token/keys` |
+| `keys` | The provider files, reading and holding signing keys | `internal/token/keys`, `api/provider-file.v1.schema.json` |
 | `verify` | The check of one token and its result | `internal/token/verify` |
 | `namespaces` | The topology file and the allowed namespaces | `internal/token/namespaces` |
 | `handler` | Each request before policy evaluation, and the responses of the check routes | `components/authz-agent/internal/server`, `api/openapi.yaml` |
@@ -40,7 +41,7 @@ Anything no rule states is the implementer's choice.
 A pull request that changes code under a record says which rules it covers, in its description:
 
 ```text
-Implements: ADR-0092 R6, R8; ADR-0091 R54.
+Implements: ADR-0092 R6, R21; ADR-0091 R54.
 Defers: ADR-0091 R38 to #208; ADR-0095 R2 to the wiring change.
 ```
 

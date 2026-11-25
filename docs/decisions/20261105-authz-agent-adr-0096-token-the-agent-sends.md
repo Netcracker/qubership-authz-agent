@@ -26,17 +26,19 @@ kichasov
     the term token for `netcracker`, and the Kubernetes tokens the agent accepts.
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   ADR-0091 R14, the readiness conditions that the policy pull and the default tenant feed.
+- [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](20261123-authz-agent-adr-0104-trusted-provider-files.md):
+  the identity-provider token (ADR-0104 R22), and ADR-0104 R14, the token file whose loss stops the start.
 
 ## Context
 
 The agent presents one token on the policy pull and on calls to PIPs, entitlements, User Management, and
 tenant-manager.
 
-`KUBERNETES_M2M_ENABLED`, a boolean chart value, chooses between the agent's realm token and the token for `netcracker`,
-and `helm-templates/authz-agent/values.yaml` sets it to `false`. The container does not read it: the choice follows from
-whether the chart sets `AUTHZ_M2M_TOKEN_URL`, and the agent has to run without the chart as well. `M2M_AUTH_MODE` of
-ADR-0092 decides which tokens the agent accepts. The services of an installation in `k8s` refuse a realm token, and in
-`legacy` they refuse a token that the API server signed.
+`KUBERNETES_M2M_ENABLED`, a boolean chart value, chooses between the agent's identity-provider token and the token for
+`netcracker`, and `helm-templates/authz-agent/values.yaml` sets it to `false`. The container does not read it: the
+choice follows from whether the chart sets `AUTHZ_M2M_TOKEN_URL`, and the agent has to run without the chart as well.
+`M2M_AUTH_MODE` of ADR-0092 decides which tokens the agent accepts. The services of an installation in `k8s` refuse an
+identity-provider token, and in `legacy` they refuse a token that the API server signed.
 
 A PIP declaration can set headers today: `setHeaders` and `forwardHeaders` take precedence over the agent's token, and
 `forwardHeaders` can forward the caller's `Authorization`.
@@ -47,18 +49,19 @@ We will choose the token the agent sends with the boolean setting `KUBERNETES_M2
 
 ### Terms
 
-- **The agent's realm token**: the realm token that the agent obtains from the realm `cloud-common` with client
-  credentials.
-- **The agent's token**: the token the agent presents to the recipients of R10: the agent's realm token or the token for
-  `netcracker` of ADR-0094.
+- **The agent's identity-provider token**: the identity-provider token that the agent obtains from the realm
+  `cloud-common` with client credentials.
+- **The agent's token**: the token the agent presents to the recipients of R10: the agent's identity-provider token or
+  the token for `netcracker` of ADR-0094.
+- **Identity-provider token**: as ADR-0104 defines it.
 
 ### Rules
 
 #### The setting
 
 - **R1** (`startup`). The agent reads `KUBERNETES_M2M_ENABLED` from its environment, `false` by default.
-- **R2** (`startup`). `true` sends the token for `netcracker`, and `false` sends the agent's realm token. The value
-  has no third state, and `M2M_AUTH_MODE` does not change it.
+- **R2** (`startup`). `true` sends the token for `netcracker`, and `false` sends the agent's identity-provider token.
+  The value has no third state, and `M2M_AUTH_MODE` does not change it.
 - **R3** (`startup`). An empty value means `false`, as an unset one does, and the value is compared without regard to
   case. Any other value stops the start, as ADR-0092 R15 does for the mode.
 - **R4** (`chart`). The chart passes the value of the same name to the container, `false` by default.
@@ -81,11 +84,12 @@ We will choose the token the agent sends with the boolean setting `KUBERNETES_M2
 #### A call without a valid token
 
 - **R12** (`client`). The agent keeps its refresh: with `true` it reads the file again, and with `false` it renews the
-  agent's realm token before it expires.
+  agent's identity-provider token before it expires.
 - **R13** (`client`). Without a valid token only the call that needs it fails. For a PIP, entitlements, or User
   Management the value it would give is unknown, and the resources that depend on it are denied.
 - **R14** (`startup`). The policy pull and the translation of the default tenant need the agent's token too, so the
-  agent stays not ready at the start while its realm token cannot be fetched, through the conditions of ADR-0091 R14.
+  agent stays not ready at the start while its identity-provider token cannot be fetched, through the conditions of
+  ADR-0091 R14.
 - **R15** (`client`). A 401 from a recipient is a failure of that recipient.
 - **R16** (`client`). The agent does not retry with the other token.
 
@@ -96,7 +100,7 @@ token for `netcracker` on its own (R2). A boolean shows which token the agent se
 token is accepted by the services that receive it, so the agent and the schema stop the other pair at the start, and the
 operator does not have to find it out from failing calls (R8, R9). Reading the value in the agent gives a deployment
 without the chart the same rule (R1). A missing token file for `netcracker` is an error of the chart that no wait
-repairs, like the token for the API server in ADR-0094 R5, while a Keycloak that does not answer can recover (R6, R14).
+repairs, like the token for the API server in ADR-0104 R14, while a Keycloak that does not answer can recover (R6, R14).
 
 A PIP address comes from the policy configuration. A declaration that replaced the token could send a caller's token to
 that address, and the recipient would see the caller and not the agent (R11).
@@ -123,4 +127,4 @@ Negative:
 - Switching an installation to `k8s`, or back to `legacy`, takes a second setting.
 - A PIP that forwards the caller's `Authorization` or `Tenant` receives the agent's token and the tenant of the decision
   instead.
-- In `k8s` the token sent to PIPs changes from a realm token to the token for `netcracker`.
+- In `k8s` the token sent to PIPs changes from an identity-provider token to the token for `netcracker`.
