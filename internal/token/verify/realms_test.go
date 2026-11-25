@@ -31,8 +31,8 @@ const realmsPath = "/auth/realms/"
 // keycloakOf serves the JWKS of each realm of realms, whose keys are the
 // public keys of the signers, each with its kid and the x5t that thumbprints
 // holds for that kid. The JWKS of the realm r is at
-// /auth/realms/r/protocol/openid-connect/certs. It returns the realm-template
-// provider identity-provider of that server, whose tokens name the address
+// /auth/realms/r/protocol/openid-connect/certs. It returns the realms provider
+// identity-provider of that server, whose tokens name the address
 // https://public.example.
 func keycloakOf(t *testing.T, realms map[string][]*signer, thumbprints map[string]string) keys.Provider {
 	t.Helper()
@@ -58,10 +58,11 @@ func keycloakOf(t *testing.T, realms map[string][]*signer, thumbprints map[strin
 	}))
 	t.Cleanup(srv.Close)
 	return keys.Provider{
-		ID:       keys.IdentityProviderID,
-		Issuer:   keys.Issuer{Type: keys.RealmTemplate, Value: "https://public.example" + realmsPath + "{realm}"},
-		JWKSURI:  srv.URL + realmsPath + "{realm}/protocol/openid-connect/certs",
-		Audience: keys.Audience{Mode: keys.SkipValidation},
+		ID:             keys.IdentityProviderID,
+		Type:           keys.Realms,
+		IssuerTemplate: "https://public.example" + realmsPath + "{realm}",
+		JWKSURI:        srv.URL + realmsPath + "{realm}/protocol/openid-connect/certs",
+		Audience:       keys.Audience{Mode: keys.Ignore},
 	}
 }
 

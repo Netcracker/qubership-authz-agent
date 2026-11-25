@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Netcracker/qubership-authz-agent/main/api/provider-file.v1.schema.json",
+  "title": "Provider file",
+  "description": "A provider file of authz-agent, version 1 (authz-agent-ADR-0104). The agent reads every provider file in /etc/authz/providers at start.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "providers": {
+      "description": "The trusted providers, keyed by name. The name decides which checks a token of the provider gets (ADR-0104 R22).",
+      "type": "object",
+      "properties": {
+        "identity-provider": {
+          "$ref": "#/$defs/identityProvider"
+        },
+        "kubernetes": {
+          "$ref": "#/$defs/kubernetes"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "providers"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "identityProvider": {
+      "description": "The Keycloak of the platform. Its tokens are identity-provider tokens and get the M2M test of ADR-0092 R6 and R21, so no other identity provider may stand under this name. A token of it is an identity-provider token also when it holds the claim kubernetes.io, and the checks of a Kubernetes token do not apply to it (ADR-0104 R22).",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "realms: one issuer per realm, given by issuerTemplate. single: one issuer, given by issuer.",
+          "enum": [
+            "realms",
+            "single"
+          ]
+        },
+        "issuer": {
+          "$ref": "#/$defs/issuer"
+        },
+        "issuerTemplate": {
+          "description": "The iss of the tokens, with {realm} in place of the realm: the path segment of iss that differs between the issuers of this provider, which Keycloak calls a realm (ADR-0104 R19).",
+          "$ref": "#/$defs/realmTemplateUrl"
+        },
+        "jwksUri": {
+          "$ref": "#/$defs/jwksUri"
+        },
+        "readinessRealms": {
+          "description": "Realms whose keys must load before the agent reports ready, each named as it stands in place of {realm} in iss after percent-decoding (ADR-0104 R12, R13, R25).",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "audience": {
+          "$ref": "#/$defs/audience"
+        }
+      },
+      "required": [
+        "type",
+        "jwksUri",
+        "audience"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "realms"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "issuerTemplate"
+            ],
+            "properties": {
+              "issuer": false,
+              "jwksUri": {
+                "$ref": "#/$defs/realmTemplateUrl"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "single"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "issuer"
+            ],
+            "properties": {
+              "issuerTemplate": false,
+              "readinessRealms": false,
+              "jwksUri": {
+                "$ref": "#/$defs/url"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "kubernetes": {
+      "description": "The API server of the cluster. Its tokens are Kubernetes tokens and M2M tokens (ADR-0092 R7), and get the checks of ADR-0094 R16 to R18 and R25 and ADR-0091 R48 (ADR-0104 R22).",
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "single"
+        },
+        "issuer": {
+          "$ref": "#/$defs/issuer"
+        },
+        "jwksUri": {
+          "description": "The address of the keys, over https only (ADR-0094 R32). With jwksBearerTokenFile it is an in-cluster address (ADR-0104 R28).",
+          "allOf": [
+            {
+              "$ref": "#/$defs/url"
+            },
+            {
+              "pattern": "^[Hh][Tt][Tt][Pp][Ss]://"
+            }
+          ]
+        },
+        "jwksBearerTokenFile": {
+          "description": "The absolute path of the file whose token goes with the requests for the keys (ADR-0104 R14, R24). At start the agent compares the iss of that token with issuer and warns when they differ or the token holds no iss it can read (ADR-0104 R29).",
+          "type": "string",
+          "pattern": "^/"
+        },
+        "audience": {
+          "$ref": "#/$defs/audience",
+          "properties": {
+            "mode": {
+              "const": "matchAny"
+            }
+          }
+        }
+      },
+      "required": [
+        "type",
+        "issuer",
+        "jwksUri",
+        "audience"
+      ],
+      "additionalProperties": false
+    },
+    "issuer": {
+      "description": "The iss of the tokens, compared byte for byte (ADR-0104 R19).",
+      "$ref": "#/$defs/url"
+    },
+    "audience": {
+      "description": "The check of aud (ADR-0104 R26).",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "description": "matchAny: aud must hold one of values. ignore: the agent does not check aud, whether the token has one or not.",
+          "enum": [
+            "matchAny",
+            "ignore"
+          ]
+        },
+        "values": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "additionalProperties": false,
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "matchAny"
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
+      "then": {
+        "required": [
+          "values"
+        ]
+      },
+      "else": {
+        "properties": {
+          "values": false
+        }
+      }
+    },
+    "jwksUri": {
+      "description": "The address of the keys (ADR-0104 R23).",
+      "type": "string",
+      "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://"
+    },
+    "url": {
+      "description": "An absolute URL of printable ASCII characters, without a space, a fragment, {, or }.",
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9+.-]*://[^/?#{}]+([/?][^#{}]*)?$",
+      "not": {
+        "pattern": "[^\\x21-\\x7e]"
+      }
+    },
+    "realmTemplateUrl": {
+      "description": "Like url, except that it holds {realm} once, as one whole path segment.",
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9+.-]*://[^/?#{}]+(/[^/?#{}]*)*/\\{realm\\}(/[^/?#{}]*)*(\\?[^#{}]*)?$",
+      "not": {
+        "pattern": "[^\\x21-\\x7e]"
+      }
+    }
+  }
+}

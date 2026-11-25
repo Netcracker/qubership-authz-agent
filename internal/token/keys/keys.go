@@ -13,8 +13,8 @@
 // limitations under the License.
 
 // Package keys holds the signing keys of the trusted sources and finds the key
-// a token asks for. A source is an exact [Provider], or a realm of a
-// realm-template provider, which the iss of a token names. A realm outside
+// a token asks for. A source is a single [Provider], or a realm of a realms
+// provider, which the iss of a token names. A realm outside
 // [Provider.ReadinessRealms] is loaded when the first token names it.
 //
 // [ReadDir] reads the provider files, and [New] builds a [Set] from them.
@@ -176,18 +176,18 @@ type Key struct {
 	alg string
 }
 
-// Source is a place that keys are read from: an exact provider, or a realm of
-// a realm-template provider.
+// Source is a place that keys are read from: a single provider, or a realm of
+// a realms provider.
 type Source struct {
 	// Provider is the provider of the source. A [Key] that a [Set] returns
 	// always has one.
 	Provider *Provider
 	// Realm is the name of a realm, the part of a token's iss in place of
-	// {realm}, percent-decoded. It is "" for an exact provider.
+	// {realm}, percent-decoded. It is "" for a single provider.
 	Realm string
 }
 
-// ID names s in a result or a log line: the [Provider.ID] of an exact
+// ID names s in a result or a log line: the [Provider.ID] of a single
 // provider, or realm/ followed by the name of a realm. A realm name is up to
 // 255 bytes taken from a token, so the ID of a realm can hold spaces and
 // quotes, and code that puts an ID into a log line, an event, or a metric
@@ -200,7 +200,7 @@ func (s Source) ID() string {
 }
 
 // label names s in a log line or an error of this package: realm "<name>" of
-// provider "<id>" for a realm, provider "<id>" for an exact provider.
+// provider "<id>" for a realm, provider "<id>" for a single provider.
 func (s Source) label() string {
 	if s.Realm != "" {
 		return fmt.Sprintf("realm %q of provider %q", s.Realm, s.Provider.ID)
@@ -236,10 +236,10 @@ func AcceptsAlgorithm(alg string) bool {
 // use, and [Set.Lookup] never waits for a reload.
 type Set struct {
 	opts Options
-	// exact holds the sources of the exact providers by issuer.value. It does
-	// not change after New.
-	exact map[string]*source
-	// templates holds the realm-template providers. It does not change after
+	// single holds the sources of the single providers by issuer. It does not
+	// change after New.
+	single map[string]*source
+	// templates holds the realms providers. It does not change after
 	// New.
 	templates []*trusted
 	// warnings admits one warning a minute about a refused load, because a
@@ -266,8 +266,8 @@ type trusted struct {
 	// loads is the limit of [maxLoadsPerMinute] on the on-demand loads of the
 	// sources of this provider.
 	loads *windowLimit
-	// issuer and jwks split the issuer.value and the jwksUri of a
-	// realm-template provider at {realm}. They are zero in an exact provider.
+	// issuer and jwks split the issuerTemplate and the jwksUri of a realms
+	// provider at {realm}. They are zero in a single provider.
 	issuer, jwks template
 }
 
@@ -285,17 +285,17 @@ func New(cfg Config, opts Options) (*Set, error) {
 	opts = opts.withDefaults()
 	s := &Set{
 		opts:     opts,
-		exact:    make(map[string]*source, len(cfg.Providers)),
+		single:   make(map[string]*source, len(cfg.Providers)),
 		warnings: newWindowLimit(1),
 		realms:   make(map[realmKey]*source),
 	}
 	for _, p := range cfg.Providers {
 		t := &trusted{provider: &p, client: newClient(opts.HTTPTimeout), loads: newWindowLimit(maxLoadsPerMinute)}
-		if p.Issuer.Type == Exact {
-			s.exact[p.Issuer.Value] = s.newSource(t, Source{Provider: t.provider}, p.JWKSURI, true)
+		if p.Type == Single {
+			s.single[p.Issuer] = s.newSource(t, Source{Provider: t.provider}, p.JWKSURI, true)
 			continue
 		}
-		t.issuer, t.jwks = splitTemplate(p.Issuer.Value), splitTemplate(p.JWKSURI)
+		t.issuer, t.jwks = splitTemplate(p.IssuerTemplate), splitTemplate(p.JWKSURI)
 		s.templates = append(s.templates, t)
 		for _, name := range p.ReadinessRealms {
 			s.realms[realmKey{t, name}] = s.newSource(t, Source{Provider: t.provider, Realm: name}, t.jwks.with(name), true)
@@ -334,7 +334,7 @@ func (s *Set) warnOnce(now time.Time, format string, args ...any) {
 }
 
 // Ready reports whether every required source has loaded a usable key: each
-// exact provider, and each realm of [Provider.ReadinessRealms]. Once true, it
+// single provider, and each realm of [Provider.ReadinessRealms]. Once true, it
 // stays true, also when a reload later removes those keys, so a server that
 // fails does not take a running service out of rotation.
 func (s *Set) Ready() bool {
@@ -349,7 +349,7 @@ func (s *Set) Ready() bool {
 // sources returns every source of the Set at the time of the call.
 func (s *Set) sources() []*source {
 	out := s.realmSources()
-	for _, src := range s.exact {
+	for _, src := range s.single {
 		out = append(out, src)
 	}
 	return out
@@ -410,13 +410,13 @@ func (s *Set) sourceFor(ctx context.Context, issuer string) (*source, error) {
 	return s.realmSource(ctx, t, realm)
 }
 
-// resolve returns the source of the exact provider whose issuer.value is
-// issuer, or else, with a nil source, the realm-template provider that issuer
+// resolve returns the source of the single provider whose issuer is issuer,
+// or else, with a nil source, the realms provider that issuer
 // matches and the realm name it puts in place of {realm}. It returns
 // [ErrIssuerUnknown] when issuer matches no provider. [Config.Validate] lets
 // no issuer match two providers.
 func (s *Set) resolve(issuer string) (*source, *trusted, string, error) {
-	if src, ok := s.exact[issuer]; ok {
+	if src, ok := s.single[issuer]; ok {
 		return src, nil, "", nil
 	}
 	for _, t := range s.templates {
@@ -429,7 +429,7 @@ func (s *Set) resolve(issuer string) (*source, *trusted, string, error) {
 
 // Refresh fetches the keys of every source once and replaces the loaded keys
 // with them, as [Set.LookupOrReload] does for one source. The returned error
-// has a line for each exact provider and each required realm whose reload did
+// has a line for each single provider and each required realm whose reload did
 // not load a usable key, in the order of their [Source.ID]. When a realm
 // outside [Provider.ReadinessRealms] fails, the error ends with one line for
 // all such realms, because the realms of a provider share its server and any

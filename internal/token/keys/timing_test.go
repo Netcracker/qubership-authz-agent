@@ -135,16 +135,17 @@ const (
 	realmsPath   = "/auth/realms/"
 )
 
-// keycloakProvider is the realm-template provider identity-provider of the
-// Keycloak at keycloakURL, whose tokens name the address public.example, and
+// keycloakProvider is the realms provider identity-provider of the Keycloak
+// at keycloakURL, whose tokens name the address public.example, and
 // which requires the realms in readiness.
 func keycloakProvider(readiness ...string) Provider {
 	return Provider{
 		ID:              IdentityProviderID,
-		Issuer:          Issuer{Type: RealmTemplate, Value: "https://public.example" + realmsPath + "{realm}"},
+		Type:            Realms,
+		IssuerTemplate:  "https://public.example" + realmsPath + "{realm}",
 		JWKSURI:         keycloakURL + realmsPath + "{realm}/protocol/openid-connect/certs",
 		ReadinessRealms: readiness,
-		Audience:        skipAudience,
+		Audience:        ignoreAudience,
 	}
 }
 
@@ -260,15 +261,15 @@ func bubbleSetOf(t *testing.T, cfg Config, opts Options, transport http.RoundTri
 	for _, p := range set.templates {
 		p.client.Transport = transport
 	}
-	for _, src := range set.exact {
+	for _, src := range set.single {
 		src.fetcher.client.Transport = transport
 	}
 	return set
 }
 
-// providerOf is an exact provider with id of the fake host idp.test.
+// providerOf is a single provider with key id of the fake host idp.test.
 func providerOf(id string) Provider {
-	return Provider{ID: id, Issuer: Issuer{Type: Exact, Value: "http://idp.test"}, JWKSURI: "http://idp.test/jwks", Audience: skipAudience}
+	return Provider{ID: id, Type: Single, Issuer: "http://idp.test", JWKSURI: "http://idp.test/jwks", Audience: ignoreAudience}
 }
 
 // runSet starts Run with a context of its own and returns the function that
@@ -659,7 +660,7 @@ func TestLookupOrReload_StopsWaitingWhenItsContextEnds(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		cancel()
 		started := time.Now()
-		if _, err := set.LookupOrReload(ctx, Query{Issuer: provider.Issuer.Value, KID: "key-2"}); !errors.Is(err, ErrKeyUnknown) {
+		if _, err := set.LookupOrReload(ctx, Query{Issuer: provider.Issuer, KID: "key-2"}); !errors.Is(err, ErrKeyUnknown) {
 			t.Errorf("LookupOrReload(%q) with an ended context error = %v while the reload was held, want %v", "key-2", err, ErrKeyUnknown)
 		}
 		if got := time.Since(started); got != 0 {
@@ -686,7 +687,7 @@ func TestLookupOrReload_StopsWaitingAfterTheReloadWait(t *testing.T) {
 		hold := make(chan struct{})
 		transport.setHold(hold)
 		started := time.Now()
-		if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer.Value, KID: "key-2"}); !errors.Is(err, ErrKeyUnknown) {
+		if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "key-2"}); !errors.Is(err, ErrKeyUnknown) {
 			t.Errorf("LookupOrReload(%q) error = %v while the reload was held, want %v", "key-2", err, ErrKeyUnknown)
 		}
 		if got := time.Since(started); got != 20*time.Millisecond {
@@ -780,7 +781,7 @@ func TestLookupOrReload_ReloadsForAKIDNoLoadedKeyHas(t *testing.T) {
 					t.Fatalf("Refresh() error = %v", err)
 				}
 				transport.publish(t, ecJWK(t, "key-1", nil), ecJWK(t, "key-2", nil))
-				key, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer.Value, KID: tt.kid})
+				key, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: tt.kid})
 				if err != nil {
 					t.Fatalf("LookupOrReload(%q) error = %v, want none", tt.kid, err)
 				}
@@ -809,7 +810,7 @@ func TestLookupOrReload_ReloadsAProviderAtMostOnceAMinute(t *testing.T) {
 		}
 		lookup := func(kid string, wantFound bool, wantRequests int) {
 			t.Helper()
-			_, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer.Value, KID: kid})
+			_, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: kid})
 			if got := transport.loadCount(); (err == nil) != wantFound || got != wantRequests {
 				t.Errorf("LookupOrReload(%q) error = %v with %d JWKS requests, want found = %t with %d", kid, err, got, wantFound, wantRequests)
 			}

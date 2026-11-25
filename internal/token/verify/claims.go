@@ -83,14 +83,14 @@ func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, p
 	return time.Unix(int64(whole), int64(fraction*float64(time.Second))), true, nil
 }
 
-// checkAudience applies the audience of the provider of from, the same for an
-// exact provider and for each of its realms. The mode [keys.SkipValidation]
-// lets every token pass. Any other mode, [keys.MatchAny] or an unset one,
-// requires aud, a string or an array of strings, to name one of the audience
-// values exactly.
+// checkAudience applies the audience of the provider of from, the same for a
+// single provider and for each realm of a realms provider. The mode
+// [keys.Ignore] lets every token pass. Any other mode, [keys.MatchAny] or an
+// unset one, requires aud, a string or an array of strings, to name one of
+// the audience values exactly.
 func checkAudience(claims map[string]json.RawMessage, from keys.Source) error {
 	p := from.Provider
-	if p.Audience.Mode == keys.SkipValidation {
+	if p.Audience.Mode == keys.Ignore {
 		return nil
 	}
 	values := p.Audience.Values

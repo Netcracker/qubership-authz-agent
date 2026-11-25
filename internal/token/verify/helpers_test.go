@@ -119,7 +119,7 @@ type signer struct {
 // providerOf returns a provider with id whose tokens pass without an aud
 // check.
 func providerOf(id string) *keys.Provider {
-	return &keys.Provider{ID: id, Audience: keys.Audience{Mode: keys.SkipValidation}}
+	return &keys.Provider{ID: id, Audience: keys.Audience{Mode: keys.Ignore}}
 }
 
 // matchAny returns a provider with the id realm whose tokens pass the aud

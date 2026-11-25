@@ -100,9 +100,9 @@ func curveOf(key jwk.Key) string {
 // fetcher downloads the signing keys of one source.
 type fetcher struct {
 	source Source
-	// address is the address of the JWKS: the jwksUri of an exact provider,
-	// or the jwksUri of a realm-template provider with the realm name in place
-	// of {realm}.
+	// address is the address of the JWKS: the jwksUri of a single provider,
+	// or the jwksUri of a realms provider with the realm name in place of
+	// {realm}.
 	address string
 	client  *http.Client
 	log     Logger

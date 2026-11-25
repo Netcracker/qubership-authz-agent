@@ -36,10 +36,10 @@ import (
 func TestLookup_FindsTheKeyOfTheIssuerThatTheQueryNames(t *testing.T) {
 	a := newIdP(t, ecJWK(t, "shared", nil))
 	b := newIdP(t, ecJWK(t, "shared", nil))
-	providerA, providerB := exactOf(IdentityProviderID, a), exactOf(KubernetesID, b)
+	providerA, providerB := singleOf(IdentityProviderID, a), singleOf(KubernetesID, b)
 	set := mustLoad(t, testOptions(), providerA, providerB)
 	for _, p := range []Provider{providerA, providerB} {
-		key, err := set.Lookup(Query{Issuer: p.Issuer.Value, KID: "shared"})
+		key, err := set.Lookup(Query{Issuer: p.Issuer, KID: "shared"})
 		if err != nil {
 			t.Errorf("Lookup(issuer of %q) error = %v", p.ID, err)
 			continue
@@ -70,7 +70,7 @@ func TestRefresh_SkipsAKeyThatCannotSignAnAcceptedToken(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			provider := exactOf(IdentityProviderID, newIdP(t, tt.key, ecJWK(t, "control", nil)))
+			provider := singleOf(IdentityProviderID, newIdP(t, tt.key, ecJWK(t, "control", nil)))
 			set := mustLoad(t, testOptions(), provider)
 			if loaded(set, provider, "case") {
 				t.Errorf("Lookup(%q) found a key, want it skipped", "case")
@@ -97,7 +97,7 @@ func TestRefresh_AcceptsEverySigningKeyType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			provider := exactOf(IdentityProviderID, newIdP(t, tt.key))
+			provider := singleOf(IdentityProviderID, newIdP(t, tt.key))
 			set := mustLoad(t, testOptions(), provider)
 			if !loaded(set, provider, "k") {
 				t.Errorf("Lookup(%q) found nothing, want the key", "k")
@@ -123,7 +123,7 @@ func TestRefresh_SkipsAWeakRSAKeyWithTheJWXFloorsLowered(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			provider := exactOf(IdentityProviderID, newIdP(t, control, tt.key))
+			provider := singleOf(IdentityProviderID, newIdP(t, control, tt.key))
 			set := mustLoad(t, testOptions(), provider)
 			if loaded(set, provider, "case") {
 				t.Errorf("Lookup(%q) found a key, want it skipped", "case")
@@ -138,7 +138,7 @@ func TestRefresh_SkipsAWeakRSAKeyWithTheJWXFloorsLowered(t *testing.T) {
 func TestRefresh_AcceptsAJWKSOfExactly1MiB(t *testing.T) {
 	idp := newIdP(t)
 	idp.jwks = paddedJWKS(ecJWK(t, "k1", nil), maxResponseBytes)
-	provider := exactOf(IdentityProviderID, idp)
+	provider := singleOf(IdentityProviderID, idp)
 	set := mustLoad(t, testOptions(), provider)
 	if !loaded(set, provider, "k1") {
 		t.Errorf("Lookup(%q) found nothing, want the key of a JWKS of %d bytes", "k1", maxResponseBytes)
@@ -171,7 +171,7 @@ func TestRefresh_ReportsAProviderWhoseKeysCannotBeRead(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			idp := newIdP(t, ecJWK(t, "k1", nil))
 			tt.setup(t, idp)
-			set := mustNew(t, Config{Providers: []Provider{exactOf(IdentityProviderID, idp)}}, testOptions())
+			set := mustNew(t, Config{Providers: []Provider{singleOf(IdentityProviderID, idp)}}, testOptions())
 			err := set.Refresh(t.Context())
 			if err == nil || !containsAll(err.Error(), `provider "identity-provider" has no keys`, tt.want) {
 				t.Errorf("Refresh() error = %v, want an error saying provider %q has no keys: %s", err, IdentityProviderID, tt.want)
@@ -187,7 +187,7 @@ func TestRefresh_ReportsAProviderWhoseKeysCannotBeRead(t *testing.T) {
 // fails on k2.
 func TestRefresh_TheSameKeyListedTwiceLoadsOnce(t *testing.T) {
 	key := ecJWK(t, "k1", nil)
-	provider := exactOf(IdentityProviderID, newIdP(t, key, key, ecJWK(t, "k2", nil)))
+	provider := singleOf(IdentityProviderID, newIdP(t, key, key, ecJWK(t, "k2", nil)))
 	set := mustLoad(t, testOptions(), provider)
 	if !loaded(set, provider, "k1") {
 		t.Errorf("Lookup(%q) found nothing, want the key listed twice", "k1")
@@ -202,7 +202,7 @@ func TestRefresh_NamesEveryProviderThatStaysDown(t *testing.T) {
 	down1.setStatus(http.StatusServiceUnavailable)
 	down2 := newIdP(t)
 	down2.setStatus(http.StatusServiceUnavailable)
-	providers := []Provider{exactOf(IdentityProviderID, down1), exactOf(KubernetesID, down2)}
+	providers := []Provider{singleOf(IdentityProviderID, down1), singleOf(KubernetesID, down2)}
 	err := mustNew(t, Config{Providers: providers}, testOptions()).Refresh(t.Context())
 	if err == nil || !containsAll(err.Error(), `provider "identity-provider"`, `provider "kubernetes"`, "HTTP 503") {
 		t.Errorf("Refresh() error = %v, want an error naming providers %q and %q with HTTP 503", err, IdentityProviderID, KubernetesID)
@@ -212,7 +212,7 @@ func TestRefresh_NamesEveryProviderThatStaysDown(t *testing.T) {
 // The test server signs its certificate with a CA that only the test holds,
 // so the roots of the system refuse it.
 func TestRefresh_TrustsTheRootsOfTheSystemAlone(t *testing.T) {
-	set := mustNew(t, Config{Providers: []Provider{exactOf(IdentityProviderID, newTLSIdP(t, ecJWK(t, "k1", nil)))}}, testOptions())
+	set := mustNew(t, Config{Providers: []Provider{singleOf(IdentityProviderID, newTLSIdP(t, ecJWK(t, "k1", nil)))}}, testOptions())
 	var certErr *tls.CertificateVerificationError
 	if err := set.Refresh(t.Context()); !errors.As(err, &certErr) {
 		t.Errorf("Refresh() error = %v, want a *tls.CertificateVerificationError", err)
@@ -228,7 +228,7 @@ func TestRefresh_FailsWithoutAUsableTokenFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			provider := exactOf(KubernetesID, newIdP(t, ecJWK(t, "k1", nil)))
+			provider := singleOf(KubernetesID, newIdP(t, ecJWK(t, "k1", nil)))
 			provider.JWKSBearerTokenFile = tt.tokenFile
 			set := mustNew(t, Config{Providers: []Provider{provider}}, testOptions())
 			if err := set.Refresh(t.Context()); err == nil || !strings.Contains(err.Error(), "jwksBearerTokenFile") {
@@ -243,7 +243,7 @@ func TestRefresh_FailsWithoutAUsableTokenFile(t *testing.T) {
 func TestRefresh_TokenFileIsReadOnEveryRequest(t *testing.T) {
 	idp := newIdP(t, ecJWK(t, "k1", nil))
 	idp.token = "first"
-	provider := exactOf(KubernetesID, idp)
+	provider := singleOf(KubernetesID, idp)
 	provider.JWKSBearerTokenFile = writeFile(t, "token", "first\n")
 	set := mustLoad(t, testOptions(), provider)
 	if got := idp.authorization(); got != "Bearer first" {
@@ -273,10 +273,11 @@ func TestRefresh_DoesNotFollowARedirect(t *testing.T) {
 	t.Cleanup(redirecting.Close)
 	provider := Provider{
 		ID:                  KubernetesID,
-		Issuer:              Issuer{Type: Exact, Value: redirecting.URL},
+		Type:                Single,
+		Issuer:              redirecting.URL,
 		JWKSURI:             redirecting.URL + "/jwks",
 		JWKSBearerTokenFile: writeFile(t, "token", "sa-token"),
-		Audience:            skipAudience,
+		Audience:            ignoreAudience,
 	}
 	set := mustNew(t, Config{Providers: []Provider{provider}}, testOptions())
 	if err := set.Refresh(t.Context()); err == nil || !strings.Contains(err.Error(), "HTTP 302") {
@@ -317,7 +318,7 @@ func TestRefresh_LogsTheSigningKeysOfASourceWhenTheirKidsChange(t *testing.T) {
 	log := &warnRecorder{}
 	opts := testOptions()
 	opts.Log = log
-	set := mustNew(t, Config{Providers: []Provider{exactOf(IdentityProviderID, idp)}}, opts)
+	set := mustNew(t, Config{Providers: []Provider{singleOf(IdentityProviderID, idp)}}, opts)
 	steps := []struct {
 		name string
 		keys []json.RawMessage
@@ -369,7 +370,7 @@ func TestKey_Allows(t *testing.T) {
 		curveJWK(t, elliptic.P521(), "ES512", "p521", map[string]any{"alg": nil}),
 		edJWK(t, "ed25519", map[string]any{"alg": nil}),
 	)
-	provider := exactOf(IdentityProviderID, idp)
+	provider := singleOf(IdentityProviderID, idp)
 	set := mustLoad(t, testOptions(), provider)
 	tests := []struct {
 		kid, alg string
@@ -388,7 +389,7 @@ func TestKey_Allows(t *testing.T) {
 		{"ed25519", "EdDSA", true},
 	}
 	for _, tt := range tests {
-		key, err := set.Lookup(Query{Issuer: provider.Issuer.Value, KID: tt.kid})
+		key, err := set.Lookup(Query{Issuer: provider.Issuer, KID: tt.kid})
 		if err != nil {
 			t.Fatalf("Lookup(%q) error = %v", tt.kid, err)
 		}
@@ -401,7 +402,7 @@ func TestKey_Allows(t *testing.T) {
 func TestRefresh_AProviderThatFailsKeepsItsKeys(t *testing.T) {
 	a := newIdP(t, ecJWK(t, "a-old", nil))
 	b := newIdP(t, ecJWK(t, "b-old", nil))
-	providerA, providerB := exactOf(IdentityProviderID, a), exactOf(KubernetesID, b)
+	providerA, providerB := singleOf(IdentityProviderID, a), singleOf(KubernetesID, b)
 	set := mustLoad(t, testOptions(), providerA, providerB)
 	a.publish(ecJWK(t, "a-new", nil))
 	b.setStatus(http.StatusServiceUnavailable)
@@ -436,8 +437,8 @@ func TestRefresh_AProviderBesideAFailingOneTakesItsNewKeys(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := newIdP(t, ecJWK(t, "a-old", nil))
 			b := newIdP(t, ecJWK(t, "b-old", nil))
-			providerB := exactOf(KubernetesID, b)
-			set := mustLoad(t, testOptions(), exactOf(IdentityProviderID, a), providerB)
+			providerB := singleOf(KubernetesID, b)
+			set := mustLoad(t, testOptions(), singleOf(IdentityProviderID, a), providerB)
 			tt.fail(t, a)
 			b.publish(ecJWK(t, "b-new", nil))
 
@@ -471,7 +472,7 @@ func TestRefresh_AJWKSWithoutAUsableKeyRemovesTheProvidersKeys(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			idp := newIdP(t, ecJWK(t, "old", nil))
-			provider := exactOf(IdentityProviderID, idp)
+			provider := singleOf(IdentityProviderID, idp)
 			set := mustLoad(t, testOptions(), provider)
 			tt.serve(t, idp)
 			if err := set.Refresh(context.Background()); err == nil {
@@ -501,7 +502,7 @@ func TestRefresh_WarnsAboutSkippedKeysOnlyWhenTheyChange(t *testing.T) {
 	log := &warnRecorder{}
 	opts := testOptions()
 	opts.Log = log
-	set := mustLoad(t, opts, exactOf(IdentityProviderID, idp))
+	set := mustLoad(t, opts, singleOf(IdentityProviderID, idp))
 	steps := []struct {
 		name string
 		keys []json.RawMessage
@@ -540,7 +541,7 @@ func TestRefresh_WarnsAboutTheSkippedKeysOfAJWKSWithoutAUsableKeyAtTheNextLoadTh
 	log := &warnRecorder{}
 	opts := testOptions()
 	opts.Log = log
-	set := mustNew(t, Config{Providers: []Provider{exactOf(IdentityProviderID, idp)}}, opts)
+	set := mustNew(t, Config{Providers: []Provider{singleOf(IdentityProviderID, idp)}}, opts)
 	if err := set.Refresh(t.Context()); !errors.Is(err, errNoUsableKey) {
 		t.Fatalf("Refresh() of a JWKS whose only key is weak: error = %v, want %v", err, errNoUsableKey)
 	}
@@ -564,7 +565,7 @@ func TestRefresh_WarnsWithTheFirstFiveSkippedKeysAndCountsTheRest(t *testing.T) 
 	log := &warnRecorder{}
 	opts := testOptions()
 	opts.Log = log
-	mustLoad(t, opts, exactOf(IdentityProviderID, newIdP(t, keys...)))
+	mustLoad(t, opts, singleOf(IdentityProviderID, newIdP(t, keys...)))
 	want := `trusted providers: provider "identity-provider" skips 7 keys of its JWKS: ` +
 		`keys[1]: has no kid; keys[2]: has no kid; keys[3]: has no kid; keys[4]: has no kid; keys[5]: has no kid; 2 more skipped keys`
 	if !slices.Equal(log.warnings, []string{want}) {
@@ -583,7 +584,7 @@ func TestRefresh_WarnsWhenASkippedKeyPastTheFifthChanges(t *testing.T) {
 	log := &warnRecorder{}
 	opts := testOptions()
 	opts.Log = log
-	set := mustLoad(t, opts, exactOf(IdentityProviderID, idp))
+	set := mustLoad(t, opts, singleOf(IdentityProviderID, idp))
 	keys[7] = ecJWK(t, "", map[string]any{"kid": nil})
 	idp.publish(keys...)
 	if err := set.Refresh(t.Context()); err != nil {
@@ -597,7 +598,7 @@ func TestRefresh_WarnsWhenASkippedKeyPastTheFifthChanges(t *testing.T) {
 // The parser repeats the kty of the key in its error, line break included.
 func TestRefresh_QuotesTheParserErrorOfASkippedKey(t *testing.T) {
 	idp := newIdP(t, json.RawMessage(`{"kty":"RSA\nforged line","kid":"k1"}`))
-	set := mustNew(t, Config{Providers: []Provider{exactOf(IdentityProviderID, idp)}}, testOptions())
+	set := mustNew(t, Config{Providers: []Provider{singleOf(IdentityProviderID, idp)}}, testOptions())
 	err := set.Refresh(t.Context())
 	if err == nil || strings.Contains(err.Error(), "\n") || !strings.Contains(err.Error(), `keys[0]: cannot be parsed: "`) {
 		t.Errorf("Refresh() error = %q, want one line that quotes the parser error of keys[0]", err)
@@ -662,7 +663,7 @@ func TestRefresh_NamesTheReasonsOfAJWKSWithoutAUsableKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			idp := newIdP(t, tt.keys...)
-			set := mustNew(t, Config{Providers: []Provider{exactOf(IdentityProviderID, idp)}}, testOptions())
+			set := mustNew(t, Config{Providers: []Provider{singleOf(IdentityProviderID, idp)}}, testOptions())
 			err := set.Refresh(t.Context())
 			if err == nil || !containsAll(err.Error(), tt.want...) || !strings.HasSuffix(err.Error(), tt.want[len(tt.want)-1]) {
 				t.Errorf("Refresh() error = %v, want it to contain %q and end with the last", err, tt.want)
@@ -673,7 +674,7 @@ func TestRefresh_NamesTheReasonsOfAJWKSWithoutAUsableKey(t *testing.T) {
 
 func TestReady_StaysTrueWhenAReloadFails(t *testing.T) {
 	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, testOptions(), exactOf(IdentityProviderID, idp))
+	set := mustLoad(t, testOptions(), singleOf(IdentityProviderID, idp))
 	idp.setStatus(http.StatusServiceUnavailable)
 	if err := set.Refresh(t.Context()); err == nil {
 		t.Fatalf("Refresh() error = nil, want the HTTP 503")
@@ -684,9 +685,9 @@ func TestReady_StaysTrueWhenAReloadFails(t *testing.T) {
 }
 
 func TestLookup_RefusesAnIssuerNoProviderHasByteForByte(t *testing.T) {
-	provider := exactOf(IdentityProviderID, newIdP(t, ecJWK(t, "k1", nil)))
+	provider := singleOf(IdentityProviderID, newIdP(t, ecJWK(t, "k1", nil)))
 	set := mustLoad(t, testOptions(), provider)
-	for _, iss := range []string{"", provider.Issuer.Value + "/", "https://other.example"} {
+	for _, iss := range []string{"", provider.Issuer + "/", "https://other.example"} {
 		if _, err := set.Lookup(Query{Issuer: iss, KID: "k1"}); !errors.Is(err, ErrIssuerUnknown) {
 			t.Errorf("Lookup(issuer %q) error = %v, want %v", iss, err, ErrIssuerUnknown)
 		}

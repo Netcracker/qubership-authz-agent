@@ -27,15 +27,15 @@ const realmIDPrefix = "realm/"
 // Set holds no realm that a later search could drop.
 var noDrop = time.Date(9999, time.December, 31, 0, 0, 0, 0, time.UTC)
 
-// realmKey identifies a realm: its realm-template provider and its name.
+// realmKey identifies a realm: its realms provider and its name.
 type realmKey struct {
 	provider *trusted
 	name     string
 }
 
-// realmSource returns the source of the realm name of the realm-template
-// provider t, adding it and starting its first load when no token named that
-// realm before. It returns [ErrKeyUnknown] when the limit of
+// realmSource returns the source of the realm name of the realms provider t,
+// adding it and starting its first load when no token named that realm
+// before. It returns [ErrKeyUnknown] when the limit of
 // [maxLoadsPerMinute] on-demand loads of t refuses another, and when the Set
 // already holds [Options.maxRealms] realms. A realm that is not required and
 // never loaded a usable key stays for a minute after its last load started, so

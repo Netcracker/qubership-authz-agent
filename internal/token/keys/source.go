@@ -23,8 +23,8 @@ import (
 	"sync/atomic"
 )
 
-// source is the signing keys of one source: an exact provider or a realm of a
-// realm-template provider. It is safe for concurrent use, and a lookup never
+// source is the signing keys of one source: a single provider or a realm of a
+// realms provider. It is safe for concurrent use, and a lookup never
 // waits for a load.
 type source struct {
 	fetcher *fetcher
@@ -60,7 +60,7 @@ func (src *source) last() loadResult {
 }
 
 // label names the source in a log line or an error: realm "<name>" of
-// provider "<id>" for a realm, provider "<id>" for an exact provider.
+// provider "<id>" for a realm, provider "<id>" for a single provider.
 func (src *source) label() string { return src.fetcher.source.label() }
 
 // find returns the key of r with the given kid, and false when there is none.

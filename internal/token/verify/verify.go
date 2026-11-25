@@ -63,10 +63,10 @@ const (
 	// accept.
 	CodeAlgNotAllowed Code = "TOKEN_ALG_NOT_ALLOWED"
 	// CodeIssuerUnknown marks a token whose iss is missing, is not a string,
-	// or matches no provider: it equals the issuer.value of no exact provider
-	// byte for byte, and no realm-template provider matches it with a valid
-	// realm name in place of {realm}, as [keys.Provider] states. A realm-template
-	// provider matches an iss whether or not the realm exists.
+	// or matches no provider: it equals the issuer of no single provider byte
+	// for byte, and no realms provider matches it with a valid realm name in
+	// place of {realm}, as [keys.Provider] states. A realms provider matches an
+	// iss whether or not the realm exists.
 	CodeIssuerUnknown Code = "TOKEN_ISSUER_UNKNOWN"
 	// CodeKIDMissing marks a token whose header has no kid, or an empty one.
 	CodeKIDMissing Code = "TOKEN_KID_MISSING"
@@ -177,8 +177,8 @@ func (t *Token) Standard() Standard {
 }
 
 // ProviderID returns the [keys.Source.ID] of the source whose key verified the
-// token: the [keys.Provider.ID] of an exact provider, or realm/<name> for a
-// realm of a realm-template provider. A realm name is the token's text, so a
+// token: the [keys.Provider.ID] of a single provider, or realm/<name> for a
+// realm of a realms provider. A realm name is the token's text, so a
 // caller that logs the id quotes it.
 func (t *Token) ProviderID() string { return t.providerID }
 

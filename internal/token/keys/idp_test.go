@@ -130,13 +130,13 @@ func (idp *fakeIdP) authorization() string {
 	return idp.lastAuth
 }
 
-// skipAudience is the audience of a provider whose aud is not checked.
-var skipAudience = Audience{Mode: SkipValidation}
+// ignoreAudience is the audience of a provider whose aud is not checked.
+var ignoreAudience = Audience{Mode: Ignore}
 
-// exactOf is an exact provider with id whose issuer.value is the address of
+// singleOf is a single provider with key id whose issuer is the address of
 // idp and whose JWKS idp serves.
-func exactOf(id string, idp *fakeIdP) Provider {
-	return Provider{ID: id, Issuer: Issuer{Type: Exact, Value: idp.srv.URL}, JWKSURI: idp.srv.URL + "/jwks", Audience: skipAudience}
+func singleOf(id string, idp *fakeIdP) Provider {
+	return Provider{ID: id, Type: Single, Issuer: idp.srv.URL, JWKSURI: idp.srv.URL + "/jwks", Audience: ignoreAudience}
 }
 
 // ecJWK returns the public JWK of a new P-256 key with kid, alg ES256, and
@@ -277,10 +277,10 @@ func mustNew(t *testing.T, cfg Config, opts Options) *Set {
 	return set
 }
 
-// loaded reports whether set holds a key under kid for the issuer of p, an
-// exact provider.
+// loaded reports whether set holds a key under kid for the issuer of p, a
+// single provider.
 func loaded(set *Set, p Provider, kid string) bool {
-	_, err := set.Lookup(Query{Issuer: p.Issuer.Value, KID: kid})
+	_, err := set.Lookup(Query{Issuer: p.Issuer, KID: kid})
 	return err == nil
 }
 

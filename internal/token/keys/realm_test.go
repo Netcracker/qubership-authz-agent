@@ -36,14 +36,14 @@ func lookupRealm(t *testing.T, set *Set, realm string) (Key, error) {
 	return set.LookupOrReload(t.Context(), Query{Issuer: iss(realm), KID: "k1"})
 }
 
-func TestSource_IDNamesARealmByItsNameAndAnExactProviderByItsID(t *testing.T) {
+func TestSource_IDNamesARealmByItsNameAndASingleProviderByItsID(t *testing.T) {
 	tests := []struct {
 		name   string
 		source Source
 		want   string
 	}{
 		{"realm", Source{Provider: &Provider{ID: IdentityProviderID}, Realm: "tenant 1"}, "realm/tenant 1"},
-		{"exact provider", Source{Provider: &Provider{ID: KubernetesID}}, "kubernetes"},
+		{"single provider", Source{Provider: &Provider{ID: KubernetesID}}, "kubernetes"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -57,9 +57,9 @@ func TestSource_IDNamesARealmByItsNameAndAnExactProviderByItsID(t *testing.T) {
 // The provider trusts https://kc.example:8443/auth/realms/{realm}. Lookup sends
 // no request, so a matched iss gets ErrKeyUnknown for a realm the Set does not
 // hold yet, and any other iss ErrIssuerUnknown.
-func TestLookup_MatchesTheIssOfARealmTemplateAsAWholeURL(t *testing.T) {
+func TestLookup_MatchesTheIssOfAnIssuerTemplateAsAWholeURL(t *testing.T) {
 	provider := keycloakProvider()
-	provider.Issuer.Value = "https://kc.example:8443/auth/realms/{realm}"
+	provider.IssuerTemplate = "https://kc.example:8443/auth/realms/{realm}"
 	set := mustNew(t, Config{Providers: []Provider{provider}}, testOptions())
 	const base = "https://kc.example:8443/auth/realms/"
 	tests := []struct {
@@ -102,9 +102,9 @@ func TestLookup_MatchesTheIssOfARealmTemplateAsAWholeURL(t *testing.T) {
 	}
 }
 
-func TestLookup_MatchesARealmTemplateWithASegmentAfterTheRealm(t *testing.T) {
+func TestLookup_MatchesAnIssuerTemplateWithASegmentAfterTheRealm(t *testing.T) {
 	provider := keycloakProvider()
-	provider.Issuer.Value = "https://kc.example/tenants/{realm}/issuer"
+	provider.IssuerTemplate = "https://kc.example/tenants/{realm}/issuer"
 	set := mustNew(t, Config{Providers: []Provider{provider}}, testOptions())
 	tests := []struct {
 		name, iss string
@@ -205,7 +205,7 @@ func TestLookupOrReload_RefusesAnIssuerNoProviderMatches(t *testing.T) {
 		{"iss of another server", withRealms, "https://idp.example/oidc"},
 		{"empty iss", withRealms, ""},
 		{"realm that is a dot segment", withRealms, iss("..")},
-		{"realm without a realm-template provider", withoutRealms, iss("tenant-1")},
+		{"realm without a realms provider", withoutRealms, iss("tenant-1")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -698,7 +698,7 @@ func TestLookupOrReload_KeepsTheLimitOfLoadsOfEachProviderApart(t *testing.T) {
 		}
 		startLoads(t, set, maxLoadsPerMinute)
 		kc.publish(t, ecJWK(t, "k1", nil), ecJWK(t, "rotated", nil))
-		if _, err := set.LookupOrReload(t.Context(), Query{Issuer: k8s.Issuer.Value, KID: "rotated"}); err != nil {
+		if _, err := set.LookupOrReload(t.Context(), Query{Issuer: k8s.Issuer, KID: "rotated"}); err != nil {
 			t.Errorf("LookupOrReload(the rotated key of provider kubernetes) error = %v, want none", err)
 		}
 		if _, err := lookupRealm(t, set, "tenant-1"); !errors.Is(err, ErrKeyUnknown) {
