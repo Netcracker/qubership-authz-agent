@@ -144,17 +144,17 @@ spec:
             - name: AUTHZ_JWKS_BOOTSTRAP_REQUIRED
               value: {{ include "authz-agent.jwksBootstrapRequired" . | quote }}
             - name: AUTHZ_JWKS_HTTP_TIMEOUT
-              value: '{{ .Values.AUTHZ_JWKS_HTTP_TIMEOUT }}'
+              value: {{ .Values.AUTHZ_JWKS_HTTP_TIMEOUT | int64 | quote }}
             - name: AUTHZ_JWKS_HTTP_RETRIES
-              value: '{{ .Values.AUTHZ_JWKS_HTTP_RETRIES }}'
+              value: {{ .Values.AUTHZ_JWKS_HTTP_RETRIES | int64 | quote }}
             - name: AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL
-              value: '{{ .Values.AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL }}'
+              value: {{ .Values.AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL | int64 | quote }}
             - name: AUTHZ_TENANT_MANAGER_URL
               value: {{ .Values.AUTHZ_TENANT_MANAGER_URL | quote }}
             - name: AUTHZ_PAP_CLIENT_SOURCE_URL
               value: {{ include "authz-agent.papSourceURL" . | quote }}
             - name: AUTHZ_PAP_CLIENT_PULL_INTERVAL
-              value: '{{ .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL }}'
+              value: {{ .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL | int64 | quote }}
             - name: AUTHZ_PAP_CLIENT_TOKEN_FILE
               value: {{ .Values.AUTHZ_PAP_CLIENT_TOKEN_FILE | quote }}
             {{- if not .Values.KUBERNETES_M2M_ENABLED }}
@@ -174,9 +174,9 @@ spec:
             - name: AUTHZ_ENTITLEMENTS_URL
               value: {{ .Values.AUTHZ_ENTITLEMENTS_URL | quote }}
             - name: AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT
-              value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT }}'
+              value: {{ .Values.AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT | int64 | quote }}
             - name: AUTHZ_ENTITLEMENTS_HTTP_RETRIES
-              value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_RETRIES }}'
+              value: {{ .Values.AUTHZ_ENTITLEMENTS_HTTP_RETRIES | int64 | quote }}
           volumeMounts:
             - name: trusted-providers
               mountPath: /etc/authz
