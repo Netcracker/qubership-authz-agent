@@ -1,7 +1,10 @@
-# The requests of the case files that have no recorded golden, one <case id>/<request name> per line,
-# grouped by case file. TestCaseFiles_EveryRequestHasAGolden fails on a request with no golden that is not
-# listed here, and on a listed request that has one. Recording a golden of a listed request removes its line.
-# Why each is missing is not known without a stand run: a run that skipped it, or a round not recorded yet.
+# The goldens of the case files that the runners compare with and that are not recorded, one
+# <case id>/<subtest> per line, where <subtest> is the path of the subtest that compares the golden below the
+# case: a request name, a step name with its observation suffix, upload-1, declare-the-domain, or a request
+# name followed by /pip-calls. They are grouped by case file. TestCaseFiles_EveryRequestHasAGolden fails on
+# a golden that is not recorded and not listed here, and on a listed golden that is recorded. Recording a
+# listed golden removes its line. Why each is missing is not known without a stand run: a run that skipped
+# it, or a round not recorded yet.
 
 # round12/scope-outside-iterate-control.json
 scope-outside-iterate-beside-a-control/scope-read-beside-a-true-rule
@@ -65,6 +68,10 @@ r31fix-pairs-none-001-s0n1/read-i2
 
 # round44/rawpairs-gfail.json
 rp44-082/q1
+
+# round44/sentinel-nodes.json
+sn44-dup-rules/read/pip-calls
+sn44-policy-after-deny-overrides-na/read/pip-calls
 
 # round46/diff2-11.json
 d2r46-f10-control-last-or/a-n
@@ -163,6 +170,63 @@ d2r46-f5-control-last-or/a-n
 # round46/diff2-7.json
 d2r46-f6-control-last-or/a-n
 
+# round50/papfields-must.json
+p50f-set-policysetid-absent/r-absent-read
+p50f-set-policysetid-edge-space/r-edge-space-read
+p50f-set-policysetid-empty-string/r-empty-string-read
+p50f-set-policysetid-other-type/r-other-type-read
+p50f-set-policysetid-blank-space/r-blank-space-read
+p50f-set-policysetid-edge-nbsp/r-edge-nbsp-read
+p50f-set-policysetid-edge-tab/r-edge-tab-read
+
+# round50/papfields-should.json
+p50f-policy-policyid-edge-space/r-edge-space-read
+p50f-policy-policyid-empty-string/r-empty-string-read
+p50f-policy-policyid-null/r-null-read
+p50f-policy-policyid-other-type/r-other-type-read
+p50f-policy-policyid-blank-space/r-blank-space-read
+p50f-policy-policyid-edge-nbsp/r-edge-nbsp-read
+p50f-policy-policyid-edge-tab/r-edge-tab-read
+p50f-rule-ruleid-edge-space/r-edge-space-read
+p50f-rule-ruleid-empty-string/r-empty-string-read
+p50f-rule-ruleid-null/r-null-read
+p50f-rule-ruleid-other-type/r-other-type-read
+p50f-rule-ruleid-blank-space/r-blank-space-read
+p50f-rule-ruleid-edge-nbsp/r-edge-nbsp-read
+p50f-rule-ruleid-edge-tab/r-edge-tab-read
+
+# round54/papfields-should.json
+p54f-set-policysetid-blank-ff/r-blank-ff-read
+p54f-set-policysetid-blank-lf/r-blank-lf-read
+p54f-set-policysetid-blank-lsep/r-blank-lsep-read
+p54f-set-policysetid-blank-nbsp/r-blank-nbsp-read
+p54f-set-policysetid-blank-tab/r-blank-tab-read
+p54f-set-policysetid-blank-vt/r-blank-vt-read
+p54f-set-policysetid-edge-cr/r-edge-cr-read
+p54f-set-policysetid-edge-ff/r-edge-ff-read
+p54f-set-policysetid-edge-lf/r-edge-lf-read
+p54f-set-policysetid-edge-lsep/r-edge-lsep-read
+p54f-policy-policyid-blank-ff/r-blank-ff-read
+p54f-policy-policyid-blank-lf/r-blank-lf-read
+p54f-policy-policyid-blank-lsep/r-blank-lsep-read
+p54f-policy-policyid-blank-nbsp/r-blank-nbsp-read
+p54f-policy-policyid-blank-tab/r-blank-tab-read
+p54f-policy-policyid-blank-vt/r-blank-vt-read
+p54f-policy-policyid-edge-cr/r-edge-cr-read
+p54f-policy-policyid-edge-ff/r-edge-ff-read
+p54f-policy-policyid-edge-lf/r-edge-lf-read
+p54f-policy-policyid-edge-lsep/r-edge-lsep-read
+p54f-rule-ruleid-blank-ff/r-blank-ff-read
+p54f-rule-ruleid-blank-lf/r-blank-lf-read
+p54f-rule-ruleid-blank-lsep/r-blank-lsep-read
+p54f-rule-ruleid-blank-nbsp/r-blank-nbsp-read
+p54f-rule-ruleid-blank-tab/r-blank-tab-read
+p54f-rule-ruleid-blank-vt/r-blank-vt-read
+p54f-rule-ruleid-edge-cr/r-edge-cr-read
+p54f-rule-ruleid-edge-ff/r-edge-ff-read
+p54f-rule-ruleid-edge-lf/r-edge-lf-read
+p54f-rule-ruleid-edge-lsep/r-edge-lsep-read
+
 # round58/diff2-3.json
 d2r58-5554977a26/ry
 
@@ -173,9 +237,30 @@ d2r58-87b26fbf0b/qc
 # round58/spell-data.json
 sp58-data-general-more-num-beyond-double-or/a-n
 
+# round59/diff2pap-must.json
+d2p59-28430c0245/target-raw-sets-read-raw
+
 # round67/open-single.json
 op67-active-policy-twin/filter
 op67-inactive-policy-allow/filter
+
+# round67/owner-v18g-null-body.json
+v18g-null-body-dup/check-list-in-region-r1/pip-calls
+v18g-null-body-pud/check-list-in-region-r1/pip-calls
+v18g-null-body-do/check-list-in-region-r1/pip-calls
+v18g-null-body-po/check-list-in-region-r1/pip-calls
+
+# round67/owner-v18g-one-grant.json
+v18g-one-grant-dup/check-list-in-region-r1/pip-calls
+v18g-one-grant-pud/check-list-in-region-r1/pip-calls
+v18g-one-grant-do/check-list-in-region-r1/pip-calls
+v18g-one-grant-po/check-list-in-region-r1/pip-calls
+
+# round67/owner-v18g-scope-list-empty.json
+v18g-scope-list-empty-dup/check-list-in-region-r1/pip-calls
+v18g-scope-list-empty-pud/check-list-in-region-r1/pip-calls
+v18g-scope-list-empty-do/check-list-in-region-r1/pip-calls
+v18g-scope-list-empty-po/check-list-in-region-r1/pip-calls
 
 # round67/rawpairs-g0.json
 rp67-012/q0

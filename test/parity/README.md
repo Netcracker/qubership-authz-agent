@@ -282,9 +282,10 @@ access-control outside this repository. Such a case compares through `requirePen
 `requireGolden`: while its golden is not recorded, it skips and prints the answer it got, for example
 `golden check-resource-v1/semantics/s2b-neq-attribute-absent is not recorded yet; the authz-agent profile answered false`. Once the
 golden is committed, the case compares like any other. A case that uses `requireGolden` still fails when its golden is
-missing. A request of a case file that the runners send with no golden is a failure of
-`TestCaseFiles_EveryRequestHasAGolden`, which needs no stand, until its golden is recorded or the request is listed in
-`suite/testdata/requests-without-a-golden.txt`.
+missing. A golden of a case file that the runners compare an answer with and that is not recorded is a failure of
+`TestCaseFiles_EveryRequestHasAGolden`, which needs no stand, until the golden is recorded or the subtest that compares
+it is listed in `suite/testdata/requests-without-a-golden.txt`. That covers the setup of a case (its uploads and the
+declaration of its domain), its requests and what their PIPs received, and every observation of a step.
 
 | Test | What it asks access-control | Golden keys (see [Golden files](#golden-files)) |
 | --- | --- | --- |
@@ -714,7 +715,7 @@ is not an object, `v2` beside `bulk`, `bulkOperations` items of two types sent t
 or value outside the two properties and their values, and a round 19 or later file whose case with `sets` drops a PIP
 name: run `go test -tags integration -run
 'TestCaseFilesAreWellFormed|TestCaseFiles_EveryRequestHasAGolden' ./test/parity/suite/` before handing a file over for
-recording, and list the new file's requests in `requests-without-a-golden.txt` until their goldens are recorded.
+recording, and list the new file's subtests in `requests-without-a-golden.txt` until their goldens are recorded.
 
 The files under `early/`, `interpreter/`, `translator/`, and `round7/` to `round15/` are written by the `generate.py`
 in their directory, run there as `python3 generate.py`, and each run reproduces the committed files exactly: edit the
