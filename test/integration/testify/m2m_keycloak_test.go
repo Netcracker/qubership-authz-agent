@@ -29,10 +29,10 @@ package runtimetest
 func (s *RuntimeSuite) TestM2MKeycloak() {
 	// (a) Policy pull succeeds with Keycloak token.
 	//
-	// The agent gets a real Keycloak access_token (test-app-client,
-	// client_credentials grant) from AUTHZ_OUTGOING_TOKEN_URL, publishes it as
-	// data.m2m.bearerToken, and the pull loop sends it as the Authorization
-	// header to authz-policy-admin. The suite setup (setup.wait_for_agent)
+	// In the kind harness the agent fetches a real Keycloak access_token
+	// (test-app-client, client_credentials grant) from AUTHZ_OUTGOING_TOKEN_URL
+	// and sends it as the Authorization header of its policy pull to
+	// authz-policy-admin. The suite setup (setup.wait_for_agent)
 	// already blocked until the agent became healthy, which requires at least
 	// one successful pull. This step asserts the resulting decision path works
 	// end-to-end — if the pull had failed the agent would not have returned 200.

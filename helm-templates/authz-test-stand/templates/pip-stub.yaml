@@ -56,13 +56,17 @@ spec:
               containerPort: {{ $port }}
           readinessProbe:
             httpGet:
-              path: /pip-stub/calls
+              path: /pip-stub/health
               port: http
             periodSeconds: 2
           securityContext:
             {{- include "authz-test-stand.containerSecurityContext" true | nindent 12 }}
+          {{- $resources := $.Values.pipStub.resources }}
+          {{- if hasKey $instance "resources" }}
+          {{- $resources = $instance.resources }}
+          {{- end }}
           resources:
-            {{- toYaml $.Values.pipStub.resources | nindent 12 }}
+            {{- toYaml $resources | nindent 12 }}
           {{- if $instance.config }}
           volumeMounts:
             - name: config
