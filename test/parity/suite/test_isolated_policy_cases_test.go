@@ -290,6 +290,7 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 				return
 			}
 			s.Require().NoError(err)
+			s.agentGone = nil
 
 			s.Run("upload", func() {
 				s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "isolated/"+tc.id, &model.PolicyLoadOutcome{Status: status, Message: s.refusal(status, body)})
@@ -313,9 +314,14 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 // Where the agent does not answer the pull (isAgentTransportFailure), it has
 // stopped, usually on the policies of that case, and its Pod restarts it:
 // emptyDomainAfter then asks it to pull until it answers, for at most
-// agentRestartWait, and logs how long that took.
+// agentRestartWait, and logs how long that took. A wait that runs out sets
+// s.agentGone, and while that is set emptyDomainAfter returns at once instead
+// of waiting again.
 func (s *ParitySuite) emptyDomainAfter(ctx context.Context, domain, caseID string) error {
 	status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, domain, nil, nil)
+	if err == nil {
+		s.agentGone = nil
+	}
 	if err == nil && (status < http.StatusOK || status >= http.StatusMultipleChoices) {
 		return fmt.Errorf("HTTP %d", status)
 	}
@@ -326,8 +332,14 @@ func (s *ParitySuite) emptyDomainAfter(ctx context.Context, domain, caseID strin
 	if !isAgentTransportFailure(notLoaded.err) {
 		return notLoaded.err
 	}
+	if s.agentGone != nil {
+		return fmt.Errorf("the agent has not answered a pull since an earlier wait for it ran out: %w", s.agentGone)
+	}
 	waited, err := awaitPullAfterRestart(ctx, agentRestartWait)
 	if err != nil {
+		if isAgentTransportFailure(err) {
+			s.agentGone = err
+		}
 		return err
 	}
 	s.T().Logf("the agent stopped answering after case %s and loaded the empty domain %s %s later", caseID, domain, waited.Round(time.Millisecond))

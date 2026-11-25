@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -44,22 +45,46 @@ import (
 // uploadGoldens holds the upload golden of each case that has one.
 func runIsolatedCasesAgainstStub(t *testing.T, refuse, pulls map[int]int, uploadGoldens map[string]int, cases ...isolatedCase) []string {
 	t.Helper()
+	var pull func(n int) int
+	if pulls != nil {
+		pull = func(n int) int {
+			if status, ok := pulls[n]; ok {
+				return status
+			}
+			return http.StatusNoContent
+		}
+	}
+	stub := newIsolatedStub(t, refuse, pull, uploadGoldens)
+	stub.run("run", cases...)
+	return stub.requests()
+}
+
+// An isolatedStub is the server and the suite of runIsolatedCasesAgainstStub,
+// kept across several runs of runIsolatedCases, one per case file.
+type isolatedStub struct {
+	t    *testing.T
+	s    *ParitySuite
+	mu   sync.Mutex
+	sent []string
+}
+
+// newIsolatedStub starts the server of runIsolatedCasesAgainstStub. With pull
+// not nil, the suite asks the server to pull, and the server answers the n-th
+// pull, counted from 1 over every run, with pull(n).
+func newIsolatedStub(t *testing.T, refuse map[int]int, pull func(n int) int, uploadGoldens map[string]int) *isolatedStub {
+	t.Helper()
 	t.Setenv("PARITY_PULL_SETTLE_SECONDS", "0")
 	t.Setenv("PARITY_AGENT_PULL_URL", "")
-	var mu sync.Mutex
-	var sent []string
+	stub := &isolatedStub{t: t}
 	domainPUTs, pullsSeen := 0, 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		mu.Lock()
-		defer mu.Unlock()
-		sent = append(sent, r.Method+" "+r.URL.Path)
+		stub.mu.Lock()
+		defer stub.mu.Unlock()
+		stub.sent = append(stub.sent, r.Method+" "+r.URL.Path)
 		switch r.URL.Path {
 		case agentPullPath:
 			pullsSeen++
-			status, ok := pulls[pullsSeen]
-			if !ok {
-				status = http.StatusNoContent
-			}
+			status := pull(pullsSeen)
 			if status == dropConnection {
 				conn, _, err := w.(http.Hijacker).Hijack()
 				if err != nil {
@@ -83,7 +108,7 @@ func runIsolatedCasesAgainstStub(t *testing.T, refuse, pulls map[int]int, upload
 		_, _ = w.Write([]byte("{}"))
 	}))
 	t.Cleanup(srv.Close)
-	if pulls != nil {
+	if pull != nil {
 		t.Setenv("PARITY_AGENT_PULL_URL", srv.URL+agentPullPath)
 	}
 
@@ -99,13 +124,24 @@ func runIsolatedCasesAgainstStub(t *testing.T, refuse, pulls map[int]int, upload
 		comparator: &GoldenComparator{goldenRoot: goldenRoot},
 	}
 	s.SetS(s)
-	t.Run("run", func(t *testing.T) {
-		s.SetT(t)
-		s.runIsolatedCases(cases)
+	stub.s = s
+	return stub
+}
+
+// run runs cases through runIsolatedCases as one case file, in the subtest
+// name.
+func (stub *isolatedStub) run(name string, cases ...isolatedCase) {
+	stub.t.Run(name, func(t *testing.T) {
+		stub.s.SetT(t)
+		stub.s.runIsolatedCases(cases)
 	})
-	mu.Lock()
-	defer mu.Unlock()
-	return sent
+}
+
+// requests returns the requests the server received so far.
+func (stub *isolatedStub) requests() []string {
+	stub.mu.Lock()
+	defer stub.mu.Unlock()
+	return slices.Clone(stub.sent)
 }
 
 // A case that authz-policy-admin refuses, as the PAP did, passes its upload
@@ -199,6 +235,55 @@ func TestRunIsolatedCases_WaitsForTheAgentOnlyWhenItStopsAnswering(t *testing.T)
 		`=== RUN   `+name+`/answers-an-error/run/next/setup\n.*: SETUP BROKEN: empty domain PARITY_ISOLATED after case crashing, `+
 			`which the agent did not load: the agent answered again after it stopped answering, but did not load the policies: .*HTTP 502`,
 		`--- SKIP: `+name+`/answers-an-error/run/next/read `)
+}
+
+// Once a wait for a stopped agent runs out, the next case file whose upload
+// finds the agent not answering is a broken setup at once, without another
+// wait. An upload the agent loads again ends that: in the third file the agent
+// stops once more and is waited for, and the case after it runs. Each case
+// file is a run of runIsolatedCases on one suite. The test reads that output
+// from a child run of itself, since the child fails on purpose.
+func TestRunIsolatedCases_DoesNotWaitAgainForAnAgentThatDidNotComeBack(t *testing.T) {
+	if os.Getenv(brokenSetupChild) == "1" {
+		agentRestartWait = 3 * time.Second
+		read := []isolatedRequest{{name: "read", m2mOnly: true}}
+		goldens := map[string]int{"crashing": http.StatusOK, "next": http.StatusOK, "loaded": http.StatusOK}
+		var down bool
+		var script []int
+		stub := newIsolatedStub(t, nil, func(int) int {
+			if len(script) > 0 {
+				status := script[0]
+				script = script[1:]
+				return status
+			}
+			if down {
+				return dropConnection
+			}
+			return http.StatusNoContent
+		}, goldens)
+		down = true
+		for _, file := range []string{"file-1", "file-2"} {
+			start := time.Now()
+			stub.run(file, isolatedCase{id: "crashing", resourceType: "RT", requests: read}, isolatedCase{id: "next", resourceType: "RT", requests: read})
+			t.Logf("%s waited for the agent: %t", file, time.Since(start) >= agentRestartWait)
+		}
+		down = false
+		// the upload of loaded is pulled, then crashing stops the agent for three pulls
+		script = []int{http.StatusNoContent, dropConnection, dropConnection, dropConnection}
+		stub.run("file-3", isolatedCase{id: "loaded", resourceType: "RT", requests: read},
+			isolatedCase{id: "crashing", resourceType: "RT", requests: read}, isolatedCase{id: "next", resourceType: "RT", requests: read})
+		return
+	}
+	name := regexp.QuoteMeta(t.Name())
+	requireOutput(t, childOutput(t),
+		`: file-1 waited for the agent: true\n`,
+		`=== RUN   `+name+`/file-2/crashing/setup\n.*: SETUP BROKEN: the agent stopped answering after the upload of case crashing: `,
+		`=== RUN   `+name+`/file-2/next/setup\n.*: SETUP BROKEN: empty domain PARITY_ISOLATED after case crashing, which the agent did not load: `+
+			`the agent has not answered a pull since an earlier wait for it ran out: the agent did not answer the pull route within 3s`,
+		`: file-2 waited for the agent: false\n`,
+		`--- PASS: `+name+`/file-3/loaded/upload `,
+		`: the agent stopped answering after case crashing and loaded the empty domain PARITY_ISOLATED .* later\n`,
+		`--- PASS: `+name+`/file-3/next/upload `)
 }
 
 // An answer of the agent other than a load, here 502, ends the emptying at
