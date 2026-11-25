@@ -12,8 +12,8 @@ kichasov
 #### Participants and approvers
 
 - The project architect (`mr-joom`) approves this record. On 2026-11-23 the architect and the owner of the policy
-  decision code agreed to drop the M2M modes, so the Docker target runs without a marked provider rather than in
-  `legacy` (R5, R8).
+  decision code agreed to drop the M2M modes, so the Docker target runs without the provider `kubernetes` rather than
+  in `legacy` (R5, R8).
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
 
 #### Related ADRs
@@ -24,16 +24,20 @@ kichasov
   the term stops the start; ADR-0091 R14, readiness; ADR-0091 R44, the leeway against the clock; ADR-0091 R64, the
   removal of `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`; and ADR-0091 R78, `IDENTITY_PROVIDER_URL`, which the agent does not read.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
-  ADR-0092 R15, which has the agent leave `M2M_AUTH_MODE` unread, as #345 rewrites it.
+  ADR-0092 R15, which has the agent leave `M2M_AUTH_MODE` unread.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
   ADR-0093 R11 and R14, the default tenant with and without tenant-manager.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
-  the topology file and the token for the API server, which exist only in a cluster, and ADR-0094 R5, which requires
-  that token wherever the trusted providers file holds the marked provider, as #345 rewrites it.
+  the topology file and the token for the API server, which exist only in a cluster.
 - [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
   ADR-0096 R1, `AUTHZ_M2M_TOKEN_SOURCE`, which the agent reads itself; ADR-0096 R3, how the agent reads that setting,
   which R6 follows for every value from a list; ADR-0096 R5, the token endpoint that `client-credentials` requires;
   ADR-0096 R7, which files the agent leaves unread with each value.
+- [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](https://github.com/Netcracker/qubership-authz-agent/pull/329),
+  proposed in #329: the provider directory and the provider files (ADR-0104 R1, R2), the two providers and their types
+  (ADR-0104 R6), the required sources (ADR-0104 R25), the Kubernetes token (ADR-0104 R22), the refusal of a token whose
+  `iss` matches no provider (ADR-0104 R21), and the refusal of a token with the claim `kubernetes.io` whose source is
+  another provider (ADR-0104 R27).
 - [authz-agent-ADR-0106: Trust a private CA only through the system roots of the base image](https://github.com/Netcracker/qubership-authz-agent/pull/330),
   proposed in #330: ADR-0106 R1, the system roots that every HTTPS request of the agent verifies against.
 
@@ -60,7 +64,10 @@ example.
   `internal` reads by name, `LOGGING_LEVEL_ROOT` included. A variable that only a test, the Go runtime, or the standard
   library reads, such as `GOMEMLIMIT` or `HTTPS_PROXY`, is not one, and neither is `LOG_LEVEL`, which R30 governs.
 - **Settings table**: the table under `## Configuration` in `components/authz-agent/README.md`.
-- **Marked provider**, **stops the start**: as ADR-0091 defines them.
+- **Stops the start**: as ADR-0091 defines it.
+- **Provider directory**, **provider file**, **provider `identity-provider`**, **provider `kubernetes`**, **`realms`
+  provider**, **`single` provider**, **required source**, **Kubernetes token**: as ADR-0104 defines them.
+- **Token for the API server**, **topology file**: as ADR-0094 defines them.
 
 ### Rules
 
@@ -71,9 +78,10 @@ example.
 
 #### Configuration
 
-- **R5** (`startup`). With a trusted providers file that holds no marked provider, the agent starts, becomes ready,
-  and serves on the Docker target with environment variables and mounted files alone: no Kubernetes API server, no
-  service account token, and no topology file.
+- **R5** (`startup`). With provider files that hold the provider `identity-provider`, as a `realms` or a `single`
+  provider, and no provider `kubernetes`, the agent starts, becomes ready, and serves on the Docker target with
+  environment variables and mounted files alone: no Kubernetes API server, no service account token, and no topology
+  file.
 - **R6** (`startup`, `client`). Before it serves a request, on every target, the agent checks the value of every agent
   variable and stops the start on a value that the row of the variable in the settings table does not accept, with a
   message that names the variable and the values its row accepts. The agent reads an integer as decimal digits with an
@@ -96,9 +104,9 @@ example.
 
 #### The Compose example and the Docker page
 
-- **R8** (`docker`). The Compose example runs the agent from its release image, mounts the trusted providers file at
-  `/etc/authz` and the client credentials at `/etc/secret`, and holds an example trusted providers file without a
-  marked provider.
+- **R8** (`docker`). The Compose example runs the agent from its release image, mounts its provider files at the
+  provider directory and the client credentials at `/etc/secret`, and holds an example provider file with the provider
+  `identity-provider` and without the provider `kubernetes`.
 - **R9** (`docker`, `startup`). The environment file of the Compose example lists every agent variable with a comment.
   It gives each variable that the configuration of the example requires a placeholder, such as an address under
   `example.com`, gives every other variable that has a default the default of its row in the settings table, and leaves
@@ -133,18 +141,21 @@ page shows how to make the credentials readable to that uid without making them 
 (R29).
 
 On the Docker target nothing but the agent checks its configuration. The token for the API server and the topology file
-exist only in a cluster, and ADR-0094 R5 requires that token wherever the trusted providers file holds the marked
-provider. So the example's file holds none, and R5 requires the agent to work without either (R8). A mistyped value of
-any agent variable stops the start, so an operator learns of it at once rather than running with a default they did not
-choose (R6). The settings table keeps the list in one file, so a new variable joins it in the change that adds it (R21).
-A variable can be optional and still have no default, so a row gives the default and whether the variable is required
-separately (R21). A number that its destination type cannot hold would overflow instead of being refused, so its range
-ends within that type, and the row gives the bound (R21). A variable that the values of others require, such as
-`AUTHZ_M2M_TOKEN_URL` with `AUTHZ_M2M_TOKEN_SOURCE=client-credentials` under ADR-0096 R5, is marked in its row, and R20
-stops the start without it. R6 reads a value from a list as ADR-0096 R3 reads `AUTHZ_M2M_TOKEN_SOURCE`, so that no
-setting accepts a spelling another one refuses. The platform logger reads `LOG_LEVEL` when `LOGGING_LEVEL_ROOT` is unset
-or empty, and runs at `info` with only a warning when it cannot parse the value. So the root log level has one name,
-`LOGGING_LEVEL_ROOT`, and a non-empty `LOG_LEVEL` stops the start (R30).
+exist only in a cluster, and the services of an installation on the Docker target run in no cluster, so none of them
+holds a service account token that an API server signs. A provider `kubernetes` would still be a required source
+(ADR-0104 R6, R25), and the agent would wait for the keys of an API server that the installation does not have
+(ADR-0091 R14). So the example's provider file holds no provider `kubernetes`, and R5 requires the agent to work without
+one, whichever type the provider `identity-provider` has (R8). A mistyped value of any agent variable stops the start,
+so an operator learns of it at once rather than running with a default they did not choose (R6). The settings table
+keeps the list in one file, so a new variable joins it in the change that adds it (R21). A variable can be optional and
+still have no default, so a row gives the default and whether the variable is required separately (R21). A number that
+its destination type cannot hold would overflow instead of being refused, so its range ends within that type, and the
+row gives the bound (R21). A variable that the values of others require, such as `AUTHZ_M2M_TOKEN_URL` with
+`AUTHZ_M2M_TOKEN_SOURCE=client-credentials` under ADR-0096 R5, is marked in its row, and R20 stops the start without it.
+R6 reads a value from a list as ADR-0096 R3 reads `AUTHZ_M2M_TOKEN_SOURCE`, so that no setting accepts a spelling
+another one refuses. The platform logger reads `LOG_LEVEL` when `LOGGING_LEVEL_ROOT` is unset or empty, and runs at
+`info` with only a warning when it cannot parse the value. So the root log level has one name, `LOGGING_LEVEL_ROOT`, and
+a non-empty `LOG_LEVEL` stops the start (R30).
 
 A default address such as `http://tenant-manager:8080` names a service that only some networks have, whether the name
 belongs to a Kubernetes Service or to a Compose service. With an address of tenant-manager the agent stays not ready
@@ -155,8 +166,8 @@ its token from `AUTHZ_M2M_TOKEN_URL` (ADR-0096 R5) and does not read the agent's
 That file lies under `/var/run/secrets`, where nothing is mounted on the Docker target, so the Compose example sets
 `AUTHZ_M2M_TOKEN_SOURCE` to `client-credentials` (R9).
 
-An operator starts from the Compose example, so it carries what the agent needs to start (R8, R9). The trusted providers
-file and `AUTHZ_M2M_TOKEN_URL` stay in the example, because the agent does not read `IDENTITY_PROVIDER_URL`
+An operator starts from the Compose example, so it carries what the agent needs to start (R8, R9). The provider file
+and `AUTHZ_M2M_TOKEN_URL` stay in the example, because the agent does not read `IDENTITY_PROVIDER_URL`
 (ADR-0091 R78). Docker's default stop timeout is too short for the agent to stop gracefully, so the example sets a
 longer one (R10). A reader looks in the README files for how to run the agent, so both link the Docker page, and a
 sentence that ties the agent to Kubernetes would send that reader away (R28).
@@ -175,7 +186,7 @@ ones (R15). TLS stays outside the agent for its clients, as the architect decide
 
 - **A2. Run the agent as a process under systemd on a Linux host.** The agent would run outside its image on one
   target, and the release would need a second artifact.
-- **A3. Let the agent build the trusted providers file and `AUTHZ_M2M_TOKEN_URL` from `IDENTITY_PROVIDER_URL`.**
+- **A3. Let the agent build the provider `identity-provider` and `AUTHZ_M2M_TOKEN_URL` from `IDENTITY_PROVIDER_URL`.**
   ADR-0091 R78 decides that the agent does not read that setting.
 - **A4. Log a warning and keep the default for an invalid value.** Rejected by R6: the warning is easy to miss, and the
   agent would run, for example, with a pull interval the operator did not choose.
@@ -199,8 +210,8 @@ Negative:
   the installation has to act (R11, R12).
 - A configuration that stops the start makes the restart policy start the agent again and again, each start ending
   with the same message in `docker compose logs` (R12).
-- On the Docker target the operator writes the address of Keycloak twice, in the trusted providers file and in
-  `AUTHZ_M2M_TOKEN_URL` (ADR-0091 R78).
+- On the Docker target the operator writes the address of Keycloak in the provider file, once for the issuers and
+  once for the keys, and again in `AUTHZ_M2M_TOKEN_URL` (ADR-0091 R78).
 - A value that the agent at 5a351ef5 replaced with its default, such as `5s` for a number of seconds, now stops the
   start (R6).
 - An installation without the chart that sets `LOG_LEVEL` now stops the start, and moves the value to
@@ -210,6 +221,6 @@ Negative:
   and a realm named by a tenant's display name as written (R7).
 - Releases before 1.0, v0.1.0 included, carry no stable API or configuration commitment, so the release notes of each
   release that implements R6, R7, or R30 list what it changes for an installation without the chart.
-- On the Docker target the trusted providers file holds no marked provider, so no token is a Kubernetes token, and
-  services that call with tokens that the API server signs cannot use such an agent (R5, R8). Such a token gets
-  `TOKEN_ISSUER_UNKNOWN` when its `iss` falls under ADR-0091 R11.
+- On the Docker target the provider files hold no provider `kubernetes`, so no token is a Kubernetes token, and
+  services that call with tokens that an API server signs cannot use such an agent (R5, R8). Such a token is refused
+  under ADR-0104 R21 or R27.
