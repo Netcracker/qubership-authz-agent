@@ -31,9 +31,9 @@ kichasov
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](https://github.com/Netcracker/qubership-authz-agent/pull/329),
   proposed in #329: the term Kubernetes token (ADR-0104 R22), and ADR-0104 R14, under which the agent stops the start
   when it cannot read the token for the API server.
-- [authz-agent-ADR-0101: Run the agent in Docker without Kubernetes](https://github.com/Netcracker/qubership-authz-agent/pull/235),
-  proposed in #235: ADR-0101 R6, which checks the value of every agent variable and may refuse a setting that R20 of
-  this record leaves unread, and ADR-0101 R9, the token source of the Compose example.
+- [authz-agent-ADR-0107: Have the agent check its own settings, whether or not the chart renders them](https://github.com/Netcracker/qubership-authz-agent/pull/359),
+  proposed in #359: ADR-0107 R2, which checks the value of every agent variable and may refuse a setting that R20 of
+  this record leaves unread.
 
 ## Context
 
@@ -73,6 +73,7 @@ itself: `client-credentials`, the default, or `token-file`.
   ADR-0094.
 - **The agent's token**: the token that R2 has the agent present to the recipients of R10.
 - **Stops the start**: as ADR-0091 defines it.
+- **Agent variable**: as ADR-0107 defines it.
 - **Kubernetes token**: as ADR-0104 defines it.
 - **Token for `netcracker`**, **token for the API server**: as ADR-0094 defines them.
 
@@ -96,7 +97,7 @@ itself: `client-credentials`, the default, or `token-file`.
 - **R20** (`startup`, `client`, `chart`). For each value of `AUTHZ_OUTGOING_TOKEN_SOURCE`, this table gives the inputs
   that the agent reads and the ones that the chart mounts or passes. An input that the table marks unread for a value
   is one that the agent with that value does not use: it sends no request to an unread token endpoint and opens no
-  unread file. A set value of a setting that names an unread input stops the start only where ADR-0101 R6 refuses that
+  unread file. A set value of a setting that names an unread input stops the start only where ADR-0107 R2 refuses that
   value, and that refusal takes precedence over this rule.
 
   | Input | `client-credentials` | `token-file` |
@@ -142,7 +143,7 @@ chart the same rule (R1).
 
 The values schema accepts the two values only as R4 spells them, as it accepts the levels of `LOG_LEVEL` only in
 lowercase, so every values file spells a value one way. A deployment without the chart sets the variable by hand, so
-the agent compares the value without regard to case and reads an empty value as the default, and ADR-0101 R6 reads
+the agent compares the value without regard to case and reads an empty value as the default, and ADR-0107 R2 reads
 every value from a list the same way (R3, R4).
 
 Whoever installs the agent chooses the token that its recipients accept. The agent does not read the mode by which the
@@ -161,7 +162,7 @@ that does not answer can recover, so the agent waits for it instead (R14, R20).
 The client secret leaves the agent only in requests to the token endpoint of `client-credentials`. With `token-file` the
 agent needs neither the endpoint nor the credentials, so the chart mounts no Secret and the Secret need not exist.
 Switching `AUTHZ_OUTGOING_TOKEN_SOURCE` then takes one setting, also where an environment file lists every setting of
-the agent (R20). A value that ADR-0101 R6 refuses still stops the start, because that check treats every agent variable
+the agent (R20). A value that ADR-0107 R2 refuses still stops the start, because that check treats every agent variable
 alike, and the operator learns of a mistyped token endpoint at once rather than when switching back to
 `client-credentials`.
 
@@ -205,7 +206,7 @@ would hide a token that the recipient refuses (R16).
   protocol, while `client-credentials` names the one grant the agent uses, the client credentials grant of OAuth 2.0.
 - **A9. Build the token endpoint from `IDENTITY_PROVIDER_URL` alone.** Rejected by R19: a Keycloak that serves its
   realms without `/auth` answers that endpoint with 404, and the agent stays not ready (R14).
-- **A10. Refuse a set `AUTHZ_OUTGOING_TOKEN_URL` that ADR-0101 R6 accepts with `token-file`.** Rejected by R20:
+- **A10. Refuse a set `AUTHZ_OUTGOING_TOKEN_URL` that ADR-0107 R2 accepts with `token-file`.** Rejected by R20:
   switching `AUTHZ_OUTGOING_TOKEN_SOURCE` would take two changes, and with `token-file` the agent sends the client
   secret nowhere either way.
 - **A11. Stop the start only on a missing token file.** Rejected by R20: an empty or unreadable file is the same error
@@ -232,8 +233,8 @@ Negative:
   agent turns ready and denies the resources that depend on that recipient (R13).
 - Outside Kubernetes nothing renews the agent's token file on its own. The agent reads the file again (R12), so a
   process that the operator runs can renew it. Without one, `token-file` serves only a token that outlives the run of
-  the agent, such as the static token of a test stand, and a deployment without Kubernetes uses `client-credentials`,
-  as the Compose example does (ADR-0101 R9).
+  the agent, such as the static token of a test stand. A deployment without Kubernetes that has neither a process that
+  renews the file nor such a token uses `client-credentials` (R2, R12).
 - A deployment that sets `KUBERNETES_M2M_ENABLED=true` and not `AUTHZ_OUTGOING_TOKEN_SOURCE` gets `client-credentials`,
   and needs the Secret `<SERVICE_NAME>-client-credentials`, until it sets `AUTHZ_OUTGOING_TOKEN_SOURCE` to `token-file`
   (R4, R17, R20).
