@@ -141,8 +141,9 @@ Negative:
 - Every installation that the chart deploys accepts Kubernetes tokens from the namespaces of the installation in
   `Authorization`, where `legacy`, the default mode, refused them (R11; ADR-0094 R17, R30).
 - Outside Kubernetes no API server serves the keys of a provider `kubernetes`, so a provider `kubernetes` there would
-  keep the agent not ready (ADR-0104 R25; ADR-0091 R14), and the provider files hold none. No token is then a
-  Kubernetes token, and a token that an API server signed is refused under ADR-0104 R21 or R27.
+  keep the agent not ready (ADR-0104 R25; ADR-0091 R14), and the provider files hold none. No token is then a Kubernetes
+  token, and a token that an API server signed is refused under ADR-0104 R21, unless a provider `identity-provider`
+  names its issuer, which makes it an identity-provider token (ADR-0104 R22).
 - The decisions of a request cannot be downloaded from the agent. Issue #223 tracks how they are read.
 - Comparing with the tenant of the decision changes the answer of two requests that no golden covers:
   - A caller that is not M2M and has no `tenant-id`, such as a client-credentials token without `ROLE_M2M`, forwards the

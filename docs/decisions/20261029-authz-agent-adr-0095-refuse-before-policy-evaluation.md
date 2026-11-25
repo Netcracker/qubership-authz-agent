@@ -30,7 +30,7 @@ kichasov
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
   ADR-0094 R16 to R18 and R25, the refusals of a Kubernetes token.
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](20261123-authz-agent-adr-0104-trusted-provider-files.md):
-  ADR-0104 R21, R26, and R27, the refusals of a token by its issuer, its audience, and the claim `kubernetes.io`.
+  ADR-0104 R21 and R26, the refusals of a token by its issuer and its audience.
 
 ## Context
 
@@ -106,7 +106,6 @@ and the reason code in the audit and a metric.
   | 401 | `TOKEN_IAT_MISSING`, `TOKEN_IAT_INVALID` | ADR-0091 R46, R47, R48 |
   | 401 | `TOKEN_NAMESPACE_NOT_ALLOWED` | ADR-0094 R25 |
   | 401 | `TOKEN_SUBJECT_INVALID` | ADR-0094 R16 |
-  | 401 | `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED` | ADR-0104 R27 |
   | 403 | `CALLER_TENANT_MISMATCH` | ADR-0092 R4 |
   | 503 | `TOKEN_KEYS_UNAVAILABLE` | ADR-0091 R23, R37, R38, for either header |
   | 503 | `DEFAULT_TENANT_NOT_TRANSLATED` | ADR-0093 R22 |

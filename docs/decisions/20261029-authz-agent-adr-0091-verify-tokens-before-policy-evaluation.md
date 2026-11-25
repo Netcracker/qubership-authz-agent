@@ -37,8 +37,8 @@ kichasov
   the agent's token, which liveness does not depend on.
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](20261123-authz-agent-adr-0104-trusted-provider-files.md):
   the provider files and the words for providers, realms, sources, issuers, and the two kinds of token (ADR-0104 R22);
-  the source of a token (ADR-0104 R19 to R21), the address of its keys (ADR-0104 R23), the required sources
-  (ADR-0104 R25), and the checks of `aud` and of the claim `kubernetes.io` (ADR-0104 R26, R27).
+  the source of a token (ADR-0104 R19 to R21), the address of its keys (ADR-0104 R23), the required sources (ADR-0104
+  R25), and the check of `aud` (ADR-0104 R26).
 
 ## Context
 
@@ -223,8 +223,8 @@ The word Keycloak names the server.
 #### The verified-token cache
 
 - **R59** (`verify`). A verified token is cached under the SHA-256 of its compact form until `exp`.
-- **R60** (`verify`). A token that a check of this record, of ADR-0094 R16, or of ADR-0104 R21, R26, or R27 refuses is
-  not cached. A token refused for its namespace stays in the cache, because ADR-0094 R22 checks it again.
+- **R60** (`verify`). A token that a check of this record, of ADR-0094 R16, or of ADR-0104 R21 or R26 refuses is not
+  cached. A token refused for its namespace stays in the cache, because ADR-0094 R22 checks it again.
 - **R61** (`verify`). A cached token is returned only while the key that verified it is still loaded for its source, so
   a withdrawn key stops a cached token at once.
 - **R62** (`verify`). The cache holds the result of the verification and the claims, and nothing computed for a request.

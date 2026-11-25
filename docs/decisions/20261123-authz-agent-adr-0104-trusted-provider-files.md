@@ -12,8 +12,11 @@ kichasov
 #### Participants and approvers
 
 - The project architect (`mr-joom`) approves this record, and with it the departures from earlier answers that it
-  records, agreed on 2026-11-19 and 2026-11-23. On 2026-11-23 the architect and the owner of the policy decision code
-  also agreed to drop the M2M modes, so no rule of this record depends on `M2M_AUTH_MODE`.
+  records, agreed on 2026-11-19, 2026-11-23, and 2026-11-25. On 2026-11-23 the architect and the owner of the policy
+  decision code also agreed to drop the M2M modes, so no rule of this record depends on `M2M_AUTH_MODE`. On 2026-11-25
+  the architect also decided that a token of any provider may hold the claim `kubernetes.io`, dropped the check of an
+  in-cluster address in the provider `identity-provider`, and chose a warning at the start on the issuer of the provider
+  `kubernetes` (R22, R29, A18 to A20).
 - The owner of the policy decision code (`vlsi`) reviews this record, and on 2026-11-24 proposed the format of a
   provider file that R6 states.
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
@@ -38,22 +41,23 @@ kichasov
   that this record accepts. This request makes ADR-0092 R6, R7, R11, and R21 name the kinds of R22, and deletes
   ADR-0092 R8, which A13 reverses.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
-  the term In-cluster address, the checks of a Kubernetes token (ADR-0094 R16 to R18, R25), and the https rule for the
-  keys of the provider `kubernetes` (ADR-0094 R32). This request deletes from ADR-0094 the rules whose place this record
-  takes: R1 (now R16 of this record), R4 and R5 (reversed by A6 and A7 of this record, with R6 and R14 of this record in
-  their place), R6, R8, and the token half of R7 (now R23 and R24 of this record), the address half of R9 (now R6 and
-  R23 of this record), R10 and R12 (now R24 and R28 of this record), R11 (now R6 of this record), R13 (now R15 of this
-  record), R14 (now R26 of this record), and R29 (now R6 of this record). It deletes ADR-0094 R27 and the CA halves of
-  ADR-0094 R7 and R9, which named the CA of the requests that this record replaces, with no successor here. It also
-  deletes ADR-0094 A4 to A6, which rejected a fixed address of the keys, an issuer set in the configuration, and
-  discovery without a token: this record configures the address and the issuer and drops discovery (R6, R23). It makes
-  the token for the API server the token in the `jwksBearerTokenFile` of the provider `kubernetes`, and restates
-  ADR-0094 R2, R16 to R25, R28, R30, and R32 in the terms of this record.
+  the term In-cluster address, the checks of a Kubernetes token (ADR-0094 R16 to R18, R25), the https rule for the keys
+  of the provider `kubernetes` (ADR-0094 R32), and the projected tokens that the chart mounts (ADR-0094 R26). This
+  request deletes from ADR-0094 the rules whose place this record takes: R1 (now R16 of this record), R4 and R5
+  (reversed by A6 and A7 of this record, with R6 and R14 of this record in their place), R6, R8, and the token half of
+  R7 (now R23 and R24 of this record), the address half of R9 (now R6 and R23 of this record), R10 and R12 (now R24 and
+  R28 of this record), R11 (now R6 of this record), R14 (now R26 of this record), and R29 (now R6 of this record). It
+  deletes ADR-0094 R13, which stopped the start for a provider that looked like the API server, with no successor (A19),
+  and ADR-0094 R27 and the CA halves of ADR-0094 R7 and R9, which named the CA of the requests that this record
+  replaces, with no successor here. It also deletes ADR-0094 A4 to A6, which rejected a fixed address of the keys, an
+  issuer set in the configuration, and discovery without a token: this record configures the address and the issuer and
+  drops discovery (R6, R23). It makes the token for the API server the token in the `jwksBearerTokenFile` of the
+  provider `kubernetes`, and restates ADR-0094 R2, R16 to R25, R28, R30, and R32 in the terms of this record.
 - [authz-agent-ADR-0095: Refuse a check request before policy evaluation](20261029-authz-agent-adr-0095-refuse-before-policy-evaluation.md):
   the steps of a check request (ADR-0095 R1), the answer to a request whose `Incoming-Token` fails a check (ADR-0095
   R3), and the index of reason codes (ADR-0095 R16). This request makes steps 1 and 2 of ADR-0095 R1 name the checks of
-  this record, and makes ADR-0095 R16 index `TOKEN_ISSUER_UNKNOWN` by R21, `TOKEN_AUDIENCE_MISSING` and
-  `TOKEN_AUDIENCE_INVALID` by R26, and the new `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED` by R27.
+  this record, and makes ADR-0095 R16 index `TOKEN_ISSUER_UNKNOWN` by R21, and `TOKEN_AUDIENCE_MISSING` and
+  `TOKEN_AUDIENCE_INVALID` by R26.
 - [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
   the token that the agent obtains from the realm `cloud-common`, which is an identity-provider token under R22. This
   request makes ADR-0096 call that token an identity-provider token, and cite R14 of this record where it cited
@@ -69,11 +73,10 @@ keys of the realm at that address followed by `/protocol/openid-connect/certs`. 
 the issuers in one trusted providers file, with a `keycloak` section for the realms and a list of providers, one of
 which the member `kubernetes: true` marked as the API server.
 
-The API server puts the claim `kubernetes.io`, which holds the namespace and the service account, into every service
-account token that the TokenRequest API issues, the token projected into a Pod among them
-(`pkg/serviceaccount/claims.go` of Kubernetes). A token from a Secret of the type
-`kubernetes.io/service-account-token` carries flat claims such as `kubernetes.io/serviceaccount/namespace` instead, and
-no `exp` (`pkg/serviceaccount/legacy.go`).
+A service account token that the TokenRequest API issues, the token projected into a Pod among them, names the issuer of
+the API server in `iss` (`GenerateToken` in `pkg/serviceaccount/jwt.go` of Kubernetes). A token from a Secret of the
+type `kubernetes.io/service-account-token` names `kubernetes/serviceaccount` in `iss` and has no `exp` (`LegacyIssuer`
+in `pkg/serviceaccount/legacy.go`).
 
 A ConfigMap mounted as a directory without `subPath` shows each key as a symbolic link into a directory whose name
 starts with `..`, and the kubelet updates the mount by switching that directory (`AtomicWriter` in
@@ -130,8 +133,6 @@ the configured `jwksUri`.
 - **R13** (`keys`). A provider without `readinessRealms` names no realm as required, and the agent adds no realm of its
   own, `cloud-common` included.
 - **R14** (`keys`). A `jwksBearerTokenFile` whose file the agent cannot read at start stops the start.
-- **R15** (`keys`). A provider `identity-provider` whose `issuer`, `issuerTemplate`, or `jwksUri` is an in-cluster
-  address stops the start.
 
 #### The providers together
 
@@ -141,11 +142,11 @@ the configured `jwksUri`.
   matches the `realms` one under R19. Two `realms` providers overlap when their `issuerTemplate` values have the same
   scheme, host, and port and the same number of path segments, and are equal in each segment where neither holds
   `{realm}`.
-- **R18** (`keys`). An error that stops the start under R3, R4, R6, R12 to R17, or R28 names the provider directory or
-  the provider file at fault. An error about a member of a provider file other than `providers` names each such member.
-  Where the error concerns a provider, it names the provider by its key and names the member at fault. An error under
-  R16 or R17 names both providers, each with its provider file. An error about `jwksBearerTokenFile` in the provider
-  `identity-provider` also says that the provider of Kubernetes tokens has the key `kubernetes`.
+- **R18** (`keys`). An error that stops the start under R3, R4, R6, R12 to R14, R16, R17, or R28 names the provider
+  directory or the provider file at fault. An error about a member of a provider file other than `providers` names each
+  such member. Where the error concerns a provider, it names the provider by its key and names the member at fault. An
+  error under R16 or R17 names both providers, each with its provider file. An error about `jwksBearerTokenFile` in the
+  provider `identity-provider` also says that the provider of Kubernetes tokens has the key `kubernetes`.
 
 #### The source of a token
 
@@ -162,7 +163,8 @@ the configured `jwksUri`.
 - **R22** (`verify`). A token whose source under R19 is the provider `kubernetes` is a Kubernetes token, and a token
   whose source is the provider `identity-provider` or one of its realms is an identity-provider token. The key of the
   provider alone decides the kind: no other member of the provider, its `type` included, and no claim of the token
-  changes it.
+  changes it. A check that a record attaches to a Kubernetes token never runs on an identity-provider token, and an
+  identity-provider token that holds the claim `kubernetes.io` gets no check and no refusal from that claim.
 
 #### The keys
 
@@ -173,6 +175,12 @@ the configured `jwksUri`.
   the requests for the keys of its provider. R28 and ADR-0094 R32 limit the addresses of those requests.
 - **R28** (`keys`). A provider `kubernetes` whose `jwksBearerTokenFile` is set and whose `jwksUri` is not an in-cluster
   address stops the start.
+- **R29** (`keys`, `startup`). At start, once the agent has read the file that the `jwksBearerTokenFile` of the provider
+  `kubernetes` names (R14), it reads the `iss` of the token in it without checking its signature and compares it byte
+  for byte with the `issuer` of the provider. When the two differ, or the token holds no `iss` that the agent can read,
+  the agent logs one warning. The warning names the provider file, the `issuer`, the file that `jwksBearerTokenFile`
+  names, and the `iss` where the agent read one, and never holds the token. The comparison changes neither the start nor
+  readiness. Without `jwksBearerTokenFile` the agent compares nothing.
 - **R25** (`keys`, `startup`). The required sources are every `single` provider and every realm whose name the
   `readinessRealms` of its provider lists.
 
@@ -184,11 +192,6 @@ the configured `jwksUri`.
   that also holds a number, is refused with `TOKEN_AUDIENCE_INVALID`. With the mode `ignore`, the agent does not check
   `aud`, whether the token has one or not. The check is the same for a token in `Authorization` and in
   `Incoming-Token`.
-
-#### Tokens of an API server
-
-- **R27** (`verify`). A token that holds the claim `kubernetes.io`, whatever its value, and whose source under R19 is
-  not the provider `kubernetes` is refused with `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED`.
 
 ### Implementation notes
 
@@ -283,14 +286,12 @@ describes under the same key, and the tokens of such a provider pass the M2M tes
 claims it signs. The description of the key in the schema therefore states that it stands for the platform's Keycloak
 alone (R6, R22).
 
-A provider `identity-provider` whose issuer is the API server would accept the token of any Pod of the cluster with no
-namespace check. Whatever address the provider files name, R27 refuses such a token by the claim `kubernetes.io`, which
-every service account token from the TokenRequest API carries (Context). Where the provider names an in-cluster
-address, which every cluster gives its API server, the provider stops the start under R15, so the mistake shows at the
-start and not only in refusals. The claim never makes a token a Kubernetes token: R22 still decides the kind, and R27
-only adds a refusal. Where the provider files hold no provider `kubernetes`, as outside Kubernetes, every token from
-the TokenRequest API is refused under R21 or R27, whatever the other providers hold. A token from a Secret has no `exp`,
-so ADR-0091 R44 refuses it.
+The claim `kubernetes.io` is whatever the signer puts in a token, so it decides neither the kind of a token nor which
+checks run on it (R22). A provider `identity-provider` whose issuer is an API server therefore makes the tokens of that
+API server identity-provider tokens, with no namespace check. The architect accepted that cost on 2026-11-25, and the
+Negative consequences name it (R22). Where the provider files hold no provider `kubernetes`, as outside Kubernetes, a
+token that an API server signed is refused under R21, unless a provider `identity-provider` names its issuer (R22). A
+token from a Secret has no `exp` (Context), so ADR-0091 R44 refuses it.
 
 `iss` names the signer, and RFC 7519, section 2, compares such values as case-sensitive strings with no
 canonicalization. Comparing all of it, the host included, means a token that names another server starts no load, and
@@ -313,13 +314,20 @@ The required sources are the ones that the configuration names: a `single` provi
 `readinessRealms` (R25). Every other realm loads on its first token. The names are the realm names that tokens carry,
 because the agent runs where no tenant-manager exists (R12).
 
-The token in `jwksBearerTokenFile` grants access to the API server of the cluster, so only the provider `kubernetes`
-may name one, and it goes only with the requests for the keys of that provider (R6, R24). A host outside the cluster
-that received the token would get that access, so R28 keeps the token to an in-cluster address. A cluster that serves
-its keys to an anonymous request needs no token, so the member is optional. A member that names a file the Pod does not
-hold is a fault of the deployment that no wait repairs, so it stops the start (R14). An operator who sets
+The token in `jwksBearerTokenFile` grants access to the API server of the cluster, so only the provider `kubernetes` may
+name one, and it goes only with the requests for the keys of that provider (R6, R24). A host outside the cluster that
+received the token would get that access, so R28 keeps the token to an in-cluster address. A cluster that serves its
+keys to an anonymous request needs no token, so the member is optional. A member that names a file the Pod does not hold
+is a fault of the deployment that no wait repairs, so it stops the start (R14). An operator who sets
 `jwksBearerTokenFile` on the provider `identity-provider` most likely meant the provider of Kubernetes tokens, so the
 error names its key (R18).
+
+The issuer of the provider `kubernetes` is a value of the provider file (R6; A6). A wrong value leaves the Pod ready
+while every token that the API server signs gets `TOKEN_ISSUER_UNKNOWN` (R21). The token in `jwksBearerTokenFile` comes
+from the API server of the cluster, so its `iss` shows the issuer that the provider should name, and a warning at the
+start points at the mistake before the refusals do. The comparison only warns: the agent reads the token without
+checking its signature, and a token from a Secret names another `iss` even when the `issuer` is right (Context), so the
+token never becomes a second source of the issuer (R29).
 
 `audience` has no default, so the file states whether `aud` is checked. The platform's Keycloak has no audience mapper
 that names the services of an installation, so a file for it sets `ignore`, which R6 allows. The name of the mode says
@@ -370,17 +378,25 @@ such as the default token of a Pod, passes in neither (R26).
 - **A13. Keep the tokens of a `single` provider `identity-provider` from being M2M tokens, as ADR-0092 R8 did for a
   file token.** Rejected by R22: the key alone decides the kind, so both types of the provider `identity-provider` give
   an identity-provider token, and ADR-0092 R6 and R21 decide whether it is an M2M token. This reverses ADR-0092 R8.
-- **A14. Accept a token with the claim `kubernetes.io` from the provider `identity-provider`, and state in the
-  Consequences that a provider `identity-provider` whose issuer is an API server accepts the token of any Pod.**
-  Rejected by R27: the safety of the agent would depend on the operator recognizing the API server under every address
-  it has.
-- **A16. Give every provider a limit of its own on the tokens it accepts, such as the namespaces of the installation
-  for the API server of the agent's cluster, in place of a kind of token.** Rejected by R22 and R27: no installation
-  needs the tokens of another cluster in this stage, and such a limit would change ADR-0094 well beyond one rule. A
-  later record can give each provider a limit and accept tokens that R27 refuses.
+- **A16. Give every provider a limit of its own on the tokens it accepts, such as the namespaces of the installation for
+  the API server of the agent's cluster, in place of a kind of token.** Rejected by R22: no installation needs the
+  tokens of another cluster in this stage, and such a limit would change ADR-0094 well beyond one rule. A later record
+  can give each provider a limit of its own.
 - **A17. Keep `providers` as a list of objects, each named by a member `id`.** Rejected by R6: a misspelled `id` gets
   an error from every branch of the schema rather than one error that names it, and two providers with one `id` in one
   file need a check of their own, where R3 already refuses one key twice in one file.
+- **A18. Refuse a token that holds the claim `kubernetes.io` and whose source is not the provider `kubernetes`, with
+  `TOKEN_KUBERNETES_CLAIM_NOT_ALLOWED`.** Rejected by R22: the claim is whatever the signer puts in the token, and the
+  architect decided on 2026-11-25 that a token of any provider may hold it, with the checks of a Kubernetes token
+  following the provider. This reverses the refusal by the claim in the answer of 2026-11-18 in #305.
+- **A19. Stop the start when a provider `identity-provider` names an in-cluster address in `issuer`, `issuerTemplate`,
+  or `jwksUri`.** The architect decided on 2026-11-25 that the check of an in-cluster address stays only where the token
+  for the API server goes (R28): a provider `identity-provider` that names the API server is a mistake of the provider
+  file, as a wrong issuer is (Negative). This reverses ADR-0094 R13.
+- **A20. Stop the start, or keep the Pod not ready, when the `issuer` of the provider `kubernetes` differs from the
+  `iss` of the token in `jwksBearerTokenFile`.** Rejected by R29: the provider file is the only source of the issuer
+  (R6), the agent reads the token without checking its signature, and a token from a Secret names another `iss` even
+  when the `issuer` is right (Context).
 
 ## Consequences
 
@@ -408,7 +424,8 @@ Negative:
 - A wrong `issuer` or `issuerTemplate` leaves the Pod ready: the keys of the provider still load from `jwksUri`, and
   every token of the provider gets `TOKEN_ISSUER_UNKNOWN` (R19, R21). For the provider `kubernetes` the issuer is a
   value set for each cluster, where A6 would read it from a token that the kubelet writes, so a wrong value refuses
-  every token that the API server signs, in a Pod that is ready.
+  every token that the API server signs, in a Pod that is ready. For the provider `kubernetes` with
+  `jwksBearerTokenFile`, R29 logs a warning at the start.
 - A `realms` provider `identity-provider` without `readinessRealms` has no required source, so the Pod becomes ready
   before any realm has loaded keys, and a wrong `jwksUri` shows only in the refusals of its tokens and in the warnings
   of ADR-0091 R81 (R13, R25; ADR-0091 R23, R38, R39, R81).
@@ -424,18 +441,23 @@ Negative:
   named one went with the requests that this record replaces. A `caFile` now stops the start under R6. An https
   `jwksUri` whose certificate a private CA or the cluster CA signs therefore works only once the agent trusts that CA in
   another way.
-- R15 recognizes the API server only by the hosts of an in-cluster address. A provider `identity-provider` whose
-  `issuer` equals the issuer of an API server and whose `issuer` and `jwksUri` are not in-cluster addresses, as with the
-  public issuer and keys of a managed cluster, passes R15. Where no provider `kubernetes` has the same `issuer` (R17),
-  as without a provider `kubernetes` or for the API server of another cluster, the agent starts. R27 then refuses every
-  token whose source is that provider and that holds the claim `kubernetes.io`, and the mistake shows only in those
-  refusals.
-- A token that a signer other than an API server issues and that holds the claim `kubernetes.io`, such as a Keycloak
-  token with a mapper that adds it, is refused (R27).
+- A provider `identity-provider` whose issuer is an API server makes every token of that API server an identity-provider
+  token (R22). Where the provider `kubernetes` names the same issuer, R17 stops the start. Otherwise, where the keys
+  load without a token, as the public keys of a managed cluster do, the token of a Pod of that cluster passes with no
+  namespace check of ADR-0094, and nothing at the start or in a refusal shows the mistake. Where the keys need a token,
+  as at the in-cluster address of a standard cluster, they never load, because only the provider `kubernetes` may hold
+  `jwksBearerTokenFile` (R6), and a `single` provider then keeps the Pod not ready (R25; ADR-0091 R19).
+- A token of the provider `identity-provider` that holds the claim `kubernetes.io` passes, and policy evaluation gets
+  that claim among the verified claims (ADR-0091 R54). Its kind is identity-provider (R22), so no check of ADR-0094
+  compared the namespace in it with the namespaces of the installation. A policy that reads that namespace without
+  checking the kind trusts what the identity provider wrote.
+- A token from a Secret in `jwksBearerTokenFile` names `kubernetes/serviceaccount` in `iss` (Context), so R29 warns at
+  every start even when the `issuer` is right. The chart mounts projected tokens (ADR-0094 R26), whose `iss` is the
+  issuer of the API server.
 - A provider `kubernetes` without `jwksBearerTokenFile` may name the issuer and the keys of the API server of another
   cluster, because R28 limits the address of its keys only when that member is set (R24, R28). The tokens of that
-  cluster are then Kubernetes tokens, which R27 does not refuse, and ADR-0094 R17 compares only the names of their
-  namespaces, which another cluster can also use.
+  cluster are then Kubernetes tokens, ADR-0094 R17 compares only the names of their namespaces, which another cluster
+  can also use, and R29 has no token to compare the issuer with.
 - An `Incoming-Token` with an `aud` that its provider does not accept fails the check of R26. The request goes on, and
   policy evaluation gets the reason code of the failure rather than the claims of that token (ADR-0095 R3).
 

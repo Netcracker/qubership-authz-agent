@@ -28,7 +28,7 @@
   "additionalProperties": false,
   "$defs": {
     "identityProvider": {
-      "description": "The Keycloak of the platform. Its tokens are identity-provider tokens and get the M2M test of ADR-0092 R6 and R21, so no other identity provider may stand under this name. A token of it that holds the claim kubernetes.io is refused (ADR-0104 R27).",
+      "description": "The Keycloak of the platform. Its tokens are identity-provider tokens and get the M2M test of ADR-0092 R6 and R21, so no other identity provider may stand under this name. A token of it is an identity-provider token also when it holds the claim kubernetes.io, and the checks of a Kubernetes token do not apply to it (ADR-0104 R22).",
       "type": "object",
       "properties": {
         "type": {
@@ -138,7 +138,7 @@
           ]
         },
         "jwksBearerTokenFile": {
-          "description": "The absolute path of the file whose token goes with the requests for the keys (ADR-0104 R14, R24).",
+          "description": "The absolute path of the file whose token goes with the requests for the keys (ADR-0104 R14, R24). At start the agent compares the iss of that token with issuer and warns when they differ or the token holds no iss it can read (ADR-0104 R29).",
           "type": "string",
           "pattern": "^/"
         },
