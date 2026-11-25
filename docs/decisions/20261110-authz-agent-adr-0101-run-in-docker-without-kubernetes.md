@@ -30,9 +30,9 @@ kichasov
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
   the topology file and the token for the API server, which exist only in a cluster.
 - [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
-  ADR-0096 R1, `AUTHZ_M2M_TOKEN_SOURCE`, which the agent reads itself; ADR-0096 R3, how the agent reads that setting,
-  which R6 follows for every value from a list; ADR-0096 R5, the token endpoint that `client-credentials` requires;
-  ADR-0096 R7, which files the agent leaves unread with each value.
+  ADR-0096 R1, `AUTHZ_OUTGOING_TOKEN_SOURCE`, which the agent reads itself; ADR-0096 R3, how the agent reads that
+  setting, which R6 follows for every value from a list; ADR-0096 R20, the inputs that each value of that setting
+  requires and leaves unread, among them the token endpoint that `client-credentials` requires.
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](https://github.com/Netcracker/qubership-authz-agent/pull/329),
   proposed in #329: the provider directory and the provider files (ADR-0104 R1, R2), the two providers and their types
   (ADR-0104 R6), the required sources (ADR-0104 R25), the Kubernetes token (ADR-0104 R22), the refusal of a token whose
@@ -63,7 +63,7 @@ example.
 - **Agent variable**: an environment variable that code built into the agent binary from `components/authz-agent` or
   `internal` reads by name, `LOGGING_LEVEL_ROOT` included. A variable that only a test, the Go runtime, or the standard
   library reads, such as `GOMEMLIMIT` or `HTTPS_PROXY`, is not one, and neither is `LOG_LEVEL`, which R30 governs.
-- **Settings table**: the table under `## Configuration` in `components/authz-agent/README.md`.
+- **Settings table**: the table of agent variables under `## Configuration` in `components/authz-agent/README.md`.
 - **Stops the start**: as ADR-0091 defines it.
 - **Provider directory**, **provider file**, **provider `identity-provider`**, **provider `kubernetes`**, **`realms`
   provider**, **`single` provider**, **required source**, **Kubernetes token**: as ADR-0104 defines them.
@@ -110,7 +110,7 @@ example.
 - **R9** (`docker`, `startup`). The environment file of the Compose example lists every agent variable with a comment.
   It gives each variable that the configuration of the example requires a placeholder, such as an address under
   `example.com`, gives every other variable that has a default the default of its row in the settings table, and leaves
-  each remaining variable commented out. It sets `AUTHZ_M2M_TOKEN_SOURCE` to `client-credentials`.
+  each remaining variable commented out. It sets `AUTHZ_OUTGOING_TOKEN_SOURCE` to `client-credentials`.
 - **R10** (`docker`). The Compose example gives the agent a stop grace period of 30 seconds.
 - **R11** (`docker`). The Compose example declares a healthcheck on `/ready` of the internal surface, which passes only
   while `/ready` reports the agent ready.
@@ -150,24 +150,24 @@ so an operator learns of it at once rather than running with a default they did 
 keeps the list in one file, so a new variable joins it in the change that adds it (R21). A variable can be optional and
 still have no default, so a row gives the default and whether the variable is required separately (R21). A number that
 its destination type cannot hold would overflow instead of being refused, so its range ends within that type, and the
-row gives the bound (R21). A variable that the values of others require, such as `AUTHZ_M2M_TOKEN_URL` with
-`AUTHZ_M2M_TOKEN_SOURCE=client-credentials` under ADR-0096 R5, is marked in its row, and R20 stops the start without it.
-R6 reads a value from a list as ADR-0096 R3 reads `AUTHZ_M2M_TOKEN_SOURCE`, so that no setting accepts a spelling
-another one refuses. The platform logger reads `LOG_LEVEL` when `LOGGING_LEVEL_ROOT` is unset or empty, and runs at
-`info` with only a warning when it cannot parse the value. So the root log level has one name, `LOGGING_LEVEL_ROOT`, and
-a non-empty `LOG_LEVEL` stops the start (R30).
+row gives the bound (R21). A variable that the values of others require, such as `AUTHZ_OUTGOING_TOKEN_URL` with
+`AUTHZ_OUTGOING_TOKEN_SOURCE=client-credentials` under ADR-0096 R20, is marked in its row, and R20 of this record
+stops the start without it. R6 reads a value from a list as ADR-0096 R3 reads `AUTHZ_OUTGOING_TOKEN_SOURCE`, so that
+no setting accepts a spelling another one refuses. The platform logger reads `LOG_LEVEL` when `LOGGING_LEVEL_ROOT` is
+unset or empty, and runs at `info` with only a warning when it cannot parse the value. So the root log level has one
+name, `LOGGING_LEVEL_ROOT`, and a non-empty `LOG_LEVEL` stops the start (R30).
 
 A default address such as `http://tenant-manager:8080` names a service that only some networks have, whether the name
 belongs to a Kubernetes Service or to a Compose service. With an address of tenant-manager the agent stays not ready
 until the translation through tenant-manager succeeds (ADR-0093 R11), and with an empty one it uses the default tenant
 as given (ADR-0093 R14). An empty default lets an agent without tenant-manager start, and an operator who has one names
-it (R7). With `AUTHZ_M2M_TOKEN_SOURCE=client-credentials`, which the agent reads itself (ADR-0096 R1), the agent gets
-its token from `AUTHZ_M2M_TOKEN_URL` (ADR-0096 R5) and does not read the agent's token file of ADR-0096 (ADR-0096 R7).
+it (R7). With `AUTHZ_OUTGOING_TOKEN_SOURCE=client-credentials`, which the agent reads itself (ADR-0096 R1), the agent
+gets its token from `AUTHZ_OUTGOING_TOKEN_URL` and does not read the agent's token file of ADR-0096 (ADR-0096 R20).
 That file lies under `/var/run/secrets`, where nothing is mounted on the Docker target, so the Compose example sets
-`AUTHZ_M2M_TOKEN_SOURCE` to `client-credentials` (R9).
+`AUTHZ_OUTGOING_TOKEN_SOURCE` to `client-credentials` (R9).
 
 An operator starts from the Compose example, so it carries what the agent needs to start (R8, R9). The provider file
-and `AUTHZ_M2M_TOKEN_URL` stay in the example, because the agent does not read `IDENTITY_PROVIDER_URL`
+and `AUTHZ_OUTGOING_TOKEN_URL` stay in the example, because the agent does not read `IDENTITY_PROVIDER_URL`
 (ADR-0091 R78). Docker's default stop timeout is too short for the agent to stop gracefully, so the example sets a
 longer one (R10). A reader looks in the README files for how to run the agent, so both link the Docker page, and a
 sentence that ties the agent to Kubernetes would send that reader away (R28).
@@ -186,8 +186,8 @@ ones (R15). TLS stays outside the agent for its clients, as the architect decide
 
 - **A2. Run the agent as a process under systemd on a Linux host.** The agent would run outside its image on one
   target, and the release would need a second artifact.
-- **A3. Let the agent build the provider `identity-provider` and `AUTHZ_M2M_TOKEN_URL` from `IDENTITY_PROVIDER_URL`.**
-  ADR-0091 R78 decides that the agent does not read that setting.
+- **A3. Let the agent build the provider `identity-provider` and `AUTHZ_OUTGOING_TOKEN_URL` from
+  `IDENTITY_PROVIDER_URL`.** ADR-0091 R78 decides that the agent does not read that setting.
 - **A4. Log a warning and keep the default for an invalid value.** Rejected by R6: the warning is easy to miss, and the
   agent would run, for example, with a pull interval the operator did not choose.
 - **A5. Put the healthcheck into the Dockerfile.** The address would be fixed in the image, while `AUTHZ_HTTP_ADDR` can
@@ -211,7 +211,7 @@ Negative:
 - A configuration that stops the start makes the restart policy start the agent again and again, each start ending
   with the same message in `docker compose logs` (R12).
 - On the Docker target the operator writes the address of Keycloak in the provider file, once for the issuers and
-  once for the keys, and again in `AUTHZ_M2M_TOKEN_URL` (ADR-0091 R78).
+  once for the keys, and again in `AUTHZ_OUTGOING_TOKEN_URL` (ADR-0091 R78).
 - A value that the agent at 5a351ef5 replaced with its default, such as `5s` for a number of seconds, now stops the
   start (R6).
 - An installation without the chart that sets `LOG_LEVEL` now stops the start, and moves the value to
