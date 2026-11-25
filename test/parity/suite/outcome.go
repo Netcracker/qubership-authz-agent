@@ -34,8 +34,9 @@ import (
 // An outcome row, one whose golden directory ends in -outcome, records every
 // status: a refused answer keeps its status and carries no decision, ids, or
 // filter result. Any other row records only a 200 answer, and outcomeOf
-// returns an error for another status. A 200 body is read by [decodeAnswer],
-// so a body that does not have the row's shape is an error on every row.
+// returns an error for another status. A 200 body is read by [decodeAnswer]:
+// on a row that records a decision, a body without the row's shape is an
+// error.
 func outcomeOf(id ParityEndpointID, status int, raw []byte, message any) (any, error) {
 	switch id {
 	case PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME:

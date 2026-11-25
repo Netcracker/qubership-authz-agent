@@ -20,6 +20,9 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io/fs"
 	"maps"
 	"net/http"
@@ -27,6 +30,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -37,7 +41,8 @@ const requestsWithoutAGoldenFile = "testdata/requests-without-a-golden.txt"
 
 // Each golden a runner compares an answer of a case file with is recorded, or
 // is listed in requests-without-a-golden.txt under the subtest that compares
-// it. That covers the setup of a case (the upload of an isolated case, the
+// it. That covers the version of the stand that runCaseFile records for a file
+// with standVersion, the setup of a case (the upload of an isolated case, the
 // declaration of a regular case's domain and each of its uploads), the
 // requests and what their PIPs received, and every observation of a step. A
 // golden that is not recorded skips as not recorded on every profile, so the
@@ -45,18 +50,37 @@ const requestsWithoutAGoldenFile = "testdata/requests-without-a-golden.txt"
 // the golden is recorded or listed. A listed golden that is recorded fails as
 // well, so the list shrinks as goldens are recorded. Which goldens are
 // compared is read from the recorded setup, in the order of the runners
-// (comparedGoldens).
-func TestCaseFiles_EveryRequestHasAGolden(t *testing.T) {
+// (comparedGoldens), and from the test functions that run each case file
+// (caseFileFunctions).
+func TestCaseFiles_EveryComparedGoldenIsRecorded(t *testing.T) {
 	index, err := goldenIndex("testdata/golden")
 	if err != nil {
 		t.Fatal(err)
 	}
-	listed, err := readRequestList(requestsWithoutAGoldenFile)
+	listed, err := readSubtestList(requestsWithoutAGoldenFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	functions, err := caseFileFunctions(".")
 	if err != nil {
 		t.Fatal(err)
 	}
 	root := filepath.Join("testdata", "cases")
 	checked := 0
+	check := func(name string, g comparedGolden) {
+		checked++
+		subtest := g.caseID + "/" + g.subtest
+		recorded := g.recordedIn(index)
+		switch {
+		case recorded && listed[subtest]:
+			t.Errorf("%s: the golden of %s is recorded, and %s lists it; remove the line", name, subtest, requestsWithoutAGoldenFile)
+		case !recorded && !listed[subtest]:
+			t.Errorf("%s: %s compares with %s, which is not recorded, so it skips on every profile; record it, or list it in %s",
+				name, subtest, GoldenKey(g.row, g.subCases[0]), requestsWithoutAGoldenFile)
+		}
+		delete(listed, subtest)
+	}
+	var standVersion []string
 	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() || filepath.Ext(path) != ".json" {
 			return err
@@ -70,27 +94,27 @@ func TestCaseFiles_EveryRequestHasAGolden(t *testing.T) {
 		if err != nil {
 			return fmt.Errorf("%s: %w", name, err)
 		}
+		if f.StandVersion {
+			standVersion = append(standVersion, filepath.ToSlash(name))
+		}
 		compared, problems := comparedGoldens(index, isolated, regular, sequence)
 		for _, problem := range problems {
 			t.Errorf("%s: %s", name, problem)
 		}
 		for _, g := range compared {
-			checked++
-			subtest := g.caseID + "/" + g.subtest
-			recorded := g.recordedIn(index)
-			switch {
-			case recorded && listed[subtest]:
-				t.Errorf("%s: the golden of %s is recorded, and %s lists it; remove the line", name, subtest, requestsWithoutAGoldenFile)
-			case !recorded && !listed[subtest]:
-				t.Errorf("%s: %s compares with %s, which is not recorded, so it skips on every profile; record it, or list it in %s",
-					name, subtest, GoldenKey(g.row, g.subCases[0]), requestsWithoutAGoldenFile)
-			}
-			delete(listed, subtest)
+			check(name, g)
 		}
 		return nil
 	})
 	if err != nil {
 		t.Fatal(err)
+	}
+	versions, problems := apiVersionGoldens(functions, standVersion)
+	for _, problem := range problems {
+		t.Error(problem)
+	}
+	for _, g := range versions {
+		check(g.caseID, g)
 	}
 	if checked == 0 {
 		t.Fatalf("no golden compared under %s", root)
@@ -295,10 +319,100 @@ func goldenIndex(root string) (map[string]json.RawMessage, error) {
 	return index, err
 }
 
-// readRequestList reads a list of <case id>/<request name>, one per line;
-// a blank line and a line that starts with # are skipped, and text after the
-// first space of a line is a comment.
-func readRequestList(path string) (map[string]bool, error) {
+// caseFileFunctions returns, for each case file that a test method of
+// ParitySuite in the Go files of dir passes to runCaseFile as a string
+// literal, the names of those methods. A call inside a function literal is
+// left out: runCaseFile keys the api-version golden by the name of the test it
+// runs in, and inside an s.Run closure that is a subtest, not the method.
+func caseFileFunctions(dir string) (map[string][]string, error) {
+	files, err := filepath.Glob(filepath.Join(dir, "*_test.go"))
+	if err != nil {
+		return nil, err
+	}
+	functions := map[string][]string{}
+	fset := token.NewFileSet()
+	for _, file := range files {
+		parsed, err := parser.ParseFile(fset, file, nil, parser.SkipObjectResolution)
+		if err != nil {
+			return nil, err
+		}
+		for _, decl := range parsed.Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok || fn.Recv == nil || fn.Body == nil || !strings.HasPrefix(fn.Name.Name, "Test") || !isParitySuiteReceiver(fn.Recv) {
+				continue
+			}
+			ast.Inspect(fn.Body, func(n ast.Node) bool {
+				if _, closure := n.(*ast.FuncLit); closure {
+					return false
+				}
+				call, ok := n.(*ast.CallExpr)
+				if !ok || len(call.Args) != 1 {
+					return true
+				}
+				selector, ok := call.Fun.(*ast.SelectorExpr)
+				if !ok || selector.Sel.Name != "runCaseFile" {
+					return true
+				}
+				literal, ok := call.Args[0].(*ast.BasicLit)
+				if !ok || literal.Kind != token.STRING {
+					return true
+				}
+				name, err := strconv.Unquote(literal.Value)
+				if err == nil {
+					functions[name] = append(functions[name], fn.Name.Name)
+				}
+				return true
+			})
+		}
+	}
+	return functions, nil
+}
+
+// isParitySuiteReceiver reports whether recv is a receiver of type *ParitySuite.
+func isParitySuiteReceiver(recv *ast.FieldList) bool {
+	if len(recv.List) != 1 {
+		return false
+	}
+	star, ok := recv.List[0].Type.(*ast.StarExpr)
+	if !ok {
+		return false
+	}
+	ident, ok := star.X.(*ast.Ident)
+	return ok && ident.Name == "ParitySuite"
+}
+
+// apiVersionGoldens returns the api-version goldens runCaseFile compares for
+// the case files in standVersion, one under each test method that functions
+// names for the file, and the subtest <method>/api-version. A file that no
+// method passes to runCaseFile as a literal is a problem, since which golden
+// it compares cannot be told, and so is a method that runs two such files,
+// whose two answers would be compared with one golden.
+func apiVersionGoldens(functions map[string][]string, standVersion []string) ([]comparedGolden, []string) {
+	var compared []comparedGolden
+	var problems []string
+	files := map[string]string{}
+	for _, name := range standVersion {
+		if len(functions[name]) == 0 {
+			problems = append(problems, fmt.Sprintf("%s records the stand's version, and no test method of ParitySuite passes it to runCaseFile as a literal, "+
+				"so the api-version golden it compares cannot be told", name))
+		}
+		for _, function := range functions[name] {
+			if other, ok := files[function]; ok {
+				problems = append(problems, fmt.Sprintf("%s runs %s and %s, which both record the stand's version under the one golden %s",
+					function, other, name, GoldenKey(PSUITE_ROW_1_API_VERSION, function)))
+				continue
+			}
+			files[function] = name
+			compared = append(compared, comparedGolden{caseID: function, subtest: "api-version", row: PSUITE_ROW_1_API_VERSION, subCases: []string{function}})
+		}
+	}
+	return compared, problems
+}
+
+// readSubtestList reads a list of <case id or test method>/<subtest>, one per
+// line; a blank line and a line that starts with # are skipped, and text after
+// the first space of a line is a comment.
+func readSubtestList(path string) (map[string]bool, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -449,5 +563,64 @@ func TestComparedGoldens_EndsACaseWhereItsSetupEndsIt(t *testing.T) {
 	}
 	if !slices.Equal(got, want) {
 		t.Errorf("comparedGoldens compares\n%q\nwant\n%q", got, want)
+	}
+}
+
+// caseFileFunctions finds the case files a ParitySuite test method passes to
+// runCaseFile as a literal, and leaves out a call inside a closure, a call with
+// a computed name, and a method of another type; apiVersionGoldens then
+// compares one api-version golden per method, and reports a stand-version file
+// that no method runs that way and a method that runs two.
+func TestCaseFileFunctions_FindsTheMethodThatKeysTheAPIVersionGolden(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	source := `package paritysuite
+
+type ParitySuite struct{}
+type other struct{}
+
+func (s *ParitySuite) runCaseFile(string) {}
+func (s *ParitySuite) Run(string, func()) {}
+
+func (s *ParitySuite) TestDirect() { s.runCaseFile("a/direct.json") }
+func (s *ParitySuite) TestTwo() {
+	s.runCaseFile("a/first.json")
+	s.runCaseFile("a/second.json")
+}
+func (s *ParitySuite) TestInAClosure() { s.Run("sub", func() { s.runCaseFile("a/closure.json") }) }
+func (s *ParitySuite) TestComputed() { name := "computed.json"; s.runCaseFile("a/" + name) }
+func (o *other) TestOther() { o.runCaseFile("a/other.json") }
+func (o *other) runCaseFile(string) {}
+`
+	if err := os.WriteFile(filepath.Join(dir, "x_test.go"), []byte(source), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	functions, err := caseFileFunctions(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantFunctions := map[string][]string{
+		"a/direct.json": {"TestDirect"},
+		"a/first.json":  {"TestTwo"},
+		"a/second.json": {"TestTwo"},
+	}
+	if !maps.EqualFunc(functions, wantFunctions, slices.Equal) {
+		t.Fatalf("caseFileFunctions = %q, want %q", functions, wantFunctions)
+	}
+	compared, problems := apiVersionGoldens(functions, []string{"a/direct.json", "a/first.json", "a/second.json", "a/closure.json"})
+	var got []string
+	for _, g := range compared {
+		got = append(got, g.caseID+"/"+g.subtest+" "+GoldenKey(g.row, g.subCases[0]))
+	}
+	want := []string{
+		"TestDirect/api-version " + GoldenKey(PSUITE_ROW_1_API_VERSION, "TestDirect"),
+		"TestTwo/api-version " + GoldenKey(PSUITE_ROW_1_API_VERSION, "TestTwo"),
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("apiVersionGoldens compares\n%q\nwant\n%q", got, want)
+	}
+	if len(problems) != 2 || !strings.Contains(problems[0], "TestTwo runs a/first.json and a/second.json") ||
+		!strings.Contains(problems[1], "a/closure.json records the stand's version, and no test method") {
+		t.Errorf("apiVersionGoldens reports %q, want the method that runs two files and the file run only in a closure", problems)
 	}
 }

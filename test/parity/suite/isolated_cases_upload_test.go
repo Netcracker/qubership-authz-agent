@@ -239,15 +239,16 @@ func TestRunIsolatedCases_WaitsForTheAgentOnlyWhenItStopsAnswering(t *testing.T)
 
 // Once a wait for a stopped agent runs out, the next case file whose upload
 // finds the agent not answering is a broken setup at once, without another
-// wait. An upload the agent loads again ends that: in the third file the agent
-// stops once more and is waited for, and the case after it runs. Each case
-// file is a run of runIsolatedCases on one suite. The test reads that output
-// from a child run of itself, since the child fails on purpose.
+// wait. Any answer of the agent to a pull ends that, a 502 (file 3) as much as
+// a load (file 5): in files 4 and 5 the agent stops once more and is waited
+// for, and the case after it runs. Each case file is a run of runIsolatedCases
+// on one suite. The test reads that output from a child run of itself, since
+// the child fails on purpose.
 func TestRunIsolatedCases_DoesNotWaitAgainForAnAgentThatDidNotComeBack(t *testing.T) {
 	if os.Getenv(brokenSetupChild) == "1" {
 		agentRestartWait = 3 * time.Second
 		read := []isolatedRequest{{name: "read", m2mOnly: true}}
-		goldens := map[string]int{"crashing": http.StatusOK, "next": http.StatusOK, "loaded": http.StatusOK}
+		goldens := map[string]int{"crashing": http.StatusOK, "next": http.StatusOK, "loaded": http.StatusOK, "answering": http.StatusOK}
 		var down bool
 		var script []int
 		stub := newIsolatedStub(t, nil, func(int) int {
@@ -268,9 +269,17 @@ func TestRunIsolatedCases_DoesNotWaitAgainForAnAgentThatDidNotComeBack(t *testin
 			t.Logf("%s waited for the agent: %t", file, time.Since(start) >= agentRestartWait)
 		}
 		down = false
+		// the agent answers the upload of answering and the emptying after it with 502
+		script = []int{http.StatusBadGateway, http.StatusBadGateway}
+		stub.run("file-3", isolatedCase{id: "answering", resourceType: "RT", requests: read})
+		// crashing stops the agent for three pulls
+		script = []int{dropConnection, dropConnection, dropConnection}
+		start := time.Now()
+		stub.run("file-4", isolatedCase{id: "crashing", resourceType: "RT", requests: read}, isolatedCase{id: "next", resourceType: "RT", requests: read})
+		t.Logf("file-4 waited for the agent: %t", time.Since(start) >= agentRestartPoll)
 		// the upload of loaded is pulled, then crashing stops the agent for three pulls
 		script = []int{http.StatusNoContent, dropConnection, dropConnection, dropConnection}
-		stub.run("file-3", isolatedCase{id: "loaded", resourceType: "RT", requests: read},
+		stub.run("file-5", isolatedCase{id: "loaded", resourceType: "RT", requests: read},
 			isolatedCase{id: "crashing", resourceType: "RT", requests: read}, isolatedCase{id: "next", resourceType: "RT", requests: read})
 		return
 	}
@@ -281,9 +290,12 @@ func TestRunIsolatedCases_DoesNotWaitAgainForAnAgentThatDidNotComeBack(t *testin
 		`=== RUN   `+name+`/file-2/next/setup\n.*: SETUP BROKEN: empty domain PARITY_ISOLATED after case crashing, which the agent did not load: `+
 			`the agent has not answered a pull since an earlier wait for it ran out: the agent did not answer the pull route within 3s`,
 		`: file-2 waited for the agent: false\n`,
-		`--- PASS: `+name+`/file-3/loaded/upload `,
-		`: the agent stopped answering after case crashing and loaded the empty domain PARITY_ISOLATED .* later\n`,
-		`--- PASS: `+name+`/file-3/next/upload `)
+		`=== RUN   `+name+`/file-3/answering/setup\n.*: SETUP BROKEN: the agent did not load the policies: .*HTTP 502`,
+		`=== RUN   `+name+`/file-4/crashing/setup\n.*: SETUP BROKEN: the agent stopped answering after the upload of case crashing: `,
+		`: file-4 waited for the agent: true\n`,
+		`--- PASS: `+name+`/file-4/next/upload `,
+		`--- PASS: `+name+`/file-5/loaded/upload `,
+		`--- PASS: `+name+`/file-5/next/upload `)
 }
 
 // An answer of the agent other than a load, here 502, ends the emptying at

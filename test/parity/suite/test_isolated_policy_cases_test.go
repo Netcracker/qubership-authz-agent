@@ -278,6 +278,7 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 			mergeFields(policy, tc.policy, tc.resourceType)
 			domain := valueOr(tc.domain, isolatedCaseDomain)
 			status, body, err := UploadIsolatedPoliciesWithQuery(ctx, s.cfg, s.tokens, domain, tc.pips, []any{policy}, tc.policiesQuery)
+			s.noteAgentAnswer(err)
 			var notLoaded *agentLoadError
 			if errors.As(err, &notLoaded) {
 				if isAgentTransportFailure(notLoaded.err) {
@@ -290,7 +291,6 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 				return
 			}
 			s.Require().NoError(err)
-			s.agentGone = nil
 
 			s.Run("upload", func() {
 				s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "isolated/"+tc.id, &model.PolicyLoadOutcome{Status: status, Message: s.refusal(status, body)})
@@ -309,6 +309,17 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 	}
 }
 
+// noteAgentAnswer clears s.agentGone when err, the error of an upload, shows
+// that the agent answered its pull: err is nil, or is an *agentLoadError whose
+// cause is not a transport failure (isAgentTransportFailure). Any other error
+// says nothing about the agent and leaves s.agentGone as it is.
+func (s *ParitySuite) noteAgentAnswer(err error) {
+	var notLoaded *agentLoadError
+	if err == nil || errors.As(err, &notLoaded) && !isAgentTransportFailure(notLoaded.err) {
+		s.agentGone = nil
+	}
+}
+
 // emptyDomainAfter empties domain after the case caseID, whose upload the
 // agent did not load, and returns nil once the agent loaded the empty domain.
 // Where the agent does not answer the pull (isAgentTransportFailure), it has
@@ -319,9 +330,7 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 // of waiting again.
 func (s *ParitySuite) emptyDomainAfter(ctx context.Context, domain, caseID string) error {
 	status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, domain, nil, nil)
-	if err == nil {
-		s.agentGone = nil
-	}
+	s.noteAgentAnswer(err)
 	if err == nil && (status < http.StatusOK || status >= http.StatusMultipleChoices) {
 		return fmt.Errorf("HTTP %d", status)
 	}

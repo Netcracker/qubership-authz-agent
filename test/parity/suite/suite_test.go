@@ -52,8 +52,8 @@ type ParitySuite struct {
 	// mainPackSeeded is set while the main domain holds the main fixtures.
 	mainPackSeeded bool
 	// agentGone is the error of the last wait for a stopped agent
-	// (awaitPullAfterRestart) that ran out without an answer, and nil once an
-	// upload of the isolated cases is loaded again. While it is set, a case
+	// (awaitPullAfterRestart) that ran out without an answer, and nil once the
+	// agent answers a pull again (noteAgentAnswer). While it is set, a case
 	// whose upload finds the agent not answering ends its case file at once,
 	// without another wait.
 	agentGone error

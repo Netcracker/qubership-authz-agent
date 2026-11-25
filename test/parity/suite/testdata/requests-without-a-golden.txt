@@ -1,8 +1,9 @@
 # The goldens of the case files that the runners compare with and that are not recorded, one
 # <case id>/<subtest> per line, where <subtest> is the path of the subtest that compares the golden below the
 # case: a request name, a step name with its observation suffix, upload-1, declare-the-domain, or a request
-# name followed by /pip-calls. They are grouped by case file. TestCaseFiles_EveryRequestHasAGolden fails on
-# a golden that is not recorded and not listed here, and on a listed golden that is recorded. Recording a
+# name followed by /pip-calls. The api-version golden of a file with standVersion is listed as
+# <test method>/api-version. They are grouped by case file. TestCaseFiles_EveryComparedGoldenIsRecorded fails
+# on a golden that is not recorded and not listed here, and on a listed golden that is recorded. Recording a
 # listed golden removes its line. Why each is missing is not known without a stand run: a run that skipped
 # it, or a round not recorded yet.
 
