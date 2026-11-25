@@ -178,10 +178,9 @@ These records use no wider word for a realm token and a file token together. The
   `TOKEN_KEYS_UNAVAILABLE`.
 - **R38** (`keys`, `verify`). The result of a token under R23 is the last result of its source, with two exceptions.
   When the token started or joined an on-demand load of its source (R29, R30), only a result stored after that on-demand
-  load started counts. When R33 refused the on-demand load that the token would have started, only a result stored after
-  the refusal counts. When no such result is stored by the time the token is checked, the token has no result. A token
-  whose wait of R71 runs out, or whose request is canceled or reaches its deadline, before the load ends is checked at
-  that moment.
+  load started counts, and when no such result is stored by the time the token is checked, the token has no result. A
+  token whose wait of R71 runs out, or whose request is canceled or reaches its deadline, before the load ends is
+  checked at that moment. A token whose on-demand load R33 refused has no result.
 - **R39** (`keys`). A load ends with one of these results:
   1. an answer, when the source returned a JWKS (a document with a `keys` array, even an empty one) and neither R79
      nor R80 refuses the response;
@@ -285,9 +284,9 @@ cost Keycloak, because a load happens before any signature is checked (R31, R33 
 (R39), the hourly reload drops a key that the source withdrew (R25, R28). A source that is down keeps its keys, so an
 outage does not change which tokens the keys already loaded verify (R28).
 
-A token that waited for a load, or whose on-demand load R33 refused, counts only a result stored after the load started
-or after the refusal. In an older answer, an invented `kid` and a key that the source added since look the same, so a
-401 would refuse a valid token. A result stored during the wait decides as any last result does, because a 503 after an
+A token that waited for a load counts only a result stored after the load started, and a token whose on-demand load R33
+refused counts none. In an older answer, an invented `kid` and a key that the source added since look the same, so a 401
+would refuse a valid token. A result stored during the wait decides as any last result does, because a 503 after an
 answer would report an outage that did not happen (R23, R38).
 
 A load that ends in a missing realm (R39) most likely means that Keycloak does not hold the realm, as after its tenant
@@ -373,8 +372,8 @@ Negative:
   warnings.
 - Two requests with the same token at about the same time can get different codes, `TOKEN_KID_UNKNOWN` or
   `TOKEN_REALM_UNKNOWN` (401) and `TOKEN_KEYS_UNAVAILABLE` (503), depending on whether each one waited for an on-demand
-  load that had not ended, and on which result a load of the source had stored last when each one was checked against
-  the keys already loaded (R23, R31, R38).
+  load that had not ended, whether R33 refused the load that one of them would have started, and on which result a load
+  of the source had stored last when each one was checked against the keys already loaded (R23, R31, R33, R38).
 - A 404 that something other than Keycloak sends, such as a proxy with no route, gives `TOKEN_REALM_UNKNOWN` (401)
   rather than `TOKEN_KEYS_UNAVAILABLE` (503) to the tokens of every realm whose load ends in a missing realm, for as
   long as the 404 lasts and up to a minute after it ends (R23, R31, R35, R39). A client then takes a fault of the path
