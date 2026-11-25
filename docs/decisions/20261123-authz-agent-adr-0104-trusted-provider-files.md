@@ -38,8 +38,7 @@ kichasov
   Kubernetes token). It also deletes ADR-0091 R2 with the member `caFile`. It deletes the terms Trusted providers file,
   Marked provider, File token, and Realm token, points the other terms for providers and tokens at this record, drops
   discovery from the term Load, and restates ADR-0091 R14, R16, R17, R19, R21, R29, R34, R35, R37, R48, R52, R54, R60,
-  R75, A2, A8, and A15 in the terms of this record. It leaves the chart rules ADR-0091 R13, R64, and R72 as they are
-  (Follow-ups).
+  R75, A2, A8, and A15 in the terms of this record.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
   the M2M test of an identity-provider token (ADR-0092 R6, R21) and of a Kubernetes token (ADR-0092 R7), the kinds of
   token that `Authorization` accepts (ADR-0092 R11), and ADR-0092 R15, under which `M2M_AUTH_MODE` changes no token
@@ -59,8 +58,7 @@ kichasov
   rejected a warning in place of R13. It deletes the term In-cluster address, which this record now defines, and the
   term Address outside the cluster. It makes the token for the API server the token in the `jwksBearerTokenFile` of the
   provider `kubernetes`, points the terms of ADR-0094 for providers and tokens at this record, and restates ADR-0094
-  R14, R18, R28, R32, A1, A8, and A9 in the terms of this record. It leaves the chart rules ADR-0094 R2 and R30 as they
-  are (Follow-ups).
+  R14, R18, R28, R32, A1, A8, and A9 in the terms of this record.
 - [authz-agent-ADR-0095: Refuse a check request before policy evaluation](20261029-authz-agent-adr-0095-refuse-before-policy-evaluation.md):
   the steps of a check request (ADR-0095 R1), the answer to a request whose `Incoming-Token` fails a check (ADR-0095
   R3), the limit on audit records (ADR-0095 R12), the line that a refusal writes in the application log (ADR-0095 R14),
@@ -71,6 +69,10 @@ kichasov
   the token that the agent obtains from the realm `cloud-common`, which is an identity-provider token under R22. This
   request makes ADR-0096 call that token an identity-provider token, and cite R14 of this record where it cited
   ADR-0094 R5.
+- [authz-agent-ADR-0105: Configure the two providers through the chart values](20261123-authz-agent-adr-0105-providers-through-chart-values.md):
+  the provider files that the chart writes from its values (ADR-0105 R2, R3, R5, R16), the token for the API server that
+  the chart gives the Pod (ADR-0105 R6), and the restart of the Pods when an upgrade changes a provider file (ADR-0105
+  R13).
 
 ## Context
 
@@ -247,7 +249,7 @@ deployment and the agent have to agree on (R1). Several files let each provider 
 agent skips names that start with `.` and reads through symbolic links, because a ConfigMap mounted as a directory
 keeps its data in hidden directories and links each key into them (R2). Reading the files only at start fixes the
 providers of a process for its lifetime, so a deployment that changes a provider file restarts the agent to apply it
-(R5).
+(R5; ADR-0105 R13).
 
 A JSON Schema states the format of a provider file in one place, in a notation that validators and editors read, and
 the other rules state what the agent does with each member (R6). The schema is a file of its own with an `$id`, so a
@@ -505,10 +507,5 @@ Negative:
 
 Follow-ups:
 
-- ADR-0105 ([#332](https://github.com/Netcracker/qubership-authz-agent/pull/332)) takes the place of the chart rules
-  ADR-0091 R13 and R72, ADR-0094 R30, and the token half of ADR-0094 R2, and adds `AUTHZ_TRUSTED_PROVIDERS_FILE` to
-  the settings that ADR-0091 R64 removes. This request leaves those rules as they are, so until then ADR-0091 R13 and
-  R72 and ADR-0094 R30 describe the chart of the trusted providers file in the words of ADR-0091 before this request,
-  such as Trusted providers file and Marked provider.
 - ADR-0106 ([#330](https://github.com/Netcracker/qubership-authz-agent/pull/330)) decides the CA that the requests of
   R23 trust, in place of the term Cluster CA and the CA half of ADR-0094 R2.
