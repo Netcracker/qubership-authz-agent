@@ -28,8 +28,9 @@ kichasov
   tokens the agent accepts.
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   ADR-0091 R14, the readiness conditions that the policy pull and the default tenant feed.
-- [authz-agent-ADR-0105: Configure the two providers through the chart values](https://github.com/Netcracker/qubership-authz-agent/pull/332),
-  proposed in #332: ADR-0105 R1, which has the chart leave `M2M_AUTH_MODE` unread.
+- [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](https://github.com/Netcracker/qubership-authz-agent/pull/329),
+  proposed in #329: the term Kubernetes token (ADR-0104 R22), and ADR-0104 R14, under which the agent stops the start
+  when it cannot read the token for the API server.
 
 ## Context
 
@@ -68,8 +69,9 @@ We will choose the token the agent sends with the setting `AUTHZ_M2M_TOKEN_SOURC
 - **The agent's token file**: `/var/run/secrets/tokens/netcracker/token`, the path of the token for `netcracker` of
   ADR-0094.
 - **The agent's token**: the token that R2 has the agent present to the recipients of R10.
-- **Stops the start**, **Kubernetes token**: as ADR-0091 defines them.
-- **Token for `netcracker`**: as ADR-0094 defines it.
+- **Stops the start**: as ADR-0091 defines it.
+- **Kubernetes token**: as ADR-0104 defines it.
+- **Token for `netcracker`**, **token for the API server**: as ADR-0094 defines them.
 
 ### Rules
 
@@ -140,8 +142,8 @@ recipients answer 401, the policy pull fails, and the agent stays not ready (R15
 
 The deployment puts the agent's token file in place before the container starts: the kubelet writes a projected volume,
 and Docker binds a file. A file that is missing, unreadable, or empty at the start is therefore an error of the
-deployment that no wait repairs, like the token for the API server in ADR-0094 R5. A Keycloak that does not answer can
-recover, so the agent waits for it instead (R6, R14).
+deployment that no wait repairs, like a token for the API server that the agent cannot read (ADR-0104 R14). A Keycloak
+that does not answer can recover, so the agent waits for it instead (R6, R14).
 
 The client secret leaves the agent only in requests to the token endpoint of `client-credentials`. With `token-file` the
 agent needs neither the endpoint nor the credentials, so the chart mounts no Secret and the Secret need not exist.
@@ -170,9 +172,9 @@ would hide a token that the recipient refuses (R16).
   operator could not tell from `values.yaml` which token the agent sends.
 - **A3. Keep the value in the chart alone.** Rejected by R1: the agent has to run without the chart as well.
 - **A4. Stop the start, and refuse to render, on a pair of `AUTHZ_M2M_TOKEN_SOURCE` and `M2M_AUTH_MODE` that the
-  recipients refuse, such as `client-credentials` in `k8s`.** Rejected by ADR-0092 R15 and ADR-0105 R1: neither the
-  agent nor the chart reads `M2M_AUTH_MODE`, and a wrong choice shows at the rollout (R15). Earlier versions of R8 and
-  R9 refused `client-credentials` in `k8s`, and before that `token-file` in `legacy`.
+  recipients refuse, such as `client-credentials` in `k8s`.** Rejected by ADR-0092 R15: whether the agent starts does
+  not depend on `M2M_AUTH_MODE`, with or without the chart, and a wrong choice shows at the rollout (R15). Earlier
+  versions of R8 and R9 refused `client-credentials` in `k8s`, and before that `token-file` in `legacy`.
 - **A5. Let a PIP declaration set these headers.** Rejected by R11: the token of a caller would reach an address from
   the policy configuration, and a PIP could answer for another tenant than the decision.
 - **A6. Let a setting name the file that `token-file` reads.** Rejected by R6: a deployment puts the token at the path
