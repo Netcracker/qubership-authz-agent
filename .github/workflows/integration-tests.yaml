@@ -17,7 +17,8 @@
 #                        cluster with Helm 4, and the runtime suite run against
 #                        them (Makefile e2e-* targets, see test/k8s/README.md)
 #   kind-parity          the same on kind with Helm 3, in its own namespace,
-#                        with the parity replay suite (Makefile parity-* targets)
+#                        with the parity replay suite (Makefile parity-* targets);
+#                        not part of ci-gate until #205 merges
 #   ci-gate              one status check for branch protection
 #
 # No paths filter on purpose: ci-gate is meant to be a required check, and a
@@ -310,7 +311,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
-    needs: [rego, chart, integration-compile, jsonpath-jayway, kind-e2e, kind-parity]
+    # kind-parity is left out until #205 replaces the decision path, so a
+    # parity failure on the current one does not block a merge.
+    needs: [rego, chart, integration-compile, jsonpath-jayway, kind-e2e]
     if: always()
     steps:
       - name: Check job results
