@@ -17,9 +17,9 @@
 // signature verifies: iss selects the source whose keys are searched. It grants
 // nothing, because a [KeyFinder] takes keys only from configured addresses, and
 // a token that names another source than the one that signed it finds no key
-// there or fails on its signature. The header names the algorithm and the key,
-// and only a token whose signature that key accepts has its aud, exp, nbf, and
-// iat checked, and, for a Kubernetes token, its sub. A refused token yields an
+// there or fails on its signature. The header names the algorithm and the kid,
+// and only a token whose signature one of the keys of that kid verifies has
+// its aud, exp, nbf, and iat checked, and, for a Kubernetes token, its sub. A refused token yields an
 // [*Error] whose [Code] names the reason; a verified one is a [*Token], which
 // keeps the payload as its issuer signed it.
 //
@@ -36,6 +36,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"time"
 
@@ -58,9 +59,9 @@ const (
 	// or a b64 parameter, and an exp, nbf, or iat that is not a number within
 	// ±(2^53 - 1) seconds.
 	CodeFormatInvalid Code = "TOKEN_FORMAT_INVALID"
-	// CodeAlgNotAllowed marks a token whose header names no algorithm, one
-	// that no key accepts, or one that the key its iss and kid select does not
-	// accept.
+	// CodeAlgNotAllowed marks a token whose header names no algorithm or an
+	// algorithm that no key accepts, and a token whose algorithm no key of its
+	// iss and kid accepts.
 	CodeAlgNotAllowed Code = "TOKEN_ALG_NOT_ALLOWED"
 	// CodeIssuerUnknown marks a token whose iss is missing, is not a string,
 	// or matches no provider: it equals the issuer of no single provider byte
@@ -79,8 +80,8 @@ const (
 	// counts none, as [keys.ErrKeysUnavailable] states. An outage of the
 	// server of a provider is one cause.
 	CodeKeysUnavailable Code = "TOKEN_KEYS_UNAVAILABLE"
-	// CodeSignatureInvalid marks a token whose signature does not verify
-	// with the key its iss and kid select.
+	// CodeSignatureInvalid marks a token that a key of its iss and kid accepts
+	// for its alg, and whose signature none of those keys verifies.
 	CodeSignatureInvalid Code = "TOKEN_SIGNATURE_INVALID"
 	// CodeExpMissing marks a token without an exp claim.
 	CodeExpMissing Code = "TOKEN_EXP_MISSING"
@@ -184,7 +185,8 @@ type Token struct {
 	expiry     time.Time
 
 	// key is the key that verified the token. A cached Token is returned
-	// only while [KeyFinder.Lookup] returns this key for issuer and keyID.
+	// only while [KeyFinder.Lookup] returns this key among the keys of issuer
+	// and keyID.
 	key jwk.Key
 }
 
@@ -266,19 +268,20 @@ func (t *Token) Issuer() string { return t.issuer }
 // Expiry returns the time exp names.
 func (t *Token) Expiry() time.Time { return t.expiry }
 
-// KeyFinder finds the signing key a token asks for; [*keys.Set] implements it.
-// Every key that its methods return has a [keys.Source.Provider]. Both methods
-// report a key they cannot return with [keys.ErrIssuerUnknown] or
-// [keys.ErrKeyUnknown], and LookupOrReload also with
-// [keys.ErrKeysUnavailable].
+// KeyFinder finds the signing keys a token asks for; [*keys.Set] implements
+// it. Both methods return every usable signing key that the source of
+// q.Issuer lists under q.KID: at least one, each with a
+// [keys.Source.Provider], in a slice that the caller does not modify. Both report keys they cannot return with
+// [keys.ErrIssuerUnknown] or [keys.ErrKeyUnknown], and LookupOrReload also
+// with [keys.ErrKeysUnavailable].
 type KeyFinder interface {
-	// Lookup returns the key q names from the keys already loaded, without
+	// Lookup returns the keys q names from the keys already loaded, without
 	// waiting.
-	Lookup(q keys.Query) (keys.Key, error)
-	// LookupOrReload returns the key q names. When no loaded key matches, it
+	Lookup(q keys.Query) ([]keys.Key, error)
+	// LookupOrReload returns the keys q names. When no loaded key matches, it
 	// may reload the keys first; it returns once the reload ends or ctx ends,
 	// from the keys loaded by then.
-	LookupOrReload(ctx context.Context, q keys.Query) (keys.Key, error)
+	LookupOrReload(ctx context.Context, q keys.Query) ([]keys.Key, error)
 }
 
 // Defaults of [Options].
@@ -346,8 +349,8 @@ func New(source KeyFinder, opts Options) *Verifier {
 // Verify checks raw, a JWT in compact serialization without a "Bearer"
 // prefix, and returns the verified token. The checks run in this order, and
 // the first that fails is returned as an [*Error]: the format of the token and
-// of its header, the alg, the kid, the format of the payload, the key that the
-// iss and the kid select, the signature, aud, exp, nbf, iat, and, for a
+// of its header, the alg, the kid, the format of the payload, the keys that
+// the iss and the kid select, the signature, aud, exp, nbf, iat, and, for a
 // Kubernetes token, sub. A token without a kid is refused before any key is
 // looked up, so it starts no load. The payload is parsed before the signature
 // verifies, but of its claims only iss is used, so a forged token whose key is
@@ -361,9 +364,9 @@ func New(source KeyFinder, opts Options) *Verifier {
 //
 // A token verified earlier that has not expired is served from the cache,
 // as the *Token the earlier call returned, while [KeyFinder.Lookup] returns
-// the same key for its issuer and kid. [Options.Admit] then runs on the token
-// either way; without Admit, a Kubernetes token is refused with
-// [CodeNamespaceNotAllowed].
+// the key that verified it among the keys of its issuer and kid.
+// [Options.Admit] then runs on the token either way; without Admit, a
+// Kubernetes token is refused with [CodeNamespaceNotAllowed].
 func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	now := v.opts.now()
 	digest := sha256.Sum256([]byte(raw))
@@ -393,11 +396,11 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	if err != nil {
 		return nil, err
 	}
-	key, err := v.keys.LookupOrReload(ctx, query)
+	candidates, err := v.keys.LookupOrReload(ctx, query)
 	if err != nil {
 		return nil, lookupFailure(query, claims, err)
 	}
-	payload, refused := checkSignature(raw, alg, query.Issuer, key)
+	key, payload, refused := checkSignature(raw, alg, query, candidates)
 	if refused != nil {
 		return nil, refused
 	}
@@ -411,20 +414,28 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	return tok, nil
 }
 
-// checkSignature returns the signed payload of raw when key, the one that the
-// iss and the kid of raw selected, accepts alg and verifies its signature. A
-// refusal quotes iss, the issuer that raw claims, and names no source, because
-// such a token only claims to come from the source of key.
-func checkSignature(raw, alg, iss string, key keys.Key) ([]byte, *Error) {
-	if !key.Allows(alg) {
-		return nil, fail(CodeAlgNotAllowed, "key %s of iss %s does not accept %s", short(key.ID), shortIssuer(iss), alg)
-	}
+// checkSignature checks the signature of raw against candidates, the keys that
+// q, the iss and the kid of raw, selected. It returns the first candidate that
+// accepts alg and verifies the signature, with the signed payload. A refusal
+// quotes the iss that raw claims and names no source, because such a token
+// only claims to come from the source of candidates.
+func checkSignature(raw, alg string, q keys.Query, candidates []keys.Key) (keys.Key, []byte, *Error) {
 	algorithm, _ := jwa.LookupSignatureAlgorithm(alg)
-	payload, err := jws.Verify([]byte(raw), jws.WithKey(algorithm, key.JWK), jws.WithCompact(), jws.WithCritValidation(true))
-	if err != nil {
-		return nil, fail(CodeSignatureInvalid, "signature does not verify with key %s of iss %s", short(key.ID), shortIssuer(iss))
+	accepted := false
+	for _, key := range candidates {
+		if !key.Allows(alg) {
+			continue
+		}
+		accepted = true
+		payload, err := jws.Verify([]byte(raw), jws.WithKey(algorithm, key.JWK), jws.WithCompact(), jws.WithCritValidation(true))
+		if err == nil {
+			return key, payload, nil
+		}
 	}
-	return payload, nil
+	if !accepted {
+		return keys.Key{}, nil, fail(CodeAlgNotAllowed, "no key %s of iss %s accepts %s", short(q.KID), shortIssuer(q.Issuer), alg)
+	}
+	return keys.Key{}, nil, fail(CodeSignatureInvalid, "signature verifies with no key %s of iss %s", short(q.KID), shortIssuer(q.Issuer))
 }
 
 // checkClaims runs the checks that follow the signature and returns the verified
@@ -489,8 +500,8 @@ func unavailableReason(err error) string {
 	return "no reason given"
 }
 
-// cached returns the cached token for digest when it has not expired and its
-// key is still the one the source publishes for its issuer and kid.
+// cached returns the cached token for digest when it has not expired and the
+// source still publishes the key that verified it under its issuer and kid.
 func (v *Verifier) cached(digest [sha256.Size]byte, now time.Time) *Token {
 	if v.cache == nil {
 		return nil
@@ -499,8 +510,8 @@ func (v *Verifier) cached(digest [sha256.Size]byte, now time.Time) *Token {
 	if tok == nil {
 		return nil
 	}
-	key, err := v.keys.Lookup(keys.Query{Issuer: tok.issuer, KID: tok.keyID})
-	if err != nil || key.JWK != tok.key {
+	found, err := v.keys.Lookup(keys.Query{Issuer: tok.issuer, KID: tok.keyID})
+	if err != nil || !slices.ContainsFunc(found, func(k keys.Key) bool { return k.JWK == tok.key }) {
 		return nil
 	}
 	return tok

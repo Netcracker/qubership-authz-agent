@@ -201,7 +201,7 @@ func (discard) Warnf(string, ...any) {
 type Key struct {
 	// Source is the source whose JWKS lists the key.
 	Source Source
-	// ID is the key's kid, unique within its source.
+	// ID is the key's kid. A source may list several keys under one kid.
 	ID string
 	// JWK is the public key.
 	JWK jwk.Key
@@ -407,30 +407,32 @@ func (s *Set) sources() []*source {
 	return out
 }
 
-// Lookup returns the key q names from the keys loaded last, without a request.
-// It returns [ErrIssuerUnknown] for an issuer that matches no provider, and
-// [ErrKeyUnknown] when no loaded key has q.KID, whatever the last load ended
-// with.
-func (s *Set) Lookup(q Query) (Key, error) {
+// Lookup returns the keys q names from the keys loaded last, without a
+// request: every usable signing key that the source of q.Issuer lists under
+// q.KID, in the order of its JWKS. It returns [ErrIssuerUnknown] for an issuer that matches
+// no provider, and [ErrKeyUnknown] when no loaded key has q.KID, whatever the
+// last load ended with. The slice it returns without an error is not empty,
+// and the caller does not modify it.
+func (s *Set) Lookup(q Query) ([]Key, error) {
 	src, t, realm, err := s.resolve(q.Issuer)
 	if err != nil {
-		return Key{}, err
+		return nil, err
 	}
 	if src == nil {
 		var ok bool
 		if src, ok = s.knownRealm(realmKey{t, realm}); !ok {
-			return Key{}, ErrKeyUnknown
+			return nil, ErrKeyUnknown
 		}
 	}
 	return src.lookup(q.KID)
 }
 
-// LookupOrReload returns the key q names. When no loaded key of the source of
-// q.Issuer matches, it starts an on-demand load of that source, waits until the
-// load ends, ctx ends, or [Options.ReloadWait] passes, and looks again among
-// the keys loaded by then. A realm no token named before is loaded the same
-// way. It returns [ErrIssuerUnknown] for an issuer that matches no provider,
-// as [Set.Lookup] does.
+// LookupOrReload returns the keys q names, as [Set.Lookup] does. When no
+// loaded key of the source of q.Issuer matches, it starts an on-demand load of
+// that source, waits until the load ends, ctx ends, or [Options.ReloadWait]
+// passes, and looks again among the keys loaded by then. A realm no token named
+// before is loaded the same way. It returns [ErrIssuerUnknown] for an issuer
+// that matches no provider, as [Set.Lookup] does.
 //
 // Callers that ask while such a load runs wait for it rather than start
 // another. One source loads at most once a minute this way, a [Set] starts at
@@ -445,10 +447,9 @@ func (s *Set) Lookup(q Query) (Key, error) {
 // answer or a 404 gives [ErrKeyUnknown], and a failed load
 // [ErrKeysUnavailable]. A load ends with an answer when it gets a JWKS: a
 // document of at most 1 MiB (1048576 bytes) whose member named exactly keys
-// holds an array. The array need not hold the kid or any usable key. A JWKS
-// that lists two different keys under one kid ends the load as a failed load.
-// A load ends with a 404 when it gets HTTP 404, and as a failed load in every
-// other case. The lookup counts the last result of the source, a scheduled
+// holds an array. The array need not hold the kid or any usable key. A load
+// ends with a 404 when it gets HTTP 404, and as a failed load in every other
+// case. The lookup counts the last result of the source, a scheduled
 // [Set.Refresh] included, with two exceptions. A lookup that started or joined
 // an on-demand load counts only a result stored after that load started, and a
 // lookup whose load the limit of loads refused counts only a result stored
@@ -456,26 +457,26 @@ func (s *Set) Lookup(q Query) (Key, error) {
 // the lookup counts no result and returns [ErrKeysUnavailable]. A realm that
 // the limit of loads or of realms refuses has no result either. [Set.Lookup]
 // reports none of these cases with ErrKeysUnavailable.
-func (s *Set) LookupOrReload(ctx context.Context, q Query) (Key, error) {
+func (s *Set) LookupOrReload(ctx context.Context, q Query) ([]Key, error) {
 	src, err := s.sourceFor(ctx, q.Issuer)
 	if err != nil {
-		return Key{}, err
+		return nil, err
 	}
-	if key, ok := src.find(q.KID); ok {
-		return key, nil
+	if keys, ok := src.find(q.KID); ok {
+		return keys, nil
 	}
 	waitCtx, cancel := context.WithTimeout(ctx, s.opts.ReloadWait)
 	defer cancel()
 	from, waitErr := src.onDemand.wait(waitCtx)
 	// last is read once, so the keys and the result come from the same load.
 	last := src.current.Load()
-	if key, ok := last.find(q.KID); ok {
-		return key, nil
+	if keys, ok := last.find(q.KID); ok {
+		return keys, nil
 	}
 	if waitErr != nil && last == from {
-		return Key{}, &UnavailableError{Reason: s.waitReason(ctx, waitErr)}
+		return nil, &UnavailableError{Reason: s.waitReason(ctx, waitErr)}
 	}
-	return Key{}, last.lookupErr()
+	return nil, last.lookupErr()
 }
 
 // waitReason returns the reason of a wait for an on-demand load that ended

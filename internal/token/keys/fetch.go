@@ -15,9 +15,7 @@
 package keys
 
 import (
-	"bytes"
 	"context"
-	"crypto"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
@@ -150,9 +148,9 @@ func isNotFound(err error) bool {
 
 // fetch downloads the JWKS of the source and returns its signing keys. It
 // fails with a *statusError when the response is not 2xx. It also fails when
-// the request fails, when the body is longer than maxResponseBytes or is not
-// the JSON of a JWKS, and when the JWKS lists two different keys under one
-// kid; a JWKS without a usable signing key fails with errNoUsableKey.
+// the request fails, and when the body is longer than maxResponseBytes or is
+// not the JSON of a JWKS; a JWKS without a usable signing key fails with
+// errNoUsableKey.
 func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 	body, err := f.get(ctx)
 	if err != nil {
@@ -212,14 +210,14 @@ func readToken(path string) (string, error) {
 	return token, nil
 }
 
-// parseJWKS returns the signing keys of a JWKS document, whose member named
-// exactly keys holds an array; a document without that member, or with null
-// or another value in it, is an error. A key that cannot sign a token the
-// service accepts is skipped, and when the parse loads a key,
-// [fetcher.reportSkipped] reports the skipped keys. The same key listed twice
-// under one kid is kept once, and two different keys under one kid are an
-// error. So is a JWKS left with no usable signing key, which fails with
-// errNoUsableKey and the
+// parseJWKS returns the signing keys of a JWKS document in the order of the
+// entries of its keys array. The member of the document named exactly keys
+// holds that array; a document without that member, or with null or another
+// value in it, is an error. Each usable
+// entry is a key of its own, also where several entries share a kid. A key
+// that cannot sign a token the service accepts is skipped, and when the parse
+// loads a key, [fetcher.reportSkipped] reports the skipped keys. A JWKS left
+// with no usable signing key fails with errNoUsableKey and the
 // [skippedKeys.describe] text: the reasons of the first maxListedSkippedKeys
 // skipped keys, the count of the rest, and the count of encryption keys.
 func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
@@ -238,7 +236,6 @@ func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 	}
 	var out []Key
 	var skipped skippedKeys
-	thumbprints := make(map[string][]byte, len(entries))
 	for i, raw := range entries {
 		key, reason := signingKey(raw)
 		if reason == encryptionKey {
@@ -249,18 +246,6 @@ func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 			skipped.add(i, raw, reason)
 			continue
 		}
-		thumbprint, err := key.JWK.Thumbprint(crypto.SHA256)
-		if err != nil {
-			skipped.add(i, raw, fmt.Sprintf("thumbprint: %q", err.Error()))
-			continue
-		}
-		if earlier, seen := thumbprints[key.ID]; seen {
-			if bytes.Equal(earlier, thumbprint) {
-				continue
-			}
-			return nil, fmt.Errorf("kid %q names two different keys", key.ID)
-		}
-		thumbprints[key.ID] = thumbprint
 		key.Source = f.source
 		out = append(out, key)
 	}

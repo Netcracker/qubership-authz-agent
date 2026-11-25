@@ -42,12 +42,12 @@ func TestLookup_FindsTheKeyOfTheIssuerThatTheQueryNames(t *testing.T) {
 		t.Fatalf("Refresh() error = %v", err)
 	}
 	for _, p := range []Provider{providerA, providerB} {
-		key, err := set.Lookup(Query{Issuer: p.Issuer, KID: "shared"})
+		found, err := set.Lookup(Query{Issuer: p.Issuer, KID: "shared"})
 		if err != nil {
 			t.Errorf("Lookup(issuer of %q) error = %v", p.ID, err)
 			continue
 		}
-		if key.Source.Provider == nil || key.Source.Provider.ID != p.ID || key.Source.Realm != "" {
+		if key := onlyKey(t, found); key.Source.Provider == nil || key.Source.Provider.ID != p.ID || key.Source.Realm != "" {
 			t.Errorf("Lookup(issuer of %q).Source = %+v, want the provider %q", p.ID, key.Source, p.ID)
 		}
 	}
@@ -175,9 +175,6 @@ func TestRefresh_ReportsAProviderWhoseKeysCannotBeRead(t *testing.T) {
 		{"JWKS whose only key has no kid", func(t *testing.T, idp *fakeIdP) {
 			idp.keys = []json.RawMessage{ecJWK(t, "", map[string]any{"kid": nil})}
 		}, answered, "keys[0]: has no kid"},
-		{"JWKS with two different keys under one kid", func(t *testing.T, idp *fakeIdP) {
-			idp.keys = []json.RawMessage{ecJWK(t, "twin", nil), ecJWK(t, "twin", nil)}
-		}, failed, `kid "twin" names two different keys`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -195,27 +192,26 @@ func TestRefresh_ReportsAProviderWhoseKeysCannotBeRead(t *testing.T) {
 	}
 }
 
-// k2 is listed after the repeated key, so a load that stops at the repeat
-// fails on k2.
-func TestRefresh_TheSameKeyListedTwiceLoadsOnce(t *testing.T) {
-	tests := []struct {
-		name string
-		twin []json.RawMessage
-	}{
-		{"with one alg", twinJWKs(t, map[string]any{"alg": "RS256"}, map[string]any{"alg": "RS256"})},
-		{"without an alg", twinJWKs(t, map[string]any{"alg": nil}, map[string]any{"alg": nil})},
+// The first two entries hold one RSA key, each with an alg of its own, and the
+// third an EC key, so the alg that each returned key accepts names its entry.
+// k2 is listed after them, so a load that stops at a repeated kid fails on k2.
+func TestLookup_ReturnsEveryEntryOfAKIDInTheOrderOfTheJWKS(t *testing.T) {
+	twin := twinJWKs(t, map[string]any{"alg": "RS256"}, map[string]any{"alg": "PS256"})
+	provider := singleOf(IdentityProviderID, newIdP(t, twin[0], twin[1], ecJWK(t, "twin", nil), ecJWK(t, "k2", nil)))
+	set := mustLoad(t, testOptions(), provider)
+	found, err := set.Lookup(Query{Issuer: provider.Issuer, KID: "twin"})
+	if err != nil {
+		t.Fatalf("Lookup(%q) error = %v", "twin", err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			provider := singleOf(IdentityProviderID, newIdP(t, append(tt.twin, ecJWK(t, "k2", nil))...))
-			set := mustLoad(t, testOptions(), provider)
-			if !loaded(set, provider, "twin") {
-				t.Errorf("Lookup(%q) found nothing, want the key listed twice", "twin")
-			}
-			if !loaded(set, provider, "k2") {
-				t.Errorf("Lookup(%q) found nothing, want the key listed after the repeat", "k2")
-			}
-		})
+	var algs []string
+	for _, key := range found {
+		algs = append(algs, strings.Join(slices.DeleteFunc([]string{"RS256", "PS256", "ES256"}, func(alg string) bool { return !key.Allows(alg) }), " "))
+	}
+	if want := []string{"RS256", "PS256", "ES256"}; !slices.Equal(algs, want) {
+		t.Errorf("algs that the keys of Lookup(%q) accept = %q, want %q", "twin", algs, want)
+	}
+	if !loaded(set, provider, "k2") {
+		t.Errorf("Lookup(%q) found nothing, want the key listed after the repeated kid", "k2")
 	}
 }
 
@@ -450,11 +446,11 @@ func TestKey_Allows(t *testing.T) {
 		{"ed25519", "EdDSA", true},
 	}
 	for _, tt := range tests {
-		key, err := set.Lookup(Query{Issuer: provider.Issuer, KID: tt.kid})
+		found, err := set.Lookup(Query{Issuer: provider.Issuer, KID: tt.kid})
 		if err != nil {
 			t.Fatalf("Lookup(%q) error = %v", tt.kid, err)
 		}
-		if got := key.Allows(tt.alg); got != tt.want {
+		if got := onlyKey(t, found).Allows(tt.alg); got != tt.want {
 			t.Errorf("Lookup(%q).Allows(%q) = %t, want %t", tt.kid, tt.alg, got, tt.want)
 		}
 	}

@@ -274,11 +274,14 @@ func kidOf(t *testing.T, raw string) string {
 func TestIssuer_KubernetesKeysHoldTheKeyOfTheIssuerAsAKeyOfKubernetes(t *testing.T) {
 	issuer := newIssuer(t)
 	query := keys.Query{Issuer: issuer.URL(), KID: kidOf(t, issuer.Sign(issuer.Claims()))}
-	key, err := issuer.KubernetesKeys().Lookup(query)
+	found, err := issuer.KubernetesKeys().Lookup(query)
 	if err != nil {
 		t.Fatalf("Lookup(%+v) error = %v", query, err)
 	}
-	if !key.Source.Kubernetes() {
+	if len(found) != 1 {
+		t.Fatalf("Lookup(%+v) returned %d keys, want 1", query, len(found))
+	}
+	if key := found[0]; !key.Source.Kubernetes() {
 		t.Errorf("Lookup(%+v) = a key of provider %q, want one of %q", query, key.Source.Provider.ID, keys.KubernetesID)
 	}
 }

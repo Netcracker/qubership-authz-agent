@@ -31,7 +31,7 @@ import (
 func iss(realm string) string { return "https://public.example" + realmsPath + realm }
 
 // lookupRealm asks for key k1 of realm.
-func lookupRealm(t *testing.T, set *Set, realm string) (Key, error) {
+func lookupRealm(t *testing.T, set *Set, realm string) ([]Key, error) {
 	t.Helper()
 	return set.LookupOrReload(t.Context(), Query{Issuer: iss(realm), KID: "k1"})
 }
@@ -152,11 +152,11 @@ func TestLookupOrReload_LoadsARealmFromTheJWKSURIOfItsProvider(t *testing.T) {
 		kc := newKeycloakTransport(t)
 		kc.publishRealm("tenant-1", ecJWK(t, "k1", nil))
 		set := keycloakSet(t, kc, testOptions())
-		key, err := lookupRealm(t, set, "tenant-1")
+		found, err := lookupRealm(t, set, "tenant-1")
 		if err != nil {
 			t.Fatalf("LookupOrReload() error = %v", err)
 		}
-		if key.Source.Realm != "tenant-1" || key.Source.Provider == nil || key.Source.Provider.ID != IdentityProviderID {
+		if key := onlyKey(t, found); key.Source.Realm != "tenant-1" || key.Source.Provider == nil || key.Source.Provider.ID != IdentityProviderID {
 			t.Errorf("Source = %+v, want the realm tenant-1 of provider %q", key.Source, IdentityProviderID)
 		}
 		if _, err := lookupRealm(t, set, "tenant-1"); err != nil {
@@ -176,12 +176,12 @@ func TestLookupOrReload_KeepsTheKeysOfTwoRealmsApart(t *testing.T) {
 		kc.publishRealm("b", ecJWK(t, "k1", nil))
 		set := keycloakSet(t, kc, testOptions())
 		for _, realm := range []string{"a", "b"} {
-			key, err := lookupRealm(t, set, realm)
+			found, err := lookupRealm(t, set, realm)
 			if err != nil {
 				t.Errorf("LookupOrReload(realm %q) error = %v", realm, err)
 				continue
 			}
-			if got := key.Source.Realm; got != realm {
+			if got := onlyKey(t, found).Source.Realm; got != realm {
 				t.Errorf("LookupOrReload(realm %q).Source.Realm = %q", realm, got)
 			}
 		}
@@ -876,9 +876,6 @@ func TestLookupOrReload_RefusesAKIDOfARealmWhoseLoadFailedAsUnavailable(t *testi
 		}},
 		{"JWKS of the kid one byte over 1 MiB", func(t *testing.T, transport *fakeTransport) {
 			transport.setJWKS(paddedJWKS(ecJWK(t, "k1", nil), maxResponseBytes+1))
-		}},
-		{"JWKS of the kid beside two different keys under one kid", func(t *testing.T, transport *fakeTransport) {
-			transport.publish(t, ecJWK(t, "twin", nil), ecJWK(t, "twin", nil), ecJWK(t, "k1", nil))
 		}},
 		{"403", func(_ *testing.T, transport *fakeTransport) {
 			transport.setStatus(keycloakHost, http.StatusForbidden)

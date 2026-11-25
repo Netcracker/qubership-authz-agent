@@ -184,6 +184,16 @@ func singleOf(id string, idp *fakeIdP) Provider {
 	return Provider{ID: id, Type: Single, Issuer: idp.srv.URL, JWKSURI: idp.srv.URL + "/jwks", Audience: ignoreAudience}
 }
 
+// onlyKey returns the one key of found, the keys a lookup returned for a kid
+// that its source lists once.
+func onlyKey(t *testing.T, found []Key) Key {
+	t.Helper()
+	if len(found) != 1 {
+		t.Fatalf("lookup returned %d keys, want 1", len(found))
+	}
+	return found[0]
+}
+
 // ecJWK returns the public JWK of a new P-256 key with kid, alg ES256, and
 // use sig. Each entry of fields sets that member of the JWK, and a nil value
 // removes it.

@@ -877,11 +877,11 @@ func TestRun_LoadsARequiredRealmAndReadinessWaitsForEveryRequiredSource(t *testi
 		stop := runSet(t, set)
 		defer stop()
 		synctest.Wait()
-		key, err := set.Lookup(Query{Issuer: iss("cloud-common"), KID: "k1"})
+		found, err := set.Lookup(Query{Issuer: iss("cloud-common"), KID: "k1"})
 		if err != nil {
-			t.Errorf("Lookup(the key of the required realm) error = %v, want none", err)
+			t.Fatalf("Lookup(the key of the required realm) error = %v, want none", err)
 		}
-		if key.Source.Realm != "cloud-common" || key.Source.Provider == nil || key.Source.Provider.ID != IdentityProviderID {
+		if key := onlyKey(t, found); key.Source.Realm != "cloud-common" || key.Source.Provider == nil || key.Source.Provider.ID != IdentityProviderID {
 			t.Errorf("Lookup(the key of the required realm).Source = %+v, want the realm cloud-common of provider %q", key.Source, IdentityProviderID)
 		}
 		if set.Ready() {
@@ -919,11 +919,11 @@ func TestLookupOrReload_ReloadsForAKIDNoLoadedKeyHas(t *testing.T) {
 					t.Fatalf("Refresh() error = %v", err)
 				}
 				transport.publish(t, ecJWK(t, "key-1", nil), ecJWK(t, "key-2", nil))
-				key, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: tt.kid})
+				found, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: tt.kid})
 				if err != nil {
 					t.Fatalf("LookupOrReload(%q) error = %v, want none", tt.kid, err)
 				}
-				if key.ID != tt.kid || key.Source.Provider == nil || key.Source.Provider.ID != IdentityProviderID || key.JWK == nil {
+				if key := onlyKey(t, found); key.ID != tt.kid || key.Source.Provider == nil || key.Source.Provider.ID != IdentityProviderID || key.JWK == nil {
 					t.Errorf("LookupOrReload(%q) = key %q of %+v with JWK %v, want key %q of provider %q", tt.kid, key.ID, key.Source, key.JWK, tt.kid, IdentityProviderID)
 				}
 				if got := transport.loadCount(); got != tt.requests {

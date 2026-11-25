@@ -45,13 +45,13 @@ const testIssuer = "https://idp.example/auth/realms/r"
 const serviceAccountSub = "system:serviceaccount:ns:app"
 
 // fakeKeys is a KeyFinder that holds the keys of testIssuer in memory, and
-// finds a key by kid alone. With an ended context, LookupOrReload reloads
-// nothing and reports a kid it does not hold with the bare
-// [keys.ErrKeysUnavailable], as a [keys.Set] reports a lookup that stopped
-// waiting before a load stored a result, though with no reason.
+// finds the keys of a kid by the kid alone. With an ended context,
+// LookupOrReload reloads nothing and reports a kid it does not hold with the
+// bare [keys.ErrKeysUnavailable], as a [keys.Set] reports a lookup that
+// stopped waiting before a load stored a result, though with no reason.
 type fakeKeys struct {
 	mu    sync.Mutex
-	byKID map[string]keys.Key
+	byKID map[string][]keys.Key
 	// onReload holds the keys the next reload adds: LookupOrReload adds
 	// them when it is asked for a kid it does not hold and its context has
 	// not ended, as a reload the caller waits for would.
@@ -62,20 +62,20 @@ type fakeKeys struct {
 }
 
 func newFakeKeys(signers ...*signer) *fakeKeys {
-	f := &fakeKeys{byKID: map[string]keys.Key{}}
+	f := &fakeKeys{byKID: map[string][]keys.Key{}}
 	for _, s := range signers {
-		f.byKID[s.key.ID] = s.key
+		f.byKID[s.key.ID] = append(f.byKID[s.key.ID], s.key)
 	}
 	return f
 }
 
-func (f *fakeKeys) Lookup(q keys.Query) (keys.Key, error) {
+func (f *fakeKeys) Lookup(q keys.Query) ([]keys.Key, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.find(q)
 }
 
-func (f *fakeKeys) LookupOrReload(ctx context.Context, q keys.Query) (keys.Key, error) {
+func (f *fakeKeys) LookupOrReload(ctx context.Context, q keys.Query) ([]keys.Key, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if _, err := f.find(q); errors.Is(err, keys.ErrKeyUnknown) && ctx.Err() == nil {
@@ -83,33 +83,33 @@ func (f *fakeKeys) LookupOrReload(ctx context.Context, q keys.Query) (keys.Key, 
 			f.reloading()
 		}
 		for _, k := range f.onReload {
-			f.byKID[k.ID] = k
+			f.byKID[k.ID] = append(f.byKID[k.ID], k)
 		}
 		f.onReload = nil
 	}
-	key, err := f.find(q)
+	found, err := f.find(q)
 	if errors.Is(err, keys.ErrKeyUnknown) && ctx.Err() != nil {
-		return keys.Key{}, keys.ErrKeysUnavailable
+		return nil, keys.ErrKeysUnavailable
 	}
-	return key, err
+	return found, err
 }
 
-// find returns the key of q. The caller holds mu.
-func (f *fakeKeys) find(q keys.Query) (keys.Key, error) {
+// find returns the keys of q. The caller holds mu.
+func (f *fakeKeys) find(q keys.Query) ([]keys.Key, error) {
 	if q.Issuer != testIssuer {
-		return keys.Key{}, keys.ErrIssuerUnknown
+		return nil, keys.ErrIssuerUnknown
 	}
-	k, ok := f.byKID[q.KID]
+	found, ok := f.byKID[q.KID]
 	if !ok {
-		return keys.Key{}, keys.ErrKeyUnknown
+		return nil, keys.ErrKeyUnknown
 	}
-	return k, nil
+	return found, nil
 }
 
 func (f *fakeKeys) set(key keys.Key) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.byKID[key.ID] = key
+	f.byKID[key.ID] = []keys.Key{key}
 }
 
 func (f *fakeKeys) remove(kid string) {

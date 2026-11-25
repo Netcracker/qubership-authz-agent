@@ -18,7 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
+	"maps"
 	"sync"
 	"sync/atomic"
 )
@@ -63,11 +63,11 @@ const (
 // loadResult is what a load leaves for the lookups after it. One value holds
 // the keys and the result, so a lookup reads both from the same load.
 type loadResult struct {
-	// keys holds the keys loaded last. After an answer they are the keys of
-	// that answer; after a 404 or a failed load, the keys the source held
-	// before that load. It is nil when no load found a usable signing key, and
-	// after an answer without one.
-	keys   []Key
+	// keys holds the keys loaded last by kid, each list in the order of the
+	// JWKS. After an answer they are the keys of that answer; after a 404 or a
+	// failed load, the keys the source held before that load. It is nil when
+	// no load found a usable signing key, and after an answer without one.
+	keys   map[string][]Key
 	result result
 }
 
@@ -78,26 +78,24 @@ func (src *source) last() loadResult { return *src.current.Load() }
 // provider "<id>" for a realm, provider "<id>" for a single provider.
 func (src *source) label() string { return src.fetcher.source.label() }
 
-// find returns the key of r with the given kid, and false when there is none.
-// [fetcher.parseJWKS] keeps one key per kid.
-func (r loadResult) find(kid string) (Key, bool) {
-	if i := slices.IndexFunc(r.keys, func(k Key) bool { return k.ID == kid }); i >= 0 {
-		return r.keys[i], true
-	}
-	return Key{}, false
+// find returns the keys of r with the given kid in the order of the JWKS, and
+// false when there is none.
+func (r loadResult) find(kid string) ([]Key, bool) {
+	keys, ok := r.keys[kid]
+	return keys, ok
 }
 
-// find returns the key with the given kid among the keys loaded last, and
+// find returns the keys with the given kid among the keys loaded last, and
 // false when there is none.
-func (src *source) find(kid string) (Key, bool) { return src.last().find(kid) }
+func (src *source) find(kid string) ([]Key, bool) { return src.last().find(kid) }
 
-// lookup returns the key with the given kid among the keys loaded last, and
+// lookup returns the keys with the given kid among the keys loaded last, and
 // [ErrKeyUnknown] when there is none.
-func (src *source) lookup(kid string) (Key, error) {
-	if key, ok := src.find(kid); ok {
-		return key, nil
+func (src *source) lookup(kid string) ([]Key, error) {
+	if keys, ok := src.find(kid); ok {
+		return keys, nil
 	}
-	return Key{}, ErrKeyUnknown
+	return nil, ErrKeyUnknown
 }
 
 // lookupErr returns the error of a lookup that counts r and finds no key in
@@ -138,22 +136,26 @@ func (src *source) reload(ctx context.Context) error {
 		}
 		return fmt.Errorf("%s keeps its previous keys after %s: %w", src.label(), ended, err)
 	}
-	src.current.Store(&loadResult{keys: fetched, result: answer})
+	loaded := byKID(fetched)
+	src.current.Store(&loadResult{keys: loaded, result: answer})
 	src.loaded.Store(true)
-	if !sameKIDs(previous, fetched) {
+	if !sameKIDs(previous, loaded) {
 		src.fetcher.log.Infof("trusted providers: %s now publishes %s", src.label(), countOf(len(fetched), "signing key"))
 	}
 	return nil
 }
 
-func sameKIDs(a, b []Key) bool {
-	ids := func(keys []Key) []string {
-		out := make([]string, len(keys))
-		for i, k := range keys {
-			out[i] = k.ID
-		}
-		slices.Sort(out)
-		return out
+// byKID groups keys by kid, each list in the order of keys.
+func byKID(keys []Key) map[string][]Key {
+	out := make(map[string][]Key)
+	for _, k := range keys {
+		out[k.ID] = append(out[k.ID], k)
 	}
-	return slices.Equal(ids(a), ids(b))
+	return out
+}
+
+// sameKIDs reports whether a and b hold the same kids with the same number of
+// keys under each.
+func sameKIDs(a, b map[string][]Key) bool {
+	return maps.EqualFunc(a, b, func(x, y []Key) bool { return len(x) == len(y) })
 }

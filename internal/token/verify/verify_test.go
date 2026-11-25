@@ -670,10 +670,10 @@ func TestVerify_AcceptsATokenWhoseKeyAReloadBringsWhileItsContextLasts(t *testin
 // unavailableKeys is a KeyFinder whose sources never answer.
 type unavailableKeys struct{}
 
-func (unavailableKeys) Lookup(keys.Query) (keys.Key, error) { return keys.Key{}, keys.ErrKeyUnknown }
+func (unavailableKeys) Lookup(keys.Query) ([]keys.Key, error) { return nil, keys.ErrKeyUnknown }
 
-func (unavailableKeys) LookupOrReload(context.Context, keys.Query) (keys.Key, error) {
-	return keys.Key{}, &keys.UnavailableError{Reason: "the last load of the source failed"}
+func (unavailableKeys) LookupOrReload(context.Context, keys.Query) ([]keys.Key, error) {
+	return nil, &keys.UnavailableError{Reason: "the last load of the source failed"}
 }
 
 // The iss is 97 bytes long, so the detail quotes its start and its end, and
@@ -849,6 +849,30 @@ func TestVerify_RefusesATokenWhoseSignatureDoesNotVerify(t *testing.T) {
 			}
 			if err != nil && strings.Contains(err.Error(), tt.raw) {
 				t.Errorf("Verify() error %q quotes the token", err)
+			}
+		})
+	}
+}
+
+// The source lists two keys under the kid k1.
+func TestVerify_AcceptsATokenThatAnyKeyOfItsKIDVerifies(t *testing.T) {
+	provider := providerOf("realm")
+	first, second := newSigner(t, "k1", provider), newSigner(t, "k1", provider)
+	tests := []struct {
+		name string
+		s    *signer
+		want Code
+	}{
+		{"signed by the first key", first, ""},
+		{"signed by the second key", second, ""},
+		{"signed by a key the source does not list", newSigner(t, "k1", provider), CodeSignatureInvalid},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(newFakeKeys(first, second))
+			_, err := v.Verify(t.Context(), tt.s.sign(t, claimsAt(start, nil)))
+			if got := codeOf(err); got != tt.want || (tt.want == "" && err != nil) {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
 			}
 		})
 	}
@@ -1251,6 +1275,19 @@ func TestVerify_ServesARepeatedTokenFromTheCache(t *testing.T) {
 	}
 }
 
+// The source lists two keys under the kid k1, and the second one verifies the
+// token.
+func TestVerify_ServesFromTheCacheATokenThatTheSecondKeyOfItsKIDVerified(t *testing.T) {
+	provider := providerOf("realm")
+	first, second := newSigner(t, "k1", provider), newSigner(t, "k1", provider)
+	v, _ := newVerifier(newFakeKeys(first, second))
+	raw := second.sign(t, claimsAt(start, nil))
+	tok := mustVerify(t, v, raw)
+	if mustVerify(t, v, raw) != tok {
+		t.Errorf("second Verify returned a new token, want the cached one")
+	}
+}
+
 func TestVerify_WithTheCacheOffChecksEveryTime(t *testing.T) {
 	s := newSigner(t, "k1", providerOf("realm"))
 	v := New(newFakeKeys(s), Options{CacheSize: -1, now: func() time.Time { return start }})
@@ -1506,12 +1543,15 @@ func TestError_DetailOfARefusalByTheSelectedKeyQuotesTheIssNotTheProvider(t *tes
 	s := newSigner(t, "k1", provider)
 	attacker := newSigner(t, "k1", provider)
 	tests := []struct {
-		name string
-		raw  string
-		want Code
+		name       string
+		raw        string
+		want       Code
+		wantDetail string
 	}{
-		{"alg the found key does not accept", unsigned(t, map[string]any{"alg": "RS256", "kid": "k1"}, claimsAt(start, nil)), CodeAlgNotAllowed},
-		{"signature", attacker.sign(t, claimsAt(start, nil)), CodeSignatureInvalid},
+		{"alg the found key does not accept", unsigned(t, map[string]any{"alg": "RS256", "kid": "k1"}, claimsAt(start, nil)), CodeAlgNotAllowed,
+			`no key "k1" of iss "` + testIssuer + `" accepts RS256`},
+		{"signature", attacker.sign(t, claimsAt(start, nil)), CodeSignatureInvalid,
+			`signature verifies with no key "k1" of iss "` + testIssuer + `"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1519,6 +1559,9 @@ func TestError_DetailOfARefusalByTheSelectedKeyQuotesTheIssNotTheProvider(t *tes
 			_, err := v.Verify(t.Context(), tt.raw)
 			if codeOf(err) != tt.want {
 				t.Fatalf("Verify() error = %v, want code %s", err, tt.want)
+			}
+			if refused, _ := errors.AsType[*Error](err); refused.Detail != tt.wantDetail {
+				t.Errorf("Verify() Detail = %q, want %q", refused.Detail, tt.wantDetail)
 			}
 			if strings.Contains(err.Error(), provider.ID) {
 				t.Errorf("Verify() error = %q, want it to name no provider", err)

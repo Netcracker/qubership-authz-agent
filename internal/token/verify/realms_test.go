@@ -22,6 +22,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lestrrat-go/jwx/v3/jwa"
 	"github.com/lestrrat-go/jwx/v3/jwk"
 
 	"authz-agent/internal/token/keys"
@@ -227,6 +228,81 @@ func TestVerify_RefusesATokenOfARealmThatAnswers404AsAnUnknownKID(t *testing.T) 
 	_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"iss": "https://public.example" + realmsPath + "a"})))
 	if codeOf(err) != CodeKIDUnknown {
 		t.Errorf("Verify() error = %v, want code %q", err, CodeKIDUnknown)
+	}
+}
+
+// jwksVerifier returns a Verifier whose one provider is a single provider
+// identity-provider with the issuer testIssuer, whose server answers every
+// request with a JWKS of entries.
+func jwksVerifier(t *testing.T, entries ...jwk.Key) *Verifier {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{"keys": entries})
+	}))
+	t.Cleanup(srv.Close)
+	provider := keys.Provider{
+		ID:       keys.IdentityProviderID,
+		Type:     keys.Single,
+		Issuer:   testIssuer,
+		JWKSURI:  srv.URL + "/jwks",
+		Audience: keys.Audience{Mode: keys.Ignore},
+	}
+	set, err := keys.New(keys.Config{Providers: []keys.Provider{provider}}, keys.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, _ := newVerifier(set)
+	return v
+}
+
+// entryOf returns the public JWK of s with its kid and alg, or with no alg
+// member where alg is "".
+func entryOf(t *testing.T, s *signer, alg string) jwk.Key {
+	t.Helper()
+	key, err := s.key.JWK.Clone()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := key.Set(jwk.KeyIDKey, s.key.ID); err != nil {
+		t.Fatal(err)
+	}
+	if alg != "" {
+		if err := key.Set(jwk.AlgorithmKey, alg); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return key
+}
+
+// The JWKS lists four entries under the kid k1: an RSA key A with the alg
+// RS256, A again with the alg PS256, another RSA key B with the alg RS384, and
+// an EC key with no alg.
+func TestVerify_ChecksATokenOnlyWithTheKeysOfItsKIDThatAcceptItsAlg(t *testing.T) {
+	a := newRSASigner(t, jwa.RS256(), "k1", providerOf("unused"))
+	b := newRSASigner(t, jwa.RS384(), "k1", providerOf("unused"))
+	ec := newSigner(t, "k1", providerOf("unused"))
+	v := jwksVerifier(t, entryOf(t, a, "RS256"), entryOf(t, a, "PS256"), entryOf(t, b, "RS384"), entryOf(t, ec, ""))
+	signedByA := func(alg jwa.SignatureAlgorithm) *signer { return &signer{alg: alg, private: a.private, key: a.key} }
+	tests := []struct {
+		name string
+		s    *signer
+		want Code
+	}{
+		{"RS256 token of A", a, ""},
+		{"PS256 token of A", signedByA(jwa.PS256()), ""},
+		{"RS384 token of B", b, ""},
+		{"ES256 token of the EC key", ec, ""},
+		{"RS384 token of A, which only B accepts", signedByA(jwa.RS384()), CodeSignatureInvalid},
+		{"RS512 token of A, which no entry accepts", signedByA(jwa.RS512()), CodeAlgNotAllowed},
+		{"ES256 token of an EC key the JWKS does not list", newSigner(t, "k1", providerOf("unused")), CodeSignatureInvalid},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := v.Verify(t.Context(), tt.s.sign(t, claimsAt(start, nil)))
+			if got := codeOf(err); got != tt.want || (tt.want == "" && err != nil) {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
 	}
 }
 
