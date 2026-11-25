@@ -98,7 +98,6 @@ and the reason code in the audit and a metric.
   | 401 | `TOKEN_ISSUER_UNKNOWN` | ADR-0091 R5, R11 |
   | 401 | `TOKEN_KID_MISSING` | ADR-0091 R22 |
   | 401 | `TOKEN_KID_UNKNOWN` | ADR-0091 R23, R39 |
-  | 401 | `TOKEN_REALM_UNKNOWN` | ADR-0091 R23, R39 |
   | 401 | `TOKEN_SIGNATURE_INVALID` | ADR-0091 R43 |
   | 401 | `TOKEN_AUDIENCE_MISSING`, `TOKEN_AUDIENCE_INVALID` | ADR-0091 R50; ADR-0094 R14 |
   | 401 | `TOKEN_EXP_MISSING`, `TOKEN_EXPIRED`, `TOKEN_NOT_YET_VALID` | ADR-0091 R44, R45 |
@@ -117,18 +116,19 @@ caller depends on the tenant (R1).
 An empty body gives a caller nothing to build on and nothing to format twice (R6). The reason stays where an operator
 looks, under the `X-Request-Id` (R9, R10).
 
-A code of its own for keys that could not be loaded keeps an outage of Keycloak from reading like an invented token. The
-503 says that the fault is not the caller's token, and `Retry-After` keeps a client from adding traffic during the
-outage (R2, R7). Its 60 seconds is the minute in which a source of keys is not asked again. A user token whose keys
-cannot be loaded ends the request, because otherwise the same request would move to another tenant for as long as the
-outage lasts (R3).
+A code of its own for keys that could not be loaded keeps an outage of Keycloak from reading like an invented token. A
+404 does not count as such an outage: a token whose `kid` matches no loaded key then gets `TOKEN_KID_UNKNOWN` (ADR-0091
+R23, R39). The 503 says that the fault is not the caller's token, and `Retry-After` keeps a client from adding traffic
+during the outage (R2, R7). Its 60 seconds is the minute in which a source of keys is not asked again. A user token
+whose keys cannot be loaded ends the request, because otherwise the same request would move to another tenant for as
+long as the outage lasts (R3).
 
 ### Alternatives considered
 
 - **A1. Carry `reasonCode` in the response body.** Rejected by R6: a caller gains nothing it can act on, and the error
   would be formatted in two places.
-- **A2. Report missing keys as `TOKEN_KID_UNKNOWN`.** Rejected by ADR-0091 R23: an outage of Keycloak would look like a
-  token with an invented `kid`.
+- **A2. Report keys that could not be loaded as `TOKEN_KID_UNKNOWN`.** Rejected by ADR-0091 R23, which gives that code
+  only after an answer or a 404: an outage of Keycloak would look like a token with an invented `kid`.
 - **A3. Answer 401 for keys that cannot be loaded.** Rejected by R2: that is the status of a bad token. With an empty
   body a caller cannot tell the two apart, and a client that reacts to a 401 by fetching a new token and retrying adds
   traffic at the worst moment.
