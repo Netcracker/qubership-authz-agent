@@ -123,12 +123,12 @@ spec:
             secretName: '{{ .Values.SERVICE_NAME }}-client-credentials'
             defaultMode: 292
         {{- end }}
-        {{- if .Values.CA_CERTIFICATES_SECRET }}
-        # The CA certificates the agent trusts besides the image's own; the
-        # base image's entrypoint reads them from /tmp/cert.
-        - name: ca-certificates-secret
+        {{- if .Values.SSL_SECRET }}
+        # The CA certificates of the environment, which the agent trusts besides
+        # the image's own; the base image's entrypoint reads them from /tmp/cert.
+        - name: ssl-secret
           secret:
-            secretName: '{{ .Values.CA_CERTIFICATES_SECRET }}'
+            secretName: '{{ .Values.SSL_SECRET }}'
             defaultMode: 292
         {{- end }}
         # The base image's entrypoint writes to these at every start: the CA
@@ -198,6 +198,12 @@ spec:
               value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT }}'
             - name: AUTHZ_ENTITLEMENTS_HTTP_RETRIES
               value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_RETRIES }}'
+            {{- if .Values.SSL_SECRET }}
+            # An upgrade that passes a new CERTIFICATE_BUNDLE_MD5SUM changes the
+            # Pod template, so the Pods are recreated and trust the new bundle.
+            - name: 'CERTIFICATE_BUNDLE_{{ .Values.SSL_SECRET }}_MD5SUM'
+              value: '{{ .Values.CERTIFICATE_BUNDLE_MD5SUM }}'
+            {{- end }}
           volumeMounts:
             - name: trusted-providers
               mountPath: /etc/authz
@@ -211,8 +217,8 @@ spec:
               mountPath: /etc/secret
               readOnly: true
             {{- end }}
-            {{- if .Values.CA_CERTIFICATES_SECRET }}
-            - name: ca-certificates-secret
+            {{- if .Values.SSL_SECRET }}
+            - name: ssl-secret
               mountPath: /tmp/cert
               readOnly: true
             {{- end }}

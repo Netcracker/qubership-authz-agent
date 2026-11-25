@@ -71,7 +71,14 @@ answers 200 as soon as the trusted providers meet the bootstrap rules, with no p
 
 The agent trusts the CA certificates in `.crt`, `.cer`, and `.pem` files under `/tmp/cert` in its container, in
 addition to the public CAs of its image, for every HTTPS server it calls, such as the identity provider, the policy
-source, and the PIPs. It reads them when the container starts. To give the agent a private CA through its chart:
+source, and the PIPs. It reads them when the container starts.
+
+The chart mounts at `/tmp/cert` the Secret that the value [`SSL_SECRET`](../../helm-templates/authz-agent/values.yaml)
+names. The platform's deployer adds the CAs of the environment to the Secret `defaultsslcertificate` and sets that
+value to it, unless the environment names another Secret. The deployer also passes the MD5 of the certificates in that
+Secret in `CERTIFICATE_BUNDLE_MD5SUM`, and an upgrade of the agent that passes a new MD5 recreates its Pods, so they
+trust the new certificates. A Helm install without the deployer leaves `SSL_SECRET` empty. To give such an install a
+private CA:
 
 1. Create a Secret in the agent's namespace that holds the CA certificate under a key that ends in `.crt`, `.cer`, or
    `.pem`:
@@ -80,8 +87,7 @@ source, and the PIPs. It reads them when the container starts. To give the agent
    kubectl create secret generic corporate-ca --from-file=corporate-ca.crt=<path to the CA certificate>
    ```
 
-2. Set the chart value [`CA_CERTIFICATES_SECRET`](../../helm-templates/authz-agent/values.yaml) to the name of that
-   Secret, `corporate-ca` here. The Pod mounts the Secret at `/tmp/cert`.
+2. Set `SSL_SECRET` to the name of that Secret, `corporate-ca` here.
 3. After you replace or remove a certificate in the Secret, recreate the Pod, for example with
    `kubectl rollout restart deployment/authz-agent`. A restart of the container can leave a removed certificate
    trusted: the entrypoint never deletes its copies, and they stay in an `emptyDir` volume of the Pod.

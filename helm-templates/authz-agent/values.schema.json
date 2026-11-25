@@ -179,15 +179,25 @@
       "title": "The READONLY_CONTAINER_FILE_SYSTEM_ENABLED schema",
       "type": "boolean"
     },
-    "CA_CERTIFICATES_SECRET": {
-      "$id": "#/properties/CA_CERTIFICATES_SECRET",
-      "type": "string",
-      "title": "The CA_CERTIFICATES_SECRET schema",
-      "description": "Name of a Secret whose keys ending in .crt, .cer, or .pem hold CA certificates the agent trusts; the Pod mounts it at /tmp/cert. Empty mounts nothing",
-      "default": "",
+    "CERTIFICATE_BUNDLE_MD5SUM": {
+      "$id": "#/properties/CERTIFICATE_BUNDLE_MD5SUM",
+      "description": "MD5 sum of certificates from cloud-deployer CERTIFICATES_SECRET deploy pipeline parameter credential",
       "examples": [
-        "corporate-ca"
-      ]
+        "89ae9282c9d92ef2308f1308e99f6529"
+      ],
+      "internal": true,
+      "title": "The CERTIFICATE_BUNDLE_MD5SUM schema",
+      "type": "string"
+    },
+    "SSL_SECRET": {
+      "$id": "#/properties/SSL_SECRET",
+      "description": "Secret name with SSL certificates from cloud-deployer CERTIFICATES_SECRET deploy pipeline parameter credential",
+      "examples": [
+        "defaultsslcertificate"
+      ],
+      "internal": true,
+      "title": "The SSL_SECRET schema",
+      "type": "string"
     },
     "MANAGED_BY": {
       "$id": "#/properties/MANAGED_BY",

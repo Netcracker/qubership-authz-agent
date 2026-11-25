@@ -501,16 +501,22 @@ for volume in "authz-agent-trusted-providers" "authz-agent-client-credentials"; 
   fi
 done
 
-# CA_CERTIFICATES_SECRET names the Secret the agent Pod mounts read-only at
-# /tmp/cert, and the default leaves /tmp/cert unmounted.
-ca_deployment="$(deployment_of --set CA_CERTIFICATES_SECRET=corporate-ca)"
+# SSL_SECRET names the Secret that the agent Pod mounts read-only at /tmp/cert.
+# The volume is not optional, so a missing Secret keeps the Pod from starting.
+# The Pod template carries CERTIFICATE_BUNDLE_MD5SUM in the variable
+# CERTIFICATE_BUNDLE_<SSL_SECRET>_MD5SUM, so an upgrade that passes a new MD5
+# recreates the Pods. The default leaves /tmp/cert unmounted and sets no such
+# variable.
+ca_deployment="$(deployment_of --set SSL_SECRET=corporate-ca --set CERTIFICATE_BUNDLE_MD5SUM=0123456789abcdef0123456789abcdef)"
+ca_default="$(deployment_of)"
 ca_volume="$(grep -B1 -E '^ +mountPath: /tmp/cert$' <<<"${ca_deployment}" | awk '$1 == "-" && $2 == "name:" {print $3}' || true)"
-ca_entries="$(grep -A2 -E "^ +- name: ${ca_volume:-none}\$" <<<"${ca_deployment}" || true)"
-ca_summary="secret=$(awk '$1 == "secretName:" {print $2}' <<<"${ca_entries}") readOnly=$(awk '$1 == "readOnly:" {print $2}' <<<"${ca_entries}") default=$(grep -c 'mountPath: /tmp/cert' <<<"$(deployment_of)" || true)"
-if [[ "${ca_summary}" == "secret='corporate-ca' readOnly=true default=0" ]]; then
-  pass "CA_CERTIFICATES_SECRET mounts the named Secret read-only at /tmp/cert, and the default mounts nothing there"
+ca_entries="$(grep -A4 -E "^ +- name: ${ca_volume:-none}\$" <<<"${ca_deployment}" || true)"
+ca_md5="$(grep -A1 -E "^ +- name: 'CERTIFICATE_BUNDLE_corporate-ca_MD5SUM'\$" <<<"${ca_deployment}" | awk '$1 == "value:" {print $2}' || true)"
+ca_summary="secret=$(awk '$1 == "secretName:" {print $2}' <<<"${ca_entries}") readOnly=$(awk '$1 == "readOnly:" {print $2}' <<<"${ca_entries}") optional=$(awk '$1 == "optional:" {print $2}' <<<"${ca_entries}" | grep . || echo none) md5=${ca_md5:-none} default=$(grep -c -E 'mountPath: /tmp/cert|CERTIFICATE_BUNDLE_' <<<"${ca_default}" || true)"
+if [[ "${ca_summary}" == "secret='corporate-ca' readOnly=true optional=none md5='0123456789abcdef0123456789abcdef' default=0" ]]; then
+  pass "SSL_SECRET mounts the named Secret read-only and required at /tmp/cert and sets CERTIFICATE_BUNDLE_<SSL_SECRET>_MD5SUM, and the default does neither"
 else
-  fail "CA_CERTIFICATES_SECRET renders ${ca_summary}, expected secret='corporate-ca' readOnly=true default=0"
+  fail "SSL_SECRET renders ${ca_summary}, expected secret='corporate-ca' readOnly=true optional=none md5='0123456789abcdef0123456789abcdef' default=0"
 fi
 
 # Every gateway route ends on the public port and reaches it under the path the
