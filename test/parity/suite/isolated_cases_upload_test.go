@@ -39,8 +39,9 @@ import (
 // domainPIPsPath, counted from 1 over the whole run, with refuse[n] when that
 // is set, a check with false, and everything else with 200. With pulls not
 // nil, the suite asks the server to pull, and the server answers the n-th pull
-// with pulls[n] when that is set, else with 204. uploadGoldens holds the upload
-// golden of each case that has one.
+// with pulls[n] when that is set, else with 204; a pulls[n] of dropConnection
+// closes the connection with no answer, as an agent that stops does.
+// uploadGoldens holds the upload golden of each case that has one.
 func runIsolatedCasesAgainstStub(t *testing.T, refuse, pulls map[int]int, uploadGoldens map[string]int, cases ...isolatedCase) []string {
 	t.Helper()
 	t.Setenv("PARITY_PULL_SETTLE_SECONDS", "0")
@@ -58,6 +59,15 @@ func runIsolatedCasesAgainstStub(t *testing.T, refuse, pulls map[int]int, upload
 			status, ok := pulls[pullsSeen]
 			if !ok {
 				status = http.StatusNoContent
+			}
+			if status == dropConnection {
+				conn, _, err := w.(http.Hijacker).Hijack()
+				if err != nil {
+					t.Errorf("hijack pull %d: %v", pullsSeen, err)
+					return
+				}
+				_ = conn.Close()
+				return
 			}
 			w.WriteHeader(status)
 			return
@@ -126,6 +136,90 @@ func TestRunIsolatedCases_AStubRefusalTheGoldenRecordsEndsOnlyItsOwnCase(t *test
 }
 
 const agentPullPath = "/internal/v1/pull"
+
+// dropConnection, as a pull status of runIsolatedCasesAgainstStub, closes the
+// connection of that pull with no answer.
+const dropConnection = -1
+
+// pullsAfter returns pulls whose pulls from..to (1-based) are answered with
+// status.
+func pullsAfter(from, to, status int) map[int]int {
+	pulls := map[int]int{}
+	for n := from; n <= to; n++ {
+		pulls[n] = status
+	}
+	return pulls
+}
+
+// A case whose upload stops the agent fails its subtest "setup" with a report
+// that says so. Where the agent answers the pull again within
+// agentRestartWait, the empty domain is loaded and the next case runs; where it
+// does not, or where it answers with an error, the next case is a broken
+// setup that names the case before it. Pull 1 is the upload of the case,
+// pull 2 onward the emptying of its domain. The test reads that output from a
+// child run of itself, since the child fails on purpose.
+func TestRunIsolatedCases_WaitsForTheAgentOnlyWhenItStopsAnswering(t *testing.T) {
+	if os.Getenv(brokenSetupChild) == "1" {
+		crashing := isolatedCase{id: "crashing", resourceType: "RT", requests: []isolatedRequest{{name: "read", m2mOnly: true}}}
+		next := isolatedCase{id: "next", resourceType: "RT", requests: []isolatedRequest{{name: "read", m2mOnly: true}}}
+		goldens := map[string]int{"crashing": http.StatusOK, "next": http.StatusOK}
+		agentRestartWait = 5 * time.Second
+		for _, tc := range []struct {
+			name  string
+			pulls map[int]int
+		}{
+			{"answers-again", pullsAfter(1, 3, dropConnection)},
+			{"never-answers", pullsAfter(1, 100, dropConnection)},
+			{"answers-an-error", map[int]int{1: dropConnection, 2: dropConnection, 3: http.StatusBadGateway}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				start := time.Now()
+				sent := runIsolatedCasesAgainstStub(t, nil, tc.pulls, goldens, crashing, next)
+				joined := strings.Join(sent, "\n")
+				t.Logf("checks sent: %d, pulls: %d, in %s", strings.Count(joined, "/access/v1/check/resource"),
+					strings.Count(joined, agentPullPath), time.Since(start).Round(time.Second))
+			})
+		}
+		return
+	}
+	name := regexp.QuoteMeta(t.Name())
+	out := childOutput(t)
+	if strings.Contains(out, "did not load: "+setupBrokenPrefix) {
+		t.Errorf("the child run's output repeats %s inside a report:\n%s", setupBrokenPrefix, out)
+	}
+	requireOutput(t, out,
+		`=== RUN   `+name+`/answers-again/run/crashing/setup\n.*: SETUP BROKEN: the agent stopped answering after the upload of case crashing: .*EOF`,
+		`--- FAIL: `+name+`/answers-again/run/crashing/setup `,
+		`: the agent stopped answering after case crashing and loaded the empty domain PARITY_ISOLATED .* later\n`,
+		`--- PASS: `+name+`/answers-again/run/next/upload `,
+		`=== NAME  `+name+`/answers-again\n.*: checks sent: 1, `,
+		`=== RUN   `+name+`/never-answers/run/next/setup\n.*: SETUP BROKEN: empty domain PARITY_ISOLATED after case crashing, `+
+			`which the agent did not load: the agent did not answer the pull route within 5s after it stopped answering; the last pull: .*EOF`,
+		`--- SKIP: `+name+`/never-answers/run/next/read `,
+		`=== RUN   `+name+`/answers-an-error/run/next/setup\n.*: SETUP BROKEN: empty domain PARITY_ISOLATED after case crashing, `+
+			`which the agent did not load: the agent answered again after it stopped answering, but did not load the policies: .*HTTP 502`,
+		`--- SKIP: `+name+`/answers-an-error/run/next/read `)
+}
+
+// An answer of the agent other than a load, here 502, ends the emptying at
+// once: the next case is a broken setup after the two pulls of the case and
+// of the emptying, and the cleanup's two pulls, with no wait for a restart.
+func TestRunIsolatedCases_AnAgentThatAnswersAnErrorIsNotWaitedFor(t *testing.T) {
+	if os.Getenv(brokenSetupChild) == "1" {
+		agentRestartWait = 2 * time.Second
+		refused := isolatedCase{id: "refused", resourceType: "RT", condition: "x", requests: []isolatedRequest{{name: "read", m2mOnly: true}}}
+		next := isolatedCase{id: "next", resourceType: "RT", requests: []isolatedRequest{{name: "read", m2mOnly: true}}}
+		sent := runIsolatedCasesAgainstStub(t, nil, map[int]int{1: http.StatusBadGateway, 2: http.StatusBadGateway},
+			map[string]int{"refused": http.StatusBadRequest, "next": http.StatusOK}, refused, next)
+		t.Logf("pulls: %d", strings.Count(strings.Join(sent, "\n"), agentPullPath))
+		return
+	}
+	run := regexp.QuoteMeta(t.Name() + "/run/")
+	requireOutput(t, childOutput(t),
+		`=== RUN   `+run+`next/setup\n.*: SETUP BROKEN: empty domain PARITY_ISOLATED after case refused, `+
+			`which the agent did not load: the agent did not load the policies: POST .*: HTTP 502`,
+		`pulls: 3\n`)
+}
 
 // An upload legacy refused, which authz-policy-admin accepts and the agent
 // does not load, matches its golden: the agent refused it too. The case sends

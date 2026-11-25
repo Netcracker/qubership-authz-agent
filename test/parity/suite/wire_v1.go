@@ -75,7 +75,7 @@ func HelperCheckResourceV1(ctx context.Context, cfg Config, body model.CheckAcce
 
 // HelperCheckResourcesV1 drives row 3 (POST /access/v1/check/resource/bulk).
 // The decoded set of allowed ids is returned as a []string; callers use
-// cmpopts.SortSlices at compare time per D-M.
+// cmpopts.SortSlices at compare time.
 func HelperCheckResourcesV1(ctx context.Context, cfg Config, body []model.CheckAccessRequestWithID, tokens TokenBundle, opts PerCallOptions) (int, []string, []byte, error) {
 	target := buildURL(cfg.ACBaseURL, v1PathCheckResourceBulk, buildQuery(cfg, opts, nil))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
@@ -183,7 +183,12 @@ func HelperFilterV1Query(ctx context.Context, cfg Config, extra url.Values, toke
 // without decoding it, so that a caller can record a refused request and send
 // a body the typed helpers would reshape.
 func HelperPostV1(ctx context.Context, cfg Config, path string, body any, tokens TokenBundle, opts PerCallOptions) (int, []byte, error) {
-	req, err := buildRequest(ctx, http.MethodPost, buildURL(cfg.ACBaseURL, path, buildQuery(cfg, opts, nil)), body, tokens, opts)
+	return HelperPostV1Query(ctx, cfg, path, nil, body, tokens, opts)
+}
+
+// HelperPostV1Query is HelperPostV1 with the query parameters extra added.
+func HelperPostV1Query(ctx context.Context, cfg Config, path string, extra url.Values, body any, tokens TokenBundle, opts PerCallOptions) (int, []byte, error) {
+	req, err := buildRequest(ctx, http.MethodPost, buildURL(cfg.ACBaseURL, path, buildQuery(cfg, opts, extra)), body, tokens, opts)
 	if err != nil {
 		return 0, nil, err
 	}

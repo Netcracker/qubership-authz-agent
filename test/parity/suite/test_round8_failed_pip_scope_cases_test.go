@@ -157,14 +157,14 @@ func (s *ParitySuite) runFailedPIPScopeCase(tc regularCase, route string, respon
 				return
 			}
 			s.Require().NoError(s.pipMock.ResetCalls(ctx))
-			checkStatus, decision, _, err := HelperCheckResourceV1(ctx, s.cfg,
+			checkStatus, decision, raw, err := HelperCheckResourceV1(ctx, s.cfg,
 				model.CheckAccessRequest{Operation: "READ", Type: tc.resourceType, Resource: tc.requests[0].resource},
 				s.mustTokenBundle(UserProfileReader), PerCallOptions{})
 			s.Require().NoError(err)
 			read := s.pipCalls(route)
 			s.T().Logf("upload %d of %s: pip-mock received %d call(s) to %s, status %d, decision %t",
 				attempt, tc.id, read, route, checkStatus, decision)
-			byClass[read > 0] = append(byClass[read > 0], model.CheckResourceOutcome{Status: checkStatus, Decision: decision})
+			byClass[read > 0] = append(byClass[read > 0], *checkV1Outcome(checkStatus, raw, nil))
 		}
 		for _, class := range []struct {
 			name string

@@ -21,7 +21,6 @@ import (
 	"os"
 	"reflect"
 	"slices"
-	"sort"
 	"strings"
 
 	"authz-agent/test/parity/suite/model"
@@ -29,7 +28,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-// GoldenComparator owns golden read / diff plumbing per D-M. A single
+// GoldenComparator reads the goldens and diffs an answer against them. A single
 // comparator instance is shared across all replay tests; it stores the
 // on-disk golden root (defaults to test/parity/suite/testdata/golden under
 // the module root). The goldens are a frozen capture of the legacy
@@ -61,6 +60,44 @@ func (gc *GoldenComparator) Recorded(id ParityEndpointID, subCase string) (json.
 // NewGoldenTarget factory; passing the wrong type is a test-authoring
 // bug and panics fast at compare time.
 func (gc *GoldenComparator) Compare(id ParityEndpointID, subCase string, actual any) error {
+	return gc.compare(id, subCase, actual, true)
+}
+
+// CompareAny compares actual with the golden of row id under each of subCases
+// that is recorded, and returns nil as soon as one matches. It returns an error
+// that wraps ErrGoldenNotRecorded when none of them is recorded, and otherwise
+// an error that carries the mismatch with each recorded one, whose
+// .observed.json entries then hold actual. Nothing is written when one
+// matches.
+func (gc *GoldenComparator) CompareAny(id ParityEndpointID, subCases []string, actual any) error {
+	var mismatches []error
+	var mismatched []string
+	for _, subCase := range subCases {
+		err := gc.compare(id, subCase, actual, false)
+		switch {
+		case err == nil:
+			return nil
+		case errors.Is(err, ErrGoldenNotRecorded):
+			continue
+		}
+		mismatches = append(mismatches, err)
+		var mismatch *GoldenMismatchError
+		if errors.As(err, &mismatch) {
+			mismatched = append(mismatched, subCase)
+		}
+	}
+	if len(mismatches) == 0 {
+		return fmt.Errorf("%w: none of %s under %s", ErrGoldenNotRecorded, strings.Join(subCases, ", "), Meta(id).GoldenDir)
+	}
+	for _, subCase := range mismatched {
+		gc.writeObservedSidecar(GoldenKey(id, subCase), actual)
+	}
+	return fmt.Errorf("the answer matches none of the %d recorded goldens: %w", len(mismatches), errors.Join(mismatches...))
+}
+
+// compare is Compare; record says whether a mismatch writes actual to the
+// .observed.json file.
+func (gc *GoldenComparator) compare(id ParityEndpointID, subCase string, actual any, record bool) error {
 	key := GoldenKey(id, subCase)
 	goldens := goldensAt(gc.goldenRoot)
 	where := goldens.Where(key)
@@ -82,12 +119,15 @@ func (gc *GoldenComparator) Compare(id ParityEndpointID, subCase string, actual 
 		panic(fmt.Sprintf("paritysuite: comparator type mismatch for row %d: actual=%T expected=%T", int(id), actual, expected))
 	}
 
+	received := actual
 	expected = normalizeComparable(id, subCase, expected)
 	actual = normalizeComparable(id, subCase, actual)
 
 	opts := compareOptionsFor(id)
 	if diff := cmp.Diff(expected, actual, opts...); diff != "" {
-		gc.writeObservedSidecar(key, actual)
+		if record {
+			gc.writeObservedSidecar(key, received)
+		}
 		if accepted, ok := acceptedDivergenceFor(id, subCase); ok {
 			return gc.compareAgainstAccepted(id, subCase, where, actual, accepted, opts)
 		}
@@ -150,11 +190,13 @@ func (gc *GoldenComparator) writeObservedSidecar(key string, actual any) {
 	_ = observedAt(gc.goldenRoot).Put(map[string]json.RawMessage{key: encoded})
 }
 
-// compareOptionsFor returns the cmp.Option set for a given row per D-M. The
-// ignore-list is deliberately minimal — Obligations is the pre-locked entry
-// (D-E), and the body of a pap-error-v1 golden, which the spec repository
-// compares by class, is the other; anything else requires a one-line
-// justification and an escalation OQ before being added.
+// compareOptionsFor returns the cmp.Option set for a given row. The comparison
+// leaves out three fields, and nothing else: the Obligations member of the
+// legacy check and filter answers of a row that sets IgnoreObligations, the
+// Body of a pap-error-v1 golden, and, through [normalizeComparable], the
+// Message of every outcome that records the body of a refusal. A field joins
+// them only where two conforming servers may answer it differently, with the
+// reason beside the option.
 func compareOptionsFor(id ParityEndpointID) []cmp.Option {
 	meta := Meta(id)
 	opts := []cmp.Option{}
@@ -168,7 +210,8 @@ func compareOptionsFor(id ParityEndpointID) []cmp.Option {
 		opts = append(opts, cmpopts.IgnoreFields(model.PapErrorOutcome{}, "Body"))
 	}
 	if meta.IgnoreObligations {
-		// Obligations is the only pre-committed ignore per D-E / D3.
+		// These rows send obligations=false, so the member is not under test
+		// here; the v2 outcome rows record it.
 		opts = append(opts,
 			cmpopts.IgnoreFields(model.CheckResourceResponse{}, "Obligations"),
 			cmpopts.IgnoreFields(model.CheckResourcesResponse{}, "Obligations"),
@@ -178,42 +221,14 @@ func compareOptionsFor(id ParityEndpointID) []cmp.Option {
 	return opts
 }
 
-// normalizeComparable applies row/sub-case specific canonicalization before
-// cmp.Diff. Legacy AC's predicate-union path for row 63/PSUITE row 6
-// agg-two-predicates is semantically stable but order-unstable on a cold
-// stack: either `a,b` or `b,a` can be emitted for the same OR-aggregation.
-// Step 3 records semantic parity there by sorting the top-level comma-delimited
-// RSQL clauses for that single sub-case only.
-//
-// D-AF-AA (2026-04-19): `PSUITE_ROW_10_CHECK_FILTER_V2 / general-pip-dict`
-// exercises the same set-semantic ordering invariant on the `in` clause's
-// element list — authz-agent produces `("row10-dict-1","row10-dict-2")`
-// deterministically across runs while legacy's freshly-recorded golden
-// captured `("row10-dict-2","row10-dict-1")`. Authz-agent determinism is
-// verified (5-run byte-identical); the divergence is a set-semantic
-// element-order swap and is normalized here by sorting the elements
-// inside every `=in=(…)` clause before diff. The same normalizer applies
-// to `PSUITE_ROW_10_CHECK_FILTER_V2 / general-pip-list` for symmetry even
-// though its authz-agent ordering currently matches the golden — a future
-// variation in either side's array handling shouldn't re-red-flag a
-// set-semantic leaf that already matches today.
-//
-// Every check/filter row goes through normalizeFilterOrder as well: access-control
-// joins the predicates of the applicable rules in an order that differs between
-// runs at every level of the expression, in every dialect, and in the apply
-// arrays of customFilterCondition, and the two sub-case rewrites of this function
-// cover only the leaves where that was first seen.
-//
-// Every outcome that records the body of a refusal goes through withoutMessage
-// first, so a golden with the body and one without compare alike.
+// normalizeComparable rewrites a decoded golden or answer into the form the
+// comparison sees. Every outcome that records the body of a refusal goes
+// through withoutMessage, so a golden with the body and one without compare
+// alike; every v2 outcome goes through withSortedObligations; and every
+// check/filter row goes through normalizeFilterOrder, which states which lists
+// of a filter compare without regard to their order.
 func normalizeComparable(id ParityEndpointID, subCase string, v any) any {
 	v = withoutMessage(v)
-	if id == PSUITE_ROW_6_CHECK_FILTER_V1 && subCase == "agg-two-predicates" {
-		v = normalizeFilterTopLevelCommaTerms(v)
-	}
-	if id == PSUITE_ROW_10_CHECK_FILTER_V2 && (subCase == "general-pip-dict" || subCase == "general-pip-list") {
-		v = normalizeFilterInClauseElements(v)
-	}
 	v = withSortedObligations(v)
 	switch id {
 	case PSUITE_ROW_6_CHECK_FILTER_V1, PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, PSUITE_ROW_10_CHECK_FILTER_V2,
@@ -312,90 +327,6 @@ func withoutMessage(v any) any {
 		return &clone
 	}
 	return v
-}
-
-func normalizeFilterTopLevelCommaTerms(v any) any {
-	switch typed := v.(type) {
-	case *model.OldFilterEvaluationResult:
-		clone := *typed
-		clone.RsqlFilterCondition = clone.RsqlFilterCondition.Map(normalizeTopLevelCommaTerms)
-		return &clone
-	case *model.FilterResponse:
-		clone := *typed
-		clone.RsqlFilterCondition = clone.RsqlFilterCondition.Map(normalizeTopLevelCommaTerms)
-		return &clone
-	default:
-		return v
-	}
-}
-
-func normalizeFilterInClauseElements(v any) any {
-	switch typed := v.(type) {
-	case *model.OldFilterEvaluationResult:
-		clone := *typed
-		clone.RsqlFilterCondition = clone.RsqlFilterCondition.Map(normalizeRsqlInElements)
-		return &clone
-	case *model.FilterResponse:
-		clone := *typed
-		clone.RsqlFilterCondition = clone.RsqlFilterCondition.Map(normalizeRsqlInElements)
-		return &clone
-	default:
-		return v
-	}
-}
-
-func normalizeTopLevelCommaTerms(expr string) string {
-	if expr == "" || !strings.Contains(expr, ",") {
-		return expr
-	}
-
-	parts := strings.Split(expr, ",")
-	for i := range parts {
-		parts[i] = strings.TrimSpace(parts[i])
-	}
-	sort.Strings(parts)
-	return strings.Join(parts, ",")
-}
-
-// normalizeRsqlInElements sorts the element list inside every `=in=(…)`
-// clause in the supplied RSQL expression. Used by the D-AF-AA comparator
-// allowlist extension for leaves where the rendered `in` clause is
-// semantically a set — element order carries no meaning, and the legacy
-// vs authz-agent diff of `("a","b")` vs `("b","a")` is a set-equivalent
-// divergence. The implementation is deliberately tolerant of whitespace
-// between elements and preserves the surrounding predicate shape byte-
-// for-byte outside the `(…)` block.
-func normalizeRsqlInElements(expr string) string {
-	if expr == "" {
-		return expr
-	}
-
-	var out strings.Builder
-	i := 0
-	for i < len(expr) {
-		idx := strings.Index(expr[i:], "=in=(")
-		if idx < 0 {
-			out.WriteString(expr[i:])
-			return out.String()
-		}
-		out.WriteString(expr[i : i+idx+len("=in=(")])
-		start := i + idx + len("=in=(")
-		close := strings.Index(expr[start:], ")")
-		if close < 0 {
-			out.WriteString(expr[start:])
-			return out.String()
-		}
-		inner := expr[start : start+close]
-		parts := strings.Split(inner, ",")
-		for k := range parts {
-			parts[k] = strings.TrimSpace(parts[k])
-		}
-		sort.Strings(parts)
-		out.WriteString(strings.Join(parts, ", "))
-		out.WriteString(")")
-		i = start + close + 1
-	}
-	return out.String()
 }
 
 // ErrGoldenNotRecorded is returned by [GoldenComparator.Compare] when no answer

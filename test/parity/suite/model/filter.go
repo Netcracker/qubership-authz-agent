@@ -35,7 +35,8 @@ type OldFilterEvaluationResult struct {
 
 // FilterResponse is the v2 POST /access/v2/check/filter response body: the
 // fields of OldFilterEvaluationResult and an Obligations block, which the
-// parity suite always filters out via cmpopts.IgnoreFields per D-E.
+// comparison leaves out on the rows that send obligations=false (see
+// compareOptionsFor).
 type FilterResponse struct {
 	CalculationResult      string          `json:"calculationResult"`
 	FilterCondition        FilterText      `json:"filterCondition,omitzero"`

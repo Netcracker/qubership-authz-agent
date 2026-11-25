@@ -24,7 +24,7 @@ import (
 
 // TestExportFedAgent replays the export bundle against an agent that pulls its
 // configuration from the export source: for each recorded test function, the
-// stub pins of its log, each export mounted before the decisions that follow
+// stub pins of its log, each export served before the decisions that follow
 // it, and every compared golden. A golden fails when the agent's answer
 // matches neither the golden nor, for an accepted class, the answer the bundle
 // predicts. An export the agent did not load fails a subtest "setup" of the

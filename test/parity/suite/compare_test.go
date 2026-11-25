@@ -15,7 +15,10 @@
 package paritysuite
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -69,6 +72,104 @@ func TestCompare_AMismatchRecordsTheAnswerBesideTheGoldenFile(t *testing.T) {
 	}
 	if want := "{\n  \"recorded-false\": true\n}\n"; string(got) != want {
 		t.Errorf("go/check-resource-v1.observed.json =\n%s\nwant\n%s", got, want)
+	}
+}
+
+// An answer that matches the golden of its second class writes no
+// .observed.json entry for the first, whose golden it does not match.
+func TestCompareAny_AMatchWritesNoObservedEntry(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	writeGolden(t, root, "check-resource-v1/req-when-the-pip-was-read", "false")
+	writeGolden(t, root, "check-resource-v1/req-when-the-pip-was-skipped", "true")
+	gc := &GoldenComparator{goldenRoot: root}
+	decision := true
+
+	if err := gc.CompareAny(PSUITE_ROW_2_CHECK_RESOURCE_V1, []string{"req-when-the-pip-was-read", "req-when-the-pip-was-skipped"}, &decision); err != nil {
+		t.Fatalf("CompareAny: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "go", "check-resource-v1.observed.json")); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("go/check-resource-v1.observed.json exists after a match (stat: %v)", err)
+	}
+}
+
+// An answer that matches no recorded class is written to the .observed.json
+// entry of each class it was compared with, and not under a name with no
+// golden.
+func TestCompareAny_AMismatchRecordsTheAnswerUnderEachRecordedClass(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	writeGolden(t, root, "check-resource-v1/req-when-the-pip-was-read", "false")
+	writeGolden(t, root, "check-resource-v1/req-when-the-pip-was-skipped", "false")
+	gc := &GoldenComparator{goldenRoot: root}
+	decision := true
+
+	err := gc.CompareAny(PSUITE_ROW_2_CHECK_RESOURCE_V1, []string{"req", "req-when-the-pip-was-read", "req-when-the-pip-was-skipped"}, &decision)
+	if err == nil {
+		t.Fatal("CompareAny: nil, want a mismatch")
+	}
+	got, readErr := os.ReadFile(filepath.Join(root, "go", "check-resource-v1.observed.json"))
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if want := "{\n  \"req-when-the-pip-was-read\": true,\n  \"req-when-the-pip-was-skipped\": true\n}\n"; string(got) != want {
+		t.Errorf("go/check-resource-v1.observed.json =\n%s\nwant\n%s", got, want)
+	}
+}
+
+// The .observed.json entry holds the answer before the comparison rewrites
+// it, since goldens merge -observed records it as a golden: the body of a
+// refusal and the term order of a filter stay as the answer had them.
+func TestCompare_AMismatchRecordsTheAnswerAsReceived(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name, golden, observedFile string
+		id                         ParityEndpointID
+		actual                     any
+		want                       string
+	}{
+		{
+			name:         "refusal body",
+			id:           PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME,
+			golden:       `{"status":400,"decision":false,"message":{"error":"old"}}`,
+			observedFile: "check-resource-v1-outcome.observed.json",
+			actual:       &model.CheckResourceOutcome{Status: 409, Message: map[string]any{"error": "new"}},
+			want:         `{"status":409,"decision":false,"message":{"error":"new"}}`,
+		},
+		{
+			name:         "filter term order",
+			id:           PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME,
+			golden:       `{"status":200,"result":{"calculationResult":"DENY"}}`,
+			observedFile: "check-filter-v1-outcome.observed.json",
+			actual:       filterOutcomeWithRsql(t, `"b==1,a==1"`),
+			want:         `{"status":200,"result":{"calculationResult":"ALLOW","rsqlFilterCondition":"b==1,a==1"}}`,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			writeGolden(t, root, Meta(tc.id).GoldenDir+"/recorded", tc.golden)
+			gc := &GoldenComparator{goldenRoot: root}
+
+			_ = gc.Compare(tc.id, "recorded", tc.actual)
+
+			raw, err := os.ReadFile(filepath.Join(root, "go", tc.observedFile))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var observed map[string]json.RawMessage
+			if err := json.Unmarshal(raw, &observed); err != nil {
+				t.Fatalf("json.Unmarshal(%s): %v", raw, err)
+			}
+			var got bytes.Buffer
+			if err := json.Compact(&got, observed["recorded"]); err != nil {
+				t.Fatalf("json.Compact(%s): %v", observed["recorded"], err)
+			}
+			if got.String() != tc.want {
+				t.Errorf("go/%s[recorded] = %s, want %s", tc.observedFile, got.String(), tc.want)
+			}
+		})
 	}
 }
 
@@ -176,62 +277,5 @@ func TestCompare_AnErrorGoldenComparesItsStatusAndNotItsBody(t *testing.T) {
 				t.Errorf("Compare(%+v) against %s: mismatch = %v, want %v (err %v)", *tc.actual, golden, got, tc.mismatch, err)
 			}
 		})
-	}
-}
-
-// TestNormalizeRsqlInElements_SortsInClauseBothDirections pins the
-// D-AF-AA (2026-04-19) comparator-allowlist contract: for RSQL `in`
-// clauses, element order is set-semantic, so `("a","b")` and `("b","a")`
-// must normalize to the same string. The parity comparator relies on
-// this to diff-empty the `PSUITE_ROW_10_CHECK_FILTER_V2` /
-// `general-pip-dict` leaf where legacy emits reversed insertion order
-// and authz-agent emits forward index order.
-func TestNormalizeRsqlInElements_SortsInClauseBothDirections(t *testing.T) {
-	t.Parallel()
-	forward := `id=in=("row10-dict-1", "row10-dict-2");amount=le="1000"`
-	reverse := `id=in=("row10-dict-2", "row10-dict-1");amount=le="1000"`
-	if normalizeRsqlInElements(forward) != normalizeRsqlInElements(reverse) {
-		t.Fatalf("forward and reverse element orders must normalize to the same string\nforward:  %s\nreverse:  %s\nnormfwd:  %s\nnormrev:  %s",
-			forward, reverse, normalizeRsqlInElements(forward), normalizeRsqlInElements(reverse))
-	}
-}
-
-// TestNormalizeRsqlInElements_DoesNotCollapseDistinctSets guards
-// against silent element-drops — two `in` clauses with different
-// element sets must NOT normalize to the same string.
-func TestNormalizeRsqlInElements_DoesNotCollapseDistinctSets(t *testing.T) {
-	t.Parallel()
-	a := `id=in=("alpha", "beta")`
-	b := `id=in=("alpha", "gamma")`
-	if normalizeRsqlInElements(a) == normalizeRsqlInElements(b) {
-		t.Fatalf("distinct element sets must not normalize equal: %q vs %q", a, b)
-	}
-}
-
-// TestNormalizeRsqlInElements_PreservesSingleElement confirms the
-// normalizer is a no-op on single-element `in` clauses and on
-// expressions without any `in` clause.
-func TestNormalizeRsqlInElements_PreservesSingleElement(t *testing.T) {
-	t.Parallel()
-	single := `id=in=("only")`
-	if got := normalizeRsqlInElements(single); got != single {
-		t.Fatalf("single-element in clause must round-trip; got %q", got)
-	}
-	plain := `status=="OPEN"`
-	if got := normalizeRsqlInElements(plain); got != plain {
-		t.Fatalf("expression without in clause must round-trip; got %q", got)
-	}
-}
-
-// TestNormalizeRsqlInElements_HandlesMultipleInClauses exercises the
-// tokenizer when the same expression carries more than one `in` clause
-// (future-proofing for richer predicates).
-func TestNormalizeRsqlInElements_HandlesMultipleInClauses(t *testing.T) {
-	t.Parallel()
-	expr := `id=in=("b", "a");tag=in=("z", "y", "x")`
-	got := normalizeRsqlInElements(expr)
-	want := `id=in=("a", "b");tag=in=("x", "y", "z")`
-	if got != want {
-		t.Fatalf("multi-in normalization mismatch\nwant: %s\ngot:  %s", want, got)
 	}
 }

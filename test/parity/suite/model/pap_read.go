@@ -20,15 +20,9 @@ package model
 // the case; an error body carries timestamps and is not recorded.
 // KeptTenants, on a step's read, lists the distinct tenantId values anywhere
 // in Body, sorted: the tenants of the elements the case's markers keep.
-// Tenants is the member a golden recorded before KeptTenants holds instead:
-// the tenantId values of the whole body before it was narrowed, which include
-// those of the elements the cases before it in the file wrote. The suite does
-// not set it; it is read so that such a golden keeps the member through
-// the canonicalizer and fails the comparison until it is recorded again.
 type PapReadOutcome struct {
 	Status      int      `json:"status"`
 	Body        any      `json:"body,omitempty"`
-	Tenants     []string `json:"tenants,omitempty"`
 	KeptTenants []string `json:"keptTenants,omitempty"`
 }
 

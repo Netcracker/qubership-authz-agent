@@ -54,9 +54,10 @@ var exportDocsWritten = map[string][]string{
 	"delete-pip-customization": {exportDocPIPs},
 }
 
-// legacyExportCase is a sequence case whose decisions part A of the
-// export-fed profile compares: the decisions the case recorded at a point
-// where its raw reads show the whole v3 export legacy access-control held.
+// legacyExportCase is a sequence case whose decisions the legacy-export
+// check (TestExportFedLegacyAgent) compares: the decisions the case recorded
+// at a point (legacyExportPoint) where its raw reads show the whole v3 export
+// legacy access-control held.
 type legacyExportCase struct {
 	file, id, resourceType, tenant string
 	pins, userManagement           map[string]PipStubResponse
@@ -91,8 +92,8 @@ type legacyDecision struct {
 	path    string
 }
 
-// legacyExportCases returns the cases of the case file name that part A can
-// compare, from the goldens under goldenRoot: those with steps and no sets
+// legacyExportCases returns the cases of the case file name that the
+// legacy-export check can compare, from the goldens under goldenRoot: those with steps and no sets
 // and no customize list. The decisions of a case that records no raw read of
 // the policy sets or the PIPs are all uncompared. A case's pins are the
 // file's and those of every case before it in the file, then its own,
@@ -674,8 +675,10 @@ func featureFamilies(features []string) []string {
 
 // legacyClass is the difference class of a golden at point p: the first
 // feature of the point, else "agent": nothing the conversion is known to drop
-// explains the difference. A point whose export the agent did not load has no
-// class; its goldens are [verdictBroken] (brokenLegacyResult).
+// explains the difference. The class belongs to the point, not to the rule a
+// decision rests on, so acceptedLegacyDifference accepts no wrong allow by
+// it. A point whose export the agent did not load has no class; its goldens
+// are [verdictBroken] (brokenLegacyResult).
 func legacyClass(p legacyExportPoint) string {
 	if len(p.features) > 0 {
 		return p.features[0]
@@ -684,24 +687,24 @@ func legacyClass(p legacyExportPoint) string {
 }
 
 // acceptedLegacyDifference returns the entry of acceptedExportDivergences
-// that covers a difference of class at a point of part A, keyed by the kind
-// of the class (set-type for set-type:DEFAULT). A wrong allow is covered only
-// by an entry whose AllowsMore is set.
+// that covers a difference of class at a point of the legacy-export check,
+// keyed by the kind of the class (set-type for set-type:DEFAULT). No entry
+// covers a wrong allow, an answer that allows what the golden denies.
 func acceptedLegacyDifference(class string, wrongAllow bool) (AcceptedDivergence, bool) {
 	kind, _, _ := strings.Cut(class, ":")
 	accepted, ok := acceptedExportDivergences[kind]
-	if !ok || wrongAllow && !accepted.AllowsMore {
+	if !ok || wrongAllow {
 		return AcceptedDivergence{}, false
 	}
 	return accepted, true
 }
 
-// legacyCanaryType is the resource type of the canary set mounted beside the
+// legacyCanaryType is the resource type of the canary set served beside the
 // export of the n-th point of a run.
 func legacyCanaryType(n int) string { return fmt.Sprintf("PARITY_EXPORT_CANARY_%d", n) }
 
 // legacyCanarySet is a SIMPLIFIED set in tenant that allows
-// ROLE_PARITY_READER to READ the resource type rt. The run mounts one with a
+// ROLE_PARITY_READER to READ the resource type rt. The run serves one with a
 // type of its own beside each export and checks it before the decisions: a
 // pull that failed keeps the previous export, whose canary has another type,
 // so the check denies. The set, its policy, and its rule carry tenantId, as
@@ -726,12 +729,12 @@ func legacyCanarySet(rt, tenant string) map[string]any {
 // legacyCanary is a canary set of resource type rt in tenant.
 type legacyCanary struct{ rt, tenant string }
 
-// legacyCanaries returns the canaries mounted beside the export of p, the
+// legacyCanaries returns the canaries served beside the export of p, the
 // n-th point of a run, whose case runs in caseTenant: the canary of the
 // export, of type legacyCanaryType(n) in caseTenant, and then one in each
 // other tenant a decision of p runs in, each of a type of its own. A pull
 // can load the export without one of its tenants, and the canary of that
-// tenant tells it. The canary of caseTenant is mounted even when the export
+// tenant tells it. The canary of caseTenant is served even when the export
 // names no element of that tenant: an empty export is told from the previous
 // one by that canary alone, and its set admits no resource type but its own.
 // Another tenant no element of the export names gets no canary, since nothing
@@ -813,20 +816,55 @@ func legacyGoldenPaths(root string, id ParityEndpointID, subCase string) []strin
 	return out
 }
 
-// legacyResult is the verdict of one decision golden of part A, with the
-// class and the features of its point.
+// legacyResult is the verdict of one decision golden of the legacy-export
+// check, with the class and the features of its point.
 type legacyResult struct {
 	exportResult
 	Features   []string
 	WrongAllow bool
 }
 
+// newLegacyResult is the result of decision d at point p of case lc before
+// a verdict: its test, its path, and the families, the class, and the
+// features of p.
+func newLegacyResult(lc legacyExportCase, p legacyExportPoint, d legacyDecision) legacyResult {
+	return legacyResult{exportResult: exportResult{Test: lc.file + "/" + lc.id, Path: d.path, Status: "legacy",
+		Families: featureFamilies(p.features), Class: legacyClass(p)}, Features: p.features}
+}
+
+// judgeLegacyAnswer sets the verdict of res from actual, the agent's answer
+// to a decision of row id, and wants, the goldens recorded at paths: the
+// golden itself, or the variants of its order class. The answer matches when
+// it equals one of them. Otherwise it differs, and the difference is accepted
+// when acceptedLegacyDifference covers the class of res; a wrong allow is
+// never accepted.
+func judgeLegacyAnswer(res legacyResult, id ParityEndpointID, paths []string, wants []any, actual any) legacyResult {
+	var diffs []string
+	for i, path := range paths {
+		_, sub, _ := goldenRow(path)
+		diff := sameOutcome(id, sub, wants[i], actual)
+		if diff == "" {
+			res.Verdict = verdictMatch
+			return res
+		}
+		diffs = append(diffs, diff)
+	}
+	res.Verdict, res.Detail = verdictDiffers, strings.Join(diffs, "\n")
+	res.WrongAllow = grantsMore(actual, wants)
+	if accepted, ok := acceptedLegacyDifference(res.Class, res.WrongAllow); ok {
+		res.Verdict = verdictAccepted
+		res.Detail = "class " + res.Class + ", decided in " + accepted.Decision + ": " + accepted.Reason
+	}
+	return res
+}
+
 // brokenLegacyResult is the result of decision d at point p of case lc when
 // the setup it waited on broke: the agent did not load the point's export, so
 // the decision is not sent. broken is the report of that setup.
 func brokenLegacyResult(lc legacyExportCase, p legacyExportPoint, d legacyDecision, broken string) legacyResult {
-	return legacyResult{exportResult: exportResult{Test: lc.file + "/" + lc.id, Path: d.path, Status: "legacy",
-		Families: featureFamilies(p.features), Verdict: verdictBroken, Detail: broken}, Features: p.features}
+	res := newLegacyResult(lc, p, d)
+	res.Class, res.Verdict, res.Detail = "", verdictBroken, broken
+	return res
 }
 
 // legacyExportReport counts, per family, the decisions compared with legacy

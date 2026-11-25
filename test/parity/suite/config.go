@@ -20,9 +20,9 @@ import (
 )
 
 // Config holds every PARITY_* env-var the suite consumes. Defaults align with
-// the Step 2 port block (PARITY_AC_PORT=28090, PARITY_PIP_PORT=28091,
+// the local port block (PARITY_AC_PORT=28090, PARITY_PIP_PORT=28091,
 // PARITY_IDP_PORT=25557) so a developer running the suite on a freshly
-// bootstrapped Step 2 stack does not need to export anything.
+// bootstrapped local stack does not need to export anything.
 type Config struct {
 	// ACBaseURL is the public API base URL of the active parity target, e.g.
 	// http://localhost:28090 (legacy) or http://localhost:28100 (authz-agent).
@@ -44,19 +44,19 @@ type Config struct {
 
 	// M2MClientID / M2MClientSecret are the client credentials the suite
 	// uses for Authorization: Bearer <M2M>. Default to the parity-m2m
-	// client Step 2 seeds into the parity realm.
+	// client the stand seeds into the parity realm.
 	M2MClientID     string
 	M2MClientSecret string
 
 	// EndUserClientID / EndUserClientSecret are the
 	// password-grant-capable client credentials the suite uses to obtain
 	// end-user tokens for Incoming-Token: Bearer <end-user>. The realm
-	// seed provides this client per D-N; the defaults are placeholders.
+	// seed provides this client; the defaults are placeholders.
 	EndUserClientID     string
 	EndUserClientSecret string
 
 	// EndUserPassword is the password applied to every parity-* test user
-	// from the static realm seed per D-N. Every test user shares the same password
+	// from the static realm seed. Every test user shares the same password
 	// because the realm seed is static and the password policy is uniform.
 	EndUserPassword string
 
@@ -75,13 +75,12 @@ type Config struct {
 	// http://localhost:28194.
 	UMMockControlURL string
 
-	// TenantID is the value the suite sends in the tenant_id query param
-	// (D-V item 6). Defaults to "default" — the tenant the Step 2 smoke
-	// fixtures use.
+	// TenantID is the value the suite sends in the tenant_id query param.
+	// Defaults to "default", the tenant the smoke fixtures use.
 	TenantID string
 
-	// DomainName is the simplified-policy domain the suite seeds into per
-	// D-L (always "PARITY" in Step 3).
+	// DomainName is the simplified-policy domain the suite seeds into,
+	// PARITY.
 	DomainName string
 
 	// Profile is the active PARITY_PROFILE: "authz-agent", or

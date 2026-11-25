@@ -35,17 +35,35 @@ func (s *ParitySuite) sendV2Request(resourceType string, req isolatedRequest, to
 		s.Require().NoError(err)
 		status, raw, err := HelperPostV2(ctx, s.cfg, v2PathCheckResourceBulkOperations, v2Query(nil, req.obligations), body, tokens, opts)
 		s.Require().NoError(err)
-		outcome, err := bulkOperationsV2Outcome(status, raw, s.refusal(status, raw))
-		s.Require().NoError(err)
-		return PSUITE_ROW_8_CHECK_RESOURCE_BULK_OPERATIONS_V2_OUTCOME, outcome
+		return s.recordedOutcome(req.outcomeRow(), status, raw)
 	case req.filter:
 		query := v2Query(filterV1Query(valueOr(req.typ, resourceType), req.filterOperation(), req.emptyOperation), req.obligations)
 		status, raw, err := HelperPostV2(ctx, s.cfg, v2PathCheckFilter, query, nil, tokens, opts)
 		s.Require().NoError(err)
-		return PSUITE_ROW_10_CHECK_FILTER_V2_OUTCOME, filterV2Outcome(status, raw, s.refusal(status, raw))
+		return s.recordedOutcome(req.outcomeRow(), status, raw)
 	}
 	body := model.CheckResourceRequest{Operation: checkOperation(req.operation, req.emptyOperation), Type: valueOr(req.typ, resourceType), Resource: req.resource}
 	status, raw, err := HelperPostV2(ctx, s.cfg, v2PathCheckResource, v2Query(nil, req.obligations), body, tokens, opts)
 	s.Require().NoError(err)
-	return PSUITE_ROW_7_CHECK_RESOURCE_V2_OUTCOME, checkV2Outcome(status, raw, s.refusal(status, raw))
+	return s.recordedOutcome(req.outcomeRow(), status, raw)
+}
+
+// outcomeRow returns the outcome row whose golden records the answer to r: the
+// row of the endpoint sendRequest sends r to.
+func (r isolatedRequest) outcomeRow() ParityEndpointID {
+	switch {
+	case r.v2 && r.bulkOperations != nil:
+		return PSUITE_ROW_8_CHECK_RESOURCE_BULK_OPERATIONS_V2_OUTCOME
+	case r.v2 && r.filter:
+		return PSUITE_ROW_10_CHECK_FILTER_V2_OUTCOME
+	case r.v2:
+		return PSUITE_ROW_7_CHECK_RESOURCE_V2_OUTCOME
+	case r.bulk != nil:
+		return PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME
+	case r.bulkOperations != nil:
+		return PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME
+	case r.filter:
+		return PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME
+	}
+	return PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME
 }

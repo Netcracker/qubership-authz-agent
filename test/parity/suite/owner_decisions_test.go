@@ -38,7 +38,9 @@ const (
 	formNeverEvaluated = "never-evaluated"
 	// formUndeclaredPIP is a target or condition that reads
 	// subject.<attribute> with no PIP of that name in the export: legacy
-	// answers 400 to every check.
+	// answers 400 to every check. The value is the key of the entry of
+	// acceptedExportDivergences that states the agent's answer
+	// (intendedAnswer).
 	formUndeclaredPIP = "undeclared-pip"
 )
 
@@ -157,7 +159,8 @@ type ownerDecision struct {
 
 // allOwnerDecisionCases returns the ownerDecisionCases of every case file
 // under testdata/cases: the regular cases of regularOwnerDecisionCases, then
-// the points of part A of legacyOwnerDecisionCases. standTenant is the tenant
+// the points of the legacy-export check of legacyOwnerDecisionCases.
+// standTenant is the tenant
 // the regular cases ran in.
 func allOwnerDecisionCases(goldenRoot, standTenant string) ([]ownerDecisionCase, error) {
 	names, err := caseFileNames()
@@ -422,8 +425,8 @@ func decisionStatus(root, subCase string) (int, bool, error) {
 // tenant of a form, legacy answered it with the status that form fails a
 // decision with, and the request is well formed, so that legacy's
 // validation, which also answers 400, did not refuse it first. A request
-// that pins a route or is filed by order class is left out, as part A leaves
-// it out.
+// that pins a route or is filed by order class is left out, as the
+// legacy-export check leaves it out.
 func dependsOnForms(d ownerDecision, resourceType string, forms []exportForm, standTenant string) bool {
 	req := d.request
 	if valueOr(req.typ, resourceType) != resourceType || !wellFormed(req) ||
@@ -470,28 +473,53 @@ func wellFormed(req isolatedRequest) bool {
 	return true
 }
 
+// intendedAnswer states the answer the agent owes a decision that legacy
+// failed because of a form of kind. A form of kind formUndeclaredPIP takes it
+// from its entry of acceptedExportDivergences, which the legacy-export check
+// applies to the same attribute; a form legacy never evaluates makes the set
+// that holds it a source that fails every time.
+func intendedAnswer(kind string) string {
+	if d, ok := acceptedExportDivergences[kind]; ok {
+		return d.Reason
+	}
+	return "the set that holds the form is a source that fails every time, and /health names it"
+}
+
+// formKindFailing returns the kind of form legacy fails a decision with
+// status on, or "" for a status no form produces.
+func formKindFailing(status int) string {
+	for kind, s := range legacyFailureStatus {
+		if s == status {
+			return kind
+		}
+	}
+	return ""
+}
+
 // refusalProblem returns "" when outcome, the agent's answer to a decision,
 // is 200 and allows nothing, and otherwise what it is instead.
 func refusalProblem(outcome any) string {
-	status, allows := 0, false
+	var status int
 	switch o := outcome.(type) {
 	case *model.CheckResourceOutcome:
-		status, allows = o.Status, o.Decision
+		status = o.Status
 	case *model.CheckResourceBulkOutcome:
-		status, allows = o.Status, o.Allowed != nil && len(*o.Allowed) > 0
+		status = o.Status
 	case *model.CheckResourceBulkOperationsOutcome:
-		status, allows = o.Status, o.Decision != nil && anyAllowed(*o.Decision)
+		status = o.Status
 	case *model.FilterOutcome:
-		status, allows = o.Status, filterRank(o.Result.CalculationResult) > 0
+		status = o.Status
 	case *model.CheckResourceV2Outcome:
-		status, allows = o.Status, o.Decision
+		status = o.Status
 	case *model.CheckResourceBulkOperationsV2Outcome:
-		status, allows = o.Status, o.Decision != nil && anyAllowed(*o.Decision)
+		status = o.Status
 	case *model.FilterV2Outcome:
-		status, allows = o.Status, filterRank(o.Result.CalculationResult) > 0
+		status = o.Status
 	default:
 		return fmt.Sprintf("an answer of type %T, which this test cannot judge", outcome)
 	}
+	grants, _ := allowanceOf(outcome)
+	allows := len(grants) > 0
 	raw, _ := json.Marshal(outcome)
 	switch {
 	case status != http.StatusOK:
@@ -500,15 +528,6 @@ func refusalProblem(outcome any) string {
 		return fmt.Sprintf("an allow: %s", raw)
 	}
 	return ""
-}
-
-func anyAllowed(decision map[string][]string) bool {
-	for _, ids := range decision {
-		if len(ids) > 0 {
-			return true
-		}
-	}
-	return false
 }
 
 // healthNames reports whether the body of the agent's /health names one of

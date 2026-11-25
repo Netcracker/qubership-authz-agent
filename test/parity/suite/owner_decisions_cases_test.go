@@ -314,8 +314,9 @@ func legacyPointCases(t *testing.T, sets []any, tenant string, status int) []own
 	return cases
 }
 
-// A point of part A whose raw reads hold a set that reads an undeclared PIP
-// makes a case only where legacy refused a check of the point with 400.
+// A point of the legacy-export check whose raw reads hold a set that reads an
+// undeclared PIP makes a case only where legacy refused a check of the point
+// with 400.
 func TestLegacyOwnerDecisionCases_AnUndeclaredPIPMakesACaseOnlyWhenLegacyRefusedACheck(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -404,5 +405,18 @@ func TestAllOwnerDecisionCases_FindsTheRecordedForms(t *testing.T) {
 		if diff := cmp.Diff(want, got[name]); diff != "" {
 			t.Errorf("decisions of %s (-want +got):\n%s", name, diff)
 		}
+	}
+}
+
+// The legacy-export check reads the same entry for the class undeclared-pip
+// (acceptedLegacyDifference), so both checks state one answer for a set that
+// reads an undeclared attribute.
+func TestIntendedAnswer_OfAnUndeclaredPIPIsItsAcceptedDivergence(t *testing.T) {
+	entry, ok := acceptedExportDivergences[formUndeclaredPIP]
+	if !ok {
+		t.Fatalf("acceptedExportDivergences has no entry %q", formUndeclaredPIP)
+	}
+	if got := intendedAnswer(formUndeclaredPIP); got != entry.Reason {
+		t.Errorf("intendedAnswer(%q) = %q, want the Reason of its entry %q", formUndeclaredPIP, got, entry.Reason)
 	}
 }

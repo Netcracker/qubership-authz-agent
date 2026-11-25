@@ -86,7 +86,11 @@ func TestCheckV2Outcome_ObligationsMember(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			written, err := json.Marshal(checkV2Outcome(200, []byte(tc.body), nil))
+			outcome, err := checkV2Outcome(200, []byte(tc.body), nil)
+			if err != nil {
+				t.Fatalf("checkV2Outcome(200, %s): %v", tc.body, err)
+			}
+			written, err := json.Marshal(outcome)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -168,8 +172,12 @@ func TestV2Query_Obligations(t *testing.T) {
 // The comparison sorts the lists of strings inside the obligations member and
 // leaves the decision as it is.
 func TestNormalizeComparable_SortsObligationFields(t *testing.T) {
-	got := normalizeComparable(PSUITE_ROW_7_CHECK_RESOURCE_V2_OUTCOME, "c",
-		checkV2Outcome(200, []byte(`{"decision":true,"obligations":{"read":{"whitelist":{"fields":["b","a"]}}}}`), nil))
+	body := `{"decision":true,"obligations":{"read":{"whitelist":{"fields":["b","a"]}}}}`
+	outcome, err := checkV2Outcome(200, []byte(body), nil)
+	if err != nil {
+		t.Fatalf("checkV2Outcome(200, %s): %v", body, err)
+	}
+	got := normalizeComparable(PSUITE_ROW_7_CHECK_RESOURCE_V2_OUTCOME, "c", outcome)
 	want := &model.CheckResourceV2Outcome{Status: 200, Decision: true, Obligations: model.Member{Present: true,
 		Value: map[string]any{"read": map[string]any{"whitelist": map[string]any{"fields": []any{"a", "b"}}}}}}
 	if diff := cmp.Diff(want, got); diff != "" {

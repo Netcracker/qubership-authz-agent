@@ -34,8 +34,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-
-	"authz-agent/test/parity/suite/model"
 )
 
 // exportFedProfile is the PARITY_PROFILE under which the agent pulls its
@@ -54,7 +52,7 @@ const (
 	exportPIPsPath       = "/access/v3/config/pips"
 )
 
-// The empty export, which replay mounts before each function. It matches
+// The empty export, which replay serves before each function. It matches
 // PARITY_EXPORT_EMPTY of the Makefile, which the stand serves until the suite
 // starts.
 var (
@@ -69,13 +67,14 @@ type ExportFedConfig struct {
 	// exports/<id>.json. PARITY_EXPORT_BUNDLE, default testdata/export-bundle.
 	BundleDir string
 	// SourceControlURL is the control endpoint of the pipstub instance the
-	// agent's AUTHZ_PAP_CLIENT_SOURCE_URL points at, which serves the mounted
-	// export. PARITY_EXPORT_SOURCE_CONTROL_URL, default http://localhost:28194.
+	// agent's AUTHZ_PAP_CLIENT_SOURCE_URL points at, which serves the export
+	// under test. PARITY_EXPORT_SOURCE_CONTROL_URL, default
+	// http://localhost:$PARITY_EXPORT_SOURCE_PORT, port 28195 unless set.
 	SourceControlURL string
 	// Run selects the test functions of the bundle whose name it matches.
 	// PARITY_EXPORT_RUN, default every function.
 	Run *regexp.Regexp
-	// PullTimeout bounds the wait for the agent to load a mounted export.
+	// PullTimeout bounds the wait for the agent to load a served export.
 	// PARITY_EXPORT_PULL_TIMEOUT_SECONDS, default 30.
 	PullTimeout time.Duration
 }
@@ -84,7 +83,7 @@ type ExportFedConfig struct {
 func LoadExportFedConfig() (ExportFedConfig, error) {
 	cfg := ExportFedConfig{
 		BundleDir:        envOr("PARITY_EXPORT_BUNDLE", "testdata/export-bundle"),
-		SourceControlURL: envOr("PARITY_EXPORT_SOURCE_CONTROL_URL", "http://localhost:"+envOr("PARITY_EXPORT_SOURCE_PORT", "28194")),
+		SourceControlURL: envOr("PARITY_EXPORT_SOURCE_CONTROL_URL", "http://localhost:"+envOr("PARITY_EXPORT_SOURCE_PORT", "28195")),
 		PullTimeout:      30 * time.Second,
 	}
 	if v := os.Getenv("PARITY_EXPORT_RUN"); v != "" {
@@ -122,7 +121,7 @@ type exportFunction struct {
 // exportEvent is one entry of a function's log, by Ev:
 //   - "pin", "configure", "pin-reset", "calls-reset": a call to a PIP stub
 //     (Mock names the stub by the URL it had when the log was dumped);
-//   - "export": mount the export ID;
+//   - "export": serve the export ID;
 //   - "http": send a decision request as recorded, with the token labels of
 //     Headers replaced by tokens;
 //   - "golden": compare the answer to the last request with the golden at
@@ -240,71 +239,10 @@ func goldenRow(path string) (ParityEndpointID, string, bool) {
 }
 
 // decisionOutcome turns the agent's answer to a decision request into the
-// golden target of row id, as the case runners build it.
+// golden target of row id, through the builder the case runners record with
+// (see outcomeOf).
 func decisionOutcome(id ParityEndpointID, status int, body []byte) (any, error) {
-	target := NewGoldenTarget(id)
-	ok := status == http.StatusOK
-	switch t := target.(type) {
-	case *model.CheckResourceOutcome:
-		t.Status = status
-		t.Decision = ok && decodeBoolean(body)
-		return t, nil
-	case *model.FilterOutcome:
-		t.Status = status
-		if ok {
-			if err := decodeJSON(body, &t.Result); err != nil {
-				return nil, err
-			}
-		}
-		return t, nil
-	case *model.CheckResourceBulkOutcome:
-		t.Status = status
-		if ok {
-			var ids []string
-			if err := decodeJSON(body, &ids); err != nil {
-				return nil, err
-			}
-			sort.Strings(ids)
-			if ids == nil {
-				ids = []string{}
-			}
-			t.Allowed = &ids
-		}
-		return t, nil
-	case *model.CheckResourceBulkOperationsOutcome:
-		t.Status = status
-		if ok {
-			byOp := map[string][]string{}
-			if err := decodeJSON(body, &byOp); err != nil {
-				return nil, err
-			}
-			for op := range byOp {
-				sort.Strings(byOp[op])
-			}
-			t.Decision = &byOp
-		}
-		return t, nil
-	case *model.CheckResourceV2Outcome:
-		return checkV2Outcome(status, body, nil), nil
-	case *model.CheckResourceBulkOperationsV2Outcome:
-		return bulkOperationsV2Outcome(status, body, nil)
-	case *model.FilterV2Outcome:
-		return filterV2Outcome(status, body, nil), nil
-	case *bool:
-		// A plain row records a 200 answer; a refusal is not a denial.
-		if !ok {
-			return nil, fmt.Errorf("status %d: %s", status, strings.TrimSpace(string(body)))
-		}
-		*t = decodeBoolean(body)
-		return t, nil
-	}
-	if !ok {
-		return nil, fmt.Errorf("status %d: %s", status, strings.TrimSpace(string(body)))
-	}
-	if err := decodeJSON(body, target); err != nil {
-		return nil, err
-	}
-	return target, nil
+	return outcomeOf(id, status, body, nil)
 }
 
 // sameOutcome compares two golden targets of row id the way the comparator
@@ -408,7 +346,7 @@ func (lt *labelTokens) token(label string) (string, error) {
 // exportSource serves an export to the agent and returns once the agent has
 // loaded it.
 type exportSource interface {
-	Mount(ctx context.Context, policySets, pips json.RawMessage) error
+	Serve(ctx context.Context, policySets, pips json.RawMessage) error
 }
 
 // stubExportSource serves the export from a pipstub instance and returns once
@@ -417,17 +355,17 @@ type exportSource interface {
 // failed (502 when the agent refused the export or could not fetch it), since
 // the agent then keeps its previous policies. Where the agent has no pull
 // route, it waits for a pull of the agent's own that fetched both documents
-// after the mount and has finished, which the pull loop shows by starting the
-// next one. A refused export is then told only by a canary set mounted beside
-// it, which TestExportFedLegacyAgent and TestExportFedOwnerDecisions mount and
-// TestExportFedAgent does not.
+// after the export is served and has finished, which the pull loop shows by
+// starting the next one. A refused export is then told only by a canary set
+// served beside it, which TestExportFedLegacyAgent and
+// TestExportFedOwnerDecisions serve and TestExportFedAgent does not.
 type stubExportSource struct {
 	stub    *PipController
 	timeout time.Duration
 	poll    time.Duration
 }
 
-func (s *stubExportSource) Mount(ctx context.Context, policySets, pips json.RawMessage) error {
+func (s *stubExportSource) Serve(ctx context.Context, policySets, pips json.RawMessage) error {
 	routes := []pipStubRoute{
 		{Path: exportPolicySetsPath, Responses: []PipStubResponse{{StatusCode: http.StatusOK, BodyRaw: string(policySets)}}},
 		{Path: exportPIPsPath, Responses: []PipStubResponse{{StatusCode: http.StatusOK, BodyRaw: string(pips)}}},
@@ -450,7 +388,7 @@ func (s *stubExportSource) Mount(ctx context.Context, policySets, pips json.RawM
 			return err
 		}
 		last = calls
-		if loadedAfterMount(calls) {
+		if loadedAfterServe(calls) {
 			return nil
 		}
 		select {
@@ -459,16 +397,16 @@ func (s *stubExportSource) Mount(ctx context.Context, policySets, pips json.RawM
 		case <-time.After(s.poll):
 		}
 	}
-	return fmt.Errorf("timed out after %s waiting for the agent to pull the mounted export; calls since the mount: %s",
+	return fmt.Errorf("timed out after %s waiting for the agent to pull the served export; calls since the export was served: %s",
 		s.timeout, callPaths(last))
 }
 
-// loadedAfterMount reports whether calls, made since the mount, hold a fetch
+// loadedAfterServe reports whether calls, made since the export was served, hold a fetch
 // of the policy sets, a fetch of the PIPs after it, and a fetch of the policy
 // sets after that. A pull fetches the policy sets first, so a PIP fetch that
 // comes first belongs to a pull that fetched the policy sets of the previous
-// export, and only the pull that starts after the mount loads this one.
-func loadedAfterMount(calls []PipStubCall) bool {
+// export, and only the pull that starts after the export is served loads this one.
+func loadedAfterServe(calls []PipStubCall) bool {
 	step := 0
 	for _, c := range calls {
 		switch {
@@ -540,14 +478,14 @@ type exportReplayer struct {
 // replay runs one function and returns a verdict per golden. The caller resets
 // the stubs' pinned routes between functions; every route an event pins is
 // recorded for that reset. The function starts from the empty export. From a
-// mount that fails until the next one that loads, the agent holds an export
+// serve that fails until the next one that loads, the agent holds an export
 // other than the one the goldens were recorded with, so replay sends none of
 // the requests in between and gives their goldens [verdictBroken], with the
-// failed mount as the detail.
+// failed serve as the detail.
 func (r *exportReplayer) replay(ctx context.Context, fn exportFunction) ([]exportResult, error) {
 	var out []exportResult
 	broken := ""
-	if err := r.source.Mount(ctx, emptyExportPolicySets, emptyExportPIPs); err != nil {
+	if err := r.source.Serve(ctx, emptyExportPolicySets, emptyExportPIPs); err != nil {
 		broken = setupBroken(fmt.Errorf("the empty export: %w", err))
 	}
 	var status int
@@ -583,7 +521,7 @@ func (r *exportReplayer) replay(ctx context.Context, fn exportFunction) ([]expor
 				return out, err
 			}
 			broken = ""
-			if err := r.source.Mount(ctx, ps, pips); err != nil {
+			if err := r.source.Serve(ctx, ps, pips); err != nil {
 				broken = setupBroken(fmt.Errorf("export %s: %w", ev.ID, err))
 			}
 		case "http":
@@ -726,12 +664,12 @@ func (r *exportReplayer) judge(group []exportEvent, sent bool, status int, body 
 	return res
 }
 
-// grantsMore reports whether actual allows something that one of the golden
-// targets wants (the variants of one golden) does not: a check that allows
-// where the golden denies, an id or an operation the golden leaves out, or a
-// filter result of a higher rank (DENY, then USE_FILTER_CONDITION, then
-// ALLOW). An accepted class covers such an answer only in part A of the
-// profile, where its entry sets AllowsMore.
+// grantsMore reports whether actual allows something that each of the golden
+// targets wants (the variants of one golden) withholds: a check that allows
+// where the golden denies, an id or an operation the golden leaves out, a
+// filter that allows every row where the golden does not, or a filter
+// condition other than the golden's where the golden does not allow every row.
+// No accepted class covers such an answer.
 func grantsMore(actual any, wants []any) bool {
 	for _, want := range wants {
 		if !grants(actual, want) {
@@ -741,101 +679,24 @@ func grantsMore(actual any, wants []any) bool {
 	return len(wants) > 0
 }
 
+// grants reports whether actual allows something want does not, by what
+// allowanceOf reads from each. A target that is not of a decision row counts
+// as allowing more, so that no accepted class covers it.
 func grants(actual, want any) bool {
-	switch a := actual.(type) {
-	case *bool:
-		w, _ := want.(*bool)
-		return *a && (w == nil || !*w)
-	case *model.CheckResourceOutcome:
-		w, _ := want.(*model.CheckResourceOutcome)
-		return a.Status == http.StatusOK && a.Decision && (w == nil || w.Status != http.StatusOK || !w.Decision)
-	case *model.CheckResourceV2Outcome:
-		w, _ := want.(*model.CheckResourceV2Outcome)
-		return a.Status == http.StatusOK && a.Decision && (w == nil || w.Status != http.StatusOK || !w.Decision)
-	case *[]string:
-		w, _ := want.(*[]string)
-		return w != nil && !subset(*a, *w)
-	case *model.CheckResourceResponse:
-		w, _ := want.(*model.CheckResourceResponse)
-		return a.Decision && (w == nil || !w.Decision)
-	case *model.CheckResourceBulkOutcome:
-		// A refused golden allows no id, so an answer that allows none grants
-		// nothing more than it.
-		var allowed []string
-		if w, _ := want.(*model.CheckResourceBulkOutcome); w != nil && w.Allowed != nil {
-			allowed = *w.Allowed
+	allowed, ok := allowanceOf(actual)
+	if !ok {
+		return true
+	}
+	wanted, ok := allowanceOf(want)
+	if !ok {
+		return true
+	}
+	for g := range allowed {
+		if !covers(wanted, g) {
+			return true
 		}
-		return a.Allowed != nil && !subset(*a.Allowed, allowed)
-	case *map[string][]string:
-		w, _ := want.(*map[string][]string)
-		return w != nil && !opsSubset(*a, *w)
-	case *model.CheckResourceBulkOperationsOutcome:
-		var allowed map[string][]string
-		if w, _ := want.(*model.CheckResourceBulkOperationsOutcome); w != nil && w.Decision != nil {
-			allowed = *w.Decision
-		}
-		return a.Decision != nil && !opsSubset(*a.Decision, allowed)
-	case *model.CheckResourceBulkOperationsV2Outcome:
-		var allowed map[string][]string
-		if w, _ := want.(*model.CheckResourceBulkOperationsV2Outcome); w != nil && w.Decision != nil {
-			allowed = *w.Decision
-		}
-		return a.Decision != nil && !opsSubset(*a.Decision, allowed)
-	case *model.CheckResourcesResponse:
-		w, _ := want.(*model.CheckResourcesResponse)
-		return w != nil && !opsSubset(a.Decision, w.Decision)
-	case *model.FilterOutcome:
-		w, _ := want.(*model.FilterOutcome)
-		if w == nil || w.Status != http.StatusOK {
-			return a.Status == http.StatusOK && filterRank(a.Result.CalculationResult) > 0
-		}
-		return a.Status == http.StatusOK && filterRank(a.Result.CalculationResult) > filterRank(w.Result.CalculationResult)
-	case *model.FilterV2Outcome:
-		w, _ := want.(*model.FilterV2Outcome)
-		if w == nil || w.Status != http.StatusOK {
-			return a.Status == http.StatusOK && filterRank(a.Result.CalculationResult) > 0
-		}
-		return a.Status == http.StatusOK && filterRank(a.Result.CalculationResult) > filterRank(w.Result.CalculationResult)
-	case *model.OldFilterEvaluationResult:
-		w, _ := want.(*model.OldFilterEvaluationResult)
-		return w != nil && filterRank(a.CalculationResult) > filterRank(w.CalculationResult)
-	case *model.FilterResponse:
-		w, _ := want.(*model.FilterResponse)
-		return w != nil && filterRank(a.CalculationResult) > filterRank(w.CalculationResult)
 	}
 	return false
-}
-
-func filterRank(result string) int {
-	switch result {
-	case "USE_FILTER_CONDITION":
-		return 1
-	case "ALLOW":
-		return 2
-	}
-	return 0
-}
-
-func subset(a, b []string) bool {
-	in := map[string]bool{}
-	for _, x := range b {
-		in[x] = true
-	}
-	for _, x := range a {
-		if !in[x] {
-			return false
-		}
-	}
-	return true
-}
-
-func opsSubset(a, b map[string][]string) bool {
-	for op, ids := range a {
-		if !subset(ids, b[op]) {
-			return false
-		}
-	}
-	return true
 }
 
 // exportRunProblem returns why a run of the profile established nothing, or ""

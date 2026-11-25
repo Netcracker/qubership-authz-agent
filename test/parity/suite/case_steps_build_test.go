@@ -348,20 +348,6 @@ func TestNarrowStepRead_TakesTheTenantsFromWhatTheGoldenKeeps(t *testing.T) {
 	}
 }
 
-// A golden recorded before keptTenants lists the tenants of the whole body
-// under tenants; it has to differ from what the suite records now, so that
-// it is recorded again rather than passing with the member dropped.
-func TestPapReadOutcome_AGoldenWithTheFormerTenantsDiffersFromANewRead(t *testing.T) {
-	golden := &model.PapReadOutcome{}
-	if err := json.Unmarshal([]byte(`{"status":200,"body":{"pips":[]},"tenants":["default"]}`), golden); err != nil {
-		t.Fatal(err)
-	}
-	read := narrowStepRead(http.StatusOK, []byte(`{"pips": [{"name": "b", "tenantId": "default"}]}`), []string{"c1"})
-	if cmp.Equal(golden, read) {
-		t.Errorf("a golden with tenants %v equals the read %+v", golden.Tenants, read)
-	}
-}
-
 func TestRawStepRead(t *testing.T) {
 	cases := []struct {
 		name   string

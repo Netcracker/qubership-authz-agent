@@ -31,18 +31,21 @@ import (
 // on: an iterate block legacy never evaluates (formNeverEvaluated), or a
 // target or condition that reads a PIP the export does not declare
 // (formUndeclaredPIP).
-// The agent counts the policy set that holds the form as a source that
-// fails every time, and nothing more: it accepts the export, its /health
-// names the set, and it answers each decision legacy failed because of the
-// form with 200 and nothing allowed.
+// The agent accepts the export, its /health names the set that holds the
+// form, and it answers each decision legacy failed because of the form as
+// intendedAnswer states. A golden of such a decision allows nothing, and no
+// check can tell from it whether an allow of the agent depends on the form,
+// so the test wants 200 with nothing allowed, as the legacy-export check does.
 //
 // The exports come from the case files and the goldens: the regular cases
 // whose upload legacy accepted (regularOwnerDecisionCases), and the points
-// of part A whose raw reads hold the form (legacyOwnerDecisionCases). Each
-// export is mounted with the canary set of part A. Each of the three checks is a subtest of the case: "setup", which
-// fails with setupBrokenPrefix when the agent does not load the export (the
-// pull fails, or the canary is denied); "health-names-failing-sets"; and one
-// per decision, named by its golden path. When the setup broke, the agent
+// of the legacy-export check whose raw reads hold the form
+// (legacyOwnerDecisionCases). The export source serves each export with the
+// canary set of the legacy-export check (legacyCanarySet). Each of the three
+// checks is a subtest of the case: "setup", which fails with
+// setupBrokenPrefix when the agent does not load the export (the pull fails,
+// or the canary is denied); "health-names-failing-sets"; and one per
+// decision, named by its golden path. When the setup broke, the agent
 // holds another export, and health-names-failing-sets and the decision
 // subtests are skipped.
 // It runs only under PARITY_PROFILE=authz-agent-export
@@ -91,8 +94,8 @@ func TestExportFedOwnerDecisions(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				if err := source.Mount(ctx, ps, pips); err != nil {
-					return fmt.Errorf("mount the export: %w; want the export accepted with the set as a failed source", err)
+				if err := source.Serve(ctx, ps, pips); err != nil {
+					return fmt.Errorf("serve the export: %w; want the export accepted", err)
 				}
 				for _, f := range oc.forms {
 					t.Logf("form %s: %s, in set %s", f.kind, f.what, strings.Join(f.sets, " / "))
@@ -100,7 +103,7 @@ func TestExportFedOwnerDecisions(t *testing.T) {
 				s.cfg.TenantID = tenant
 				if !s.legacyCanaryAllowed(canary) {
 					return fmt.Errorf("the agent refused the export: the canary set %s is denied, so the agent kept its "+
-						"previous snapshot; want the export accepted with the set as a failed source", canary)
+						"previous snapshot; want the export accepted", canary)
 				}
 				return nil
 			})
@@ -128,7 +131,8 @@ func TestExportFedOwnerDecisions(t *testing.T) {
 					s.cfg.TenantID = valueOr(d.tenant, stand)
 					_, outcome := s.sendRequest(oc.resourceType, d.request, s.requestTokens(d.request))
 					if problem := refusalProblem(outcome); problem != "" {
-						t.Errorf("%s: legacy answered %d; want 200 with nothing allowed, got %s", d.path, d.status, problem)
+						t.Errorf("%s: legacy answered %d, the agent answered %s; want 200 with nothing allowed. "+
+							"The agent's intended answer: %s", d.path, d.status, problem, intendedAnswer(formKindFailing(d.status)))
 					}
 				})
 			}

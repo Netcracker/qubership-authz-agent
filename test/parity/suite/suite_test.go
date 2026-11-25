@@ -25,10 +25,10 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// ParitySuite is the testify entry point per D-A, with one test method per
+// ParitySuite is the testify entry point, with one test method per
 // row of the Planned Test Catalogue. The TearDownTest hook already calls ResetPinnedRoutes on
 // pip-mock, entitlements-mock and user-management-mock so every sub-case starts from a known
-// state per D-O.
+// state.
 type ParitySuite struct {
 	suite.Suite
 

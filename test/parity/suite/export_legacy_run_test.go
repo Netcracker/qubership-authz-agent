@@ -25,26 +25,25 @@ import (
 	"net/http"
 	"path/filepath"
 	"slices"
-	"strings"
 	"testing"
 	"time"
 
 	"authz-agent/test/parity/suite/model"
 )
 
-// TestExportFedLegacyAgent is part A of the export-fed profile: it feeds the
-// agent the v3 exports legacy access-control held, as the raw reads of the
-// sequence cases recorded them, and compares the agent's decisions with the
-// legacy goldens recorded at the same point (legacyExportCases). Each point's
-// export is mounted on the export source with a canary set beside it in each
-// tenant its decisions run in (legacyCanaries). The point's setup subtests
-// fail, with setupBrokenPrefix, when the agent does not load the export or one
-// of its tenants: the pull fails, or a canary is denied. The decisions that
+// TestExportFedLegacyAgent, the legacy-export check of the export-fed
+// profile, feeds the agent the v3 exports legacy access-control held, as the
+// raw reads of the sequence cases recorded them, and compares the agent's
+// decisions with the legacy goldens recorded at the same point
+// (legacyExportPoint). The export source serves each point's export with a
+// canary set beside it in each tenant its decisions run in (legacyCanaries).
+// The point's setup subtests fail, with setupBrokenPrefix, when the agent
+// does not load the export or one of its tenants: the pull fails, or a canary is denied. The decisions that
 // depend on it are then skipped and counted apart (setUpLegacyPoint), because
-// the agent holds another configuration. A golden fails when the agent's answer differs from it, unless the kind of its
-// class (set-type for set-type:DEFAULT) is listed in
-// acceptedExportDivergences and the answer allows nothing the golden denies,
-// or the entry covers such an answer too (AllowsMore). It runs only under
+// the agent holds another configuration. A golden fails when the agent's
+// answer differs from it, unless the kind of its class (set-type for
+// set-type:DEFAULT) is listed in acceptedExportDivergences and the answer
+// allows nothing the golden denies (judgeLegacyAnswer). It runs only under
 // PARITY_PROFILE=authz-agent-export (make parity-export-legacy);
 // PARITY_EXPORT_RUN selects the cases whose <file>/<case id> it matches.
 func TestExportFedLegacyAgent(t *testing.T) {
@@ -67,7 +66,7 @@ func TestExportFedLegacyAgent(t *testing.T) {
 	ctx := context.Background()
 	var all []legacyResult
 	uncompared := map[string]string{}
-	mounted := 0
+	served := 0
 	stand := cfg.TenantID
 	for _, lc := range cases {
 		name := lc.file + "/" + lc.id
@@ -92,15 +91,15 @@ func TestExportFedLegacyAgent(t *testing.T) {
 				return nil
 			})
 			for _, p := range lc.points {
-				mounted++
-				canaries := legacyCanaries(p, mounted, valueOr(lc.tenant, stand), stand)
+				served++
+				canaries := legacyCanaries(p, served, valueOr(lc.tenant, stand), stand)
 				t.Run(p.step, func(t *testing.T) {
 					setup := legacyPointSetup{point: caseBroken}
 					if caseBroken == "" {
 						setup = setUpLegacyPoint(t, p, canaries, stand, legacyPointLoader{
-							mount: func(t *testing.T, ps, pips json.RawMessage) error {
+							serve: func(t *testing.T, ps, pips json.RawMessage) error {
 								s.SetT(t)
-								return source.Mount(ctx, ps, pips)
+								return source.Serve(ctx, ps, pips)
 							},
 							allowed: func(t *testing.T, c legacyCanary) bool {
 								s.SetT(t)
@@ -182,10 +181,10 @@ func caseFileNames() ([]string, error) {
 	return names, err
 }
 
-// legacyPointLoader mounts the export of a point and checks one of its
-// canaries; the run drives the stand through it.
+// legacyPointLoader configures the export source to serve the export of a
+// point and checks one of its canaries; the run drives the stand through it.
 type legacyPointLoader struct {
-	mount   func(t *testing.T, ps, pips json.RawMessage) error
+	serve   func(t *testing.T, ps, pips json.RawMessage) error
 	allowed func(t *testing.T, c legacyCanary) bool
 }
 
@@ -207,29 +206,29 @@ func (b legacyPointSetup) brokenFor(d legacyDecision) string {
 	return b.tenants[valueOr(d.tenant, b.stand)]
 }
 
-// setUpLegacyPoint mounts the export of p with canaries through l and checks
+// setUpLegacyPoint serves the export of p with canaries through l and checks
 // them, the first, which is in the tenant of the case, in the subtest "setup"
 // and each other in a subtest "setup <tenant>". A denied canary means the
 // agent holds another configuration of its tenant, and the decisions in that
-// tenant are broken. When the mount fails, or every canary is denied, the
+// tenant are broken. When serving fails, or every canary is denied, the
 // agent holds none of the export, and every decision of p is broken, those in
 // a tenant without a canary included.
 func setUpLegacyPoint(t *testing.T, p legacyExportPoint, canaries []legacyCanary, stand string, l legacyPointLoader) legacyPointSetup {
 	t.Helper()
 	b := legacyPointSetup{tenants: map[string]string{}, stand: stand}
-	mounted := false
+	served := false
 	first := runSetup(t, func(t *testing.T) error {
 		ps, pips, err := legacyExportDocuments(p, canaries)
 		if err != nil {
 			return err
 		}
-		if err := l.mount(t, ps, pips); err != nil {
-			return fmt.Errorf("mount the export of step %s: %w", p.step, err)
+		if err := l.serve(t, ps, pips); err != nil {
+			return fmt.Errorf("serve the export of step %s: %w", p.step, err)
 		}
-		mounted = true
+		served = true
 		return deniedCanary(t, p, canaries[0], l)
 	})
-	if !mounted {
+	if !served {
 		b.point = first
 		return b
 	}
@@ -263,7 +262,7 @@ func deniedCanary(t *testing.T, p legacyExportPoint, c legacyCanary, l legacyPoi
 }
 
 // legacyCanaryAllowed checks the canary type for parity-reader and reports
-// whether the agent allows it, that is, whether it loaded the export mounted
+// whether the agent allows it, that is, whether it loaded the export served
 // with that canary.
 func (s *ParitySuite) legacyCanaryAllowed(canary string) bool {
 	_, outcome := s.sendRequest(canary, isolatedRequest{name: "canary", operation: "READ"}, s.requestTokens(isolatedRequest{}))
@@ -273,11 +272,10 @@ func (s *ParitySuite) legacyCanaryAllowed(canary string) bool {
 
 // judgeLegacyDecision sends the decision d at point p of case lc and compares
 // the answer with its golden, or with the recorded variants of its order
-// class.
+// class (judgeLegacyAnswer).
 func (s *ParitySuite) judgeLegacyDecision(lc legacyExportCase, p legacyExportPoint, d legacyDecision) legacyResult {
 	req := d.request
-	res := legacyResult{exportResult: exportResult{Test: lc.file + "/" + lc.id, Path: d.path, Status: "legacy",
-		Families: featureFamilies(p.features), Class: legacyClass(p)}, Features: p.features}
+	res := newLegacyResult(lc, p, d)
 	s.pinRoutes(req.pins)
 	s.pinUserManagement(req.userManagement)
 	time.Sleep(req.pause)
@@ -288,7 +286,6 @@ func (s *ParitySuite) judgeLegacyDecision(lc legacyExportCase, p legacyExportPoi
 		return res
 	}
 	wants := make([]any, len(paths))
-	var diffs []string
 	for i, path := range paths {
 		want, err := readGoldenTarget(s.comparator.goldenRoot, id, path)
 		if err != nil {
@@ -296,19 +293,6 @@ func (s *ParitySuite) judgeLegacyDecision(lc legacyExportCase, p legacyExportPoi
 			return res
 		}
 		wants[i] = want
-		_, sub, _ := goldenRow(path)
-		diff := sameOutcome(id, sub, want, actual)
-		if diff == "" {
-			res.Verdict = verdictMatch
-			return res
-		}
-		diffs = append(diffs, diff)
 	}
-	res.Verdict, res.Detail = verdictDiffers, strings.Join(diffs, "\n")
-	res.WrongAllow = grantsMore(actual, wants)
-	if accepted, ok := acceptedLegacyDifference(res.Class, res.WrongAllow); ok {
-		res.Verdict = verdictAccepted
-		res.Detail = "class " + res.Class + ", decided in " + accepted.Decision + ": " + accepted.Reason
-	}
-	return res
+	return judgeLegacyAnswer(res, id, paths, wants, actual)
 }

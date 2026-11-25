@@ -115,11 +115,10 @@ type RowMeta struct {
 	SortSlices        bool
 }
 
-// rowMetas is keyed by ParityEndpointID and populated from the parity
-// contract's Summary Table. IgnoreObligations flips for v2 rows 7/8/9/10
-// per D-E. SortSlices flips for rows 3/4/5/8/9 where the wire order is
-// "LinkedHashSet-ordered but the client discards order" — the comparator
-// therefore sorts before running cmp.Diff per D-M.
+// rowMetas is keyed by ParityEndpointID. IgnoreObligations is set for the v2
+// rows 7 to 10, which send obligations=false. SortSlices is set for the rows
+// 3, 4, 5, 8, and 9, whose lists the stand writes in insertion order and the
+// client reads as a set, so the comparator sorts them before cmp.Diff.
 var rowMetas = map[ParityEndpointID]RowMeta{
 	PSUITE_ROW_1_API_VERSION: {
 		ID: PSUITE_ROW_1_API_VERSION, Name: "api-version", HTTPMethod: "GET",
@@ -270,7 +269,7 @@ func Meta(id ParityEndpointID) RowMeta {
 
 // NewGoldenTarget returns a fresh zero-value pointer that the
 // GoldenComparator unmarshals both the golden JSON and the actual response
-// into per D-M. CLANG / AGG / SUB / ENT rows reuse the row id they inherit
+// into. CLANG / AGG / SUB / ENT rows reuse the row id they inherit
 // from the parity-contract row they live on, so this map covers them
 // transitively — no extra ids are needed.
 func NewGoldenTarget(id ParityEndpointID) any {

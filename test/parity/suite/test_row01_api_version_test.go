@@ -23,7 +23,7 @@ import (
 
 // TestRow01ApiVersion drives parity-contract row 1 (GET /api-version, PSUITE-1-m2m).
 // The endpoint answers without authentication, so no Authorization or
-// Incoming-Token header is sent. Golden asserts the integer byte shape from D-V item 11.
+// Incoming-Token header is sent. The golden records the version numbers as integers.
 func (s *ParitySuite) TestRow01ApiVersion() {
 	ctx := context.Background()
 

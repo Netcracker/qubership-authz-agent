@@ -118,7 +118,7 @@ func TestParseTokenLabel(t *testing.T) {
 	}
 }
 
-func TestLoadedAfterMount_WantsAWholePullAfterTheMountThenTheNext(t *testing.T) {
+func TestLoadedAfterServe_WantsAWholePullAfterTheExportIsServedThenTheNext(t *testing.T) {
 	call := func(paths ...string) []PipStubCall {
 		out := make([]PipStubCall, len(paths))
 		for i, p := range paths {
@@ -132,15 +132,15 @@ func TestLoadedAfterMount_WantsAWholePullAfterTheMountThenTheNext(t *testing.T) 
 		want  bool
 	}{
 		{"nothing fetched", call(), false},
-		{"a pull that started before the mount", call(exportPIPsPath), false},
-		{"a pull after the mount, still converting", call(exportPolicySetsPath, exportPIPsPath), false},
+		{"a pull that started before the export was served", call(exportPIPsPath), false},
+		{"a pull after the export was served, still converting", call(exportPolicySetsPath, exportPIPsPath), false},
 		{"the next pull started", call(exportPolicySetsPath, exportPIPsPath, exportPolicySetsPath), true},
 		{"a pull that fetched the previous policy sets, then one still converting", call(exportPIPsPath, exportPolicySetsPath), false},
 		{"a pull that fetched the previous policy sets, then a whole pull", call(exportPIPsPath, exportPolicySetsPath, exportPIPsPath, exportPolicySetsPath), true},
 	}
 	for _, tc := range cases {
-		if got := loadedAfterMount(tc.calls); got != tc.want {
-			t.Errorf("%s: loadedAfterMount(%s) = %v, want %v", tc.name, callPaths(tc.calls), got, tc.want)
+		if got := loadedAfterServe(tc.calls); got != tc.want {
+			t.Errorf("%s: loadedAfterServe(%s) = %v, want %v", tc.name, callPaths(tc.calls), got, tc.want)
 		}
 	}
 }
@@ -176,23 +176,23 @@ func TestBundleExports_JoinsTheElementsOfAnExport(t *testing.T) {
 
 // fakeStand is the agent, its export source, and the PIP stub of one replay:
 // the agent answers each check with the decision the test sets for the
-// mounted export.
+// served export.
 type fakeStand struct {
 	mu      sync.Mutex
-	mounted string
-	answers map[string]string // mounted policySets text -> check body
+	served  string
+	answers map[string]string // served policySets text -> check body
 	refused map[string]bool   // policySets text the agent does not load
 	pins    []string
 	sent    []*http.Request
 }
 
-func (f *fakeStand) Mount(_ context.Context, policySets, _ json.RawMessage) error {
+func (f *fakeStand) Serve(_ context.Context, policySets, _ json.RawMessage) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.refused[string(policySets)] {
 		return &pullStatusError{url: "http://agent/internal/v1/pull", status: http.StatusBadGateway, body: "refused"}
 	}
-	f.mounted = string(policySets)
+	f.served = string(policySets)
 	return nil
 }
 
@@ -201,7 +201,7 @@ func (f *fakeStand) agent() http.Handler {
 		f.mu.Lock()
 		defer f.mu.Unlock()
 		f.sent = append(f.sent, r)
-		_, _ = io.WriteString(w, f.answers[f.mounted])
+		_, _ = io.WriteString(w, f.answers[f.served])
 	})
 }
 
@@ -298,7 +298,7 @@ func golden(path, class string, agent string) exportEvent {
 
 const outcomePath = "check-resource-v1-outcome/sequence/c/"
 
-func TestExportReplayer_JudgesEachGoldenByTheMountedExport(t *testing.T) {
+func TestExportReplayer_JudgesEachGoldenByTheServedExport(t *testing.T) {
 	allowed, denied := `{"status":200,"decision":true}`, `{"status":200,"decision":false}`
 	cases := []struct {
 		name   string
@@ -328,7 +328,7 @@ func TestExportReplayer_JudgesEachGoldenByTheMountedExport(t *testing.T) {
 
 // A function whose decisions come before any export the agent loaded, as when
 // the pull of its first export fails, is judged under the empty export, not
-// under the export the function before it mounted.
+// under the export served for the function before it.
 func TestExportReplayer_StartsEachFunctionFromTheEmptyExport(t *testing.T) {
 	allowed, denied := `{"status":200,"decision":true}`, `{"status":200,"decision":false}`
 	before := exportFunction{Test: "TestBefore", Events: []exportEvent{
@@ -573,14 +573,14 @@ func TestStubExportSource_WithoutAPullRouteWaitsForTheNextPull(t *testing.T) {
 	defer agent.Close()
 	t.Setenv("PARITY_AGENT_PULL_URL", agent.URL+"/internal/v1/pull")
 	src := &stubExportSource{stub: NewPipController(srv.URL), timeout: 5 * time.Second, poll: time.Millisecond}
-	if err := src.Mount(context.Background(), json.RawMessage(`{"policySets":[]}`), json.RawMessage(`{"pips":[]}`)); err != nil {
-		t.Fatalf("Mount: %v", err)
+	if err := src.Serve(context.Background(), json.RawMessage(`{"policySets":[]}`), json.RawMessage(`{"pips":[]}`)); err != nil {
+		t.Fatalf("Serve: %v", err)
 	}
 	if !strings.Contains(configured, exportPolicySetsPath) || !strings.Contains(configured, exportPIPsPath) {
 		t.Errorf("configured routes = %s, want both export paths", configured)
 	}
 	if polls < 3 {
-		t.Errorf("Mount returned after %d polls, before the agent's next pull", polls)
+		t.Errorf("Serve returned after %d polls, before the agent's next pull", polls)
 	}
 }
 
@@ -593,16 +593,17 @@ func TestStubExportSource_ReportsTheCallsItSawOnTimeout(t *testing.T) {
 	defer srv.Close()
 	t.Setenv("PARITY_AGENT_PULL_URL", "")
 	src := &stubExportSource{stub: NewPipController(srv.URL), timeout: 20 * time.Millisecond, poll: time.Millisecond}
-	err := src.Mount(context.Background(), json.RawMessage(`{}`), json.RawMessage(`{}`))
+	err := src.Serve(context.Background(), json.RawMessage(`{}`), json.RawMessage(`{}`))
 	if err == nil || !strings.Contains(err.Error(), exportPIPsPath) {
-		t.Errorf("Mount = %v, want a timeout that lists the calls seen", err)
+		t.Errorf("Serve = %v, want a timeout that lists the calls seen", err)
 	}
 }
 
-// mountAsking mounts an empty export on a stub whose call log never shows a
-// pull, with the agent's pull route answering status, and returns the requests
-// the stub and the agent saw, in order, and what Mount returned.
-func mountAsking(t *testing.T, status int) ([]string, error) {
+// serveEmptyExport configures a stub whose call log never shows a pull to
+// serve an empty export, with the agent's pull route answering status, and
+// returns the requests the stub and the agent saw, in order, and what Serve
+// returned.
+func serveEmptyExport(t *testing.T, status int) ([]string, error) {
 	t.Helper()
 	var mu sync.Mutex
 	var seen []string
@@ -626,25 +627,25 @@ func mountAsking(t *testing.T, status int) ([]string, error) {
 	defer agent.Close()
 	t.Setenv("PARITY_AGENT_PULL_URL", agent.URL+"/internal/v1/pull")
 	src := &stubExportSource{stub: NewPipController(stub.URL), timeout: 50 * time.Millisecond, poll: time.Millisecond}
-	err := src.Mount(context.Background(), json.RawMessage(`{"policySets":[]}`), json.RawMessage(`{"pips":[]}`))
+	err := src.Serve(context.Background(), json.RawMessage(`{"policySets":[]}`), json.RawMessage(`{"pips":[]}`))
 	mu.Lock()
 	defer mu.Unlock()
 	return seen, err
 }
 
 func TestStubExportSource_ReturnsOnceTheAgentStoredThePull(t *testing.T) {
-	seen, err := mountAsking(t, http.StatusNoContent)
+	seen, err := serveEmptyExport(t, http.StatusNoContent)
 	if err != nil {
-		t.Errorf("Mount with the pull route answering 204 = %v, want nil", err)
+		t.Errorf("Serve with the pull route answering 204 = %v, want nil", err)
 	}
 	want := []string{"PUT /pip-stub/configure", "GET /pip-stub/reset", "POST /internal/v1/pull"}
 	if diff := cmp.Diff(want, seen); diff != "" {
-		t.Errorf("requests of Mount with the pull route answering 204 (-want +got):\n%s", diff)
+		t.Errorf("requests of Serve with the pull route answering 204 (-want +got):\n%s", diff)
 	}
 }
 
 // A 502 is the agent refusing the export it fetched, or failing to fetch it;
-// either way it keeps its previous policies, so the mount has failed.
+// either way it keeps its previous policies, so serving the export has failed.
 func TestStubExportSource_FailsOnAPullAnswerOtherThanStoredOrMissing(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -654,10 +655,10 @@ func TestStubExportSource_FailsOnAPullAnswerOtherThanStoredOrMissing(t *testing.
 		{"server error", http.StatusInternalServerError},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := mountAsking(t, tc.status)
+			_, err := serveEmptyExport(t, tc.status)
 			var answered *pullStatusError
 			if !errors.As(err, &answered) || answered.status != tc.status {
-				t.Errorf("Mount with the pull route answering %d = %v, want a *pullStatusError with status %d", tc.status, err, tc.status)
+				t.Errorf("Serve with the pull route answering %d = %v, want a *pullStatusError with status %d", tc.status, err, tc.status)
 			}
 		})
 	}

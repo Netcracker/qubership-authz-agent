@@ -17,5 +17,5 @@ Why it exists:
 Current coverage:
 
 - `parity-suite-full.json`
-  Covers the remaining Step 3 cases that need non-simplified predicate fields:
+  Covers the remaining cases that need non-simplified predicate fields:
   `PSUITE-6-use-filter-incoming` plus SUB rows 71/72/73.

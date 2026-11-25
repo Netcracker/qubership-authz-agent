@@ -26,7 +26,7 @@ import (
 )
 
 // UserProfile selects which seeded parity test user to acquire an end-user
-// token for. Values map to the users D-N locks into parity-realm.json.
+// token for. Values map to the users parity-realm.json seeds.
 type UserProfile int
 
 const (
@@ -70,8 +70,8 @@ func (p UserProfile) Username() string {
 }
 
 // TokenBundle is the per-request set of tokens the Go helper layer plants
-// into Authorization / Incoming-Token / Authorization-Type headers per D-V
-// items 2/3/4. Non-anonymous flows fill M2M + EndUser; anonymous flows fill
+// into the Authorization, Incoming-Token, and Authorization-Type headers.
+// Non-anonymous flows fill M2M + EndUser; anonymous flows fill
 // M2M only and set Anonymous=true.
 type TokenBundle struct {
 	M2M       string
@@ -97,7 +97,7 @@ type tokenEntry struct {
 
 // NewTokenFactory builds a TokenFactory bound to the given config. The
 // underlying HTTP client has a 10s timeout, matching the tests/integration/testify
-// helpers.go convention per D-I.
+// helpers.go convention.
 func NewTokenFactory(cfg Config) *TokenFactory {
 	return &TokenFactory{
 		cfg:    cfg,

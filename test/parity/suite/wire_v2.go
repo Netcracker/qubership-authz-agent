@@ -31,7 +31,7 @@ const (
 )
 
 // v2Flags carries the per-call flag decisions. Parity always sends
-// obligations=false per D-E; Preview toggles the path template between
+// obligations=false; Preview toggles the path template between
 // /access/v2 and /preview/v2 (Flags.withPreview() — AbstractRemoteACCommon
 // (v2):45-61).
 type v2Flags struct {
@@ -39,8 +39,8 @@ type v2Flags struct {
 }
 
 // v2QueryExtra returns the query params v2 helpers append on top of
-// tenant_id + optional userId. obligations=false is unconditional per D-E
-// / D-V item 9.
+// tenant_id + optional userId: obligations=false on every request, since the
+// suite does not compare obligations on these rows.
 func v2QueryExtra() url.Values {
 	extra := url.Values{}
 	extra.Set("obligations", "false")
@@ -63,6 +63,11 @@ func HelperCheckResourceV2(ctx context.Context, cfg Config, body model.CheckReso
 	var decoded model.CheckResourceResponse
 	if err := decodeJSON(raw, &decoded); err != nil {
 		return status, decoded, raw, err
+	}
+	if status == http.StatusOK {
+		if _, err := v2Decision(raw); err != nil {
+			return status, decoded, raw, err
+		}
 	}
 	return status, decoded, raw, nil
 }

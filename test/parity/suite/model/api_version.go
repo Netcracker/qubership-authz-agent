@@ -18,8 +18,8 @@
 package model
 
 // ApiVersionResponse is the body of GET /api-version. The legacy server emits
-// integer major, minor and supportedMajors; the Go struct uses int to preserve
-// that byte shape per D-V item 11.
+// integer major, minor and supportedMajors; the Go struct uses int so that a
+// golden keeps them as integers.
 type ApiVersionResponse struct {
 	Specs []ApiVersionSpec `json:"specs"`
 }

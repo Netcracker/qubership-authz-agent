@@ -105,7 +105,7 @@ func filterCustomHeaders(in map[string]string) map[string]string {
 }
 
 // applyAuthHeaders sets Authorization, Incoming-Token, and Authorization-Type
-// according to D-V items 2–4.
+// from tokens, the headers the legacy client sends.
 func applyAuthHeaders(req *http.Request, tokens TokenBundle) {
 	if tokens.M2M != "" {
 		req.Header.Set("Authorization", "Bearer "+tokens.M2M)

@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"sort"
+	"net/http"
 
 	"authz-agent/test/parity/suite/model"
 )
@@ -44,42 +44,64 @@ func obligationsMember(raw []byte) model.Member {
 }
 
 // checkV2Outcome returns the golden shape of a check/resource answer sent
-// through v2: its status, its decision, false when the body has none, and its
-// obligations member.
-func checkV2Outcome(status int, raw []byte, message any) *model.CheckResourceV2Outcome {
+// through v2: its status, its obligations member, and on 200 its decision. A
+// 200 body whose decision member is not a JSON boolean is an error, since no
+// conforming server answers so; on any other status the decision is false.
+func checkV2Outcome(status int, raw []byte, message any) (*model.CheckResourceV2Outcome, error) {
 	out := &model.CheckResourceV2Outcome{Status: status, Obligations: obligationsMember(raw), Message: message}
-	if decision, ok := v2Body(raw)["decision"]; ok {
-		_ = json.Unmarshal(decision, &out.Decision)
+	if status != http.StatusOK {
+		return out, nil
 	}
-	return out
+	decision, err := v2Decision(raw)
+	if err != nil {
+		return nil, err
+	}
+	out.Decision = decision
+	return out, nil
+}
+
+// v2Decision returns the decision member of raw, the body of a 200 v2 check
+// answer, and an error where that member is missing or is not a JSON boolean.
+func v2Decision(raw []byte) (bool, error) {
+	var decision *bool
+	member, ok := v2Body(raw)["decision"]
+	if !ok || json.Unmarshal(member, &decision) != nil || decision == nil {
+		return false, fmt.Errorf("a 200 answer without a boolean decision: %s", raw)
+	}
+	return *decision, nil
 }
 
 // bulkOperationsV2Outcome returns the golden shape of a bulk operations answer
-// sent through v2: its status, on 200 the allowed ids of each operation,
-// sorted, and its obligations member.
+// sent through v2: its status, its obligations member, and on 200 the allowed
+// ids of each operation, sorted.
 func bulkOperationsV2Outcome(status int, raw []byte, message any) (*model.CheckResourceBulkOperationsV2Outcome, error) {
 	out := &model.CheckResourceBulkOperationsV2Outcome{Status: status, Obligations: obligationsMember(raw), Message: message}
-	if status != 200 {
+	if status != http.StatusOK {
 		return out, nil
 	}
-	decision := map[string][]string{}
-	if member, ok := v2Body(raw)["decision"]; ok {
-		if err := json.Unmarshal(member, &decision); err != nil {
-			return nil, fmt.Errorf("decode the allowed ids by operation of %s: %w", raw, err)
-		}
+	member, ok := v2Body(raw)["decision"]
+	if !ok {
+		out.Decision = &map[string][]string{}
+		return out, nil
 	}
-	for _, ids := range decision {
-		sort.Strings(ids)
+	decision, err := allowedByOperation(member)
+	if err != nil {
+		return nil, err
 	}
-	out.Decision = &decision
+	out.Decision = decision
 	return out, nil
 }
 
 // filterV2Outcome returns the golden shape of a check/filter answer sent
-// through v2: its status, its filter result members, and its obligations
-// member.
-func filterV2Outcome(status int, raw []byte, message any) *model.FilterV2Outcome {
+// through v2: its status, its obligations member, and on 200 its filter result
+// members.
+func filterV2Outcome(status int, raw []byte, message any) (*model.FilterV2Outcome, error) {
 	out := &model.FilterV2Outcome{Status: status, Obligations: obligationsMember(raw), Message: message}
-	_ = decodeJSON(raw, &out.Result)
-	return out
+	if status != http.StatusOK {
+		return out, nil
+	}
+	if err := decodeJSON(raw, &out.Result); err != nil {
+		return nil, fmt.Errorf("decode the filter result of %s: %w", raw, err)
+	}
+	return out, nil
 }

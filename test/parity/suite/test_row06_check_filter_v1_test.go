@@ -21,7 +21,7 @@ import (
 	"net/http"
 )
 
-// Row 6 drives POST /access/v1/check/filter. The Step 2 rls-filter.json
+// Row 6 drives POST /access/v1/check/filter. The smoke rls-filter.json
 // fixture grants PARITY_ORDER LIST to ROLE_PARITY_READER with the RSQL
 // predicate `ownerId==${subject.id}`, so the response carries a non-trivial
 // calculationResult and a rendered rsqlFilterCondition naming the subject id.

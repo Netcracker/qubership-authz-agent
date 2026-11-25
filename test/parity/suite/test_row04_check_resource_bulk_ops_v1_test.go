@@ -26,7 +26,7 @@ import (
 // Row 4 drives POST /access/v1/check/resource/bulk/operations. Response is
 // Map<String, Set<String>> — one entry per request id, mapping to the subset
 // of operations that were granted. The bulk body issues a single entry against
-// PARITY_CUSTOMER with operations {READ, WRITE, DELETE}; against the Step 2
+// PARITY_CUSTOMER with operations {READ, WRITE, DELETE}; against the smoke
 // fixtures that yields {READ, DELETE} (WRITE is not granted).
 func (s *ParitySuite) TestRow04CheckResourceBulkOperationsV1Mixed() {
 	ctx := context.Background()

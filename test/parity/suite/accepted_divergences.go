@@ -45,11 +45,6 @@ type AcceptedDivergence struct {
 	Reason string
 	// Decision names where the decision is written down in full.
 	Decision string
-	// AllowsMore marks a decision that also covers an answer allowing what
-	// the golden denies. Only part A of the export-fed profile
-	// (acceptedLegacyDifference) reads it; every other comparison rejects
-	// such an answer whatever the entry says.
-	AllowsMore bool
 }
 
 // acceptedDivergences is keyed by "<row id>|<subCase>".
@@ -85,23 +80,26 @@ var acceptedDivergences = map[string]AcceptedDivergence{
 // answers a third way still fails.
 //
 // Every entry needs a decision document, as acceptedDivergences does. An
-// answer that allows what the golden denies (grantsMore) is accepted only
-// where the entry sets AllowsMore: a wrong allow is an agent defect until its
-// own decision says otherwise. Part A of the profile also keys this map by
-// the classes it derives from the exports legacy held (legacyClass), such as
-// undeclared-pip, which the bundle never gives.
+// answer that allows what the golden denies (grantsMore) is never accepted:
+// it is an agent defect unless the rule it rests on is one an entry's
+// decision covers, and no check of the profile can tell from a golden which
+// rule an allow rests on. The legacy-export check (TestExportFedLegacyAgent)
+// also keys this map by the classes it derives from the exports legacy held
+// (legacyClass), such as undeclared-pip, which the bundle never gives.
 var acceptedExportDivergences = map[string]AcceptedDivergence{
 	"set-type": {
 		Reason: "The agent evaluates the simplified model only: it skips every policy set whose type is not " +
 			"SIMPLIFIED, so a decision that rests on a regular policy set differs from legacy.",
 		Decision: "docs/parity/export-fed-agent-divergences.md",
 	},
+	// TestExportFedOwnerDecisions reads this entry too, as the answer it
+	// wants for a decision legacy refused because of such an attribute.
 	"undeclared-pip": {
-		Reason: "The agent takes a subject attribute with no declared PIP as an unknown value of its own " +
-			"operand only, and evaluates the rest of the condition; legacy fails the whole rule, so a " +
-			"condition such as subject.x == 'v' OR resource.a == 'y' allows in the agent and denies in legacy.",
-		Decision:   "docs/parity/export-fed-agent-divergences.md",
-		AllowsMore: true,
+		Reason: "A subject attribute with no declared PIP counts as a PIP that failed: the comparison " +
+			"that reads it has an unknown value, the agent evaluates the rest of the condition, answers 200, " +
+			"allows a request only where the answer does not depend on that value, and names the set in " +
+			"/health; legacy answers 400 to every check of the tenant while one of its sets reads such an attribute.",
+		Decision: "docs/parity/export-fed-agent-divergences.md",
 	},
 }
 

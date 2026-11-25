@@ -350,7 +350,7 @@ func TestLegacyExportCases_ARequestOfAnotherTenantNeedsThatTenantsDocuments(t *t
 }
 
 // An uncompared decision between two that see the same export splits them
-// into two points, since the replay mounts the export again after it.
+// into two points, since the replay serves the export again after it.
 func TestLegacyExportCases_AnUncomparedDecisionSplitsAPoint(t *testing.T) {
 	fx := newLegacyFixture(t)
 	fx.status("write-domain-policies", "write", 201)
@@ -555,7 +555,7 @@ func TestLegacyClass(t *testing.T) {
 func TestLegacyExportReport_CountsADecisionOfABrokenSetupApartFromTheDifferences(t *testing.T) {
 	lc := legacyExportCase{file: "round70/bool.json", id: "o70-bool-true"}
 	p := legacyExportPoint{step: "s1", features: []string{"set-type:DEFAULT"}}
-	broken := "SETUP BROKEN: mount the export of step s1: the agent did not load the policies: HTTP 502"
+	broken := "SETUP BROKEN: serve the export of step s1: the agent did not load the policies: HTTP 502"
 	results := []legacyResult{
 		brokenLegacyResult(lc, p, legacyDecision{path: "check/o70-bool-true/a"}, broken),
 		brokenLegacyResult(lc, p, legacyDecision{path: "check/o70-bool-true/b"}, broken),
@@ -593,11 +593,72 @@ func TestAcceptedLegacyDifference(t *testing.T) {
 		{"a regular set that allows what the golden denies", "set-type:DEFAULT", true, false},
 		{"a class with no decision", "tenant", false, false},
 		{"an undeclared PIP that denies", "undeclared-pip:parityX", false, true},
-		{"an undeclared PIP that allows what the golden denies", "undeclared-pip:parityX", true, true},
+		{"an undeclared PIP that allows what the golden denies", "undeclared-pip:parityX", true, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if _, got := acceptedLegacyDifference(tc.class, tc.wrongAllow); got != tc.want {
 				t.Errorf("acceptedLegacyDifference(%q, %v) accepted = %v, want %v", tc.class, tc.wrongAllow, got, tc.want)
+			}
+		})
+	}
+}
+
+// legacyPointOf is a point of tenant a whose export holds sets, with the
+// features exportFeatures gives it.
+func legacyPointOf(sets ...any) legacyExportPoint {
+	return legacyExportPoint{step: "s1", policySets: sets, features: exportFeatures(sets, nil, nil, "a")}
+}
+
+// simplifiedSet is a SIMPLIFIED set of tenant a with policies and nested sets.
+func simplifiedSet(policies []any, nested ...any) map[string]any {
+	return map[string]any{"type": "SIMPLIFIED", "status": "ACTIVE", "tenantId": "a", "policies": policies,
+		"policySets": nested}
+}
+
+// allowPolicy is a policy with target whose one ALLOW rule has condition, or
+// none when condition is "".
+func allowPolicy(target, condition string) map[string]any {
+	rule := map[string]any{"effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'"}
+	if condition != "" {
+		rule["condition"] = condition
+	}
+	return map[string]any{"target": target, "rules": []any{rule}}
+}
+
+func TestJudgeLegacyAnswer_AcceptsNoWrongAllowAtAPointThatReadsAnUndeclaredAttribute(t *testing.T) {
+	operationAll := allowPolicy("operation == 'ALL'", "resource.a == 'y'")
+	readsUndeclared := allowPolicy("operation == 'READ'", "subject.parityX == 'v' OR resource.a == 'y'")
+	plainAllow := allowPolicy("operation == 'READ'", "")
+	deny := &model.CheckResourceOutcome{Status: 200}
+	allow := &model.CheckResourceOutcome{Status: 200, Decision: true}
+	refused := &model.CheckResourceOutcome{Status: 400}
+	for _, tc := range []struct {
+		name           string
+		p              legacyExportPoint
+		golden, answer *model.CheckResourceOutcome
+		want           exportVerdict
+	}{
+		{"an allow beside an operation-ALL policy with a condition",
+			legacyPointOf(simplifiedSet([]any{operationAll, readsUndeclared})), deny, allow, verdictDiffers},
+		{"an allow beside an operation-ALL policy in a nested set",
+			legacyPointOf(simplifiedSet([]any{readsUndeclared}, simplifiedSet([]any{operationAll}))), deny, allow, verdictDiffers},
+		{"an allow beside a plain allow rule",
+			legacyPointOf(simplifiedSet([]any{plainAllow, readsUndeclared})), deny, allow, verdictDiffers},
+		{"an allow where legacy refused",
+			legacyPointOf(simplifiedSet([]any{readsUndeclared})), refused, allow, verdictDiffers},
+		{"a deny where legacy refused",
+			legacyPointOf(simplifiedSet([]any{readsUndeclared})), refused, deny, verdictAccepted},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			res := newLegacyResult(legacyExportCase{file: "f.json", id: "c"}, tc.p, legacyDecision{path: "sequence/c/read"})
+			if res.Class != "undeclared-pip:parityX" {
+				t.Fatalf("class of the point = %q, want undeclared-pip:parityX", res.Class)
+			}
+			got := judgeLegacyAnswer(res, PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME,
+				[]string{"check-resource-v1-outcome/sequence/c/read.json"}, []any{tc.golden}, tc.answer)
+			if got.Verdict != tc.want {
+				t.Errorf("judgeLegacyAnswer(golden %+v, answer %+v) verdict = %s, want %s; detail: %s",
+					*tc.golden, *tc.answer, got.Verdict, tc.want, got.Detail)
 			}
 		})
 	}
@@ -700,7 +761,7 @@ func TestLegacyExportReport_ListsWrongAllowsFirstAndCountsPerFamilyAndClass(t *t
 		{exportResult: exportResult{Path: "a", Class: "agent", Families: []string{"simplified"}, Verdict: verdictMatch}},
 		{exportResult: exportResult{Path: "b", Class: "agent", Families: []string{"simplified"}, Verdict: verdictDiffers}},
 		{exportResult: exportResult{Path: "c", Class: "tenant", Families: []string{"tenant"}, Verdict: verdictDiffers}, WrongAllow: true},
-		{exportResult: exportResult{Path: "e", Class: "undeclared-pip:x", Families: []string{"simplified"}, Verdict: verdictAccepted}, WrongAllow: true},
+		{exportResult: exportResult{Path: "e", Class: "undeclared-pip:x", Families: []string{"simplified"}, Verdict: verdictAccepted}},
 	}
 	report := legacyExportReport(results, map[string]string{"d": "no raw read of pips at step s: tenant t pips"})
 	// The columns are padded; compare with single spaces.
@@ -708,7 +769,7 @@ func TestLegacyExportReport_ListsWrongAllowsFirstAndCountsPerFamilyAndClass(t *t
 	for _, want := range []string{
 		"4 goldens, 0 of them not compared because the setup broke; 1 decisions without a legacy export",
 		"family simplified match 1, accepted 1, differs 1, skipped 0",
-		"class undeclared-pip:x differs 1, wrong allows 1",
+		"class undeclared-pip:x differs 1, wrong allows 0",
 		"class agent differs 1, wrong allows 0",
 		"class tenant differs 1, wrong allows 1",
 		"uncompared 1: no raw read of pips",
@@ -721,11 +782,12 @@ func TestLegacyExportReport_ListsWrongAllowsFirstAndCountsPerFamilyAndClass(t *t
 		t.Errorf("report lists the wrong allow c after the difference b, or omits one:\n%s", report)
 	}
 	if strings.Contains(report, " e (") {
-		t.Errorf("report lists the accepted wrong allow e among the differences:\n%s", report)
+		t.Errorf("report lists the accepted difference e among the differences:\n%s", report)
 	}
 }
 
-// Every case file under testdata/cases builds into part A's cases, so a
+// Every case file under testdata/cases builds into the cases of the
+// legacy-export check, so a
 // change of the case format or of the goldens that breaks the walk fails
 // without a stand.
 func TestAllLegacyExportCases_ReadTheRecordedRawReads(t *testing.T) {
@@ -800,17 +862,17 @@ func TestSetUpLegacyPoint_SkipsTheDecisionsOfATenantWhoseCanaryIsDenied(t *testi
 		}
 		for _, tc := range []struct {
 			name     string
-			mountErr error
+			serveErr error
 			denied   []string
 		}{
 			{"holder-denied", nil, []string{"parity-a-holder"}},
 			{"case-denied", nil, []string{"parity-a"}},
 			{"all-denied", nil, []string{"parity-a", "parity-a-holder"}},
-			{"mount-fails", errors.New("HTTP 502"), nil},
+			{"serve-fails", errors.New("HTTP 502"), nil},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				setup := setUpLegacyPoint(t, p, legacyCanaries(p, 1, "parity-a", "default"), "default", legacyPointLoader{
-					mount:   func(*testing.T, json.RawMessage, json.RawMessage) error { return tc.mountErr },
+					serve:   func(*testing.T, json.RawMessage, json.RawMessage) error { return tc.serveErr },
 					allowed: func(_ *testing.T, c legacyCanary) bool { return !slices.Contains(tc.denied, c.tenant) },
 				})
 				for _, d := range p.decisions {
@@ -847,10 +909,10 @@ func TestSetUpLegacyPoint_SkipsTheDecisionsOfATenantWhoseCanaryIsDenied(t *testi
 		`=== RUN   `+name+`/all-denied/read-unnamed\n.*: SETUP BROKEN: the agent did not load the export of step h4: `+
 			`the canary of each of its 2 tenants is denied; not compared\n`,
 
-		`=== RUN   `+name+`/mount-fails/setup\n.*: SETUP BROKEN: mount the export of step h4: HTTP 502\n`,
-		`=== RUN   `+name+`/mount-fails/read-holder\n.*: SETUP BROKEN: mount the export of step h4: HTTP 502; not compared\n`,
-		`--- SKIP: `+name+`/mount-fails/read-unnamed `)
-	if strings.Contains(out, t.Name()+"/mount-fails/setup_") {
-		t.Errorf("the child run checked a holder canary after the mount failed:\n%s", out)
+		`=== RUN   `+name+`/serve-fails/setup\n.*: SETUP BROKEN: serve the export of step h4: HTTP 502\n`,
+		`=== RUN   `+name+`/serve-fails/read-holder\n.*: SETUP BROKEN: serve the export of step h4: HTTP 502; not compared\n`,
+		`--- SKIP: `+name+`/serve-fails/read-unnamed `)
+	if strings.Contains(out, t.Name()+"/serve-fails/setup_") {
+		t.Errorf("the child run checked a holder canary after serving the export failed:\n%s", out)
 	}
 }

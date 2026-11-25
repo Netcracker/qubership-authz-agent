@@ -49,6 +49,10 @@ func (s *ParitySuite) runCaseFile(name string) {
 	if f.StandVersion {
 		function := path.Base(s.T().Name())
 		s.Run("api-version", func() {
+			if isAuthzAgentProfile(s.cfg.Profile) {
+				s.T().Skip("the golden records the version of the stand that answered the file, not a behavior; " +
+					"the agent's own version is compared by TestRow01ApiVersion")
+			}
 			status, version, err := HelperApiVersion(ctx, s.cfg)
 			s.Require().NoError(err)
 			s.Require().Equal(http.StatusOK, status)

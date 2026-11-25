@@ -99,7 +99,7 @@ func TestCustomizationCleanup_DeletesEachSetAndPIPOnceAtTheLevelsOfItsSteps(t *t
 		{Name: "own-level", Level: stringOf("PROJECT"), Sets: []any{map[string]any{"key": "outer"}, json.Number("5")}},
 		{Name: "other-level", Level: stringOf("PARITY_OTHER"), Sets: []any{map[string]any{"key": "outer"}},
 			PIPs: []any{map[string]any{"name": "subject.{{resourceType}}"}}},
-		{Name: "no-level", Level: stringOf("PROJECT"), OmitLevel: true, Sets: []any{map[string]any{"key": "outer"}}},
+		{Name: "no-level", OmitLevel: true, Sets: []any{map[string]any{"key": "outer"}}},
 	}
 	set := "/access/v1/config/customization/policySet/d82b5a69-4822-465d-d804-1c9317bcfe92"
 	pip := "/access/v1/pip/customization/pip/subject.RT"
@@ -133,7 +133,7 @@ func TestCustomizeStepCall(t *testing.T) {
 				body: json.RawMessage(`{}`)},
 			PSUITE_IMPORT_CUSTOMIZATION},
 		{"omitLevel sends no level",
-			customizeStep{Level: stringOf("CUSTOMER"), OmitLevel: true},
+			customizeStep{OmitLevel: true},
 			papCall{method: http.MethodPost, path: "/access/v1/config/customization/import", query: url.Values{}, body: []any{}},
 			PSUITE_IMPORT_CUSTOMIZATION},
 		{"a PIP import sends the entries with the placeholders replaced",
@@ -155,7 +155,7 @@ func TestCustomizeStepCall(t *testing.T) {
 				body: map[string]any{"name": "subject.RT", "cachePeriod": json.Number("5")}},
 			PSUITE_IMPORT_PIP_CUSTOMIZATION},
 		{"a PIP delete sends the PIP's name, and omitLevel no level",
-			customizeStep{Level: stringOf("CUSTOMER"), OmitLevel: true, Delete: &customizeDelete{PIP: "subject.{{resourceType}}"}},
+			customizeStep{OmitLevel: true, Delete: &customizeDelete{PIP: "subject.{{resourceType}}"}},
 			papCall{method: http.MethodDelete, path: "/access/v1/pip/customization/pip/subject.RT", query: url.Values{}},
 			PSUITE_DELETE_PIP_CUSTOMIZATION},
 	}
@@ -555,6 +555,8 @@ func TestCaseFileProblems(t *testing.T) {
 			`case reg has a customize step named "step"`},
 		{"a step with no level", func(f *caseFile) { f.Cases[1].Customize[0].Level = nil },
 			"case reg step step names no level"},
+		{"level beside omitLevel", func(f *caseFile) { f.Cases[1].Customize[0].OmitLevel = true },
+			"case reg step step sets both level and omitLevel"},
 		{"a step with sets and pips", func(f *caseFile) { f.Cases[1].Customize[0].PIPs = []any{map[string]any{"name": "subject.a"}} },
 			"case reg step step sets more than one of delete, pips or pipBody, and sets or body"},
 		{"a PIP customization with no name", func(f *caseFile) {

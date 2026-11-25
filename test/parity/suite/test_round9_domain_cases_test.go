@@ -235,7 +235,7 @@ func (s *ParitySuite) TestRound9TwinPIPDeclarationCases() {
 		}
 		s.Run(req.name, func() {
 			s.Require().NoError(s.pipMock.ResetCalls(ctx))
-			status, decision, _, err := HelperCheckResourceV1(ctx, s.cfg,
+			status, _, raw, err := HelperCheckResourceV1(ctx, s.cfg,
 				model.CheckAccessRequest{Operation: req.operation, Type: req.resourceType, Resource: map[string]any{"id": "r9-twin"}},
 				s.mustTokenBundle(UserProfileReader), PerCallOptions{})
 			s.Require().NoError(err)
@@ -254,8 +254,7 @@ func (s *ParitySuite) TestRound9TwinPIPDeclarationCases() {
 					s.requirePendingGolden(PSUITE_PIP_CALL, "twin-pip/"+req.name+"/"+domain, pipCall)
 				})
 			}
-			s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, "twin-pip/"+req.name,
-				&model.CheckResourceOutcome{Status: status, Decision: decision})
+			s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, "twin-pip/"+req.name, checkV1Outcome(status, raw, nil))
 		})
 	}
 }

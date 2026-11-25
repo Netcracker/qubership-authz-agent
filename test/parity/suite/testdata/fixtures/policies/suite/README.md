@@ -10,16 +10,16 @@ before the first `TestRow` test, the smoke simplified fixtures first and this
 suite pack second, preserving the
 legacy ordering that the old compose seeding script used. The suite pack uses
 **distinct** `resourceType` names under the `PARITY_SUITE_*` prefix so there
-is no locator collision per **D-L** of the handover. No fixture in this
-directory overwrites or shadows a Step 2 smoke row.
+is no locator collision. No fixture in this
+directory overwrites or shadows a smoke row.
 
 ## Grammar constraints
 
 The legacy simplified-policy input DTO (from the internal access-control source
 repository) has **only** these predicate-carrying fields:
 
-- `condition` — an ABAC-expression AST string parsed by the ABAC expression
-  grammar (`AbacExpression.g4` in the internal policy-decision-point module).
+- `condition` — an ABAC expression string, in the condition language the PAP
+  accepts.
 - `rsqlPredicate` — an RSQL template string, optionally containing
   `${subject.<alias>}` placeholders that the engine substitutes at render
   time.
@@ -27,7 +27,7 @@ repository) has **only** these predicate-carrying fields:
 There is **no** `sqlPredicate` / `mongodbPredicate` input. The
 `sqlFilterCondition` / `mongodbFilterCondition` fields that the parity
 response carries are populated by a different code path (full-policy /
-XACML) that simplified-policies do not reach. Step 3 therefore splits the
+XACML) that simplified-policies do not reach. The suite therefore splits the
 fixture pack across two channels:
 
 - this `suite/` directory for simplified-policy and simplified-PIP payloads;

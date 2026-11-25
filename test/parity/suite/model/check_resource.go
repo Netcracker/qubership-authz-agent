@@ -27,7 +27,7 @@ type CheckAccessRequest struct {
 
 // CheckAccessRequestWithID is the v1 POST /access/v1/check/resource/bulk
 // entry type. ID is a pointer so omitempty drops it from the wire when unset,
-// as the legacy service leaves out null fields, per D-V item 8.
+// as the legacy service leaves out null fields.
 type CheckAccessRequestWithID struct {
 	ID        *string `json:"id,omitempty"`
 	Operation string  `json:"operation"`
@@ -52,9 +52,8 @@ type CheckResourceRequest struct {
 }
 
 // CheckResourceResponse is the v2 POST /access/v2/check/resource response body.
-// Obligations is json.RawMessage so it can
-// be filtered out via cmpopts.IgnoreFields before cmp.Diff runs (D-E); it never
-// participates in parity assertions in Step 3.
+// Obligations is json.RawMessage, and the comparison of this type leaves it
+// out (see compareOptionsFor): the requests send obligations=false.
 type CheckResourceResponse struct {
 	Decision    bool            `json:"decision"`
 	Obligations json.RawMessage `json:"obligations,omitempty"`

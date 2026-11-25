@@ -217,9 +217,10 @@ func (s *ParitySuite) subjectToken(req isolatedRequest) (string, error) {
 // setupBrokenPrefix and every request is skipped, since the agent holds the
 // policies of the case before. Either way the domain of that case is emptied
 // at once: otherwise the upload the agent did not load stays in the
-// configuration every later pull reads, until the run ends. When emptying the
-// domain fails, or the agent does not load it either, every later case reports
-// a broken setup and uploads nothing.
+// configuration every later pull reads, until the run ends. Where the agent
+// stopped answering, emptyDomainAfter waits for it to answer again. When
+// emptying the domain fails, or the agent does not load it either, every later
+// case reports a broken setup and uploads nothing.
 //
 // When it ends, it empties every domain its cases uploaded into.
 func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
@@ -279,16 +280,11 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 			status, body, err := UploadIsolatedPoliciesWithQuery(ctx, s.cfg, s.tokens, domain, tc.pips, []any{policy}, tc.policiesQuery)
 			var notLoaded *agentLoadError
 			if errors.As(err, &notLoaded) {
+				if isAgentTransportFailure(notLoaded.err) {
+					notLoaded = &agentLoadError{err: fmt.Errorf("the agent stopped answering after the upload of case %s: %w", tc.id, notLoaded.err)}
+				}
 				s.endUnloadedCase("isolated/"+tc.id, status, notLoaded, tc.requests)
-				status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, domain, nil, nil)
-				if err == nil && (status < http.StatusOK || status >= http.StatusMultipleChoices) {
-					err = fmt.Errorf("HTTP %d", status)
-				}
-				var emptyNotLoaded *agentLoadError
-				if errors.As(err, &emptyNotLoaded) {
-					err = emptyNotLoaded.err
-				}
-				if err != nil {
+				if err := s.emptyDomainAfter(ctx, domain, tc.id); err != nil {
 					stale = setupBroken(fmt.Errorf("empty domain %s after case %s, which the agent did not load: %w", domain, tc.id, err))
 				}
 				return
@@ -310,6 +306,32 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 			s.requireRoutesRead(tc.readsRoutes)
 		})
 	}
+}
+
+// emptyDomainAfter empties domain after the case caseID, whose upload the
+// agent did not load, and returns nil once the agent loaded the empty domain.
+// Where the agent does not answer the pull (isAgentTransportFailure), it has
+// stopped, usually on the policies of that case, and its Pod restarts it:
+// emptyDomainAfter then asks it to pull until it answers, for at most
+// agentRestartWait, and logs how long that took.
+func (s *ParitySuite) emptyDomainAfter(ctx context.Context, domain, caseID string) error {
+	status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, domain, nil, nil)
+	if err == nil && (status < http.StatusOK || status >= http.StatusMultipleChoices) {
+		return fmt.Errorf("HTTP %d", status)
+	}
+	var notLoaded *agentLoadError
+	if !errors.As(err, &notLoaded) {
+		return err
+	}
+	if !isAgentTransportFailure(notLoaded.err) {
+		return notLoaded.err
+	}
+	waited, err := awaitPullAfterRestart(ctx, agentRestartWait)
+	if err != nil {
+		return err
+	}
+	s.T().Logf("the agent stopped answering after case %s and loaded the empty domain %s %s later", caseID, domain, waited.Round(time.Millisecond))
+	return nil
 }
 
 // filterOperation is the operation parameter of a filter request: LIST unless the

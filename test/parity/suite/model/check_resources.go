@@ -24,8 +24,7 @@ type CheckResourcesRequest struct {
 }
 
 // CheckResourcesRequestEntry is one entry of CheckResourcesRequest. ID and
-// Resource use omitempty because the legacy service leaves out null fields, per
-// D-V item 8.
+// Resource use omitempty because the legacy service leaves out null fields.
 type CheckResourcesRequestEntry struct {
 	ID         *string  `json:"id,omitempty"`
 	Operations []string `json:"operations"`
@@ -35,8 +34,8 @@ type CheckResourcesRequestEntry struct {
 // CheckResourcesResponse is the v2 POST /access/v2/check/resource/bulk/operations
 // response body. The Decision map holds a set of operations per id; Go
 // represents it as
-// map[string][]string and the GoldenComparator sorts the slice values
-// order-insensitive via cmpopts.SortSlices per D-M.
+// map[string][]string, and the GoldenComparator compares the slice values as
+// sets via cmpopts.SortSlices.
 type CheckResourcesResponse struct {
 	Decision    map[string][]string `json:"decision"`
 	Obligations json.RawMessage     `json:"obligations,omitempty"`

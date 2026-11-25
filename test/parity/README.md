@@ -1,6 +1,6 @@
 # Parity Test Suite
 
-The parity suite replays 129 captured test cases against the authz-agent and
+The parity suite replays captured test cases against the authz-agent and
 compares the answers with golden files recording how the legacy access-control
 service answered the same requests.
 
@@ -78,9 +78,10 @@ the suite image built from [`suite/Dockerfile`](suite/Dockerfile)), then:
 | `parity-install` | `helm upgrade --install` of the stub chart with its dev resource profile and [`test/k8s/parity/policy-admin-values.yaml`](../k8s/parity/policy-admin-values.yaml), then of the agent chart with its dev resource profile and [`test/k8s/parity/values.yaml`](../k8s/parity/values.yaml) |
 | `parity-suite` | The suite Job of the test-stand release, run by `helm test`; its log is streamed |
 
-Expected result: 135/135 cases green against authz-agent, and the cases that wait for a golden skipped (see
-[Cases waiting for a golden](#cases-waiting-for-a-golden)). CI runs the same targets (job `Parity on kind` in
-`.github/workflows/integration-tests.yaml`).
+Expected result: every case matches its golden or an accepted divergence (see [Goldens, accepted divergences, and the
+divergence backlog](#goldens-accepted-divergences-and-the-divergence-backlog)), and the cases that wait for a golden are
+skipped (see [Cases waiting for a golden](#cases-waiting-for-a-golden)). CI runs the same targets (job `Parity on kind`
+in `.github/workflows/integration-tests.yaml`).
 
 The suite addresses `authz-agent`, `idp`, `pip-mock`, `entitlements-mock`, and `user-management-mock` by Service
 name; nothing is published on the host. To look at the stack from the host, port-forward, for example
@@ -121,29 +122,36 @@ skips.
 | Target | What it does |
 | --- | --- |
 | `parity-export-image` | Builds `local/authz-parity-suite-export:ci`, the suite image with the bundle under `testdata/export-bundle/`, from the build context `export-bundle` of [`suite/Dockerfile`](suite/Dockerfile), and loads it into the cluster. `make e2e-images` builds `local/authz-parity-suite:ci` without a bundle, and [`suite/.dockerignore`](suite/.dockerignore) keeps one under `suite/testdata/` out of either |
-| `parity-export-harness` | The test-stand chart with [`test/k8s/parity/test-stand-values-export.yaml`](../k8s/parity/test-stand-values-export.yaml) layered over `test-stand-values.yaml`: the parity stand plus `export-source`, a PIP stub that serves the mounted export, and the suite Job `parity-export` with `PARITY_PROFILE=authz-agent-export`; then an empty export on `export-source` until the first mount, so that the agent becomes ready |
+| `parity-export-harness` | The test-stand chart with [`test/k8s/parity/test-stand-values-export.yaml`](../k8s/parity/test-stand-values-export.yaml) layered over `test-stand-values.yaml`: the parity stand plus `export-source`, a PIP stub that serves the export the suite configures on it, and the suite Job `parity-export` with `PARITY_PROFILE=authz-agent-export`; then an empty export on `export-source` until the suite configures the first one, so that the agent becomes ready. When the upgrade replaces the Keycloak Pod, it restarts the agent, as `parity-harness` does |
 | `parity-export-install` | `helm upgrade --install` of the agent chart with its dev resource profile and [`values-export.yaml`](../k8s/parity/values-export.yaml) layered over `values.yaml`, so the agent pulls from `export-source` every second |
-| `parity-export-suite` | The test-stand release again with the current `PARITY_EXPORT_RUN`, then the Job `parity-export`, run by `helm test` with a timeout of `8h15m`, past the Job's 8-hour deadline; its log is streamed |
+| `parity-export-suite` | The test-stand release again with the current `PARITY_EXPORT_RUN`, then the Job `parity-export`, run by `helm test` with the timeout `PARITY_EXPORT_SUITE_TIMEOUT_<check>` in the `Makefile`, longer than the Job's `activeDeadlineSeconds`; its log is streamed |
+
+`parity-export-harness` and `parity-export-suite` run the check that `PARITY_EXPORT_CHECK` names: `bundle` (the default
+and the one `make parity-export` runs), `legacy`, or `owner-decisions`. `make parity-export-legacy` and
+`make parity-export-owner-decisions`, described below, set it, and each has `-harness` and `-suite` targets that do the
+same.
 
 The export-fed stand replaces the parity suite Job and the agent's policy source in the same namespace. To run the agent
 profile again, run `make parity-harness parity-install parity-suite`. After `make e2e-images`,
 `make parity-export-restart` restarts the export-fed stand's Deployments that run a local image, `export-source` among
 them, and configures the empty export on the new `export-source` before it waits for the agent.
 
-Each test function starts from the empty export. Before the decisions that follow an export, the suite pins that export
-on `export-source` and asks the agent to pull it now at `PARITY_AGENT_PULL_URL` (`POST /internal/v1/pull`). An answer of
-204 means the agent stored the export; 502 means it refused the export or could not fetch it. From an export the agent
-does not load until the next one it loads, the suite sends no request: the function's subtest `setup` fails with
-`SETUP BROKEN: <reason>`, and the report counts those goldens as `setup broken` and lists them as `NOT COMPARED`. Where
-the agent has no pull route (404, or the variable is unset), the suite waits until a pull that started after the pin has
-fetched both documents and the agent has started its next pull; this test mounts no canary, so it then cannot tell a
-refused export from a loaded one. Nor can it tell a partial load, where the agent rejects one tenant of the export and
-still answers 204.
-`PARITY_EXPORT_PULL_TIMEOUT_SECONDS` bounds the wait (30 by default). A whole bundle mounts several thousand exports and
-takes hours; `PARITY_EXPORT_RUN=<regexp>` limits the run to the test functions whose name matches. A golden whose token
-comes from a realm the stand lacks, or whose user the realm refuses with `invalid_grant` (such as a user of the second
-tenant), is skipped. The run fails first if the realm refuses a token for `parity-reader`, so a wrong end-user password
-fails the run rather than skipping every end-user golden, and it fails at the end if no golden was compared.
+The suite configures `export-source` at `PARITY_EXPORT_SOURCE_CONTROL_URL`, by default `http://localhost:28195` (port
+`PARITY_EXPORT_SOURCE_PORT`); the values file sets the Service URL on kind. Each test function starts from the empty
+export. Before the decisions that follow an export, the suite configures that export on `export-source` and asks the
+agent to pull it now at `PARITY_AGENT_PULL_URL` (`POST /internal/v1/pull`). An answer of 204 means the agent stored the
+export; 502 means it refused the export or could not fetch it. From an export the agent does not load until the next one
+it loads, the suite sends no request: the function's subtest `setup` fails with `SETUP BROKEN: <reason>`, and the report
+counts those goldens as `setup broken` and lists them as `NOT COMPARED`. Where the agent has no pull route (404, or the
+variable is unset), the suite waits until a pull that started after the suite configured the export has fetched both
+documents and the agent has started its next pull; this test adds no canary, so it then cannot tell a refused export
+from a loaded one. Nor can it tell a partial load, where the agent rejects one tenant of the export and still answers
+204. `PARITY_EXPORT_PULL_TIMEOUT_SECONDS` bounds the wait (30 by default). A whole bundle configures several thousand
+exports and takes hours; `PARITY_EXPORT_RUN=<regexp>` limits the run to the test functions whose name matches. A golden
+whose token comes from a realm the stand lacks, or whose user the realm refuses with `invalid_grant` (such as a user of
+the second tenant), is skipped. The run fails first if the realm refuses a token for `parity-reader`, so a wrong
+end-user password fails the run rather than skipping every end-user golden, and it fails at the end if no golden was
+compared.
 
 Each golden of the bundle carries the difference class the specification predicts for it. A golden passes when the agent
 matches it. It also passes when its class is listed in `acceptedExportDivergences` in
@@ -155,24 +163,26 @@ family (simplified, policy-set, customization, status, tenant, pip-kind) and lis
 
 `make parity-export-legacy` runs `TestExportFedLegacyAgent` on the same stand. It needs no bundle: it feeds the agent
 the v3 exports that legacy access-control held, as the raw reads (`pap-read-raw-v1`) of the sequence cases recorded
-them, and compares the agent's decisions with the goldens recorded at the same point. A document of a tenant is known
-at a decision when a raw read of it lies between the same two accepted writes that change it, or, in a tenant of the
-case's own, when no accepted write changed it yet; a write whose status golden is missing counts as accepted. A
-decision for which one document is not known is not compared, and the report counts such decisions by the document
-that is missing.
+them, and compares the agent's decisions with the goldens recorded while legacy held that export. The test groups the
+decisions of a case into points: a point is a run of consecutive decisions of one case between which no accepted write
+changes a document of a tenant the case runs in, so that one export holds for all of them. A document of a tenant is
+known at a decision when a raw read of it lies between the same two accepted writes that change it, or, in a tenant of
+the case's own, when no accepted write changed it yet; a write whose status golden is missing counts as accepted. A
+decision for which one document is not known is not compared, and the report counts such decisions by the document that
+is missing.
 
-Each point's export is mounted with a canary policy set of a resource type of its own in the tenant of the case, and one
-in each other tenant the point's decisions run in that an element of the export names. The point's subtest `setup`
-checks the canary of the case's tenant, and a subtest `setup <tenant>` checks each other one, before the decisions. A
-denied canary means the agent holds another configuration of that tenant (a pull answers 204 when it rejects one tenant
-of the export and loads the others): its subtest fails with `SETUP BROKEN: <reason>`, and the decisions in that tenant,
-each a subtest named by its golden path, are skipped with that reason. When the pull fails, or every canary of the point
-is denied, the agent holds none of the export, and every decision of the point is skipped. The report counts the skipped
-decisions as `setup broken` per family and lists them as `NOT COMPARED` per case and reason. A difference gets the first
-feature of its point that the agent's conversion drops or ignores (`set-type`, `status`, `rule-effect`, `customization`,
-`tenant`, `pip-kind`), or `agent` when the point has none. The report counts the verdicts per family and the differences
-per class, and lists the wrong allows, where the agent allows what the golden denies, before the other differences.
-`PARITY_EXPORT_RUN` selects the cases whose `<case file>/<case id>` it matches.
+Each point's export is configured on `export-source` with a canary policy set of a resource type of its own in the
+tenant of the case, and one in each other tenant the point's decisions run in that an element of the export names. The
+point's subtest `setup` checks the canary of the case's tenant, and a subtest `setup <tenant>` checks each other one,
+before the decisions. A denied canary means the agent holds another configuration of that tenant (a pull answers 204
+when it rejects one tenant of the export and loads the others): its subtest fails with `SETUP BROKEN: <reason>`, and the
+decisions in that tenant, each a subtest named by its golden path, are skipped with that reason. When the pull fails, or
+every canary of the point is denied, the agent holds none of the export, and every decision of the point is skipped. The
+report counts the skipped decisions as `setup broken` per family and lists them as `NOT COMPARED` per case and reason. A
+difference gets the first feature of its point that the agent's conversion drops or ignores (`set-type`, `status`,
+`rule-effect`, `customization`, `tenant`, `pip-kind`), or `agent` when the point has none. The report counts the
+verdicts per family and the differences per class, and lists the wrong allows, where the agent allows what the golden
+denies, before the other differences. `PARITY_EXPORT_RUN` selects the cases whose `<case file>/<case id>` it matches.
 
 ### Forms legacy accepts and fails every decision on
 
@@ -180,13 +190,16 @@ per class, and lists the wrong allows, where the agent allows what the golden de
 access-control accepts two forms into its configuration and then fails every decision that depends on them: an
 `iterate` block whose `foreach` is not `subject.permissionScope` or that has no `combiningAlgorithm` (legacy answers
 500), and a target or condition that reads `subject.<attribute>` with no PIP of that name declared (legacy answers 400
-to every check). The agent treats the policy set that holds such a form as a source that always fails: it accepts the
-export, its `/health` names the set, and it answers each decision that legacy failed because of the form with 200 and
-nothing allowed.
+to every check). The agent accepts the export, and its `/health` names the set that holds the form. A set with such an
+`iterate` block is a source that always fails. For an undeclared attribute the agent's intended answer is the one the
+`undeclared-pip` entry of `acceptedExportDivergences` states (see
+[Divergences of the export-fed agent](../../docs/parity/export-fed-agent-divergences.md)): the comparison that reads the
+attribute has an unknown value, and a request is allowed only where the answer does not depend on it. The test cannot
+tell whether an allow depends on the form, so it wants 200 with nothing allowed for each decision legacy failed.
 
 The test builds an export for each regular case whose upload legacy accepted and whose sets hold such a form, and for
 each point of the legacy exports whose raw reads hold one. A set that reads an undeclared PIP counts only when legacy
-refused a check of the case with 400, because legacy resolves some attributes without a PIP. Each export is mounted
+refused a check of the case with 400, because legacy resolves some attributes without a PIP. Each export is configured
 with the canary of the legacy exports. Each case has three kinds of subtests, and each fails on its own: `setup` fails
 with `SETUP BROKEN: <reason>` when the pull fails or the canary is denied (the agent refused the export);
 `health-names-failing-sets` fails when `/health` does not name the set; and a subtest per decision, named by its golden
@@ -226,7 +239,7 @@ the management endpoints too, which is why the probes hit `/auth/health/ready`.
 
 ## Goldens, accepted divergences, and the divergence backlog
 
-The 129 committed goldens represent the legacy service's answers. The
+The committed goldens represent the legacy service's answers. The
 authz-agent is expected to match all of them; cases where it intentionally
 differs are listed in
 [`suite/accepted_divergences.go`](suite/accepted_divergences.go) with a
@@ -269,7 +282,9 @@ access-control outside this repository. Such a case compares through `requirePen
 `requireGolden`: while its golden is not recorded, it skips and prints the answer it got, for example
 `golden check-resource-v1/semantics/s2b-neq-attribute-absent is not recorded yet; the authz-agent profile answered false`. Once the
 golden is committed, the case compares like any other. A case that uses `requireGolden` still fails when its golden is
-missing.
+missing. A request of a case file that the runners send with no golden is a failure of
+`TestCaseFiles_EveryRequestHasAGolden`, which needs no stand, until its golden is recorded or the request is listed in
+`suite/testdata/requests-without-a-golden.txt`.
 
 | Test | What it asks access-control | Golden keys (see [Golden files](#golden-files)) |
 | --- | --- | --- |
@@ -557,7 +572,7 @@ Optional fields change one part of the upload or the request; without them a cas
 | `pins` | A case | Pip-mock answers by route, `{statusCode, body}` with optional `bodyRaw`, `headers` (set after `Content-Type`, so an answer can carry `Location` or replace `Content-Type`) and `noBody` (an empty body, where a missing `body` sends the text `null`), pinned when the case starts, before its uploads. An answer stays until a later case or request pins the route again, in the order the cases run: the cases without `sets` first |
 | `steps` | A case | PAP operations the case performs, each followed by the observations it records; see [Steps](#steps). A case with `sets` runs them after its upload and its requests, in place of `customize`. A case with `steps` and no `sets` is a sequence case: it uploads nothing of its own and runs after the file's cases with `sets` |
 | `tenant` | A sequence case | The `tenant_id` every call of the case sends, a step's own `tenant` and its requests' own `tenantId` aside, in place of the file's tenant and the stand's |
-| `standVersion` | The file | `true` makes the function first send `GET /api-version` and record the answer under `api-version/<test function>`, so the round's answers carry the version of the stand that gave them |
+| `standVersion` | The file | `true` makes the function first send `GET /api-version` and record the answer under `api-version/<test function>`, so the round's answers carry the version of the stand that gave them. On the authz-agent profile the check skips: the golden records the stand's version, not a behavior, and `TestRow01ApiVersion` compares the agent's own |
 | `tenant` | The file | The `tenant_id` of every sequence case that names none. A file with a `tenant` holds only sequence cases |
 
 A file runs its cases without `sets` first, then its cases with `sets`, each in file order. Each case without `sets`
@@ -585,6 +600,7 @@ A request may set `classifyBy` to a route the file, its case, or the request its
 differs between stands, and an answer that depends on whether a failing PIP was reached is recorded with the order the
 stand used. The order is chosen per case, not once per stand, and a recording run writes one of the two names for each
 request, so both names of a request take runs on several stands. A filter request is classed the same way, and so is a request whose answer depends on the order in which access-control reads the operands of a condition.
+On access-control the call log picks the name the answer is compared with. On the authz-agent profile the answer passes when it matches the golden under the request's own name or under either of its two names, and skips only when none of the three is recorded.
 
 A step of `customize` has a `name`, a `level`, and `requests`, and makes one call to the customization API of the PAP,
 whose status is recorded under the step's name:
@@ -606,16 +622,17 @@ the step names another level or sets `omitLevel`.
 
 #### User Management stub
 
-Access-control decides a request with `userId` for the user it reads from the User Management API, which it reaches
-at `INTERNAL_APIGATEWAY_URL`. On a stand where that variable points at `user-management-mock`, a third pip-stub
-instance, a case answers the lookup itself: `userManagement` pins an answer to a path, and the route `*` answers every
-path that has no route of its own. The suite reaches the stub at `PARITY_UM_MOCK_CONTROL_URL`, default
-`http://localhost:28194`. Without the default route, an unrouted path answers 404, as pip-mock does. The stub matches a
-route on the path alone, whatever tenant the request or its step runs in; the golden shows the call's `Tenant` header.
-Both fields also work on a request a sequence step decides, whose golden is `user-management-call/sequence/<case>/<request>`.
-Only a file that sets `userManagement` or `userManagementCalls` makes the suite pin or read the stub, so a stand
-without it runs every other file. On a stand that has it, access-control calls it for every authorized request with
-`userId`, from any file; an unrouted path answers 404, as a stand without the API does.
+Access-control decides a request with `userId` for the user it reads from the User Management API, which it reaches at
+`INTERNAL_APIGATEWAY_URL`. On a stand where that variable points at `user-management-mock`, a third pip-stub instance, a
+case answers the lookup itself: `userManagement` pins an answer to a path, and the route `*` answers every path that has
+no route of its own. The suite reaches the stub at `PARITY_UM_MOCK_CONTROL_URL`, default `http://localhost:28194` (port
+`PARITY_UM_PORT`); `export-source` of the export-fed profile defaults to port 28195. Without the default route, an
+unrouted path answers 404, as pip-mock does. The stub matches a route on the path alone, whatever tenant the request or
+its step runs in; the golden shows the call's `Tenant` header. Both fields also work on a request a sequence step
+decides, whose golden is `user-management-call/sequence/<case>/<request>`. Only a file that sets `userManagement` or
+`userManagementCalls` makes the suite pin or read the stub, so a stand without it runs every other file. On a stand that
+has it, access-control calls it for every authorized request with `userId`, from any file; an unrouted path answers 404,
+as a stand without the API does.
 
 A `user-management-call` golden lists the calls in the order they arrived. Each holds the method, `requestUri` (the
 request target with its path and query as the caller encoded them), `headerNames` (every header name, lower case,
@@ -679,7 +696,7 @@ request on a route nothing pins before it (the file, the case, or the request it
 `user:<username>` or `bearer:<username>`, alone or followed by `@<client>` with a client of `suite/testdata/realm-clients/token-subject-clients.json`,
 `subjectClaims` without a `user:`, `bearer:`, `m2m` or `m2m@` subject, a field of a case without `sets` on a case with `sets` or
 the other way round, a `ruleIdsOf` that names no earlier case with `sets` of the file, two requests or two steps of a
-case with one name, a step with neither `level` nor `omitLevel`, a step that sets more than one of `delete`, `pips` or
+case with one name, a step with neither `level` nor `omitLevel` or with both, a step that sets more than one of `delete`, `pips` or
 `pipBody`, and `sets` or `body`, `pips` beside `pipBody`, a `delete` that names both a set and a PIP or neither, a
 `recursive` on the delete of a PIP, a step that names an operation or a binding the table does not hold, a decision as a
 step, an argument the binding does not take or a value outside its listed values, a write whose `observe` does not
@@ -695,8 +712,9 @@ object of `pips` or `pipBody` with no name, `status` beside `omitStatus`, `pipHe
 `pauseMs`, a bulk request with a `filter`, `resource`, `operation`, `type`, or `classifyBy` of its own or an item that
 is not an object, `v2` beside `bulk`, `bulkOperations` items of two types sent through `v2`, a `standProperties` name
 or value outside the two properties and their values, and a round 19 or later file whose case with `sets` drops a PIP
-name: run `go test -run
-TestCaseFilesAreWellFormed ./test/parity/suite/` before handing a file over for recording.
+name: run `go test -tags integration -run
+'TestCaseFilesAreWellFormed|TestCaseFiles_EveryRequestHasAGolden' ./test/parity/suite/` before handing a file over for
+recording, and list the new file's requests in `requests-without-a-golden.txt` until their goldens are recorded.
 
 A file is usually written by a generator beside it, such as `suite/testdata/cases/round14/generate.py`: edit the
 generator and rerun it rather than the JSON. The round 14 and 15 generators leave out the cases listed in the

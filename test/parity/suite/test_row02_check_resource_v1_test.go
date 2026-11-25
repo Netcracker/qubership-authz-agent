@@ -24,7 +24,7 @@ import (
 )
 
 // Row 2 drives POST /access/v1/check/resource. Every sub-case below hits
-// the Step 2 bespoke smoke fixture set:
+// the smoke fixture set:
 //
 //	PARITY_CUSTOMER READ   → OLS allow (ols-allow.json)
 //	PARITY_CUSTOMER DELETE → OLS allow (ols-deny.json; DELETE is the only

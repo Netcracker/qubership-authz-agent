@@ -68,7 +68,8 @@ type caseFile struct {
 	// StandVersion, when true, makes the function first record what the stand
 	// says about itself: GET /api-version, filed under
 	// api-version/<test function>, so the answers of the file carry the version
-	// that gave them.
+	// that gave them. On the authz-agent profile the check skips, since that
+	// golden describes the recording stand rather than a behavior.
 	StandVersion bool `json:"standVersion"`
 	// Tenant is the tenant_id every call of a case with steps and no sets
 	// sends, unless the case names its own; the stand's tenant when empty. A
@@ -185,9 +186,10 @@ type caseSpec struct {
 // policy sets on the stand answers 500.
 type customizeStep struct {
 	Name string `json:"name"`
-	// Level is the level query parameter, sent as written; see OmitLevel.
+	// Level is the level query parameter, sent as written.
 	Level *string `json:"level"`
-	// OmitLevel sends the step with no level parameter at all.
+	// OmitLevel sends the step with no level parameter at all. A step sets
+	// either Level or OmitLevel, never both.
 	OmitLevel bool `json:"omitLevel"`
 	// Sets holds the customization entries, in the shape of setSpec. The key of
 	// an entry, a policy, or a rule is replaced by the id the upload derives
@@ -310,7 +312,10 @@ type requestSpec struct {
 	// the request ran, and under <name>-when-the-pip-was-skipped when it did
 	// not, so that an answer that depends on the order access-control evaluates
 	// the children of a node or the operands of a condition in is filed with
-	// that order.
+	// that order. On access-control the call log picks the golden the answer
+	// is compared with; on the authz-agent profile the answer passes when it
+	// matches the golden under the request's own name or under either class,
+	// and skips only when none is recorded.
 	ClassifyBy string `json:"classifyBy"`
 	// TenantID replaces the stand's tenant in the tenant_id query parameter
 	// when present; an empty string sends tenant_id with an empty value.
@@ -1159,6 +1164,9 @@ func stepProblems(caseID string, st customizeStep) []string {
 	}
 	if st.Level == nil && !st.OmitLevel {
 		report("names no level and does not set omitLevel")
+	}
+	if st.Level != nil && st.OmitLevel {
+		report("sets both level and omitLevel, and is sent with no level; remove level, or remove omitLevel to send it")
 	}
 	kinds := 0
 	if st.Delete != nil {

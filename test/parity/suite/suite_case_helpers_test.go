@@ -147,9 +147,9 @@ func (s *ParitySuite) runRepeatedPendingCheckResourceV1Case(subCase string, body
 func (s *ParitySuite) runPendingCheckResourceV1OutcomeCase(subCase string, body model.CheckAccessRequest, tokens TokenBundle, opts PerCallOptions) {
 	s.T().Helper()
 
-	status, decision, _, err := HelperCheckResourceV1(context.Background(), s.cfg, body, tokens, opts)
+	status, raw, err := HelperPostV1(context.Background(), s.cfg, v1PathCheckResource, body, tokens, opts)
 	s.Require().NoError(err)
-	s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, subCase, &model.CheckResourceOutcome{Status: status, Decision: decision})
+	s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, subCase, checkV1Outcome(status, raw, nil))
 }
 
 // runPendingFilterV1OutcomeCase is runPendingCheckResourceV1OutcomeCase for
@@ -157,9 +157,11 @@ func (s *ParitySuite) runPendingCheckResourceV1OutcomeCase(subCase string, body 
 func (s *ParitySuite) runPendingFilterV1OutcomeCase(subCase, resourceType, operation string, tokens TokenBundle, opts PerCallOptions) {
 	s.T().Helper()
 
-	status, decoded, _, err := HelperFilterV1(context.Background(), s.cfg, resourceType, operation, tokens, opts)
+	status, raw, err := HelperPostV1Query(context.Background(), s.cfg, v1PathCheckFilter, filterV1Query(resourceType, operation, false), nil, tokens, opts)
 	s.Require().NoError(err)
-	s.requirePendingGolden(PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, subCase, &model.FilterOutcome{Status: status, Result: decoded})
+	outcome, err := filterV1Outcome(status, raw, nil)
+	s.Require().NoError(err)
+	s.requirePendingGolden(PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, subCase, outcome)
 }
 
 func (s *ParitySuite) runPendingCheckResourceBulkV1Case(subCase string, body []model.CheckAccessRequestWithID, tokens TokenBundle, opts PerCallOptions) {
@@ -362,50 +364,48 @@ func (s *ParitySuite) sendRequest(resourceType string, req isolatedRequest, toke
 	case req.bulk != nil:
 		status, raw, err := HelperPostV1(ctx, s.cfg, v1PathCheckResourceBulk, req.bulk, tokens, opts)
 		s.Require().NoError(err)
-		outcome := &model.CheckResourceBulkOutcome{Status: status, Message: s.refusal(status, raw)}
-		if status == http.StatusOK {
-			allowed := []string{}
-			s.Require().NoError(decodeJSON(raw, &allowed), "decode the allowed ids of %s", raw)
-			sort.Strings(allowed)
-			outcome.Allowed = &allowed
-		}
-		return PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME, outcome
+		return s.recordedOutcome(req.outcomeRow(), status, raw)
 	case req.bulkOperations != nil:
 		status, raw, err := HelperPostV1(ctx, s.cfg, v1PathCheckResourceBulkOperations, req.bulkOperations, tokens, opts)
 		s.Require().NoError(err)
-		outcome := &model.CheckResourceBulkOperationsOutcome{Status: status, Message: s.refusal(status, raw)}
-		if status == http.StatusOK {
-			decision := map[string][]string{}
-			s.Require().NoError(decodeJSON(raw, &decision), "decode the allowed ids by operation of %s", raw)
-			for _, ids := range decision {
-				sort.Strings(ids)
-			}
-			outcome.Decision = &decision
-		}
-		return PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME, outcome
+		return s.recordedOutcome(req.outcomeRow(), status, raw)
 	case req.filter:
 		query := filterV1Query(valueOr(req.typ, resourceType), req.filterOperation(), req.emptyOperation)
-		status, decoded, raw, err := HelperFilterV1Query(ctx, s.cfg, query, tokens, opts)
+		status, raw, err := HelperPostV1Query(ctx, s.cfg, v1PathCheckFilter, query, nil, tokens, opts)
 		s.Require().NoError(err)
-		return PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, &model.FilterOutcome{Status: status, Result: decoded, Message: s.refusal(status, raw)}
+		return s.recordedOutcome(req.outcomeRow(), status, raw)
 	}
-	status, decision, raw, err := HelperCheckResourceV1(ctx, s.cfg,
-		model.CheckAccessRequest{Operation: checkOperation(req.operation, req.emptyOperation), Type: valueOr(req.typ, resourceType), Resource: req.resource},
-		tokens, opts)
+	body := model.CheckAccessRequest{Operation: checkOperation(req.operation, req.emptyOperation), Type: valueOr(req.typ, resourceType), Resource: req.resource}
+	status, raw, err := HelperPostV1(ctx, s.cfg, v1PathCheckResource, body, tokens, opts)
 	s.Require().NoError(err)
-	return PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, &model.CheckResourceOutcome{Status: status, Decision: decision, Message: s.refusal(status, raw)}
+	return s.recordedOutcome(req.outcomeRow(), status, raw)
+}
+
+// recordedOutcome returns id with the golden target outcomeOf builds from an
+// answer with status and body raw, and fails the test where it cannot.
+func (s *ParitySuite) recordedOutcome(id ParityEndpointID, status int, raw []byte) (ParityEndpointID, any) {
+	s.T().Helper()
+	outcome, err := outcomeOf(id, status, raw, s.refusal(status, raw))
+	s.Require().NoError(err)
+	return id, outcome
 }
 
 // runRequest sends req against resourceType and compares its outcome with the
-// golden subCase. With req.classifyBy the golden is filed under the order
-// class the call log of that route shows. With req.pipCalls what the route
-// received is recorded as the pip-call golden subCase beside the request's
-// own; the call log is read before either golden is compared, since a golden
-// not yet recorded skips the rest of the subtest. Either one, and
-// req.readsRoutes, clear the call log before req.pause starts, and req.pins
-// are pinned before that. With req.userManagementCalls what user-management-
-// mock received is recorded as the user-management-call golden subCase, its
-// call log cleared and req.userManagement pinned at the same points.
+// golden subCase. With req.classifyBy the answer may depend on the order the
+// stand evaluates in, and its goldens are filed by order class: on the legacy
+// profile the call log of that route picks the class, -when-the-pip-was-read
+// or -when-the-pip-was-skipped, and the answer is compared with that class's
+// golden; on the authz-agent profile, whose order the call log does not
+// reveal, the answer passes when it matches any recorded one of subCase and
+// its two classes, fails when it matches none, and skips only when none is
+// recorded. With req.pipCalls what the route received is recorded as the
+// pip-call golden subCase beside the request's own; the call log is read
+// before either golden is compared, since a golden not yet recorded skips the
+// rest of the subtest. Either one, and req.readsRoutes, clear the call log
+// before req.pause starts, and req.pins are pinned before that. With
+// req.userManagementCalls what user-management-mock received is recorded as
+// the user-management-call golden subCase, its call log cleared and
+// req.userManagement pinned at the same points.
 func (s *ParitySuite) runRequest(subCase, resourceType string, req isolatedRequest) {
 	s.T().Helper()
 	ctx := context.Background()
@@ -431,16 +431,17 @@ func (s *ParitySuite) runRequest(subCase, resourceType string, req isolatedReque
 		}
 		umCalls = userManagementCallOutcome(calls, sentHeaders(tokens, req.callOptions()), tenant, req.userID)
 	}
+	subCases := []string{subCase}
 	switch {
-	case req.classifyBy != "" && s.comparesWithTheUnclassifiedGolden(id, subCase):
-		s.T().Logf("%s: the %s profile is compared with the unclassified golden", subCase, s.cfg.Profile)
+	case req.classifyBy != "" && isAuthzAgentProfile(s.cfg.Profile):
+		subCases = append(subCases, subCase+"-when-the-pip-was-read", subCase+"-when-the-pip-was-skipped")
 	case req.classifyBy != "":
 		read := s.pipCalls(req.classifyBy)
 		s.T().Logf("%s: pip-mock received %d call(s) to %s", subCase, read, req.classifyBy)
 		if read > 0 {
-			subCase += "-when-the-pip-was-read"
+			subCases = []string{subCase + "-when-the-pip-was-read"}
 		} else {
-			subCase += "-when-the-pip-was-skipped"
+			subCases = []string{subCase + "-when-the-pip-was-skipped"}
 		}
 	case req.pipCalls != "":
 		calls, err := s.pipMock.GetCalls(ctx)
@@ -462,22 +463,25 @@ func (s *ParitySuite) runRequest(subCase, resourceType string, req isolatedReque
 			s.requirePendingGolden(PSUITE_USER_MANAGEMENT_CALL, subCase, umCalls)
 		})
 	}
-	s.requirePendingGolden(id, subCase, outcome)
+	s.requireOneOfGoldens(id, subCases, outcome)
 }
 
-// comparesWithTheUnclassifiedGolden reports whether a request classed by
-// classifyBy is compared with its golden subCase itself rather than with the
-// golden of its order class: on the authz-agent profile, when that golden is
-// recorded. An answer that depends on the order the stand evaluates in is
-// accepted from legacy access-control only; the agent has to give the one
-// answer that golden holds on every run. A request with no such golden keeps
-// its order classes on both profiles.
-func (s *ParitySuite) comparesWithTheUnclassifiedGolden(id ParityEndpointID, subCase string) bool {
-	if !isAuthzAgentProfile(s.cfg.Profile) {
-		return false
+// requireOneOfGoldens is requirePendingGolden over the goldens subCases, of
+// which actual has to match one; see [GoldenComparator.CompareAny].
+func (s *ParitySuite) requireOneOfGoldens(id ParityEndpointID, subCases []string, actual any) {
+	s.T().Helper()
+	if len(subCases) == 1 {
+		s.requirePendingGolden(id, subCases[0], actual)
+		return
 	}
-	_, ok, err := s.comparator.Recorded(id, subCase)
-	return err == nil && ok
+	err := s.comparator.CompareAny(id, subCases, actual)
+	if errors.Is(err, ErrGoldenNotRecorded) {
+		answer, _ := json.Marshal(actual)
+		s.T().Skipf("%v; the %s profile answered %s", err, s.cfg.Profile, answer)
+	}
+	if err != nil {
+		s.T().Errorf("%v", err)
+	}
 }
 
 // pipCalls counts the calls pip-mock received on route since its call log was

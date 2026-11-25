@@ -147,7 +147,7 @@ func (s *ParitySuite) runPIPCacheCase(caseID, route string, pip map[string]any) 
 			s.Require().NoError(s.pipMock.ResetCalls(ctx))
 			name := round.name + "-" + strings.ToLower(operation)
 			s.Run(name, func() {
-				status, decision, _, err := HelperCheckResourceV1(ctx, s.cfg,
+				status, _, raw, err := HelperCheckResourceV1(ctx, s.cfg,
 					model.CheckAccessRequest{Operation: operation, Type: rt, Resource: map[string]any{"id": "reg-pip-cache"}},
 					s.mustTokenBundle(UserProfileReader), PerCallOptions{})
 				s.Require().NoError(err)
@@ -169,8 +169,7 @@ func (s *ParitySuite) runPIPCacheCase(caseID, route string, pip map[string]any) 
 				s.Run("pip-calls", func() {
 					s.requirePendingGolden(PSUITE_PIP_CALL, caseID+"/"+name, pipCall)
 				})
-				s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, caseID+"/"+name,
-					&model.CheckResourceOutcome{Status: status, Decision: decision})
+				s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, caseID+"/"+name, checkV1Outcome(status, raw, nil))
 			})
 		}
 	}
