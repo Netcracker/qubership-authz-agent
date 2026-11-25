@@ -264,7 +264,7 @@ func TestRenewal(t *testing.T) {
 		want                  time.Duration
 	}{
 		{"the margin before expiry", 300 * time.Second, 60 * time.Second, 240 * time.Second},
-		{"no later than half the lifetime", 100 * time.Second, 60 * time.Second, 50 * time.Second},
+		{"no earlier than half the lifetime", 100 * time.Second, 60 * time.Second, 50 * time.Second},
 		{"never sooner than one second", time.Second, 60 * time.Second, time.Second},
 		{"at the expiry when RenewBefore is zero", 300 * time.Second, 0, 300 * time.Second},
 	}

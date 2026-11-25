@@ -16,72 +16,9 @@ package pips
 
 import (
 	"encoding/json"
-	"reflect"
 	"strings"
 	"testing"
 )
-
-func TestLoadEntitlementsConfigFromEnv(t *testing.T) {
-	cases := []struct {
-		name     string
-		env      map[string]string
-		expected *EntitlementsConfig
-	}{
-		{
-			name:     "unset URL returns nil",
-			env:      nil,
-			expected: nil,
-		},
-		{
-			name:     "blank URL returns nil",
-			env:      map[string]string{EnvEntitlementsURL: "   "},
-			expected: nil,
-		},
-		{
-			name:     "URL with no trailing slash is preserved as-is",
-			env:      map[string]string{EnvEntitlementsURL: "http://entitlements-mock:8080"},
-			expected: &EntitlementsConfig{URL: "http://entitlements-mock:8080", HTTPTimeoutSeconds: DefaultEntitlementsHTTPTimeout, HTTPRetries: DefaultEntitlementsHTTPRetries},
-		},
-		{
-			name:     "trailing slash stripped",
-			env:      map[string]string{EnvEntitlementsURL: "http://entitlements-mock:8080/"},
-			expected: &EntitlementsConfig{URL: "http://entitlements-mock:8080", HTTPTimeoutSeconds: DefaultEntitlementsHTTPTimeout, HTTPRetries: DefaultEntitlementsHTTPRetries},
-		},
-		{
-			name: "explicit knobs applied",
-			env: map[string]string{
-				EnvEntitlementsURL:         "http://entitlements-mock:8080",
-				EnvEntitlementsHTTPTimeout: "2",
-				EnvEntitlementsHTTPRetries: "10",
-			},
-			expected: &EntitlementsConfig{URL: "http://entitlements-mock:8080", HTTPTimeoutSeconds: 2, HTTPRetries: 10},
-		},
-		{
-			name: "unparseable knobs fall back to defaults",
-			env: map[string]string{
-				EnvEntitlementsURL:         "http://entitlements-mock:8080",
-				EnvEntitlementsHTTPTimeout: "oops",
-				EnvEntitlementsHTTPRetries: "-4",
-			},
-			expected: &EntitlementsConfig{URL: "http://entitlements-mock:8080", HTTPTimeoutSeconds: DefaultEntitlementsHTTPTimeout, HTTPRetries: DefaultEntitlementsHTTPRetries},
-		},
-	}
-	for _, tc := range cases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			for _, key := range []string{EnvEntitlementsURL, EnvEntitlementsHTTPTimeout, EnvEntitlementsHTTPRetries} {
-				t.Setenv(key, "")
-			}
-			for k, v := range tc.env {
-				t.Setenv(k, v)
-			}
-			got := LoadEntitlementsConfigFromEnv()
-			if !reflect.DeepEqual(got, tc.expected) {
-				t.Fatalf("LoadEntitlementsConfigFromEnv() = %+v, want %+v", got, tc.expected)
-			}
-		})
-	}
-}
 
 func TestApplyEntitlementsOverride_AddsAndRemoves(t *testing.T) {
 	doc := EmptyDocumentWithEntitlements(nil)

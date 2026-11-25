@@ -117,7 +117,8 @@ type RemotePIPs struct {
 // EntitlementsPIPConfig is the on-disk + on-wire shape of the single
 // container-pinned entitlements-resolver entry. Rego reads this under
 // `data.pips.remote.entitlements` to compose the V3 per-user URL and to
-// read the per-call HTTP timeout/retries knobs at `http.send` time.
+// read the per-call HTTP timeout at `http.send` time. Nothing reads
+// httpRetries, so each call to the aggregator is one attempt.
 //
 // Per ADR-0054 + D-AG-17 the set of knobs is intentionally small; no
 // cache-related field ever appears on this struct (ADR-0052).
