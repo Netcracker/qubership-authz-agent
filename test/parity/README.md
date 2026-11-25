@@ -716,11 +716,12 @@ name: run `go test -tags integration -run
 'TestCaseFilesAreWellFormed|TestCaseFiles_EveryRequestHasAGolden' ./test/parity/suite/` before handing a file over for
 recording, and list the new file's requests in `requests-without-a-golden.txt` until their goldens are recorded.
 
-A file is usually written by a generator beside it, such as `suite/testdata/cases/round14/generate.py`: edit the
-generator and rerun it rather than the JSON. The round 14 and 15 generators leave out the cases listed in the
-`duplicates.tsv` beside them, each next to the kept case that exercises exactly what it does. The round 16 to 41 files
-have no generator in the repository. Cases that change the stand in ways the fields above do not cover, such as the
-tenants of the two-tenant stand, stay in Go.
+The files under `early/`, `interpreter/`, `translator/`, and `round7/` to `round15/` are written by the `generate.py`
+in their directory, run there as `python3 generate.py`, and each run reproduces the committed files exactly: edit the
+generator and rerun it rather than the JSON. A generator with a `duplicates.tsv` beside it leaves out the cases that
+file lists, each next to the kept case that exercises exactly what it does. The round 16 to 78 files have no generator
+in the repository. Cases that change the stand in ways the fields above do not cover, such as the tenants of the
+two-tenant stand, stay in Go.
 
 To record goldens, run one function per fresh stand:
 
