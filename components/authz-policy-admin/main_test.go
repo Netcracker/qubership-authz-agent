@@ -195,6 +195,44 @@ func TestStart_LogsWhyItFailed(t *testing.T) {
 	}
 }
 
+// TestMain runs the probe of [TestStart_TheLevelLogStopRaisesStaysRaised] when
+// AUTHZ_POLICY_ADMIN_TEST_LEVEL_PROBE is 1, before any test and as close to the
+// end of the package's init as a test can get.
+func TestMain(m *testing.M) {
+	if os.Getenv("AUTHZ_POLICY_ADMIN_TEST_LEVEL_PROBE") == "1" {
+		logStop("level probe")
+		time.Sleep(100 * time.Millisecond)
+		fmt.Printf("level after logStop: %v\n", logger.GetLevel())
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
+
+// The platform logger sets every logger it knows to the configured level when
+// configloader delivers its init event, from a goroutine of configloader. If
+// the event is delivered after logStop has raised the level, the logger drops
+// the line logStop writes. Each child calls logStop right after the package's
+// init and reads the level again 100 ms later. If an init event is still
+// pending when init returns, at least one of five children reads fatal in
+// nearly every run.
+func TestStart_TheLevelLogStopRaisesStaysRaised(t *testing.T) {
+	const children = 5
+	for child := 1; child <= children; child++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		command := exec.CommandContext(ctx, os.Args[0], "-test.run=^$")
+		command.Env = append(childEnvironment(), "AUTHZ_POLICY_ADMIN_TEST_LEVEL_PROBE=1", "LOGGING_LEVEL_ROOT=fatal")
+		out, err := command.CombinedOutput()
+		cancel()
+		if err != nil {
+			t.Fatalf("level probe %d of %d: %v\n%s", child, children, err, out)
+		}
+		if !strings.Contains(string(out), "level after logStop: error\n") {
+			t.Errorf("level probe %d of %d at LOGGING_LEVEL_ROOT=fatal, output:\n%s\nwant the line \"level after logStop: error\"",
+				child, children, out)
+		}
+	}
+}
+
 // childEnvironment is the environment of this test process without every
 // variable whose name starts with log.level or logging.level once folded as
 // configloader folds it, to lower case with dots for underscores. Such a
