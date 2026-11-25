@@ -60,16 +60,8 @@ func HelperCheckResourceV2(ctx context.Context, cfg Config, body model.CheckReso
 	if err != nil {
 		return status, model.CheckResourceResponse{}, raw, err
 	}
-	var decoded model.CheckResourceResponse
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, decoded, raw, err
-	}
-	if status == http.StatusOK {
-		if _, err := v2Decision(raw); err != nil {
-			return status, decoded, raw, err
-		}
-	}
-	return status, decoded, raw, nil
+	decoded, err := answerOf[model.CheckResourceResponse](PSUITE_ROW_7_CHECK_RESOURCE_V2, status, raw)
+	return status, decoded, raw, err
 }
 
 // HelperCheckResourcesV2 drives row 8
@@ -89,11 +81,12 @@ func HelperCheckResourcesV2(ctx context.Context, cfg Config, body model.CheckRes
 	if err != nil {
 		return status, model.CheckResourcesResponse{}, raw, err
 	}
-	var decoded model.CheckResourcesResponse
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, decoded, raw, err
+	row := PSUITE_ROW_8_CHECK_RESOURCE_BULK_OPERATIONS_V2
+	if flags.Preview {
+		row = PSUITE_ROW_9_PREVIEW_BULK_OPERATIONS_V2
 	}
-	return status, decoded, raw, nil
+	decoded, err := answerOf[model.CheckResourcesResponse](row, status, raw)
+	return status, decoded, raw, err
 }
 
 // HelperPreviewCheckResourcesV2 is a thin wrapper that forces
@@ -122,11 +115,8 @@ func HelperFilterV2(ctx context.Context, cfg Config, resourceType, operation str
 	if err != nil {
 		return status, model.FilterResponse{}, raw, err
 	}
-	var decoded model.FilterResponse
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, decoded, raw, err
-	}
-	return status, decoded, raw, nil
+	decoded, err := answerOf[model.FilterResponse](PSUITE_ROW_10_CHECK_FILTER_V2, status, raw)
+	return status, decoded, raw, err
 }
 
 // HelperPostV2 posts body, nil for none, to the v2 path of access-control

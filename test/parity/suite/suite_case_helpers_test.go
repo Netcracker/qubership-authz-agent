@@ -149,7 +149,9 @@ func (s *ParitySuite) runPendingCheckResourceV1OutcomeCase(subCase string, body 
 
 	status, raw, err := HelperPostV1(context.Background(), s.cfg, v1PathCheckResource, body, tokens, opts)
 	s.Require().NoError(err)
-	s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, subCase, checkV1Outcome(status, raw, nil))
+	outcome, err := checkV1Outcome(status, raw, nil)
+	s.Require().NoError(err)
+	s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, subCase, outcome)
 }
 
 // runPendingFilterV1OutcomeCase is runPendingCheckResourceV1OutcomeCase for

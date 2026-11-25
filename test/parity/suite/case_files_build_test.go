@@ -871,9 +871,9 @@ type recordedRequest struct {
 	method, path, query, body string
 }
 
-// testServer answers every request with 200 and an empty JSON object, and
-// records each request it received.
-func testServer(t *testing.T) (*httptest.Server, *[]recordedRequest) {
+// testServer answers every request with 200 and the body answer, and records
+// each request it received.
+func testServer(t *testing.T, answer string) (*httptest.Server, *[]recordedRequest) {
 	t.Helper()
 	var mu sync.Mutex
 	var got []recordedRequest
@@ -882,14 +882,14 @@ func testServer(t *testing.T) (*httptest.Server, *[]recordedRequest) {
 		mu.Lock()
 		got = append(got, recordedRequest{r.Method, r.URL.Path, r.URL.RawQuery, string(body)})
 		mu.Unlock()
-		_, _ = w.Write([]byte("{}"))
+		_, _ = w.Write([]byte(answer))
 	}))
 	t.Cleanup(srv.Close)
 	return srv, &got
 }
 
 func TestUploadIsolatedPoliciesWithQuery_ExtendsOnlyTheUploadOfThePolicies(t *testing.T) {
-	srv, got := testServer(t)
+	srv, got := testServer(t, "{}")
 	cfg := Config{ACBaseURL: srv.URL, TenantID: "t", Profile: "legacy"}
 	tokens := &TokenFactory{cache: map[string]tokenEntry{"m2m": {accessToken: "m2m-token", expiresAt: time.Now().Add(time.Hour)}}}
 	if _, _, err := UploadIsolatedPoliciesWithQuery(context.Background(), cfg, tokens, "D", nil, []any{}, "applicableForFrontend=true"); err != nil {
@@ -967,7 +967,8 @@ func TestUploadIsolatedPoliciesWithQuery_ReturnsTheBodyOfTheReturnedStatus(t *te
 }
 
 func TestEmptyOperation_WireForms(t *testing.T) {
-	srv, got := testServer(t)
+	// null is a 200 body of every v1 decision row: the legacy client's null.
+	srv, got := testServer(t, "null")
 	cfg := Config{ACBaseURL: srv.URL, TenantID: "t"}
 	ctx := context.Background()
 	if _, _, _, err := HelperFilterV1Query(ctx, cfg, filterV1Query("RT", "LIST", true), TokenBundle{}, PerCallOptions{}); err != nil {
@@ -1022,6 +1023,66 @@ func TestBuildSet_IterateAlgorithmIsSentAsWritten(t *testing.T) {
 			}
 			if string(got) != tc.want {
 				t.Errorf("iterate %s is sent as %s, want %s", tc.iterate, got, tc.want)
+			}
+		})
+	}
+}
+
+// The typed row helpers read a 200 body through decodeAnswer, as outcomeOf
+// does, so a body that does not have the row's shape is an error there too.
+func TestRowHelpers_ReadA200BodyThroughItsRow(t *testing.T) {
+	ctx := context.Background()
+	call := map[string]func(cfg Config) error{
+		"check v1": func(cfg Config) error {
+			_, _, _, err := HelperCheckResourceV1(ctx, cfg, model.CheckAccessRequest{Operation: "READ", Type: "RT"}, TokenBundle{}, PerCallOptions{})
+			return err
+		},
+		"bulk v1": func(cfg Config) error {
+			_, _, _, err := HelperCheckResourcesV1(ctx, cfg, nil, TokenBundle{}, PerCallOptions{})
+			return err
+		},
+		"filter v1": func(cfg Config) error {
+			_, _, _, err := HelperFilterV1(ctx, cfg, "RT", "LIST", TokenBundle{}, PerCallOptions{})
+			return err
+		},
+		"check v2": func(cfg Config) error {
+			_, _, _, err := HelperCheckResourceV2(ctx, cfg, model.CheckResourceRequest{}, TokenBundle{}, PerCallOptions{})
+			return err
+		},
+		"bulk operations v2": func(cfg Config) error {
+			_, _, _, err := HelperCheckResourcesV2(ctx, cfg, model.CheckResourcesRequest{}, TokenBundle{}, PerCallOptions{}, v2Flags{})
+			return err
+		},
+		"filter v2": func(cfg Config) error {
+			_, _, _, err := HelperFilterV2(ctx, cfg, "RT", "LIST", TokenBundle{}, PerCallOptions{})
+			return err
+		},
+	}
+	cases := []struct {
+		helper, answer string
+		wantErr        bool
+	}{
+		{"check v1", "true", false},
+		{"check v1", "", false},
+		{"check v1", `{"decision":true}`, true},
+		{"check v1", `"true"`, true},
+		{"bulk v1", `["a"]`, false},
+		{"bulk v1", `{}`, true},
+		{"filter v1", `{"calculationResult":"DENY"}`, false},
+		{"filter v1", `{}`, true},
+		{"check v2", `{"decision":false}`, false},
+		{"check v2", `{}`, true},
+		{"bulk operations v2", `{"decision":{}}`, false},
+		{"bulk operations v2", `{}`, true},
+		{"filter v2", `{"calculationResult":"ALLOW"}`, false},
+		{"filter v2", `{"obligations":[]}`, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.helper+"/"+tc.answer, func(t *testing.T) {
+			srv, _ := testServer(t, tc.answer)
+			err := call[tc.helper](Config{ACBaseURL: srv.URL, TenantID: "t"})
+			if (err != nil) != tc.wantErr {
+				t.Errorf("%s answered with 200 %q returns the error %v; want an error: %t", tc.helper, tc.answer, err, tc.wantErr)
 			}
 		})
 	}

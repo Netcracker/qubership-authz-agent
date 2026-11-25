@@ -17,7 +17,6 @@ package paritysuite
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"authz-agent/test/parity/suite/model"
@@ -44,31 +43,13 @@ func obligationsMember(raw []byte) model.Member {
 }
 
 // checkV2Outcome returns the golden shape of a check/resource answer sent
-// through v2: its status, its obligations member, and on 200 its decision. A
-// 200 body whose decision member is not a JSON boolean is an error, since no
-// conforming server answers so; on any other status the decision is false.
+// through v2: its status, its obligations member, and on 200 its decision.
 func checkV2Outcome(status int, raw []byte, message any) (*model.CheckResourceV2Outcome, error) {
-	out := &model.CheckResourceV2Outcome{Status: status, Obligations: obligationsMember(raw), Message: message}
-	if status != http.StatusOK {
-		return out, nil
-	}
-	decision, err := v2Decision(raw)
+	answer, err := answerOf[model.CheckResourceResponse](PSUITE_ROW_7_CHECK_RESOURCE_V2, status, raw)
 	if err != nil {
 		return nil, err
 	}
-	out.Decision = decision
-	return out, nil
-}
-
-// v2Decision returns the decision member of raw, the body of a 200 v2 check
-// answer, and an error where that member is missing or is not a JSON boolean.
-func v2Decision(raw []byte) (bool, error) {
-	var decision *bool
-	member, ok := v2Body(raw)["decision"]
-	if !ok || json.Unmarshal(member, &decision) != nil || decision == nil {
-		return false, fmt.Errorf("a 200 answer without a boolean decision: %s", raw)
-	}
-	return *decision, nil
+	return &model.CheckResourceV2Outcome{Status: status, Decision: answer.Decision, Obligations: obligationsMember(raw), Message: message}, nil
 }
 
 // bulkOperationsV2Outcome returns the golden shape of a bulk operations answer
@@ -79,16 +60,12 @@ func bulkOperationsV2Outcome(status int, raw []byte, message any) (*model.CheckR
 	if status != http.StatusOK {
 		return out, nil
 	}
-	member, ok := v2Body(raw)["decision"]
-	if !ok {
-		out.Decision = &map[string][]string{}
-		return out, nil
-	}
-	decision, err := allowedByOperation(member)
+	answer, err := answerOf[model.CheckResourcesResponse](PSUITE_ROW_8_CHECK_RESOURCE_BULK_OPERATIONS_V2, status, raw)
 	if err != nil {
 		return nil, err
 	}
-	out.Decision = decision
+	sortIDs(answer.Decision)
+	out.Decision = &answer.Decision
 	return out, nil
 }
 
@@ -96,12 +73,9 @@ func bulkOperationsV2Outcome(status int, raw []byte, message any) (*model.CheckR
 // through v2: its status, its obligations member, and on 200 its filter result
 // members.
 func filterV2Outcome(status int, raw []byte, message any) (*model.FilterV2Outcome, error) {
-	out := &model.FilterV2Outcome{Status: status, Obligations: obligationsMember(raw), Message: message}
-	if status != http.StatusOK {
-		return out, nil
+	answer, err := answerOf[model.FilterResponse](PSUITE_ROW_10_CHECK_FILTER_V2, status, raw)
+	if err != nil {
+		return nil, err
 	}
-	if err := decodeJSON(raw, &out.Result); err != nil {
-		return nil, fmt.Errorf("decode the filter result of %s: %w", raw, err)
-	}
-	return out, nil
+	return &model.FilterV2Outcome{Status: status, Result: answer.EvaluationResult(), Obligations: obligationsMember(raw), Message: message}, nil
 }

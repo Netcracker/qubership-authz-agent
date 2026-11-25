@@ -254,7 +254,9 @@ func (s *ParitySuite) TestRound9TwinPIPDeclarationCases() {
 					s.requirePendingGolden(PSUITE_PIP_CALL, "twin-pip/"+req.name+"/"+domain, pipCall)
 				})
 			}
-			s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, "twin-pip/"+req.name, checkV1Outcome(status, raw, nil))
+			outcome, err := checkV1Outcome(status, raw, nil)
+			s.Require().NoError(err)
+			s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, "twin-pip/"+req.name, outcome)
 		})
 	}
 }

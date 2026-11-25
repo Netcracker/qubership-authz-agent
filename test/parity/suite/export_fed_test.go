@@ -24,7 +24,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -53,50 +52,6 @@ func TestGoldenRow_TakesTheLongestGoldenDirectory(t *testing.T) {
 	}
 	if _, _, ok := goldenRow("no-such-kind/x.json"); ok {
 		t.Errorf(`goldenRow("no-such-kind/x.json") found a row, want none`)
-	}
-}
-
-func TestDecisionOutcome_BuildsTheGoldenShapeOfEachRow(t *testing.T) {
-	ids := []string{"b", "a"}
-	byOp := map[string][]string{"READ": {"b", "a"}}
-	cases := []struct {
-		name   string
-		id     ParityEndpointID
-		status int
-		body   string
-		want   any
-	}{
-		{"an allowed check", PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, 200, "true", &model.CheckResourceOutcome{Status: 200, Decision: true}},
-		{"a refused check denies", PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, 400, `{"message":"x"}`, &model.CheckResourceOutcome{Status: 400}},
-		{"a plain check", PSUITE_ROW_2_CHECK_RESOURCE_V1, 200, "false", ptr(false)},
-		{"bulk ids are sorted", PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME, 200, `["b","a"]`, &model.CheckResourceBulkOutcome{Status: 200, Allowed: &[]string{"a", "b"}}},
-		{"bulk operations ids are sorted", PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME, 200, `{"READ":["b","a"]}`, &model.CheckResourceBulkOperationsOutcome{Status: 200, Decision: &map[string][]string{"READ": {"a", "b"}}}},
-		{"a refused filter has no result", PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, 500, "boom", &model.FilterOutcome{Status: 500}},
-		{"a plain bulk keeps the wire order", PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1, 200, `["b","a"]`, &ids},
-		{"plain bulk operations keep the wire order", PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1, 200, `{"READ":["b","a"]}`, &byOp},
-		{"an allowed v2 check", PSUITE_ROW_7_CHECK_RESOURCE_V2_OUTCOME, 200, `{"decision":true}`, &model.CheckResourceV2Outcome{Status: 200, Decision: true}},
-		{"a refused v2 check denies", PSUITE_ROW_7_CHECK_RESOURCE_V2_OUTCOME, 400, `{"message":"x"}`, &model.CheckResourceV2Outcome{Status: 400}},
-		{"v2 bulk operations ids are sorted", PSUITE_ROW_8_CHECK_RESOURCE_BULK_OPERATIONS_V2_OUTCOME, 200, `{"decision":{"READ":["b","a"]}}`, &model.CheckResourceBulkOperationsV2Outcome{Status: 200, Decision: &map[string][]string{"READ": {"a", "b"}}}},
-		{"a v2 filter carries its result", PSUITE_ROW_10_CHECK_FILTER_V2_OUTCOME, 200, `{"calculationResult":"ALLOW"}`, &model.FilterV2Outcome{Status: 200, Result: model.OldFilterEvaluationResult{CalculationResult: "ALLOW"}}},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			got, err := decisionOutcome(tc.id, tc.status, []byte(tc.body))
-			if err != nil {
-				t.Fatalf("decisionOutcome(%d, %d, %s): %v", tc.id, tc.status, tc.body, err)
-			}
-			if !reflect.DeepEqual(got, tc.want) {
-				t.Errorf("decisionOutcome(%d, %d, %s) = %s, want %s", tc.id, tc.status, tc.body, show(got), show(tc.want))
-			}
-		})
-	}
-}
-
-func TestDecisionOutcome_RefusesAFailedPlainRow(t *testing.T) {
-	for _, id := range []ParityEndpointID{PSUITE_ROW_6_CHECK_FILTER_V1, PSUITE_ROW_2_CHECK_RESOURCE_V1} {
-		if got, err := decisionOutcome(id, 500, []byte("false")); err == nil {
-			t.Errorf("decisionOutcome(%d, 500) = %s, want an error: the plain row has no status to carry", id, show(got))
-		}
 	}
 }
 

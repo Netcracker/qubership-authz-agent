@@ -238,13 +238,6 @@ func goldenRow(path string) (ParityEndpointID, string, bool) {
 	return best, strings.TrimSuffix(path[bestLen:], ".json"), true
 }
 
-// decisionOutcome turns the agent's answer to a decision request into the
-// golden target of row id, through the builder the case runners record with
-// (see outcomeOf).
-func decisionOutcome(id ParityEndpointID, status int, body []byte) (any, error) {
-	return outcomeOf(id, status, body, nil)
-}
-
 // sameOutcome compares two golden targets of row id the way the comparator
 // compares an answer with its golden.
 func sameOutcome(id ParityEndpointID, subCase string, want, got any) string {
@@ -625,7 +618,7 @@ func (r *exportReplayer) judge(group []exportEvent, sent bool, status int, body 
 		res.Verdict, res.Detail = verdictDiffers, "no row has this golden directory"
 		return res
 	}
-	actual, err := decisionOutcome(id, status, body)
+	actual, err := outcomeOf(id, status, body, nil)
 	if err != nil {
 		res.Verdict, res.Detail = verdictDiffers, err.Error()
 		return res
@@ -672,17 +665,17 @@ func (r *exportReplayer) judge(group []exportEvent, sent bool, status int, body 
 // No accepted class covers such an answer.
 func grantsMore(actual any, wants []any) bool {
 	for _, want := range wants {
-		if !grants(actual, want) {
+		if !allowsMoreThan(actual, want) {
 			return false
 		}
 	}
 	return len(wants) > 0
 }
 
-// grants reports whether actual allows something want does not, by what
+// allowsMoreThan reports whether actual allows something want does not, by what
 // allowanceOf reads from each. A target that is not of a decision row counts
 // as allowing more, so that no accepted class covers it.
-func grants(actual, want any) bool {
+func allowsMoreThan(actual, want any) bool {
 	allowed, ok := allowanceOf(actual)
 	if !ok {
 		return true

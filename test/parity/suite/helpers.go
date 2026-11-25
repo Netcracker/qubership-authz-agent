@@ -169,10 +169,9 @@ func doRequest(req *http.Request) (int, []byte, error) {
 	return resp.StatusCode, body, nil
 }
 
-// decodeJSON unmarshals the given body into target when body is non-empty.
-// Empty/whitespace bodies are a no-op and target is left as its zero value —
-// this matches the RemoteACCommon v1 contract where an empty body maps to
-// null, which the client then coerces to false.
+// decodeJSON unmarshals body into target, and leaves target as it is where
+// body is empty or only white space. A 200 body of a decision row is read by
+// [decodeAnswer] instead.
 func decodeJSON(body []byte, target any) error {
 	if len(bytes.TrimSpace(body)) == 0 {
 		return nil

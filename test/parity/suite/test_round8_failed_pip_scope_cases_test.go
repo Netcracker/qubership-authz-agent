@@ -164,7 +164,9 @@ func (s *ParitySuite) runFailedPIPScopeCase(tc regularCase, route string, respon
 			read := s.pipCalls(route)
 			s.T().Logf("upload %d of %s: pip-mock received %d call(s) to %s, status %d, decision %t",
 				attempt, tc.id, read, route, checkStatus, decision)
-			byClass[read > 0] = append(byClass[read > 0], *checkV1Outcome(checkStatus, raw, nil))
+			outcome, err := checkV1Outcome(checkStatus, raw, nil)
+			s.Require().NoError(err)
+			byClass[read > 0] = append(byClass[read > 0], *outcome)
 		}
 		for _, class := range []struct {
 			name string

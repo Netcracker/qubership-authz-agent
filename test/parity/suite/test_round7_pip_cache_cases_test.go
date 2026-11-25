@@ -169,7 +169,9 @@ func (s *ParitySuite) runPIPCacheCase(caseID, route string, pip map[string]any) 
 				s.Run("pip-calls", func() {
 					s.requirePendingGolden(PSUITE_PIP_CALL, caseID+"/"+name, pipCall)
 				})
-				s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, caseID+"/"+name, checkV1Outcome(status, raw, nil))
+				outcome, err := checkV1Outcome(status, raw, nil)
+				s.Require().NoError(err)
+				s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, caseID+"/"+name, outcome)
 			})
 		}
 	}

@@ -15,6 +15,7 @@
 package paritysuite
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -28,18 +29,17 @@ import (
 // body raw; message is the recorded body of a refusal, or nil where the caller
 // records none. The case runners read the answers to the requests of a case
 // file through it (recordedOutcome), and the export-fed profiles read the
-// agent's answers through it (decisionOutcome), so both build a golden target
-// of an outcome row the same way.
+// agent's answers through it, so both build a golden target the same way.
 //
-// An outcome row records every status: a refused answer keeps its status and
-// carries no decision, ids, or filter result. Any other row records only a 200
-// answer, and outcomeOf returns an error for another status. A 200 body that
-// does not have the row's shape is an error too, as is a 200 v2 check answer
-// without a boolean decision.
+// An outcome row, one whose golden directory ends in -outcome, records every
+// status: a refused answer keeps its status and carries no decision, ids, or
+// filter result. Any other row records only a 200 answer, and outcomeOf
+// returns an error for another status. A 200 body is read by [decodeAnswer],
+// so a body that does not have the row's shape is an error on every row.
 func outcomeOf(id ParityEndpointID, status int, raw []byte, message any) (any, error) {
 	switch id {
 	case PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME:
-		return checkV1Outcome(status, raw, message), nil
+		return checkV1Outcome(status, raw, message)
 	case PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME:
 		return bulkV1Outcome(status, raw, message)
 	case PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME:
@@ -56,27 +56,165 @@ func outcomeOf(id ParityEndpointID, status int, raw []byte, message any) (any, e
 	if status != http.StatusOK {
 		return nil, fmt.Errorf("status %d: %s", status, strings.TrimSpace(string(raw)))
 	}
-	if id == PSUITE_ROW_7_CHECK_RESOURCE_V2 {
-		if _, err := v2Decision(raw); err != nil {
+	return decodeAnswer(id, raw)
+}
+
+// A jsonKind is the kind of a JSON value, told by its first byte.
+type jsonKind int
+
+const (
+	jsonInvalid jsonKind = iota
+	jsonNull
+	jsonBoolean
+	jsonNumber
+	jsonString
+	jsonArray
+	jsonObject
+)
+
+func (k jsonKind) String() string {
+	return [...]string{"invalid JSON", "null", "boolean", "number", "string", "array", "object"}[k]
+}
+
+// kindOf returns the kind of the JSON value raw, which has no surrounding
+// space; jsonInvalid where raw is no JSON value.
+func kindOf(raw []byte) jsonKind {
+	if !json.Valid(raw) {
+		return jsonInvalid
+	}
+	switch raw[0] {
+	case 'n':
+		return jsonNull
+	case 't', 'f':
+		return jsonBoolean
+	case '"':
+		return jsonString
+	case '[':
+		return jsonArray
+	case '{':
+		return jsonObject
+	}
+	return jsonNumber
+}
+
+// An answerShape is the form a 200 body of a decision row has: a row whose
+// golden records what a check, a bulk check, or a filter allowed.
+type answerShape struct {
+	// kind is the kind of the body.
+	kind jsonKind
+	// legacyNull is set for a v1 row, whose body the legacy v1 client reads as
+	// null where it is empty or null: no decision (false), no ids, and no
+	// filter result.
+	legacyNull bool
+	// member names a member the body has to hold, with a value of kind
+	// memberKind; empty for none.
+	member     string
+	memberKind jsonKind
+}
+
+// answerShapeOf returns the shape of a 200 body read into target, the golden
+// target of a row that is not an outcome row, and false where that row records
+// no decision. A v2 body has to hold the member that carries the decision,
+// since every v2 answer legacy sends with 200 holds it.
+func answerShapeOf(target any) (answerShape, bool) {
+	switch target.(type) {
+	case *bool:
+		return answerShape{kind: jsonBoolean, legacyNull: true}, true
+	case *[]string:
+		return answerShape{kind: jsonArray, legacyNull: true}, true
+	case *map[string][]string:
+		return answerShape{kind: jsonObject, legacyNull: true}, true
+	case *model.OldFilterEvaluationResult:
+		return answerShape{kind: jsonObject, legacyNull: true, member: "calculationResult", memberKind: jsonString}, true
+	case *model.CheckResourceResponse:
+		return answerShape{kind: jsonObject, member: "decision", memberKind: jsonBoolean}, true
+	case *model.CheckResourcesResponse:
+		return answerShape{kind: jsonObject, member: "decision", memberKind: jsonObject}, true
+	case *model.FilterResponse:
+		return answerShape{kind: jsonObject, member: "calculationResult", memberKind: jsonString}, true
+	}
+	return answerShape{}, false
+}
+
+// check returns an error where raw, a 200 body, does not have the shape s.
+func (s answerShape) check(raw []byte) error {
+	body := bytes.TrimSpace(raw)
+	kind := jsonNull
+	if len(body) > 0 {
+		kind = kindOf(body)
+	}
+	switch {
+	case kind == jsonNull && s.legacyNull:
+		return nil
+	case kind != s.kind:
+		return fmt.Errorf("the body is %s, not a JSON %s: %q", kind, s.kind, body)
+	case s.member == "":
+		return nil
+	}
+	var members map[string]json.RawMessage
+	if err := json.Unmarshal(body, &members); err != nil {
+		return fmt.Errorf("read the members of %q: %w", body, err)
+	}
+	member, ok := members[s.member]
+	if !ok {
+		return fmt.Errorf("the body has no %s member: %q", s.member, body)
+	}
+	if got := kindOf(bytes.TrimSpace(member)); got != s.memberKind {
+		return fmt.Errorf("the %s member is %s, not a JSON %s: %q", s.member, got, s.memberKind, body)
+	}
+	return nil
+}
+
+// decodeAnswer decodes raw, the body of a 200 answer to row id, into a new
+// golden target of the row (NewGoldenTarget). For a row that records a
+// decision (answerShapeOf), a body without the row's shape is an error, and an
+// empty body of a v1 row reads as null. Any other row reads an empty body as
+// its zero target.
+func decodeAnswer(id ParityEndpointID, raw []byte) (any, error) {
+	target := NewGoldenTarget(id)
+	shape, ok := answerShapeOf(target)
+	if !ok {
+		if err := decodeJSON(raw, target); err != nil {
 			return nil, err
 		}
+		return target, nil
 	}
-	target := NewGoldenTarget(id)
-	if decision, ok := target.(*bool); ok {
-		*decision = decodeBoolean(raw)
-		return decision, nil
+	if err := shape.check(raw); err != nil {
+		return nil, fmt.Errorf("a 200 answer of %s: %w", Meta(id).GoldenDir, err)
 	}
-	if err := decodeJSON(raw, target); err != nil {
-		return nil, err
+	body := bytes.TrimSpace(raw)
+	if len(body) == 0 {
+		body = []byte("null")
+	}
+	if err := json.Unmarshal(body, target); err != nil {
+		return nil, fmt.Errorf("a 200 answer of %s: decode %q: %w", Meta(id).GoldenDir, body, err)
 	}
 	return target, nil
 }
 
+// answerOf returns the 200 body raw of row id decoded by [decodeAnswer], where
+// T is the type the row's golden target points to. For any other status it
+// returns the zero T and reads nothing.
+func answerOf[T any](id ParityEndpointID, status int, raw []byte) (T, error) {
+	var answer T
+	if status != http.StatusOK {
+		return answer, nil
+	}
+	target, err := decodeAnswer(id, raw)
+	if err != nil {
+		return answer, err
+	}
+	return *target.(*T), nil
+}
+
 // checkV1Outcome returns the golden shape of a check/resource answer: its
-// status, and on 200 the decision the body holds, read as the legacy client
-// reads it (see decodeBoolean).
-func checkV1Outcome(status int, raw []byte, message any) *model.CheckResourceOutcome {
-	return &model.CheckResourceOutcome{Status: status, Decision: status == http.StatusOK && decodeBoolean(raw), Message: message}
+// status, and on 200 the decision the body holds.
+func checkV1Outcome(status int, raw []byte, message any) (*model.CheckResourceOutcome, error) {
+	decision, err := answerOf[bool](PSUITE_ROW_2_CHECK_RESOURCE_V1, status, raw)
+	if err != nil {
+		return nil, err
+	}
+	return &model.CheckResourceOutcome{Status: status, Decision: decision, Message: message}, nil
 }
 
 // bulkV1Outcome returns the golden shape of a check/resource/bulk answer: its
@@ -87,9 +225,9 @@ func bulkV1Outcome(status int, raw []byte, message any) (*model.CheckResourceBul
 	if status != http.StatusOK {
 		return out, nil
 	}
-	var allowed []string
-	if err := decodeJSON(raw, &allowed); err != nil {
-		return nil, fmt.Errorf("decode the allowed ids of %s: %w", raw, err)
+	allowed, err := answerOf[[]string](PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1, status, raw)
+	if err != nil {
+		return nil, err
 	}
 	sort.Strings(allowed)
 	out.Allowed = &allowed
@@ -103,38 +241,30 @@ func bulkOperationsV1Outcome(status int, raw []byte, message any) (*model.CheckR
 	if status != http.StatusOK {
 		return out, nil
 	}
-	decision, err := allowedByOperation(raw)
+	decision, err := answerOf[map[string][]string](PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1, status, raw)
 	if err != nil {
 		return nil, err
 	}
-	out.Decision = decision
+	sortIDs(decision)
+	out.Decision = &decision
 	return out, nil
 }
 
-// allowedByOperation decodes member, a map from an operation to the ids it
-// allows, and sorts the ids of each operation.
-func allowedByOperation(member []byte) (*map[string][]string, error) {
-	decision := map[string][]string{}
-	if err := decodeJSON(member, &decision); err != nil {
-		return nil, fmt.Errorf("decode the allowed ids by operation of %s: %w", member, err)
-	}
-	for _, ids := range decision {
+// sortIDs sorts the ids of each operation of byOperation in place.
+func sortIDs(byOperation map[string][]string) {
+	for _, ids := range byOperation {
 		sort.Strings(ids)
 	}
-	return &decision, nil
 }
 
 // filterV1Outcome returns the golden shape of a check/filter answer: its
 // status, and on 200 the filter result the body holds.
 func filterV1Outcome(status int, raw []byte, message any) (*model.FilterOutcome, error) {
-	out := &model.FilterOutcome{Status: status, Message: message}
-	if status != http.StatusOK {
-		return out, nil
+	result, err := answerOf[model.OldFilterEvaluationResult](PSUITE_ROW_6_CHECK_FILTER_V1, status, raw)
+	if err != nil {
+		return nil, err
 	}
-	if err := decodeJSON(raw, &out.Result); err != nil {
-		return nil, fmt.Errorf("decode the filter result of %s: %w", raw, err)
-	}
-	return out, nil
+	return &model.FilterOutcome{Status: status, Result: result, Message: message}, nil
 }
 
 // A grant is one thing a decision allows: a check (kind grantCheck), an id of
@@ -230,11 +360,7 @@ func allowanceOf(target any) (grants map[grant]bool, ok bool) {
 	case *model.OldFilterEvaluationResult:
 		allowFilter(*t)
 	case *model.FilterResponse:
-		allowFilter(model.OldFilterEvaluationResult{
-			CalculationResult: t.CalculationResult, FilterCondition: t.FilterCondition,
-			MongodbFilterCondition: t.MongodbFilterCondition, RsqlFilterCondition: t.RsqlFilterCondition,
-			SqlFilterCondition: t.SqlFilterCondition, CustomFilterCondition: t.CustomFilterCondition,
-		})
+		allowFilter(t.EvaluationResult())
 	case *model.FilterOutcome:
 		if !refused(t.Status) {
 			allowFilter(t.Result)

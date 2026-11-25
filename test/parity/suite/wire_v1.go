@@ -16,7 +16,6 @@ package paritysuite
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/url"
 	"strings"
@@ -69,8 +68,8 @@ func HelperCheckResourceV1(ctx context.Context, cfg Config, body model.CheckAcce
 	if err != nil {
 		return status, false, raw, err
 	}
-	decision := decodeBoolean(raw)
-	return status, decision, raw, nil
+	decision, err := answerOf[bool](PSUITE_ROW_2_CHECK_RESOURCE_V1, status, raw)
+	return status, decision, raw, err
 }
 
 // HelperCheckResourcesV1 drives row 3 (POST /access/v1/check/resource/bulk).
@@ -86,11 +85,8 @@ func HelperCheckResourcesV1(ctx context.Context, cfg Config, body []model.CheckA
 	if err != nil {
 		return status, nil, raw, err
 	}
-	var decoded []string
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, nil, raw, err
-	}
-	return status, decoded, raw, nil
+	decoded, err := answerOf[[]string](PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1, status, raw)
+	return status, decoded, raw, err
 }
 
 // HelperCheckResourcesByOperationsV1 drives row 4
@@ -105,11 +101,8 @@ func HelperCheckResourcesByOperationsV1(ctx context.Context, cfg Config, body []
 	if err != nil {
 		return status, nil, raw, err
 	}
-	var decoded map[string][]string
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, nil, raw, err
-	}
-	return status, decoded, raw, nil
+	decoded, err := answerOf[map[string][]string](PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1, status, raw)
+	return status, decoded, raw, err
 }
 
 // HelperPreviewCheckResourcesByOperationsV1 drives row 5
@@ -126,11 +119,8 @@ func HelperPreviewCheckResourcesByOperationsV1(ctx context.Context, cfg Config, 
 	if err != nil {
 		return status, nil, raw, err
 	}
-	var decoded map[string][]string
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, nil, raw, err
-	}
-	return status, decoded, raw, nil
+	decoded, err := answerOf[map[string][]string](PSUITE_ROW_5_PREVIEW_BULK_OPERATIONS_V1, status, raw)
+	return status, decoded, raw, err
 }
 
 // HelperFilterV1 drives row 6 (POST /access/v1/check/filter). Body is empty —
@@ -171,11 +161,8 @@ func HelperFilterV1Query(ctx context.Context, cfg Config, extra url.Values, toke
 	if err != nil {
 		return status, model.OldFilterEvaluationResult{}, raw, err
 	}
-	var decoded model.OldFilterEvaluationResult
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, decoded, raw, err
-	}
-	return status, decoded, raw, nil
+	decoded, err := answerOf[model.OldFilterEvaluationResult](PSUITE_ROW_6_CHECK_FILTER_V1, status, raw)
+	return status, decoded, raw, err
 }
 
 // HelperPostV1 posts body to path of access-control with the tenant, the
@@ -202,18 +189,4 @@ func buildURL(base, path, query string) string {
 		full += "?" + query
 	}
 	return full
-}
-
-// decodeBoolean mirrors the thin client's BOOLEAN_RESPONSE_TYPE handling —
-// empty/whitespace body → null → false.
-func decodeBoolean(body []byte) bool {
-	trimmed := strings.TrimSpace(string(body))
-	if trimmed == "" || trimmed == "null" {
-		return false
-	}
-	var decoded bool
-	if err := json.Unmarshal([]byte(trimmed), &decoded); err != nil {
-		return false
-	}
-	return decoded
 }

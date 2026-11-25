@@ -47,6 +47,16 @@ type FilterResponse struct {
 	Obligations            json.RawMessage `json:"obligations,omitempty"`
 }
 
+// EvaluationResult returns the members of r that a v1 check/filter answer
+// carries, without Obligations.
+func (r *FilterResponse) EvaluationResult() OldFilterEvaluationResult {
+	return OldFilterEvaluationResult{
+		CalculationResult: r.CalculationResult, FilterCondition: r.FilterCondition,
+		MongodbFilterCondition: r.MongodbFilterCondition, RsqlFilterCondition: r.RsqlFilterCondition,
+		SqlFilterCondition: r.SqlFilterCondition, CustomFilterCondition: r.CustomFilterCondition,
+	}
+}
+
 // FilterText is the predicate of one text dialect in a check/filter answer, in
 // the form the body carried it: a string, null, or no member at all. Present is
 // false for an absent member, and Text is nil for null. A struct field of this
