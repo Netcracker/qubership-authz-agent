@@ -15,12 +15,19 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 )
 
 // reported keeps the level and the text of every line a run wrote.
@@ -33,6 +40,11 @@ func (r *reported) record(level, format string, args ...any) {
 func (r *reported) Infof(format string, args ...any)  { r.record("info", format, args...) }
 func (r *reported) Warnf(format string, args ...any)  { r.record("warn", format, args...) }
 func (r *reported) Errorf(format string, args ...any) { r.record("error", format, args...) }
+
+// reported keeps a line at every level, so it reports the most verbose level
+// and ignores a new one.
+func (r *reported) GetLevel() logging.Lvl { return logging.LvlDebug }
+func (r *reported) SetLevel(logging.Lvl)  {}
 
 // contains reports whether any line at level holds substring.
 func (r *reported) contains(level, substring string) bool {
@@ -131,6 +143,95 @@ func TestBuild_RefusesADataDirectoryItCannotWrite(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "store") {
 		t.Errorf("build reported %q, want an error naming the store", err)
+	}
+}
+
+// The command runs as a child process of this test binary, which calls main
+// when AUTHZ_POLICY_ADMIN_TEST_RUN_MAIN is 1. Every child gets a port that a
+// socket of this test holds, so a start that gets past the store fails on the
+// listener instead of serving.
+func TestStart_LogsWhyItFailed(t *testing.T) {
+	if os.Getenv("AUTHZ_POLICY_ADMIN_TEST_RUN_MAIN") == "1" {
+		main()
+		return
+	}
+	file := filepath.Join(t.TempDir(), "not-a-dir")
+	if err := os.WriteFile(file, nil, 0o600); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+	socket, err := net.Listen("tcp", "0.0.0.0:0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	t.Cleanup(func() { _ = socket.Close() })
+	_, port, _ := net.SplitHostPort(socket.Addr().String())
+
+	for _, tt := range []struct {
+		name    string
+		level   string
+		dataDir string
+		want    string
+	}{
+		{"a data directory that is a file at the level fatal", "fatal", file, "store: create data dir " + file + " "},
+		{"a data directory that is a file at the level info", "info", file, "store: create data dir " + file + " "},
+		{"a port in use at the level fatal", "fatal", "", "listening on 0.0.0.0:" + port + ": "},
+		{"a port in use at the level info", "info", "", "listening on 0.0.0.0:" + port + ": "},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			command := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestStart_LogsWhyItFailed$")
+			command.Env = append(childEnvironment(), "AUTHZ_POLICY_ADMIN_TEST_RUN_MAIN=1", "LOGGING_LEVEL_ROOT="+tt.level,
+				"AUTHZ_POLICY_ADMIN_DATA_DIR="+tt.dataDir, "AUTHZ_POLICY_ADMIN_PORT="+port)
+			out, err := command.CombinedOutput()
+			var exit *exec.ExitError
+			if !errors.As(err, &exit) || exit.ExitCode() != 1 {
+				t.Errorf("authz-policy-admin at LOGGING_LEVEL_ROOT=%s ended with %v, want exit status 1", tt.level, err)
+			}
+			if !strings.Contains(string(out), tt.want) {
+				t.Errorf("the output of authz-policy-admin at LOGGING_LEVEL_ROOT=%s lacks %q:\n%s", tt.level, tt.want, out)
+			}
+		})
+	}
+}
+
+// childEnvironment is the environment of this test process without every
+// variable whose name starts with log.level or logging.level once folded as
+// configloader folds it, to lower case with dots for underscores. Such a
+// variable can set a level the platform logger reads, as LOG_LEVEL does, or
+// hide LOGGING_LEVEL_ROOT from it, as LOGGING_LEVEL_ROOT_X does.
+func childEnvironment() []string {
+	var kept []string
+	for _, entry := range os.Environ() {
+		name, _, _ := strings.Cut(entry, "=")
+		key := strings.ReplaceAll(strings.ToLower(name), "_", ".")
+		if strings.HasPrefix(key, "log.level") || strings.HasPrefix(key, "logging.level") {
+			continue
+		}
+		kept = append(kept, entry)
+	}
+	return kept
+}
+
+func TestLogStop_RaisesOnlyTheLevelFatal(t *testing.T) {
+	saved := logger.GetLevel()
+	t.Cleanup(func() { logger.SetLevel(saved) })
+	for _, tt := range []struct {
+		name      string
+		level     logging.Lvl
+		wantLevel logging.Lvl
+	}{
+		{"fatal is raised to error", logging.LvlCrit, logging.LvlError},
+		{"error stays error", logging.LvlError, logging.LvlError},
+		{"debug stays debug", logging.LvlDebug, logging.LvlDebug},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			logger.SetLevel(tt.level)
+			logStop("logStop test line")
+			if got := logger.GetLevel(); got != tt.wantLevel {
+				t.Errorf("logger level after logStop() at %v = %v, want %v", tt.level, got, tt.wantLevel)
+			}
+		})
 	}
 }
 

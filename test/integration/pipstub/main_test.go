@@ -26,7 +26,7 @@ import (
 
 func resetState() {
 	routes = map[string]*pipRoute{}
-	calls = []callRecord{}
+	calls = newCallJournal(maxCalls)
 	counters = map[string]int{}
 	rules = nil
 	ruleCounter = map[string]int{}
@@ -127,8 +127,8 @@ func TestHandlePIP_EchoRule(t *testing.T) {
 		t.Fatalf("echo body payload mismatch: %v", echoed["body"])
 	}
 	// the call was captured with full request content
-	if len(calls) != 1 || calls[0].BodyRaw != `{"k":"v"}` || calls[0].Headers["x-trace-id"] != "t-1" {
-		t.Fatalf("call capture mismatch: %+v", calls)
+	if got := calls.snapshot(); len(got) != 1 || got[0].BodyRaw != `{"k":"v"}` || got[0].Headers["x-trace-id"] != "t-1" {
+		t.Fatalf("call capture mismatch: %+v", got)
 	}
 }
 
@@ -256,6 +256,17 @@ func TestHandlePIP_DefaultRouteAnswersUnroutedPaths(t *testing.T) {
 	}
 }
 
+// The 404 body is JSON for a path that holds a quote once decoded.
+func TestHandlePIP_UnroutedPathWithAQuoteGetsAJSONError(t *testing.T) {
+	resetState()
+	status, body := serve(http.MethodGet, "/a%22b")
+	var refusal struct{ Error string }
+	decodeErr := json.Unmarshal([]byte(body), &refusal)
+	if want := `no rule or route for /a"b`; status != http.StatusNotFound || decodeErr != nil || refusal.Error != want {
+		t.Errorf("GET /a%%22b = %d %s (decode error %v), want 404 with error %q", status, body, decodeErr, want)
+	}
+}
+
 // The default route serves its responses in sequence across every unrouted
 // path, clamped to the last, as one route does for its own path.
 func TestHandlePIP_DefaultRouteServesItsSequenceAcrossPaths(t *testing.T) {
@@ -276,11 +287,250 @@ func TestHandlePIP_DefaultRouteServesItsSequenceAcrossPaths(t *testing.T) {
 func TestHandlePIP_RecordsTheRequestTargetAsSent(t *testing.T) {
 	resetState()
 	serve(http.MethodGet, "/users/a%2Fb%20c%3F?x=1")
-	if len(calls) != 1 {
-		t.Fatalf("recorded %d calls, want 1", len(calls))
+	recorded := calls.snapshot()
+	if len(recorded) != 1 {
+		t.Fatalf("recorded %d calls, want 1", len(recorded))
 	}
-	got := calls[0]
+	got := recorded[0]
 	if got.RequestURI != "/users/a%2Fb%20c%3F?x=1" || got.Path != "/users/a/b c?" {
 		t.Errorf("requestUri %q, path %q, want %q and %q", got.RequestURI, got.Path, "/users/a%2Fb%20c%3F?x=1", "/users/a/b c?")
+	}
+}
+
+// getCalls returns the paths that GET /pip-stub/calls lists and its
+// Pip-Stub-Calls-Dropped header.
+func getCalls(t *testing.T) (paths []string, dropped string) {
+	t.Helper()
+	rr := httptest.NewRecorder()
+	handleCalls(rr, httptest.NewRequest(http.MethodGet, "/pip-stub/calls", nil))
+	var recorded []callRecord
+	if err := json.Unmarshal(rr.Body.Bytes(), &recorded); err != nil {
+		t.Fatalf("decode /pip-stub/calls: %v", err)
+	}
+	for _, c := range recorded {
+		paths = append(paths, c.Path)
+	}
+	return paths, rr.Header().Get(callsDroppedHeader)
+}
+
+// The journal keeps the latest requests up to its limit, oldest first, and
+// the calls response counts the requests it dropped, so a caller can tell a
+// complete list from a truncated one.
+func TestHandleCalls_KeepsTheLatestCallsUpToTheLimit(t *testing.T) {
+	cases := []struct {
+		name        string
+		sent        []string
+		wantPaths   []string
+		wantDropped string
+	}{
+		{"a journal at its limit keeps every call", []string{"/a", "/b", "/c"}, []string{"/a", "/b", "/c"}, "0"},
+		{"a journal past its limit keeps the latest calls", []string{"/a", "/b", "/c", "/d", "/e"},
+			[]string{"/c", "/d", "/e"}, "2"},
+		{"a journal past twice its limit keeps the latest calls in order", []string{"/a", "/b", "/c", "/d", "/e", "/f", "/g"},
+			[]string{"/e", "/f", "/g"}, "4"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resetState()
+			calls = newCallJournal(3)
+			for _, path := range tc.sent {
+				serve(http.MethodGet, path)
+			}
+			paths, dropped := getCalls(t)
+			if !reflect.DeepEqual(paths, tc.wantPaths) || dropped != tc.wantDropped {
+				t.Errorf("calls after %v = %v dropped %s, want %v dropped %s",
+					tc.sent, paths, dropped, tc.wantPaths, tc.wantDropped)
+			}
+		})
+	}
+}
+
+// A reset empties a full journal and its dropped count, and keeps the limit.
+func TestHandleReset_EmptiesAFullJournal(t *testing.T) {
+	resetState()
+	calls = newCallJournal(2)
+	for _, path := range []string{"/a", "/b", "/c", "/d", "/e"} {
+		serve(http.MethodGet, path)
+	}
+	handleReset(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/pip-stub/reset", nil))
+	for _, path := range []string{"/x", "/y", "/z"} {
+		serve(http.MethodGet, path)
+	}
+	paths, dropped := getCalls(t)
+	if want := []string{"/y", "/z"}; !reflect.DeepEqual(paths, want) || dropped != "1" {
+		t.Errorf("calls after reset and /x, /y, /z = %v dropped %s, want %v dropped 1", paths, dropped, want)
+	}
+}
+
+// A configured route answers each number in its body with the digits it was
+// configured with, including a value that float64 cannot hold or holds only
+// approximately.
+func TestHandleConfigure_KeepsNumbersAsWritten(t *testing.T) {
+	for _, number := range []string{"9007199254740993", "-9007199254740993", "1e400", "0.1", "1e3"} {
+		t.Run(number, func(t *testing.T) {
+			resetState()
+			config := `[{"path":"/n","responses":[{"statusCode":200,"body":{"value":[` + number + `]}}]}]`
+			rr := httptest.NewRecorder()
+			handleConfigure(rr, httptest.NewRequest(http.MethodPut, "/pip-stub/configure", strings.NewReader(config)))
+			if rr.Code != http.StatusOK {
+				t.Fatalf("PUT /pip-stub/configure %s = %d %s, want 200", config, rr.Code, strings.TrimSpace(rr.Body.String()))
+			}
+			want := `{"value":[` + number + `]}`
+			if status, body := serve(http.MethodGet, "/n"); status != http.StatusOK || body != want {
+				t.Errorf("GET /n = %d %s, want 200 %s", status, body, want)
+			}
+		})
+	}
+}
+
+// A header named twice in one route response, in different case, refuses the
+// whole payload, including the routes before it.
+func TestHandleConfigure_RefusesAHeaderNamedTwice(t *testing.T) {
+	resetState()
+	config := `[{"path":"/ok","responses":[{"headers":{"X-Result":"a","X-Other":"b"}}]},` +
+		`{"path":"/\"dup\"","responses":[{"headers":{"X-Result":"a","x-result":"b"}}]}]`
+	rr := httptest.NewRecorder()
+	handleConfigure(rr, httptest.NewRequest(http.MethodPut, "/pip-stub/configure", strings.NewReader(config)))
+	var refusal struct{ Error string }
+	decodeErr := json.Unmarshal(rr.Body.Bytes(), &refusal)
+	if want := `route /"dup" sets header X-Result more than once`; rr.Code != http.StatusBadRequest || decodeErr != nil || refusal.Error != want {
+		t.Errorf("PUT /pip-stub/configure %s = %d %s (decode error %v), want 400 with error %q",
+			config, rr.Code, strings.TrimSpace(rr.Body.String()), decodeErr, want)
+	}
+	if len(routes) != 0 {
+		t.Errorf("routes after a refused configure = %v, want none", routes)
+	}
+}
+
+// Distinct header names, in any case, configure the route.
+func TestHandleConfigure_AcceptsDistinctHeaders(t *testing.T) {
+	resetState()
+	config := `[{"path":"/ok","responses":[{"headers":{"X-Result":"a","x-other":"b"}}]}]`
+	rr := httptest.NewRecorder()
+	handleConfigure(rr, httptest.NewRequest(http.MethodPut, "/pip-stub/configure", strings.NewReader(config)))
+	if rr.Code != http.StatusOK {
+		t.Errorf("PUT /pip-stub/configure %s = %d %s, want 200", config, rr.Code, strings.TrimSpace(rr.Body.String()))
+	}
+	if _, ok := routes["/ok"]; !ok {
+		t.Errorf("routes after configure = %v, want /ok", routes)
+	}
+}
+
+func TestHandleConfigure_RefusesAnInvalidNumber(t *testing.T) {
+	resetState()
+	config := `[{"path":"/n","responses":[{"statusCode":200,"body":{"value":[1e]}}]}]`
+	rr := httptest.NewRecorder()
+	handleConfigure(rr, httptest.NewRequest(http.MethodPut, "/pip-stub/configure", strings.NewReader(config)))
+	if rr.Code != http.StatusBadRequest {
+		t.Errorf("PUT /pip-stub/configure %s = %d %s, want 400", config, rr.Code, strings.TrimSpace(rr.Body.String()))
+	}
+	if route, ok := routes["/n"]; ok {
+		t.Errorf("routes[\"/n\"] = %+v after a refused configure, want no route", route)
+	}
+}
+
+// A route's headers are set on its response after Content-Type, so a route can
+// send a redirect with Location and can replace Content-Type; a route without
+// headers still sends application/json.
+func TestHandlePIP_RouteSendsItsHeaders(t *testing.T) {
+	cases := []struct {
+		name        string
+		response    pipResponse
+		wantStatus  int
+		wantHeaders map[string]string
+	}{
+		{"a redirect carries Location", pipResponse{StatusCode: 302, Body: []string{"x"},
+			Headers: map[string]string{"Location": "/guard"}}, 302,
+			map[string]string{"Location": "/guard", "Content-Type": "application/json"}},
+		{"a header replaces Content-Type", pipResponse{StatusCode: 200, BodyRaw: "x",
+			Headers: map[string]string{"Content-Type": "text/plain", "Content-Encoding": "identity"}}, 200,
+			map[string]string{"Content-Type": "text/plain", "Content-Encoding": "identity"}},
+		{"no headers keep application/json", pipResponse{StatusCode: 200, Body: []string{"x"}}, 200,
+			map[string]string{"Content-Type": "application/json", "Location": ""}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resetState()
+			routes["/r"] = &pipRoute{Path: "/r", Responses: []pipResponse{tc.response}}
+			rr := httptest.NewRecorder()
+			handlePIP(rr, httptest.NewRequest(http.MethodPost, "/r", nil))
+			if rr.Code != tc.wantStatus {
+				t.Errorf("status = %d, want %d", rr.Code, tc.wantStatus)
+			}
+			for name, want := range tc.wantHeaders {
+				if got := rr.Header().Get(name); got != want {
+					t.Errorf("header %s = %q, want %q", name, got, want)
+				}
+			}
+		})
+	}
+}
+
+// A route with noBody sends an empty body, whatever body members it has, and a
+// route with neither noBody nor a body sends the text null.
+func TestHandlePIP_NoBodySendsNothing(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		response pipResponse
+		want     string
+	}{
+		{"noBody", pipResponse{StatusCode: 302, NoBody: true, Body: []string{"x"}}, ""},
+		{"noBody with bodyRaw", pipResponse{StatusCode: 302, NoBody: true, BodyRaw: "raw"}, ""},
+		{"noBody with no body members", pipResponse{StatusCode: 302, NoBody: true}, ""},
+		{"no body member", pipResponse{StatusCode: 302}, "null"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resetState()
+			routes["/r"] = &pipRoute{Path: "/r", Responses: []pipResponse{tc.response}}
+			if _, body := serve(http.MethodPost, "/r"); body != tc.want {
+				t.Errorf("body = %q, want %q", body, tc.want)
+			}
+		})
+	}
+}
+
+// The probe on /pip-stub/health goes through the handler main serves and
+// leaves the call journal empty.
+func TestNewStub_HealthAnswers200WithoutRecordingTheCall(t *testing.T) {
+	stub := newStub("")
+	health := httptest.NewRecorder()
+	stub.ServeHTTP(health, httptest.NewRequest(http.MethodGet, "/pip-stub/health", nil))
+	if health.Code != http.StatusOK || health.Body.Len() != 0 {
+		t.Errorf("GET /pip-stub/health = %d %q, want 200 with an empty body", health.Code, health.Body.String())
+	}
+	calls := httptest.NewRecorder()
+	stub.ServeHTTP(calls, httptest.NewRequest(http.MethodGet, "/pip-stub/calls", nil))
+	body, dropped := strings.TrimSpace(calls.Body.String()), calls.Header().Get(callsDroppedHeader)
+	if calls.Code != http.StatusOK || body != "[]" || dropped != "0" {
+		t.Errorf("GET /pip-stub/calls after the probe = %d %s, %s %q; want 200 [], %s \"0\"",
+			calls.Code, body, callsDroppedHeader, dropped, callsDroppedHeader)
+	}
+}
+
+// Only GET and HEAD on /pip-stub/health reach the probe handler; another
+// method on that path is routed and recorded like any other request.
+func TestNewStub_PostToHealthReachesTheRoutes(t *testing.T) {
+	stub := newStub("")
+	post := httptest.NewRecorder()
+	stub.ServeHTTP(post, httptest.NewRequest(http.MethodPost, "/pip-stub/health", nil))
+	if post.Code != http.StatusNotFound {
+		t.Errorf("POST /pip-stub/health = %d %s, want 404 from a stub with no route for it",
+			post.Code, strings.TrimSpace(post.Body.String()))
+	}
+	if paths, _ := getCalls(t); !reflect.DeepEqual(paths, []string{"/pip-stub/health"}) {
+		t.Errorf("recorded calls after POST /pip-stub/health = %v, want [/pip-stub/health]", paths)
+	}
+}
+
+// add reports the first record that drops an older one, once per journal, so
+// handlePIP logs the overflow once between resets.
+func TestCallJournal_AddReportsOnlyTheFirstDrop(t *testing.T) {
+	journal := newCallJournal(1)
+	var got []bool
+	for _, path := range []string{"/a", "/b", "/c"} {
+		got = append(got, journal.add(callRecord{Path: path}))
+	}
+	if want := []bool{false, true, false}; !reflect.DeepEqual(got, want) {
+		t.Errorf("add(/a), add(/b), add(/c) on a journal of 1 = %v, want %v", got, want)
 	}
 }

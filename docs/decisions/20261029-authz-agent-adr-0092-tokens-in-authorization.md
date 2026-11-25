@@ -11,8 +11,8 @@ kichasov
 
 #### Participants and approvers
 
-- The project architect (`mr-joom`) approves this record, with the answers it takes from the owner of the policy
-  decision code on an unknown mode and on the mode outside Kubernetes, and with the 503 for keys that cannot be loaded.
+- The project architect (`mr-joom`) approves this record, with the 503 for keys that cannot be loaded. On 2026-11-23
+  the architect and the owner of the policy decision code agreed to drop the M2M modes of `M2M_AUTH_MODE` (R11, R15).
 - The owner of the policy decision code (`vlsi`) returned the questionnaire of 2026-11-03.
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
 
@@ -24,7 +24,8 @@ kichasov
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   verifies the tokens that this record accepts, and defines realm token, file token, and Kubernetes token.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
-  ADR-0093 R1, the tenant that a caller that is not M2M is compared with.
+  ADR-0093 R1, the tenant that a caller that is not M2M is compared with, and ADR-0093 R22, the 503 that takes the
+  place of the 403 of R4 before the default tenant is translated.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
     the marked provider and the checks of a Kubernetes token.
 - [authz-agent-ADR-0095: Refuse a check request before policy evaluation](20261029-authz-agent-adr-0095-refuse-before-policy-evaluation.md):
@@ -35,8 +36,8 @@ kichasov
 A check route receives the caller's token in `Authorization` and, optionally, the user's token in `Incoming-Token`.
 
 Services of an installation call each other with realm tokens, and in some installations with Kubernetes service account
-tokens. The platform runs the services of an installation in one of three M2M modes, set in `M2M_AUTH_MODE`: `legacy`,
-`hybrid`, and `k8s`, `legacy` by default.
+tokens. The platform's deployer passes `M2M_AUTH_MODE`, with the value `legacy`, `hybrid`, or `k8s`, to every service of
+an installation, and the services that read it decide by it which kinds of token they accept.
 
 Some callers send a user token in `Authorization`, and some services authenticate with client credentials and carry
 neither the role `ROLE_M2M` nor a `level`. The parity goldens of #42 cover both: `caller-user-token`, `ts69-service`,
@@ -44,8 +45,8 @@ and `ts69-bare-service`.
 
 ## Decision
 
-We will accept on the check routes any verified token in `Authorization` of a kind the M2M mode accepts, and limit a
-token that is not M2M to its own tenant.
+We will accept on the check routes any verified token in `Authorization`, of every kind and in every installation, and
+limit a token that is not M2M to its own tenant.
 
 ### Terms
 
@@ -65,7 +66,8 @@ token that is not M2M to its own tenant.
 - **R3** (`handler`). An M2M token in `Authorization` may name any tenant.
 - **R4** (`handler`). A token in `Authorization` that is not M2M may reach only the tenant of its own non-empty
   `tenant-id` claim, or the default tenant when it has no such claim. Any other tenant gets 403 with
-  `CALLER_TENANT_MISMATCH` before policy evaluation.
+  `CALLER_TENANT_MISMATCH` before policy evaluation. The exception is a caller that ADR-0093 R22 refuses with 503
+  before the agent translates the name of the default tenant.
 - **R5** (`handler`). The comparison of R4 uses the tenant of the decision of ADR-0093 R1, so that an `Incoming-Token`
   cannot move the caller out of its tenant.
 
@@ -74,33 +76,17 @@ token that is not M2M to its own tenant.
 - **R6** (`verify`). A realm token is an M2M token when `realm_access.roles` holds `ROLE_M2M`, compared byte for byte.
 - **R21** (`verify`). A realm token is an M2M token when `level` is `m2m` or `key-manager`, compared without regard to
   case.
-- **R7** (`verify`). A Kubernetes token is an M2M token. ADR-0094 R16 refuses one whose `sub` does not start with
-  `system:serviceaccount`.
+- **R7** (`verify`). A Kubernetes token is an M2M token.
 - **R8** (`verify`). A file token is not an M2M token, because its claims are whatever that provider signs.
-- **R9** (`verify`). The token verification computes this test once and returns the result, as ADR-0091 R54 states.
-- **R10** (`handler`, `policy`). Every reader, `subject.isM2M` among them, reads that result.
+- **R10** (`handler`, `policy`). Every reader of the M2M test, `subject.isM2M` among them, reads the result that the
+  token verification returns under ADR-0091 R54.
 
-#### M2M modes
+#### Kinds of token
 
-- **R11** (`handler`). `M2M_AUTH_MODE` decides the kinds of token that `Authorization` accepts. This is the one
-  definition of the modes:
-
-  | `M2M_AUTH_MODE` | Accepted in `Authorization` |
-  | --- | --- |
-  | `legacy` | Realm tokens and file tokens |
-  | `hybrid` | Realm tokens, file tokens, and Kubernetes tokens |
-  | `k8s` | Kubernetes tokens |
-
-- **R12** (`keys`). In `legacy` the agent has no marked provider, so a token that the API server signed is refused with
-  `TOKEN_ISSUER_UNKNOWN`, and no key is loaded for it.
-- **R13** (`handler`). In `k8s` a realm token or a file token in `Authorization` that passes verification gets 401 with
-  `TOKEN_KIND_NOT_ALLOWED`. One that fails gets the code of that check.
-- **R14** (`keys`). The agent loads the keys of realms and of providers in every mode, because `Incoming-Token` may
-  still hold a realm token or a file token in `k8s`.
-- **R15** (`startup`). The value of `M2M_AUTH_MODE` is compared without regard to case, and an empty value means
-  `legacy`, as an unset one does. Any other value stops the start, with or without the chart.
-- **R16** (`startup`). Outside Kubernetes the only mode is `legacy`, because there is no API server. In the other modes
-  ADR-0094 R5 stops the start when the token for the API server is missing.
+- **R11** (`handler`). A token in `Authorization` that passes verification is accepted whatever its kind: a realm token,
+  a file token, or a Kubernetes token. R4 limits the tenants that a token that is not M2M may reach.
+- **R15** (`startup`). The agent does not read `M2M_AUTH_MODE`. The tokens that the agent accepts, and whether it
+  starts, are the same whether `M2M_AUTH_MODE` is unset or holds any value, with or without the chart.
 
 #### Other routes
 
@@ -113,30 +99,33 @@ token that is not M2M to its own tenant.
 
 ### Justification
 
-A check route needs a verified caller, not a caller of a particular kind. The M2M test decides what a caller may reach
-instead of whether it may call (R3, R4), so a service whose Keycloak client issues neither `ROLE_M2M` nor a `level`
-keeps working and stays inside its own tenant. Computing the test once keeps the check of a caller and the policies from
-disagreeing about one token (R9, R10).
+A check route needs a verified caller, not a caller of a particular kind (R11). The M2M test decides what a caller may
+reach instead of whether it may call (R3, R4), so a service whose Keycloak client issues neither `ROLE_M2M` nor a
+`level` keeps working and stays inside its own tenant. Reading the one result that the verification returns keeps the
+check of a caller and the policies from disagreeing about one token (R10).
 
-`k8s` exists to check a migration: an installation switches it on and sees which services still call with a realm token
-or a file token (R13). It is not planned for production.
-
-One table of modes keeps the records that depend on it from defining the modes again (R11). The value is matched loosely
-because a mode in another case or an empty value should not stop the start by accident, and the table has no value that
-differs from another by case alone (R15).
+The project architect and the owner of the policy decision code dropped the M2M modes on 2026-11-23. The agent accepts
+the same kinds of token in every installation, so a service moves from a realm token to a Kubernetes token with no
+change of the agent, and no setting of the agent has to agree with the mode of the other services (R11, R15). The
+platform's deployer passes `M2M_AUTH_MODE` to every service, so the agent leaves it unread, and a value set for the
+other services cannot stop the start of the agent (R15).
 
 The goldens `caller-user-token`, `ts69-service`, and `ts69-bare-service` keep their answers. The goldens of #42 tell the
 broad M2M test from `level` alone, and `ts72-service` and `ts72-role-m2m` tell `ROLE_M2M` from a service account.
 
 ### Alternatives considered
 
-- **A1. Accept only M2M tokens in `Authorization`.** Rejected by R11: 28 goldens would change their answer, and a
+- **A1. Accept only M2M tokens in `Authorization`.** Rejected by R17: 28 goldens would change their answer, and a
   service without `ROLE_M2M` or `level` would stop working with no way to see that in the goldens.
-- **A2. Accept realm tokens and file tokens in `Authorization` in `k8s` too.** Rejected by R13: the mode could no longer
-  show who still uses one.
 - **A3. Compare the caller with the tenant the request names.** Rejected by R5: an `Incoming-Token` of another tenant
   would move the decision out of the caller's tenant, and a mismatch would get the refusal that ADR-0093 R9 does not
   make.
+- **A4. Keep the M2M modes of `M2M_AUTH_MODE`: `legacy` accepts realm tokens and file tokens in `Authorization`,
+  `hybrid` adds Kubernetes tokens, and `k8s` accepts only Kubernetes tokens and refuses the others with
+  `TOKEN_KIND_NOT_ALLOWED`.** Rejected by R11 and R15: the architect and the owner of the policy decision code dropped
+  the modes, and the tokens that the agent accepts would depend on a setting that the other services also read. This
+  reverses the earlier R11 to R15 of this record, its A2, which kept realm tokens and file tokens out of `k8s`, and the
+  answers of the owner of the policy decision code on an unknown mode and on the mode outside Kubernetes.
 
 ## Consequences
 
@@ -144,11 +133,19 @@ Negative:
 
 - A client-credentials token without `ROLE_M2M` and without `level` is treated as a user token, so it reaches only its
   own or the default tenant.
+- No setting refuses realm tokens or file tokens in `Authorization`, so the refusals of the agent no longer show which
+  services still call with one, as `k8s` did (R11).
+- Every installation that the chart deploys accepts Kubernetes tokens from the namespaces of the installation in
+  `Authorization`, where `legacy`, the default mode, refused them (R11; ADR-0094 R17, R30).
+- Outside Kubernetes no token for the API server exists, so the trusted providers file there holds no marked provider,
+  and no token is a Kubernetes token (ADR-0094 R5). A token that the API server signed then gets `TOKEN_ISSUER_UNKNOWN`
+  when its `iss` falls under ADR-0091 R11.
 - The decisions of a request cannot be downloaded from the agent. Issue #223 tracks how they are read.
 - Comparing with the tenant of the decision changes the answer of two requests that no golden covers:
   - A caller that is not M2M and has no `tenant-id`, such as a client-credentials token without `ROLE_M2M`, forwards the
     `Incoming-Token` of a user of tenant T. Without that header it is the golden `no-claim-names-no-tenant`, 200 in the
-    default tenant. Here the tenant of the decision is T, so the caller gets 403 `CALLER_TENANT_MISMATCH`.
+    default tenant. Here the tenant of the decision is T, so after the translation of the default tenant (ADR-0093 R22)
+    the caller gets 403 `CALLER_TENANT_MISMATCH`.
   - A user of tenant A sends a token in `Authorization`, `tenant_id=B`, and an `Incoming-Token` with `tenant-id` A.
     Without that header it is the golden `claim-a-names-tenant-b`, 403. Here the decision is computed in A, with 200.
 
