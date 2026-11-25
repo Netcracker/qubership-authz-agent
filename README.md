@@ -15,8 +15,8 @@ because it is not a container of the agent Pod.
 
 ## Maturity
 
-**Pre-1.0.**  Releases before 1.0, v0.1.0 included, carry no stable API or
-configuration commitment.  The access-control-compatible API surface — the legacy
+**Pre-1.0, no releases yet.**  The component has no published release and no
+stable API commitment.  The access-control-compatible API surface — the legacy
 check endpoints the agent translates — is deliberately partly unimplemented:
 only the paths that the test suites exercise are wired.  The deployment assumes
 a Kubernetes cluster running the Netcracker platform (Keycloak realm structure,
