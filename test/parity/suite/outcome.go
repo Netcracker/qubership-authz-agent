@@ -115,8 +115,9 @@ type answerShape struct {
 
 // answerShapeOf returns the shape of a 200 body read into target, the golden
 // target of a row that is not an outcome row, and false where that row records
-// no decision. A v2 body has to hold the member that carries the decision,
-// since every v2 answer legacy sends with 200 holds it.
+// no decision. A v2 body, and a v1 filter body that is not empty or null,
+// has to hold the member that carries the decision or the filter result,
+// since every such answer legacy sends with 200 holds it.
 func answerShapeOf(target any) (answerShape, bool) {
 	switch target.(type) {
 	case *bool:

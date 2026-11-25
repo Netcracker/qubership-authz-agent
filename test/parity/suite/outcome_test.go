@@ -22,10 +22,11 @@ import (
 	"authz-agent/test/parity/suite/model"
 )
 
-// outcomeOf reads every answer of a decision row through decodeAnswer, for the
-// case runners and the export-fed judges alike. A 200 body of the wrong shape
-// is an error on every row, an empty or null body of a v1 row reads as the
-// legacy client's null, and a null list stays apart from an empty one.
+// outcomeOf reads every 200 answer through decodeAnswer, for the case runners
+// and the export-fed judges alike. On a row that records a decision, a 200
+// body of the wrong shape is an error, an empty or null body of a v1 row reads
+// as the legacy client's null, and a null list stays apart from an empty one;
+// a row that records no decision, such as the api version, has no shape.
 func TestOutcomeOf_ReadsEachShapeOfAnAnswer(t *testing.T) {
 	t.Parallel()
 	cases := []struct {

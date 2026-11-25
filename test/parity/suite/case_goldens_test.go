@@ -466,10 +466,10 @@ func TestComparedGoldens_FollowsTheRunnerThroughTheSetupItRecorded(t *testing.T)
 		requests: []isolatedRequest{{name: "top"}, {name: "classified", classifyBy: "/pip"}, {name: "classified-plain", classifyBy: "/pip"},
 			{name: "counted", pipCalls: "/pip", userManagementCalls: true}},
 		steps: []regularStep{
-			write("accepted", true, decide("after-accepted")),
+			write("accepted", true, decide("after-accepted"), stepObservation{kind: "pip-call", route: "/step-pip"}),
 			read,
 			write("refused-goes-on", false, decide("after-refused-goes-on")),
-			write("refused-stops", true, decide("after-refused-stops")),
+			write("refused-stops", true, stepObservation{kind: "error-class"}, decide("after-refused-stops")),
 			write("never-run", true, decide("after-the-stop")),
 		},
 	}}
@@ -491,11 +491,13 @@ func TestComparedGoldens_FollowsTheRunnerThroughTheSetupItRecorded(t *testing.T)
 		"counted":                       true,
 		"accepted":                      true,
 		"after-accepted":                false, // its golden is under the filter row, and the request is a check
+		"accepted-pip-calls":            false,
 		"read-read":                     false,
 		"after-read":                    false, // a class golden stands only for a request classified by a PIP
 		"refused-goes-on":               true,
 		"after-refused-goes-on":         false,
-		"refused-stops":                 true, // and the case ends there, before the-pip-calls of the whole case
+		"refused-stops":                 true,  // and the case ends there, before the-pip-calls of the whole case
+		"refused-stops-error-class":     false, // the error class of a refusal is compared before the case ends
 	}
 	if !maps.Equal(got, want) {
 		t.Errorf("comparedGoldens compares, with whether each is recorded, %v; want %v", got, want)

@@ -218,7 +218,8 @@ func (s *ParitySuite) subjectToken(req isolatedRequest) (string, error) {
 // policies of the case before. Either way the domain of that case is emptied
 // at once: otherwise the upload the agent did not load stays in the
 // configuration every later pull reads, until the run ends. Where the agent
-// stopped answering, emptyDomainAfter waits for it to answer again. When
+// stopped answering, emptyDomainAfter waits for it to answer again, unless an
+// earlier wait for it ran out and it has not answered since (agentGone). When
 // emptying the domain fails, or the agent does not load it either, every later
 // case reports a broken setup and uploads nothing.
 //
@@ -235,7 +236,9 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 	}
 	s.T().Cleanup(func() {
 		for _, domain := range domains {
-			if _, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, domain, nil, nil); err != nil {
+			status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, domain, nil, nil)
+			s.noteAgentAnswer(status, err)
+			if err != nil {
 				s.T().Logf("empty domain %s: %v", domain, err)
 			}
 		}
@@ -278,7 +281,7 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 			mergeFields(policy, tc.policy, tc.resourceType)
 			domain := valueOr(tc.domain, isolatedCaseDomain)
 			status, body, err := UploadIsolatedPoliciesWithQuery(ctx, s.cfg, s.tokens, domain, tc.pips, []any{policy}, tc.policiesQuery)
-			s.noteAgentAnswer(err)
+			s.noteAgentAnswer(status, err)
 			var notLoaded *agentLoadError
 			if errors.As(err, &notLoaded) {
 				if isAgentTransportFailure(notLoaded.err) {
@@ -309,13 +312,16 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 	}
 }
 
-// noteAgentAnswer clears s.agentGone when err, the error of an upload, shows
-// that the agent answered its pull: err is nil, or is an *agentLoadError whose
-// cause is not a transport failure (isAgentTransportFailure). Any other error
-// says nothing about the agent and leaves s.agentGone as it is.
-func (s *ParitySuite) noteAgentAnswer(err error) {
+// noteAgentAnswer clears s.agentGone when an upload with status and err shows
+// that the agent answered its pull: the upload was accepted and loaded (a 2xx
+// status and no error), or err is an *agentLoadError whose cause is not a
+// transport failure (isAgentTransportFailure). A refused upload, which makes
+// no pull, and any other error say nothing about the agent and leave
+// s.agentGone as it is.
+func (s *ParitySuite) noteAgentAnswer(status int, err error) {
 	var notLoaded *agentLoadError
-	if err == nil || errors.As(err, &notLoaded) && !isAgentTransportFailure(notLoaded.err) {
+	loaded := err == nil && status >= http.StatusOK && status < http.StatusMultipleChoices
+	if loaded || errors.As(err, &notLoaded) && !isAgentTransportFailure(notLoaded.err) {
 		s.agentGone = nil
 	}
 }
@@ -330,7 +336,7 @@ func (s *ParitySuite) noteAgentAnswer(err error) {
 // of waiting again.
 func (s *ParitySuite) emptyDomainAfter(ctx context.Context, domain, caseID string) error {
 	status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, domain, nil, nil)
-	s.noteAgentAnswer(err)
+	s.noteAgentAnswer(status, err)
 	if err == nil && (status < http.StatusOK || status >= http.StatusMultipleChoices) {
 		return fmt.Errorf("HTTP %d", status)
 	}
