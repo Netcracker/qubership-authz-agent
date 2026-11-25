@@ -116,7 +116,7 @@ These records use no wider word for a realm token and a file token together. The
 - **R14** (`startup`). The agent is ready once it has all of these:
   1. the policy snapshot of every tenant of the policy source (ADR-0093 R17);
   2. a usable key of every provider, the marked provider among them;
-  3. a usable key of every realm in `keycloak.requiredRealms`, in every M2M mode;
+  3. a usable key of every realm in `keycloak.requiredRealms`;
   4. the default tenant (ADR-0093 R10 to R14).
 - **R15** (`keys`). `cloud-common` is the agent's own default for `keycloak.requiredRealms` when the trusted providers
   file holds `keycloak` and names none.
