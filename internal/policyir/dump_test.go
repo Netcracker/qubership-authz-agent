@@ -18,11 +18,10 @@ import (
 	"testing"
 )
 
-// The tree holds every node type, every atom type, and every operand type, so
-// a type left without a case in Dump shows up here as a <T> placeholder.
-func TestTreeDump(t *testing.T) {
-	t.Parallel()
-
+// everyKindTree returns a new valid tree that holds every node type, every
+// atom type, and every operand type.
+func everyKindTree(t *testing.T) *Tree {
+	t.Helper()
 	pips := []*PIP{
 		{Name: "subject.tier", Type: PIPToken, Claim: "tier", DefaultValue: `"none"`, Domain: "D"},
 		{Name: "subject.owners.filtered", Type: PIPFiltered, URL: "http://pip/owners", ResourceType: "order",
@@ -88,6 +87,13 @@ func TestTreeDump(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	return tree
+}
+
+// A type left without a case in Dump shows up here as a <T> placeholder.
+func TestTreeDump(t *testing.T) {
+	t.Parallel()
+	tree := everyKindTree(t)
 
 	want := `pip "subject.tier" type=TOKEN claim="tier" defaultValue="none" domain="D"
 pip "subject.owners.filtered" type=FILTERED url="http://pip/owners" resourceType="order" unsupported="timeoutSeconds"
