@@ -33,6 +33,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 
+	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/policyir"
 	"authz-agent/internal/regobuiltins"
 	"authz-agent/internal/regogen/spectables"
@@ -162,7 +163,7 @@ func resolvedText(r Resolved) string {
 	if r.Value == nil {
 		return string(r.State)
 	}
-	return string(r.State) + " " + jsonText(r.Value)
+	return string(r.State) + " " + jsonvalue.Encode(r.Value)
 }
 
 // serve starts a server that answers every request with h.

@@ -15,8 +15,6 @@
 package regogen
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -106,7 +104,8 @@ type Record struct {
 	// no token equals.
 	Key, ValueKey, MatchKey *string
 	// ElementKeys holds the match tokens of the elements of a list that are
-	// not null, a list or an object among them by its folded Java text, or
+	// not null, a list or an object among them by its folded
+	// [legacyvalue.StructureText], or
 	// those of a value read as a list of one; ElementOwnKeys holds their own
 	// tokens.
 	ElementKeys, ElementOwnKeys []string
@@ -116,7 +115,7 @@ type Record struct {
 	// null out.
 	HasNull bool
 	// TextKey is the key of the text a string equals a list or an object by
-	// (structureText).
+	// ([legacyvalue.StructureText]).
 	TextKey *string
 	// Length is the number of elements of a list, null elements included.
 	Length *int
@@ -413,15 +412,13 @@ func buildRecord(r *Ref, v Resolved) Record {
 	default:
 		rec.elementKeys(r, v.Value, lv)
 		rec.HasNull = lv.State == legacyvalue.StateNullElement
-		switch l, ok := v.Value.([]jsonvalue.Value); {
-		case !r.reads(fieldTextKey):
-		case ok && len(l) > 0 && allStrings(l):
-			// structureText of a list of strings is its Java text, which k
-			// folds
+		if r.reads(fieldTextKey) {
 			rec.TextKey = lv.Key
-		default:
-			textKey := legacyvalue.Fold(structureText(v.Value))
-			rec.TextKey = &textKey
+			if rec.TextKey == nil {
+				// the record of an empty list carries its state alone
+				tk := legacyvalue.Fold(legacyvalue.StructureText(v.Value))
+				rec.TextKey = &tk
+			}
 		}
 		if r.reads(fieldEqAlts, fieldEqIndex) {
 			rec.EqAlts, rec.EqIndex = eqElements(v.Value, inputNumberValue)
@@ -989,124 +986,7 @@ func (in *Input) PIPRecord(id string) (*ast.Term, bool) {
 	return r.term(), true
 }
 
-func allStrings(l []jsonvalue.Value) bool {
-	for _, e := range l {
-		if _, ok := e.(string); !ok {
-			return false
-		}
-	}
-	return true
-}
-
-// structureText is the text a string compares a list or an object by, as the
-// agent profile prints it: the members in document order, a scalar member as
-// its Java text with a number as structureNumberText prints it, and a member
-// that is itself a list or an object as compact JSON with its numbers as
-// written.
-func structureText(v jsonvalue.Value) string {
-	member := func(x jsonvalue.Value) string {
-		switch x := x.(type) {
-		case []jsonvalue.Value, *jsonvalue.Object:
-			return jsonText(x)
-		case nil:
-			return "null"
-		case bool:
-			return strconv.FormatBool(x)
-		case jsonvalue.Number:
-			return structureNumberText(string(x))
-		case string:
-			return x
-		}
-		return ""
-	}
-	var parts []string
-	switch v := v.(type) {
-	case []jsonvalue.Value:
-		for _, x := range v {
-			parts = append(parts, member(x))
-		}
-		return "[" + strings.Join(parts, ", ") + "]"
-	case *jsonvalue.Object:
-		for _, k := range v.Keys() {
-			x, _ := v.Get(k)
-			parts = append(parts, k+"="+member(x))
-		}
-		return "{" + strings.Join(parts, ", ") + "}"
-	}
-	return member(v)
-}
-
-// jsonText is compact JSON with the numbers as the document writes them.
-func jsonText(v jsonvalue.Value) string {
-	var b strings.Builder
-	writeJSONText(&b, v)
-	return b.String()
-}
-
-func writeJSONText(b *strings.Builder, v jsonvalue.Value) {
-	switch v := v.(type) {
-	case []jsonvalue.Value:
-		b.WriteByte('[')
-		for i, x := range v {
-			if i > 0 {
-				b.WriteByte(',')
-			}
-			writeJSONText(b, x)
-		}
-		b.WriteByte(']')
-	case *jsonvalue.Object:
-		b.WriteByte('{')
-		for i, k := range v.Keys() {
-			if i > 0 {
-				b.WriteByte(',')
-			}
-			x, _ := v.Get(k)
-			b.WriteString(jsonString(k))
-			b.WriteByte(':')
-			writeJSONText(b, x)
-		}
-		b.WriteByte('}')
-	case jsonvalue.Number:
-		b.WriteString(string(v))
-	case string:
-		b.WriteString(jsonString(v))
-	case bool:
-		b.WriteString(strconv.FormatBool(v))
-	default:
-		b.WriteString("null")
-	}
-}
-
-func jsonString(s string) string {
-	var b bytes.Buffer
-	enc := json.NewEncoder(&b)
-	enc.SetEscapeHTML(false)
-	_ = enc.Encode(s)
-	return strings.TrimSuffix(b.String(), "\n")
-}
-
 var numberRE = regexp.MustCompile(`^(-?)(\d*)(?:\.(\d*))?(?:[eE]([-+]?\d+))?$`)
-
-// structureNumberText is the text of a number that is a member of a list or
-// an object in structureText: Double.toString of a number with an exponent
-// and no digits after the point that the exponent leaves, such as 1e3, 1.5e1,
-// or 5e0, which print 1000.0, 15.0, and 5.0; plainStripped of any other.
-func structureNumberText(text string) string {
-	m := numberRE.FindStringSubmatch(text)
-	if m == nil || m[4] == "" {
-		return plainStripped(text)
-	}
-	// an exponent too long for an int64 leaves digits after the point when
-	// it is negative, and none when it is positive
-	exp, err := strconv.ParseInt(m[4], 10, 64)
-	if err != nil && strings.HasPrefix(m[4], "-") || err == nil && int64(len(m[3])) > exp {
-		return plainStripped(text)
-	}
-	// a number beyond the range of a float64 parses as an infinity with
-	// ErrRange, and DoubleText prints it as Infinity
-	f, _ := strconv.ParseFloat(text, 64)
-	return jsonvalue.DoubleText(f)
-}
 
 // plainZeroLimit is the most zeros plainStripped adds to the digits of a
 // number to write it in plain notation: 1e999999999 would take a gigabyte.

@@ -117,7 +117,7 @@ func textShape(s string) string { return "t:" + strconv.Quote(legacyvalue.Fold(s
 // the prefix x:, which no shape has, so the texts of two structures never
 // meet.
 func structureAlias(e jsonvalue.Value) deep {
-	return deep{shape: "x:" + strconv.Quote(legacyvalue.Fold(structureText(e)))}
+	return deep{shape: "x:" + strconv.Quote(legacyvalue.Fold(legacyvalue.StructureText(e)))}
 }
 
 func stringAlias(s string) deep { return deep{shape: "x:" + strconv.Quote(legacyvalue.Fold(s))} }
@@ -314,11 +314,11 @@ func elementIndex(v jsonvalue.Value, num numberValue, objects bool) deepIndex {
 		case *jsonvalue.Object:
 			if objects {
 				ix.add(deepOf(e, num))
-				ix.add(deep{shape: textShape(structureText(e))})
+				ix.add(deep{shape: textShape(legacyvalue.StructureText(e))})
 			}
 		case []jsonvalue.Value:
 			ix.add(deepOf(e, num))
-			ix.add(deep{shape: textShape(structureText(e))})
+			ix.add(deep{shape: textShape(legacyvalue.StructureText(e))})
 		case string:
 			ix.add(deepOf(e, num))
 			ix.add(stringAlias(e))

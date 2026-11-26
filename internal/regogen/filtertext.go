@@ -68,9 +68,9 @@ func orOf(terms []*fexpr) *fexpr {
 // key identifies x by its structure and its predicates.
 func (x *fexpr) key() string {
 	if x.kind == "leaf" {
-		k := "leaf:" + x.term.key + "\x00" + jsonText(x.term.textObject())
+		k := "leaf:" + x.term.key + "\x00" + jsonvalue.Encode(x.term.textObject())
 		if c := x.term.custom; c != nil {
-			k += "\x00" + jsonText(c.object())
+			k += "\x00" + jsonvalue.Encode(c.object())
 		}
 		return k
 	}
@@ -701,7 +701,7 @@ func (a FilterAnswer) MarshalJSON() ([]byte, error) {
 	} else {
 		o.Set("customFilterCondition", nil)
 	}
-	return []byte(jsonText(o)), nil
+	return []byte(jsonvalue.Encode(o)), nil
 }
 
 var _ json.Marshaler = FilterAnswer{}
@@ -837,7 +837,7 @@ func namePaths(x *fexpr, paths map[string]string) {
 	if x.term.custom == nil {
 		return
 	}
-	body := jsonText(x.term.custom.object())
+	body := jsonvalue.Encode(x.term.custom.object())
 	path := x.term.key
 	for n := 2; paths[path] != "" && paths[path] != body; n++ {
 		path = fmt.Sprintf("%s#%d", x.term.key, n)

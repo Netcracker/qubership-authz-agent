@@ -84,8 +84,8 @@ func TestDedupe_KeepsOneOfEqualObjectsWhateverTheOrderOfTheirMembers(t *testing.
 		{"objects with other values", `[{"a": 1}, {"a": 2}]`, `[{"a": 1}, {"a": 2}]`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got := jsonText(dedupe(mustDecode(t, tc.list).([]jsonvalue.Value)))
-			if want := jsonText(mustDecode(t, tc.want)); got != want {
+			got := jsonvalue.Encode(dedupe(mustDecode(t, tc.list).([]jsonvalue.Value)))
+			if want := jsonvalue.Encode(mustDecode(t, tc.want)); got != want {
 				t.Errorf("dedupe(%s) = %s, want %s", tc.list, got, want)
 			}
 		})

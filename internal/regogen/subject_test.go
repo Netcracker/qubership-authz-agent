@@ -80,7 +80,7 @@ func TestSubjectOfReadsTheMembersFromTheClaims(t *testing.T) {
 			got := s.Values[specKey("subj", tc.member)]
 			value := ""
 			if got.State == spectables.StateValue {
-				value = jsonText(got.Value)
+				value = jsonvalue.Encode(got.Value)
 			}
 			if got.State != tc.state || value != tc.value {
 				t.Errorf("SubjectOf(%s, anonymous %v): %s = %s %s, want %s %s", tc.claims, tc.anonymous,
@@ -116,7 +116,7 @@ func TestSubjectOfReadsTheIDByTheRules(t *testing.T) {
 			got := SubjectOf(claimsOf(t, serviceClaims), tc.anonymous, tc.rules).Values[keySubjID]
 			value := ""
 			if got.State == spectables.StateValue {
-				value = jsonText(got.Value)
+				value = jsonvalue.Encode(got.Value)
 			}
 			if got.State != tc.state || value != tc.value {
 				t.Errorf("SubjectOf(anonymous %v, %+v): id = %s %s, want %s %s", tc.anonymous, tc.rules,

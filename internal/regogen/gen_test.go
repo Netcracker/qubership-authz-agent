@@ -509,8 +509,9 @@ func TestTheNodeRulesComeFromTheExport(t *testing.T) {
 }
 
 // A list or an object compares with a string by the text the profile prints
-// for it, in either order and under equalsIgnoreCase; a number inside prints
-// without trailing zeros.
+// for it, in either order and under equalsIgnoreCase; a number with a point
+// or an exponent inside prints as the Double legacy reads, so a fraction keeps
+// its point, and an integer prints as its digits.
 func TestAStructureComparesWithAStringByItsText(t *testing.T) {
 	keyB := `["res",".b"]`
 	for _, tc := range []struct {
@@ -518,7 +519,17 @@ func TestAStructureComparesWithAStringByItsText(t *testing.T) {
 		want                  bool
 	}{
 		{"a list equals its text in another case", "resource.a == '[X, y]'", `["x", "y"]`, "", true},
-		{"a number element prints without its trailing zero", "resource.a == '[1]'", `[1.0]`, "", true},
+		{"a fractional element keeps its point", "resource.a == '[5.0]'", `[5.0]`, "", true},
+		{"an integer element prints without a point", "resource.a == '[5.0]'", `[5]`, "", false},
+		{"a fractional element does not print as an integer", "resource.a == '[1]'", `[1.0]`, "", false},
+		{"a fraction with a trailing zero prints as its Double", "resource.a == '[5.5]'", `[5.50]`, "", true},
+		{"an exponent prints as its Double", "resource.a == '[1000.0]'", `[1e3]`, "", true},
+		{"a member of an object keeps its point", "resource.a CONTAINS '{k=1.0}'", `{"k": 1.0}`, "", true},
+		{"a nested list is a subset element by its text", "'[1.0]' IS SUBSET resource.a", `[[1.0]]`, "", true},
+		{"a nested list is in a list by its text", "'[0.000010]' IN resource.a", `[[1e-5]]`, "", true},
+		{"a nested list is not in a list by its Double.toString text", "'[1.0E-5]' IN resource.a", `[[1e-5]]`, "", false},
+		{"a nested object is in a list by its text", "'{k=[\"v\"]}' IN resource.a", `[{"k": ["v"]}]`, "", true},
+		{"a nested list does not match the integer text", "'[1]' IS SUBSET resource.a", `[[1.0]]`, "", false},
 		{"a list does not equal another text", "resource.a == '[y]'", `["x"]`, "", false},
 		{"a string equals the text of a list on the right", "resource.b == resource.a", `["x"]`, `"[x]"`, true},
 		{"an object contains its text", "resource.a CONTAINS '{k=v}'", `{"k": "v"}`, "", true},
@@ -534,6 +545,26 @@ func TestAStructureComparesWithAStringByItsText(t *testing.T) {
 			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
 				t.Errorf("allow(%s, resource.a = %s, resource.b = %s) = %v, want %v", tc.condition, tc.a, tc.b, got,
 					tc.want)
+			}
+		})
+	}
+}
+
+// A DENY rule fires on a structure whose text matches, as an ALLOW rule
+// permits on it.
+func TestADenyFiresOnAStructureByItsText(t *testing.T) {
+	for _, tc := range []struct {
+		name, condition, a string
+		want               bool
+	}{
+		{"a fractional element keeps its point", "resource.a == '[1.0]'", `[1.0]`, false},
+		{"an integer element prints without a point", "resource.a == '[1.0]'", `[1]`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSet(t, "PERMIT_UNLESS_DENY", "DENY", tc.condition)
+			values := map[string]Resolved{keyA: resolved(t, "VALUE", tc.a)}
+			if got := decideValues(t, tree, DefaultOptions(), values); got != tc.want {
+				t.Errorf("allow(DENY %s, resource.a = %s) = %v, want %v", tc.condition, tc.a, got, tc.want)
 			}
 		})
 	}

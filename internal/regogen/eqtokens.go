@@ -142,9 +142,8 @@ func scalarTokensOfRecord(e jsonvalue.Value, lv legacyvalue.Record) scalarTokens
 }
 
 // listTokens returns the match and the own tokens of the elements of l that
-// are not null: a scalar by its tokens, and a list or an object by its folded
-// Java text, which keys, the [legacyvalue.Record.Keys] of l, holds in the
-// order of l.
+// are not null: a scalar by its tokens, and a list or an object by its key in
+// keys, the [legacyvalue.Record.Keys] of l, which holds them in the order of l.
 func listTokens(l []jsonvalue.Value, keys []string) (match, own []string) {
 	match, own = []string{}, []string{}
 	j := 0

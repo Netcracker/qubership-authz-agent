@@ -97,8 +97,8 @@ type Ref struct {
 type litVal struct {
 	kind  spectables.Kind
 	class spectables.Class
-	// key is the key of a scalar (scalarTokens) and the folded Java text of
-	// a list.
+	// key is the key of a scalar (scalarTokens) and the folded
+	// [legacyvalue.StructureText] of a list.
 	key string
 	// keys and own are the match and the own tokens of a scalar, or of the
 	// items of a list.

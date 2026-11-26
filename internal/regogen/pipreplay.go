@@ -159,16 +159,16 @@ func pipAnswer(v Resolved, jp string) (int, string, error) {
 			}
 		case []jsonvalue.Value:
 			if len(x) < 2 {
-				return 0, "", fmt.Errorf("replay: no body gives the list %s", jsonText(x))
+				return 0, "", fmt.Errorf("replay: no body gives the list %s", jsonvalue.Encode(x))
 			}
 			body = x
 		case *jsonvalue.Object:
 			if jp == "" {
-				return 0, "", fmt.Errorf("replay: no body without jsonPath gives the object %s", jsonText(x))
+				return 0, "", fmt.Errorf("replay: no body without jsonPath gives the object %s", jsonvalue.Encode(x))
 			}
 			body = x
 		default:
-			return 0, "", fmt.Errorf("replay: no body gives the value %s in state VALUE", jsonText(x))
+			return 0, "", fmt.Errorf("replay: no body gives the value %s in state VALUE", jsonvalue.Encode(x))
 		}
 	default:
 		return 0, "", fmt.Errorf("replay: no response gives the state %s", v.State)
@@ -188,5 +188,5 @@ func pipAnswer(v Resolved, jp string) (int, string, error) {
 			body = o
 		}
 	}
-	return http.StatusOK, jsonText(body), nil
+	return http.StatusOK, jsonvalue.Encode(body), nil
 }

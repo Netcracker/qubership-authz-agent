@@ -84,18 +84,18 @@ type Record struct {
 	// k: the key two values are equal by under equalsIgnoreCase. For a
 	// scalar it is [Fold] of the text the legacy service compares the value
 	// by, so the number 5 and the string "5" share a key, and so do true and
-	// "TRUE". For a list or an object it is Fold of its Java [Text], which a
-	// string equals it by. Generated code compares a number with a number or
+	// "TRUE". For a list or an object it is Fold of its [StructureText], which
+	// a string equals it by. Generated code compares a number with a number or
 	// a string by Number instead, and the two are unequal unless both have
 	// one; two numbers that both lack one, such as 1e400, compare by ck
 	// (ADR-0083).
 	Key *string
 	// ck: the key with case, the same text before [Fold].
 	CaseKey *string
-	// ks: the keys of the elements that are not null, for a list; the record's
-	// own Key for any other value, which a collection operator reads as a list
-	// of one. A number element compares with a number or a string by its value
-	// instead.
+	// ks: the keys of the elements that are not null, for a list, each as Key
+	// would be for that element alone; the record's own Key for any other
+	// value, which a collection operator reads as a list of one. A number
+	// element compares with a number or a string by its value instead.
 	Keys []string
 	// n: the number new BigDecimal(ck) reads, set for a number and for
 	// a string that BigDecimal reads; <, <=, >, and >= compare it, and so does
@@ -158,7 +158,7 @@ func of(v jsonvalue.Value) Record {
 		}
 		return listRecord(x, AllParts)
 	case *jsonvalue.Object:
-		ck := Text(x)
+		ck := StructureText(x)
 		k := Fold(ck)
 		return Record{State: StateValue, Class: ClassOther, Type: TypeObject, Key: &k, CaseKey: &ck,
 			Keys: []string{k}}
@@ -176,12 +176,12 @@ func scalar(t Type, c Class, text string) Record {
 }
 
 // listRecord returns the record of a non-empty list with the parts p. It
-// writes the Java text of the list once and that of each element once, so
+// writes the text of the list once and that of each element once, so
 // its cost is linear in the size of the list however deep its lists nest.
 func listRecord(list []jsonvalue.Value, p Parts) Record {
 	r := Record{State: StateValue, Class: ClassList, Type: TypeArray}
 	if p&PartKey != 0 {
-		ck := Text(list)
+		ck := StructureText(list)
 		k := Fold(ck)
 		r.CaseKey, r.Key = &ck, &k
 	}
@@ -190,10 +190,20 @@ func listRecord(list []jsonvalue.Value, p Parts) Record {
 	}
 	for _, e := range list {
 		if !classify(&r, e) && r.Keys != nil {
-			r.Keys = append(r.Keys, Fold(Text(e)))
+			r.Keys = append(r.Keys, Fold(elementText(e)))
 		}
 	}
 	return r
+}
+
+// elementText is the text an element of a list compares with a string by: a
+// list or an object by its [StructureText], a scalar by its Java [Text].
+func elementText(e jsonvalue.Value) string {
+	switch e.(type) {
+	case []jsonvalue.Value, *jsonvalue.Object:
+		return StructureText(e)
+	}
+	return Text(e)
 }
 
 // classify updates the state and the class of the list record r for its

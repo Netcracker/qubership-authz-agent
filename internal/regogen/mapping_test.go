@@ -107,6 +107,14 @@ func TestResolveSubject_ComputesPermissionsFromTheMappingTables(t *testing.T) {
 		{"productMapping does not count beside an empty customMapping",
 			mapping(`{}`, `{"subject.roles": {"r": ["p-product"]}}`), roles(`["r"]`), nil,
 			Resolved{State: "EMPTY_COLL"}},
+		{"a list key value matches by the text == compares it by",
+			`{"name": "subject.dept", "pipType": "TOKEN", "claim": "dept"}, ` +
+				mapping(`{"subject.dept": {"[0.000010]": ["p-n"], "{k=[\"v\"]}": ["p-o"]}}`, `null`),
+			`{"dept": [[1e-5], {"k": ["v"]}]}`, nil, resolved(t, "VALUE", `["p-n", "p-o"]`)},
+		{"a list key value does not match its Double.toString or nested Java text",
+			`{"name": "subject.dept", "pipType": "TOKEN", "claim": "dept"}, ` +
+				mapping(`{"subject.dept": {"[1.0E-5]": ["p-n"], "{k=[v]}": ["p-o"]}}`, `null`),
+			`{"dept": [[1e-5], {"k": ["v"]}]}`, nil, Resolved{State: "EMPTY_COLL"}},
 		{"a key naming an undeclared PIP grants nothing and fails nothing",
 			mapping(`{"subject.nope": {"x": ["p-nope"]}, "subject.roles": {"r": ["p1"]}}`, `null`), roles(`["r"]`), nil,
 			resolved(t, "VALUE", `["p1"]`)},

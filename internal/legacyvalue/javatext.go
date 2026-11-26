@@ -83,7 +83,7 @@ func isIntegerText(s string) bool {
 
 // Text returns Java's String.valueOf of v: an object as {k=v, w=x} in member
 // order, a list as [v, w], null as null, a number by [NumberText], and a string
-// as itself. It is the text a string equals a list or an object by.
+// as itself.
 func Text(v jsonvalue.Value) string {
 	var b strings.Builder
 	writeText(&b, v)

@@ -126,9 +126,9 @@ func TestOf_StateOfAValueWithoutAKey(t *testing.T) {
 	}
 }
 
-// A structure has the key of its Java text, which a string equals it by, and a
-// list also has the keys of its elements that are not null.
-func TestOf_StructureCarriesItsJavaTextAndTheKeysOfItsElements(t *testing.T) {
+// A structure has the key of its StructureText, which a string equals it by,
+// and a list also has the keys of its elements that are not null.
+func TestOf_StructureCarriesItsTextAndTheKeysOfItsElements(t *testing.T) {
 	tests := []struct {
 		name    string
 		doc     string
@@ -140,9 +140,11 @@ func TestOf_StructureCarriesItsJavaTextAndTheKeysOfItsElements(t *testing.T) {
 		{"a list of scalars", `[1, "A", true]`, StateValue, ClassList, "[1, A, true]", []string{"1", "a", "true"}},
 		{"a list that holds null", `[null, "A"]`, StateNullElement, ClassOther, "[null, A]", []string{"a"}},
 		{"a list that holds a list", `[[1], "x"]`, StateValue, ClassOther, "[[1], x]", []string{"[1]", "x"}},
+		{"a list that holds a fraction inside and outside a list", `[[1.0, {"k": 5.0}], 1e-5]`, StateValue, ClassOther,
+			`[[1.0,{"k":5.0}], 0.000010]`, []string{`[1.0, {"k":5.0}]`, "1.0e-5"}},
 		{"a list that holds an empty object", `[{}]`, StateValue, ClassOther, "[{}]", []string{"{}"}},
 		{"a list that holds an empty list", `[[], "x"]`, StateValue, ClassOther, "[[], x]", []string{"[]", "x"}},
-		{"an object in document order", `{"b": 1, "A": [2, "X"]}`, StateValue, ClassOther, "{b=1, A=[2, X]}", []string{"{b=1, a=[2, x]}"}},
+		{"an object in document order", `{"b": 1, "A": [2, "X"]}`, StateValue, ClassOther, `{b=1, A=[2,"X"]}`, []string{`{b=1, a=[2,"x"]}`}},
 		{"an empty object", `{}`, StateValue, ClassOther, "{}", []string{"{}"}},
 	}
 	for _, tt := range tests {

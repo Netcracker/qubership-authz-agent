@@ -292,7 +292,7 @@ func predicateTree(t *testing.T, effect string, preds map[string]string, pips st
 	sets := fmt.Sprintf(`{"policySets": [{"policySetId": "s1", "name": "s1", "status": "ACTIVE",
 		"target": "resourceType == 'doc'", "combiningAlgorithm": %[1]q, "tenantId": "t1", %[2]s
 		"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": %[1]q, "tenantId": "t1",
-			"rules": [%[3]s]}]}]}`, alg, it, jsonText(stringObject(rule)))
+			"rules": [%[3]s]}]}]}`, alg, it, jsonvalue.Encode(stringObject(rule)))
 	if pips != "" {
 		pips = strings.ReplaceAll(pips, `{"name"`, `{"tenantId": "t1", "name"`)
 	}

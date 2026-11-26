@@ -173,7 +173,7 @@ func TestPIPFunction_ReadsTheResponse(t *testing.T) {
 	ok := func(raw string) string {
 		r := fmt.Sprintf(`{"status_code": 200, "raw_body": %q`, raw)
 		if json, err := jsonvalue.Decode([]byte(raw)); err == nil {
-			r += fmt.Sprintf(`, "body": %s`, jsonText(json))
+			r += fmt.Sprintf(`, "body": %s`, jsonvalue.Encode(json))
 		}
 		return r + "}"
 	}

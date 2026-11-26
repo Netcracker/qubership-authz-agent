@@ -26,53 +26,16 @@ import (
 	"authz-agent/internal/regogen/spectables"
 )
 
-// The text a string compares a structure by prints a scalar member as Java
-// text, and a nested member as compact JSON with its numbers as written. A
-// number with an exponent that leaves no digits after the point prints as
-// Double.toString, any other with its trailing zeros stripped. The expected
-// texts are what the specification's agent profile prints.
-func TestStructureText(t *testing.T) {
-	for _, tc := range []struct{ value, want string }{
-		{`["x", null]`, `[x, null]`},
-		{`[1.0, true]`, `[1, true]`},
-		{`[1.50e1, -0.0, 100]`, `[15, 0, 100]`},
-		{`[1e3, 1E3, -1e3]`, `[1000.0, 1000.0, -1000.0]`},
-		{`{"k": 1e7}`, `{k=1.0E7}`},
-		{`[5e0, 0e5, -0e0]`, `[5.0, 0.0, -0.0]`},
-		{`[1.5e1, 1.50e1, 1.2345678912345679E8]`, `[15.0, 15, 123456789.12345679]`},
-		{`[1e-0, 5E-00, -0e-0, 1e+0, 1.0e-0, 10e-1]`, `[1.0, 5.0, -0.0, 1.0, 1, 1]`},
-		{`[1e64, 1e65, 1e400]`, `[1.0E64, 1.0E65, Infinity]`},
-		{`[1` + strings.Repeat("0", 64) + `, 1` + strings.Repeat("0", 65) + `]`,
-			`[1` + strings.Repeat("0", 64) + `, 1` + strings.Repeat("0", 65) + `]`},
-		{`[1e-65, 1e-66]`, `[0.` + strings.Repeat("0", 64) + `1, 1e-66]`},
-		{`[1e9223372036854775807, 10e9223372036854775807]`, `[Infinity, Infinity]`},
-		{`[1e-9223372036854775808, 0.1e-9223372036854775808]`, `[1e-9223372036854775808, 0.1e-9223372036854775808]`},
-		{`[1e99999999999999999999]`, `[Infinity]`},
-		{`[1e-99999999999999999999]`, `[1e-99999999999999999999]`},
-		{`[["a"], "b"]`, `[["a"], b]`},
-		{`{"k": {"b": "c"}}`, `{k={"b":"c"}}`},
-		{`{"a": [1.0]}`, `{a=[1.0]}`},
-		{`[]`, `[]`},
-	} {
-		v, err := jsonvalue.Decode([]byte(tc.value))
-		if err != nil {
-			t.Fatalf("jsonvalue.Decode(%s): %v", tc.value, err)
-		}
-		if got := structureText(v); got != tc.want {
-			t.Errorf("structureText(%s) = %q, want %q", tc.value, got, tc.want)
-		}
-	}
-}
-
-// The record of a value carries the folded text a string compares it by
-// (TextKey). A list with a number or null is not a list of strings, whose
-// text TextKey takes from the folded Java text.
+// The record of a list or an object carries the folded text a string
+// compares it by (TextKey), its legacyvalue.StructureText; a fraction keeps
+// its point. The record of an empty list has no key, and TextKey is
+// computed for it.
 func TestRecordReadsTheTextKey(t *testing.T) {
 	for _, tc := range []struct{ value, tk string }{
 		{`["Ab", "c"]`, `[ab, c]`},
 		{`[]`, `[]`},
 		{`["x", ["Y"], "Z"]`, `[x, ["y"], z]`},
-		{`[1.0, "A"]`, `[1, a]`},
+		{`[1.0, "A"]`, `[1.0, a]`},
 		{`["05", 5]`, `[05, 5]`},
 		{`[null, "A"]`, `[null, a]`},
 		{`"Q"`, ``},

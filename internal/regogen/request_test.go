@@ -17,6 +17,7 @@ package regogen
 import (
 	"testing"
 
+	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/policyir"
 	"authz-agent/internal/regogen/spectables"
 )
@@ -43,7 +44,7 @@ func TestReadBodyTakesResourceTypeWhereTypeIsEmpty(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ReadBody(%s): %v", tc.body, err)
 			}
-			if got := jsonText(b.ResourceType); got != tc.want {
+			if got := jsonvalue.Encode(b.ResourceType); got != tc.want {
 				t.Errorf("ReadBody(%s).ResourceType = %s, want %s", tc.body, got, tc.want)
 			}
 		})
@@ -61,7 +62,7 @@ func TestReadBodyKeepsTheOperationAsSent(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ReadBody(%s): %v", tc.body, err)
 			}
-			if got := jsonText(b.Operation); got != tc.want {
+			if got := jsonvalue.Encode(b.Operation); got != tc.want {
 				t.Errorf("ReadBody(%s).Operation = %s, want %s", tc.body, got, tc.want)
 			}
 		})
@@ -124,7 +125,7 @@ func TestResolveReadsTheResourceOperandsOfTheBody(t *testing.T) {
 			}
 			value := ""
 			if got.State == spectables.StateValue {
-				value = jsonText(got.Value)
+				value = jsonvalue.Encode(got.Value)
 			}
 			if got.State != tc.state || value != tc.value {
 				t.Errorf("Resolve(%s)[%s] = %s %s, want %s %s", tc.body, tc.key, got.State, value, tc.state, tc.value)
@@ -176,7 +177,7 @@ func TestResolveReadsAPathThatEndsInADotByTheKnob(t *testing.T) {
 			got := values[tc.key]
 			value := ""
 			if got.State == spectables.StateValue {
-				value = jsonText(got.Value)
+				value = jsonvalue.Encode(got.Value)
 			}
 			if got.State != tc.state || value != tc.value || len(values) != 1 {
 				t.Errorf("Resolve under %s = %v, want %s: %s %s", tc.knob, values, tc.key, tc.state, tc.value)
