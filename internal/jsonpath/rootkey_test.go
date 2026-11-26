@@ -15,6 +15,7 @@
 package jsonpath
 
 import (
+	"slices"
 	"testing"
 
 	"authz-agent/internal/jsonvalue"
@@ -40,6 +41,33 @@ func TestALeadingBracketKeySelectsTheMemberOnlyUnderCompileRootKey(t *testing.T)
 			}
 			if got := p.Select(doc); got != tc.want {
 				t.Errorf("%s(['a b'].c).Select = %+v, want %+v", tc.name, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestKeysListsTheMemberKeysOfAPathOfKeyStepsOnly(t *testing.T) {
+	for _, tc := range []struct {
+		path string
+		want []string // nil for a path Keys refuses
+	}{
+		{`['a b'].c`, []string{"a b", "c"}},
+		{`.a.['b.c']`, []string{"a", "b.c"}},
+		{`['']`, []string{""}},
+		{`.a[0]`, nil},
+		{`..a`, nil},
+		{`.a[*]`, nil},
+		{`.a.length()`, nil},
+		{`.a[:]`, nil}, // refused: a slice with no bound
+	} {
+		t.Run(tc.path, func(t *testing.T) {
+			p, err := CompileRootKey(tc.path)
+			if err != nil {
+				t.Fatalf("CompileRootKey(%s): %v", tc.path, err)
+			}
+			got, ok := p.Keys()
+			if ok != (tc.want != nil) || !slices.Equal(got, tc.want) {
+				t.Errorf("CompileRootKey(%s).Keys() = %q, %t, want %q, %t", tc.path, got, ok, tc.want, tc.want != nil)
 			}
 		})
 	}

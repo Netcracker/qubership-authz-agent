@@ -103,3 +103,28 @@ func TestAPIPJSONPathWithARootBracketSelectsTheKeyItNames(t *testing.T) {
 		})
 	}
 }
+
+// The replay of a GENERAL PIP whose jsonPath is $['k'] answers with a body
+// that the PIP reads back as the value the recording gave, whatever k holds.
+func TestAReplayedPIPWithARootBracketJSONPathReadsBackItsValue(t *testing.T) {
+	bctx := rego.BuiltinContext{Context: context.Background()}
+	want := Resolved{State: spectables.StateValue, Value: "selected"}
+	for _, k := range rootKeys(t, 30) {
+		t.Run(k, func(t *testing.T) {
+			jp, err := pipPath(&policyir.PIP{Name: "subject.g", ReturnType: "JSON", JSONPath: "$['" + k + "']"})
+			if err != nil {
+				t.Fatalf("pipPath($['%s']): %v", k, err)
+			}
+			status, body, err := pipAnswer(want, jp)
+			if err != nil {
+				t.Fatalf("pipAnswer for jsonPath $['%s'] read as %q: %v", k, jp, err)
+			}
+			resp := ast.ObjectTerm(
+				[2]*ast.Term{ast.StringTerm("status_code"), ast.IntNumberTerm(status)},
+				[2]*ast.Term{ast.StringTerm("raw_body"), ast.StringTerm(body)})
+			if got, err := pipResolve(bctx, resp, jp); err != nil || !reflect.DeepEqual(got, want) {
+				t.Errorf("jsonPath $['%s'] reads the replayed body %s as %+v, %v, want %+v", k, body, got, err, want)
+			}
+		})
+	}
+}

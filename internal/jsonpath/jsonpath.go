@@ -357,6 +357,22 @@ func (p *Path) Bounded() bool {
 	return true
 }
 
+// Keys returns the member keys of p, outermost first, and false when p is
+// refused or has a step other than a member key.
+func (p *Path) Keys() ([]string, bool) {
+	if p.refused {
+		return nil, false
+	}
+	keys := make([]string, 0, len(p.steps))
+	for _, s := range p.steps {
+		if s.kind != stepKey {
+			return nil, false
+		}
+		keys = append(keys, s.key)
+	}
+	return keys, true
+}
+
 // Select applies the path to doc. The selected values are parts of doc, not
 // copies. Select gives [KindTooLarge] once its work exceeds a fixed multiple
 // of the size of doc: each value a step visits, each member a filter reads,

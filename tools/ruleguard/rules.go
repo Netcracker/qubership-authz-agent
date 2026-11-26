@@ -23,13 +23,19 @@ package gorules
 
 import "github.com/quasilyte/go-ruleguard/dsl"
 
-// recordOutsideItsConstructor flags a regogen.Record built anywhere but in
-// project.go, where record checks the state of an operand against the domain
+// recordOutsideItsConstructor flags a regogen.Record built, or a field of one
+// assigned, anywhere but in project.go, where record checks the state of an operand against the domain
 // of its kind. A Record built elsewhere would reach the module with a state
 // the generated leaves have no answer for.
 func recordOutsideItsConstructor(m dsl.Matcher) {
+	m.Import("authz-agent/internal/regogen")
 	m.Match(`Record{$*_}`).
 		Where(m.File().PkgPath.Matches(`(^|/)internal/regogen$`) &&
+			!m.File().Name.Matches(`^project\.go$`) && !m.File().Name.Matches(`_test\.go$`)).
+		Report(`a Record is built only by record in project.go, which checks the state against the domain of the operand's kind`)
+	m.Match(`$x.$f = $_`).
+		Where((m["x"].Type.Is(`regogen.Record`) || m["x"].Type.Is(`*regogen.Record`)) &&
+			m.File().PkgPath.Matches(`(^|/)internal/regogen$`) &&
 			!m.File().Name.Matches(`^project\.go$`) && !m.File().Name.Matches(`_test\.go$`)).
 		Report(`a Record is built only by record in project.go, which checks the state against the domain of the operand's kind`)
 }
@@ -38,14 +44,37 @@ func recordOutsideItsConstructor(m dsl.Matcher) {
 // fmt's %v) used as its identity: hashed, used as a map key, or compared
 // with ==. Such text may drop a difference the code reads elsewhere, such as
 // nil against an empty map, or print two values of different types alike,
-// such as "true" and true.
+// such as "true" and true. The rule matches the expression in place: text
+// first stored in a variable, or rendered with %s, passes.
 func textAsIdentity(m dsl.Matcher) {
 	m.Import("hash")
 	m.Import("bytes")
 	m.Import("strings")
+	m.Import("io")
+	m.Match(`$sum([]byte(fmt.Sprint($*_)))`).
+		Where(!m.File().Name.Matches(`_test\.go$`) && m["sum"].Text.Matches(`^[a-z0-9]+\.Sum`)).
+		Report(`fmt renders text for people; hash a canonical encoding that keeps every field instead`)
+	m.Match(`$sum([]byte(fmt.Sprintf($s, $*_)))`).
+		Where(!m.File().Name.Matches(`_test\.go$`) && m["s"].Text.Matches(`%[-+# 0-9.]*v`) &&
+			m["sum"].Text.Matches(`^[a-z0-9]+\.Sum`)).
+		Report(`fmt renders text for people; hash a canonical encoding that keeps every field instead`)
+	m.Match(`$h.Write([]byte(fmt.Sprint($*_)))`, `fmt.Fprint($h, $*_)`, `fmt.Fprintln($h, $*_)`).
+		Where(!m.File().Name.Matches(`_test\.go$`) && m["h"].Type.Implements("hash.Hash")).
+		Report(`fmt renders text for people; hash a canonical encoding that keeps every field instead`)
+	m.Match(`$h.Write([]byte(fmt.Sprintf($s, $*_)))`, `fmt.Fprintf($h, $s, $*_)`).
+		Where(!m.File().Name.Matches(`_test\.go$`) && m["s"].Text.Matches(`%[-+# 0-9.]*v`) &&
+			m["h"].Type.Implements("hash.Hash")).
+		Report(`fmt renders text for people; hash a canonical encoding that keeps every field instead`)
+	m.Match(`io.WriteString($h, $x.$f())`).
+		Where(m["f"].Text.Matches(`^(String|Dump)$`) && !m.File().Name.Matches(`_test\.go$`) &&
+			m["h"].Type.Implements("hash.Hash")).
+		Report(`$x.$f() is text for people; hash a canonical encoding that keeps every field instead`)
+	m.Match(`map[$k]$v{$*_, $x.$f(): $_, $*_}`).
+		Where(m["f"].Text.Matches(`^(String|Dump)$`) && !m.File().Name.Matches(`_test\.go$`)).
+		Report(`$x.$f() is text for people; key the map by a comparable value or a canonical encoding`)
 	m.Match(`$sum([]byte($x.$f()))`).
 		Where(m["f"].Text.Matches(`^(String|Dump)$`) && !m.File().Name.Matches(`_test\.go$`) &&
-			m["sum"].Text.Matches(`^(sha256|sha512|sha1|md5)\.Sum`)).
+			m["sum"].Text.Matches(`^[a-z0-9]+\.Sum`)).
 		Report(`$x.$f() is text for people; hash a canonical encoding that keeps every field instead`)
 	m.Match(`$h.Write([]byte($x.$f()))`).
 		Where(m["f"].Text.Matches(`^(String|Dump)$`) && !m.File().Name.Matches(`_test\.go$`) &&
@@ -59,7 +88,7 @@ func textAsIdentity(m dsl.Matcher) {
 		Where(!m.File().Name.Matches(`_test\.go$`) && m["mp"].Type.Is(`map[$_]$_`)).
 		Report(`fmt renders text for people; key the map by a comparable value or a canonical encoding`)
 	m.Match(`$mp[fmt.Sprintf($s, $*_)]`).
-		Where(!m.File().Name.Matches(`_test\.go$`) && m["mp"].Type.Is(`map[$_]$_`) && m["s"].Text.Matches(`%v`)).
+		Where(!m.File().Name.Matches(`_test\.go$`) && m["mp"].Type.Is(`map[$_]$_`) && m["s"].Text.Matches(`%[-+# 0-9.]*v`)).
 		Report(`fmt renders text for people; key the map by a comparable value or a canonical encoding`)
 	m.Match(`$x.$f() == $_`, `$_ == $x.$f()`, `$x.$f() != $_`, `$_ != $x.$f()`).
 		Where(m["f"].Text.Matches(`^(String|Dump)$`) && !m.File().Name.Matches(`_test\.go$`) &&
@@ -72,7 +101,7 @@ func textAsIdentity(m dsl.Matcher) {
 		Report(`fmt renders text for people; compare the values, not what they print`)
 	m.Match(`fmt.Sprintf($s, $*_) == $_`, `$_ == fmt.Sprintf($s, $*_)`,
 		`fmt.Sprintf($s, $*_) != $_`, `$_ != fmt.Sprintf($s, $*_)`).
-		Where(!m.File().Name.Matches(`_test\.go$`) && m["s"].Text.Matches(`%v`)).
+		Where(!m.File().Name.Matches(`_test\.go$`) && m["s"].Text.Matches(`%[-+# 0-9.]*v`)).
 		Report(`fmt renders text for people; compare the values, not what they print`)
 }
 
@@ -97,7 +126,8 @@ func pathTextOutsideJSONPath(m dsl.Matcher) {
 		Where(!m.File().PkgPath.Matches(`(^|/)internal/jsonpath$`) && m["s"].Text.Matches(`\\\[\s*'`)).
 		Report(`a jsonPath bracket step is read by internal/jsonpath only`)
 	m.Match(`strings.HasPrefix($_, $s)`, `strings.TrimPrefix($_, $s)`, `strings.CutPrefix($_, $s)`,
-		`strings.Index($_, $s)`, `strings.Contains($_, $s)`).
-		Where(!m.File().PkgPath.Matches(`(^|/)internal/jsonpath$`) && m["s"].Text.Matches(`^"\$?\['`)).
+		`strings.Index($_, $s)`, `strings.Contains($_, $s)`, `strings.Cut($_, $s)`, `strings.Split($_, $s)`,
+		`strings.SplitN($_, $s, $_)`).
+		Where(!m.File().PkgPath.Matches(`(^|/)internal/jsonpath$`) && m["s"].Text.Matches("^[\"`]\\$?\\['")).
 		Report(`a jsonPath bracket step is read by internal/jsonpath only`)
 }
