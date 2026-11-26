@@ -94,7 +94,7 @@ and the reason code in the audit and a metric.
   | --- | --- | --- |
   | 401 | `TOKEN_MISSING`, `TOKEN_SCHEME_INVALID` | ADR-0092 R1 |
   | 401 | `TOKEN_FORMAT_INVALID` | ADR-0091 R40 |
-  | 401 | `TOKEN_ALG_NOT_ALLOWED` | ADR-0091 R41 |
+  | 401 | `TOKEN_ALG_NOT_ALLOWED` | ADR-0091 R41, R79 |
   | 401 | `TOKEN_ISSUER_UNKNOWN` | ADR-0091 R5, R11 |
   | 401 | `TOKEN_KID_MISSING` | ADR-0091 R22 |
   | 401 | `TOKEN_KID_UNKNOWN` | ADR-0091 R23, R39 |
@@ -127,8 +127,8 @@ long as the outage lasts (R3).
 
 - **A1. Carry `reasonCode` in the response body.** Rejected by R6: a caller gains nothing it can act on, and the error
   would be formatted in two places.
-- **A2. Report keys that could not be loaded as `TOKEN_KID_UNKNOWN`.** Rejected by ADR-0091 R23, which gives that code
-  only after an answer or a 404: an outage of Keycloak would look like a token with an invented `kid`.
+- **A2. Report keys that could not be loaded as `TOKEN_KID_UNKNOWN`.** Rejected by ADR-0091 R23: an outage of Keycloak
+  would look like a token with an invented `kid`.
 - **A3. Answer 401 for keys that cannot be loaded.** Rejected by R2: that is the status of a bad token. With an empty
   body a caller cannot tell the two apart, and a client that reacts to a 401 by fetching a new token and retrying adds
   traffic at the worst moment.
