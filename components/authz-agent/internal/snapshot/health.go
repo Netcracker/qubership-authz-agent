@@ -51,6 +51,10 @@ type TenantHealth struct {
 	// Dropped lists what the tenant's tree leaves out of the export, one
 	// line per element.
 	Dropped []string `json:"dropped,omitempty"`
+	// Warnings lists the comparisons of the tenant's tree that the agent
+	// evaluates otherwise than their author likely meant, as
+	// policyir.Tree.Warnings finds them.
+	Warnings []string `json:"warnings,omitempty"`
 }
 
 // Failure is a part of a tenant that answers as a failed source.

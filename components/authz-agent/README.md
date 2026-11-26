@@ -123,6 +123,10 @@ of the evaluation in the same way, and the internal `/health` lists it under `dr
 The admin refuses such a condition on upload. A `MATCH` pattern written `subject.x-y` is the text of the pattern and
 is not affected.
 
+A comparison with `subject.isM2M`, such as `subject.isM2M == true`, is never true. The condition `subject.isM2M` alone
+tests whether the token is M2M. The internal `/health` lists each such comparison under the tenant's `warnings`, and
+the load logs it once.
+
 ### The limit on looking up nested values
 
 A request fails when a value a comparison reads is a list of nested lists or objects whose elements hold numbers as

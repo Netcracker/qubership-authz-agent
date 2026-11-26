@@ -84,3 +84,32 @@ func TestTreeUnsupportedTellsApartSiblingsThatShareAnID(t *testing.T) {
 		t.Errorf("Unsupported() =\n%v\nwant\n%v", got, want)
 	}
 }
+
+// Every comparison with subject.isM2M draws a warning, on either side and in
+// any condition; the bare atom subject.isM2M and a comparison with another
+// subject attribute draw none.
+func TestTreeWarningsNameEveryComparisonWithSubjectIsM2M(t *testing.T) {
+	t.Parallel()
+
+	m2m := Subject{Attr: SubjectIsM2M}
+	p := validParts()
+	p.simplified[0].Policies[0].Condition = one(PlaceSimplified,
+		Compare{Op: OpEQ, Left: m2m, Right: String{Value: "yes"}})
+	p.rule().Condition = one(PlaceRuleCondition, readOp, IsM2M{},
+		Compare{Op: OpEQ, Left: Subject{Attr: SubjectName}, Right: String{Value: "x"}})
+	p.sets[0].Policies[0].Target = one(PlacePolicyTarget,
+		Compare{Op: OpNE, Left: Resource{Path: ".a"}, Right: m2m})
+	tree, err := NewTree(p.simplified, p.sets, p.pips)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	const tail = " reads subject.isM2M as absent whatever the token; the condition subject.isM2M alone tests whether the token is M2M"
+	want := []string{
+		`simplified "d"/"c"/"uri" > policy "sp1" > condition: subject.isM2M EQ "yes"` + tail,
+		`set "s1" > policy "p1" > target: resource.a NE subject.isM2M` + tail,
+	}
+	if got := tree.Warnings(); !slices.Equal(got, want) {
+		t.Errorf("Warnings() =\n%v\nwant\n%v", got, want)
+	}
+}

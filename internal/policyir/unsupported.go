@@ -84,10 +84,7 @@ func (t *Tree) Unsupported() []Finding {
 			out = append(out, Finding{Where: fmt.Sprintf("pip %q", p.Name), Form: FormPIPExtension, Text: p.Unsupported})
 		}
 	}
-	cond := func(where *node, c *Condition) {
-		if c == nil {
-			return
-		}
+	t.walkConditions(func(where *node, c *Condition) {
 		for _, d := range c.Disjuncts {
 			for _, a := range d {
 				switch v := a.(type) {
@@ -102,30 +99,67 @@ func (t *Tree) Unsupported() []Finding {
 				}
 			}
 		}
+	}, func(where *node, s *PolicySet) {
+		out = append(out, Finding{Where: where.String(), Form: FormNestedIterate, Text: "iterate var " + s.Iterate.Var})
+	})
+	return out
+}
+
+// Warnings lists, in tree order, the comparisons the agent evaluates
+// otherwise than their author likely meant, each with the place of its
+// condition: a comparison over subject.isM2M, which reads subject.isM2M as
+// absent whatever the token, where the condition subject.isM2M alone tests
+// the M2M token.
+func (t *Tree) Warnings() []string {
+	var out []string
+	t.walkConditions(func(where *node, c *Condition) {
+		for _, d := range c.Disjuncts {
+			for _, a := range d {
+				cmp, ok := a.(Compare)
+				if !ok || cmp.Left != Operand(Subject{Attr: SubjectIsM2M}) && cmp.Right != Operand(Subject{Attr: SubjectIsM2M}) {
+					continue
+				}
+				out = append(out, fmt.Sprintf("%s: %s reads subject.isM2M as absent whatever the token; "+
+					"the condition subject.isM2M alone tests whether the token is M2M", where, formatAtom(cmp, false)))
+			}
+		}
+	}, nil)
+	return out
+}
+
+// walkConditions calls cond for every condition of the tree with its place:
+// the conditions of the simplified groups, then those of the sets in tree
+// order. It calls nested, where nested is not nil, for every set with
+// iterate inside a set with iterate.
+func (t *Tree) walkConditions(cond func(where *node, c *Condition), nested func(where *node, s *PolicySet)) {
+	visit := func(where *node, c *Condition) {
+		if c != nil {
+			cond(where, c)
+		}
 	}
 	groups := labels(t.Simplified, groupLabel)
 	for i, g := range t.Simplified {
 		group := (*node)(nil).child(groups[i])
 		policies := labels(g.Policies, simplifiedPolicyLabel)
 		for j, p := range g.Policies {
-			cond(group.child(policies[j]).child("condition"), p.Condition)
+			visit(group.child(policies[j]).child("condition"), p.Condition)
 		}
 	}
 	var set func(here *node, s *PolicySet, iterating bool)
 	set = func(here *node, s *PolicySet, iterating bool) {
-		if s.Iterate != nil && iterating {
-			out = append(out, Finding{Where: here.String(), Form: FormNestedIterate, Text: "iterate var " + s.Iterate.Var})
+		if s.Iterate != nil && iterating && nested != nil {
+			nested(here, s)
 		}
-		cond(here.child("target"), s.Target)
+		visit(here.child("target"), s.Target)
 		policies := labels(s.Policies, policyLabel)
 		for i, p := range s.Policies {
 			pp := here.child(policies[i])
-			cond(pp.child("target"), p.Target)
+			visit(pp.child("target"), p.Target)
 			rules := labels(p.Rules, ruleLabel)
 			for j, r := range p.Rules {
 				rp := pp.child(rules[j])
-				cond(rp.child("target"), r.Target)
-				cond(rp.child("condition"), r.Condition)
+				visit(rp.child("target"), r.Target)
+				visit(rp.child("condition"), r.Condition)
 			}
 		}
 		children := labels(s.Sets, setLabel)
@@ -137,7 +171,6 @@ func (t *Tree) Unsupported() []Finding {
 	for i, s := range t.Sets {
 		set((*node)(nil).child(top[i]), s, false)
 	}
-	return out
 }
 
 // EachPredicates calls f with the filter predicates of every simplified

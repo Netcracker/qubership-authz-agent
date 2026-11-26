@@ -76,7 +76,7 @@ type Snapshot struct {
 	Tenant string
 	// Hash identifies the module text and the decision text; tenants with
 	// equal text share the compiled queries.
-	Hash        string
+	Hash   string
 	Module *regogen.Module
 	// Filter is the module that answers check/filter.
 	Filter      *regogen.Module
@@ -286,6 +286,9 @@ func (r *Registry) Load(ctx context.Context, policySets, pips []byte) (LoadSumma
 		th := b.health
 		th.Tenant = t
 		th.Dropped = exp.Dropped[t]
+		if tree, ok := exp.Trees[t]; ok {
+			th.Warnings = tree.Warnings()
+		}
 		switch {
 		case b.snap != nil:
 			next.snapshots[t] = b.snap
@@ -486,10 +489,11 @@ func (r *Registry) LoadSnapshots(ctx context.Context, policySets, pips []byte) e
 }
 
 // warnNew warns of each element that next leaves out of the policies or
-// names no tenant, and of each part of a published snapshot that answers as
-// a failed source, where prev did not have it: a rule that loses a key or a
-// set that is dropped changes the answers while every tenant stays ready, so
-// /health alone does not reach the operator.
+// names no tenant, of each part of a published snapshot that answers as a
+// failed source, and of each warning of a tenant's tree, where prev did not
+// have it: a rule that loses a key or a set that is dropped changes the
+// answers while every tenant stays ready, so /health alone does not reach the
+// operator.
 func (r *Registry) warnNew(prev, next *state) {
 	for _, o := range next.orphans {
 		if !slices.Contains(prev.orphans, o) {
@@ -506,6 +510,11 @@ func (r *Registry) warnNew(prev, next *state) {
 		for _, f := range th.Failures {
 			if !slices.Contains(old.Failures, f) {
 				r.log.Warnf("policies: tenant %s: answers as a failed source: %s", t, f)
+			}
+		}
+		for _, w := range th.Warnings {
+			if !slices.Contains(old.Warnings, w) {
+				r.log.Warnf("policies: tenant %s: %s", t, w)
 			}
 		}
 	}

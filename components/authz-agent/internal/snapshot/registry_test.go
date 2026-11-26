@@ -464,7 +464,9 @@ type warnings struct {
 	lines []string
 }
 
-func (w *warnings) Warnf(format string, args ...any) { w.lines = append(w.lines, fmt.Sprintf(format, args...)) }
+func (w *warnings) Warnf(format string, args ...any) {
+	w.lines = append(w.lines, fmt.Sprintf(format, args...))
+}
 
 // A load warns of each element the export leaves out, each element that
 // names no tenant, and each part of a published snapshot that answers as a
@@ -1396,5 +1398,50 @@ func TestThePermissionScopeIsReadOncePerRequest(t *testing.T) {
 	}
 	if got := decide(t, r, readDoc(t, "a", "z", 1)); got[0].Allowed {
 		t.Errorf("Decide of the doc z outside the scope = %+v, want denied", got[0])
+	}
+}
+
+// A comparison with subject.isM2M reads it as absent, so it is never true:
+// an ALLOW rule over subject.isM2M == 'yes' allows a user nothing, and a DENY
+// rule over subject.isM2M == true denies a user nothing. The load
+// warns of each such comparison once, naming the policy, and the tenant's
+// health lists it; the bare condition subject.isM2M draws no warning. No
+// golden records a decision of such a comparison: legacy refuses the load of
+// the policies that hold one (dm-is-m2m-declared, dm-is-m2m-undeclared, and
+// rule-condition-subject-is-m2m record 400).
+func TestAComparisonWithSubjectIsM2MIsNeverTrueAndTheLoadWarnsOfIt(t *testing.T) {
+	const m2mWarning = "reads subject.isM2M as absent whatever the token; " +
+		"the condition subject.isM2M alone tests whether the token is M2M"
+	w := &warnings{}
+	r := New(Config{}, tab(t), w)
+	deny := strings.NewReplacer(`"DENY_UNLESS_PERMIT"`, `"PERMIT_UNLESS_DENY"`, `"ALLOW"`, `"DENY"`).
+		Replace(set("b", "subject.isM2M == true"))
+	loadUnchecked(t, r, ``, set("a", "subject.isM2M == 'yes'"), deny, set("c", "subject.isM2M"))
+
+	if got := decide(t, r, readDoc(t, "a", "y", 1)); got[0].Allowed {
+		t.Errorf("Decide(ALLOW over subject.isM2M == 'yes') = %+v, want denied", got[0])
+	}
+	if got := decide(t, r, readDoc(t, "b", "y", 1)); !got[0].Allowed {
+		t.Errorf("Decide(DENY over subject.isM2M == true) = %+v, want allowed", got[0])
+	}
+	want := []string{
+		`policies: tenant a: set "s-a" > policy "p" > rule "r" > condition: subject.isM2M EQ "yes" ` + m2mWarning,
+		`policies: tenant b: set "s-b" > policy "p" > rule "r" > condition: subject.isM2M EQ true ` + m2mWarning,
+	}
+	got := slices.Sorted(slices.Values(w.lines))
+	if !slices.Equal(got, want) {
+		t.Errorf("warnings of the first load:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+	if th, ok := tenantHealth(r, "a"); !ok || len(th.Warnings) != 1 {
+		t.Errorf("health of tenant a: warnings %q, want one", th.Warnings)
+	}
+	if th, ok := tenantHealth(r, "c"); !ok || len(th.Warnings) != 0 {
+		t.Errorf("health of tenant c: warnings %q, want none", th.Warnings)
+	}
+
+	w.lines = nil
+	loadUnchecked(t, r, ``, set("a", "subject.isM2M == 'yes'"), deny, set("c", "subject.isM2M"))
+	if len(w.lines) != 0 {
+		t.Errorf("warnings of the same load again = %q, want none", w.lines)
 	}
 }
