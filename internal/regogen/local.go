@@ -16,7 +16,6 @@ package regogen
 
 import (
 	"encoding/json"
-	"regexp"
 	"strings"
 
 	"authz-agent/internal/jsonpath"
@@ -148,13 +147,6 @@ func latin1(s string) string {
 	return b.String()
 }
 
-// rootBracket is a leading ['key'] step, which a TOKEN PIP's claim and the
-// jsonPath of a GENERAL or FILTERED PIP read as .key
-// (jsonpath_root_bracket=KEY).
-//
-//nolint:gocritic // F80, F28: a leading ['k'] is rewritten to .k, so a key holding a space, a slash, or a dot reads another member or fails
-var rootBracket = regexp.MustCompile(`^\['([^']*)'\]`)
-
 // tokenPIP is the value of a TOKEN PIP: the claim the declaration names,
 // read as a jsonPath over the claims of the subject's token, or else its
 // default value split at commas. A claim that is blank or outside the
@@ -166,7 +158,7 @@ func tokenPIP(decl *policyir.PIP, claims *jsonvalue.Object) Resolved {
 	}
 	missing := false
 	switch sel.Kind {
-	case jsonpath.KindMissing, jsonpath.KindNullParent, jsonpath.KindIndexOutOfBounds, jsonpath.KindBracket:
+	case jsonpath.KindMissing, jsonpath.KindNullParent, jsonpath.KindIndexOutOfBounds:
 		missing = true
 	case jsonpath.KindMany:
 		l, _ := sel.Value.([]jsonvalue.Value)
@@ -200,10 +192,7 @@ func tokenSelect(decl *policyir.PIP, claims *jsonvalue.Object) (sel jsonpath.Res
 	if strings.HasPrefix(claim, "$") {
 		path = claim[1:]
 	}
-	if m := rootBracket.FindStringSubmatch(path); m != nil {
-		path = "." + m[1] + path[len(m[0]):]
-	}
-	p, err := jsonpath.Compile(path)
+	p, err := jsonpath.CompileRootKey(path)
 	if err != nil {
 		return sel, false
 	}
