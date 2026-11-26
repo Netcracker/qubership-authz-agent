@@ -23,7 +23,7 @@ kichasov
   changes in the tokens the agent accepts and in whether the agent starts.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
   ADR-0093 R11 and R14, the default tenant with and without tenant-manager.
-- [authz-agent-ADR-0096: Choose the token the agent sends by M2M_AUTH_MODE](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
+- [authz-agent-ADR-0096: Choose the token the agent sends by `M2M_AUTH_MODE`](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
   ADR-0096 R1, R2, R3, and R20 as [#338](https://github.com/Netcracker/qubership-authz-agent/pull/338) rewrites them:
   `M2M_AUTH_MODE` and the token it chooses for the agent to send, how the agent reads it, which R2 of this record
   follows for every value from a list, and the inputs that the agent reads for each value, among them the token endpoint
