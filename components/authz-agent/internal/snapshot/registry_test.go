@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -27,6 +28,7 @@ import (
 	"testing"
 
 	"authz-agent/internal/jsonvalue"
+	"authz-agent/internal/policyir"
 	"authz-agent/internal/regobuiltins"
 	"authz-agent/internal/regogen"
 	"authz-agent/internal/regogen/spectables"
@@ -71,7 +73,85 @@ func loadSnapshots(r *Registry, sets ...string) error {
 	return r.LoadSnapshots(context.Background(), policySets, pips)
 }
 
+// setShape is how the export reader reads every top-level set of a load.
+type setShape int
+
+const (
+	// regularSets: every set is read as a regular [policyir.PolicySet].
+	regularSets setShape = iota
+	// simplifiedSets: every set is read as a [policyir.SimplifiedGroup].
+	simplifiedSets
+)
+
+// load is [Registry.Load] of sets and pips, and fails the test unless the
+// export reader reads every set as a regular set and leaves nothing out, and
+// no tenant is refused.
 func load(t *testing.T, r *Registry, pips string, sets ...string) LoadSummary {
+	t.Helper()
+	return loadAs(t, r, regularSets, pips, sets...)
+}
+
+// loadSimplified is load for sets that the export reader must read as
+// simplified policies.
+func loadSimplified(t *testing.T, r *Registry, pips string, sets ...string) LoadSummary {
+	t.Helper()
+	return loadAs(t, r, simplifiedSets, pips, sets...)
+}
+
+// loadAs is [Registry.Load] of sets and pips. It fails the test when the
+// export reader fails a tenant, finds an element of no tenant, drops or
+// isolates anything, or reads a set in a shape other than want, and when the
+// load refuses a tenant: a test whose setup did any of these would run its
+// assertions on another branch than the one it names.
+func loadAs(t *testing.T, r *Registry, want setShape, pips string, sets ...string) LoadSummary {
+	t.Helper()
+	policySets, pipsDoc := documents(pips, sets...)
+	exp, err := policyir.FromRegular(policySets, pipsDoc)
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	var problems []string
+	for _, tenant := range slices.Sorted(maps.Keys(exp.Failed)) {
+		problems = append(problems, fmt.Sprintf("the export reader fails tenant %s: %v", tenant, exp.Failed[tenant]))
+	}
+	for _, e := range exp.Orphans {
+		problems = append(problems, fmt.Sprintf("the export reader finds an element of no tenant: %v", e))
+	}
+	for _, tenant := range slices.Sorted(maps.Keys(exp.Dropped)) {
+		for _, d := range exp.Dropped[tenant] {
+			problems = append(problems, fmt.Sprintf("the export reader leaves out of tenant %s: %s", tenant, d))
+		}
+	}
+	for _, tenant := range slices.Sorted(maps.Keys(exp.Trees)) {
+		tree := exp.Trees[tenant]
+		switch {
+		case want == regularSets && len(tree.Simplified) > 0:
+			problems = append(problems, fmt.Sprintf("tenant %s: %d sets are read as simplified policies, want every set read as regular",
+				tenant, len(tree.Simplified)))
+		case want == simplifiedSets && len(tree.Sets) > 0:
+			problems = append(problems, fmt.Sprintf("tenant %s: %d sets are read as regular sets, want every set read as simplified policies",
+				tenant, len(tree.Sets)))
+		}
+	}
+	sum, err := r.Load(context.Background(), policySets, pipsDoc)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	for _, ref := range sum.Refused {
+		problems = append(problems, fmt.Sprintf("Load refuses tenant %s at stage %s: %s", ref.Tenant, ref.Stage, ref.Reason))
+	}
+	if len(problems) > 0 {
+		t.Fatalf("the setup of the test does not load as it intends:\n%s", strings.Join(problems, "\n"))
+	}
+	return sum
+}
+
+// loadUnchecked is [Registry.Load] of sets and pips that fails the test only
+// when Load returns an error. It is for a test whose subject is a refused
+// tenant, an isolated or dropped set, an element of no tenant, or a PIP
+// declared more than once, and for a table of cases that mixes them with
+// cases [load] would accept.
+func loadUnchecked(t *testing.T, r *Registry, pips string, sets ...string) LoadSummary {
 	t.Helper()
 	policySets, pipsDoc := documents(pips, sets...)
 	sum, err := r.Load(context.Background(), policySets, pipsDoc)
@@ -165,7 +245,7 @@ func TestTwoSetsOfOnePolicySetIdAreEvaluatedOnlyWhenIdentical(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			r := New(Config{}, tab(t), quiet{})
-			load(t, r, ``, set("a", "true"), tc.second)
+			loadUnchecked(t, r, ``, set("a", "true"), tc.second)
 			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0] != tc.want {
 				t.Errorf("Decide(read doc) = %+v, want %+v", got[0], tc.want)
 			}
@@ -259,7 +339,7 @@ const broken = "resource.a =="
 func TestARefusedCandidateKeepsThePreviousSnapshot(t *testing.T) {
 	r := New(Config{}, tab(t), quiet{})
 	load(t, r, ``, set("a", "true"), set("b", "resource.a == 'x'"))
-	sum := load(t, r, ``, set("a", broken), set("b", "true"))
+	sum := loadUnchecked(t, r, ``, set("a", broken), set("b", "true"))
 
 	if sum.Rejected != 1 || sum.Generated != 1 {
 		t.Errorf("Load summary = %+v, want 1 refused and 1 generated", sum)
@@ -287,7 +367,7 @@ func TestAPolicyOfResourceTypeAllThatIsNotGlobalKeepsThePreviousSnapshot(t *test
 		"policies": [{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true", "tenantId": "a",
 			"rules": [{"ruleId": "r-all", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'",
 				"tenantId": "a"}]}]}`
-	sum := load(t, r, ``, set("a", "false"), notGlobal)
+	sum := loadUnchecked(t, r, ``, set("a", "false"), notGlobal)
 
 	if sum.Rejected != 1 {
 		t.Errorf("Load summary = %+v, want 1 refused", sum)
@@ -327,7 +407,7 @@ func TestAPolicyWithAPatternRegexpRefusesIsAFailureOfTheTenant(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			w := &warnings{}
 			r := New(Config{}, tab(t), w)
-			sum := load(t, r, ``, set("a", "resource.a MATCH "+tc.pattern))
+			sum := loadUnchecked(t, r, ``, set("a", "resource.a MATCH "+tc.pattern))
 			if sum.Rejected != 0 || sum.Generated != 1 {
 				t.Errorf("Load summary = %+v, want 1 generated and none refused", sum)
 			}
@@ -365,7 +445,7 @@ func TestALoadWarnsOfWhatItLeavesOutOnce(t *testing.T) {
 	inactive := strings.Replace(set("a", "true"), `"ACTIVE"`, `"INACTIVE"`, 1)
 	inactive = strings.Replace(inactive, `"s-a"`, `"s-a2"`, 1)
 	orphan := strings.Replace(set("", "true"), `"tenantId": ""`, `"x": 1`, 1)
-	load(t, r, ``, set("a", "subject.g == 'x'"), inactive, orphan)
+	loadUnchecked(t, r, ``, set("a", "subject.g == 'x'"), inactive, orphan)
 
 	want := []string{
 		`policies: tenant a: left out of the policies: policy set 1 "s-a2": status INACTIVE`,
@@ -380,7 +460,7 @@ func TestALoadWarnsOfWhatItLeavesOutOnce(t *testing.T) {
 
 	w.lines = nil
 	inactive3 := strings.Replace(inactive, `"s-a2"`, `"s-a3"`, 1)
-	load(t, r, ``, set("a", "subject.g == 'x'"), inactive, orphan, set("b", "true"), inactive3)
+	loadUnchecked(t, r, ``, set("a", "subject.g == 'x'"), inactive, orphan, set("b", "true"), inactive3)
 	if want := []string{`policies: tenant a: left out of the policies: policy set 4 "s-a3": status INACTIVE`}; !slices.Equal(w.lines, want) {
 		t.Errorf("warnings of a load that adds a tenant b and an inactive set s-a3 = %q, want %q", w.lines, want)
 	}
@@ -390,7 +470,7 @@ func TestALoadWarnsOfWhatItLeavesOutOnce(t *testing.T) {
 // denies every request, and the other tenants are served.
 func TestATenantRefusedOnItsFirstLoadIsNotServed(t *testing.T) {
 	r := New(Config{}, tab(t), quiet{})
-	load(t, r, ``, set("a", broken), set("b", "true"))
+	loadUnchecked(t, r, ``, set("a", broken), set("b", "true"))
 
 	if got := decide(t, r, readDoc(t, "a", "y", 1)); got[0].Allowed || got[0].Reason != "no policies are published for tenant a" {
 		t.Errorf("Decide(tenant a) = %+v, want denied as unpublished", got[0])
@@ -412,7 +492,7 @@ func TestAPIPWithAJSONPathOutsideTheSubsetRejectsTheTenantThatReadsIt(t *testing
 			"url": "http://pip.invalid", "jsonPath": "$.a.concat('x')"}`
 	}
 	r := New(Config{}, tab(t), quiet{})
-	load(t, r, pip("a")+`, `+pip("b"), set("a", "subject.g == 'x'"), set("b", "true"))
+	loadUnchecked(t, r, pip("a")+`, `+pip("b"), set("a", "subject.g == 'x'"), set("b", "true"))
 
 	th, _ := tenantHealth(r, "a")
 	if th.Ready || th.Rejected == nil || th.Rejected.Stage != "unsupported" || len(th.Rejected.Forms) != 1 ||
@@ -473,7 +553,7 @@ func TestAPredicateOverAPIPWithAJSONPathOutsideTheSubsetRejectsTheTenant(t *test
 	for _, tc := range rejected {
 		t.Run(tc.name, func(t *testing.T) {
 			r := New(Config{}, tab(t), quiet{})
-			load(t, r, pip("a", tc.pipType)+`, `+pip("b", tc.pipType), tc.set, set("b", "true"))
+			loadUnchecked(t, r, pip("a", tc.pipType)+`, `+pip("b", tc.pipType), tc.set, set("b", "true"))
 
 			th, _ := tenantHealth(r, "a")
 			want := []Form{{Where: tc.where, Form: "jsonpath",
@@ -496,7 +576,7 @@ func TestAPredicateOverAPIPWithAJSONPathOutsideTheSubsetRejectsTheTenant(t *test
 				pips = pip("a", "GENERAL") + `, ` + pip("a", "FILTERED")
 			}
 			r := New(Config{}, tab(t), quiet{})
-			load(t, r, pips, tc.set)
+			loadUnchecked(t, r, pips, tc.set)
 
 			if th, _ := tenantHealth(r, "a"); !th.Ready || th.Rejected != nil {
 				t.Errorf("health of a = %+v, want ready and not refused", th)
@@ -597,9 +677,9 @@ func TestLoadSnapshotsNamesRefusedTenantsInOrderAcrossLoads(t *testing.T) {
 // as refused again.
 func TestAnUnchangedTreeIsNotGeneratedAgain(t *testing.T) {
 	r := New(Config{}, tab(t), quiet{})
-	load(t, r, ``, set("a", "true"), set("b", broken))
+	loadUnchecked(t, r, ``, set("a", "true"), set("b", broken))
 	before, _ := r.Snapshot("a")
-	sum := load(t, r, ``, set("a", "true"), set("b", broken), set("c", "true"))
+	sum := loadUnchecked(t, r, ``, set("a", "true"), set("b", broken), set("c", "true"))
 
 	if after, _ := r.Snapshot("a"); after != before {
 		t.Errorf("snapshot of a after an unchanged load = %p, want the same %p", after, before)
@@ -894,7 +974,7 @@ func TestARuleWhoseConditionReadsAFailedPIPDeniesTheResource(t *testing.T) {
 func TestARuleOverAPIPDeclaredTwiceDeniesTheResource(t *testing.T) {
 	srv, _ := pipServer(t, http.StatusOK, `["y"]`)
 	r := pipRegistry(t)
-	load(t, r, generalPIP(srv.URL, "")+", "+generalPIP(srv.URL, `, "cacheable": true`),
+	loadUnchecked(t, r, generalPIP(srv.URL, "")+", "+generalPIP(srv.URL, `, "cacheable": true`),
 		besideAllow("PERMIT_OVERRIDES", "true", "true", "ALLOW", "subject.g == 'y'"))
 	if got, want := decide(t, r, readDoc(t, "a", "x", 1))[0], (Result{Reason: "PIP resolution failed: subject.g"}); got != want {
 		t.Errorf("Decide(read doc) = %+v, want %+v", got, want)
@@ -907,7 +987,7 @@ func TestARuleOverAPIPDeclaredTwiceDeniesTheResource(t *testing.T) {
 func TestARuleOverAPIPDeclaredTwiceIdenticallyReadsTheDeclaration(t *testing.T) {
 	srv, _ := pipServer(t, http.StatusOK, `["y"]`)
 	r := pipRegistry(t)
-	load(t, r, generalPIP(srv.URL, "")+", "+generalPIP(srv.URL, ""), set("a", "subject.g == 'y'"))
+	loadUnchecked(t, r, generalPIP(srv.URL, "")+", "+generalPIP(srv.URL, ""), set("a", "subject.g == 'y'"))
 	if got, want := decide(t, r, readDoc(t, "a", "x", 1))[0], (Result{Allowed: true}); got != want {
 		t.Errorf("Decide(read doc) = %+v, want %+v", got, want)
 	}

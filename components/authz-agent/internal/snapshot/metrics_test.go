@@ -28,7 +28,7 @@ import (
 func TestTheCollectorCountsTenantsBySnapshot(t *testing.T) {
 	r := New(Config{}, tab(t), quiet{})
 	load(t, r, ``, set("a", "true"), set("b", "true"))
-	load(t, r, ``, set("a", broken), set("b", "true"), set("c", broken))
+	loadUnchecked(t, r, ``, set("a", broken), set("b", "true"), set("c", broken))
 
 	const want = `
 # HELP authz_agent_policy_tenants Tenants of the last policy load by the snapshot they answer from: current (the latest candidate), stale (an earlier snapshot, because the latest candidate was refused), or none (every candidate was refused, so the tenant denies every request).

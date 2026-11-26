@@ -40,17 +40,14 @@ func assertRefused(t *testing.T, path string, tc uploadCase) {
 // it as before.
 func assertRefusedOn(t *testing.T, mux *http.ServeMux, path string, tc uploadCase, status int) {
 	t.Helper()
-	before := do(t, mux, http.MethodGet, path, "").Body.String()
-	rec := do(t, mux, http.MethodPut, path, tc.body)
-	if rec.Code != status {
-		t.Fatalf("PUT %s %s = %d %s, want %d", path, tc.body, rec.Code, rec.Body, status)
-	}
+	before := do(t, mux, http.MethodGet, path, "", http.StatusOK).Body.String()
+	rec := do(t, mux, http.MethodPut, path, tc.body, status)
 	var resp struct{ Error string }
 	decode(t, rec.Body.Bytes(), &resp)
 	if !strings.Contains(resp.Error, tc.wantError) {
 		t.Errorf("PUT %s %s: error %q, want it to contain %q", path, tc.body, resp.Error, tc.wantError)
 	}
-	if after := do(t, mux, http.MethodGet, path, "").Body.String(); after != before {
+	if after := do(t, mux, http.MethodGet, path, "", http.StatusOK).Body.String(); after != before {
 		t.Errorf("after the refused PUT %s %s the domain reads %s, want %s", path, tc.body, after, before)
 	}
 }
@@ -64,9 +61,7 @@ func assertAccepted(t *testing.T, path string, tc uploadCase) {
 // assertAcceptedOn fails unless the upload of tc to path on mux answers 200.
 func assertAcceptedOn(t *testing.T, mux *http.ServeMux, path string, tc uploadCase) {
 	t.Helper()
-	if rec := do(t, mux, http.MethodPut, path, tc.body); rec.Code != http.StatusOK {
-		t.Errorf("PUT %s %s = %d %s, want 200", path, tc.body, rec.Code, rec.Body)
-	}
+	do(t, mux, http.MethodPut, path, tc.body, http.StatusOK)
 }
 
 // policyWith returns a policy upload of one policy whose condition is the
@@ -328,7 +323,7 @@ func TestPIPNameDeclaredTwiceInATenantIsAConflict(t *testing.T) {
 			codes := make(chan int, 2)
 			var wg sync.WaitGroup
 			for _, domain := range []string{"billing", "orders"} {
-				wg.Go(func() { codes <- do(t, mux, http.MethodPut, pipsPath+domain, `[`+token+`]`).Code })
+				wg.Go(func() { codes <- serve(mux, http.MethodPut, pipsPath+domain, `[`+token+`]`, "").Code })
 			}
 			wg.Wait()
 			close(codes)
@@ -344,9 +339,7 @@ func TestPIPNameDeclaredTwiceInATenantIsAConflict(t *testing.T) {
 	})
 	t.Run("another tenant", func(t *testing.T) {
 		mux := withBilling(t)
-		if rec := doWithTenantHeader(t, mux, http.MethodPut, pipsPath+"orders", `[`+token+`]`, "t2"); rec.Code != http.StatusOK {
-			t.Errorf("PUT %sorders as tenant t2 = %d %s, want 200", pipsPath, rec.Code, rec.Body)
-		}
+		doWithTenantHeader(t, mux, http.MethodPut, pipsPath+"orders", `[`+token+`]`, "t2", http.StatusOK)
 	})
 }
 
