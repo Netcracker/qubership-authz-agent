@@ -63,8 +63,8 @@ evaluation.
   4. the default tenant.
 - **R2** (`handler`). A token that failed verification and an M2M token do not set the tenant, and the token in
   `Authorization` never does.
-- **R3** (`handler`). An `Incoming-Token` that ADR-0091 R38 refuses ends the request with the 503 of ADR-0095 R3, so an
-  outage does not move the tenant of a decision.
+- **R3** (`handler`). An `Incoming-Token` that ADR-0091 R23 refuses with `TOKEN_KEYS_UNAVAILABLE` ends the request with
+  the 503 of ADR-0095 R3, so an outage does not move the tenant of a decision.
 - **R4** (`handler`). The claim, `tenant_id`, and `Tenant` are compared as keys of the policy data, byte for byte.
 - **R5** (`handler`). A value from the request is compared with the default tenant that R11 or R14 gives, never with the
   name in `AUTHZ_DEFAULT_TENANT` before its translation.
