@@ -1,0 +1,221 @@
+# The state each source reads for each class of the answer of its service:
+# <class> <source> <state>. TestPIPResponse_EachClassReadsToTheStateOfItsCell
+# compares the agent with it; REGOGEN_UPDATE_PIP_TABLE=1 rewrites it.
+# A changed cell changes what a deployed policy decides. An encoding cell
+# of ERROR may become the status/200 state once the agent decodes that coding.
+
+config/url-empty               GENERAL       PIP_NULL
+config/url-empty               FILTERED      PIP_NULL
+config/url-empty               jsonPath      PIP_NULL
+config/url-empty               entitlements  ERROR
+config/url-empty               scope         ERROR
+
+config/url-unusable            GENERAL       ERROR
+config/url-unusable            FILTERED      ERROR
+config/url-unusable            jsonPath      ERROR
+config/url-unusable            entitlements  ERROR
+config/url-unusable            scope         ERROR
+
+transport/timeout              GENERAL       ERROR
+transport/timeout              FILTERED      ERROR
+transport/timeout              jsonPath      ERROR
+transport/timeout              entitlements  ERROR
+transport/timeout              scope         ERROR
+
+transport/connection-refused   GENERAL       ERROR
+transport/connection-refused   FILTERED      ERROR
+transport/connection-refused   jsonPath      ERROR
+transport/connection-refused   entitlements  ERROR
+transport/connection-refused   scope         ERROR
+
+transport/reset-mid-body       GENERAL       ERROR
+transport/reset-mid-body       FILTERED      ERROR
+transport/reset-mid-body       jsonPath      ERROR
+transport/reset-mid-body       entitlements  ERROR
+transport/reset-mid-body       scope         ERROR
+
+status/200                     GENERAL       VALUE "x"
+status/200                     FILTERED      VALUE "x"
+status/200                     jsonPath      VALUE "x"
+status/200                     entitlements  VALUE ["x"]
+status/200                     scope         PASSES [VALUE ["x"]]
+
+status/201                     GENERAL       ERROR
+status/201                     FILTERED      ERROR
+status/201                     jsonPath      ERROR
+status/201                     entitlements  ERROR
+status/201                     scope         ERROR
+
+status/204                     GENERAL       PIP_NULL
+status/204                     FILTERED      PIP_NULL
+status/204                     jsonPath      PIP_NULL
+status/204                     entitlements  EMPTY_COLL
+status/204                     scope         ERROR
+
+status/302-with-location       GENERAL       ERROR
+status/302-with-location       FILTERED      ERROR
+status/302-with-location       jsonPath      ERROR
+status/302-with-location       entitlements  ERROR
+status/302-with-location       scope         ERROR
+
+status/302-without-location    GENERAL       ERROR
+status/302-without-location    FILTERED      ERROR
+status/302-without-location    jsonPath      ERROR
+status/302-without-location    entitlements  ERROR
+status/302-without-location    scope         ERROR
+
+status/404                     GENERAL       ERROR
+status/404                     FILTERED      ERROR
+status/404                     jsonPath      ERROR
+status/404                     entitlements  ERROR
+status/404                     scope         ERROR
+
+status/500                     GENERAL       ERROR
+status/500                     FILTERED      ERROR
+status/500                     jsonPath      ERROR
+status/500                     entitlements  ERROR
+status/500                     scope         ERROR
+
+body/empty                     GENERAL       PIP_NULL
+body/empty                     FILTERED      PIP_NULL
+body/empty                     jsonPath      PIP_NULL
+body/empty                     entitlements  EMPTY_COLL
+body/empty                     scope         ERROR
+
+body/whitespace                GENERAL       ERROR
+body/whitespace                FILTERED      ERROR
+body/whitespace                jsonPath      ERROR
+body/whitespace                entitlements  ERROR
+body/whitespace                scope         ERROR
+
+body/not-json                  GENERAL       ERROR
+body/not-json                  FILTERED      ERROR
+body/not-json                  jsonPath      ERROR
+body/not-json                  entitlements  ERROR
+body/not-json                  scope         ERROR
+
+body/truncated                 GENERAL       ERROR
+body/truncated                 FILTERED      ERROR
+body/truncated                 jsonPath      ERROR
+body/truncated                 entitlements  ERROR
+body/truncated                 scope         ERROR
+
+body/8MiB                      GENERAL       VALUE "x"
+body/8MiB                      FILTERED      VALUE "x"
+body/8MiB                      jsonPath      VALUE "x"
+body/8MiB                      entitlements  VALUE ["x"]
+body/8MiB                      scope         PASSES [VALUE ["x"]]
+
+body/over-8MiB                 GENERAL       ERROR
+body/over-8MiB                 FILTERED      ERROR
+body/over-8MiB                 jsonPath      ERROR
+body/over-8MiB                 entitlements  ERROR
+body/over-8MiB                 scope         ERROR
+
+body/null                      GENERAL       PIP_NULL
+body/null                      FILTERED      PIP_NULL
+body/null                      jsonPath      PIP_NULL
+body/null                      entitlements  EMPTY_COLL
+body/null                      scope         PASSES []
+
+body/false                     GENERAL       SCALAR_ODD false
+body/false                     FILTERED      SCALAR_ODD false
+body/false                     jsonPath      PIP_NULL
+body/false                     entitlements  EMPTY_COLL
+body/false                     scope         ERROR
+
+body/true                      GENERAL       SCALAR_ODD true
+body/true                      FILTERED      SCALAR_ODD true
+body/true                      jsonPath      PIP_NULL
+body/true                      entitlements  ERROR
+body/true                      scope         ERROR
+
+body/0                         GENERAL       SCALAR_ODD 0
+body/0                         FILTERED      SCALAR_ODD 0
+body/0                         jsonPath      PIP_NULL
+body/0                         entitlements  EMPTY_COLL
+body/0                         scope         ERROR
+
+body/1                         GENERAL       SCALAR_ODD 1
+body/1                         FILTERED      SCALAR_ODD 1
+body/1                         jsonPath      PIP_NULL
+body/1                         entitlements  ERROR
+body/1                         scope         ERROR
+
+body/""                        GENERAL       PIP_NULL
+body/""                        FILTERED      PIP_NULL
+body/""                        jsonPath      PIP_NULL
+body/""                        entitlements  EMPTY_COLL
+body/""                        scope         ERROR
+
+body/"x"                       GENERAL       PIP_NULL
+body/"x"                       FILTERED      PIP_NULL
+body/"x"                       jsonPath      PIP_NULL
+body/"x"                       entitlements  ERROR
+body/"x"                       scope         ERROR
+
+body/[]                        GENERAL       PIP_EMPTY
+body/[]                        FILTERED      PIP_EMPTY
+body/[]                        jsonPath      PIP_NULL
+body/[]                        entitlements  EMPTY_COLL
+body/[]                        scope         ERROR
+
+body/["x"]                     GENERAL       VALUE "x"
+body/["x"]                     FILTERED      VALUE "x"
+body/["x"]                     jsonPath      PIP_NULL
+body/["x"]                     entitlements  ERROR
+body/["x"]                     scope         ERROR
+
+body/{}                        GENERAL       PIP_NULL
+body/{}                        FILTERED      PIP_NULL
+body/{}                        jsonPath      PIP_NULL
+body/{}                        entitlements  EMPTY_COLL
+body/{}                        scope         ERROR
+
+body/{"k":"v"}                 GENERAL       PIP_NULL
+body/{"k":"v"}                 FILTERED      PIP_NULL
+body/{"k":"v"}                 jsonPath      PIP_NULL
+body/{"k":"v"}                 entitlements  EMPTY_COLL
+body/{"k":"v"}                 scope         ERROR
+
+encoding/identity              GENERAL       VALUE "x"
+encoding/identity              FILTERED      VALUE "x"
+encoding/identity              jsonPath      VALUE "x"
+encoding/identity              entitlements  VALUE ["x"]
+encoding/identity              scope         PASSES [VALUE ["x"]]
+
+encoding/gzip                  GENERAL       VALUE "x"
+encoding/gzip                  FILTERED      VALUE "x"
+encoding/gzip                  jsonPath      VALUE "x"
+encoding/gzip                  entitlements  VALUE ["x"]
+encoding/gzip                  scope         PASSES [VALUE ["x"]]
+
+encoding/x-gzip                GENERAL       ERROR
+encoding/x-gzip                FILTERED      ERROR
+encoding/x-gzip                jsonPath      ERROR
+encoding/x-gzip                entitlements  ERROR
+encoding/x-gzip                scope         ERROR
+
+encoding/deflate               GENERAL       ERROR
+encoding/deflate               FILTERED      ERROR
+encoding/deflate               jsonPath      ERROR
+encoding/deflate               entitlements  ERROR
+encoding/deflate               scope         ERROR
+
+encoding/br                    GENERAL       ERROR
+encoding/br                    FILTERED      ERROR
+encoding/br                    jsonPath      ERROR
+encoding/br                    entitlements  ERROR
+encoding/br                    scope         ERROR
+
+encoding/x-unknown             GENERAL       ERROR
+encoding/x-unknown             FILTERED      ERROR
+encoding/x-unknown             jsonPath      ERROR
+encoding/x-unknown             entitlements  ERROR
+encoding/x-unknown             scope         ERROR
+
+encoding/gzip-over-8MiB        GENERAL       ERROR
+encoding/gzip-over-8MiB        FILTERED      ERROR
+encoding/gzip-over-8MiB        jsonPath      ERROR
+encoding/gzip-over-8MiB        entitlements  ERROR
+encoding/gzip-over-8MiB        scope         ERROR
