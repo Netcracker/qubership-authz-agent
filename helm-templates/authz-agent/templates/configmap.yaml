@@ -20,11 +20,10 @@ data:
   trusted-providers.json: |-
 {{ (dict "providers" (include "authz-agent.trustedProviders" . | fromJsonArray)) | toPrettyJson | indent 4 }}
 ---
-# ServiceAccount whose projected Kubernetes token the agent presents to the
-# policy source. The token is sent as a Bearer credential on every request to
-# access-control's v3 config API; access-control recognises it as an M2M
-# principal via the `kubernetes.io` claim check in isM2M(). The ServiceAccount
-# itself needs no RBAC — the projected token is sufficient.
+# ServiceAccount of the agent's Pod. With M2M_AUTH_MODE k8s or hybrid the
+# kubelet projects its token for the netcracker audience into the Pod, and the
+# agent sends that token as a Bearer credential on the policy pull and on its
+# PIP calls. The ServiceAccount itself needs no RBAC.
 apiVersion: v1
 kind: ServiceAccount
 metadata:

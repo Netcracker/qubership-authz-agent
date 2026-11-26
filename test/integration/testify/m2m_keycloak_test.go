@@ -23,16 +23,16 @@ package runtimetest
 // The tests run only when M2M_KEYCLOAK_PROFILE=true. The kind harness sets it,
 // because there the test stand provisions the client credentials and the
 // agent's token endpoint is the harness Keycloak. Against an agent with a static
-// M2M token the steps are skipped via t.Skip() so the catalog coverage check
-// passes.
+// token the steps are skipped via t.Skip() so the catalog coverage check passes.
 //
 // Test client: cloud-common realm / test-app-client (client_credentials)
 func (s *RuntimeSuite) TestM2MKeycloak() {
 	// (a) Policy pull succeeds with Keycloak token.
 	//
 	// In the kind harness the agent fetches a real Keycloak access_token
-	// (test-app-client, client_credentials grant) and sends it as the
-	// Authorization header of its policy pull to authz-policy-admin. The suite setup (setup.wait_for_agent)
+	// (test-app-client, client_credentials grant) from AUTHZ_OUTGOING_TOKEN_URL
+	// and sends it as the Authorization header of its policy pull to
+	// authz-policy-admin. The suite setup (setup.wait_for_agent)
 	// already blocked until the agent became healthy, which requires at least
 	// one successful pull. This step asserts the resulting decision path works
 	// end-to-end — if the pull had failed the agent would not have returned 200.

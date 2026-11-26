@@ -201,15 +201,32 @@
       ],
       "internal": true
     },
-    "KUBERNETES_M2M_ENABLED": {
-      "$id": "#/properties/KUBERNETES_M2M_ENABLED",
-      "type": "boolean",
-      "title": "The KUBERNETES_M2M_ENABLED schema",
-      "description": "Parameter specifies if M2M authentication with Kubernetes service account tokens is enabled",
-      "default": false,
+    "M2M_AUTH_MODE": {
+      "$id": "#/properties/M2M_AUTH_MODE",
+      "type": "string",
+      "title": "The M2M_AUTH_MODE schema",
+      "description": "The mode that the platform's deployer passes to every application. It chooses the token the agent sends on the policy pull and on its calls to PIPs. legacy obtains a token from AUTHZ_OUTGOING_TOKEN_URL with the client credentials of the Secret <SERVICE_NAME>-client-credentials, which the chart mounts. k8s sends the projected netcracker-audience token, which the chart mounts at /var/run/secrets/tokens/netcracker/token. hybrid mounts both, the Secret as optional, and sends the projected token. The chart does not read KUBERNETES_M2M_ENABLED",
+      "default": "legacy",
       "examples": [
-        true,
-        false
+        "legacy",
+        "hybrid",
+        "k8s"
+      ],
+      "enum": [
+        "legacy",
+        "hybrid",
+        "k8s"
+      ]
+    },
+    "AUTHZ_OUTGOING_TOKEN_URL": {
+      "$id": "#/properties/AUTHZ_OUTGOING_TOKEN_URL",
+      "type": "string",
+      "title": "The AUTHZ_OUTGOING_TOKEN_URL schema",
+      "description": "Token endpoint of the agent's client credentials token. Empty builds it from IDENTITY_PROVIDER_URL as <IDENTITY_PROVIDER_URL>/auth/realms/cloud-common/protocol/openid-connect/token; set it where Keycloak serves its realms without /auth. The chart passes a set value as it is in legacy and hybrid, and none in k8s",
+      "default": "",
+      "examples": [
+        "",
+        "http://keycloak:8080/realms/cloud-common/protocol/openid-connect/token"
       ]
     },
     "MESH_ROUTES_ENABLED": {
@@ -272,7 +289,7 @@
       "$id": "#/properties/IDENTITY_PROVIDER_URL",
       "type": "string",
       "title": "The IDENTITY_PROVIDER_URL schema",
-      "description": "Base URL of the platform identity provider, without a realm. Used to generate the trusted providers when AUTHZ_TRUSTED_PROVIDERS is empty",
+      "description": "Base URL of the platform identity provider, without a realm. While AUTHZ_TRUSTED_PROVIDERS is empty, the chart builds the issuer of each realm in AUTHZ_IDP_REALMS from it. While M2M_AUTH_MODE is legacy or hybrid and AUTHZ_OUTGOING_TOKEN_URL is empty, the chart builds the agent's token endpoint AUTHZ_OUTGOING_TOKEN_URL from it. Where the chart builds either one, it must be an http or https URL with a host",
       "default": "http://identity-provider:8080",
       "examples": [
         "http://identity-provider:8080",
@@ -419,7 +436,8 @@
       "examples": [
         3
       ],
-      "minimum": 1
+      "minimum": 1,
+      "maximum": 100
     },
     "AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL": {
       "$id": "#/properties/AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL",
@@ -461,7 +479,7 @@
       "$id": "#/properties/AUTHZ_PAP_CLIENT_TOKEN_FILE",
       "type": "string",
       "title": "The AUTHZ_PAP_CLIENT_TOKEN_FILE schema",
-      "description": "Path of the Bearer token the pull loop sends, written by the kubelet when KUBERNETES_M2M_ENABLED is true and by the agent's own token loop otherwise",
+      "description": "File the agent reads its token from when M2M_AUTH_MODE is k8s, or hybrid with something at this path at the start. The chart mounts the projected token at the default path alone, so keep the default",
       "default": "/var/run/secrets/tokens/netcracker/token",
       "examples": [
         "/var/run/secrets/tokens/netcracker/token"
@@ -498,7 +516,8 @@
       "examples": [
         3
       ],
-      "minimum": 1
+      "minimum": 1,
+      "maximum": 100
     },
     "HPA_ENABLED": {
       "$id": "#/properties/HPA_ENABLED",

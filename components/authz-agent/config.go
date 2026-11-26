@@ -15,12 +15,15 @@
 package main
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
+	"io/fs"
 	"math"
 	"net"
 	"net/netip"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -46,9 +49,12 @@ type config struct {
 	Authn authn.Config
 	// Pull configures the policy pull; [pull.Config] says what disables it.
 	Pull pull.Config
-	// M2M configures the agent's own token; empty TokenURL and TokenFile
-	// disable it.
+	// M2M configures the agent's own token: from TokenURL, or from TokenFile
+	// when TokenURL is empty.
 	M2M m2m.Config
+	// Mode is the value of M2M_AUTH_MODE in lower case, legacy where it is
+	// unset or empty.
+	Mode string
 }
 
 // lookup reads one configuration key: [get] in main, a map in tests.
@@ -68,15 +74,65 @@ const (
 // 9223372036, about 292 years.
 const maxSeconds = math.MaxInt64 / int64(time.Second)
 
+// The configuration keys of the token that the agent sends: authModeKey of
+// M2M_AUTH_MODE, which the platform's deployer passes to every service and
+// which chooses the token; tokenURLKey of AUTHZ_OUTGOING_TOKEN_URL, the token
+// endpoint of the agent's client credentials token; and tokenFileKey of
+// AUTHZ_PAP_CLIENT_TOKEN_FILE, the agent's token file.
+const (
+	authModeKey  = "m2m.auth.mode"
+	tokenURLKey  = "authz.outgoing.token.url"
+	tokenFileKey = "authz.pap.client.token.file"
+)
+
+// The values of M2M_AUTH_MODE. legacy sends the agent's client credentials
+// token, k8s the content of its token file, and hybrid the content of that
+// file where its path exists at the start and the client credentials token
+// where it does not.
+const (
+	legacyMode = "legacy"
+	hybridMode = "hybrid"
+	k8sMode    = "k8s"
+)
+
+// authModes lists the values of M2M_AUTH_MODE.
+var authModes = []string{legacyMode, hybridMode, k8sMode}
+
+// deploymentFiles are the paths at which a deployment puts the files of the
+// agent's token. loadConfig takes each path where the variable that names the
+// file is unset or empty.
+type deploymentFiles struct {
+	TokenFile, ClientIDFile, ClientSecretFile string
+}
+
+// defaultFiles are the paths at which the chart mounts those files.
+var defaultFiles = deploymentFiles{
+	TokenFile:        m2m.DefaultTokenFile,
+	ClientIDFile:     m2m.DefaultClientIDFile,
+	ClientSecretFile: m2m.DefaultClientSecretFile,
+}
+
+// maxRetries is the largest number of attempts per request that
+// AUTHZ_JWKS_HTTP_RETRIES and AUTHZ_ENTITLEMENTS_HTTP_RETRIES accept. The
+// chart's values schema has the same maximum.
+const maxRetries = 100
+
 // loadConfig builds the configuration from the environment. A number, a
-// boolean, a log level, or a listen address that is empty takes its default,
-// as an unset one does, and an empty URL turns its feature off. A file path is
-// used as set, empty included, without a check. LOGGING_LEVEL_ROOT and
-// LOG_LEVEL are only checked: the platform logger reads them itself. The error
-// names every variable whose value is not of its form or out of its range,
-// with the values that variable accepts. It also names LOG_LEVEL whenever
-// that variable is not empty.
-func loadConfig(get lookup) (config, error) {
+// boolean, a value from a list, or a listen address that is empty takes its
+// default, as an unset one does, and so does the path of the token file or of a
+// client credentials file, which takes its default from files. An empty URL
+// turns its feature off, except AUTHZ_OUTGOING_TOKEN_URL where the agent sends
+// its client credentials token. The path of the trusted providers file is used
+// as set, empty included. LOGGING_LEVEL_ROOT and LOG_LEVEL are only checked:
+// the platform logger reads them itself. The error names every variable whose
+// value is not of its form or out of its range, with the values that variable
+// accepts. It also names, with the reason, each input that the agent cannot use
+// for the token that M2M_AUTH_MODE chooses: an unset or empty
+// AUTHZ_OUTGOING_TOKEN_URL, a file that [m2m.CheckFile] refuses, and in hybrid
+// mode a token file path that os.Stat neither finds nor reports missing. With a
+// refused M2M_AUTH_MODE it names none of them. It names LOG_LEVEL whenever that
+// variable is not empty.
+func loadConfig(get lookup, files deploymentFiles) (config, error) {
 	s := settings{get: get}
 	cfg := config{
 		Addr:       s.address("authz.http.addr", "0.0.0.0:8181"),
@@ -85,7 +141,7 @@ func loadConfig(get lookup) (config, error) {
 			File:             get("authz.trusted.providers.file", authn.DefaultFile),
 			Required:         s.boolean("authz.jwks.bootstrap.required", true),
 			HTTPTimeout:      s.seconds("authz.jwks.http.timeout", 1, authn.DefaultHTTPTimeout),
-			HTTPRetries:      s.integer("authz.jwks.http.retries", 1, authn.DefaultHTTPRetries),
+			HTTPRetries:      s.integer("authz.jwks.http.retries", 1, maxRetries, authn.DefaultHTTPRetries),
 			TenantManagerURL: s.httpURL("authz.tenant.manager.url"),
 			ReloadInterval:   s.seconds("authz.trusted.providers.reload.interval", 0, authn.DefaultReloadInterval),
 		},
@@ -95,20 +151,28 @@ func loadConfig(get lookup) (config, error) {
 			HTTPTimeout: pull.DefaultHTTPTimeout,
 		},
 		M2M: m2m.Config{
-			TokenURL:         s.httpURL("authz.m2m.token.url"),
-			ClientIDFile:     get("authz.m2m.client.id.file", m2m.DefaultClientIDFile),
-			ClientSecretFile: get("authz.m2m.client.secret.file", m2m.DefaultClientSecretFile),
-			RenewBefore:      s.seconds("authz.m2m.renew.before.seconds", 0, m2m.DefaultRenewBefore),
-			TokenFile:        get("authz.pap.client.token.file", m2m.DefaultTokenFile),
+			TokenURL:         s.httpURL(tokenURLKey),
+			ClientIDFile:     cmp.Or(get("authz.outgoing.client.id.file", ""), files.ClientIDFile),
+			ClientSecretFile: cmp.Or(get("authz.outgoing.client.secret.file", ""), files.ClientSecretFile),
+			RenewBefore:      s.seconds("authz.outgoing.renew.before.seconds", 0, m2m.DefaultRenewBefore),
+			TokenFile:        cmp.Or(get(tokenFileKey, ""), files.TokenFile),
 			WatchInterval:    m2m.DefaultWatchInterval,
 		},
 	}
 	// The entitlements timeout and retries are checked whether or not a URL
 	// turns the PIP on, as the chart's values schema checks them.
 	timeout := s.seconds("authz.entitlements.http.timeout", 1, pips.DefaultEntitlementsHTTPTimeout*time.Second)
-	retries := s.integer("authz.entitlements.http.retries", 1, pips.DefaultEntitlementsHTTPRetries)
+	retries := s.integer("authz.entitlements.http.retries", 1, maxRetries, pips.DefaultEntitlementsHTTPRetries)
 	if url := strings.TrimRight(s.httpURL("authz.entitlements.url"), "/"); url != "" {
 		cfg.Pull.Entitlements = &pips.EntitlementsConfig{URL: url, HTTPTimeoutSeconds: int(timeout / time.Second), HTTPRetries: retries}
+	}
+	// A refused M2M_AUTH_MODE chooses no token, so no input of a token is
+	// checked. A token endpoint that is not an http or https URL has been
+	// refused already, whichever token the mode chooses.
+	refusedBefore := len(s.refused)
+	cfg.Mode = cmp.Or(s.fromList(authModeKey, authModes), legacyMode)
+	if len(s.refused) == refusedBefore {
+		s.outgoingToken(&cfg.M2M, cfg.Mode)
 	}
 	// The platform logger reads LOGGING_LEVEL_ROOT itself and falls back to
 	// info where the value is not a level name; fromList refuses such a value.
@@ -127,7 +191,7 @@ func loadConfig(get lookup) (config, error) {
 
 // settings reads the values that loadConfig checks, and records each value
 // that it refuses. For an empty or refused value, a method returns its
-// fallback; httpURL returns "", and fromList returns nothing.
+// fallback; httpURL and fromList return "".
 type settings struct {
 	get     lookup
 	refused []string
@@ -147,15 +211,15 @@ func (s *settings) seconds(key string, minimum int64, fallback time.Duration) ti
 	return time.Duration(n) * time.Second
 }
 
-// integer reads an integer from minimum to [math.MaxInt].
-func (s *settings) integer(key string, minimum, fallback int) int {
+// integer reads an integer from minimum to maximum.
+func (s *settings) integer(key string, minimum, maximum, fallback int) int {
 	raw := s.get(key, "")
 	if raw == "" {
 		return fallback
 	}
 	n, err := strconv.Atoi(raw)
-	if err != nil || n < minimum {
-		s.refuse(key, raw, fmt.Sprintf("an integer from %d to %d", minimum, math.MaxInt))
+	if err != nil || n < minimum || n > maximum {
+		s.refuse(key, raw, fmt.Sprintf("an integer from %d to %d", minimum, maximum))
 		return fallback
 	}
 	return n
@@ -176,19 +240,20 @@ func (s *settings) boolean(key string, fallback bool) bool {
 	return fallback
 }
 
-// fromList refuses a non-empty value that is not one of values without
-// regard to case.
-func (s *settings) fromList(key string, values []string) {
+// fromList returns the member of values that the value of key matches
+// without regard to case, and refuses a non-empty value that matches none.
+func (s *settings) fromList(key string, values []string) string {
 	raw := s.get(key, "")
 	if raw == "" {
-		return
+		return ""
 	}
 	for _, v := range values {
 		if strings.EqualFold(raw, v) {
-			return
+			return v
 		}
 	}
 	s.refuse(key, raw, "one of "+strings.Join(values, ", "))
+	return ""
 }
 
 // address reads a listen address <host>:<port>, whose host is empty, an IP
@@ -297,6 +362,84 @@ func urlPort(port string) bool {
 	}
 	n, err := strconv.ParseUint(port, 10, 16)
 	return err == nil && n > 0
+}
+
+// outgoingToken has cfg send the token that mode chooses, and refuses each of
+// that token's inputs that the agent cannot use. It empties cfg.TokenURL
+// where the token is the content of cfg.TokenFile. In hybrid mode the token
+// file is present where [os.Stat], which follows symbolic links, finds the
+// path, and absent where it reports that the path does not exist. Any other
+// error of os.Stat is refused, since the agent can then tell neither that the
+// file is present nor that it is absent.
+func (s *settings) outgoingToken(cfg *m2m.Config, mode string) {
+	switch mode {
+	case k8sMode:
+		cfg.TokenURL = ""
+		s.requireFile(tokenFileKey, cfg.TokenFile, "M2M_AUTH_MODE=k8s sends the token in this file")
+	case hybridMode:
+		_, err := os.Stat(cfg.TokenFile)
+		switch {
+		case err == nil:
+			cfg.TokenURL = ""
+			s.requireFile(tokenFileKey, cfg.TokenFile, "M2M_AUTH_MODE=hybrid sends the token in this file, since the path exists")
+		case errors.Is(err, fs.ErrNotExist):
+			s.clientCredentials(cfg, fmt.Sprintf("while M2M_AUTH_MODE is hybrid and %s does not exist", cfg.TokenFile), "")
+		default:
+			s.refused = append(s.refused, fmt.Sprintf("%s=%q: %s, and M2M_AUTH_MODE=hybrid needs the path either to hold the token or not to exist",
+				variable(tokenFileKey), cfg.TokenFile, reason(err)))
+		}
+	default:
+		s.clientCredentials(cfg, "while M2M_AUTH_MODE is legacy, which is its default",
+			fmt.Sprintf("; M2M_AUTH_MODE=k8s sends the token in %s instead", cfg.TokenFile))
+	}
+}
+
+// clientCredentials refuses an unset or empty AUTHZ_OUTGOING_TOKEN_URL and
+// each client credentials file of cfg that the agent cannot use. condition
+// says when the agent sends its client credentials token. other ends the
+// refusal of the endpoint and names the other token, or is empty where there
+// is none.
+func (s *settings) clientCredentials(cfg *m2m.Config, condition, other string) {
+	// The raw value is tested, so that a token endpoint of the wrong form,
+	// refused where it was read, is not refused again as missing.
+	if s.get(tokenURLKey, "") == "" {
+		s.refuse(tokenURLKey, "", "the http or https URL of the token endpoint, required "+condition+other)
+	}
+	s.requireFile("authz.outgoing.client.id.file", cfg.ClientIDFile, "the agent reads the client id from this file "+condition)
+	s.requireFile("authz.outgoing.client.secret.file", cfg.ClientSecretFile, "the agent reads the client secret from this file "+condition)
+}
+
+// requireFile refuses path, the value of key, unless [m2m.CheckFile] accepts
+// the file it names. The refusal gives the reason, followed by use, which says
+// what the agent reads the file for.
+func (s *settings) requireFile(key, path, use string) {
+	if err := m2m.CheckFile(path); err != nil {
+		s.refused = append(s.refused, fmt.Sprintf("%s=%q: %s, and %s", variable(key), path, reason(err), use))
+	}
+}
+
+// reason is the text of err without the path that an [*fs.PathError]
+// carries, which a refusal names already.
+func reason(err error) string {
+	var pathErr *fs.PathError
+	if errors.As(err, &pathErr) {
+		return pathErr.Err.Error()
+	}
+	return err.Error()
+}
+
+// tokenChoice is the line that the agent logs at the start in hybrid mode,
+// where nothing else in the deployment shows which token the agent sends, and
+// "" in any other mode.
+func (c config) tokenChoice() string {
+	switch {
+	case c.Mode != hybridMode:
+		return ""
+	case c.M2M.TokenURL == "":
+		return fmt.Sprintf("M2M_AUTH_MODE is hybrid and %s exists, so the agent sends the token in that file", c.M2M.TokenFile)
+	}
+	return fmt.Sprintf("M2M_AUTH_MODE is hybrid and %s does not exist, so the agent sends its client credentials token from %s",
+		c.M2M.TokenFile, c.M2M.TokenURL)
 }
 
 func (s *settings) refuse(key, raw, accepted string) {

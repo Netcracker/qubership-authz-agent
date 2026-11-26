@@ -242,16 +242,39 @@ done
 # whole block is compared, so a rollingUpdate left under Recreate would show.
 strategy_of() { deployment_of "$@" | sed -n '/^  strategy:/,/^  selector:/p' | sed '$d'; }
 
-# Renders a chart and returns the value of one environment variable, "" when
-# the chart renders none. The empty string is what the absent case has to
-# produce: an unguarded grep ends the whole run under `set -e`, and a suite
-# that stops says less than one that names the check that failed.
+# deployment_kind is the line every render that produced a Deployment carries;
+# a render that failed carries Helm's error instead.
+deployment_kind='kind: Deployment'
+
+# Renders a chart and prints the value of one environment variable without its
+# YAML quotes, "" when the chart renders none. A single-quoted or unquoted value
+# prints as written, and a double-quoted one with \" and \\ read as " and \, the
+# escapes that Helm's quote writes for a URL. The empty string is what the
+# absent case has to produce: an unguarded grep ends the whole run under
+# `set -e`, and a suite that stops says less than one that names the check that
+# failed.
 env_value_of() {
   local chart="$1" name="$2"
   shift 2
   helm template t "${chart}" -f "${SIZING}" "$@" 2>&1 \
     | grep -A1 "name: ${name}$" \
-    | awk -F"'" '/value:/ && !seen {print $2; seen=1}' || true
+    | awk '/value:/ && !seen {
+        seen = 1
+        v = $0
+        sub(/^[^:]*value: /, "", v)
+        if (v ~ /^\047/) {
+          v = substr(v, 2, length(v) - 2)
+        } else if (v ~ /^"/) {
+          v = substr(v, 2, length(v) - 2)
+          out = ""
+          while ((i = index(v, "\\")) > 0) {
+            out = out substr(v, 1, i - 1) substr(v, i + 1, 1)
+            v = substr(v, i + 2)
+          }
+          v = out v
+        }
+        print v
+      }' || true
 }
 
 env_value() {
@@ -454,31 +477,246 @@ for row in "${CHART_DIR}:ghcr.io/netcracker/qubership-authz-agent" "${STUB_CHART
   fi
 done
 
-# The M2M identity, which a platform install takes through a projected
-# service-account token. The default above does not render it.
-k8s_m2m="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set KUBERNETES_M2M_ENABLED=true)"
-if [[ "${k8s_m2m}" == *"serviceAccountToken"* && "${k8s_m2m}" != *"client-credentials"* ]]; then
-  pass "the agent Pod takes the projected token under KUBERNETES_M2M_ENABLED"
-else
-  fail "the agent Pod does not take the projected token under KUBERNETES_M2M_ENABLED"
-fi
-if [[ "${k8s_m2m}" != *"AUTHZ_M2M_TOKEN_URL"* ]]; then
-  pass "the agent Pod asks no identity provider for a token under KUBERNETES_M2M_ENABLED"
-else
-  fail "the agent Pod still sets AUTHZ_M2M_TOKEN_URL under KUBERNETES_M2M_ENABLED"
-fi
+# token_layout renders the Deployment with its arguments and prints what
+# M2M_AUTH_MODE decided there: whether the client-credentials Secret is
+# mounted, and whether as optional; whether the projected netcracker token is
+# mounted; the volumes that the agent's container mounts; and the value of each
+# variable of the agent's token, or "-" where the render does not set it.
+token_layout() {
+  local deployment volumes secret_volume secret token mounts layout name
+  deployment="$(deployment_of "$@")"
+  volumes="$(sed -n '/^      volumes:/,/^      containers:/p' <<<"${deployment}")"
+  secret_volume="$(awk '/^        - name: / {inside = ($3 == "client-credentials")} inside' <<<"${volumes}")"
+  secret=absent
+  if [[ -n "${secret_volume}" ]]; then
+    secret=required
+    if [[ "${secret_volume}" == *"optional: true"* ]]; then
+      secret=optional
+    fi
+  fi
+  token=absent
+  if [[ "${volumes}" == *"audience: netcracker"* ]]; then
+    token=projected
+  fi
+  mounts="$(sed -n '/^          volumeMounts:/,/^          [a-zA-Z]/p' <<<"${deployment}" | awk '$1 == "-" && $2 == "name:" {print $3}' | paste -sd, -)"
+  layout="secret=${secret} token=${token} mounts=${mounts}"
+  for name in M2M_AUTH_MODE AUTHZ_OUTGOING_TOKEN_URL AUTHZ_OUTGOING_CLIENT_ID_FILE AUTHZ_OUTGOING_CLIENT_SECRET_FILE \
+    AUTHZ_OUTGOING_RENEW_BEFORE_SECONDS; do
+    layout+=" ${name}=$(awk -v entry="- name: ${name}" '
+      index($0, entry) && substr($0, index($0, entry) + length(entry)) == "" {
+        getline
+        v = $0
+        sub(/^[^:]*value: /, "", v)
+        gsub(/^["\047]|["\047]$/, "", v)
+        print v
+        found = 1
+        exit
+      }
+      END {if (!found) print "-"}' <<<"${deployment}")"
+  done
+  echo "${layout}"
+}
+legacy_layout="secret=required token=absent mounts=trusted-providers,client-credentials M2M_AUTH_MODE=legacy AUTHZ_OUTGOING_TOKEN_URL=http://identity-provider:8080/auth/realms/cloud-common/protocol/openid-connect/token AUTHZ_OUTGOING_CLIENT_ID_FILE=/etc/secret/username AUTHZ_OUTGOING_CLIENT_SECRET_FILE=/etc/secret/password AUTHZ_OUTGOING_RENEW_BEFORE_SECONDS=60"
+hybrid_layout="secret=optional token=projected mounts=trusted-providers,projected-tokens,client-credentials M2M_AUTH_MODE=hybrid AUTHZ_OUTGOING_TOKEN_URL=http://identity-provider:8080/auth/realms/cloud-common/protocol/openid-connect/token AUTHZ_OUTGOING_CLIENT_ID_FILE=/etc/secret/username AUTHZ_OUTGOING_CLIENT_SECRET_FILE=/etc/secret/password AUTHZ_OUTGOING_RENEW_BEFORE_SECONDS=60"
+k8s_layout="secret=absent token=projected mounts=trusted-providers,projected-tokens M2M_AUTH_MODE=k8s AUTHZ_OUTGOING_TOKEN_URL=- AUTHZ_OUTGOING_CLIENT_ID_FILE=- AUTHZ_OUTGOING_CLIENT_SECRET_FILE=- AUTHZ_OUTGOING_RENEW_BEFORE_SECONDS=-"
+k8s_mode=(--set M2M_AUTH_MODE=k8s)
+for row in "a default install|${legacy_layout}|" \
+  "M2M_AUTH_MODE=legacy|${legacy_layout}|--set M2M_AUTH_MODE=legacy" \
+  "M2M_AUTH_MODE=hybrid|${hybrid_layout}|--set M2M_AUTH_MODE=hybrid" \
+  "M2M_AUTH_MODE=k8s|${k8s_layout}|--set M2M_AUTH_MODE=k8s" \
+  "M2M_AUTH_MODE=k8s beside a set AUTHZ_OUTGOING_TOKEN_URL|${k8s_layout}|--set M2M_AUTH_MODE=k8s --set-string AUTHZ_OUTGOING_TOKEN_URL=https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token"; do
+  IFS='|' read -r label expected args <<<"${row}"
+  read -r -a layout_args <<<"${args}"
+  layout="$(token_layout ${layout_args[@]+"${layout_args[@]}"})"
+  if [[ "${layout}" == "${expected}" ]]; then
+    pass "${label} mounts and passes what its mode needs"
+  else
+    fail "${label} renders ${layout}, expected ${expected}"
+  fi
+done
 # The token lands where the platform's charts put the netcracker-audience
 # token, and the service is pointed at that file.
-token_summary="path=$(field "${k8s_m2m}" path:) audience=$(field "${k8s_m2m}" audience:) mount=$(field "$(grep -A1 'name: projected-tokens' <<<"${k8s_m2m}" | tail -1)" mountPath:) file=$(env_value AUTHZ_PAP_CLIENT_TOKEN_FILE --set KUBERNETES_M2M_ENABLED=true)"
+k8s_m2m="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${k8s_mode[@]}")"
+token_summary="path=$(field "${k8s_m2m}" path:) audience=$(field "${k8s_m2m}" audience:) mount=$(field "$(grep -A1 'name: projected-tokens' <<<"${k8s_m2m}" | tail -1)" mountPath:) file=$(env_value AUTHZ_PAP_CLIENT_TOKEN_FILE "${k8s_mode[@]}")"
 if [[ "${token_summary}" == "path=netcracker/token audience=netcracker mount=/var/run/secrets/tokens file=/var/run/secrets/tokens/netcracker/token" ]]; then
   pass "the projected token is mounted at the platform's path and the agent reads it from there"
 else
   fail "the projected token renders ${token_summary}, expected path=netcracker/token audience=netcracker mount=/var/run/secrets/tokens file=/var/run/secrets/tokens/netcracker/token"
 fi
-if [[ "${all_manifests}" == *"client-credentials"* && "${all_manifests}" != *"serviceAccountToken"* ]]; then
-  pass "the agent Pod takes the client-credentials Secret without KUBERNETES_M2M_ENABLED"
+for value in "" foo K8S Legacy; do
+  refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set-string "M2M_AUTH_MODE=${value}" 2>&1 || true)"
+  if [[ "${refused}" == *"M2M_AUTH_MODE"*"legacy"*"hybrid"*"k8s"* && "${refused}" != *"${deployment_kind}"* ]]; then
+    pass "the values schema refuses M2M_AUTH_MODE='${value}'"
+  else
+    fail "the values schema must refuse M2M_AUTH_MODE='${value}', got: $(head -3 <<<"${refused}")"
+  fi
+done
+
+# The chart does not read KUBERNETES_M2M_ENABLED, which the platform's
+# deployments may still pass to every chart, and accepts any value of it.
+default_deployment="$(deployment_of)"
+for value in true false yes; do
+  with_flag="$(deployment_of --set-string "KUBERNETES_M2M_ENABLED=${value}")"
+  if [[ "${with_flag}" == "${default_deployment}" ]]; then
+    pass "KUBERNETES_M2M_ENABLED=${value} renders the default Deployment"
+  else
+    fail "KUBERNETES_M2M_ENABLED=${value} changed the Deployment: $(diff <(echo "${default_deployment}") <(echo "${with_flag}") | head -5)"
+  fi
+done
+
+# With M2M_AUTH_MODE legacy or hybrid and AUTHZ_OUTGOING_TOKEN_URL empty, the
+# chart builds AUTHZ_OUTGOING_TOKEN_URL from IDENTITY_PROVIDER_URL. Most renders below set an
+# explicit provider list, so that the chart builds only the token endpoint from
+# IDENTITY_PROVIDER_URL. A refusal names the problem, then gives one sentence
+# for each value the chart builds, then the remedy, which starts with "Set it
+# to". Each check matches the message from the problem to the start of the
+# remedy, so a refusal that names one value too many or too few fails it.
+token_use="While M2M_AUTH_MODE is legacy or hybrid and AUTHZ_OUTGOING_TOKEN_URL is empty, the chart builds the agent's token endpoint AUTHZ_OUTGOING_TOKEN_URL from it."
+issuer_use="While AUTHZ_TRUSTED_PROVIDERS is empty, its default, the chart builds the issuer of each realm in AUTHZ_IDP_REALMS from it."
+kc_provider=(--set-json 'AUTHZ_TRUSTED_PROVIDERS=[{"id":"kc","issuer":"https://kc.example.com/auth/realms/kc"}]')
+expect_token_url() {
+  local label="$1" expected="$2"
+  shift 2
+  local got
+  got="$(env_value AUTHZ_OUTGOING_TOKEN_URL "$@")"
+  if [[ "${got}" == "${expected}" ]]; then
+    pass "${label}"
+  elif [[ -z "${got}" ]]; then
+    fail "${label}: the render sets no AUTHZ_OUTGOING_TOKEN_URL: $(head -3 <<<"$(deployment_of "$@")")"
+  else
+    fail "${label}: AUTHZ_OUTGOING_TOKEN_URL is '${got}', expected ${expected}"
+  fi
+}
+expect_token_url "a default install builds AUTHZ_OUTGOING_TOKEN_URL from the default IDENTITY_PROVIDER_URL" \
+  "http://identity-provider:8080/auth/realms/cloud-common/protocol/openid-connect/token"
+expect_token_url "an https IDENTITY_PROVIDER_URL with a port builds AUTHZ_OUTGOING_TOKEN_URL beside an explicit provider list" \
+  "https://identity-provider:8443/auth/realms/cloud-common/protocol/openid-connect/token" \
+  "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL=https://identity-provider:8443
+expect_token_url "an IDENTITY_PROVIDER_URL with an upper-case scheme builds AUTHZ_OUTGOING_TOKEN_URL" \
+  "HTTP://identity-provider:8080/auth/realms/cloud-common/protocol/openid-connect/token" \
+  "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL=HTTP://identity-provider:8080
+expect_token_url "an IPv6 IDENTITY_PROVIDER_URL builds AUTHZ_OUTGOING_TOKEN_URL" \
+  "https://[fd00::1]:8443/auth/realms/cloud-common/protocol/openid-connect/token" \
+  "${kc_provider[@]}" --set-string 'IDENTITY_PROVIDER_URL=https://[fd00::1]:8443'
+expect_token_url "a trailing slash on IDENTITY_PROVIDER_URL leaves one slash before auth in AUTHZ_OUTGOING_TOKEN_URL" \
+  "https://identity-provider:8443/auth/realms/cloud-common/protocol/openid-connect/token" \
+  "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL=https://identity-provider:8443/
+expect_token_url "a set AUTHZ_OUTGOING_TOKEN_URL reaches the agent as it is, in place of the endpoint built from IDENTITY_PROVIDER_URL" \
+  "https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token" \
+  --set-string AUTHZ_OUTGOING_TOKEN_URL=https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token
+# RFC 3986 allows ' in a URL, so the endpoint is quoted for YAML whatever it
+# holds; " and \ are not URL characters, and the agent refuses them, but the
+# chart still renders them as given.
+expect_token_url "a set AUTHZ_OUTGOING_TOKEN_URL with an apostrophe reaches the agent as it is" \
+  "https://keycloak:8443/tok'en" --set-string "AUTHZ_OUTGOING_TOKEN_URL=https://keycloak:8443/tok'en"
+expect_token_url "a set AUTHZ_OUTGOING_TOKEN_URL with a double quote reaches the agent as it is" \
+  'https://keycloak:8443/a"b' --set-string 'AUTHZ_OUTGOING_TOKEN_URL=https://keycloak:8443/a"b'
+expect_token_url "a set AUTHZ_OUTGOING_TOKEN_URL with a backslash reaches the agent as it is" \
+  'https://keycloak:8443/a\b' --set-json 'AUTHZ_OUTGOING_TOKEN_URL="https://keycloak:8443/a\\b"'
+expect_token_url "an IDENTITY_PROVIDER_URL with an apostrophe builds AUTHZ_OUTGOING_TOKEN_URL as it is" \
+  "http://identity-provider:8080/o'k/auth/realms/cloud-common/protocol/openid-connect/token" \
+  "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=http://identity-provider:8080/o'k"
+# The chart builds nothing from IDENTITY_PROVIDER_URL beside a set
+# AUTHZ_OUTGOING_TOKEN_URL and an explicit provider list, so an empty one
+# renders.
+expect_token_url "an empty IDENTITY_PROVIDER_URL renders beside a set AUTHZ_OUTGOING_TOKEN_URL and an explicit provider list" \
+  "https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token" \
+  "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL= \
+  --set-string AUTHZ_OUTGOING_TOKEN_URL=https://keycloak:8443/realms/cloud-common/protocol/openid-connect/token
+for row in "|is empty" "identity-provider:8080|has no http or https scheme" "10.0.0.5:8080|has no http or https scheme" \
+  "ftp://identity-provider|has no http or https scheme" "http://:8080|has no host" "http:/identity-provider:8080|has no host" \
+  "http://admin:s3cret@[::1|has no host"; do
+  IFS='|' read -r url rule <<<"${row}"
+  refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}" 2>&1 || true)"
+  if [[ "${refused}" == *"IDENTITY_PROVIDER_URL ${rule}. ${token_use} Set it to"* ]]; then
+    pass "IDENTITY_PROVIDER_URL '${url}' is refused, since it ${rule}, while the chart builds the token endpoint from it"
+  elif [[ "${refused}" == *"${deployment_kind}"* ]]; then
+    fail "IDENTITY_PROVIDER_URL '${url}' must be refused as one that ${rule}, and the chart rendered AUTHZ_OUTGOING_TOKEN_URL '$(env_value AUTHZ_OUTGOING_TOKEN_URL "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}")'"
+  else
+    fail "IDENTITY_PROVIDER_URL '${url}' must be refused as one that ${rule}, got: $(head -3 <<<"${refused}")"
+  fi
+done
+# A null value removes the key, which leaves the chart nothing to build from.
+null_refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set IDENTITY_PROVIDER_URL=null 2>&1 || true)"
+if [[ "${null_refused}" == *"IDENTITY_PROVIDER_URL is empty. ${token_use} Set it to"* ]]; then
+  pass "a null IDENTITY_PROVIDER_URL is refused as empty while the chart builds the token endpoint from it"
 else
-  fail "the agent Pod does not take the client-credentials Secret without KUBERNETES_M2M_ENABLED"
+  fail "a null IDENTITY_PROVIDER_URL must be refused as empty, got: $(head -3 <<<"${null_refused}")"
+fi
+# http://admin:s3cret@[::1 is refused for its unclosed bracket, and Go's URL
+# parser refuses both it and the value with the port 80a. Only the standard
+# error is read: a render that succeeds puts the value into the Deployment.
+for url in "http://admin:s3cret@[::1" "http://admin:s3cret@identity-provider:80a"; do
+  render_errors="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}" 2>&1 >/dev/null || true)"
+  if [[ "${render_errors}" != *"s3cret"* ]]; then
+    pass "no error of the render quotes the password in IDENTITY_PROVIDER_URL '${url}'"
+  else
+    fail "an error of the render quotes the password in IDENTITY_PROVIDER_URL '${url}': $(head -3 <<<"${render_errors}")"
+  fi
+done
+# Values with a scheme and a host that the agent refuses for another part: a
+# user, a port that is not a number, and the newline that a value read with
+# --set-file ends in, after a port and after a path.
+for url in "http://user@identity-provider:8080" "http://identity-provider:80a" \
+  $'http://identity-provider:8080\n' $'http://identity-provider:8080/\n'; do
+  render_errors="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}" 2>&1 >/dev/null || true)"
+  if [[ "${render_errors}" != *"has no host"* && "${render_errors}" != *"has no http or https scheme"* ]]; then
+    pass "IDENTITY_PROVIDER_URL $(printf %q "${url}") is not reported as missing a scheme or a host"
+  else
+    fail "IDENTITY_PROVIDER_URL $(printf %q "${url}") is reported as missing a scheme or a host: $(head -3 <<<"${render_errors}")"
+  fi
+done
+hybrid_refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set M2M_AUTH_MODE=hybrid --set-string IDENTITY_PROVIDER_URL= 2>&1 || true)"
+if [[ "${hybrid_refused}" == *"IDENTITY_PROVIDER_URL is empty. ${token_use} Set it to"* ]]; then
+  pass "an empty IDENTITY_PROVIDER_URL is refused in hybrid, which builds the token endpoint from it"
+else
+  fail "an empty IDENTITY_PROVIDER_URL must be refused in hybrid, got: $(head -3 <<<"${hybrid_refused}")"
+fi
+m2m_without_idp="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${kc_provider[@]}" --set-string IDENTITY_PROVIDER_URL= "${k8s_mode[@]}" 2>&1 || true)"
+if [[ "${m2m_without_idp}" == *"${deployment_kind}"* ]]; then
+  pass "an empty IDENTITY_PROVIDER_URL renders in k8s, which builds no token endpoint"
+else
+  fail "an empty IDENTITY_PROVIDER_URL must render in k8s, got: $(head -3 <<<"${m2m_without_idp}")"
+fi
+
+# With AUTHZ_TRUSTED_PROVIDERS empty, the chart builds the issuer of each realm
+# from IDENTITY_PROVIDER_URL, whatever M2M_AUTH_MODE is. In k8s the chart builds
+# only the issuers from IDENTITY_PROVIDER_URL.
+m2m_on=("${k8s_mode[@]}")
+for row in "|is empty" "identity-provider:8080|has no http or https scheme" "http://:8080|has no host"; do
+  IFS='|' read -r url rule <<<"${row}"
+  refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${m2m_on[@]}" --set-string "IDENTITY_PROVIDER_URL=${url}" 2>&1 || true)"
+  if [[ "${refused}" == *"IDENTITY_PROVIDER_URL ${rule}. ${issuer_use} Set it to"* ]]; then
+    pass "IDENTITY_PROVIDER_URL '${url}' is refused in k8s, since it ${rule}, while the chart builds the issuers from it"
+  elif [[ "${refused}" == *"${deployment_kind}"* ]]; then
+    fail "IDENTITY_PROVIDER_URL '${url}' must be refused in k8s as one that ${rule}, and the chart rendered the issuers $(yq_providers <<<"${refused}" | jq -c '[.providers[].issuer]' 2>&1 || true)"
+  else
+    fail "IDENTITY_PROVIDER_URL '${url}' must be refused in k8s as one that ${rule}, got: $(head -3 <<<"${refused}")"
+  fi
+done
+m2m_issuers="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${m2m_on[@]}" --set-string IDENTITY_PROVIDER_URL=https://identity-provider:8443 2>&1 || true)"
+m2m_issuer="$(yq_providers <<<"${m2m_issuers}" | jq -r '.providers[0].issuer' 2>/dev/null || true)"
+if [[ "${m2m_issuer}" == "https://identity-provider:8443/auth/realms/cloud-common" ]]; then
+  pass "an https IDENTITY_PROVIDER_URL builds the issuers in k8s"
+elif [[ -n "${m2m_issuer}" ]]; then
+  fail "an https IDENTITY_PROVIDER_URL in k8s builds the first issuer '${m2m_issuer}', expected https://identity-provider:8443/auth/realms/cloud-common"
+else
+  fail "an https IDENTITY_PROVIDER_URL must build the issuers in k8s, got: $(head -3 <<<"${m2m_issuers}")"
+fi
+# The default install builds both values, and the refusal names both.
+both_refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set-string IDENTITY_PROVIDER_URL=identity-provider:8080 2>&1 || true)"
+if [[ "${both_refused}" == *"IDENTITY_PROVIDER_URL has no http or https scheme. ${token_use} ${issuer_use} Set it to"* ]]; then
+  pass "a refusal with the default mode and no AUTHZ_TRUSTED_PROVIDERS names both the token endpoint and the issuers"
+else
+  fail "a refusal with the default mode and no AUTHZ_TRUSTED_PROVIDERS must name both the token endpoint and the issuers, got: $(head -3 <<<"${both_refused}")"
+fi
+# With AUTHZ_IDP_REALMS empty, the generated list has no issuer, so in k8s the
+# chart builds nothing from IDENTITY_PROVIDER_URL.
+no_realms="$(helm template t "${CHART_DIR}" -f "${SIZING}" "${m2m_on[@]}" --set-json 'AUTHZ_IDP_REALMS=[]' --set-string IDENTITY_PROVIDER_URL= 2>&1 || true)"
+if [[ "$(yq_providers <<<"${no_realms}" | jq -r '.providers | length' 2>/dev/null || true)" == "0" ]]; then
+  pass "an empty IDENTITY_PROVIDER_URL renders an empty provider list in k8s when AUTHZ_IDP_REALMS is empty"
+else
+  fail "an empty IDENTITY_PROVIDER_URL must render an empty provider list in k8s when AUTHZ_IDP_REALMS is empty, got: $(head -3 <<<"${no_realms}")"
 fi
 
 # Every setting the service reads has to reach it, and the objects it reads
@@ -832,7 +1070,7 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
   all_on=(-f "${SIZING}" --set MESH_ROUTES_ENABLED=true --set MONITORING_ENABLED=true)
   by_resource_name="$(helm template t "${chart}" "${all_on[@]}" --set "DEPLOYMENT_RESOURCE_NAME=${name}-renamed" 2>&1 || true)"
   by_service_name="$(helm template t "${chart}" "${all_on[@]}" --set "SERVICE_NAME=${name}-renamed" 2>&1 || true)"
-  if [[ "${by_resource_name}" == *"kind: Deployment"* && "${by_resource_name}" != *"${name}-renamed"* && "${by_service_name}" == *"name: '${name}-renamed'"* ]]; then
+  if [[ "${by_resource_name}" == *"${deployment_kind}"* && "${by_resource_name}" != *"${name}-renamed"* && "${by_service_name}" == *"name: '${name}-renamed'"* ]]; then
     pass "${name}: DEPLOYMENT_RESOURCE_NAME renames no object, and SERVICE_NAME does"
   else
     fail "${name}: with DEPLOYMENT_RESOURCE_NAME=${name}-renamed the render carries: $(grep -n -- "${name}-renamed" <<<"${by_resource_name}" | head -3 | paste -sd'|' - || true); with SERVICE_NAME renamed the Deployment is $(field "${by_service_name}" name:)"

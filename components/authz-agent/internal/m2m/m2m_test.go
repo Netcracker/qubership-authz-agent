@@ -19,6 +19,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -68,6 +69,38 @@ func writeFile(t *testing.T, name, content string) string {
 		t.Fatal(err)
 	}
 	return path
+}
+
+// projectedToken lays out a token as the kubelet lays out a projected volume,
+// token -> ..data/token and ..data -> ..<timestamp>, and returns the path of
+// token.
+func projectedToken(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.Mkdir(filepath.Join(dir, "..2026_11_23_00_00_00.000000001"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "..2026_11_23_00_00_00.000000001", "token"), []byte("a\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink("..2026_11_23_00_00_00.000000001", filepath.Join(dir, "..data")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(filepath.Join("..data", "token"), filepath.Join(dir, "token")); err != nil {
+		t.Fatal(err)
+	}
+	return filepath.Join(dir, "token")
+}
+
+// symlink creates a symbolic link to target in a new directory and returns
+// the path of the link.
+func symlink(t *testing.T, target string) string {
+	t.Helper()
+	link := filepath.Join(t.TempDir(), "link")
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	return link
 }
 
 // waitFor polls cond for up to two seconds.
@@ -400,6 +433,53 @@ func TestFile_PublishesEachChange(t *testing.T) {
 	case <-src.Ready():
 	default:
 		t.Error("Ready() is not closed after the first token")
+	}
+}
+
+func TestCheckFile(t *testing.T) {
+	dir := t.TempDir()
+	for _, tt := range []struct {
+		name string
+		path string
+		want error
+	}{
+		{"a token", writeFile(t, "token", "a\n"), nil},
+		{"an empty file", writeFile(t, "token", ""), errEmpty},
+		{"white space alone", writeFile(t, "token", " \n"), errEmpty},
+		{"a missing file", filepath.Join(dir, "missing"), fs.ErrNotExist},
+		{"a directory", dir, errNotRegular},
+		{"a projected volume, links to a token", projectedToken(t), nil},
+		{"a link to a directory", symlink(t, dir), errNotRegular},
+		{"a dangling link", symlink(t, filepath.Join(dir, "missing")), fs.ErrNotExist},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := CheckFile(tt.path); !errors.Is(err, tt.want) {
+				t.Errorf("CheckFile(%q) = %v, want %v", tt.path, err, tt.want)
+			}
+		})
+	}
+}
+
+// checkFile returns the error that runFile logs as a warning, so a file that
+// has yet to appear or to receive a token is no error.
+func TestFile_CheckReportsOnlyAPathItCannotRead(t *testing.T) {
+	dir := t.TempDir()
+	for _, tt := range []struct {
+		name, path, want string
+	}{
+		{"a missing file", filepath.Join(dir, "missing"), ""},
+		{"white space alone", writeFile(t, "token", " \n"), ""},
+		{"a directory", dir, "read " + dir + ": is not a regular file"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ""
+			if err := New(Config{TokenFile: tt.path}, &store{}, quiet{}).checkFile(context.Background()); err != nil {
+				got = err.Error()
+			}
+			if got != tt.want {
+				t.Errorf("checkFile() with the token file %q = %q, want %q", tt.path, got, tt.want)
+			}
+		})
 	}
 }
 

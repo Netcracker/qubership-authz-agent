@@ -29,6 +29,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -221,14 +222,13 @@ func (s *Source) runFile(ctx context.Context) {
 }
 
 func (s *Source) checkFile(ctx context.Context) error {
-	raw, err := os.ReadFile(s.cfg.TokenFile)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
-		return fmt.Errorf("read %s: %w", s.cfg.TokenFile, err)
+	token, err := readToken(s.cfg.TokenFile)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
 	}
-	token := strings.TrimSpace(string(raw))
+	if err != nil {
+		return err
+	}
 	if token == "" {
 		return nil
 	}
@@ -334,6 +334,40 @@ func jwtExpiry(token string) (time.Time, error) {
 		return time.Time{}, errors.New("exp claim absent or zero")
 	}
 	return time.Unix(int64(claims.Exp), 0), nil
+}
+
+var (
+	errEmpty      = errors.New("is empty or holds white space alone")
+	errNotRegular = errors.New("is not a regular file")
+)
+
+// CheckFile returns nil when the file at path holds something other than
+// white space, as the token file of a [Source] without a TokenURL, the client
+// id file, and the client secret file have to. Otherwise it returns why it
+// does not: an [*fs.PathError] wherever the path cannot be resolved or read,
+// or names anything but a regular file after symbolic links are followed, and
+// an error that names no path for a file that is empty or holds white space
+// alone.
+func CheckFile(path string) error {
+	content, err := readToken(path)
+	if err == nil && content == "" {
+		return errEmpty
+	}
+	return err
+}
+
+// readToken returns the content of the regular file at path without the
+// white space around it. It opens nothing but a regular file, so a FIFO
+// cannot block it, and every error it returns is an [*fs.PathError].
+func readToken(path string) (string, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return "", err
+	}
+	if !info.Mode().IsRegular() {
+		return "", &fs.PathError{Op: "read", Path: path, Err: errNotRegular}
+	}
+	return readFile(path)
 }
 
 func readFile(path string) (string, error) {

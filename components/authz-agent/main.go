@@ -59,7 +59,7 @@ func init() {
 }
 
 func main() {
-	cfg, err := loadConfig(get)
+	cfg, err := loadConfig(get, defaultFiles)
 	refused := otherRootLevelNames(os.Environ())
 	if err != nil {
 		refused = append([]string{err.Error()}, refused...)
@@ -67,6 +67,9 @@ func main() {
 	if len(refused) > 0 {
 		logStop("configuration: %s", strings.Join(refused, "; "))
 		os.Exit(1)
+	}
+	if choice := cfg.tokenChoice(); choice != "" {
+		logger.Infof("authz-agent: %s", choice)
 	}
 	modules, err := policies.Modules()
 	if err != nil {
@@ -89,15 +92,8 @@ func main() {
 		providers = authn.New(cfg.Authn, eng, logger)
 		providers.Bootstrap(ctx)
 	}
-	var tokens *m2m.Source
-	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != "" {
-		tokens = m2m.New(cfg.M2M, eng, logger)
-	}
-	var source pull.Tokens
-	if tokens != nil {
-		source = tokens
-	}
-	puller := pull.New(cfg.Pull, eng, source, logger)
+	tokens := m2m.New(cfg.M2M, eng, logger)
+	puller := pull.New(cfg.Pull, eng, tokens, logger)
 	opts := server.Options{
 		Log:     logger,
 		Health:  func() server.Report { return report(providers, puller) },
@@ -131,9 +127,7 @@ func main() {
 	srv := server.Register(internal, eng, opts)
 	srv.RegisterPublic(public)
 
-	if tokens != nil {
-		go tokens.Run(ctx)
-	}
+	go tokens.Run(ctx)
 	if puller != nil {
 		go puller.Run(ctx)
 	}
