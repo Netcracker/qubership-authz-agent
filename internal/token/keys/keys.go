@@ -125,6 +125,7 @@ func (k Key) Allows(alg string) bool {
 	if k.alg != "" {
 		return alg == k.alg
 	}
+	//nolint:gocritic // not a defect: the String of a jwa.KeyType is its registered name
 	if algorithmKeyType[alg] != k.JWK.KeyType().String() {
 		return false
 	}

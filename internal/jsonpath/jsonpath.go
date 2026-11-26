@@ -213,6 +213,18 @@ var (
 // Multilingual Plane in an index, a slice bound, a filter's number literal,
 // or a size.
 func Compile(path string) (*Path, error) {
+	return compile(path, false)
+}
+
+// CompileRootKey parses path as [Compile] does, except that a leading
+// ['key'] step selects the member key of the document, as a .['key'] step
+// does, where [Compile] gives a path that selects [KindBracket]. A PIP reads
+// its claim and its jsonPath this way.
+func CompileRootKey(path string) (*Path, error) {
+	return compile(path, true)
+}
+
+func compile(path string, rootKey bool) (*Path, error) {
 	toks := tokenRE.FindAllString(path, -1)
 	if strings.Join(toks, "") != path {
 		return nil, fmt.Errorf("%w: %q", ErrUnsupported, path)
@@ -221,7 +233,7 @@ func Compile(path string) (*Path, error) {
 	deep := false
 	var unsupported error
 	for pos, t := range toks {
-		s, err := parseStep(t, pos)
+		s, err := parseStep(t, pos == 0 && !rootKey)
 		if errors.Is(err, errJaywayRefuses) {
 			return &Path{refused: true}, nil
 		}
@@ -251,14 +263,16 @@ func Compile(path string) (*Path, error) {
 	return p, nil
 }
 
-func parseStep(t string, pos int) (step, error) {
+// parseStep parses the token t of a path. rootBracket is set for the first
+// token of a path that [Compile] parses, where ['key'] selects
+// [KindBracket].
+func parseStep(t string, rootBracket bool) (step, error) {
 	if strings.HasPrefix(t, ".[") {
-		// .['key'] is a key wherever it stands; only a path that starts
-		// with [ is read as KindBracket.
-		t, pos = t[1:], -1
+		// .['key'] is a key wherever it stands
+		t, rootBracket = t[1:], false
 	}
 	if m := bracketKeyRE.FindStringSubmatch(t); m != nil {
-		if pos == 0 {
+		if rootBracket {
 			return step{kind: stepRootBracket}, nil
 		}
 		key, err := quotedText(m[1])
@@ -341,6 +355,22 @@ func (p *Path) Bounded() bool {
 		}
 	}
 	return true
+}
+
+// Keys returns the member keys of p, outermost first, and false when p is
+// refused or has a step other than a member key.
+func (p *Path) Keys() ([]string, bool) {
+	if p.refused {
+		return nil, false
+	}
+	keys := make([]string, 0, len(p.steps))
+	for _, s := range p.steps {
+		if s.kind != stepKey {
+			return nil, false
+		}
+		keys = append(keys, s.key)
+	}
+	return keys, true
 }
 
 // Select applies the path to doc. The selected values are parts of doc, not

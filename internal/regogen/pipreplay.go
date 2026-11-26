@@ -20,11 +20,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/open-policy-agent/opa/v1/util"
 
+	"authz-agent/internal/jsonpath"
 	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/regogen/spectables"
 )
@@ -134,8 +134,6 @@ func replayKey(method, url string, body any) (string, error) {
 	return method + " " + url + " " + string(b), nil
 }
 
-var simplePathRE = regexp.MustCompile(`^(\.[A-Za-z_][A-Za-z0-9_]*)+$`)
-
 // pipAnswer returns the status and the body of a response that
 // [pipResolve] reads as v, with path jp, which [pipPath] gives, selecting the
 // value from the body. A value no response gives is an error.
@@ -176,10 +174,14 @@ func pipAnswer(v Resolved, jp string) (int, string, error) {
 		return 0, "", fmt.Errorf("replay: no response gives the state %s", v.State)
 	}
 	if jp != "" {
-		if !simplePathRE.MatchString(jp) {
-			return 0, "", fmt.Errorf("replay: the path %q is not a chain of names", jp)
+		p, err := jsonpath.CompileRootKey(jp)
+		if err != nil {
+			return 0, "", fmt.Errorf("replay: the path %q: %w", jp, err)
 		}
-		names := strings.Split(jp[1:], ".")
+		names, ok := p.Keys()
+		if !ok {
+			return 0, "", fmt.Errorf("replay: the path %q is not a chain of member keys", jp)
+		}
 		for i := len(names) - 1; i >= 0; i-- {
 			o := jsonvalue.NewObject()
 			o.Set(names[i], body)
