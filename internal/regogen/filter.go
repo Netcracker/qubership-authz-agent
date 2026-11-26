@@ -275,7 +275,8 @@ func (fg *filterGen) set(n *node, s *policyir.PolicySet, prefix dnf) *fnode {
 		g.pass = true
 		f.kids = []*fnode{fg.setKids(n.kids[0], s, inner)}
 		g.pass = saved
-		f.inheritVetoes()
+		// a failed permission scope vetoes the rows as a failed source does
+		f.vetoes = true
 		return f
 	}
 	inner := g.product(prefix, n.tgt.notF())

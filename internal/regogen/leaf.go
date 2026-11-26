@@ -38,9 +38,10 @@ type leafRails struct {
 	// failed holds where the leaf is unknown because a value it reads
 	// failed on the request: a point of a side at the failure of its source
 	// whose outcome depends on the source's value, a PIP that is not
-	// declared, or a point whose cell is unknown for every value, such as
-	// IS EMPTY over a null PIP body, where legacy fails the decision though
-	// the source answered. It is false for a leaf that reads no such value.
+	// declared, or a value on which the specification's cell is ERR, such
+	// as IS EMPTY over a null PIP body or CONTAINS over a list with a null
+	// element, where legacy fails the decision though the source answered.
+	// It is false for a leaf that reads no such value.
 	failed dnf
 	// row is set on a leaf over the resource in check/filter, which is true
 	// on the rows it matches.
@@ -576,7 +577,7 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 	if oddL != oddR && (lp.st != spectables.StateValue || R != nil && rp.st != spectables.StateValue || pipListR) {
 		// the other side has no value, or one whose elements do not take
 		// part, so only a null element of the odd list decides: it fails
-		// the PIP (undefined), and any other element gives the cell's one
+		// the PIP (ERR), and any other element gives the cell's one
 		// remaining outcome
 		oddSide := L
 		if oddR {
@@ -609,13 +610,16 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 		// fact of state VALUE, which would contradict that state
 		g2 := conj(oddSide.bind(), clause{{cls: oddSide.cls(clsCheck), text: "not " + oddSide.field(fieldHasNull),
 			test: refTest(oddSide, &test{kind: "non0"})}})
-		c := conj(L.at(lps[i]), rightAt(R, rps[j]), g2)
+		at := conj(L.at(lps[i]), rightAt(R, rps[j]))
+		c := conj(at, g2)
 		if rest[0] == spectables.OutcomeT {
 			rails.t = union(rails.t, dnf{c})
 		} else {
 			rails.f = union(rails.f, dnf{c})
 		}
 		rails.threeValued = true
+		rails.failed = union(rails.failed, dnf{conj(at, oddSide.bind(), clause{{cls: oddSide.cls(clsCheck),
+			text: oddSide.field(fieldHasNull)}})})
 		if pipListR {
 			return "single_odd against a PIP list", nil
 		}
@@ -690,8 +694,12 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 		g.stats.NoTemplate[stat]++
 		return "", err
 	}
-	if tp.undefined {
+	if !tp.u.isFalse() {
+		// the cell is ERR for the values on u, and an ERR denies the
+		// resource as a failed source does, whether it is decided at
+		// generation or by the value
 		rails.threeValued = true
+		rails.failed = union(rails.failed, prod(dnf{conj(L.at(lps[i]), rightAt(R, rps[j]))}, tp.u, true))
 	}
 	// same reports whether the cell's true rows are the same at every point
 	// of s whose record carries the fields they read, with the other side at
@@ -828,18 +836,20 @@ func (g *gen) cellTemplate(op spectables.Operator, L, R *side, lp, rp point, odd
 		// there as it does against any list without one. NOT CONTAINS ANY
 		// ends where CONTAINS ANY does, and the guard applies to both rails.
 		g := dnf{conj(L.bind(), clause{{cls: L.cls(clsCheck), text: "not " + L.field(fieldHasNull), fact: vfact(L)}})}
+		ends := hasNull(L)
 		if oddR && !oddL {
 			g = append(g, conj(R.bind(), clause{{cls: R.cls(clsCheck), text: R.field(fieldHasNull), fact: vfact(R)}}))
+			ends = conj(ends, R.bind(), clause{{cls: R.cls(clsCheck), text: "not " + R.field(fieldHasNull), fact: vfact(R)}})
 		}
 		tp.t, tp.f = prod(g, tp.t, true), prod(g, tp.f, true)
-		tp.undefined = true
+		tp.u = union(prod(g, tp.u, true), dnf{ends})
 		tp.rules[spectables.RuleNullElementEnds] = true
 	}
-	if slices.Contains(cell.Outcomes, spectables.OutcomeU) && !tp.undefined {
+	if slices.Contains(cell.Outcomes, spectables.OutcomeU) && tp.u.isFalse() {
 		return tpl{}, stat(" with U"), gap(FormGenerator,
 			fmt.Errorf("%s: value-dependent cell with an undefined outcome has no template", op))
 	}
-	if tp.undefined && !slices.Contains(cell.Outcomes, spectables.OutcomeU) {
+	if !tp.u.isFalse() && !slices.Contains(cell.Outcomes, spectables.OutcomeU) {
 		return tpl{}, stat(" without U"), gap(FormGenerator,
 			fmt.Errorf("%s: the template leaves a value undefined where the cell has no undefined outcome", op))
 	}
@@ -847,6 +857,7 @@ func (g *gen) cellTemplate(op spectables.Operator, L, R *side, lp, rp point, odd
 		// the template's expressions read the odd list in its own state, not
 		// in VALUE
 		tp.t, tp.f = withoutValueFacts(tp.t, L, oddL, R, oddR), withoutValueFacts(tp.f, L, oddL, R, oddR)
+		tp.u = withoutValueFacts(tp.u, L, oddL, R, oddR)
 	}
 	have := slices.Collect(maps.Keys(tp.rules))
 	if oddL || oddR {
@@ -971,8 +982,8 @@ func (g *gen) rightListScalarOps(tp *tpl, R *side, rp point) error {
 	if err != nil {
 		return err
 	}
-	// the setting holds a legacy outcome; the agent ends no rule and fails
-	// no decision there (an end is false, an error unknown)
+	// the setting holds a legacy outcome; the agent ends no rule there (an
+	// end is false), and an error is ERR, which u carries
 	outcome, ok := map[string]spectables.Outcome{"T": spectables.OutcomeT, "F": spectables.OutcomeF,
 		"ABORT": spectables.OutcomeF, "ERR": spectables.OutcomeU}[knob]
 	if !ok {
@@ -982,13 +993,14 @@ func (g *gen) rightListScalarOps(tp *tpl, R *side, rp point) error {
 	short := conj(R.bind(), clause{{cls: R.cls(clsCheck), text: R.field(fieldLength) + " <= 1", fact: vfact(R)}})
 	tp.t = prod(dnf{short}, tp.t, true)
 	tp.f = prod(dnf{short}, tp.f, true)
+	tp.u = prod(dnf{short}, tp.u, true)
 	switch outcome {
 	case spectables.OutcomeT:
 		tp.t = union(tp.t, dnf{long})
 	case spectables.OutcomeF:
 		tp.f = union(tp.f, dnf{long})
 	default:
-		tp.undefined = true
+		tp.u = union(tp.u, dnf{long})
 	}
 	if tp.fields[R] == nil {
 		tp.fields[R] = map[string]bool{}

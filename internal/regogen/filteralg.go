@@ -285,8 +285,9 @@ func (e *filterEval) top(plan *filterPlan) (rows, error) {
 
 // collectVetoes registers the veto of every condition at or below n that
 // applies in pass (-1 outside an iterate): under targets that are not false,
-// in an iterate whose permission scope was read, and in a simplified policy
-// whose resource type, operation, and roles match.
+// in each pass of an iterate, and in a simplified policy whose resource type,
+// operation, and roles match. An iterate under such targets whose permission
+// scope failed vetoes every row.
 func (e *filterEval) collectVetoes(n *fnode, pass int) {
 	switch n.kind {
 	case kindSimplified:
@@ -314,10 +315,13 @@ func (e *filterEval) collectVetoes(n *fnode, pass int) {
 		return
 	}
 	if n.kind == kindIterate {
-		if sc := e.req.Scope; sc != nil && !sc.Failed {
-			for i := range sc.Passes {
-				e.collectVetoes(n.kids[0], i)
-			}
+		sc := e.req.Scope
+		if sc == nil || sc.Failed {
+			e.vetoAll = true
+			return
+		}
+		for i := range sc.Passes {
+			e.collectVetoes(n.kids[0], i)
 		}
 	} else {
 		for _, k := range n.kids {

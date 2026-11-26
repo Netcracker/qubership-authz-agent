@@ -859,7 +859,8 @@ func (g *gen) access(a policyir.Access) (leafRails, error) {
 }
 
 // fails reports whether a rule condition at or below n reads a value that
-// may fail ([cond.fails]).
+// may fail ([cond.fails]), or n or a node below it iterates over a permission
+// scope, which may fail.
 func (g *gen) fails(n *node) bool {
 	if f, ok := g.failsMemo[n]; ok {
 		return f
@@ -867,6 +868,8 @@ func (g *gen) fails(n *node) bool {
 	f := false
 	switch n.kind {
 	case kindUnknown:
+	case kindIterate:
+		f = true
 	case kindRule:
 		f = n.cond.fails
 	case kindSimplified:
@@ -994,9 +997,8 @@ func (c *cond) railRule(d dnf, o spectables.Outcome) dnf {
 // failedU holds where the condition is unknown and its value depends on a
 // value that failed ([leafRails.failed]): some disjunct is unknown at a
 // failed value and has no false leaf, and no disjunct is true. The agent
-// denies the resource there. A condition unknown only where a cell's
-// outcome depends on the operand values, or whose failed operand a known
-// operand settles, keeps its bounds.
+// denies the resource there. A condition whose failed operand a known
+// operand settles keeps its bounds.
 func (c *cond) failedU() dnf {
 	if !c.fails {
 		return dnfFalse
@@ -1076,10 +1078,11 @@ func (g *gen) call(name string) string {
 }
 
 // ruleFailed holds where a rule applies and its condition is unknown because
-// a value it reads failed ([cond.failedU]), which denies the resource. allow
-// reads it once, beside rulePermit, which holds the clauses where the
-// policies permit: a reference in each of those clauses would cost the
-// compiler of OPA a walk of the rules of failed per clause.
+// a value it reads failed ([cond.failedU]), or where an iterate applies whose
+// permission scope failed; the resource is denied there. allow reads it
+// once, beside rulePermit, which holds the clauses where the policies
+// permit: a reference in each of those clauses would cost the compiler of
+// OPA a walk of the rules of failed per clause.
 const (
 	ruleFailed = "failed"
 	rulePermit = "permit"

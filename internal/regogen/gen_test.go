@@ -2921,8 +2921,8 @@ func iterateTree(t testing.TB, algorithm, condition string) *policyir.Tree {
 // An iterate evaluates its set once per assignment of the permission scope,
 // with subject.permissionScope.<key> reading the pass, and combines the passes
 // by its algorithm: under DENY_UNLESS_PERMIT one permitting pass permits, and
-// no pass denies. A permission scope that cannot be read leaves the node
-// unknown, which denies.
+// no pass denies. A permission scope that cannot be read makes the node a
+// failed source, which denies.
 func TestAnIterateCombinesItsPasses(t *testing.T) {
 	const domain = `["subj","permissionScope.domain"]`
 	pass := func(v string) map[string]Resolved { return map[string]Resolved{domain: resolved(t, "VALUE", v)} }
@@ -3126,8 +3126,8 @@ func TestSubjectAllowedReadsADecisionDeniedOverAFailedSource(t *testing.T) {
 }
 
 // Under PERMIT_UNLESS_DENY an iterate with no pass permits, the algorithm's
-// outcome over no children, while a scope that cannot be read leaves the
-// node unknown and denies.
+// outcome over no children, while a scope that cannot be read makes the node
+// a failed source, which denies.
 func TestAnEmptyScopeAndAFailedScopeDiffer(t *testing.T) {
 	m, err := Generate(iterateTree(t, "PERMIT_UNLESS_DENY", "resource.domain == 'never'"), table(t), DefaultOptions())
 	if err != nil {
@@ -3186,7 +3186,7 @@ func nestedIterateTree(t *testing.T, inner, iter, effect, condition string) *pol
 }
 
 // Under a PERMIT_UNLESS_DENY parent the outcome of the iterate's node shows:
-// a scope that cannot be read leaves it unknown, which denies, while no pass
+// a scope that cannot be read makes it a failed source, which denies, while no pass
 // gives PERMIT_OVERRIDES' not applicable, which permits; a denying pass makes
 // DENY_OVERRIDES deny; and where the set's target does not hold, the node is
 // not applicable whatever the scope.
@@ -3199,7 +3199,7 @@ func TestTheOutcomeOfAnIterateNode(t *testing.T) {
 		scope                                   Scope
 		want                                    bool
 	}{
-		{"a failed scope is unknown", "DENY_UNLESS_PERMIT", "PERMIT_OVERRIDES", "ALLOW", "doc",
+		{"a failed scope is a failed source", "DENY_UNLESS_PERMIT", "PERMIT_OVERRIDES", "ALLOW", "doc",
 			Scope{Failed: true}, false},
 		{"no pass is not applicable under PERMIT_OVERRIDES", "DENY_UNLESS_PERMIT", "PERMIT_OVERRIDES", "ALLOW", "doc",
 			Scope{Passes: []map[string]Resolved{}}, true},

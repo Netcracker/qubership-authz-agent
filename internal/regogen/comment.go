@@ -249,8 +249,8 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # allow holds where permit holds and failed does not: permit where the
 # policies permit, failed where a rule applies whose condition is unknown
 # because a value it reads failed, such as a PIP whose call failed or IS EMPTY
-# over a null PIP body, which denies the resource whatever the other rules
-# give.
+# over a null PIP body, or where an iterate applies whose permission scope
+# failed; failed denies the resource whatever the other rules give.
 #
 # Rules: <node>_<b><x>_K holds when bound b (lo, hi) of the node equals x (P
 # permit, D deny), and <node>_loE_K where failed holds at or below the node;

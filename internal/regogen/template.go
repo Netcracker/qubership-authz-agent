@@ -31,8 +31,9 @@ import (
 type tpl struct {
 	t, f   dnf
 	fields map[*side]map[string]bool
-	// undefined is set when a value leaves the comparison on neither rail.
-	undefined bool
+	// u holds where a value leaves the comparison on neither rail, which the
+	// specification calls ERR; it is false where every value decides.
+	u dnf
 	// rules are the value rules the template implements; a cell that names
 	// another rule is not this template's.
 	rules map[spectables.ValueRule]bool
@@ -184,9 +185,9 @@ func template(op spectables.Operator, L, R *side, cl, cr spectables.Class) (tpl,
 	// read as one) ends the rule on one side of a collection operator: the
 	// right of IN, the left of CONTAINS, and the left of CONTAINS ANY when the
 	// right has none.
-	// The agent reads the end as undefined, so both rails require that side to
-	// hold no null element; elsewhere the null element has no key and the
-	// list compares as any other.
+	// The agent reads the end as ERR, so both rails require that side to hold
+	// no null element, and u holds where it holds one; elsewhere the null
+	// element has no key and the list compares as any other.
 	var ends *side
 	switch op {
 	case spectables.OpIn:
@@ -212,13 +213,18 @@ func template(op spectables.Operator, L, R *side, cl, cr spectables.Class) (tpl,
 		test: refTest(ends, &test{kind: "non0"})}})
 	t.t = prod(dnf{g}, t.t, true)
 	t.f = prod(dnf{g}, t.f, true)
+	t.u = union(prod(dnf{g}, t.u, true), dnf{hasNull(ends)})
 	if t.fields[ends] == nil {
 		t.fields[ends] = map[string]bool{}
 	}
 	t.fields[ends][fieldHasNull] = true
-	t.undefined = true
 	t.rules[spectables.RuleNullElementEnds] = true
 	return t, true
+}
+
+// hasNull is the clause where list s holds a null element.
+func hasNull(s *side) clause {
+	return conj(s.bind(), clause{{cls: s.cls(clsCheck), text: s.field(fieldHasNull), fact: vfact(s)}})
 }
 
 func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) (tpl, bool) {
@@ -236,7 +242,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 				fields[s] = map[string]bool{"guard": true}
 			}
 		}
-		return tpl{t: t.f, f: t.t, fields: fields, undefined: t.undefined, rules: t.rules}, true
+		return tpl{t: t.f, f: t.t, fields: fields, u: t.u, rules: t.rules}, true
 	}
 	if (op == spectables.OpIsEmpty || op == spectables.OpIsNotEmpty) && L.ref != nil && isListClass(cl) {
 		// a list in state VALUE is empty by its length: the whole resource

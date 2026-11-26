@@ -25,8 +25,9 @@ package regogen
 // reads p.
 //
 // No pass is no kid, so an empty scope gives the algorithm's outcome over no
-// children; a failed scope leaves the node unknown, [deny, permit], as a
-// failed source does.
+// children. A failed scope makes the node a failed source under its set's
+// target: it is on the failed rail (bound lo, x E), which denies the
+// resource, and its bounds are [deny, permit].
 
 const scopeFailed = "input." + memberScopeFailed
 
@@ -50,8 +51,7 @@ func (g *gen) iterateFlag(n *node, b, x string) (dnf, error) {
 		return nil, err
 	}
 	switch b + x {
-	case "loD", "hiP":
-		// a failed scope is [deny, permit]
+	case "loD", "hiP", "loE":
 		in = union(in, dnf{{{cls: clsCheck, text: scopeFailed}}})
 	}
 	if x == "P" {
