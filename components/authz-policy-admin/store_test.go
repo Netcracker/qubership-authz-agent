@@ -192,8 +192,11 @@ func TestStoreReloadsPersistedDomainsWithSameHash(t *testing.T) {
 	dir := t.TempDir()
 
 	first := newTestServer(t, dir)
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, first, http.MethodPut, policiesPath+"BSS", bssPolicies)
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, first, http.MethodPut, policiesPath+"OSS", ossPolicies)
+	//nolint:gocritic // F30: the upload of a PIP named tenant is refused with 400, and the test passes with no PIP stored
 	do(t, first, http.MethodPut, pipsPath+"BSS", `[{"name":"tenant","pipType":"TOKEN","claim":"tenant_id"}]`)
 	before := hashOf(t, first)
 
@@ -221,16 +224,19 @@ func TestStoreReloadsPersistedDomainsWithSameHash(t *testing.T) {
 func TestHashIsContentBased(t *testing.T) {
 	mux := newTestServer(t, t.TempDir())
 
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies)
 	original := hashOf(t, mux)
 
 	reformatted := `[{"operation":"READ","roles":["ROLE_ADMIN"],"resourceType":"Invoice","component":"BSS"}]`
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, mux, http.MethodPut, policiesPath+"BSS", reformatted)
 	if got := hashOf(t, mux); got != original {
 		t.Errorf("hash changed on a semantically identical upload: %q → %q", original, got)
 	}
 
 	changed := `[{"component":"BSS","resourceType":"Invoice","operation":"UPDATE","roles":["ROLE_ADMIN"]}]`
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, mux, http.MethodPut, policiesPath+"BSS", changed)
 	if got := hashOf(t, mux); got == original {
 		t.Errorf("hash unchanged after the policies changed: %q", got)
@@ -242,9 +248,11 @@ func TestHashIsContentBased(t *testing.T) {
 func TestPolicyAndPIPHashesAreIndependent(t *testing.T) {
 	mux := newTestServer(t, t.TempDir())
 
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies)
 	policiesHash := hashOf(t, mux)
 
+	//nolint:gocritic // F30: the upload of a PIP named tenant is refused with 400, and the test passes with no PIP stored
 	do(t, mux, http.MethodPut, pipsPath+"BSS", `[{"name":"tenant","pipType":"TOKEN","claim":"tenant_id"}]`)
 	if got := hashOf(t, mux); got != policiesHash {
 		t.Errorf("policy hash moved on a PIP upload: %q → %q", policiesHash, got)
@@ -266,6 +274,7 @@ func TestFailedPersistKeepsPreviousContent(t *testing.T) {
 	}
 	dir := t.TempDir()
 	mux := newTestServer(t, dir)
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies)
 	before := hashOf(t, mux)
 
@@ -300,6 +309,7 @@ func TestFailedPIPPersistKeepsPreviousContent(t *testing.T) {
 	}
 	dir := t.TempDir()
 	mux := newTestServer(t, dir)
+	//nolint:gocritic // F30: the upload of a PIP named tenant is refused with 400, and the test passes with no PIP stored
 	do(t, mux, http.MethodPut, pipsPath+"BSS", `[{"name":"tenant","pipType":"TOKEN","claim":"tenant_id"}]`)
 	before := hashOf(t, mux)
 
@@ -519,8 +529,11 @@ func TestInMemoryModeServesUploads(t *testing.T) {
 // debugging "my policies did not arrive" wants to see.
 func TestHashEndpointListsDomains(t *testing.T) {
 	mux := newTestServer(t, t.TempDir())
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, mux, http.MethodPut, policiesPath+"billing", `[]`)
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, mux, http.MethodPut, pipsPath+"network", `[]`)
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, mux, http.MethodPut, pipsPath+"support?tenant_id=tenant-a", `[]`)
 
 	var status struct {
@@ -628,7 +641,9 @@ func TestTenantsKeepSeparateCollectionsOfOneDomain(t *testing.T) {
 func TestStoreReloadsTenantCollections(t *testing.T) {
 	dir := t.TempDir()
 	first := newTestServer(t, dir)
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, first, http.MethodPut, policiesPath+"billing", `[{"component":"billing","resourceType":"Invoice","operation":"READ","roles":["ROLE_ADMIN"]}]`)
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, first, http.MethodPut, policiesPath+"support?tenant_id=tenant-a", `[{"component":"support","resourceType":"Ticket","operation":"UPDATE","roles":["ROLE_ENGINEER"]}]`)
 	before := hashOf(t, first)
 
@@ -658,8 +673,11 @@ func TestStoreReloadsTenantCollections(t *testing.T) {
 // leaves the tenant an upload named as it is.
 func TestTheDefaultTenantIsExportedUnderItsConfiguredID(t *testing.T) {
 	mux := newTestServerWithDefaultTenantID(t, t.TempDir(), "6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b")
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, mux, http.MethodPut, policiesPath+"billing", `[{"component":"billing","resourceType":"Invoice","operation":"READ","roles":["ROLE_ADMIN"]}]`)
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, mux, http.MethodPut, policiesPath+"billing?tenant_id=tenant-a", `[{"component":"billing","resourceType":"Ticket","operation":"READ","roles":["ROLE_ADMIN"]}]`)
+	//nolint:gocritic // F30 class: the test passes whether or not this upload is stored
 	do(t, mux, http.MethodPut, pipsPath+"billing", `[{"name":"subject.org","pipType":"TOKEN","claim":"org"}]`)
 
 	var sets v3PolicySetsResponse

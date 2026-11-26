@@ -151,6 +151,8 @@ func latin1(s string) string {
 // rootBracket is a leading ['key'] step, which a TOKEN PIP's claim and the
 // jsonPath of a GENERAL or FILTERED PIP read as .key
 // (jsonpath_root_bracket=KEY).
+//
+//nolint:gocritic // F80, F28: a leading ['k'] is rewritten to .k, so a key holding a space, a slash, or a dot reads another member or fails
 var rootBracket = regexp.MustCompile(`^\['([^']*)'\]`)
 
 // tokenPIP is the value of a TOKEN PIP: the claim the declaration names,

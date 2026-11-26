@@ -376,6 +376,7 @@ func (r *Registry) build(ctx context.Context, t string, exp *policyir.Export, pr
 		b.health.Rejected = &Rejection{At: now(), Stage: "export", Reason: reason}
 		return b
 	}
+	//nolint:gocritic // F3: Dump prints an absent and an empty requestAttributes alike, so a load that changes only that keeps the old snapshot
 	sum := sha256.Sum256([]byte(tree.Dump()))
 	treeKey := hex.EncodeToString(sum[:])
 	if old, ok := prev.snapshots[t]; ok && old.treeKey == treeKey {

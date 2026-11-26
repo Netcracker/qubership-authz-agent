@@ -493,6 +493,7 @@ func valuesEqual(got, want any) bool {
 			return gf == wf
 		}
 	}
+	//nolint:gocritic // not in the review: the string "true" equals the boolean true here
 	return fmt.Sprintf("%v", got) == fmt.Sprintf("%v", want)
 }
 
