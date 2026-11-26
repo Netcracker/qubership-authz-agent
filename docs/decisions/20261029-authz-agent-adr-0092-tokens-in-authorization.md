@@ -12,7 +12,9 @@ kichasov
 #### Participants and approvers
 
 - The project architect (`mr-joom`) approves this record, with the 503 for keys that cannot be loaded. On 2026-11-23
-  the architect and the owner of the policy decision code agreed to drop the M2M modes of `M2M_AUTH_MODE` (R11, R15).
+  the architect and the owner of the policy decision code agreed to drop the M2M modes of `M2M_AUTH_MODE` (R11). On
+  2026-11-25 the owner, the architect, and the owner of the policy decision code agreed that the mode chooses the token
+  the agent sends and none of the tokens it accepts (R15).
 - The owner of the policy decision code (`vlsi`) returned the questionnaire of 2026-11-03.
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
 
@@ -30,6 +32,9 @@ kichasov
     the marked provider and the checks of a Kubernetes token.
 - [authz-agent-ADR-0095: Refuse a check request before policy evaluation](20261029-authz-agent-adr-0095-refuse-before-policy-evaluation.md):
   ADR-0095 R2, the 503 for keys that cannot be loaded.
+- [authz-agent-ADR-0096: Choose the token the agent sends by `M2M_AUTH_MODE`](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
+  ADR-0096 R2, R3, and R20, how `M2M_AUTH_MODE` chooses the token the agent sends and what each mode needs at the
+  start.
 
 ## Context
 
@@ -37,7 +42,7 @@ A check route receives the caller's token in `Authorization` and, optionally, th
 
 Services of an installation call each other with realm tokens, and in some installations with Kubernetes service account
 tokens. The platform's deployer passes `M2M_AUTH_MODE`, with the value `legacy`, `hybrid`, or `k8s`, to every service of
-an installation, and the services that read it decide by it which kinds of token they accept.
+an installation, and the other services that read it decide by it which kinds of token they accept.
 
 Some callers send a user token in `Authorization`, and some services authenticate with client credentials and carry
 neither the role `ROLE_M2M` nor a `level`. The parity goldens of #42 cover both: `caller-user-token`, `ts69-service`,
@@ -54,6 +59,7 @@ limit a token that is not M2M to its own tenant.
   `/access/v2`, `check/resource/bulk` under `/access/v1`, and `check/resource/bulk/operations` under `/preview/v1` and
   `/preview/v2`.
 - **M2M token**: a token that R6, R7, or R21 makes one.
+- **Stops the start**: as ADR-0091 defines it.
 
 ### Rules
 
@@ -85,8 +91,9 @@ limit a token that is not M2M to its own tenant.
 
 - **R11** (`handler`). A token in `Authorization` that passes verification is accepted whatever its kind: a realm token,
   a file token, or a Kubernetes token. R4 limits the tenants that a token that is not M2M may reach.
-- **R15** (`startup`). The agent does not read `M2M_AUTH_MODE`. The tokens that the agent accepts, and whether it
-  starts, are the same whether `M2M_AUTH_MODE` is unset or holds any value, with or without the chart.
+- **R15** (`startup`, `handler`, `verify`). `M2M_AUTH_MODE` changes none of the tokens that the agent accepts, with or
+  without the chart. It chooses the token that the agent sends (ADR-0096 R2), and it makes the agent stop the start
+  only where ADR-0096 R3 or R20 stops it.
 
 #### Other routes
 
@@ -106,9 +113,9 @@ check of a caller and the policies from disagreeing about one token (R10).
 
 The project architect and the owner of the policy decision code dropped the M2M modes on 2026-11-23. The agent accepts
 the same kinds of token in every installation, so a service moves from a realm token to a Kubernetes token with no
-change of the agent, and no setting of the agent has to agree with the mode of the other services (R11, R15). The
-platform's deployer passes `M2M_AUTH_MODE` to every service, so the agent leaves it unread, and a value set for the
-other services cannot stop the start of the agent (R15).
+change of the agent (R11). The platform's deployer passes `M2M_AUTH_MODE` to every service, and the agent reads it to
+choose the token it sends, so the tokens it accepts do not depend on it, and the mode stops the agent's start only
+where R15 says (R15).
 
 The goldens `caller-user-token`, `ts69-service`, and `ts69-bare-service` keep their answers. The goldens of #42 tell the
 broad M2M test from `level` alone, and `ts72-service` and `ts72-role-m2m` tell `ROLE_M2M` from a service account.
