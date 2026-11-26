@@ -60,6 +60,9 @@ func TestResolveSubject_ComputesPermissionsFromTheMappingTables(t *testing.T) {
 		{"a permission granted twice is listed once, in the order of the tables",
 			mapping(`{"subject.roles": {"a": ["p1", "p2"], "b": ["p2", "p3"]}}`, `null`), roles(`["b", "a"]`), nil,
 			resolved(t, "VALUE", `["p1", "p2", "p3"]`)},
+		{"permissions that Python's == finds equal are listed once",
+			mapping(`{"subject.roles": {"a": [1, 1.0, true, {"x": 1, "y": [2]}], "b": [{"y": [2.0], "x": true}, "1"]}}`, `null`),
+			roles(`["a", "b"]`), nil, resolved(t, "VALUE", `[1, {"x": 1, "y": [2]}, "1"]`)},
 		{"a HEADER PIP key",
 			`{"name": "subject.region", "pipType": "HEADER", "header": "X-Region"}, ` +
 				mapping(`{"subject.region": {"eu": ["p-eu"]}}`, `null`),

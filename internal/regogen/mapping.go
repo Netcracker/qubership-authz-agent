@@ -29,10 +29,11 @@ import (
 //
 // Each key of a mapping table names a subject attribute, and each value of
 // the attribute that equals a key of the table, as == compares a string,
-// grants the permissions listed under it, each once, in the order the tables
-// list them. productMapping counts only when no MAPPING PIP has a
-// customMapping that is an object, empty or not, or any other value Python
-// counts true; such a value grants nothing itself. A tenant without a MAPPING
+// grants the permissions listed under it, in the order the tables list them,
+// where a permission is left out when an earlier one has the same [pyKey].
+// productMapping counts only when no MAPPING PIP has a customMapping that is
+// an object, empty or not, or any other value Python counts true; such a
+// value grants nothing itself. A tenant without a MAPPING
 // PIP gives ABSENT, and one whose tables grant nothing EMPTY_COLL. A key
 // whose attribute is ERROR, or a list or a scalar the PIP's type does not
 // give, makes the whole value ERROR; a key without a value grants nothing.
@@ -58,6 +59,7 @@ func (m *Module) permissions(req *Request) Resolved {
 	}
 	failed := false
 	var perms []jsonvalue.Value
+	seen := map[string]bool{}
 	for _, s := range sources {
 		tables := s[:1]
 		if !hasCustom {
@@ -86,7 +88,8 @@ func (m *Module) permissions(req *Request) Resolved {
 						continue
 					}
 					for _, g := range list {
-						if !containsPy(perms, g) {
+						if k := pyKey(g); !seen[k] {
+							seen[k] = true
 							perms = append(perms, g)
 						}
 					}

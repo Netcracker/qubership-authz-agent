@@ -116,11 +116,12 @@ func entRecordFunction() func(*rego.Rego) {
 
 // entResolve returns the value of subject.entitledResources.of(typ).as(as)
 // that the entitlements service answered resp with: ERROR for an answer
-// [regobuiltins.ReadAnswer] reads as failed; otherwise
-// the resourceId of each resource under a reference named in as of an
-// entitlement whose resourceType equals typ ignoring case, each once in the
-// order of the answer, or EMPTY_COLL for none. A body the specification cannot walk, such as a list where it
-// reads an object, is ERROR: the legacy service fails on it.
+// [regobuiltins.ReadAnswer] reads as failed; otherwise the resourceId of each
+// resource under a reference named in as of an entitlement whose resourceType
+// equals typ ignoring case, in the order of the answer, where an id is left
+// out when an earlier id has the same [pyKey], or EMPTY_COLL for none. A body
+// the specification cannot walk, such as a list where it reads an object, is
+// ERROR: the legacy service fails on it.
 func entResolve(resp *ast.Term, typ string, as []string) Resolved {
 	errorState := Resolved{State: spectables.StateError}
 	ans, err := regobuiltins.ReadAnswer(rego.BuiltinContext{}, resp)
@@ -141,6 +142,7 @@ func entResolve(resp *ast.Term, typ string, as []string) Resolved {
 	}
 	foldedType := legacyvalue.Fold(typ)
 	var ids []jsonvalue.Value
+	seen := map[string]bool{}
 	for _, e := range ents {
 		ent, ok := e.(*jsonvalue.Object)
 		if !ok {
@@ -173,7 +175,8 @@ func entResolve(resp *ast.Term, typ string, as []string) Resolved {
 					return errorState
 				}
 				id, _ := res.Get("resourceId")
-				if !containsPy(ids, id) {
+				if k := pyKey(id); !seen[k] {
+					seen[k] = true
 					ids = append(ids, id)
 				}
 			}
@@ -223,73 +226,6 @@ func truthy(v jsonvalue.Value) bool {
 // number as written, and a list or an object as its Java text.
 func pyStr(v jsonvalue.Value) string {
 	return roleText(v)
-}
-
-// containsPy reports whether list holds a value equal to v as Python's ==
-// compares JSON values: numbers by value, true as 1 and false as 0, lists
-// and objects member by member.
-func containsPy(list []jsonvalue.Value, v jsonvalue.Value) bool {
-	for _, e := range list {
-		if pyEqual(e, v) {
-			return true
-		}
-	}
-	return false
-}
-
-func pyEqual(a, b jsonvalue.Value) bool {
-	if na, ok := pyNumber(a); ok {
-		nb, ok := pyNumber(b)
-		return ok && na == nb
-	}
-	switch x := a.(type) {
-	case nil:
-		return b == nil
-	case string:
-		y, ok := b.(string)
-		return ok && x == y
-	case []jsonvalue.Value:
-		y, ok := b.([]jsonvalue.Value)
-		if !ok || len(x) != len(y) {
-			return false
-		}
-		for i := range x {
-			if !pyEqual(x[i], y[i]) {
-				return false
-			}
-		}
-		return true
-	case *jsonvalue.Object:
-		y, ok := b.(*jsonvalue.Object)
-		if !ok || len(x.Keys()) != len(y.Keys()) {
-			return false
-		}
-		for _, k := range x.Keys() {
-			xv, _ := x.Get(k)
-			yv, ok := y.Get(k)
-			if !ok || !pyEqual(xv, yv) {
-				return false
-			}
-		}
-		return true
-	}
-	return false
-}
-
-// pyNumber returns the value of a number or a boolean, which Python
-// compares as the numbers 1 and 0.
-func pyNumber(v jsonvalue.Value) (float64, bool) {
-	switch x := v.(type) {
-	case bool:
-		if x {
-			return 1, true
-		}
-		return 0, true
-	case jsonvalue.Number:
-		f, err := strconv.ParseFloat(string(x), 64)
-		return f, err == nil
-	}
-	return 0, false
 }
 
 func containsString(list []string, s string) bool {

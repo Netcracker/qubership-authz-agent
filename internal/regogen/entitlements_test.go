@@ -19,16 +19,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 
+	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/regobuiltins"
 )
 
@@ -51,6 +54,11 @@ func TestEntResolve_ReadsTheIDsOfTheNamedReferences(t *testing.T) {
 		want Resolved
 	}{
 		{"ids of the type ignoring case, each once in order", entAnswer(200, ordersAndInvoice), resolved(t, "VALUE", `["o1", "o2", "o3"]`)},
+		{"ids that Python's == finds equal are one id, the first kept",
+			entAnswer(200, `{"entitlements": [{"resourceType": "order", "references": [{"name": "owner", "resources": [
+				{"resourceId": 1}, {"resourceId": 1.0}, {"resourceId": true}, {"resourceId": "1"},
+				{"resourceId": {"a": 1, "b": [2]}}, {"resourceId": {"b": [2.0], "a": true}}, {"resourceId": [2, 1]}]}]}]}`),
+			resolved(t, "VALUE", `[1, "1", {"a": 1, "b": [2]}, [2, 1]]`)},
 		{"no entitlement of the type", entAnswer(200, `{"entitlements": [{"resourceType": "invoice", "references": []}]}`),
 			Resolved{State: "EMPTY_COLL"}},
 		{"no entitlements", entAnswer(200, `{"entitlements": []}`), Resolved{State: "EMPTY_COLL"}},
@@ -72,6 +80,49 @@ func TestEntResolve_ReadsTheIDsOfTheNamedReferences(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := entResolve(tc.resp, "order", []string{"owner"}); !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("entResolve = %+v, want %+v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestEntResolve_TimeGrowsLinearlyWithTheIDsOfTheAnswer(t *testing.T) {
+	ids := func(n int, each string) string {
+		parts := make([]string, n)
+		for i := range parts {
+			parts[i] = fmt.Sprintf(each, i)
+		}
+		return strings.Join(parts, ",")
+	}
+	for _, tc := range []struct {
+		name string
+		body func(n int) string
+	}{
+		{"distinct ids under one reference", func(n int) string {
+			return `{"entitlements": [{"resourceType": "doc", "references": [{"name": "owner", "resources": [` +
+				ids(n, `{"resourceId": "r%d"}`) + `]}]}]}`
+		}},
+		{"one distinct id in each entitlement", func(n int) string {
+			return `{"entitlements": [` + ids(n, `{"resourceType": "doc", "references": [{"name": "owner", "resources": [{"resourceId": %d}]}]}`) + `]}`
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			took := func(n int) time.Duration {
+				resp := entAnswer(200, tc.body(n))
+				best := time.Duration(math.MaxInt64)
+				for range 3 {
+					start := time.Now()
+					got := entResolve(resp, "doc", []string{"owner"})
+					best = min(best, time.Since(start))
+					if l, _ := got.Value.([]jsonvalue.Value); got.State != "VALUE" || len(l) != n {
+						t.Fatalf("entResolve over %d ids = %s with %d ids, want VALUE with %d", n, got.State, len(l), n)
+					}
+				}
+				return best
+			}
+			small, large := took(10000), took(40000)
+			if large > 8*small {
+				t.Errorf("entResolve over 40000 ids took %v, %.1f times the %v of 10000; want at most 8 times, as 4 times the ids take about 4 times as long",
+					large, float64(large)/float64(small), small)
 			}
 		})
 	}

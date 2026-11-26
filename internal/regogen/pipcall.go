@@ -613,20 +613,21 @@ func pipResolve(bctx rego.BuiltinContext, resp *ast.Term, jp string) (Resolved, 
 	return Resolved{State: spectables.StateValue, Value: v}, nil
 }
 
-// dedupe returns l without the repeats of an element: numbers are one by
-// value, 5 and 5.0, and any other element by its JSON type and text.
+// dedupe returns l without the repeats of an element, the first of each
+// kept: a number is one element by its value, so 5 and 5.0 are one, and any
+// other element is one by [typedKey].
 func dedupe(l []jsonvalue.Value) []jsonvalue.Value {
 	seen := make(map[string]bool, len(l))
 	out := make([]jsonvalue.Value, 0, len(l))
 	for _, e := range l {
-		var k string
+		k := ""
 		if n, ok := e.(jsonvalue.Number); ok {
 			if d, ok := jsonvalue.ParseDecimal(string(n)); ok {
 				k = "n" + d.String()
 			}
 		}
 		if k == "" {
-			k = "j" + jsonText(e)
+			k = typedKey(e)
 		}
 		if !seen[k] {
 			seen[k] = true
