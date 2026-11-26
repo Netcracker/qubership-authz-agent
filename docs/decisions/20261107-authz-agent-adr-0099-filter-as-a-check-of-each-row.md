@@ -35,6 +35,15 @@ the legacy filter admits rows that `check/resource` denies for the same row: it 
 alone where a DENY rule should subtract rows, and it writes the wrong opposite of some operators when it negates a DENY
 predicate. ADR-0097 calls this a defect of meaning.
 
+RSQL fixes the syntax of a comparison, not how the comparison matches; the consumer that parses the text decides. The
+[rsql-parser](https://github.com/jirutka/rsql-parser) library, on which RSQL consumers commonly build, only parses the
+text, and its README writes `actor==*Bale` for a pattern. The
+[rsql-jpa-specification](https://github.com/perplexhub/rsql-jpa-specification) library turns `==` and `!=` on a string
+that holds `*` into `LIKE` and `NOT LIKE`, and on a string that holds `^` into a comparison that ignores case, unless
+its `strictEquality` setting is on. A consumer can also preprocess an argument before it compares: replace an argument
+of the form `{{name}}` with a value of its own, read the argument `EMPTY` as a missing value, or turn an ISO 8601
+duration or a `YYYY-MM-DD` date into a time or a range of times. The agent does not know which consumer reads its text.
+
 ## Decision
 
 We will build the answer of `check/filter` as the set of rows that `check/resource` would allow, row by row, taking the
@@ -219,16 +228,20 @@ The author of a policy writes the condition and the template of a rule separatel
 are evaluated by different rules. `==` in a condition ignores case and converts types, and a comparison in SQL, RSQL,
 or mongodb follows the collation and the column types of the application's store. The agent knows neither. A guard
 such as `LOWER(...)` or `IS NOT NULL` would guess at the store, could keep the database from using an index, and
-cannot be written in an RSQL dialect whose parser has no such operator. The author knows the store, so keeping the
-template in step with the condition is the author's task (R11).
+cannot be written in an RSQL dialect whose parser has no such operator. The author knows the store and the consumer
+that reads the text, so keeping the template in step with the condition is the author's task (R11).
 
 The rows that ADR-0098 R11 denies through a failed value are described by the condition, not by a template. A text
 that the agent derives from the condition compares by the rules of the store, where `==` in the condition ignores case
 and converts types. With `subject.x == 'v' AND resource.a == 'y'` and a failed `subject.x`, ADR-0098 R11 denies every
 row whose `a` equals `y` ignoring case. The derived text `a=="y"` misses `{"a":"Y"}` in a store that compares
 case-sensitively, so the filter would admit that row where another rule allows it, and `check/resource` denies it.
-R11 accepts that cost for a template only because its author knows the store; the agent does not, so it writes no such
-text and narrows the answer under R5 (R14).
+An RSQL text adds the rules of its consumer to those of the store. With `subject.x == 'v' AND resource.a != 'y*'` and a
+failed `subject.x`, ADR-0098 R11 denies every row whose `a` differs from `y*` ignoring case. At a consumer that reads
+`*` as a pattern, the derived text `a!="y*"` selects only the rows whose `a` does not start with `y`, so the filter
+would admit `{"a":"yes"}` where another rule allows it, and `check/resource` denies it. R11 accepts that cost for a
+template only because its author knows the store and its consumer; the agent knows neither, so it writes no such text
+and narrows the answer under R5 (R14).
 
 Legacy builds the text of a filter only from the templates of rules. It writes the template of a rule that has one
 without evaluating the rule's condition, and leaves out a rule without a template whose condition reads the resource,
@@ -280,8 +293,9 @@ legacy filter, so each is named as allowing more (R8).
   quotes around the placeholder, and some substitute a list that forms part of the syntax, so escaping would change
   the predicates they produce today.
 - **A13. Derive the text of the rows that ADR-0098 R11 denies from the condition, such as `a=="y"` for
-  `resource.a == 'y'`.** Rejected by R14: the text compares by the rules of the store, and where another rule allows a
-  row, admits it although `check/resource` denies it. Legacy writes no such text.
+  `resource.a == 'y'`.** Rejected by R14: the text compares by the rules of the store, and an RSQL text also by those
+  of its consumer. Where another rule allows a row, the text admits it although `check/resource` denies it. Legacy
+  writes no such text.
 - **A14. Derive that text only where it admits fewer rows than the rows ADR-0098 R11 leaves to the rest of the tree,
   such as `a=="y"` for `subject.x == 'v' OR resource.a == 'y'` in a store that compares case-sensitively.** Rejected
   by R14: a store whose collation ignores accents or trailing spaces matches rows that `==` does not, so the text can
@@ -310,9 +324,11 @@ Negative:
 - A predicate is only as safe as the values substituted into it (R13). A value that holds a quote, a separator, or an
   operator of the dialect changes the structure of the predicate, and the predicate can then select rows the policy
   does not allow. A value that holds a placeholder, such as `${subject.id}`, pulls another value of the subject into
-  the predicate. The policy author decides which values a template substitutes: a value whose characters a caller or
-  a user controls, such as a token claim or a PIP answer built from the request, belongs in `customPredicate` instead,
-  where the application binds it as a parameter.
+  the predicate. In RSQL, a value that holds `*` or `^`, has the form `{{name}}`, or is `EMPTY` keeps the structure of
+  the predicate and still changes the rows that some consumers select: with the value `Pay*`, the template
+  `owner=="${subject.name}"` selects every owner whose name starts with `Pay`. The policy author decides which values
+  a template substitutes: a value whose characters a caller or a user controls, such as a token claim or a PIP answer
+  built from the request, belongs in `customPredicate` instead, where the application binds it as a parameter.
 - While a source fails, a filter in which ADR-0098 R11 denies the rows of a condition that compares an attribute of
   the resource answers `null` in every dialect for that subtraction, and `DENY` where no dialect is left (R14). The
   rows that `check/resource` allows there are not admitted.
@@ -341,6 +357,8 @@ Follow-ups:
   `check/filter` calls for resource types that use deny lists. The point affects R3 and R5.
 - **O2.** Whether the agent fails the request instead of substituting a value that contains the quote character of the
   surrounding template, or, for a placeholder without quotes, a separator or an operator of the dialect, and whether a
-  value that holds a placeholder is substituted again or fails the request too. Legacy sets no bound on the repeated
-  substitution, so the placeholder that R13 leaves in the text after the bound is a departure whose direction this
-  point settles as well. The owner of the policy decision code (`vlsi`) decides. The point affects R13.
+  value that holds a placeholder is substituted again or fails the request too. In RSQL, the characters and forms that
+  change the meaning of a value without changing the structure of the predicate, such as `*` and `{{name}}`, belong to
+  the same question. Legacy sets no bound on the repeated substitution, so the placeholder that R13 leaves in the text
+  after the bound is a departure whose direction this point settles as well. The owner of the policy decision code
+  (`vlsi`) decides. The point affects R13.
