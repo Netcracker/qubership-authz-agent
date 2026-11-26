@@ -118,7 +118,7 @@ by the Helm chart probes and the Docker Compose health checks.
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger; the chart sets it from its `LOG_LEVEL` value |
+| `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger; the chart sets it from its `LOG_LEVEL` value. Whatever the level, `fatal` included, the service logs one line at the level `error` that says why it exits with status 1 |
 | `AUTHZ_POLICY_ADMIN_PORT` | `18090` | TCP port to listen on |
 | `AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID` | `default` | `tenantId` of the `default` tenant in the v3 export. Set it to the ID the agent resolves its default tenant to |
 | `AUTHZ_POLICY_ADMIN_REQUIRE_DECLARED_PIPS` | `false` | `true` refuses a policy whose condition reads a PIP the tenant has not declared in any domain, as access-control does. The test suites upload policies before their PIPs and leave it off |

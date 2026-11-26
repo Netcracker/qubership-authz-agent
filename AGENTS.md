@@ -12,6 +12,13 @@ the process. The Rego in `policies/` stays exempt.
 A test that measures how that cost grows with the size of the input builds only under `//go:build unix && complexity`.
 `make complexity-tests` runs it, and `go test ./...` leaves it out.
 
+A production installation serves at most 3 tenants and up to 10000 policies, a subject holds up to 1200 permissions, and
+a bulk request carries 20 to 50 items. A request, bulk included, has a budget of 5 ms. Size designs, limits, and caches
+for these numbers. In a review, leave out a cost that appears only beyond them, such as the start time of an
+installation with 100 tenants. This covers cost only: a correctness defect, such as one tenant reading the policies of
+another, stays in scope. A count that a caller or a PIP controls, such as the items of a bulk request, the bytes of a
+PIP response, the tenants that requests name, or the realms in `iss` claims, needs a bound at any size.
+
 Tests: Go `testing` from the standard library, with `testing/synctest` for code that waits on goroutines or timers. testify is used only in `test/integration/testify` and `test/parity/suite`, and go-cmp only in `test/parity/suite`; new tests elsewhere use neither. Mutation: mutago, through `make mutation-diff`.
 
 For a branch that changes Go code outside `test/`, run `make mutation-diff` after `git fetch` and act on the report it prints. Do not run mutago with `--update-baseline`.

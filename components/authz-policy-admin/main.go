@@ -66,12 +66,14 @@ import (
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 )
 
-// logSink is the part of the platform logger this command writes through.
+// logSink is the part of the platform logger this command uses.
 // The narrow type is what lets a test record what a run reported.
 type logSink interface {
 	Infof(format string, args ...any)
 	Warnf(format string, args ...any)
 	Errorf(format string, args ...any)
+	GetLevel() logging.Lvl
+	SetLevel(level logging.Lvl)
 }
 
 // logger is shared by every file of the command.
@@ -94,12 +96,12 @@ func main() {
 		envOr("AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID", defaultTenant),
 		envOr("AUTHZ_POLICY_ADMIN_REQUIRE_DECLARED_PIPS", "false"))
 	if err != nil {
-		logger.Errorf("%v", err)
+		logStop("%v", err)
 		os.Exit(1)
 	}
 	logger.Infof("authz-policy-admin listening on %s", addr)
 	if err := http.ListenAndServe(addr, mux); err != nil {
-		logger.Errorf("listening on %s: %v", addr, err)
+		logStop("listening on %s: %v", addr, err)
 		os.Exit(1)
 	}
 }
@@ -142,4 +144,15 @@ func envOr(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// logStop logs, at the level error, the line after which main exits with
+// status 1. A logger at the level fatal drops error lines, so logStop first
+// raises it to error; a logger at any other level logs the line and keeps
+// its level.
+func logStop(format string, args ...any) {
+	if logger.GetLevel() < logging.LvlError {
+		logger.SetLevel(logging.LvlError)
+	}
+	logger.Errorf(format, args...)
 }
