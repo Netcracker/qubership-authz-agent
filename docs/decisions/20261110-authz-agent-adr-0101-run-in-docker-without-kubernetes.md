@@ -33,8 +33,7 @@ kichasov
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](https://github.com/Netcracker/qubership-authz-agent/pull/329),
   proposed in #329: the provider directory and the provider files (ADR-0104 R1, R2), the reading of the provider files
   at start alone (ADR-0104 R5), the two providers and their types (ADR-0104 R6), the required sources (ADR-0104 R25),
-  the Kubernetes token (ADR-0104 R22), the refusal of a token whose `iss` matches no provider (ADR-0104 R21), and the
-  refusal of a token with the claim `kubernetes.io` whose source is another provider (ADR-0104 R27).
+  the Kubernetes token (ADR-0104 R22), and the refusal of a token whose `iss` matches no provider (ADR-0104 R21).
 - [authz-agent-ADR-0106: Trust a private CA only through the system roots of the base image](https://github.com/Netcracker/qubership-authz-agent/pull/330),
   proposed in #330: ADR-0106 R1, the system roots that every HTTPS request of the agent verifies against.
 - [authz-agent-ADR-0107: Have the agent check its own settings, whether or not the chart renders them](https://github.com/Netcracker/qubership-authz-agent/pull/359),
@@ -213,4 +212,4 @@ Negative:
   once for the keys, and again as the token endpoint of the agent's client credentials token (ADR-0091 R78).
 - Where the provider files on the container target hold no provider `kubernetes`, as R5 allows, no token is a Kubernetes
   token, and services that call with tokens that an API server signs cannot use such an agent (R5). Such a token is
-  refused under ADR-0104 R21 or R27.
+  refused under ADR-0104 R21, since its `iss` matches no provider.
