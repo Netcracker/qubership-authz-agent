@@ -36,6 +36,11 @@
 // any other route. No request path is *, so it never shadows a real route.
 // A stub nobody configures with it answers an unrouted request 404, as it did
 // before the default route existed.
+//
+// GET /pip-stub/calls returns the recorded requests, oldest first: the latest
+// maxCalls of them since the last /pip-stub/reset. Its Pip-Stub-Calls-Dropped
+// header counts the older requests that are no longer in the list.
+// GET /pip-stub/health answers 200 and serves the readiness probe.
 package main
 
 import (
@@ -54,12 +59,19 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// ── Legacy path-routing model (unchanged wire contract) ──────────────────────
+// ── Legacy path-routing model (extended additively) ──────────────────────────
 
 type pipResponse struct {
 	StatusCode int    `json:"statusCode"`
 	Body       any    `json:"body"`
 	BodyRaw    string `json:"bodyRaw,omitempty"`
+	// Headers are set on the response after Content-Type, so a route can
+	// replace it and can send Location or Content-Encoding.
+	Headers map[string]string `json:"headers,omitempty"`
+	// NoBody sends the response without a body, ignoring Body and BodyRaw.
+	// Without NoBody, a response with neither BodyRaw nor Body sends the text
+	// null.
+	NoBody bool `json:"noBody,omitempty"`
 }
 
 type pipRoute struct {
@@ -80,6 +92,53 @@ type callRecord struct {
 	Headers    map[string]string   `json:"headers,omitempty"`
 	BodyRaw    string              `json:"bodyRaw,omitempty"`
 	Body       any                 `json:"body,omitempty"`
+}
+
+// maxCalls bounds how many requests the call journal keeps between resets.
+// The stub answers polling clients for days between test runs, and an
+// unbounded journal grows until the container exceeds its memory limit. With
+// requests that carry a bearer token, a full journal takes about 3 MB of heap
+// and its /pip-stub/calls response about 2.5 MB, well inside the 64Mi a stub
+// gets by default.
+const maxCalls = 2000
+
+// callsDroppedHeader carries, on the /pip-stub/calls response, how many
+// requests the journal dropped since the last reset. A non-zero value means
+// the returned list lacks the oldest calls.
+const callsDroppedHeader = "Pip-Stub-Calls-Dropped"
+
+// callJournal keeps the latest limit requests in the order handlePIP records
+// them. Once full, each new request replaces the oldest one and increments
+// dropped.
+type callJournal struct {
+	limit   int
+	records []callRecord
+	oldest  int // index of the oldest record once records holds limit of them
+	dropped int
+}
+
+func newCallJournal(limit int) *callJournal {
+	return &callJournal{limit: limit}
+}
+
+// add records rec and reports whether it is the first record the journal
+// dropped an older one for since the last reset.
+func (j *callJournal) add(rec callRecord) (firstDrop bool) {
+	if len(j.records) < j.limit {
+		j.records = append(j.records, rec)
+		return false
+	}
+	j.records[j.oldest] = rec
+	j.oldest = (j.oldest + 1) % j.limit
+	j.dropped++
+	return j.dropped == 1
+}
+
+// snapshot returns a copy of the kept records, oldest first.
+func (j *callJournal) snapshot() []callRecord {
+	out := make([]callRecord, 0, len(j.records))
+	out = append(out, j.records[j.oldest:]...)
+	return append(out, j.records[:j.oldest]...)
 }
 
 // ── Static rule engine model (YAML) ──────────────────────────────────────────
@@ -125,7 +184,7 @@ const defaultRoute = "*"
 
 var (
 	routes      map[string]*pipRoute
-	calls       []callRecord
+	calls       *callJournal
 	counters    map[string]int // legacy per-path response index
 	rules       []stubRule
 	ruleCounter map[string]int // per-rule respondSequence index
@@ -135,11 +194,20 @@ var (
 
 func main() {
 	port := envOr("PIP_STUB_PORT", "8090")
-	configPath := envOr("PIP_STUB_CONFIG", "")
+	handler := newStub(envOr("PIP_STUB_CONFIG", ""))
 
+	addr := "0.0.0.0:" + port
+	log.Printf("pip-stub listening on %s with %d path-routes and %d rules", addr, len(routes), len(rules))
+	log.Fatal(http.ListenAndServe(addr, handler))
+}
+
+// newStub replaces the stub's state with a fresh one, loads the rules from
+// configPath when it is not empty, and returns the handler that main serves.
+func newStub(configPath string) http.Handler {
 	routes = make(map[string]*pipRoute)
-	calls = make([]callRecord, 0)
+	calls = newCallJournal(maxCalls)
 	counters = make(map[string]int)
+	rules = nil
 	ruleCounter = make(map[string]int)
 	compiledRe = make(map[string]*regexp.Regexp)
 
@@ -149,14 +217,13 @@ func main() {
 
 	loadDefaultRoutes()
 
-	http.HandleFunc("/pip-stub/calls", handleCalls)
-	http.HandleFunc("/pip-stub/reset", handleReset)
-	http.HandleFunc("/pip-stub/configure", handleConfigure)
-	http.HandleFunc("/", handlePIP)
-
-	addr := "0.0.0.0:" + port
-	log.Printf("pip-stub listening on %s with %d path-routes and %d rules", addr, len(routes), len(rules))
-	log.Fatal(http.ListenAndServe(addr, nil))
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /pip-stub/health", handleHealth)
+	mux.HandleFunc("/pip-stub/calls", handleCalls)
+	mux.HandleFunc("/pip-stub/reset", handleReset)
+	mux.HandleFunc("/pip-stub/configure", handleConfigure)
+	mux.HandleFunc("/", handlePIP)
+	return mux
 }
 
 func loadDefaultRoutes() {
@@ -220,11 +287,19 @@ func handlePIP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mu.Lock()
-	calls = append(calls, rec)
+	firstDrop, limit := calls.add(rec), calls.limit
+	// unlock releases mu and only then logs the first dropped call, so a slow
+	// log sink holds up no other request and the response waits for no lock.
+	unlock := func() {
+		mu.Unlock()
+		if firstDrop {
+			log.Printf("call journal reached %d records and dropped its oldest call; it keeps dropping them until /pip-stub/reset", limit)
+		}
+	}
 
 	// 1. Rule engine (first fully-matching rule wins).
 	if resp, ok := matchRule(rec); ok {
-		mu.Unlock()
+		unlock()
 		writeRespond(w, resp, rec)
 		return
 	}
@@ -238,9 +313,8 @@ func handlePIP(w http.ResponseWriter, r *http.Request) {
 		route, ok = routes[key]
 	}
 	if !ok || len(route.Responses) == 0 {
-		mu.Unlock()
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = fmt.Fprintf(w, `{"error":"no rule or route for %s"}`, r.URL.Path)
+		unlock()
+		writeJSONError(w, http.StatusNotFound, "no rule or route for "+r.URL.Path)
 		return
 	}
 	idx := counters[key]
@@ -249,14 +323,20 @@ func handlePIP(w http.ResponseWriter, r *http.Request) {
 	}
 	counters[key] = idx + 1
 	resp := route.Responses[idx]
-	mu.Unlock()
+	unlock()
 
 	status := resp.StatusCode
 	if status == 0 {
 		status = http.StatusOK
 	}
 	w.Header().Set("Content-Type", "application/json")
+	for name, value := range resp.Headers {
+		w.Header().Set(name, value)
+	}
 	w.WriteHeader(status)
+	if resp.NoBody {
+		return
+	}
 	if resp.BodyRaw != "" {
 		_, _ = fmt.Fprint(w, resp.BodyRaw)
 		return
@@ -361,20 +441,28 @@ func writeRespond(w http.ResponseWriter, resp stubRespond, rec callRecord) {
 	}
 }
 
-// ── Control surface (unchanged) ──────────────────────────────────────────────
+// ── Control surface ──────────────────────────────────────────────
+
+// handleHealth answers 200 for the readiness probe and does not read the call
+// journal. The probe runs every two seconds, and reading /pip-stub/calls
+// instead would encode the whole journal each time.
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
 
 func handleCalls(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
-	snapshot := make([]callRecord, len(calls))
-	copy(snapshot, calls)
+	snapshot := calls.snapshot()
+	dropped := calls.dropped
 	mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(callsDroppedHeader, strconv.Itoa(dropped))
 	_ = json.NewEncoder(w).Encode(snapshot)
 }
 
 func handleReset(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
-	calls = make([]callRecord, 0)
+	calls = newCallJournal(calls.limit)
 	counters = make(map[string]int)
 	ruleCounter = make(map[string]int)
 	mu.Unlock()
@@ -388,10 +476,23 @@ func handleConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var cfg []pipRoute
-	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = fmt.Fprintf(w, `{"error":"%s"}`, err.Error())
+	// A number in a route body is kept as its text and answered with the same
+	// digits; as a float64, 1e400 would be refused and 9007199254740993 rounded.
+	decoder := json.NewDecoder(r.Body)
+	decoder.UseNumber()
+	if err := decoder.Decode(&cfg); err != nil {
+		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
+	}
+	// A JSON object may name one header twice in different case, and setting
+	// both would leave the response to map iteration order.
+	for _, route := range cfg {
+		for _, resp := range route.Responses {
+			if name := repeatedHeader(resp.Headers); name != "" {
+				writeJSONError(w, http.StatusBadRequest, fmt.Sprintf("route %s sets header %s more than once", route.Path, name))
+				return
+			}
+		}
 	}
 	mu.Lock()
 	for i := range cfg {
@@ -403,6 +504,28 @@ func handleConfigure(w http.ResponseWriter, r *http.Request) {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+// writeJSONError answers status with {"error": message}, JSON-encoded, so a
+// path or a decoder message that holds a quote stays inside the string.
+func writeJSONError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
+}
+
+// repeatedHeader returns the canonical name of a header that headers names
+// more than once, ignoring case, or "" when every name is distinct.
+func repeatedHeader(headers map[string]string) string {
+	seen := make(map[string]bool, len(headers))
+	for name := range headers {
+		canonical := http.CanonicalHeaderKey(name)
+		if seen[canonical] {
+			return canonical
+		}
+		seen[canonical] = true
+	}
+	return ""
+}
 
 // flattenHeaders lowercases header names (case-insensitive matching) and joins
 // multi-value headers with ", " — the last-value-wins convention is avoided so

@@ -12,7 +12,9 @@ kichasov
 #### Participants and approvers
 
 - The project architect (`mr-joom`) approves this record, and with it the answers it takes from the owner of the policy
-  decision code on the keys, the checks, and the issuer.
+  decision code on the keys, the checks, and the issuer. On 2026-11-23 the architect and the owner of the policy
+  decision code agreed to drop the M2M modes, so every installation that the chart deploys accepts Kubernetes tokens
+  (R1, R30).
 - The owner of the policy decision code (`vlsi`) returned the questionnaire of 2026-11-03.
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
 
@@ -20,9 +22,10 @@ kichasov
 
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   the trusted providers file, the reloads of the keys, the verifier in which the namespace check of this record runs,
-  and the terms marked provider and Kubernetes token.
+  the terms marked provider and Kubernetes token, and ADR-0091 R48, the future `iat` of a Kubernetes token.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
-  ADR-0092 R11, the M2M modes, and ADR-0092 R7, a Kubernetes token as an M2M token.
+  ADR-0092 R11, which accepts a Kubernetes token in `Authorization`, and ADR-0092 R7, a Kubernetes token as an M2M
+  token.
 - [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
   which token the agent sends, which this record does not decide.
 
@@ -33,15 +36,15 @@ server of the cluster signs them, and the services request them with the audienc
 between the services of an installation uses. Every Pod can also hold a token that the API server issues for its own
 audience.
 
-The API server names itself in the `iss` of every token it signs and publishes its keys under that address. In one
-cloud that address cannot be reached from inside the cluster. A standard cluster grants discovery to the group
-`system:serviceaccounts` through the ClusterRoleBinding `system:service-account-issuer-discovery`, so an anonymous
-request gets 401 or 403 unless the cluster allows it. The keys are also at
+The API server names itself in the `iss` of every token it signs and, when that address is an https URL, publishes its
+keys under it. In one cloud that address cannot be reached from inside the cluster. A standard cluster grants discovery
+to the group `system:serviceaccounts` through the ClusterRoleBinding `system:service-account-issuer-discovery`, so an
+anonymous request gets 401 or 403 unless the cluster allows it. The keys are also at
 `https://kubernetes.default.svc/openid/v1/jwks`, where any service account of the cluster may read them with a token
 issued for the API server, and the server's certificate is signed by the cluster CA from the ConfigMap
-`kube-root-ca.crt`. The agent's Pod sets `automountServiceAccountToken: false`.
-
-ADR-0092 R11 defines the M2M modes of `M2M_AUTH_MODE` and which tokens each accepts.
+`kube-root-ca.crt`. The API server serves its discovery document and its keys only when its issuer is an https URL, and
+the `jwks_uri` it names in that document is an https URL (`pkg/serviceaccount/openidmetadata.go` and the code in
+`pkg/controlplane` that installs both endpoints, read in Kubernetes 1.21, 1.27, and master of 2026-11-17).
 
 The chart mounts projected tokens under `/var/run/secrets/tokens/<name>/token`, and a Pod can hold more than one.
 
@@ -52,8 +55,9 @@ in a stable format.
 
 ## Decision
 
-We will accept a Kubernetes token in the M2M modes `hybrid` and `k8s`, and only when a key of the API server of the
-agent's own cluster verifies it, it passes the checks of this record, and its namespace belongs to the installation.
+We will accept a Kubernetes token in every installation whose trusted providers file holds the marked provider, and
+only when a key of the API server of the agent's own cluster verifies it, it passes the checks of this record, and its
+namespace belongs to the installation.
 
 ### Terms
 
@@ -70,24 +74,30 @@ agent's own cluster verifies it, it passes the checks of this record, and its na
 
 #### The provider
 
-- **R1** (`keys`). In the modes `hybrid` and `k8s` the trusted providers file holds exactly one marked provider. In
-  `legacy` it holds none. Anything else stops the start.
-- **R2** (`chart`). In the modes `hybrid` and `k8s` the chart mounts the token for the API server and the cluster CA.
-- **R30** (`chart`). In the modes `hybrid` and `k8s` the chart writes the marked provider.
+- **R1** (`keys`). The trusted providers file holds at most one marked provider. A file with two or more stops the
+  start.
+- **R2** (`chart`). The chart mounts the token for the API server and the cluster CA.
+- **R30** (`chart`). The chart writes the marked provider.
 - **R31** (`chart`). The agent's Pod sets `automountServiceAccountToken: false`.
 - **R3** (`chart`). The chart mounts the token for `netcracker` when ADR-0096 R2 chooses it.
 - **R4** (`keys`). The `issuer` of the marked provider is the `iss` of the token for the API server. The agent reads it
   at start without checking its signature, because the kubelet wrote the file.
-- **R5** (`keys`). A missing token for the API server stops the start in the modes `hybrid` and `k8s`.
+- **R5** (`keys`). A missing token for the API server stops the start when the trusted providers file holds the marked
+  provider.
 - **R6** (`keys`). The keys are found through discovery under the issuer, unless the setting of R9 replaces the address.
+  R32 limits the addresses from which the keys are read.
 - **R7** (`keys`). When the issuer is an https in-cluster address, the requests of discovery carry the token for the API
   server and trust the cluster CA, and so does the request to the `jwks_uri` that this address names.
 - **R8** (`keys`). For any other issuer those requests carry no token.
 - **R27** (`keys`). For any other issuer those requests trust the system roots together with, under
   `INTERNAL_TLS_ENABLED`, the CA in `CERTIFICATE_FILE_PATH`.
-- **R9** (`chart`). A chart setting replaces the JWKS address and its CA, for a cluster whose issuer cannot be reached
-  or does not publish a discovery document. The provider then reads the keys directly, and its `issuer` still comes from
-  R4:
+- **R32** (`keys`). The marked provider reads its keys only over https. A marked provider with a `jwksUri` that is not
+  an https URL stops the start. Without the setting of R9, an issuer that is not an https URL stops the start, and the
+  agent sends no request to a `jwks_uri` that a discovery document names unless that `jwks_uri` is an https URL,
+  whether or not the request would carry the token for the API server.
+- **R9** (`chart`). A chart setting replaces the JWKS address and its CA, for a cluster whose issuer is an https URL
+  under which the agent cannot read the keys through discovery. The provider then reads the keys directly, and its
+  `issuer` still comes from R4:
 
   ```json
   {"id": "kubernetes",
@@ -105,17 +115,16 @@ agent's own cluster verifies it, it passes the checks of this record, and its na
   configuration, and whoever controls one would get the agent's access to the API server.
 - **R29** (`keys`). The token for the API server goes only over https, so a marked provider with a `tokenFile` and an
   http `jwksUri` stops the start.
-- **R13** (`keys`). In every mode a provider that is not marked but has the id `kubernetes` or an in-cluster address in
-  `issuer` or `jwksUri` stops the start, since its tokens would get no namespace check.
-- **R26** (`chart`). A Pod holds up to two projected tokens: the token for the API server and the token for
-  `netcracker`.
+- **R13** (`keys`). A provider that is not marked but has the id `kubernetes` or an in-cluster address in `issuer` or
+  `jwksUri` stops the start, since its tokens would get no namespace check.
+- **R26** (`chart`). The chart mounts up to two projected tokens in the agent's Pod: the token for the API server and
+  the token for `netcracker`.
 
 #### The checks
 
 - **R14** (`verify`). The `aud` of a Kubernetes token contains `netcracker`. The codes are `TOKEN_AUDIENCE_MISSING` and
   `TOKEN_AUDIENCE_INVALID` of ADR-0091 R50.
-- **R15** (`verify`). ADR-0091 R7, R46, and R48 apply to a Kubernetes token.
-- **R16** (`verify`). The `sub` of a Kubernetes token starts with `system:serviceaccount`, or the token gets
+- **R16** (`verify`). The `sub` of a Kubernetes token starts with `system:serviceaccount:`, or the token gets
   `TOKEN_SUBJECT_INVALID`. Its parts are not parsed: the namespace comes from R18.
 
 #### The namespaces
@@ -130,29 +139,37 @@ agent's own cluster verifies it, it passes the checks of this record, and its na
 - **R22** (`verify`). The check of R17 runs on a verified token taken from the cache too.
 - **R23** (`namespaces`). A namespace that leaves the topology is refused once the kubelet has updated the mounted file
   and the next read has run, with no restart.
-- **R24** (`verify`). A Kubernetes token is never accepted without the check of R17.
 - **R25** (`namespaces`). A token that R17 or R18 refuses gets the code `TOKEN_NAMESPACE_NOT_ALLOWED`.
 
 ### Justification
 
 The namespace check is what limits who gets in (R17). The audience keeps out the tokens that the API server issues for
 other purposes, the default token of every Pod among them, but it does not limit who holds an accepted token: anyone who
-can create a Pod can request a projected token for any audience, `netcracker` included. For the same reason a Kubernetes
-token never passes without the namespace check (R24).
+can create a Pod can request a projected token for any audience, `netcracker` included. For the same reason, the
+namespace check runs on every Kubernetes token, a cached one included (R17, R22).
 
 The signature cannot tell the services of one installation from those of another, because the API server signs both
 with the same keys. The topology file is the platform's own description of the installation, kept in every namespace,
 so the agent needs no list of its own.
 
 Taking the issuer from the token for the API server needs no setting per cluster, and the token states exactly the value
-the tokens of that cluster carry (R4). Discovery follows from the issuer in the same way, and the chart setting covers
-the cluster where it does not work (R6, R9). A standard cluster opens discovery to service accounts only, so the request
-to an in-cluster address carries the token for the API server (R7). Any other issuer gets no token, because the token
-grants access to the API server of the cluster and to nothing else (R8). The API server serves TLS, and an ambient mesh
-does not protect the path to it, because the mesh encrypts traffic only between its own Pods (R29).
+the tokens of that cluster carry (R4). Discovery follows from the issuer in the same way, and the chart setting covers a
+cluster whose issuer is an https URL under which the agent cannot read the keys through discovery (R6, R9). A standard
+cluster opens discovery to service accounts only, so the request to an in-cluster address carries the token for the API
+server (R7). Any other issuer gets no token, because the token grants access to the API server of the cluster and to
+nothing else (R8). The API server serves TLS, and an ambient mesh does not protect the path to it, because the mesh
+encrypts traffic only between its own Pods (R29).
+
+The keys of the marked provider decide which tokens pass as Kubernetes tokens, and the signer of a token writes its
+namespace, so whoever replaces those keys on the path could make the agent accept a token from any namespace. The keys
+are therefore read only over https (R32). An API server whose issuer is not an https URL serves neither discovery nor
+its keys, and an API server whose issuer is an https URL names an https `jwks_uri`. R32 therefore refuses no discovery
+document that an API server serves and no `jwks_uri` that an API server names. Where another host serves the discovery
+document of an https issuer and names an http `jwks_uri` in it, the provider reads the keys from the API server over
+https with the setting of R9.
 
 A provider that looks like the API server and has no mark would accept the token of any Pod of the cluster with no
-namespace check, in every mode, so it stops the start instead of warning (R13).
+namespace check, so it stops the start instead of warning (R13).
 
 The mark decides which tokens are Kubernetes tokens, and neither the provider id nor the `kubernetes.io` claim does. The
 id of this provider is a label the operator picks, and the claim is whatever the signer puts in the token, while the
@@ -169,17 +186,21 @@ The agent calls the API server only to read its keys, not for every request, and
   agent to every installation of the cluster.
 - **A3. Refuse to start without the topology file.** Rejected by R20: a namespace without the ConfigMap could not run
   the agent at all, not even for its own services.
-- **A4. Always read the JWKS at a fixed address with the cluster CA.** Rejected by R6: the address would be a
-  value to keep per cluster where discovery needs none, and the chart setting still covers the cluster that needs it.
+- **A4. Always read the JWKS at a fixed address with the cluster CA.** Rejected by R6: the address would be a value to
+  keep per cluster where discovery needs none, and the chart setting still covers a cluster whose issuer is an https URL
+  under which the agent cannot read the keys through discovery.
 - **A5. Set the issuer in the chart.** Rejected by R4: it differs per cluster, and the token for the API server already
   holds it.
-- **A6. Send no token with discovery.** Rejected by R7: a standard cluster refuses such a request, so a Pod in `hybrid`
-  or `k8s` would not become ready without the chart setting.
+- **A6. Send no token with discovery.** Rejected by R7: a standard cluster refuses such a request, so a Pod with the
+  marked provider would not become ready without the chart setting.
 - **A7. Warn about a provider that looks like the API server and has no mark.** Rejected by R13: its tokens would pass
   with no namespace check, and a warning does not stop that.
 - **A8. Run without Kubernetes tokens when the token for the API server is missing.** Rejected by R5: the readiness
-  probe would pass while the agent refuses those tokens, and in `k8s` it would refuse every caller. A missing file is an
-  error of the chart that no wait repairs, so the agent stops at the start.
+  probe would pass while the agent refuses those tokens. A missing file is an error of the chart that no wait repairs,
+  so the agent stops at the start.
+- **A9. Read the keys over http where the issuer is an http URL or its discovery document names an http `jwks_uri`.**
+  Rejected by R32: anyone on the path could replace the keys, and an API server whose issuer is not an https URL serves
+  no discovery document, while one that serves it names an https `jwks_uri` (Context).
 
 ## Consequences
 
@@ -192,6 +213,12 @@ Negative:
   API server. How long that is depends on the lifetime the caller requested.
 - A namespace that joins the composite is accepted only after the kubelet updates the mounted file and the next read
   runs.
-- In the default mode `legacy` every token that the API server signed is refused, so an installation whose services call
-  the agent with such tokens has to run in `hybrid` or `k8s`.
-- A missing token for the API server stops a Pod in `hybrid` or `k8s` at the start.
+- Where the trusted providers file holds no marked provider, as outside Kubernetes, no token is a Kubernetes token, and
+  a token that the API server signed is refused with `TOKEN_ISSUER_UNKNOWN` when its `iss` falls under ADR-0091 R11
+  (R1).
+- The chart writes the marked provider in every installation, so every Pod that the chart deploys waits for the keys of
+  the API server before it becomes ready (R30; ADR-0091 R14), and a missing token for the API server stops it at the
+  start (R5).
+- On a cluster whose issuer is not an https URL every Pod that the chart deploys stops at the start without the setting
+  of R9 (R32), and with it stays not ready, because the API server serves no keys at the address of R9 (Context,
+  ADR-0091 R19).
