@@ -83,7 +83,7 @@ type Snapshot struct {
 	PublishedAt time.Time
 	// treeKey identifies the tenant's tree, so that a load whose tree is
 	// unchanged keeps the snapshot without generating it again.
-	treeKey string
+	treeKey policyir.Key
 	q       *queries
 }
 
@@ -99,9 +99,9 @@ type state struct {
 	snapshots map[string]*Snapshot
 	tenants   map[string]TenantHealth
 	orphans   []string
-	// refused holds the tree key of each tenant's refused candidate, so
-	// that an unchanged tree is not generated, refused, and reported again.
-	refused   map[string]string
+	// refused holds each tenant's refused candidate, so that an unchanged
+	// candidate is not refused and reported again.
+	refused   map[string]refusal
 	loadedAt  time.Time
 	sourceKey string
 }
@@ -238,7 +238,7 @@ func (r *Registry) Load(ctx context.Context, policySets, pips []byte) (LoadSumma
 	next := &state{
 		snapshots: map[string]*Snapshot{},
 		tenants:   map[string]TenantHealth{},
-		refused:   map[string]string{},
+		refused:   map[string]refusal{},
 		loadedAt:  time.Now(),
 		sourceKey: sourceKey,
 	}
@@ -312,8 +312,8 @@ func (r *Registry) Load(ctx context.Context, policySets, pips []byte) (LoadSumma
 			th.PublishedAt = s.PublishedAt.UTC().Format(time.RFC3339)
 			th.Failures = failuresOf(s.Module)
 		}
-		if b.refusedTree != "" {
-			next.refused[t] = b.refusedTree
+		if b.refused != nil {
+			next.refused[t] = *b.refused
 		}
 		next.tenants[t] = th
 	}
@@ -354,10 +354,17 @@ type build struct {
 	kept     bool
 	compiled bool
 	health   TenantHealth
-	// refusedTree is the tree key of a refused candidate, and repeat is set
-	// when the previous load refused the same tree.
-	refusedTree string
-	repeat      bool
+	// refused is the refused candidate, nil for one that is not refused,
+	// and repeat is set when the previous load refused the same candidate.
+	refused *refusal
+	repeat  bool
+}
+
+// refusal is a refused candidate: the key of its tree, or the reason the
+// export has no tree for the tenant.
+type refusal struct {
+	tree   policyir.Key
+	export string
 }
 
 // build generates and compiles the candidate of tenant t, or keeps its
@@ -368,26 +375,25 @@ func (r *Registry) build(ctx context.Context, t string, exp *policyir.Export, pr
 	tree, ok := exp.Trees[t]
 	if !ok {
 		reason := exp.Failed[t].Error()
-		b.refusedTree = "export: " + reason
-		if prev.refused[t] == b.refusedTree {
+		b.refused = &refusal{export: reason}
+		if p, ok := prev.refused[t]; ok && p == *b.refused {
 			b.health.Rejected, b.repeat = prev.tenants[t].Rejected, true
 			return b
 		}
 		b.health.Rejected = &Rejection{At: now(), Stage: "export", Reason: reason}
 		return b
 	}
-	sum := sha256.Sum256([]byte(tree.Dump()))
-	treeKey := hex.EncodeToString(sum[:])
+	treeKey := tree.Key()
 	if old, ok := prev.snapshots[t]; ok && old.treeKey == treeKey {
 		b.snap, b.kept = old, true
 		return b
 	}
-	if prev.refused[t] == treeKey {
+	b.refused = &refusal{tree: treeKey}
+	if p, ok := prev.refused[t]; ok && p == *b.refused {
 		// a refusal of the same tree stays visible until the tree changes
-		b.health.Rejected, b.refusedTree, b.repeat = prev.tenants[t].Rejected, treeKey, true
+		b.health.Rejected, b.repeat = prev.tenants[t].Rejected, true
 		return b
 	}
-	b.refusedTree = treeKey
 	m, err := regogen.Generate(tree, r.tab, r.opt)
 	if err != nil {
 		rej := &Rejection{At: now(), Stage: "generate", Reason: err.Error()}
@@ -424,7 +430,7 @@ func (r *Registry) build(ctx context.Context, t string, exp *policyir.Export, pr
 		shared[hash] = q
 		mu.Unlock()
 	}
-	b.refusedTree = ""
+	b.refused = nil
 	b.snap = &Snapshot{Tenant: t, Hash: hash, Module: m, Filter: f, PublishedAt: time.Now(), treeKey: treeKey, q: q}
 	return b
 }
