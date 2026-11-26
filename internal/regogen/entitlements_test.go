@@ -85,8 +85,12 @@ func TestEntCall_PostsForTheSubjectOrMakesNoCall(t *testing.T) {
 	if !got.Equal(want) {
 		t.Errorf("entCall = %v, want %v", got, want)
 	}
-	for _, req := range []Request{{Values: id}, {Entitlements: "http://ent", Values: map[string]Resolved{keySubjID: {State: "NULL"}}}} {
-		if got := entCall(&req); !got.Equal(stateCall("ERROR")) {
+	noCall := []Request{{Values: id}, {Entitlements: "http://ent", Values: map[string]Resolved{keySubjID: {State: "NULL"}}}}
+	for _, v := range []string{`""`, `".."`, `"."`, `[]`} {
+		noCall = append(noCall, Request{Entitlements: "http://ent", Values: map[string]Resolved{keySubjID: resolved(t, "VALUE", v)}})
+	}
+	for _, req := range noCall {
+		if got := entCall(&req); !got.Equal(stateCall(entitlementsPIP, "ERROR")) {
 			t.Errorf("entCall(%+v) = %v, want no call, ERROR", req, got)
 		}
 	}

@@ -597,3 +597,70 @@ func TestFailedPIPs_NamesThePIPsWhoseCallFailed(t *testing.T) {
 		})
 	}
 }
+
+// TestReadAnswer_ClassifiesEachResponse: each response of nc.http.send, and
+// each a mock may give in its place, reads as a value, an empty body, or a
+// failure.
+func TestReadAnswer_ClassifiesEachResponse(t *testing.T) {
+	for _, c := range []struct {
+		name, resp string
+		want       string
+	}{
+		{"a JSON body", `{"status_code": 200, "raw_body": "[\"a\"]"}`, `value ["a"]`},
+		{"a body of zero bytes", `{"status_code": 200, "raw_body": ""}`, "empty"},
+		{"a 204", `{"status_code": 204, "raw_body": ""}`, "empty"},
+		{"a body that is not JSON", `{"status_code": 200, "raw_body": "<html>"}`, "failed"},
+		{"a body of white space", `{"status_code": 200, "raw_body": " "}`, "failed"},
+		{"a raw_body that is not a string", `{"status_code": 200, "raw_body": 1}`, "failed"},
+		{"a status not read", `{"status_code": 404, "raw_body": "[1]"}`, "failed"},
+		{"an error", `{"status_code": 0, "error": {"code": "eval_http_send_network_error"}}`, "failed"},
+		{"no status", `{"raw_body": "[1]"}`, "failed"},
+		{"a mock's body", `{"status_code": 200, "body": ["a"]}`, `value ["a"]`},
+		{"a mock without a body", `{"status_code": 200}`, "empty"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			ans, err := ReadAnswer(rego.BuiltinContext{}, ast.MustParseTerm(c.resp))
+			if err != nil {
+				t.Fatalf("ReadAnswer(%s): %v", c.resp, err)
+			}
+			got := "value " + ast.NewTerm(ast.MustInterfaceToValue(ans.Body)).String()
+			switch {
+			case ans.Failed:
+				got = "failed"
+			case ans.Empty:
+				got = "empty"
+			}
+			if got != c.want {
+				t.Errorf("ReadAnswer(%s) = %s, want %s", c.resp, got, c.want)
+			}
+		})
+	}
+}
+
+// TestHTTPSend_CarriesTheRequestID: a call carries the decision request's id
+// in X-Request-Id, and no such header without one.
+func TestHTTPSend_CarriesTheRequestID(t *testing.T) {
+	for _, c := range []struct{ name, id string }{
+		{"with an id", "req-7"},
+		{"without an id", ""},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			var got []string
+			srv, _ := pipServer(t, func(w http.ResponseWriter, r *http.Request) {
+				got = r.Header.Values("X-Request-Id")
+				_, _ = w.Write([]byte(`[]`))
+			})
+			ctx := WithRequestID((&HTTP{Token: ownToken}).Context(context.Background()), c.id)
+			if _, err := sendEval(t, ctx, `nc.http.send({"method": "get", "url": "`+srv.URL+`"})`); err != nil {
+				t.Fatal(err)
+			}
+			var want []string
+			if c.id != "" {
+				want = []string{c.id}
+			}
+			if strings.Join(got, ",") != strings.Join(want, ",") || len(got) != len(want) {
+				t.Errorf("X-Request-Id = %q, want %q", got, want)
+			}
+		})
+	}
+}

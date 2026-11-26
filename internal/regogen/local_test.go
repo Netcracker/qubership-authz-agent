@@ -139,7 +139,9 @@ func TestResolveSubject_LeavesEntitlementsToTheModuleWithAService(t *testing.T) 
 	}
 	var without Request
 	unread := m.ResolveSubject(&without)
-	if want := (Resolved{State: "ERROR"}); without.Values[key] != want || !slices.Equal(unread, []string{key}) {
-		t.Errorf("without a service: value %+v, unread %v; want %+v, [%s]", without.Values[key], unread, want, key)
+	if want := (Resolved{State: "ERROR"}); without.Values[key] != want ||
+		!slices.Equal(unread, []string{"subject.entitledResources"}) {
+		t.Errorf("without a service: value %+v, unread %v; want %+v, [subject.entitledResources]", without.Values[key],
+			unread, want)
 	}
 }

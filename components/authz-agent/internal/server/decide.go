@@ -255,7 +255,7 @@ func snapshotRequest(tenant string, input map[string]any, payload any, headers m
 		return snapshot.Request{}, err
 	}
 	req := snapshot.Request{Tenant: tenant, Headers: legacy.RequestHeaders(headers), Anonymous: input["subject"] == "",
-		Claims: claims, IncomingToken: legacy.IncomingToken(headers)}
+		Claims: claims, IncomingToken: legacy.IncomingToken(headers), RequestID: requestIDOf(input)}
 	for _, r := range resources {
 		b, err := body(r)
 		if err != nil {
@@ -275,11 +275,19 @@ func filterRequest(tenant string, input map[string]any, payload any, headers map
 		return snapshot.FilterRequest{}, err
 	}
 	req := snapshot.FilterRequest{Tenant: tenant, Headers: legacy.RequestHeaders(headers), Anonymous: input["subject"] == "",
-		Claims: claims, IncomingToken: legacy.IncomingToken(headers), ResourceType: fmt.Sprint(r.ResourceType)}
+		Claims: claims, IncomingToken: legacy.IncomingToken(headers), RequestID: requestIDOf(input),
+		ResourceType: fmt.Sprint(r.ResourceType)}
 	if op := fmt.Sprint(r.Operation); op != "" {
 		req.Operation = &op
 	}
 	return req, nil
+}
+
+// requestIDOf is the id of the request whose input is input, which the
+// requestID middleware always sets.
+func requestIDOf(input map[string]any) string {
+	id, _ := input["requestId"].(string)
+	return id
 }
 
 // claimsOf is the token payload of the admission as claims, an empty

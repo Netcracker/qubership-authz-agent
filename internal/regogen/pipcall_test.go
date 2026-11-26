@@ -163,7 +163,9 @@ func subjectValues(t *testing.T, id string) map[string]Resolved {
 
 // TestPIPFunction_ReadsTheResponse: the function of a GENERAL PIP reads the
 // response of its call as the agent profile does: a failed call and a
-// status other than 200 and 204 are ERROR, a body that is no list is PIP_NULL, a scalar
+// status other than 200 and 204 are ERROR, and so is a body that is not
+// JSON, which the recorded answers read as a null body; an empty body or a
+// JSON body that is no list is PIP_NULL, a scalar
 // or a list of one value other than a string is odd, and a list of strings
 // is the value, its duplicates dropped.
 func TestPIPFunction_ReadsTheResponse(t *testing.T) {
@@ -183,7 +185,8 @@ func TestPIPFunction_ReadsTheResponse(t *testing.T) {
 			{name: "a null body", response: ok(`null`), state: "PIP_NULL"},
 			{name: "an object", response: ok(`{"id": "acc-7"}`), state: "PIP_NULL"},
 			{name: "a string", response: ok(`"acc-7"`), state: "PIP_NULL"},
-			{name: "a body that is not JSON", response: ok(`acc-7`), state: "PIP_NULL"},
+			{name: "a body that is not JSON", response: ok(`acc-7`), state: "ERROR"},
+			{name: "status 200 with an empty body", response: ok(``), state: "PIP_NULL"},
 			{name: "a boolean", response: ok(`true`), state: "SCALAR_ODD"},
 			{name: "a number", response: ok(`7`), state: "SCALAR_ODD"},
 			{name: "a list of one null", response: ok(`[null]`), state: "SINGLE_ODD"},
@@ -396,20 +399,25 @@ func TestPIPFunction_ForwardsTheIncomingTokenItNames(t *testing.T) {
 	})
 }
 
-// TestPIPCall_ReadsAGzipResponseToTheCallersAcceptEncoding: the caller's
-// Accept-Encoding goes to the service, so Go's transport leaves a gzip
-// response to the agent to decompress.
-func TestPIPCall_ReadsAGzipResponseToTheCallersAcceptEncoding(t *testing.T) {
+// TestPIPCall_ReadsTheAnswerInTheCodingTheAgentAsksFor: a PIP that names
+// Accept-Encoding among its headers does not receive the caller's, which may
+// ask for br, so a service that answers in the coding asked for answers in
+// gzip, which the agent reads.
+func TestPIPCall_ReadsTheAnswerInTheCodingTheAgentAsksFor(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if got := r.Header.Get("Accept-Encoding"); got != "gzip" {
-			http.Error(w, "Accept-Encoding is "+got+", want gzip", http.StatusBadRequest)
-			return
-		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Content-Encoding", "gzip")
-		zw := gzip.NewWriter(w)
-		_, _ = zw.Write([]byte(`["acc-7"]`))
-		_ = zw.Close()
+		switch accept := r.Header.Get("Accept-Encoding"); {
+		case strings.Contains(accept, "br"):
+			w.Header().Set("Content-Encoding", "br")
+			_, _ = w.Write(brotliStored(t, []byte(`["acc-7"]`)))
+		case strings.Contains(accept, "gzip"):
+			w.Header().Set("Content-Encoding", "gzip")
+			zw := gzip.NewWriter(w)
+			_, _ = zw.Write([]byte(`["acc-7"]`))
+			_ = zw.Close()
+		default:
+			_, _ = w.Write([]byte(`["acc-7"]`))
+		}
 	}))
 	defer srv.Close()
 	tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.g == 'acc-7'", fmt.Sprintf(
@@ -426,7 +434,7 @@ func TestPIPCall_ReadsAGzipResponseToTheCallersAcceptEncoding(t *testing.T) {
 		}
 	}
 	in, err := Project(m, Request{Body: Body{Operation: "read", ResourceType: "doc"},
-		Headers: map[string]string{"accept-encoding": "gzip"},
+		Headers: map[string]string{"accept-encoding": "gzip, deflate, br"},
 		// the record comes from the call; the projection still wants a value
 		Values: map[string]Resolved{`["subj","g"]`: resolved(t, "VALUE", `"acc-7"`)}})
 	if err != nil {
@@ -441,7 +449,8 @@ func TestPIPCall_ReadsAGzipResponseToTheCallersAcceptEncoding(t *testing.T) {
 		t.Fatalf("Eval(%s) = %v, %v", query, rs, err)
 	}
 	if got, want := fmt.Sprint(rs[0].Expressions[0].Value), "[VALUE true]"; got != want {
-		t.Errorf("[state of subject.g, allow] = %s, want %s for the gzip body [\"acc-7\"]", got, want)
+		t.Errorf("[state of subject.g, allow] = %s, want %s for the body [\"acc-7\"], which the caller's "+
+			"Accept-Encoding: gzip, deflate, br would have had in br", got, want)
 	}
 }
 
@@ -468,6 +477,12 @@ func TestPIPFunction_EncodesTheValuesOfTheURL(t *testing.T) {
 					"pip": "subject.g", "body": {"requestAttributes": null}}`}})
 		})
 	}
+	t.Run("an empty value in the query", func(t *testing.T) {
+		const decl = `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g/u?id=${subject.id}"}`
+		checkPIPCases(t, decl, Request{Values: subjectValues(t, `""`)}, []pipCase{{name: "an empty value in the query",
+			response: answer, state: "VALUE", want: `{"method": "POST", "url": "http://g/u?id=", "headers": {},
+				"raise_error": false, "pip": "subject.g", "body": {"requestAttributes": null}}`}})
+	})
 	t.Run("a HEADER PIP", func(t *testing.T) {
 		const decl = `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g/h/${subject.who}"},
 			{"name": "subject.who", "pipType": "HEADER", "header": "X-Who"}`
@@ -525,6 +540,13 @@ func TestPIPFunction_MakesNoCall(t *testing.T) {
 			`{"name": "subject.g", "pipType": "GENERAL", "url": "http://g/${resource}"}`,
 			Request{Values: map[string]Resolved{}, Body: Body{Resource: "r1", HasResource: true}}, "ERROR"},
 		{"a dot segment in the path", general, Request{Values: subjectValues(t, `".."`)}, "ERROR"},
+		{"an empty value in the path", general, Request{Values: subjectValues(t, `""`)}, "ERROR"},
+		{"an empty collection in the path", general,
+			Request{Values: map[string]Resolved{`["subj","id"]`: {State: "EMPTY_COLL"}}}, "ERROR"},
+		{"a token claim path that selects nothing in the path",
+			`{"name": "subject.g", "pipType": "GENERAL", "url": "http://g/t/${subject.none}/x"},
+			{"name": "subject.none", "pipType": "TOKEN", "claim": "$..x"}`,
+			Request{Values: map[string]Resolved{}, Claims: mustDecode(t, `{"sub": "u1"}`).(*jsonvalue.Object)}, "ERROR"},
 		{"a placeholder in the host of the url",
 			`{"name": "subject.g", "pipType": "GENERAL", "url": "http://${subject.id}/u"}`,
 			Request{Values: subjectValues(t, `"g"`)}, "ERROR"},

@@ -33,6 +33,8 @@ import (
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/types"
 	"github.com/open-policy-agent/opa/v1/util"
+
+	"authz-agent/internal/jsonvalue"
 )
 
 // DefaultTimeout bounds a call of nc.http.send whose request names no
@@ -69,6 +71,16 @@ func (h *HTTP) Context(ctx context.Context) context.Context {
 	return context.WithValue(ctx, httpKey{}, h)
 }
 
+type requestIDKey struct{}
+
+// WithRequestID returns a copy of ctx in which every call of nc.http.send
+// carries id in X-Request-Id, over any value the request names, so that a
+// PIP's logs join the decision request that called it. An empty id leaves
+// the calls without the header.
+func WithRequestID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, requestIDKey{}, id)
+}
+
 type callsKey struct{}
 
 // calls is the cache of nc.http.send for one decision request.
@@ -77,8 +89,8 @@ type calls struct {
 	m  map[string]*call
 	// sent counts the requests that went to the network.
 	sent int
-	// failed holds the PIPs whose call failed or was answered with a status
-	// other than 200 and 204 ([StatusRead]), for the reason of a decision.
+	// failed holds the PIPs that failed, for the reason of a decision
+	// ([FailedPIPs]).
 	failed map[string]bool
 }
 
@@ -109,9 +121,70 @@ func WithCalls(ctx context.Context) context.Context {
 // status fails the source, a redirect included, since a call follows none.
 func StatusRead(code int) bool { return code == http.StatusOK || code == http.StatusNoContent }
 
-// FailedPIPs returns the PIPs whose call under the cache of ctx failed, or
-// was answered with a status other than 200 and 204 ([StatusRead]), in
-// lexical order.
+// Answer is how one call of a source ended, as [ReadAnswer] reads the
+// response of nc.http.send. At most one of Failed and Empty is set; with
+// neither, Body holds the decoded body.
+type Answer struct {
+	// Failed is set for a call that failed, for a status other than 200
+	// and 204 ([StatusRead]), and for a body that is not empty and does not
+	// decode as one JSON value: a page of a proxy, truncated JSON,
+	// whitespace alone, or bytes in a content coding the agent does not
+	// decode.
+	Failed bool
+	// Empty is set for a body of zero bytes, which a 204 has.
+	Empty bool
+	Body  jsonvalue.Value
+}
+
+// ReadAnswer returns how the call that answered resp, a response of
+// nc.http.send, ended. Every source the agent calls reads its answer
+// through it, so a body that does not decode fails each of them alike. A
+// response without raw_body, which a mock gives, reads its body member,
+// and one without either is empty. The error is for resp that is not an
+// object.
+func ReadAnswer(bctx rego.BuiltinContext, resp *ast.Term) (Answer, error) {
+	o, ok := resp.Value.(ast.Object)
+	if !ok {
+		return Answer{}, fmt.Errorf("the response %v is not an object", resp)
+	}
+	if o.Get(ast.InternedTerm("error")) != nil {
+		return Answer{Failed: true}, nil
+	}
+	var status ast.Number
+	if t := o.Get(ast.InternedTerm("status_code")); t != nil {
+		status, _ = t.Value.(ast.Number)
+	}
+	if code, ok := status.Int(); !ok || !StatusRead(code) {
+		return Answer{Failed: true}, nil
+	}
+	if t := o.Get(ast.InternedTerm("raw_body")); t != nil {
+		raw, ok := t.Value.(ast.String)
+		if !ok {
+			return Answer{Failed: true}, nil
+		}
+		if raw == "" {
+			return Answer{Empty: true}, nil
+		}
+		body, err := jsonvalue.Decode([]byte(raw))
+		if err != nil {
+			return Answer{Failed: true}, nil
+		}
+		return Answer{Body: body}, nil
+	}
+	b := o.Get(ast.InternedTerm("body"))
+	if b == nil {
+		return Answer{Empty: true}, nil
+	}
+	body, err := JSONOf(bctx, b)
+	if err != nil {
+		return Answer{}, err
+	}
+	return Answer{Body: body}, nil
+}
+
+// FailedPIPs returns the PIPs that failed under the cache of ctx, in
+// lexical order: those whose answer [ReadAnswer] reads as failed, and
+// those [NoteFailed] names.
 func FailedPIPs(ctx context.Context) []string {
 	c, ok := ctx.Value(callsKey{}).(*calls)
 	if !ok {
@@ -222,7 +295,26 @@ func Send(ctx context.Context, req *ast.Term) (*ast.Term, error) {
 	return httpSend(rego.BuiltinContext{Context: ctx}, req)
 }
 
-// note records in c a failed call of a PIP.
+// NoteFailed records under the cache of ctx that pip failed without a call,
+// such as a call the agent refuses to make, so that [FailedPIPs] names it
+// beside the PIPs whose call failed.
+func NoteFailed(ctx context.Context, pip string) {
+	if c, ok := ctx.Value(callsKey{}).(*calls); ok && pip != "" {
+		c.fail(pip)
+	}
+}
+
+func (c *calls) fail(pip string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.failed == nil {
+		c.failed = map[string]bool{}
+	}
+	c.failed[pip] = true
+}
+
+// note records in c a PIP whose call failed or whose answer [ReadAnswer]
+// reads as failed.
 func (c *calls) note(a, resp *ast.Term, err error) {
 	obj, ok := a.Value.(ast.Object)
 	if !ok {
@@ -236,25 +328,12 @@ func (c *calls) note(a, resp *ast.Term, err error) {
 	if !ok || pip == "" {
 		return
 	}
-	failed := err != nil || resp == nil
-	if !failed {
-		if r, ok := resp.Value.(ast.Object); ok {
-			if t := r.Get(ast.InternedTerm("status_code")); t != nil {
-				code, _ := t.Value.(ast.Number)
-				n, _ := code.Int()
-				failed = !StatusRead(n)
-			}
+	if err == nil && resp != nil {
+		if ans, err := ReadAnswer(rego.BuiltinContext{}, resp); err == nil && !ans.Failed {
+			return
 		}
 	}
-	if !failed {
-		return
-	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.failed == nil {
-		c.failed = map[string]bool{}
-	}
-	c.failed[string(pip)] = true
+	c.fail(string(pip))
 }
 
 func send(ctx context.Context, a *ast.Term) (*ast.Term, error) {
@@ -346,6 +425,9 @@ func do(ctx context.Context, req sendRequest, timeout time.Duration) (*ast.Term,
 	for k, v := range req.Headers {
 		hr.Header.Set(k, v)
 	}
+	if id, _ := ctx.Value(requestIDKey{}).(string); id != "" {
+		hr.Header.Set("X-Request-Id", id)
+	}
 	// the agent's own token wins over any Authorization the request names
 	hr.Header.Set("Authorization", "Bearer "+token)
 	if body != nil {
@@ -386,8 +468,8 @@ func do(ctx context.Context, req sendRequest, timeout time.Duration) (*ast.Term,
 
 // readBody reads the body of resp, up to one byte over maxResponseBody after
 // decompression. The transport decompresses gzip only where it set
-// Accept-Encoding itself; where the request named the header, as a PIP that
-// forwards the caller's does, readBody decompresses a gzip body and drops
+// Accept-Encoding itself; where the request named the header, readBody
+// decompresses a gzip body and drops
 // Content-Encoding and Content-Length from resp, as the transport does.
 // A body in any other encoding stays as sent.
 func readBody(resp *http.Response) ([]byte, error) {

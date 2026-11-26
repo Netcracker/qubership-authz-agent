@@ -95,8 +95,15 @@ func scopeModule(t *testing.T, url string) *Module {
 // token given by token.
 func readScope(t *testing.T, m *Module, token func() (string, error)) *Scope {
 	t.Helper()
+	return readScopeOf(t, m, token, `"u1"`)
+}
+
+// readScopeOf reads the permission scope of the user whose subject.id is
+// the JSON id.
+func readScopeOf(t *testing.T, m *Module, token func() (string, error), id string) *Scope {
+	t.Helper()
 	h := &regobuiltins.HTTP{Client: &http.Client{}, Token: token}
-	req := Request{Values: map[string]Resolved{keySubjID: resolved(t, "VALUE", `"u1"`)}}
+	req := Request{Values: map[string]Resolved{keySubjID: resolved(t, "VALUE", id)}}
 	return m.ReadScope(regobuiltins.WithCalls(h.Context(context.Background())), &req)
 }
 
@@ -126,8 +133,8 @@ func TestReadScope_CallsTheServiceAndReadsAPassPerGrant(t *testing.T) {
 	}
 }
 
-// Without a PERMISSION_SCOPE PIP or the agent's token the scope is not
-// read, and fails.
+// Without a PERMISSION_SCOPE PIP, the agent's token, or a subject.id that
+// can stand as a segment of the path, the scope is not read, and fails.
 func TestReadScope_FailsWithoutAPIPOrAToken(t *testing.T) {
 	calls := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -142,6 +149,11 @@ func TestReadScope_FailsWithoutAPIPOrAToken(t *testing.T) {
 	noToken := func() (string, error) { return "", errors.New("no token") }
 	if s := readScope(t, scopeModule(t, srv.URL), noToken); !s.Failed {
 		t.Errorf("without the agent's token: %+v, want failed", s)
+	}
+	for _, id := range []string{`""`, `".."`, `[]`} {
+		if s := readScopeOf(t, scopeModule(t, srv.URL), own, id); !s.Failed {
+			t.Errorf("for subject.id %s, which cannot stand as a segment of the path: %+v, want failed", id, s)
+		}
 	}
 	if calls != 0 {
 		t.Errorf("calls = %d, want 0", calls)

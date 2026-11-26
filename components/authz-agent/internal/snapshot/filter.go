@@ -35,8 +35,10 @@ type FilterRequest struct {
 	Headers   map[string]string
 	// IncomingToken is [Request.IncomingToken].
 	IncomingToken string
-	ResourceType  string
-	Operation     *string
+	// RequestID is [Request.RequestID].
+	RequestID    string
+	ResourceType string
+	Operation    *string
 }
 
 // Filter answers req with the snapshot of req.Tenant: the rows of
@@ -63,7 +65,7 @@ func (r *Registry) Filter(ctx context.Context, req FilterRequest) (regogen.Filte
 	}
 	regogen.SubjectOf(claims, req.Anonymous, regogen.DefaultSubjectRules).Apply(&in)
 	m.ResolveSubject(&in)
-	ctx = regobuiltins.WithCalls(ctx)
+	ctx = regobuiltins.WithRequestID(regobuiltins.WithCalls(ctx), req.RequestID)
 	if r.cfg.HTTP != nil {
 		ctx = r.cfg.HTTP.Context(ctx)
 	}

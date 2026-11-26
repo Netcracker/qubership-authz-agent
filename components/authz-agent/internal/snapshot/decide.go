@@ -46,7 +46,10 @@ type Request struct {
 	// IncomingToken is the Incoming-Token header as sent, which a PIP
 	// receives when its declaration names it; "" for none.
 	IncomingToken string
-	Items         []regogen.Body
+	// RequestID is the id of the decision request, which every call of a
+	// PIP carries in X-Request-Id; "" for none.
+	RequestID string
+	Items     []regogen.Body
 }
 
 // Result is the answer for one item. Reason says why an item is denied.
@@ -90,7 +93,7 @@ func (r *Registry) Decide(ctx context.Context, req Request) ([]Result, error) {
 	}
 	regogen.SubjectOf(claims, req.Anonymous, regogen.DefaultSubjectRules).Apply(&base)
 	unread := m.ResolveSubject(&base)
-	ctx = regobuiltins.WithCalls(ctx)
+	ctx = regobuiltins.WithRequestID(regobuiltins.WithCalls(ctx), req.RequestID)
 	if r.cfg.HTTP != nil {
 		ctx = r.cfg.HTTP.Context(ctx)
 	}

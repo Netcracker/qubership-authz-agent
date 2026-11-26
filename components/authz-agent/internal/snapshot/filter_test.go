@@ -672,6 +672,25 @@ func TestARuleTargetOverAPIPTheCheckMayLeaveUndefinedDeniesOnlyForADenyRule(t *t
 	}
 }
 
+// A filter with a DENY rule over a PIP whose answer has a body that is not
+// JSON denies every row, as over a PIP whose call failed; an empty body reads
+// as null and lets the ALLOW rule beside it allow.
+func TestAFilterWithADenyOverAPIPWhoseBodyIsNotJSONDenies(t *testing.T) {
+	for _, tc := range []struct{ name, body, want string }{
+		{"an HTML page", `<html>down</html>`, deny},
+		{"an empty body", ``, allow},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := pipServer(t, http.StatusOK, tc.body)
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), denyWhere("subject.g == 'x'"))
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) with the PIP answering %q = %s, want %s", tc.body, got, tc.want)
+			}
+		})
+	}
+}
+
 // A set inside a set follows the same rule as a policy: under a target over
 // the resource it does not apply where it denies no row once its target
 // holds, and denies rows the filter cannot name where it does.

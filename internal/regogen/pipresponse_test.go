@@ -44,93 +44,16 @@ const pipTableFile = "testdata/pip-response-classes.txt"
 // pipTableKnown lists the cells of pipTableFile the agent does not read yet,
 // by "<class> <source>". The file holds the state the cell must have; the
 // agent's state today is logged.
-var pipTableKnown = map[string]string{
-	"body/not-json GENERAL":        f11,
-	"body/not-json FILTERED":       f11,
-	"body/not-json jsonPath":       f11,
-	"body/truncated GENERAL":       f11,
-	"body/truncated FILTERED":      f11,
-	"body/truncated jsonPath":      f11,
-	"body/whitespace GENERAL":      f11,
-	"body/whitespace FILTERED":     f11,
-	"body/whitespace jsonPath":     f11,
-	"body/whitespace entitlements": f11,
-	"encoding/br GENERAL":          f16,
-	"encoding/br FILTERED":         f16,
-	"encoding/br jsonPath":         f16,
-	"encoding/deflate GENERAL":     f16,
-	"encoding/deflate FILTERED":    f16,
-	"encoding/deflate jsonPath":    f16,
-	"encoding/x-gzip GENERAL":      f16,
-	"encoding/x-gzip FILTERED":     f16,
-	"encoding/x-gzip jsonPath":     f16,
-	"encoding/x-unknown GENERAL":   f16,
-	"encoding/x-unknown FILTERED":  f16,
-	"encoding/x-unknown jsonPath":  f16,
-}
+var pipTableKnown = map[string]string{}
 
 // pipEncodingKnown lists the sources and content codings that break
 // TestPIPResponse_AnEncodedBodyReadsAsItsIdentityOrAsError, by
 // "<source>/<coding>".
-var pipEncodingKnown = map[string]string{
-	"GENERAL/br":         f16,
-	"GENERAL/deflate":    f16,
-	"GENERAL/x-gzip":     f16,
-	"GENERAL/x-unknown":  f16,
-	"FILTERED/br":        f16,
-	"FILTERED/deflate":   f16,
-	"FILTERED/x-gzip":    f16,
-	"FILTERED/x-unknown": f16,
-	"jsonPath/br":        f16,
-	"jsonPath/deflate":   f16,
-	"jsonPath/x-gzip":    f16,
-	"jsonPath/x-unknown": f16,
-}
+var pipEncodingKnown = map[string]string{}
 
 // pipUnreadableKnown lists the sources and bodies that break
 // TestPIPResponse_BytesThatAreNotJSONReadAsError, by "<source>/<body>".
-var pipUnreadableKnown = map[string]string{
-	"GENERAL/text":             f11,
-	"GENERAL/html":             f11,
-	"GENERAL/open-brace":       f11,
-	"GENERAL/truncated-array":  f11,
-	"GENERAL/space":            f11,
-	"GENERAL/crlf":             f11,
-	"GENERAL/binary":           f11,
-	"GENERAL/single-quoted":    f11,
-	"GENERAL/NaN":              f11,
-	"GENERAL/trailing-text":    f11,
-	"FILTERED/text":            f11,
-	"FILTERED/html":            f11,
-	"FILTERED/open-brace":      f11,
-	"FILTERED/truncated-array": f11,
-	"FILTERED/space":           f11,
-	"FILTERED/crlf":            f11,
-	"FILTERED/binary":          f11,
-	"FILTERED/single-quoted":   f11,
-	"FILTERED/NaN":             f11,
-	"FILTERED/trailing-text":   f11,
-	"jsonPath/text":            f11,
-	"jsonPath/html":            f11,
-	"jsonPath/open-brace":      f11,
-	"jsonPath/truncated-array": f11,
-	"jsonPath/space":           f11,
-	"jsonPath/crlf":            f11,
-	"jsonPath/binary":          f11,
-	"jsonPath/single-quoted":   f11,
-	"jsonPath/NaN":             f11,
-	"jsonPath/trailing-text":   f11,
-	"entitlements/space":       f11,
-	"entitlements/crlf":        f11,
-}
-
-const (
-	f11 = "F11: a 200 answer of a PIP or of the entitlements service whose non-empty body is not JSON " +
-		"reads as a null or empty source, " +
-		"so a DENY over that source does not fire"
-	f16 = "F16: a PIP answer in a content coding other than gzip reads as a text body, then as a null source, " +
-		"so a caller's Accept-Encoding can switch off a DENY over that source"
-)
+var pipUnreadableKnown = map[string]string{}
 
 // pipSource is a source whose answer the agent reads: a GENERAL or FILTERED
 // PIP, the entitlements service, or the permission scope.

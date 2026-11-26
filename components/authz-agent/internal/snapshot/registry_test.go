@@ -24,6 +24,7 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 
@@ -787,7 +788,7 @@ func TestADenialOnAnUnreadSourceNamesIt(t *testing.T) {
 			ReasonUnknown + ": subject.entitledResources"},
 		{"entitlements without the service's URL", ``,
 			set("a", "subject.entitledResources.of('doc').as('owner') CONTAINS resource.a"),
-			ReasonUnknown + `: ["ent","doc",["owner"]]`},
+			ReasonUnknown + ": subject.entitledResources"},
 		{"a permission scope without a PERMISSION_SCOPE PIP", ``, scopeSet("a"), ReasonUnknown + ": subject.permissionScope"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -813,6 +814,142 @@ func TestADenialOnAFailedPIPNamesIt(t *testing.T) {
 
 	if want := (Result{Reason: "PIP resolution failed: subject.g"}); got[0] != want {
 		t.Errorf("Decide = %+v, want %+v", got[0], want)
+	}
+}
+
+// A PIP whose answer has a body that is not empty and is not JSON failed, as
+// one whose call failed does: a DENY rule over it denies and names it. The
+// recorded answers of the legacy service read such a body as null, and the
+// agent departs from them by the owner's decision.
+func TestADenyOverAPIPWhoseBodyIsNotJSONDenies(t *testing.T) {
+	failed := Result{Reason: "PIP resolution failed: subject.g"}
+	for _, tc := range []struct {
+		name   string
+		status int
+		body   string
+		want   Result
+	}{
+		{"an HTML page", http.StatusOK, `<html>down</html>`, failed},
+		{"an open brace", http.StatusOK, `{`, failed},
+		{"bare text", http.StatusOK, `x`, failed},
+		{"whitespace alone", http.StatusOK, " \n", failed},
+		{"an empty body", http.StatusOK, ``, Result{Allowed: true}},
+		{"a 204", http.StatusNoContent, ``, Result{Allowed: true}},
+		{"a JSON string", http.StatusOK, `"x"`, Result{Allowed: true}},
+		{"a JSON object", http.StatusOK, `{"k": "v"}`, Result{Allowed: true}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := pipServer(t, tc.status, tc.body)
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), denyWhere("subject.g == 'x'"))
+			if got := decide(t, r, readDoc(t, "a", "y", 1)); got[0] != tc.want {
+				t.Errorf("Decide(PIP answers %d %q) = %+v, want %+v", tc.status, tc.body, got[0], tc.want)
+			}
+		})
+	}
+}
+
+// A PIP the agent does not call, or whose url it cannot build, fails without
+// an answer, and a denial that rests on it names it as it names a PIP whose
+// call failed.
+func TestADenialOnAPIPThatFailedWithoutACallNamesIt(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusOK, `["x"]`)
+	failed := Result{Reason: "PIP resolution failed: subject.g"}
+	for _, tc := range []struct {
+		name, pips, claims string
+		want               Result
+	}{
+		{"a service account", generalPIP(srv.URL, ""), `{"sub": "u1", "preferred_username": "service-account-x"}`,
+			failed},
+		{"an empty subject id in the path", `{"tenantId": "a", "name": "subject.g", "pipType": "GENERAL", "url": "` +
+			srv.URL + `/u/${subject.id}/roles", "httpMethod": "GET"}`, `{"sub": "", "preferred_username": "alice"}`,
+			failed},
+		{"a url that reads another GENERAL PIP", `{"tenantId": "a", "name": "subject.g", "pipType": "GENERAL",
+			"url": "` + srv.URL + `/u/${subject.b}", "httpMethod": "GET"},
+			{"tenantId": "a", "name": "subject.b", "pipType": "GENERAL", "url": "` + srv.URL + `", "httpMethod": "GET"}`,
+			`{"sub": "u1", "preferred_username": "alice"}`, failed},
+		{"a user and a url it can build", `{"tenantId": "a", "name": "subject.g", "pipType": "GENERAL", "url": "` +
+			srv.URL + `/u/${subject.id}/roles", "httpMethod": "GET"}`, `{"sub": "u1", "preferred_username": "alice"}`,
+			Result{Allowed: true}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := pipRegistry(t)
+			load(t, r, tc.pips, set("a", "subject.g == 'x'"))
+			req := readDoc(t, "a", "y", 1)
+			req.Claims = mustObject(t, tc.claims).(*jsonvalue.Object)
+			if got := decide(t, r, req); got[0] != tc.want {
+				t.Errorf("Decide(claims %s) = %+v, want %+v", tc.claims, got[0], tc.want)
+			}
+		})
+	}
+}
+
+// A denial on the entitlements of a subject without an id, for which the
+// agent does not call the entitlements service, names the service.
+func TestADenialOnEntitlementsNotCalledForWantOfAnIDNamesThem(t *testing.T) {
+	srv, calls := pipServer(t, http.StatusOK, `{"entitlements": []}`)
+	r := New(Config{Entitlements: srv.URL, HTTP: &regobuiltins.HTTP{Client: &http.Client{},
+		Token: func() (string, error) { return "own", nil }}}, tab(t), quiet{})
+	load(t, r, ``, set("a", "subject.entitledResources.of('doc').as('owner') CONTAINS resource.a"))
+	req := readDoc(t, "a", "y", 1)
+	req.Claims = mustObject(t, `{"preferred_username": "alice"}`).(*jsonvalue.Object)
+
+	got := decide(t, r, req)
+
+	if want := (Result{Reason: ReasonUnknown + ": subject.entitledResources"}); got[0] != want || calls.Load() != 0 {
+		t.Errorf("Decide = %+v after %d calls of the service, want %+v after none", got[0], calls.Load(), want)
+	}
+}
+
+// A denial on the entitlements of a subject whose answer the agent cannot
+// walk, such as a list where it reads an object, names the service, as a
+// failed call of it does.
+func TestADenialOnEntitlementsWhoseAnswerCannotBeWalkedNamesThem(t *testing.T) {
+	srv, calls := pipServer(t, http.StatusOK, `["x"]`)
+	r := New(Config{Entitlements: srv.URL, HTTP: &regobuiltins.HTTP{Client: &http.Client{},
+		Token: func() (string, error) { return "own", nil }}}, tab(t), quiet{})
+	load(t, r, ``, set("a", "subject.entitledResources.of('doc').as('owner') CONTAINS resource.a"))
+
+	got := decide(t, r, readDoc(t, "a", "y", 1))
+
+	if want := (Result{Reason: ReasonUnknown + ": subject.entitledResources"}); got[0] != want || calls.Load() != 1 {
+		t.Errorf("Decide = %+v after %d calls of the service, want %+v after one", got[0], calls.Load(), want)
+	}
+}
+
+// Every call of a PIP carries the id of the decision request in
+// X-Request-Id, the one call the items of a bulk request share and the call
+// of a filter included, over a value the request's headers give a PIP that
+// names the header.
+func TestACallOfAPIPCarriesTheRequestID(t *testing.T) {
+	var seen sync.Map
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen.Store(r.URL.Path, r.Header.Get("X-Request-Id"))
+		_, _ = w.Write([]byte(`["x"]`))
+	}))
+	t.Cleanup(srv.Close)
+	r := pipRegistry(t)
+	load(t, r, `{"tenantId": "a", "name": "subject.g", "pipType": "GENERAL", "url": "`+srv.URL+`/check",
+			"httpMethod": "GET", "headers": "X-Request-Id"},
+		{"tenantId": "a", "name": "subject.f", "pipType": "GENERAL", "url": "`+srv.URL+`/filter", "httpMethod": "GET"}`,
+		set("a", "subject.g == 'x'"), `{"policySetId": "f", "name": "f", "status": "ACTIVE", "tenantId": "a",
+			"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+			"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+				"rules": [{"ruleId": "r", "target": "true", "condition": "subject.f == 'x'", "effect": "ALLOW",
+					"tenantId": "a"}]}]}`)
+	req := readDoc(t, "a", "y", 2)
+	req.RequestID = "abc"
+	req.Headers["x-request-id"] = "from-the-caller"
+	decide(t, r, req)
+	op := "read"
+	if _, err := r.Filter(context.Background(), FilterRequest{Tenant: "a", Claims: req.Claims, RequestID: "abc",
+		ResourceType: "doc", Operation: &op}); err != nil {
+		t.Fatalf("Filter: %v", err)
+	}
+	for _, path := range []string{"/check", "/filter"} {
+		if got, _ := seen.Load(path); got != "abc" {
+			t.Errorf("X-Request-Id of the call of %s = %v, want abc", path, got)
+		}
 	}
 }
 

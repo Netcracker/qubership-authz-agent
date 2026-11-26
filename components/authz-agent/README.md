@@ -44,7 +44,7 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
 | `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
 | `AUTHZ_DEFAULT_TENANT` | `default` | Display name of the tenant a check request is decided in when it names none in the `tenant_id` parameter or the `Tenant` header; resolved to the tenant ID through `AUTHZ_TENANT_MANAGER_URL` |
-| `AUTHZ_PIP_TIMEOUT` | `2` | Seconds a policy waits for one call of a PIP; a call that takes longer is a failed PIP, as is a response whose body exceeds 8 MiB or whose status is other than 200 and 204: the agent follows no redirect |
+| `AUTHZ_PIP_TIMEOUT` | `2` | Seconds a policy waits for one call of a PIP; a call that takes longer is a failed PIP, as is a response whose status is other than 200 and 204 (the agent follows no redirect), whose body exceeds 8 MiB, or whose body is not empty and is not one JSON value, such as an HTML page or truncated JSON |
 | `AUTHZ_ENTITLEMENTS_URL` | empty | Base URL of the entitlements service, which a condition on `subject.entitledResources` calls at `/api/v3/user-entitlements/user/<subject id>`, once per decision request, within `AUTHZ_PIP_TIMEOUT` and without retries. Empty makes such a condition's operand fail, and the item is denied with the reason `PIP resolution failed` |
 | `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; empty reads the token from `AUTHZ_PAP_CLIENT_TOKEN_FILE` instead |
 | `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials |
@@ -59,7 +59,8 @@ The policy source is the only way policies reach the agent.
 At the default level the service reports what it could not do: a policy that failed to evaluate or a document it
 could not store. `debug` adds a line per decision, per rejected legacy request, per unmatched route and per policy
 load. A decision that denies its caller is not reported at either level: it is the answer the policy gave.
-Every line carries the request id under `request_id`, the same id the response carries in `X-Request-Id`.
+Every line carries the request id under `request_id`, the same id the response carries in `X-Request-Id`. Each call
+of a PIP, the entitlements service, or the permission scope carries it in `X-Request-Id` too.
 
 `GET /health` is 200 once the trusted providers meet the bootstrap rules, and 503 with the reason and its details until
 then. On the internal port, its `snapshots` member lists each tenant of the last policy load: whether it is `ready`, the

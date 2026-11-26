@@ -17,13 +17,12 @@ package regogen
 import (
 	"context"
 	"encoding/json"
-	"net/url"
 	"strings"
 
 	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
 
 	"authz-agent/internal/jsonvalue"
-	"authz-agent/internal/legacyvalue"
 	"authz-agent/internal/regobuiltins"
 	"authz-agent/internal/regogen/spectables"
 )
@@ -57,11 +56,11 @@ func (m *Module) ReadScope(ctx context.Context, req *Request) *Scope {
 	if m.scopePIP == nil || id.State != spectables.StateValue {
 		return failed
 	}
-	text, ok := id.Value.(string)
+	seg, ok := pathSegment(id.Value)
 	if !ok {
-		text = legacyvalue.Text(id.Value)
+		return failed
 	}
-	u := strings.TrimRight(m.scopePIP.URL, "/") + "/api/v1/permission-scope/user/" + url.PathEscape(text) + "/policies"
+	u := strings.TrimRight(m.scopePIP.URL, "/") + "/api/v1/permission-scope/user/" + seg + "/policies"
 	q := ast.ObjectTerm(
 		ast.Item(ast.StringTerm("method"), ast.StringTerm("POST")),
 		ast.Item(ast.StringTerm("url"), ast.StringTerm(u)),
@@ -113,23 +112,13 @@ func scopeKey(key string) string {
 // per policy, each mapping a key to its values; false where the scope
 // fails.
 func scopeAnswer(resp *ast.Term) ([]map[string][]jsonvalue.Value, bool) {
-	o, ok := resp.Value.(ast.Object)
-	if !ok || o.Get(ast.StringTerm("error")) != nil {
+	ans, err := regobuiltins.ReadAnswer(rego.BuiltinContext{}, resp)
+	if err != nil || ans.Failed || ans.Empty {
+		// a failed answer fails the scope, and so does no body: the
+		// specification reads permissionScope of None
 		return nil, false
 	}
-	status, _ := o.Get(ast.StringTerm("status_code")).Value.(ast.Number)
-	if code, ok := status.Int(); !ok || !regobuiltins.StatusRead(code) {
-		return nil, false
-	}
-	raw, _ := o.Get(ast.StringTerm("raw_body")).Value.(ast.String)
-	if strings.TrimSpace(string(raw)) == "" {
-		// no body: the specification reads permissionScope of None
-		return nil, false
-	}
-	body, err := jsonvalue.Decode([]byte(raw))
-	if err != nil {
-		return nil, false
-	}
+	body := ans.Body
 	if body == nil {
 		return nil, true
 	}

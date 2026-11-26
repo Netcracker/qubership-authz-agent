@@ -17,7 +17,6 @@ package regogen
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -57,18 +56,19 @@ const entitlementsPIP = "subject.entitledResources"
 
 // entCall returns the q of an entitlements operand on req: a POST with the
 // body {} to <req.Entitlements>/api/v3/user-entitlements/user/<subject.id>,
-// or {"state": "ERROR"} without the service's URL or without a subject.id
-// value.
+// or a call the agent does not make, of state ERROR ([stateCall]), without
+// the service's URL or without a subject.id value that can stand as a
+// segment of the path ([pathSegment]).
 func entCall(req *Request) *ast.Term {
 	id := req.Values[keySubjID]
 	if req.Entitlements == "" || id.State != spectables.StateValue {
-		return stateCall(spectables.StateError)
+		return stateCall(entitlementsPIP, spectables.StateError)
 	}
-	text, ok := id.Value.(string)
+	seg, ok := pathSegment(id.Value)
 	if !ok {
-		text = legacyvalue.Text(id.Value)
+		return stateCall(entitlementsPIP, spectables.StateError)
 	}
-	u := strings.TrimRight(req.Entitlements, "/") + "/api/v3/user-entitlements/user/" + url.PathEscape(text)
+	u := strings.TrimRight(req.Entitlements, "/") + "/api/v3/user-entitlements/user/" + seg
 	return ast.ObjectTerm(
 		ast.Item(ast.StringTerm("method"), ast.StringTerm("POST")),
 		ast.Item(ast.StringTerm("url"), ast.StringTerm(u)),
@@ -88,7 +88,7 @@ var EntRecordDecl = &ast.Builtin{
 
 func entRecordFunction() func(*rego.Rego) {
 	return rego.Function3(&rego.Function{Name: EntRecordDecl.Name, Decl: EntRecordDecl.Decl},
-		func(_ rego.BuiltinContext, q, resp, opts *ast.Term) (*ast.Term, error) {
+		func(bctx rego.BuiltinContext, q, resp, opts *ast.Term) (*ast.Term, error) {
 			r, _, err := pipOptions(opts)
 			if err != nil {
 				return nil, err
@@ -102,41 +102,32 @@ func entRecordFunction() func(*rego.Rego) {
 			if err := ast.As(o.Get(ast.StringTerm("as")).Value, &as); err != nil {
 				return nil, fmt.Errorf("nc.ent.record: the names in %v: %w", opts, err)
 			}
-			if s := q.Get(ast.StringTerm(queryState)); s != nil {
-				st, ok := s.Value.(ast.String)
-				if !ok {
-					return nil, fmt.Errorf("nc.ent.record: the state %v is not a string", s)
-				}
-				return record(r, Resolved{State: spectables.State(st)}).term(), nil
+			if st, ok, err := callState(q); err != nil {
+				return nil, fmt.Errorf("nc.ent.record: %w", err)
+			} else if ok {
+				noteFailed(bctx, q, st)
+				return record(r, Resolved{State: st}).term(), nil
 			}
-			return sourceRecord(r, entResolve(resp, string(typ), as)).term(), nil
+			v := entResolve(resp, string(typ), as)
+			noteFailed(bctx, q, v.State)
+			return sourceRecord(r, v).term(), nil
 		})
 }
 
 // entResolve returns the value of subject.entitledResources.of(typ).as(as)
-// that the entitlements service answered resp with: ERROR for a failed call
-// or a status other than 200 and 204 ([regobuiltins.StatusRead]); otherwise
+// that the entitlements service answered resp with: ERROR for an answer
+// [regobuiltins.ReadAnswer] reads as failed; otherwise
 // the resourceId of each resource under a reference named in as of an
 // entitlement whose resourceType equals typ ignoring case, each once in the
 // order of the answer, or EMPTY_COLL for none. A body the specification cannot walk, such as a list where it
 // reads an object, is ERROR: the legacy service fails on it.
 func entResolve(resp *ast.Term, typ string, as []string) Resolved {
 	errorState := Resolved{State: spectables.StateError}
-	o, ok := resp.Value.(ast.Object)
-	if !ok || o.Get(ast.StringTerm("error")) != nil {
+	ans, err := regobuiltins.ReadAnswer(rego.BuiltinContext{}, resp)
+	if err != nil || ans.Failed {
 		return errorState
 	}
-	status, _ := o.Get(ast.StringTerm("status_code")).Value.(ast.Number)
-	if code, ok := status.Int(); !ok || !regobuiltins.StatusRead(code) {
-		return errorState
-	}
-	var body jsonvalue.Value
-	if raw, ok := o.Get(ast.StringTerm("raw_body")).Value.(ast.String); ok && strings.TrimSpace(string(raw)) != "" {
-		var err error
-		if body, err = jsonvalue.Decode([]byte(raw)); err != nil {
-			return errorState
-		}
-	}
+	body := ans.Body
 	if !truthy(body) {
 		return Resolved{State: spectables.StateEmptyColl}
 	}

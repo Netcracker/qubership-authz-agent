@@ -36,8 +36,9 @@ import (
 // PERMISSION_SCOPE read as a value is ERROR, as a failed PIP is.
 // subject.entitledResources is left to
 // the module, which calls the entitlements service, unless req names no
-// such service: then it is ERROR. It returns the keys of the operands set to
-// ERROR for want of a source, which the reason of a denial names. A
+// such service: then it is ERROR. It returns what the reason of a denial
+// names for the operands set to ERROR for want of a source: the key of the
+// operand, or [entitlementsPIP] for entitlements. A
 // placeholder a PIP's request reads and nothing gives is ABSENT. An operand
 // req.Values already holds is left as it is.
 //
@@ -90,7 +91,8 @@ func (m *Module) ResolveSubject(req *Request) []string {
 				continue
 			}
 			v = Resolved{State: spectables.StateError}
-			unread = append(unread, r.Key)
+			// the name a call of the service that is not made goes by
+			unread = append(unread, entitlementsPIP)
 		default:
 			continue
 		}

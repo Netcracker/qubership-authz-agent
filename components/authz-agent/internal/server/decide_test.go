@@ -267,6 +267,26 @@ func TestDecide_ThePIPsGetNoTokenOfTheCaller(t *testing.T) {
 	}
 }
 
+// TestDecide_TheRegistryGetsTheRequestID: the request id of the input,
+// which the requestID middleware always sets, reaches the registry, which
+// passes it to the calls of the PIPs.
+func TestDecide_TheRegistryGetsTheRequestID(t *testing.T) {
+	headers := map[string][]string{"X-Request-Id": {"abc"}}
+	input := legacy.Input(headers)
+	req, err := snapshotRequest("a", input, nil, headers, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	freq, err := filterRequest("a", input, nil, headers, legacy.Resource{ResourceType: "doc"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if req.RequestID != "abc" || freq.RequestID != "abc" {
+		t.Errorf("RequestID of snapshotRequest = %q, of filterRequest = %q, want abc in both", req.RequestID,
+			freq.RequestID)
+	}
+}
+
 // While the name of the default tenant is not translated, the policy data
 // held under that name may be another tenant's: a request that names no
 // tenant is denied on every route as in a tenant without policies, although
