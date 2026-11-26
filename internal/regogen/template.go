@@ -17,6 +17,7 @@ package regogen
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -333,18 +334,23 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		if err != nil {
 			return tpl{}, false
 		}
+		re, err := regexp.Compile(rx)
+		if err != nil {
+			return tpl{}, false
+		}
 		b.use(L, fieldText)
 		call := expr{cls: L.cls(clsCheck), text: fmt.Sprintf("regex.match(%s, %s)", lit(rx), L.field(fieldText)),
-			fact: vfact(L)}
+			fact: vfact(L), test: refTest(L, &test{kind: "match", rx: re})}
 		t := conj(L.bind(), clause{call})
 		if !L.ref.Network {
-			if guards := segmentGuards(R.pattern, L.ref.ID); len(guards) > 0 {
+			if guards := segmentGuards(R.pattern, L); len(guards) > 0 {
 				L.ref.Segments = true
 				t = conj(guards, t)
 			}
 		}
 		f := conj(L.bind(), clause{{cls: L.cls(clsCheck),
-			text: fmt.Sprintf("not regex.match(%s, %s)", lit(rx), L.field(fieldText)), fact: vfact(L)}})
+			text: fmt.Sprintf("not regex.match(%s, %s)", lit(rx), L.field(fieldText)), fact: vfact(L),
+			test: refTest(L, &test{kind: "nomatch", rx: re})}})
 		return out(spectables.RuleMatch, dnf{t}, dnf{f})
 	case spectables.OpEQ:
 		// a null element is an element of the set too
@@ -576,11 +582,13 @@ func matchRegex(pattern string) (string, error) {
 	return policyir.Pattern{Text: pattern}.Anchored()
 }
 
-// segmentGuards are equalities a value must satisfy to match the pattern: its
-// literal path segments, counted from the start up to the first segment that
-// can span a slash and from the end after the last one, and the number of
-// segments when no segment can. The index of OPA uses each of them.
-func segmentGuards(pattern, ref string) clause {
+// segmentGuards are equalities the value of s must satisfy to match the
+// pattern: its literal path segments, counted from the start up to the first
+// segment that can span a slash and from the end after the last one, and the
+// number of segments when no segment can. The index of OPA uses each of them.
+// The regular expression of the pattern implies every guard, so a guard's
+// group test holds whatever the value.
+func segmentGuards(pattern string, s *side) clause {
 	const most = 3
 	isMeta := func(s string) bool { return strings.ContainsAny(s, `*?().[]{}+^$|\`) }
 	breaks := func(s string) bool { return strings.Contains(s, "**") || strings.Contains(s, ".") }
@@ -589,8 +597,8 @@ func segmentGuards(pattern, ref string) clause {
 	}
 	segs := strings.Split(pattern, "/")
 	first, last := -1, -1
-	for i, s := range segs {
-		if breaks(s) {
+	for i, seg := range segs {
+		if breaks(seg) {
 			if first < 0 {
 				first = i
 			}
@@ -598,8 +606,11 @@ func segmentGuards(pattern, ref string) clause {
 		}
 	}
 	var out clause
+	guard := func(text string) {
+		out = append(out, expr{cls: clsIndexEq, text: text, test: refTest(s, &test{kind: "noop"})})
+	}
 	if first < 0 {
-		out = append(out, expr{cls: clsIndexEq, text: fmt.Sprintf("input.%s%s == %d", fieldSegmentCount, refIndex(ref), len(segs))})
+		guard(fmt.Sprintf("%s == %d", s.field(fieldSegmentCount), len(segs)))
 	}
 	head := segs
 	if first >= 0 {
@@ -608,7 +619,7 @@ func segmentGuards(pattern, ref string) clause {
 	n := 0
 	for i := len(head) - 1; i >= 0 && n < most; i-- {
 		if head[i] != "" && !isMeta(head[i]) {
-			out = append(out, expr{cls: clsIndexEq, text: fmt.Sprintf("input.%s%s[%d] == %s", fieldSegments, refIndex(ref), i, lit(head[i]))})
+			guard(fmt.Sprintf("%s[%d] == %s", s.field(fieldSegments), i, lit(head[i])))
 			n++
 		}
 	}
@@ -617,7 +628,7 @@ func segmentGuards(pattern, ref string) clause {
 		for j := 0; j < len(tail) && len(out) < most+1; j++ {
 			x := tail[len(tail)-1-j]
 			if x != "" && !isMeta(x) {
-				out = append(out, expr{cls: clsIndexEq, text: fmt.Sprintf("input.%s%s[%d] == %s", fieldSegmentsFromEnd, refIndex(ref), j, lit(x))})
+				guard(fmt.Sprintf("%s[%d] == %s", s.field(fieldSegmentsFromEnd), j, lit(x)))
 			}
 		}
 	}

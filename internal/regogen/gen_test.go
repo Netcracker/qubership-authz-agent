@@ -1147,6 +1147,41 @@ func TestContainsBetweenTwoPIPs(t *testing.T) {
 	}
 }
 
+// MATCH over a HEADER PIP joins a subject group, where the group evaluator
+// matches the text and the path segments in Go; it answers as the rows of
+// the flat module do.
+func TestMatchInASubjectGroupAnswersAsTheFlatModule(t *testing.T) {
+	groups := DefaultOptions()
+	groups.Groups = true
+	forms := map[string]Options{"flat": DefaultOptions(), "with groups": groups}
+	const pips = `{"name": "subject.r", "pipType": "HEADER", "header": "X-R"}`
+	for _, tc := range []struct {
+		name, condition, r string
+		want               bool
+	}{
+		{"a value of the pattern's segments", "subject.r MATCH a/*", `"a/b"`, true},
+		{"a value with another first segment", "subject.r MATCH a/*", `"x/b"`, false},
+		{"a value with the pattern's last segment", "subject.r MATCH **/b", `"a/c/b"`, true},
+		{"a value with another last segment", "subject.r MATCH **/b", `"a/c/x"`, false},
+		{"a value the negation matches", "subject.r NOT MATCH a.b/*/c", `"a.b/x/d"`, true},
+		{"a value the negation does not match", "subject.r NOT MATCH a.b/*/c", `"a.b/x/c"`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition, pips)
+			if m, err := Generate(tree, table(t), groups); err != nil || len(m.Groups) == 0 {
+				t.Fatalf("Generate(%s) with groups: %d groups, error %v; want at least one group", tc.condition,
+					len(m.Groups), err)
+			}
+			values := map[string]Resolved{keyR: resolved(t, "VALUE", tc.r)}
+			for form, opt := range forms {
+				if got := decideValues(t, tree, opt, values); got != tc.want {
+					t.Errorf("allow(%s, subject.r = %s) %s = %v, want %v", tc.condition, tc.r, form, got, tc.want)
+				}
+			}
+		})
+	}
+}
+
 // A null whole resource is in no list, and a one-element GENERAL list of null
 // on the right of IN ends the rule, which the agent reads as undefined.
 func TestANullResourceIsInNoSingleOddList(t *testing.T) {
@@ -1850,6 +1885,13 @@ func TestAComparisonOfTheOperationWithLiteralsIsDecidedAtGeneration(t *testing.T
 		{"the operation outside a literal list", "write", "operation IS SUBSET 'x', 'y'", false},
 		{"an operation that reads as a smaller number", "3", "operation < 5", true},
 		{"an operation that reads as a larger number", "7", "operation < 5", false},
+		{"the operation contains its own text", "write", "operation CONTAINS 'write'", true},
+		{"the operation contains no other text", "write", "operation CONTAINS 'x'", false},
+		{"a literal contains the operation", "write", "'write' CONTAINS operation", true},
+		{"the operation shares no literal", "write", "operation NOT CONTAINS ANY 'x', 'y'", true},
+		{"the operation shares a literal", "write", "operation NOT CONTAINS ANY 'write', 'y'", false},
+		{"the operation matches a pattern", "a/b", "operation MATCH a/*", true},
+		{"the operation matches no pattern", "x/b", "operation MATCH a/*", false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sets := fmt.Sprintf(`{"policySets": [
@@ -2914,6 +2956,73 @@ func TestAnIterateCombinesItsPasses(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+// A permission-scope pass on the right of CONTAINS is compared element by
+// element only while it holds at most one value; a longer pass answers with
+// right_list_scalar_ops, ABORT in the default profile, whatever class the
+// resource value has.
+func TestAPassOfSeveralValuesOnTheRightOfContainsAnswersWithItsKnob(t *testing.T) {
+	const domain = `["subj","permissionScope.domain"]`
+	for _, form := range []struct {
+		name string
+		opt  func(*Options)
+	}{{"flat", func(*Options) {}}, {"with groups", func(o *Options) { o.Groups = true }}} {
+		opt := DefaultOptions()
+		form.opt(&opt)
+		m, err := Generate(iterateTree(t, "DENY_UNLESS_PERMIT", "resource.a CONTAINS subject.permissionScope.domain"),
+			table(t), opt)
+		if err != nil {
+			t.Fatalf("Generate: %v", err)
+		}
+		for _, tc := range []struct {
+			name, pass, a string
+			want          bool
+		}{
+			{"a pass of one value in a resource list", `["d"]`, `["d"]`, true},
+			{"a pass of one value equal to a resource string", `["d"]`, `"d"`, true},
+			{"a pass of two values against a resource list", `["x","d"]`, `["d"]`, false},
+			{"a pass of two values against a resource string", `["x","d"]`, `"d"`, false},
+			{"a pass of one value repeated against a resource string", `["d","d"]`, `"d"`, false},
+		} {
+			t.Run(form.name+"/"+tc.name, func(t *testing.T) {
+				sc := Scope{Passes: []map[string]Resolved{{domain: resolved(t, "VALUE", tc.pass)}}}
+				req := Request{Body: Body{Operation: "read", ResourceType: "doc"}, Scope: &sc,
+					Values: map[string]Resolved{`["res",".a"]`: resolved(t, "VALUE", tc.a)}}
+				if got := evalModule(t, m, req); got != tc.want {
+					t.Errorf("allow(resource.a = %s, pass %s) = %v, want %v", tc.a, tc.pass, got, tc.want)
+				}
+			})
+		}
+	}
+}
+
+// MATCH over a permission-scope pass reads the text and the path segments of
+// the pass value, both from the pass.
+func TestMatchOverAPassValueReadsThePass(t *testing.T) {
+	const domain = `["subj","permissionScope.domain"]`
+	for _, tc := range []struct {
+		name, pattern, pass string
+		want                bool
+	}{
+		{"a value of the pattern's segments", "a/*", `"a/b"`, true},
+		{"a value with another first segment", "a/*", `"x/b"`, false},
+		{"a value with the pattern's last segment", "**/b", `"a/c/b"`, true},
+		{"a value with another last segment", "**/b", `"a/c/x"`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			m, err := Generate(iterateTree(t, "DENY_UNLESS_PERMIT", "subject.permissionScope.domain MATCH "+tc.pattern),
+				table(t), DefaultOptions())
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			sc := Scope{Passes: []map[string]Resolved{{domain: resolved(t, "VALUE", tc.pass)}}}
+			req := Request{Body: Body{Operation: "read", ResourceType: "doc"}, Scope: &sc}
+			if got := evalModule(t, m, req); got != tc.want {
+				t.Errorf("allow(pass %s MATCH %s) = %v, want %v", tc.pass, tc.pattern, got, tc.want)
+			}
+		})
 	}
 }
 

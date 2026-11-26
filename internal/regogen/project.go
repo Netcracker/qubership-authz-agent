@@ -440,6 +440,38 @@ func buildRecord(r *Ref, v Resolved) Record {
 	return rec
 }
 
+// literalRecord is the record of literal l as a reference would read it, in
+// state VALUE, which the domain of every literal kind holds. It holds every
+// field a test of a group reads, and reads a number by its own text, as
+// [literalSplit] does, where an input reads it as a double.
+func literalRecord(l *litVal) Record {
+	rec := Record{State: string(spectables.StateValue), Class: string(l.class), ElementKeys: l.keys,
+		ElementOwnKeys: l.own, Number: l.num, ElementAlts: l.alts, SubsetIndex: l.subsetIndex,
+		ElementIndex: elementIndex(l.value, literalNumberValue, true)}
+	if isScalar(l.class) {
+		t := scalarTokensOf(l.value, literalNumberValue)
+		rec.Key = &t.key
+		if t.valueKey != "" {
+			rec.ValueKey = &t.valueKey
+		} else if l.class == spectables.ClassString {
+			noValue := valueTokenPrefix
+			rec.ValueKey = &noValue
+		}
+		if t.matchKey != "" {
+			rec.MatchKey = &t.matchKey
+		}
+	}
+	if items, ok := l.value.([]jsonvalue.Value); ok {
+		n := len(items)
+		rec.Length = &n
+	}
+	if s, ok := l.value.(string); ok {
+		rec.Text = &s
+		rec.Segments = strings.Split(s, "/")
+	}
+	return rec
+}
+
 // elementKeys sets ElementKeys and ElementOwnKeys, where the module reads
 // them, for a list, an object, or a SINGLE_ODD value v; lv is its record.
 func (rec *Record) elementKeys(r *Ref, v jsonvalue.Value, lv legacyvalue.Record) {

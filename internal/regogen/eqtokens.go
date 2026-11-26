@@ -195,15 +195,3 @@ func splitTokens(tokens []string, isString bool) (keys, values []string) {
 	}
 	return keys, values
 }
-
-// meets reports whether the own tokens own meet the match tokens match.
-func meets(own, match []string) bool {
-	for _, t := range own {
-		for _, m := range match {
-			if t == m {
-				return true
-			}
-		}
-	}
-	return false
-}

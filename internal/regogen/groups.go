@@ -16,6 +16,7 @@ package regogen
 
 import (
 	"maps"
+	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -49,6 +50,9 @@ type test struct {
 	// index is the index of a literal on the right of IS SUBSET, where
 	// rightRef is empty: it reads the SubsetIndex of rightRef otherwise.
 	index deepIndex
+	// rx is the regular expression of MATCH that match and nomatch test
+	// the text of ref against.
+	rx *regexp.Regexp
 	// refIndex and rightRefIndex number ref and rightRef among the references
 	// of the module's groups, -1 for none and for folded_roles, and slot and
 	// rightSlot number the lists of ref and rightRef that field and rightField
@@ -572,10 +576,11 @@ func (t *test) holds(e *groupEval) bool {
 	var st, cl string
 	var hasNull bool
 	var num *jsonvalue.Decimal
+	var text *string
 	if t.ref == memberFoldedRoles {
 		keys = e.in.FoldedRoles
 	} else if r, ok := e.rec(t.refIndex); ok {
-		keys, k, st, cl, hasNull, num = r.list(t.field), r.scalar(t.field), r.State, r.Class, r.HasNull, r.Number
+		keys, k, st, cl, hasNull, num, text = r.list(t.field), r.scalar(t.field), r.State, r.Class, r.HasNull, r.Number, r.Text
 	}
 	right := func() ([]string, *string) {
 		if r, ok := e.rec(t.rightRefIndex); ok {
@@ -610,6 +615,10 @@ func (t *test) holds(e *groupEval) bool {
 		return relHolds(t.val, num, rightNum)
 	case "nonum":
 		return num == nil
+	case "match":
+		return text != nil && t.rx.MatchString(*text)
+	case "nomatch":
+		return text == nil || !t.rx.MatchString(*text)
 	case "subset", "unmatched", "nonempty", "emptyleft":
 		return t.subsetHolds(e)
 	case "state":

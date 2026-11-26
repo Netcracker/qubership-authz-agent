@@ -112,6 +112,8 @@ type litVal struct {
 	// alts are the deeps of the literal's items, or of the literal as the
 	// one item, as IN, CONTAINS, and CONTAINS ANY compare them (elementAlts).
 	alts [][]deep
+	// value is the literal's value.
+	value jsonvalue.Value
 }
 
 // side is one operand of a comparison: a literal, a pattern, a reference, or a
@@ -257,7 +259,7 @@ func literalSplit(o policyir.Operand, split func(raw string) ([]jsonvalue.Value,
 		return nil, fmt.Errorf("operand %T is not a literal", o)
 	}
 	rec := legacyvalue.Of(v)
-	l := &litVal{kind: kind}
+	l := &litVal{kind: kind, value: v}
 	if s, ok := v.(string); ok {
 		l.text = s
 	}
@@ -485,8 +487,8 @@ func (g *gen) side(o policyir.Operand) (*side, error) {
 	case policyir.Operation:
 		if g.fixedOp != nil {
 			l, _ := literal(policyir.String{Value: *g.fixedOp})
-			return &side{kind: spectables.KindOperation, lit: &litVal{kind: spectables.KindOperation,
-				class: spectables.ClassString, key: l.key, keys: l.keys, own: l.own, text: l.text, num: l.num, subsetIndex: l.subsetIndex, alts: l.alts}}, nil
+			l.kind = spectables.KindOperation
+			return &side{kind: spectables.KindOperation, lit: l}, nil
 		}
 	case policyir.Subject:
 		if o.Attr == policyir.SubjectPermissionScope {

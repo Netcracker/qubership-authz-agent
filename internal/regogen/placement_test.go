@@ -32,34 +32,7 @@ import (
 // in another place today, keyed by place and condition. A listed case is
 // logged; a listed case that generates fails the test until its entry is
 // removed, and an unlisted one fails it.
-var placementKnown = map[string]string{
-	"subject allowed | 'write' CONTAINS ANY operation":          f87,
-	"subject allowed | 'write' CONTAINS operation":              f87,
-	"subject allowed | 'write' NOT CONTAINS ANY operation":      f87,
-	"subject allowed | 'write' NOT CONTAINS operation":          f87,
-	"subject allowed | 5 CONTAINS ANY operation":                f87,
-	"subject allowed | 5 CONTAINS operation":                    f87,
-	"subject allowed | 5 NOT CONTAINS ANY operation":            f87,
-	"subject allowed | 5 NOT CONTAINS operation":                f87,
-	"subject allowed | operation CONTAINS 'write'":              f87,
-	"subject allowed | operation CONTAINS 5":                    f87,
-	"subject allowed | operation CONTAINS ANY 'write'":          f87,
-	"subject allowed | operation CONTAINS ANY 'write', 'x'":     f87,
-	"subject allowed | operation CONTAINS ANY 5":                f87,
-	"subject allowed | operation CONTAINS ANY operation":        f87,
-	"subject allowed | operation CONTAINS operation":            f87,
-	"subject allowed | operation NOT CONTAINS 'write'":          f87,
-	"subject allowed | operation NOT CONTAINS 5":                f87,
-	"subject allowed | operation NOT CONTAINS ANY 'write'":      f87,
-	"subject allowed | operation NOT CONTAINS ANY 'write', 'x'": f87,
-	"subject allowed | operation NOT CONTAINS ANY 5":            f87,
-	"subject allowed | operation NOT CONTAINS ANY operation":    f87,
-	"subject allowed | operation NOT CONTAINS operation":        f87,
-}
-
-const f87 = "F87: in the copy of the tree that subject allowed reads, the operation is a literal, and a " +
-	"comparison of two literals by CONTAINS, NOT CONTAINS, CONTAINS ANY, or NOT CONTAINS ANY has no " +
-	"template, so the tenant is rejected"
+var placementKnown = map[string]string{}
 
 // placementGaps lists the places where a form is refused by design, keyed as
 // [placementKnown]: each is a decision of the generator, not a defect, and is

@@ -18,7 +18,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"regexp"
 	"slices"
 
 	"authz-agent/internal/policyir"
@@ -544,8 +543,8 @@ func rightAt(R *side, p point) clause {
 
 // byValue adds the template rows of the value-dependent cell (i, j) and
 // returns how it answered the cell, as [CellReport.Template] names it. A true
-// row leaves out the class check of a side when the template applies, with the
-// same true row, to every class whose record has the fields the row reads:
+// row leaves out the class check of a side when the cell of every class whose
+// record has the fields the row reads gives the same true rows:
 // then the fields themselves select the classes, and the index sees the bare
 // equality. A false row keeps the checks, because its negations also hold
 // where the fields are missing.
@@ -671,17 +670,13 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 		return "", gap(FormGenerator, fmt.Errorf("%s(%s %s, %s %s): value-dependent cell in a state other than VALUE has no template", op,
 			L.kind, lp.st, kindOf(R), rp.st))
 	}
-	if L.ref == nil && L.lit != nil && R != nil && R.ref == nil {
-		// both values known at generation: a copy of the tree for one
-		// operation compares the operation with a literal
-		v, ok := constCompare(op, L, R)
-		if _, bad := uncovered(cell.ValueRule, spectables.RuleEq, spectables.RuleInAny, spectables.RuleMatch,
-			spectables.RuleRel, spectables.RuleSubset); bad {
-			ok = false
-		}
-		if !ok {
+	if L.lit != nil && R != nil && R.ref == nil {
+		// both values known at generation, such as the operation in the copy
+		// of the tree for one operation
+		v, err := g.literalCell(op, L, R, lp, rp, cell)
+		if err != nil {
 			g.stats.NoTemplate[fmt.Sprintf("%s(%s, %s) of two literals", op, L.kind, R.kind)]++
-			return "", gap(FormGenerator, fmt.Errorf("%s(%s, %s): no constant template", op, L.kind, R.kind))
+			return "", err
 		}
 		if v {
 			rails.t = union(rails.t, dnfTrue)
@@ -690,72 +685,18 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 		}
 		return "two literals compared at generation", nil
 	}
-	tp, ok := template(op, L, R, lp.cl, rp.cl)
-	if ok && rightListOp[op] && R != nil && R.ref != nil && !isRes(R.kind) && !oddR &&
-		(rp.cl == spectables.ClassList || rp.cl == spectables.ClassNullElement || rp.cl == spectables.ClassNested) &&
-		!slices.Contains(cell.ValueRule, spectables.RuleRightListScalarOps) {
-		// the templates compare such a list element by element, which holds
-		// only for a list of at most one value; a cell that names no
-		// right_list_scalar_ops has not seen a longer one
-		g.stats.NoTemplate[fmt.Sprintf("%s(%s %s, %s %s) without rule %s", op, L.kind, lp.cl, kindOf(R), rp.cl,
-			spectables.RuleRightListScalarOps)]++
-		return "", gap(FormGenerator, fmt.Errorf("%s(%s %s, %s %s): a list on the right without rule %s has no template", op, L.kind,
-			lp.cl, kindOf(R), rp.cl, spectables.RuleRightListScalarOps))
-	}
-	if ok && slices.Contains(cell.ValueRule, spectables.RuleRightListScalarOps) {
-		if err := g.rightListScalarOps(&tp, R, rp); err != nil {
-			g.stats.NoTemplate[fmt.Sprintf("%s(%s %s, %s %s) rule %s", op, L.kind, lp.cl, kindOf(R), rp.cl,
-				spectables.RuleRightListScalarOps)]++
-			return "", fmt.Errorf("%s(%s %s, %s %s): %w", op, L.kind, lp.cl, kindOf(R), rp.cl, err)
-		}
-	}
-	if ok && (op == spectables.OpContainsAny || op == spectables.OpNotContainsAny) && (oddL || oddR) &&
-		lp.cl == spectables.ClassNullElement && rp.cl == spectables.ClassNullElement {
-		// A SINGLE_ODD list of null fails the PIP on the left of CONTAINS
-		// ANY. On the right it is a value, and a list of a boolean or an
-		// object holds no null, so a null element on the left ends the rule
-		// there as it does against any list without one. NOT CONTAINS ANY
-		// ends where CONTAINS ANY does, and the guard applies to both rails.
-		g := dnf{conj(L.bind(), clause{{cls: L.cls(clsCheck), text: "not " + L.field(fieldHasNull), fact: vfact(L)}})}
-		if oddR && !oddL {
-			g = append(g, conj(R.bind(), clause{{cls: R.cls(clsCheck), text: R.field(fieldHasNull), fact: vfact(R)}}))
-		}
-		tp.t, tp.f = prod(g, tp.t, true), prod(g, tp.f, true)
-		tp.undefined = true
-		tp.rules[spectables.RuleNullElementEnds] = true
-	}
-	if ok && slices.Contains(cell.Outcomes, spectables.OutcomeU) && !tp.undefined {
-		g.stats.NoTemplate[fmt.Sprintf("%s(%s %s, %s %s) with U", op, L.kind, lp.cl, kindOf(R), rp.cl)]++
-		return "", gap(FormGenerator, fmt.Errorf("%s: value-dependent cell with an undefined outcome has no template", op))
-	}
-	if ok && tp.undefined && !slices.Contains(cell.Outcomes, spectables.OutcomeU) {
-		g.stats.NoTemplate[fmt.Sprintf("%s(%s %s, %s %s) without U", op, L.kind, lp.cl, kindOf(R), rp.cl)]++
-		return "", gap(FormGenerator, fmt.Errorf("%s: the template leaves a value undefined where the cell has no undefined outcome", op))
+	tp, stat, err := g.cellTemplate(op, L, R, lp, rp, oddL, oddR, cell)
+	if err != nil {
+		g.stats.NoTemplate[stat]++
+		return "", err
 	}
 	if tp.undefined {
 		rails.threeValued = true
 	}
-	if oddL || oddR {
-		// the template's expressions read the odd list in its own state, not
-		// in VALUE
-		tp.t, tp.f = withoutValueFacts(tp.t, L, oddL, R, oddR), withoutValueFacts(tp.f, L, oddL, R, oddR)
-	}
-	if !ok {
-		g.stats.NoTemplate[fmt.Sprintf("%s(%s %s, %s %s)", op, L.kind, lp.cl, kindOf(R), rp.cl)]++
-		return "", gap(FormGenerator, fmt.Errorf("%s(%s %s, %s %s): no template for a value-dependent cell", op, L.kind, lp.cl,
-			kindOf(R), rp.cl))
-	}
-	have := slices.Collect(maps.Keys(tp.rules))
-	if oddL || oddR {
-		have = append(have, spectables.RuleSingleOdd)
-	}
-	if r, bad := uncovered(cell.ValueRule, have...); bad {
-		g.stats.NoTemplate[fmt.Sprintf("%s(%s %s, %s %s) rule %s", op, L.kind, lp.cl, kindOf(R), rp.cl, r)]++
-		return "", gap(FormGenerator, fmt.Errorf("%s(%s %s, %s %s): value rule %s has no template", op, L.kind, lp.cl, kindOf(R), rp.cl, r))
-	}
-	// same reports whether the template's true rows are the same at every
-	// point of s whose record carries the fields they read, with the other
-	// side at its point. A SINGLE_ODD record carries element_keys and
+	// same reports whether the cell's true rows are the same at every point
+	// of s whose record carries the fields they read, with the other side at
+	// its point: the rows [gen.cellTemplate] builds there, value rules
+	// included. A SINGLE_ODD record carries element_keys and
 	// element_own_keys too, so a row that reads them keeps its check where
 	// the domain has that state.
 	same := func(s *side, isLeft bool) bool {
@@ -775,25 +716,25 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 		want := tp.t.key()
 		for _, cl := range classes {
 			var c spectables.Cell
-			lc, rc := lp.cl, rp.cl
+			olp, orp := lp, rp
 			if isLeft {
 				idx := slices.Index(lps, point{spectables.StateValue, cl})
 				if idx < 0 {
 					return false
 				}
-				c, lc = cells[idx][j], cl
+				c, olp = cells[idx][j], lps[idx]
 			} else {
 				idx := slices.Index(rps, point{spectables.StateValue, cl})
 				if idx < 0 {
 					return false
 				}
-				c, rc = cells[i][idx], cl
+				c, orp = cells[i][idx], rps[idx]
 			}
 			if c.Outcome != spectables.OutcomeByValue {
 				return false
 			}
-			other, ok := template(op, L, R, lc, rc)
-			if !ok || other.t.key() != want {
+			other, _, err := g.cellTemplate(op, L, R, olp, orp, oddL, oddR, c)
+			if err != nil || other.t.key() != want {
 				return false
 			}
 		}
@@ -845,39 +786,146 @@ func sideSubjectOnly(s *side) bool {
 	return false
 }
 
-// constCompare compares two values known at generation, and returns false as
-// its second result for an operator it does not evaluate.
-func constCompare(op spectables.Operator, L, R *side) (bool, bool) {
-	if pos, ok := negated[op]; ok {
-		v, ok := constCompare(pos, L, R)
-		return !v, ok
+// cellTemplate returns the rows the module gets for the value-dependent cell
+// at the points lp and rp: the operator's template with the cell's value rules
+// applied. oddL and oddR say that lp or rp is a SINGLE_ODD point the caller
+// already reads as a list with a null element. It fails where no template
+// covers the cell or a rule it names, or the profile's setting the cell reads
+// is not an outcome, and then returns the key the generator's statistics
+// count the cell under.
+func (g *gen) cellTemplate(op spectables.Operator, L, R *side, lp, rp point, oddL, oddR bool,
+	cell spectables.Cell) (tpl, string, error) {
+	stat := func(suffix string) string {
+		return fmt.Sprintf("%s(%s %s, %s %s)%s", op, L.kind, lp.cl, kindOf(R), rp.cl, suffix)
 	}
-	switch op {
-	case spectables.OpEQ:
-		if isScalar(L.lit.class) && isScalar(R.lit.class) {
-			return meets(L.lit.own, R.lit.keys), true
+	tp, ok := template(op, L, R, lp.cl, rp.cl)
+	if !ok {
+		return tpl{}, stat(""), gap(FormGenerator, fmt.Errorf("%s(%s %s, %s %s): no template for a value-dependent cell", op,
+			L.kind, lp.cl, kindOf(R), rp.cl))
+	}
+	rightList := slices.Contains(cell.ValueRule, spectables.RuleRightListScalarOps)
+	if rightListOp[op] && R != nil && R.ref != nil && !isRes(R.kind) && !oddR &&
+		(rp.cl == spectables.ClassList || rp.cl == spectables.ClassNullElement || rp.cl == spectables.ClassNested) &&
+		!rightList {
+		// the templates compare such a list element by element, which holds
+		// only for a list of at most one value; a cell that names no
+		// right_list_scalar_ops has not seen a longer one
+		return tpl{}, stat(" without rule " + string(spectables.RuleRightListScalarOps)),
+			gap(FormGenerator, fmt.Errorf("%s(%s %s, %s %s): a list on the right without rule %s has no template", op, L.kind,
+				lp.cl, kindOf(R), rp.cl, spectables.RuleRightListScalarOps))
+	}
+	if rightList {
+		if err := g.rightListScalarOps(&tp, R, rp); err != nil {
+			return tpl{}, stat(" rule " + string(spectables.RuleRightListScalarOps)),
+				fmt.Errorf("%s(%s %s, %s %s): %w", op, L.kind, lp.cl, kindOf(R), rp.cl, err)
 		}
-	case spectables.OpIn:
-		if isScalar(L.lit.class) {
-			return meets(L.lit.own, R.lit.keys), true
+	}
+	if (op == spectables.OpContainsAny || op == spectables.OpNotContainsAny) && (oddL || oddR) &&
+		lp.cl == spectables.ClassNullElement && rp.cl == spectables.ClassNullElement {
+		// A SINGLE_ODD list of null fails the PIP on the left of CONTAINS
+		// ANY. On the right it is a value, and a list of a boolean or an
+		// object holds no null, so a null element on the left ends the rule
+		// there as it does against any list without one. NOT CONTAINS ANY
+		// ends where CONTAINS ANY does, and the guard applies to both rails.
+		g := dnf{conj(L.bind(), clause{{cls: L.cls(clsCheck), text: "not " + L.field(fieldHasNull), fact: vfact(L)}})}
+		if oddR && !oddL {
+			g = append(g, conj(R.bind(), clause{{cls: R.cls(clsCheck), text: R.field(fieldHasNull), fact: vfact(R)}}))
 		}
-	case spectables.OpIsSubset:
-		t := &test{kind: "subset", alts: L.lit.alts, index: R.lit.subsetIndex}
-		return t.subsetHolds(nil), true
-	case spectables.OpLT, spectables.OpLE, spectables.OpGT, spectables.OpGE:
-		if isScalar(L.lit.class) && isScalar(R.lit.class) {
-			return relHolds(string(op), L.lit.num, R.lit.num), true
+		tp.t, tp.f = prod(g, tp.t, true), prod(g, tp.f, true)
+		tp.undefined = true
+		tp.rules[spectables.RuleNullElementEnds] = true
+	}
+	if slices.Contains(cell.Outcomes, spectables.OutcomeU) && !tp.undefined {
+		return tpl{}, stat(" with U"), gap(FormGenerator,
+			fmt.Errorf("%s: value-dependent cell with an undefined outcome has no template", op))
+	}
+	if tp.undefined && !slices.Contains(cell.Outcomes, spectables.OutcomeU) {
+		return tpl{}, stat(" without U"), gap(FormGenerator,
+			fmt.Errorf("%s: the template leaves a value undefined where the cell has no undefined outcome", op))
+	}
+	if oddL || oddR {
+		// the template's expressions read the odd list in its own state, not
+		// in VALUE
+		tp.t, tp.f = withoutValueFacts(tp.t, L, oddL, R, oddR), withoutValueFacts(tp.f, L, oddL, R, oddR)
+	}
+	have := slices.Collect(maps.Keys(tp.rules))
+	if oddL || oddR {
+		have = append(have, spectables.RuleSingleOdd)
+	}
+	if r, bad := uncovered(cell.ValueRule, have...); bad {
+		return tpl{}, stat(" rule " + string(r)), gap(FormGenerator,
+			fmt.Errorf("%s(%s %s, %s %s): value rule %s has no template", op, L.kind, lp.cl, kindOf(R), rp.cl, r))
+	}
+	return tp, "", nil
+}
+
+// literalCell answers the value-dependent cell of two values known at
+// generation, L and R, at the points lp and rp. It reads each literal that
+// stands for a value of the request (the operation, in the copy of the tree
+// for one operation) as a reference whose record is the literal's, or L where
+// neither does, builds the cell's rows with [gen.cellTemplate], and evaluates
+// the group tests of those rows over the records. A row with an expression
+// that carries no test, or rows that put the pair on both rails or on
+// neither, give no answer, and the cell fails generation.
+func (g *gen) literalCell(op spectables.Operator, L, R *side, lp, rp point, cell spectables.Cell) (bool, error) {
+	asRef := func(s *side, id string) *side {
+		r := &Ref{ID: "\x00" + id, Var: id, Kind: s.kind,
+			domain: spectables.Domain{States: []spectables.State{spectables.StateValue}, Classes: []spectables.Class{s.lit.class}}}
+		return &side{kind: s.kind, ref: r}
+	}
+	l, r := L, R
+	switch {
+	case L.kind == spectables.KindOperation && R.kind == spectables.KindOperation:
+		l, r = asRef(L, "left"), asRef(R, "right")
+	case R.kind == spectables.KindOperation:
+		r = asRef(R, "right")
+	default:
+		l = asRef(L, "left")
+	}
+	tp, _, err := g.cellTemplate(op, l, r, lp, rp, false, false, cell)
+	if err != nil {
+		return false, err
+	}
+	e := &groupEval{sets: make([]map[string]struct{}, 2*slotsPerRef+1)}
+	index := map[string]int{}
+	for _, s := range []struct{ conv, orig *side }{{l, L}, {r, R}} {
+		if s.conv.ref != nil {
+			index[s.conv.ref.ID] = len(e.recs)
+			e.recs = append(e.recs, literalRecord(s.orig.lit))
+			e.loaded = append(e.loaded, 1)
 		}
-	case spectables.OpMatch:
-		if R.isPattern() && L.lit.class == spectables.ClassString {
-			rx, err := matchRegex(R.pattern)
-			if err != nil {
-				return false, false
+	}
+	refIndex := func(id string) int {
+		if i, ok := index[id]; ok {
+			return i
+		}
+		return -1
+	}
+	holds := func(d dnf) (bool, bool) {
+		some := false
+		for _, c := range d {
+			all := true
+			for _, x := range c {
+				if x.test == nil {
+					return false, false
+				}
+				t := *x.test
+				t.refIndex, t.rightRefIndex = refIndex(t.ref), refIndex(t.rightRef)
+				t.slot, t.rightSlot = listSlot(t.refIndex, t.field), listSlot(t.rightRefIndex, t.rightField)
+				if !t.holds(e) {
+					all = false
+				}
 			}
-			return regexp.MustCompile(rx).MatchString(L.lit.text), true
+			some = some || all
 		}
+		return some, true
 	}
-	return false, false
+	t, okT := holds(tp.t)
+	f, okF := holds(tp.f)
+	if !okT || !okF || t == f {
+		return false, gap(FormGenerator, fmt.Errorf("%s(%s, %s): no constant template", op, L.kind, R.kind))
+	}
+	return t, nil
 }
 
 // withoutValueFacts drops the requirement of state VALUE that template
