@@ -314,16 +314,18 @@ func (g *gen) operandKind(o policyir.Operand) (kind spectables.Kind, network, de
 	case policyir.Entitled:
 		return spectables.KindEntitled, true, true, nil
 	case policyir.PIPRef:
-		if o.Name == "subject.permissionScope" {
-			return spectables.KindSubjPermissionScope, false, true, nil
-		}
 		pip, ok := g.tree.PIP(o.Name)
-		if !ok {
+		switch {
+		case !ok:
 			g.fail(Failure{Set: g.where.set, PIP: o.Name, Reason: "not declared"})
 			return "", false, false, nil
-		}
-		if pip.Isolated != "" {
+		case pip.Isolated != "":
 			g.fail(Failure{Set: g.where.set, PIP: o.Name, Reason: "isolated: " + pip.Isolated})
+			return "", false, false, nil
+		case pip.Type == policyir.PIPPermissionScope:
+			// a PERMISSION_SCOPE PIP gives its grants to an iterate and no
+			// value to a reference, which reads it as a failed PIP
+			g.fail(Failure{Set: g.where.set, PIP: o.Name, Reason: "a condition reads a PERMISSION_SCOPE PIP only by a key, as subject.permissionScope.<key>"})
 			return "", false, false, nil
 		}
 		if pip.Type == policyir.PIPGeneral || pip.Type == policyir.PIPFiltered || pip.Type == "" {

@@ -275,6 +275,8 @@ func formatOperand(o Operand, brief bool) string {
 			return fmt.Sprintf("pattern(%q, path)", v.Text)
 		}
 		return fmt.Sprintf("pattern(%q)", v.Text)
+	case RefusedSubject:
+		return fmt.Sprintf("refused(%q)", v.Text)
 	case Unsupported:
 		return formatUnsupported(v)
 	default:

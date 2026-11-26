@@ -23,8 +23,9 @@ import (
 	"authz-agent/internal/policyir"
 )
 
-// conditionRefusal returns why access-control refuses the condition of a
-// simplified policy, or "". declared holds the names of the PIPs the tenant
+// conditionRefusal returns why the admin refuses the condition of a
+// simplified policy, or "": access-control refuses it, or the agent would
+// leave the policy out at load ([conditionTextRefusal]). declared holds the names of the PIPs the tenant
 // declared; a nil declared skips the checks that read it. An absent or null
 // condition and a boolean are accepted; a boolean binds as its text. The text
 // is cut of the characters up to U+0020 around it, unless it is blank
@@ -53,11 +54,14 @@ func conditionRefusal(condition any, declared map[string]bool) string {
 	return ""
 }
 
-// conditionTextRefusal returns why access-control refuses the condition text,
-// or "". The agent's parser accepts more than access-control stores, so the
+// conditionTextRefusal returns why the admin refuses the condition text, or
+// "". The agent's parser accepts more than access-control stores, so the
 // checks after the parse refuse the operands an operator may not take, true
 // or false beside a connective, a boolean in a list, and the subject
-// attributes a simplified policy may not read.
+// attributes a simplified policy may not read. It also refuses a
+// [policyir.RefusedSubject] operand, such as subject.roles[0], which
+// access-control stores and reads from the resource, and which the agent
+// leaves out at load.
 func conditionTextRefusal(text string, declared map[string]bool) string {
 	switch strings.ToLower(text) {
 	case "true", "false":
@@ -85,6 +89,11 @@ func conditionTextRefusal(text string, declared map[string]bool) string {
 		cmp, ok := a.(policyir.Compare)
 		if !ok {
 			continue
+		}
+		for _, o := range []policyir.Operand{cmp.Left, cmp.Right} {
+			if r, ok := o.(policyir.RefusedSubject); ok {
+				return r.Reason()
+			}
 		}
 		if why := operandKindRefusal(cmp); why != "" {
 			return why

@@ -68,6 +68,36 @@ func TestResolveSubject_ComputesPermissionsFromTheMappingTables(t *testing.T) {
 			`{"name": "subject.dept", "pipType": "TOKEN", "claim": "dept"}, ` +
 				mapping(`{"subject.dept": {"d1": ["p-d1"]}}`, `null`),
 			`{"dept": "d1"}`, nil, resolved(t, "VALUE", `["p-d1"]`)},
+		{"a TOKEN PIP key named under a built-in attribute",
+			`{"name": "subject.name.dept", "pipType": "TOKEN", "claim": "dept"}, ` +
+				mapping(`{"subject.name.dept": {"d1": ["p-d1"]}}`, `null`),
+			`{"dept": "d1"}`, nil, resolved(t, "VALUE", `["p-d1"]`)},
+		{"a HEADER PIP key named under a built-in attribute",
+			`{"name": "subject.id.region", "pipType": "HEADER", "header": "X-Region"}, ` +
+				mapping(`{"subject.id.region": {"eu": ["p-eu"]}}`, `null`),
+			roles(`["r"]`), map[string]string{"x-region": "eu"}, resolved(t, "VALUE", `["p-eu"]`)},
+		{"a key on a built-in attribute reads the token",
+			`{"name": "subject.name.dept", "pipType": "TOKEN", "claim": "dept"}, ` +
+				mapping(`{"subject.id": {"u1": ["p-u1"]}}`, `null`),
+			`{"sub": "u1", "dept": "d1"}`, nil, resolved(t, "VALUE", `["p-u1"]`)},
+		{"a key on subject.isM2M reads whether the token is M2M",
+			mapping(`{"subject.isM2M": {"true": ["p-m2m"]}}`, `null`), `{"level": "m2m"}`, nil,
+			resolved(t, "VALUE", `["p-m2m"]`)},
+		{"a key on subject.permissionScope without a PIP of that name grants nothing and fails nothing",
+			mapping(`{"subject.permissionScope": {"d": ["p-d"]}, "subject.roles": {"r": ["p1"]}}`, `null`),
+			roles(`["r"]`), nil, resolved(t, "VALUE", `["p1"]`)},
+		{"a key on a PERMISSION_SCOPE PIP fails the whole value",
+			`{"name": "subject.permissionScope", "pipType": "PERMISSION_SCOPE", "url": "http://scope"}, ` +
+				mapping(`{"subject.permissionScope": {"d": ["p-d"]}, "subject.roles": {"r": ["p1"]}}`, `null`),
+			roles(`["r"]`), nil, Resolved{State: "ERROR"}},
+		{"a key on a TOKEN PIP whose claim is missing and whose default is false grants nothing",
+			`{"name": "subject.flag", "pipType": "TOKEN", "claim": "flag", "defaultValue": false}, ` +
+				mapping(`{"subject.flag": {"False": ["p-f"]}}`, `null`),
+			`{}`, nil, Resolved{State: "EMPTY_COLL"}},
+		{"a key on a TOKEN PIP whose claim is missing takes its default",
+			`{"name": "subject.flag", "pipType": "TOKEN", "claim": "flag", "defaultValue": "on"}, ` +
+				mapping(`{"subject.flag": {"on": ["p-on"]}}`, `null`),
+			`{}`, nil, resolved(t, "VALUE", `["p-on"]`)},
 		{"productMapping counts without a customMapping",
 			mapping(`null`, `{"subject.roles": {"r": ["p-product"]}}`), roles(`["r"]`), nil,
 			resolved(t, "VALUE", `["p-product"]`)},

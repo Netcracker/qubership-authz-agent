@@ -607,16 +607,13 @@ func (p *parser) operand() (Operand, error) {
 		return nil, p.fail("operand: empty brackets or double quotes in a path")
 	}
 	p.i += len(tok)
-	if isScopeToken(tok) && (strings.Contains(tok, "[") || strings.HasSuffix(tok, ".")) {
+	if strings.HasPrefix(tok, "subject.") {
 		return p.subjectToken(tok), nil
 	}
 	path := tok
 	dot := strings.HasSuffix(tok, ".") && !strings.HasSuffix(tok, "..")
 	if dot {
 		path = tok[:len(tok)-1]
-		if strings.HasPrefix(path, "subject.") {
-			return p.resource("."+path, tok, true), nil
-		}
 	}
 	path = normalizeIndexes(path)
 	switch {
@@ -626,8 +623,6 @@ func (p *parser) operand() (Operand, error) {
 		return ResourceType{}, nil
 	case path == "resource" || strings.HasPrefix(path, "resource.") || strings.HasPrefix(path, "resource["):
 		return p.resource(path[len("resource"):], tok, dot), nil
-	case strings.HasPrefix(path, "subject.") && !strings.ContainsAny(path, "[]") && isSubjectToken(path):
-		return p.subjectToken(path), nil
 	case path == "subject":
 		return nil, p.fail("bare subject")
 	}
@@ -698,40 +693,55 @@ func (p *parser) resource(path, text string, dot bool) Operand {
 }
 
 // isSubjectToken reports whether tok, a path that starts with "subject.", is
-// a permission scope, a built-in subject attribute, or a PIP name, rather
-// than the path of a resource attribute.
+// a permission scope, a built-in subject attribute, or a PIP name.
 func isSubjectToken(tok string) bool {
 	return isScopeToken(tok) || pipTokenRE.MatchString(tok)
 }
 
 // isScopeToken reports whether tok is a subject.permissionScope.<key> token: a
-// key that starts with a letter or '_' and has no ']' without its '['. The key
-// "a]" is not one, so subject.permissionScope.a] is the path of a resource
-// attribute.
+// key that starts with a letter or '_' and has no ']' without its '['.
 func isScopeToken(tok string) bool {
 	return scopeTokenRE.MatchString(tok) && strings.Count(tok, "]") <= strings.Count(tok, "[")
 }
 
-// subjectToken returns the operand for tok, a token for which
-// [isSubjectToken] holds. The key of a permission scope is the rest of tok as
-// written, so subject.permissionScope.a[0] reads the key "a[0]" and
-// subject.permissionScope.a. the key "a."; inside an iterate it is a key of
-// the pass. A name that is not exactly a built-in attribute is a PIP name, so
-// subject.id.region and subject.entitledResources are PIP names, and so is
-// subject.permissionScope without a key.
-func (p *parser) subjectToken(tok string) Operand {
-	name := tok[len("subject."):]
-	if isScopeToken(tok) {
-		key := name[len("permissionScope."):]
-		if p.iterVar != "" {
-			return PassValue{Var: p.iterVar, Key: key}
-		}
-		return Subject{Attr: SubjectPermissionScope, Key: key}
+// SubjectOperand returns the operand that tok, a name written
+// subject.<name>, reads outside an iterate. A condition and a mapping key
+// read a subject name through it alike.
+//
+// The key of a permission scope is the rest of tok as written, so
+// subject.permissionScope.a[0] reads the key "a[0]" and
+// subject.permissionScope.a. the key "a."; such a token is a [Subject]. A
+// name that is exactly a built-in attribute other than permissionScope is a
+// [Subject] too. Any other name of dot-separated segments, each a letter or
+// '_' followed by letters, digits, and '_', is a [PIPRef], so
+// subject.name.dept, subject.entitledResources, and subject.permissionScope
+// without a key are PIP names. Every other token, such as subject.roles[0],
+// subject.x-y, subject.1x, or subject.a., is a [RefusedSubject].
+func SubjectOperand(tok string) Operand {
+	name, ok := strings.CutPrefix(tok, "subject.")
+	switch {
+	case !ok:
+		return RefusedSubject{Text: tok}
+	case isScopeToken(tok):
+		return Subject{Attr: SubjectPermissionScope, Key: name[len("permissionScope."):]}
+	case !pipTokenRE.MatchString(tok):
+		return RefusedSubject{Text: tok}
 	}
 	if a := SubjectAttr(name); a != SubjectPermissionScope && slices.Contains(subjectAttrs, a) {
 		return Subject{Attr: a}
 	}
 	return PIPRef{Name: tok}
+}
+
+// subjectToken returns the operand tok reads as [SubjectOperand] gives it,
+// except that inside an iterate subject.permissionScope.<key> is a key of the
+// pass.
+func (p *parser) subjectToken(tok string) Operand {
+	o := SubjectOperand(tok)
+	if s, ok := o.(Subject); ok && s.Key != "" && p.iterVar != "" {
+		return PassValue{Var: p.iterVar, Key: s.Key}
+	}
+	return o
 }
 
 func truncate(s string, n int) string {

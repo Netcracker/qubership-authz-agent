@@ -162,3 +162,38 @@ func TestReadScope_FailsWithoutAPIPOrAToken(t *testing.T) {
 		t.Errorf("with the PIP and a token: %+v after %d calls, want no passes after 1", s, calls)
 	}
 }
+
+// A condition that reads a PERMISSION_SCOPE PIP by its name, whatever the
+// name, fails its leaf as a failed PIP does, and so does one that reads
+// subject.permissionScope where no PIP of that name is declared. An ALLOW rule
+// under PERMIT_UNLESS_DENY permits where its leaf is true or false, so only a
+// failed leaf makes allow false.
+func TestAConditionOverAPermissionScopePIPByItsNameFailsItsLeaf(t *testing.T) {
+	const scope = `{"name": "subject.permissionScope", "pipType": "PERMISSION_SCOPE", "url": "http://scope"}`
+	for _, tc := range []struct {
+		name, condition, pips string
+		want                  bool
+	}{
+		{"IS EMPTY", "subject.permissionScope IS EMPTY", scope, false},
+		{"IS NOT EMPTY", "subject.permissionScope IS NOT EMPTY", scope, false},
+		{"a comparison with a string", "subject.permissionScope == 'x'", scope, false},
+		{"under another name", "subject.grants IS EMPTY",
+			`{"name": "subject.grants", "pipType": "PERMISSION_SCOPE", "url": "http://scope"}`, false},
+		{"with no PIP declared", "subject.permissionScope IS EMPTY", ``, false},
+		{"a TOKEN PIP, which answers", "subject.tok IS EMPTY",
+			`{"name": "subject.tok", "pipType": "TOKEN", "claim": "c"}`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			m, err := Generate(tenantWithSetAndPIPs(t, "PERMIT_UNLESS_DENY", "ALLOW", tc.condition, tc.pips),
+				table(t), DefaultOptions())
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			req := Request{Body: Body{Operation: "read", ResourceType: "doc"}}
+			m.ResolveSubject(&req)
+			if got := evalModule(t, m, req); got != tc.want {
+				t.Errorf("allow for %q = %t, want %t", tc.condition, got, tc.want)
+			}
+		})
+	}
+}

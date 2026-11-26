@@ -24,7 +24,8 @@ import (
 
 // Operand is one side of a comparison. Its dynamic type is one of [Operation],
 // [ResourceType], [Resource], [Subject], [PIPRef], [Entitled], [PassValue],
-// [String], [Number], [Bool], [List], [Pattern], or [Unsupported].
+// [String], [Number], [Bool], [List], [Pattern], [RefusedSubject],
+// or [Unsupported].
 type Operand interface {
 	operand()
 }
@@ -44,10 +45,11 @@ type ResourceType struct{}
 // Resource reads the resource of the request. Path is the path as written after
 // the word resource: empty for the whole resource, otherwise starting with a dot
 // or a bracket, such as ".a.b", "['x']", "[0]", "..id", or
-// ".items[?(@.k == 'v')].length()". A path written without the resource prefix,
-// and a subject token that is neither a built-in attribute, a PIP name, nor
-// subject.permissionScope.<key>, are resource paths too, and a frontend writes
-// them here with their leading dot: ".a.b", ".subject.l[0]", ".subject.x-y".
+// ".items[?(@.k == 'v')].length()". A path written without the resource prefix
+// is a resource path too, and a frontend writes it here with its leading dot:
+// ".a.b". A path written with the subject prefix never is: it is a
+// [Subject], a [PIPRef], a [PassValue] inside an iterate, or a
+// [RefusedSubject].
 //
 // Path is one that package jsonpath compiles; [NewCompare] checks it.
 // TrailingDot reports a path written with one dot at its end, such as
@@ -114,6 +116,29 @@ type Entitled struct {
 	As           []string
 }
 
+// RefusedSubject is an operand written subject.<name> whose name is neither
+// a built-in subject attribute, subject.permissionScope.<key>, nor a PIP name
+// ([SubjectOperand]), such as subject.roles[0] or subject.x-y, on either
+// side of a comparison. Text is the operand as written. A MATCH pattern
+// written so stays a [Pattern]: legacy matches its text and reads neither the
+// subject nor the resource.
+// Legacy reads such an operand from the resource at the path it spells, so
+// subject.roles[0] is .subject.roles[0] of the resource. The agent reads every
+// subject.<name> operand from the subject and never from the resource, so a
+// frontend isolates the policy, the set, or the set
+// of simplified policies that holds one instead of evaluating it.
+type RefusedSubject struct {
+	Text string
+}
+
+// Reason is why a condition with r is refused, with the two ways to write
+// what its author may have meant.
+func (r RefusedSubject) Reason() string {
+	return fmt.Sprintf("operand %s names no subject attribute, subject.permissionScope.<key>, or PIP; "+
+		"write resource.%s to read the resource, or test a subject attribute by its name, "+
+		"such as subject.roles CONTAINS 'admin'", r.Text, r.Text)
+}
+
 // PassValue reads the value the current pass of an iterate binds:
 // subject.permissionScope inside the set whose [Iterate.Var] is Var, or inside
 // a set nested in it. Key is the key of the assignment, as [Subject.Key] holds
@@ -162,19 +187,20 @@ type Pattern struct {
 	Path bool
 }
 
-func (Operation) operand()    {}
-func (ResourceType) operand() {}
-func (Resource) operand()     {}
-func (Subject) operand()      {}
-func (PIPRef) operand()       {}
-func (Entitled) operand()     {}
-func (PassValue) operand()    {}
-func (String) operand()       {}
-func (Number) operand()       {}
-func (Bool) operand()         {}
-func (List) operand()         {}
-func (Pattern) operand()      {}
-func (Unsupported) operand()  {}
+func (Operation) operand()      {}
+func (ResourceType) operand()   {}
+func (Resource) operand()       {}
+func (Subject) operand()        {}
+func (PIPRef) operand()         {}
+func (Entitled) operand()       {}
+func (PassValue) operand()      {}
+func (String) operand()         {}
+func (Number) operand()         {}
+func (Bool) operand()           {}
+func (List) operand()           {}
+func (Pattern) operand()        {}
+func (RefusedSubject) operand() {}
+func (Unsupported) operand()    {}
 
 func (String) literal() {}
 func (Number) literal() {}
@@ -287,6 +313,11 @@ func validateOperand(o Operand) error {
 	case Pattern:
 		if v.Text == "" {
 			return errors.New("pattern: empty")
+		}
+		return nil
+	case RefusedSubject:
+		if !strings.HasPrefix(v.Text, "subject.") {
+			return fmt.Errorf("refused subject operand %q: does not start with the subject prefix", v.Text)
 		}
 		return nil
 	case Unsupported:

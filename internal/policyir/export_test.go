@@ -662,6 +662,52 @@ func TestFromRegularIsolatesAPolicyWithAPatternRegexpRefuses(t *testing.T) {
 	}
 }
 
+// An operand written subject.<name> reads the subject, never the resource, so
+// one whose name is no subject attribute, permission scope key, or PIP name
+// isolates the policy that holds it, on either side of a comparison. A MATCH
+// pattern written so is text and isolates nothing. The reason quotes the
+// operand and the resource path to write instead.
+func TestFromRegularIsolatesAPolicyWithASubjectOperandThatNamesNoSubjectAttribute(t *testing.T) {
+	t.Parallel()
+
+	const control = `{"policyId": "p2", "rules": [{"ruleId": "r2", "effect": "ALLOW", "condition":
+		"subject.roles CONTAINS 'admin' AND subject.permissionScope.k == 'v' AND subject.foo == 'x' AND resource.subject.l[0] == 'admin' AND resource.v MATCH subject.x-y"}]}`
+	const controlDump = "  policy \"p2\" name=\"\" algorithm=absent\n" +
+		"    rule \"r2\" name=\"\" effect=ALLOW\n" +
+		"      condition[rule_condition]: subject.roles CONTAINS \"admin\" AND subject.permissionScope[\"k\"] EQ \"v\" AND " +
+		"pip(\"subject.foo\") EQ \"x\" AND resource.subject.l[0] EQ \"admin\" AND resource.v MATCH pattern(\"subject.x-y\")\n"
+	cases := []struct {
+		name, condition, operand string
+	}{
+		{"an index", "subject.roles[0] == 'admin'", "subject.roles[0]"},
+		{"a hyphen", "subject.x-y == 'v'", "subject.x-y"},
+		{"a segment that starts with a digit", "subject.1x == 'v'", "subject.1x"},
+		{"a trailing dot", "subject.a. == 'v'", "subject.a."},
+		{"the right operand", "resource.v == subject.l[0]", "subject.l[0]"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			policy := `{"policyId": "p1", "target": "resourceType == 'R'",
+				"rules": [{"ruleId": "r1", "effect": "ALLOW", "condition": "` + tc.condition + `"}]}`
+			e := fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "policies": [`+policy+`, `+control+`]}]`, `[]`)
+			why := "operand " + tc.operand + " names no subject attribute, subject.permissionScope.<key>, or PIP; " +
+				"write resource." + tc.operand + " to read the resource, or test a subject attribute by its name, " +
+				"such as subject.roles CONTAINS 'admin'"
+			want := "set \"s\" name=\"\" domain=\"\" algorithm=absent\n" +
+				"  policy \"p1\" name=\"\" algorithm=absent\n" + fmt.Sprintf("    isolated: %q\n", why) +
+				"    target[policy_target]: resourceType EQ \"R\"\n" + controlDump
+			if got := tree(t, e, "t").Dump(); got != want {
+				t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
+			}
+			wantDropped := []string{`policy set 0 "s": policy "p1": isolated: ` + why}
+			if got := e.Dropped["t"]; !slices.Equal(got, wantDropped) {
+				t.Errorf("Dropped[t] = %q, want %q", got, wantDropped)
+			}
+		})
+	}
+}
+
 // A pattern that package regexp does not compile isolates a set whose target
 // holds it, top-level or nested, with the target true, and a set of
 // simplified policies whose condition holds it. The tenant keeps its other

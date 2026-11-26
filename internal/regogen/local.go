@@ -32,8 +32,7 @@ import (
 // req.Headers, and subject.permissions from the MAPPING PIPs
 // ([Module.permissions]). A MAPPING PIP read by its own name is ABSENT
 // (mapping_own_name=ABSENT), and so is subject.isM2M as an operand of a
-// comparison, whose domain holds that state alone. A PIP of type
-// PERMISSION_SCOPE read as a value is ERROR, as a failed PIP is.
+// comparison, whose domain holds that state alone.
 // subject.entitledResources is left to
 // the module, which calls the entitlements service, unless req names no
 // such service: then it is ERROR. It returns what the reason of a denial
@@ -82,9 +81,6 @@ func (m *Module) ResolveSubject(req *Request) []string {
 			v = m.permissions(req)
 		case spectables.KindPIPMapping, spectables.KindSubjIsM2M:
 			v = Resolved{State: spectables.StateAbsent}
-		case spectables.KindSubjPermissionScope:
-			v = Resolved{State: spectables.StateError}
-			unread = append(unread, r.Key)
 		case spectables.KindEntitled:
 			if req.Entitlements != "" {
 				// the module calls the service itself
@@ -151,7 +147,7 @@ func latin1(s string) string {
 
 // tokenPIP is the value of a TOKEN PIP: the claim the declaration names,
 // read as a jsonPath over the claims of the subject's token, or else its
-// default value split at commas. A claim that is blank or outside the
+// default value ([tokenDefault]) split at commas. A claim that is blank or outside the
 // jsonPath subset is ERROR.
 func tokenPIP(decl *policyir.PIP, claims *jsonvalue.Object) Resolved {
 	sel, ok := tokenSelect(decl, claims)
@@ -171,8 +167,8 @@ func tokenPIP(decl *policyir.PIP, claims *jsonvalue.Object) Resolved {
 		return Resolved{State: spectables.StateError}
 	}
 	if missing {
-		dv, ok := defaultText(decl.DefaultValue)
-		if !ok || dv == "" {
+		dv, ok := tokenDefault(decl)
+		if !ok {
 			return Resolved{State: spectables.StatePIPEmpty}
 		}
 		return pipList(splitItems(dv))
@@ -205,11 +201,19 @@ func tokenSelect(decl *policyir.PIP, claims *jsonvalue.Object) (sel jsonpath.Res
 	return p.Select(doc), true
 }
 
-// hasDefault reports whether decl has a defaultValue whose text is not
-// empty.
-func hasDefault(decl *policyir.PIP) bool {
-	dv, ok := defaultText(decl.DefaultValue)
-	return ok && dv != ""
+// tokenDefault returns the text of the defaultValue that TOKEN PIP decl gives
+// for a missing claim; ok is false where it gives none. A default applies
+// only where Python counts its JSON value true ([truthy]), so null, false, 0,
+// "", [], and {} give none, and the text is the one [defaultText] gives.
+func tokenDefault(decl *policyir.PIP) (string, bool) {
+	if decl.DefaultValue == "" {
+		return "", false
+	}
+	v, err := jsonvalue.Decode([]byte(decl.DefaultValue))
+	if err != nil || !truthy(v) {
+		return "", false
+	}
+	return defaultText(decl.DefaultValue)
 }
 
 // defaultText is the text of a declaration's defaultValue, the compacted

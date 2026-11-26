@@ -125,26 +125,31 @@ var mappingErrorStates = map[spectables.State]bool{
 }
 
 // mappingKeyValues returns the values of the subject attribute a mapping
-// key names, and whether its state makes subject.permissions fail.
+// key names, and whether its state makes subject.permissions fail. A key
+// over subject.permissions itself grants nothing (mapping_self_key=EMPTY).
+// Any other key reads the name an operand of a condition reads
+// ([policyir.SubjectOperand]): a built-in attribute from the subject's token,
+// subject.permissionScope.<key> as read outside an iterate's pass, and any
+// other name from the PIP the tenant declares under it, ABSENT where it
+// declares none.
 func (m *Module) mappingKeyValues(key string, req *Request) ([]jsonvalue.Value, bool) {
 	name, ok := strings.CutPrefix(key, "subject.")
-	if !ok {
+	if !ok || name == "permissions" || strings.HasPrefix(name, "permissions.") {
 		return nil, false
 	}
 	var v Resolved
-	switch {
-	case name == "permissions" || strings.HasPrefix(name, "permissions."):
-		return nil, false
-	case name == "permissionScope" || strings.HasPrefix(name, "permissionScope."):
-		// read outside an iterate's pass
-		v = Resolved{State: spectables.StateScopeOutside}
-	case builtinSubject[strings.Split(name, ".")[0]]:
-		var ok bool
-		if v, ok = req.Values[specKey("subj", name)]; !ok {
-			v = Resolved{State: spectables.StateAbsent}
-		}
-		if name == "isM2M" {
+	switch o := policyir.SubjectOperand(key).(type) {
+	case policyir.Subject:
+		switch {
+		case o.Key != "":
+			v = Resolved{State: spectables.StateScopeOutside}
+		case o.Attr == policyir.SubjectIsM2M:
 			v = Resolved{State: spectables.StateValue, Value: req.M2M}
+		default:
+			var ok bool
+			if v, ok = req.Values[specKey("subj", name)]; !ok {
+				v = Resolved{State: spectables.StateAbsent}
+			}
 		}
 	default:
 		decl, ok := m.pips(key)
@@ -182,13 +187,6 @@ func (m *Module) mappingKeyValues(key string, req *Request) ([]jsonvalue.Value, 
 		return nil, false
 	}
 	return nil, mappingErrorStates[v.State]
-}
-
-// builtinSubject holds the subject attributes the token gives without a
-// PIP, which a mapping key reads without looking up a declaration.
-var builtinSubject = map[string]bool{
-	"id": true, "name": true, "type": true, "scopes": true, "serviceAccount": true, "entitledResources": true,
-	"isM2M": true, "roles": true,
 }
 
 // anyEqualsText reports whether one of vals equals the table key text as

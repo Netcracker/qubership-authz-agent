@@ -149,7 +149,7 @@ func (Unsupported) atom() {}
 //     there is a list of one;
 //   - the path of a [Resource] compiles with [jsonpath.Compile].
 //
-// An [Unsupported] operand is admitted on either side.
+// An [Unsupported] or a [RefusedSubject] operand is admitted on either side.
 func NewCompare(op Operator, left, right Operand) (Compare, error) {
 	c := Compare{Op: op, Left: left, Right: right}
 	if err := validateCompare(c); err != nil {
@@ -185,7 +185,8 @@ func validateCompare(c Compare) error {
 	if err := validateOperand(c.Right); err != nil {
 		return fmt.Errorf("%s: right: %w", c.Op, err)
 	}
-	if _, ok := c.Right.(Unsupported); ok {
+	switch c.Right.(type) {
+	case Unsupported, RefusedSubject:
 		return nil
 	}
 	if c.Op == OpMatch || c.Op == OpNotMatch {

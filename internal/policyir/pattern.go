@@ -84,9 +84,10 @@ func patternRefused(text string) string {
 	return ""
 }
 
-// conditionRefused returns the reason [patternRefused] gives for the first
-// MATCH or NOT MATCH pattern of c it refuses, or "" when there is none. A nil
-// c has none.
+// conditionRefused returns why the agent refuses c: the reason
+// [patternRefused] gives for the first MATCH or NOT MATCH pattern of c it
+// refuses, or the reason for the first [RefusedSubject] operand; "" when c
+// holds neither. A nil c holds neither.
 func conditionRefused(c *Condition) string {
 	if c == nil {
 		return ""
@@ -94,7 +95,15 @@ func conditionRefused(c *Condition) string {
 	for _, d := range c.Disjuncts {
 		for _, a := range d {
 			cmp, ok := a.(Compare)
-			if !ok || (cmp.Op != OpMatch && cmp.Op != OpNotMatch) {
+			if !ok {
+				continue
+			}
+			for _, o := range []Operand{cmp.Left, cmp.Right} {
+				if r, ok := o.(RefusedSubject); ok {
+					return r.Reason()
+				}
+			}
+			if cmp.Op != OpMatch && cmp.Op != OpNotMatch {
 				continue
 			}
 			if p, ok := cmp.Right.(Pattern); ok {
@@ -108,14 +117,14 @@ func conditionRefused(c *Condition) string {
 }
 
 // trueCondition is the condition true at place: the target an isolated node
-// gets when its own target holds the pattern that isolates it.
+// gets when its own target holds the form that isolates it.
 func trueCondition(place Place) *Condition {
 	return &Condition{Place: place, Disjuncts: [][]Atom{{Const{Value: true}}}}
 }
 
 // isolatedTarget is the target of a set isolated for another reason, whose
 // target c is kept: c, or the condition true when c holds a pattern
-// [patternRefused] refuses, which the generator could not translate.
+// [conditionRefused] refuses, which the generator could not translate.
 func isolatedTarget(c *Condition) *Condition {
 	if conditionRefused(c) != "" {
 		return trueCondition(PlaceSetTarget)

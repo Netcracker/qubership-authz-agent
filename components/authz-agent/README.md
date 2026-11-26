@@ -115,6 +115,14 @@ tenant's other policies answer as usual. A set of simplified policies with such 
 failed as a whole. The tenant then counts as `failing`, and the internal `/health` names the set, the policy, and the
 pattern.
 
+An operand written `subject.<name>` reads the subject: a built-in attribute such as `subject.roles`, a key such as
+`subject.permissionScope.region`, or a PIP of that name. An operand that is none of these, such as `subject.roles[0]`,
+`subject.x-y`, or `subject.a.`, leaves its policy, the set whose target holds it, or its set of simplified policies out
+of the evaluation in the same way, and the internal `/health` lists it under `dropped` with the reason
+`operand subject.roles[0] names no subject attribute, subject.permissionScope.<key>, or PIP; write resource.subject.roles[0] to read the resource, or test a subject attribute by its name, such as subject.roles CONTAINS 'admin'`.
+The admin refuses such a condition on upload. A `MATCH` pattern written `subject.x-y` is the text of the pattern and
+is not affected.
+
 ### The limit on looking up nested values
 
 A request fails when a value a comparison reads is a list of nested lists or objects whose elements hold numbers as

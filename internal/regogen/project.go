@@ -234,10 +234,7 @@ type kindState struct {
 // record keeps such a state rather than failing the request.
 // TestResolvedStatesStayInTheDomainOfTheirKind fails on an entry no resolver
 // gives any more.
-var knownOutsideDomain = map[kindState]string{
-	{spectables.KindSubjPermissionScope, spectables.StateError}: "F79: ResolveSubject reads a bare " +
-		"subject.permissionScope as ERROR, which its domain lacks, so its leaf is neither true, false, nor failed",
-}
+var knownOutsideDomain = map[kindState]string{}
 
 // inDomain reports whether r may hold state s: s is a state of the domain
 // of r's kind, or knownOutsideDomain lists it. A reference that a built-in

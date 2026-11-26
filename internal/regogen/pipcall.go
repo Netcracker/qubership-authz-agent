@@ -422,7 +422,7 @@ func placeholderValue(expr string, req *Request, pips func(string) (*policyir.PI
 			// claim path that selects no element, without a default, is []
 			// (request_attr_token_empty_selection=empty)
 			v = tokenPIP(p, req.Claims)
-			if v.State == spectables.StatePIPEmpty && !hasDefault(p) {
+			if _, applies := tokenDefault(p); v.State == spectables.StatePIPEmpty && !applies {
 				if sel, ok := tokenSelect(p, req.Claims); ok && sel.Kind == jsonpath.KindMany {
 					return []jsonvalue.Value{}, true
 				}

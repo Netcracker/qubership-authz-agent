@@ -216,7 +216,8 @@ var (
 	// admin accepts holds. The totality test checks nothing about them, so
 	// a spelling lands here only where the admin refuses it on purpose.
 	refusedSpellings = []string{
-		"condition=a no-break space", "condition=a tab", "condition=empty", "condition=spaces", "id=a text that is not a UUID",
+		"condition=a no-break space", "condition=a tab", "condition=empty", "condition=reads an index of the roles",
+		"condition=spaces", "id=a text that is not a UUID",
 	}
 	// crossedPolicyFields are the policy fields whose spellings the corpus
 	// takes in every combination, because whether a policy is global turns

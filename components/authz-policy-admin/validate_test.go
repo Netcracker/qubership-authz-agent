@@ -393,6 +393,10 @@ func TestPolicyConditionIsRefusedForAFormAccessControlDoesNotStore(t *testing.T)
 		{"a line feed after a list comma", policyWith(`"resource.a IN 'x', \n'y'"`), "a list holds a tab or a line break"},
 		{"the operation", policyWith(`"operation == 'READ'"`), "a simplified policy does not read the operation"},
 		{"subject.isM2M as an operand", policyWith(`"subject.isM2M == true"`), "EQ does not take subject.isM2M"},
+		{"an index of the roles", policyWith(`"subject.roles[0] == 'admin'"`),
+			"operand subject.roles[0] names no subject attribute"},
+		{"a resource path written after subject.", policyWith(`"resource.a == subject.x-y"`),
+			"operand subject.x-y names no subject attribute"},
 		{"a permission under subject.permissions.", policyWith(`"subject.permissions.billing CONTAINS 'read'"`),
 			"reads subject.permissions only as a whole"},
 	} {

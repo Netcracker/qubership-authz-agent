@@ -155,7 +155,8 @@ type PolicySet struct {
 	// Isolated is the reason the agent does not evaluate this set: the export
 	// shows it damaged, and which of its elements belong to it cannot be told,
 	// or its target, or for a set of simplified policies one of their
-	// conditions, holds a MATCH pattern the agent refuses. Empty for a set
+	// conditions, holds a MATCH pattern or a [RefusedSubject] operand the
+	// agent refuses. Empty for a set
 	// the agent evaluates. Like a set with AlwaysFails, an isolated set is a permanent
 	// source failure under its target, holds no policies, no sets, and no
 	// iterate, and fails no other set of the tenant.
@@ -185,7 +186,8 @@ type Policy struct {
 	Target *Condition
 	Rules  []*Rule
 	// Isolated is the reason the agent does not evaluate this policy: its
-	// target or one of its rules holds a MATCH pattern the agent refuses.
+	// target or one of its rules holds a MATCH pattern or a
+	// [RefusedSubject] operand the agent refuses.
 	// Empty for a policy the agent evaluates. An isolated policy holds no
 	// rules and, like an isolated set, is a permanent source failure under its
 	// target that fails no other policy of the tenant.

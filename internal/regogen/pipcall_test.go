@@ -343,22 +343,28 @@ func TestPIPFunction_SendsTheRequestOfTheDeclaration(t *testing.T) {
 // TestPIPFunction_ReadsATokenPlaceholderFromTheClaims: a TOKEN PIP that only
 // a placeholder reads takes its value from the subject's claims: the claim,
 // the default value split at commas, and [] for a claim path that selects no
-// element.
+// element. A default that is false, 0, "", [], or {} applies to no claim, so
+// an absent claim with it sends null and a claim path that selects no element
+// sends [].
 func TestPIPFunction_ReadsATokenPlaceholderFromTheClaims(t *testing.T) {
 	claims, ok := mustDecode(t, `{"department": "finance", "groups": []}`).(*jsonvalue.Object)
 	if !ok {
 		t.Fatal("the claims are not an object")
 	}
 	const decl = `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g", "requestAttributes":
-			{"v": "${subject.dept}", "x": "${subject.listed}", "d": "${subject.none}", "e": "${subject.lacking}"}},
+			{"v": "${subject.dept}", "x": "${subject.listed}", "d": "${subject.none}", "e": "${subject.lacking}",
+			 "f": "${subject.falsy}", "z": "${subject.zero}"}},
 		{"name": "subject.dept", "pipType": "TOKEN", "claim": "department"},
 		{"name": "subject.listed", "pipType": "TOKEN", "claim": "absent", "defaultValue": "d1,d2"},
 		{"name": "subject.none", "pipType": "TOKEN", "claim": "$..x"},
-		{"name": "subject.lacking", "pipType": "TOKEN", "claim": "absent"}`
+		{"name": "subject.lacking", "pipType": "TOKEN", "claim": "absent"},
+		{"name": "subject.falsy", "pipType": "TOKEN", "claim": "absent", "defaultValue": false},
+		{"name": "subject.zero", "pipType": "TOKEN", "claim": "$..x", "defaultValue": 0}`
 	checkPIPCases(t, decl, Request{Values: map[string]Resolved{}, Claims: claims}, []pipCase{{
 		name: "the claims", response: answer, state: "VALUE",
 		want: `{"method": "POST", "url": "http://g", "headers": {}, "raise_error": false, "pip": "subject.g",
-			"body": {"requestAttributes": {"v": "finance", "x": ["d1", "d2"], "d": [], "e": null}}}`}})
+			"body": {"requestAttributes": {"v": "finance", "x": ["d1", "d2"], "d": [], "e": null,
+				"f": null, "z": []}}}`}})
 }
 
 // TestPIPFunction_ReadsABracketPlaceholderFromTheMemberResource: a

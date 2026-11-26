@@ -35,19 +35,19 @@ func TestParseCondition(t *testing.T) {
 		{"resource.a.b. == 1", `resource.a.b. EQ 1`},
 		{"resource.l[0]. == 1", `resource.l[0]. EQ 1`},
 		{"resource[0]. == 1", `resource[0]. EQ 1`},
-		{"subject.x. == 1", `resource.subject.x. EQ 1`},
+		{"subject.x. == 1", `refused("subject.x.") EQ 1`},
 		{"subject[0]. == 1", `resource.subject[0]. EQ 1`},
 		{"resource.x == resource.y.", `resource.x EQ resource.y.`},
 		{"resource.a-b == 1", `resource.a-b EQ 1`},
 		{"resource.a.@b == 1", `resource.a.@b EQ 1`},
 		{"resource.a.length() == 1", `resource.a.length() EQ 1`},
 		{"subject.idx.y == 1", `pip("subject.idx.y") EQ 1`},
-		{"subject.id[0] == 1", `resource.subject.id[0] EQ 1`},
+		{"subject.id[0] == 1", `refused("subject.id[0]") EQ 1`},
 		{"resource[ 0 ] == 1", `resource[0] EQ 1`},
 		{"resource.a[?(@.key == '[ 0 ]')].id == 's'", `resource.a[?(@.key == '[ 0 ]')].id EQ "s"`},
 		{"resource.a[?(@.s =~ /[ 0 ]/)].id CONTAINS 'space'", `resource.a[?(@.s =~ /[ 0 ]/)].id CONTAINS "space"`},
 		{"resource.a[?(@.s =~ /[ 0 ]/)][ 1 ] == 1", `resource.a[?(@.s =~ /[ 0 ]/)][1] EQ 1`},
-		{"subject.l[0] IS NULL", `resource.subject.l[0] IS_NULL`},
+		{"subject.l[0] IS NULL", `refused("subject.l[0]") IS_NULL`},
 		{"resource.a GREATER THAN OR EQUAL TO 5", `resource.a GE 5`},
 		{"resource.a IS NOT NULL", `resource.a IS_NOT_NULL`},
 		{"resource.a == null", `resource.a EQ resource.null`},
@@ -75,7 +75,7 @@ func TestParseCondition(t *testing.T) {
 		{"subject.id.region == 'eu'", `pip("subject.id.region") EQ "eu"`},
 		{"subject.name.x == 1", `pip("subject.name.x") EQ 1`},
 		{"subject.entitledResources == 'eu'", `pip("subject.entitledResources") EQ "eu"`},
-		{"subject.name. == 1", `resource.subject.name. EQ 1`},
+		{"subject.name. == 1", `refused("subject.name.") EQ 1`},
 		{"null == 1", `resource.null EQ 1`},
 		{"resource.v NOT MATCH resource.*", `resource.v NOT_MATCH pattern("resource.*", path)`},
 		{"resource.v MATCH subject.l[:]", `resource.v MATCH pattern("subject.l[:]")`},
@@ -139,10 +139,10 @@ func TestParseConditionKeepsTheListTokenAsWritten(t *testing.T) {
 
 // An operand is the token the legacy lexer reads: its longest token, and on a
 // tie the boolean, the subject attribute, the PIP, or the permission scope
-// rather than the resource attribute. Each row that the attribute token wins
-// stands beside a control the shorter token wins: true,false beside true,
-// subject.x-y beside subject.x_y, subject.permissionScope.a] beside
-// subject.permissionScope.a[ 0 ].
+// rather than the resource attribute. A subject token that names none of
+// these, such as subject.x-y beside the PIP subject.x_y, or
+// subject.permissionScope.a] beside subject.permissionScope.a[ 0 ], is
+// refused; true,false stands beside true.
 func TestParseConditionReadsTheLongestLegacyToken(t *testing.T) {
 	t.Parallel()
 
@@ -153,20 +153,20 @@ func TestParseConditionReadsTheLongestLegacyToken(t *testing.T) {
 		{"resource.x IN true,false", `resource.x IN unsupported(jsonpath "true,false")`},
 		{"resource.x IN FALSE,true", `resource.x IN unsupported(jsonpath "FALSE,true")`},
 		{"resource.x == true", `resource.x EQ true`},
-		{"subject.x-y == 'v'", `resource.subject.x-y EQ "v"`},
-		{"subject.1x == 'v'", `resource.subject.1x EQ "v"`},
+		{"subject.x-y == 'v'", `refused("subject.x-y") EQ "v"`},
+		{"subject.1x == 'v'", `refused("subject.1x") EQ "v"`},
 		{"subject.x_y == 'v'", `pip("subject.x_y") EQ "v"`},
 		{"subject.id == 'eu'", `subject.id EQ "eu"`},
-		{"subject.roles. CONTAINS 'r'", `resource.subject.roles. CONTAINS "r"`},
+		{"subject.roles. CONTAINS 'r'", `refused("subject.roles.") CONTAINS "r"`},
 		{"subject.roles CONTAINS 'r'", `subject.roles CONTAINS "r"`},
 		{"subject.permissionScope.a[0] == 'v'", `subject.permissionScope["a[0]"] EQ "v"`},
 		{"subject.permissionScope.a[ 0 ] == 'v'", `subject.permissionScope["a[ 0 ]"] EQ "v"`},
 		{"subject.permissionScope.a. == 'v'", `subject.permissionScope["a."] EQ "v"`},
 		{"subject.permissionScope.a == 'v'", `subject.permissionScope["a"] EQ "v"`},
 		{"subject.permissionScope._a == 'v'", `subject.permissionScope["_a"] EQ "v"`},
-		{"subject.permissionScope.1a == 'v'", `resource.subject.permissionScope.1a EQ "v"`},
-		{"subject.permissionScope.a] IS NULL", `unsupported(jsonpath "subject.permissionScope.a]") IS_NULL`},
-		{"subject.permissionScope.ab] IS NULL", `unsupported(jsonpath "subject.permissionScope.ab]") IS_NULL`},
+		{"subject.permissionScope.1a == 'v'", `refused("subject.permissionScope.1a") EQ "v"`},
+		{"subject.permissionScope.a] IS NULL", `refused("subject.permissionScope.a]") IS_NULL`},
+		{"subject.permissionScope.ab] IS NULL", `refused("subject.permissionScope.ab]") IS_NULL`},
 		{"resource.v MATCH subject.x-y", `resource.v MATCH pattern("subject.x-y")`},
 		{"resource.v MATCH subject.name%", `resource.v MATCH pattern("subject.name%")`},
 		{"resource.v MATCH a#b", `resource.v MATCH pattern("a#b")`},
@@ -344,7 +344,6 @@ func TestParseConditionMarksAPathOutsideTheJSONPathSubset(t *testing.T) {
 		{"resource.a[?(@.k ~ 'v')] == 1", `unsupported(jsonpath "resource.a[?(@.k ~ 'v')]") EQ 1`},
 		{"resource.o[?(@.n=~/(?=u)/)].n == 1", `unsupported(jsonpath "resource.o[?(@.n=~/(?=u)/)].n") EQ 1`},
 		{"resource.a[0:2:1] == 1", `unsupported(jsonpath "resource.a[0:2:1]") EQ 1`},
-		{"subject.l[0:2:1] == 1", `unsupported(jsonpath "subject.l[0:2:1]") EQ 1`},
 		{"foo[0:2:1] == 1", `unsupported(jsonpath "foo[0:2:1]") EQ 1`},
 		{"resource['k'] == 1", `resource['k'] EQ 1`},
 		{"resource.a[:] == 1", `resource.a[:] EQ 1`},

@@ -64,8 +64,8 @@ type Export struct {
 // alike. A PIP name the tenant declares more than once becomes one
 // declaration with [PIP.Isolated], unless every declaration of it is
 // identical, which is then read once. A MATCH or NOT MATCH pattern whose
-// [Pattern.Regexp] package regexp does not compile isolates the node it
-// stands in:
+// [Pattern.Regexp] package regexp does not compile, and a [RefusedSubject]
+// operand, isolate the node they stand in:
 // a policy, by its target or a rule, becomes [Policy.Isolated]; a set, by its
 // target, and a set of simplified policies, by a condition, become
 // [PolicySet.Isolated]. A node isolated by its own target gets the target
