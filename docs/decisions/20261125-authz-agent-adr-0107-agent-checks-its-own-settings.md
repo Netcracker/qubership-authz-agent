@@ -64,9 +64,9 @@ the chart and without it.
 - **Agent variable**: an environment variable that code built into the agent binary from `components/authz-agent` or
   `internal` reads by name, `LOGGING_LEVEL_ROOT` included, whatever the values of other agent variables and the files
   present at start. `AUTHZ_OUTGOING_TOKEN_URL` is one also where the agent leaves it unread, with `M2M_AUTH_MODE=k8s`
-  and with `M2M_AUTH_MODE=hybrid` when the agent's token file is present at start. A variable that only a test, the Go
-  runtime, or the standard library reads, such as `GOMEMLIMIT` or `HTTPS_PROXY`, is not one, and neither is `LOG_LEVEL`,
-  which R5 governs.
+  and with `M2M_AUTH_MODE=hybrid` when the agent's token file is present at the start. A variable that only a test, the
+  Go runtime, or the standard library reads, such as `GOMEMLIMIT` or `HTTPS_PROXY`, is not one, and neither is
+  `LOG_LEVEL`, which R5 governs.
 - **Settings table**: the table of agent variables under `## Configuration` in `components/authz-agent/README.md`, with
   the text of that section that defines the forms and the bounds its rows name.
 - **Chart**: the Helm chart in `helm-templates/authz-agent`, its values schema included.
@@ -77,7 +77,7 @@ the chart and without it.
   `SCTP`.
 - **Policy-admin variable**: an environment variable whose name begins with `AUTHZ_POLICY_ADMIN_`.
 - **Stops the start**: as ADR-0091 defines it.
-- **The agent's token file**: as ADR-0096 defines it.
+- **The agent's token file**, **present at the start**: as ADR-0096 defines them.
 
 ### Rules
 
@@ -138,12 +138,13 @@ A mistyped value of any agent variable stops the start, so an operator learns of
 default they did not choose (R2). A required variable has no default to fall back on while it is required, so a missing
 value is one more value that its row does not accept (R2). A variable that a condition requires is marked in its row
 with that condition (R4). The condition can rest on a file as well as on values: ADR-0096 R20 makes
-`AUTHZ_OUTGOING_TOKEN_URL` required under conditions that include whether the agent's token file is present at start. So
-R2 and R4 speak of a condition that the row names. R2 reads a value from a list as ADR-0096 R3 reads `M2M_AUTH_MODE`, so
-that no setting accepts a spelling another one refuses. The settings table keeps the list in one file, so a new variable
-joins it in the change that adds it (R4). A variable can be optional and still have no default, so a row gives the
-default and whether the variable is required separately (R4). A number that its destination type cannot hold would
-overflow instead of being refused, so its range ends within that type, and the row gives the bound (R4).
+`AUTHZ_OUTGOING_TOKEN_URL` required under conditions that include whether the agent's token file is present at the
+start. So R2 and R4 speak of a condition that the row names. R2 reads a value from a list as ADR-0096 R3 reads
+`M2M_AUTH_MODE`, so that no setting accepts a spelling another one refuses. The settings table keeps the list in one
+file, so a new variable joins it in the change that adds it (R4). A variable can be optional and still have no default,
+so a row gives the default and whether the variable is required separately (R4). A number that its destination type
+cannot hold would overflow instead of being refused, so its range ends within that type, and the row gives the bound
+(R4).
 
 A default address such as `http://tenant-manager:8080` names a service that only some networks have, whether the name
 belongs to a Kubernetes Service or to a Compose service. With an address of tenant-manager the agent stays not ready
