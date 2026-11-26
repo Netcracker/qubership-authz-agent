@@ -37,23 +37,19 @@ import (
 // the spellings that cause it, to the finding ID and the defect in one
 // phrase. A fix of the defect removes the entry.
 var knownTotalityViolations = map[string]string{
-	"the export reader refuses the tenant: resourceType=all":                                           knownF31,
-	"the export reader refuses the tenant: resourceType=All":                                           knownF31,
-	"the export reader refuses the tenant: resourceType=*":                                             knownF31,
-	"Generate refuses the tenant: pip jsonPath=a bracketed key with a space + condition=reads the PIP": knownF28,
-	"GenerateFilter fails: pip jsonPath=a bracketed key with a space + condition=reads the PIP":        knownF28,
-	"the tree loses the predicate: predicates=mongodbPredicate number":                                 knownF29,
-	"the tree loses the predicate: predicates=mongodbPredicate object":                                 knownF29,
-	"the tree loses the predicate: predicates=mongodbPredicate list":                                   knownF29,
-	"the tree loses the predicate: predicates=mongodbPredicate boolean":                                knownF29,
-	"the tree loses the predicate: a top-level mongodbPredicate":                                       knownF29,
+	"the export reader refuses the tenant: resourceType=all":            knownF31,
+	"the export reader refuses the tenant: resourceType=All":            knownF31,
+	"the export reader refuses the tenant: resourceType=*":              knownF31,
+	"the tree loses the predicate: predicates=mongodbPredicate number":  knownF29,
+	"the tree loses the predicate: predicates=mongodbPredicate object":  knownF29,
+	"the tree loses the predicate: predicates=mongodbPredicate list":    knownF29,
+	"the tree loses the predicate: predicates=mongodbPredicate boolean": knownF29,
+	"the tree loses the predicate: a top-level mongodbPredicate":        knownF29,
 }
 
 const (
 	knownF31 = "F31: the admin checks that a policy is global only for the resourceType ALL, so it accepts " +
 		"all, All, or * on a policy that is not global, and the agent refuses the whole tenant on the next export"
-	knownF28 = "F28: the admin accepts a jsonPath it never parses, and the agent refuses the tenant whose " +
-		"condition reads a PIP with a bracketed key that holds a space"
 	knownF29 = "F29: the admin accepts a mongodbPredicate that is not a text, or one written beside " +
 		"predicates, and the export leaves the predicate out"
 )

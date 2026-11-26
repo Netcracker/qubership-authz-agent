@@ -493,7 +493,7 @@ func valuesEqual(got, want any) bool {
 			return gf == wf
 		}
 	}
-	//nolint:gocritic // known defect, no finding id yet: a match on the string "true" accepts the boolean true
+	//nolint:gocritic // N-B1: a match on the string "true" accepts the boolean true
 	return fmt.Sprintf("%v", got) == fmt.Sprintf("%v", want)
 }
 

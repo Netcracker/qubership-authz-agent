@@ -40,14 +40,14 @@ func assertRefused(t *testing.T, path string, tc uploadCase) {
 // it as before.
 func assertRefusedOn(t *testing.T, mux *http.ServeMux, path string, tc uploadCase, status int) {
 	t.Helper()
-	before := do(t, mux, http.MethodGet, path, "", http.StatusOK).Body.String()
-	rec := do(t, mux, http.MethodPut, path, tc.body, status)
+	before := do(t, mux, http.MethodGet, path, "", http.StatusOK).String()
+	body := do(t, mux, http.MethodPut, path, tc.body, status)
 	var resp struct{ Error string }
-	decode(t, rec.Body.Bytes(), &resp)
+	decode(t, body.Bytes(), &resp)
 	if !strings.Contains(resp.Error, tc.wantError) {
 		t.Errorf("PUT %s %s: error %q, want it to contain %q", path, tc.body, resp.Error, tc.wantError)
 	}
-	if after := do(t, mux, http.MethodGet, path, "", http.StatusOK).Body.String(); after != before {
+	if after := do(t, mux, http.MethodGet, path, "", http.StatusOK).String(); after != before {
 		t.Errorf("after the refused PUT %s %s the domain reads %s, want %s", path, tc.body, after, before)
 	}
 }

@@ -15,6 +15,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -57,9 +58,9 @@ func newTestServerWithDefaultTenantID(t *testing.T, dataDir, defaultTenantID str
 	return mux
 }
 
-// do sends the request to mux with no Tenant header and fails the test
-// unless the answer has the status want.
-func do(t *testing.T, mux *http.ServeMux, method, path, body string, want int) *httptest.ResponseRecorder {
+// do sends the request to mux with no Tenant header, fails the test unless
+// the answer has the status want, and returns the body of the answer.
+func do(t *testing.T, mux *http.ServeMux, method, path, body string, want int) *bytes.Buffer {
 	t.Helper()
 	return doWithTenantHeader(t, mux, method, path, body, "", want)
 }
@@ -68,7 +69,7 @@ func do(t *testing.T, mux *http.ServeMux, method, path, body string, want int) *
 // Tenant header when tenant is empty. A test listed in [knownSetupFailures]
 // is skipped instead of failed when the request and the status are the ones
 // its entry names, and fails when no request it sends gets them.
-func doWithTenantHeader(t *testing.T, mux *http.ServeMux, method, path, body, tenant string, want int) *httptest.ResponseRecorder {
+func doWithTenantHeader(t *testing.T, mux *http.ServeMux, method, path, body, tenant string, want int) *bytes.Buffer {
 	t.Helper()
 	known, listed := knownSetupFailures[t.Name()]
 	if listed {
@@ -81,7 +82,7 @@ func doWithTenantHeader(t *testing.T, mux *http.ServeMux, method, path, body, te
 		}
 		t.Fatalf("%s %s = %d %s, want %d", method, path, rec.Code, rec.Body, want)
 	}
-	return rec
+	return rec.Body
 }
 
 // knownSetupFailure is a request of a test's setup that a known defect
@@ -157,9 +158,9 @@ func TestDomainsAreIndependentAndExportIsTheUnion(t *testing.T) {
 
 	// Each domain still reads back its own content.
 	for domain, want := range map[string]string{"BSS": "Invoice", "OSS": "Ticket"} {
-		rec := do(t, mux, http.MethodGet, policiesPath+domain, "", http.StatusOK)
+		body := do(t, mux, http.MethodGet, policiesPath+domain, "", http.StatusOK)
 		var items []simplifiedPolicy
-		decode(t, rec.Body.Bytes(), &items)
+		decode(t, body.Bytes(), &items)
 		if len(items) != 1 || items[0].ResourceType != want {
 			t.Errorf("GET %s returned %+v, want one policy on %s", domain, items, want)
 		}
@@ -167,7 +168,7 @@ func TestDomainsAreIndependentAndExportIsTheUnion(t *testing.T) {
 
 	// The v3 export carries both, so the agent applies both.
 	var resp v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Body.Bytes(), &resp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	domains := map[string]bool{}
 	for _, ps := range resp.PolicySets {
 		domains[ps.Domain] = true
@@ -189,7 +190,7 @@ func TestTwoDomainsKeepTheirPoliciesInTwoSets(t *testing.T) {
 	}
 
 	var resp v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Body.Bytes(), &resp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	var got []string
 	for _, ps := range resp.PolicySets {
 		var preds []string
@@ -217,7 +218,7 @@ func TestPolicySetIDsTellTheKeysApart(t *testing.T) {
 	}
 
 	var resp v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Body.Bytes(), &resp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	var got []string
 	for _, ps := range resp.PolicySets {
 		got = append(got, ps.PolicySetID)
@@ -232,9 +233,9 @@ func TestPolicySetIDsTellTheKeysApart(t *testing.T) {
 // answers for a domain nobody has uploaded yet.
 func TestUnknownDomainReadsEmpty(t *testing.T) {
 	mux := newTestServer(t, t.TempDir())
-	rec := do(t, mux, http.MethodGet, policiesPath+"NOPE", "", http.StatusOK)
+	body := do(t, mux, http.MethodGet, policiesPath+"NOPE", "", http.StatusOK)
 	var items []simplifiedPolicy
-	decode(t, rec.Body.Bytes(), &items)
+	decode(t, body.Bytes(), &items)
 	if len(items) != 0 {
 		t.Errorf("got %d policies for an unused domain, want 0", len(items))
 	}
@@ -258,7 +259,7 @@ func TestStoreReloadsPersistedDomainsWithSameHash(t *testing.T) {
 		t.Errorf("hash changed across restart: %q → %q", before, got)
 	}
 	var resp v3PolicySetsResponse
-	decode(t, do(t, second, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Body.Bytes(), &resp)
+	decode(t, do(t, second, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	if len(resp.PolicySets) != 2 {
 		t.Errorf("reloaded %d policy sets, want 2 (one per domain)", len(resp.PolicySets))
 	}
@@ -307,7 +308,7 @@ func TestPolicyAndPIPHashesAreIndependent(t *testing.T) {
 	}
 
 	var pipsResp v3PIPsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "", http.StatusOK).Body.Bytes(), &pipsResp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "", http.StatusOK).Bytes(), &pipsResp)
 	if pipsResp.Hash == policiesHash {
 		t.Error("PIP and policy hashes are identical; they must be computed per collection")
 	}
@@ -337,7 +338,7 @@ func TestFailedPersistKeepsPreviousContent(t *testing.T) {
 	// A brand-new domain must not linger in memory either.
 	do(t, mux, http.MethodPut, policiesPath+"FRESH", ossPolicies, http.StatusInternalServerError)
 	var items []simplifiedPolicy
-	decode(t, do(t, mux, http.MethodGet, policiesPath+"FRESH", "", http.StatusOK).Body.Bytes(), &items)
+	decode(t, do(t, mux, http.MethodGet, policiesPath+"FRESH", "", http.StatusOK).Bytes(), &items)
 	if len(items) != 0 {
 		t.Errorf("failed upload of a new domain left %d policies behind", len(items))
 	}
@@ -411,7 +412,7 @@ func TestMalformedDomainFileSkipsOnlyThatDomain(t *testing.T) {
 
 	mux := newTestServer(t, dir)
 	var resp v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Body.Bytes(), &resp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	if len(resp.PolicySets) != 1 || resp.PolicySets[0].Domain != "BSS" {
 		t.Errorf("got %+v, want only the BSS policy set", resp.PolicySets)
 	}
@@ -455,7 +456,7 @@ func seedNotADomain(t *testing.T, dir string) {
 func assertOnlyBSSSurvived(t *testing.T, mux *http.ServeMux) {
 	t.Helper()
 	var resp v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Body.Bytes(), &resp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	if len(resp.PolicySets) != 1 || resp.PolicySets[0].Domain != "BSS" {
 		t.Errorf("the export holds %+v, want only the BSS policy set the store could read", resp.PolicySets)
 	}
@@ -463,7 +464,7 @@ func assertOnlyBSSSurvived(t *testing.T, mux *http.ServeMux) {
 		Revision int      `json:"revision"`
 		Domains  []string `json:"domains"`
 	}
-	decode(t, do(t, mux, http.MethodGet, "/authz-policy-admin/hash", "", http.StatusOK).Body.Bytes(), &status)
+	decode(t, do(t, mux, http.MethodGet, "/authz-policy-admin/hash", "", http.StatusOK).Bytes(), &status)
 	if status.Revision != 0 {
 		t.Errorf("revision = %d, want 0: no state the store could read", status.Revision)
 	}
@@ -557,7 +558,7 @@ func TestInMemoryModeServesUploads(t *testing.T) {
 	mux := newTestServer(t, "")
 	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies, http.StatusOK)
 	var resp v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Body.Bytes(), &resp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	if len(resp.PolicySets) != 1 {
 		t.Errorf("got %d policy sets, want 1", len(resp.PolicySets))
 	}
@@ -575,7 +576,7 @@ func TestHashEndpointListsDomains(t *testing.T) {
 		Domains []string `json:"domains"`
 		Hash    string   `json:"hash"`
 	}
-	decode(t, do(t, mux, http.MethodGet, "/authz-policy-admin/hash", "", http.StatusOK).Body.Bytes(), &status)
+	decode(t, do(t, mux, http.MethodGet, "/authz-policy-admin/hash", "", http.StatusOK).Bytes(), &status)
 	if fmt.Sprint(status.Domains) != "[billing network tenant-a/support]" {
 		t.Errorf("domains %v, want [billing network tenant-a/support]", status.Domains)
 	}
@@ -593,7 +594,7 @@ func TestEmptyStoreExportsEmptyArrays(t *testing.T) {
 		{"/access/v3/config/pips", "pips"},
 	} {
 		var resp map[string]json.RawMessage
-		decode(t, do(t, mux, http.MethodGet, tc.path, "", http.StatusOK).Body.Bytes(), &resp)
+		decode(t, do(t, mux, http.MethodGet, tc.path, "", http.StatusOK).Bytes(), &resp)
 		if got := string(resp[tc.field]); got != "[]" {
 			t.Errorf("GET %s: %s = %s, want []", tc.path, tc.field, got)
 		}
@@ -628,7 +629,7 @@ func TestTenantsKeepSeparateCollectionsOfOneDomain(t *testing.T) {
 		{"", "tenant-b-ignored", ""},
 	} {
 		var items []simplifiedPolicy
-		decode(t, doWithTenantHeader(t, mux, http.MethodGet, policiesPath+"billing"+tc.query, "", tc.header, http.StatusOK).Body.Bytes(), &items)
+		decode(t, doWithTenantHeader(t, mux, http.MethodGet, policiesPath+"billing"+tc.query, "", tc.header, http.StatusOK).Bytes(), &items)
 		var got []string
 		for _, p := range items {
 			got = append(got, p.ResourceType)
@@ -639,7 +640,7 @@ func TestTenantsKeepSeparateCollectionsOfOneDomain(t *testing.T) {
 	}
 
 	var sets v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Body.Bytes(), &sets)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &sets)
 	gotSets := map[string]string{}
 	for _, ps := range sets.PolicySets {
 		gotSets[ps.TenantID] = ps.Target
@@ -655,7 +656,7 @@ func TestTenantsKeepSeparateCollectionsOfOneDomain(t *testing.T) {
 	}
 
 	var pips v3PIPsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "", http.StatusOK).Body.Bytes(), &pips)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "", http.StatusOK).Bytes(), &pips)
 	gotPIPs := map[string]string{}
 	for _, p := range pips.PIPs {
 		gotPIPs[p.TenantID] = p.Claim
@@ -687,7 +688,7 @@ func TestStoreReloadsTenantCollections(t *testing.T) {
 		t.Errorf("hash changed across restart: %q → %q", before, got)
 	}
 	var resp v3PolicySetsResponse
-	decode(t, do(t, second, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Body.Bytes(), &resp)
+	decode(t, do(t, second, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	got := map[string]string{}
 	for _, ps := range resp.PolicySets {
 		got[ps.Domain] = ps.TenantID
@@ -707,7 +708,7 @@ func TestTheDefaultTenantIsExportedUnderItsConfiguredID(t *testing.T) {
 	do(t, mux, http.MethodPut, pipsPath+"billing", `[{"name":"subject.org","pipType":"TOKEN","claim":"org"}]`, http.StatusOK)
 
 	var sets v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Body.Bytes(), &sets)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &sets)
 	got := map[string]string{}
 	for _, ps := range sets.PolicySets {
 		got[ps.TenantID] = ps.Target
@@ -717,7 +718,7 @@ func TestTheDefaultTenantIsExportedUnderItsConfiguredID(t *testing.T) {
 		t.Errorf("policy set targets by tenantId = %v, want %v", got, want)
 	}
 	var pips v3PIPsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "", http.StatusOK).Body.Bytes(), &pips)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "", http.StatusOK).Bytes(), &pips)
 	if len(pips.PIPs) != 1 || pips.PIPs[0].TenantID != "6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b" {
 		t.Errorf("PIPs = %+v, want one PIP of tenantId 6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b", pips.PIPs)
 	}
@@ -745,7 +746,7 @@ func TestInvalidTenantIsRejected(t *testing.T) {
 func hashOf(t *testing.T, mux *http.ServeMux) string {
 	t.Helper()
 	var resp v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Body.Bytes(), &resp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	return resp.Hash
 }
 
