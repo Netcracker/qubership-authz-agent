@@ -189,20 +189,30 @@ func (fg *filterGen) status(key string, prefix dnf, c *cond) status {
 		return status{konst: *c.isTrue && !prefix.isFalse()}
 	}
 	g := fg.g
-	s := status{key: key, three: c.three, pass: g.pass, resource: anyLeaf(c, func(l leafRails) bool { return l.row != nil })}
+	s := status{key: key, three: c.three, pass: g.pass, resource: anyLeaf(c, func(l leafRails) bool { return l.row })}
 	fg.order = append(fg.order, key)
 	fg.t[key] = g.product(prefix, c.T())
 	if c.three {
 		fg.f[key] = g.product(prefix, c.F())
-	}
-	if c.fails || s.resource && anyLeaf(c, func(l leafRails) bool { return l.row == nil && l.threeValued }) {
-		s.leaves = fg.leaves(key, c)
 	}
 	if g.pass {
 		if fg.pass == nil {
 			fg.pass = map[string]bool{}
 		}
 		fg.pass[key] = true
+	}
+	return s
+}
+
+// condStatus is the status of condition c, as status records it, with the
+// leaves the filter reads row by row where a failed source may leave c
+// unknown, or where c reads the resource beside a leaf that may be unknown
+// on every row. A target has no such leaves: the filter reads it only on
+// the request.
+func (fg *filterGen) condStatus(key string, prefix dnf, c *cond) status {
+	s := fg.status(key, prefix, c)
+	if s.key != "" && (c.fails || s.resource && anyLeaf(c, func(l leafRails) bool { return !l.row && l.threeValued })) {
+		s.leaves = fg.leaves(key, c)
 	}
 	return s
 }
@@ -239,7 +249,7 @@ func (fg *filterGen) simplified(n *node, sg *policyir.SimplifiedGroup) []*fnode 
 		alts = union(alts)
 		fs := fsimp{op: p.Operation, id: p.ID, preds: p.Predicates,
 			match: fg.dnfStatus(fmt.Sprintf("%s.m%d", n.id, i), alts),
-			cond:  fg.status(fmt.Sprintf("%s.c%d", n.id, i), alts, k.c)}
+			cond:  fg.condStatus(fmt.Sprintf("%s.c%d", n.id, i), alts, k.c)}
 		part, ok := parts[p.Operation]
 		if !ok {
 			part = &fnode{kind: kindSimplified}
@@ -265,7 +275,7 @@ func (fg *filterGen) set(n *node, s *policyir.PolicySet, prefix dnf) *fnode {
 		g.pass = true
 		f.kids = []*fnode{fg.setKids(n.kids[0], s, inner)}
 		g.pass = saved
-		fg.narrow(f, n.id+".t", n.tgt)
+		f.inheritVetoes()
 		return f
 	}
 	inner := g.product(prefix, n.tgt.notF())
@@ -276,19 +286,14 @@ func (fg *filterGen) set(n *node, s *policyir.PolicySet, prefix dnf) *fnode {
 			f.kids = append(f.kids, fg.set(k, s.Sets[i-len(s.Policies)], inner))
 		}
 	}
-	fg.narrow(f, n.id+".t", n.tgt)
+	f.inheritVetoes()
 	return f
 }
 
-// narrow gives the target of node f, translated from c, its leaves where a
-// condition below it may veto rows, so that the veto keeps to the rows where
-// the target may hold.
-func (fg *filterGen) narrow(f *fnode, key string, c *cond) {
+// inheritVetoes marks f where a condition below it may veto rows.
+func (f *fnode) inheritVetoes() {
 	for _, k := range f.kids {
 		f.vetoes = f.vetoes || k.vetoes
-	}
-	if f.vetoes && f.tgt.key != "" && f.tgt.leaves == nil {
-		f.tgt.leaves = fg.leaves(key, c)
 	}
 }
 
@@ -319,16 +324,11 @@ func (fg *filterGen) policy(n *node, p *policyir.Policy, prefix dnf) *fnode {
 	for j, k := range n.kids {
 		r := p.Rules[j]
 		rule := &fnode{kind: kindRule, effect: k.effect, preds: r.Predicates, ruleID: r.ID,
-			tgt: fg.status(k.id+".t", inner, k.tgt), cond: fg.status(k.id+".c", inner, k.cond)}
+			tgt: fg.status(k.id+".t", inner, k.tgt), cond: fg.condStatus(k.id+".c", inner, k.cond)}
 		rule.vetoes = k.cond.fails
-		if k.cond.fails && rule.tgt.key != "" && rule.tgt.leaves == nil {
-			// the rows where the condition fails are denied where the target
-			// may hold
-			rule.tgt.leaves = fg.leaves(k.id+".t", k.tgt)
-		}
 		f.kids = append(f.kids, rule)
 	}
-	fg.narrow(f, n.id+".t", n.tgt)
+	f.inheritVetoes()
 	return f
 }
 
@@ -464,7 +464,7 @@ func (m *Module) Filter(ctx context.Context, st *Statuses, req *Request) (Filter
 	if m.filter == nil {
 		return FilterAnswer{}, errors.New("the module answers check/resource, not check/filter")
 	}
-	e := &filterEval{m: m, ctx: ctx, req: req, st: st, approx: m.filter.approx, path: rowsTrue,
+	e := &filterEval{m: m, ctx: ctx, req: req, st: st, approx: m.filter.approx,
 		sub: &substituter{m: m, ctx: ctx, req: req, general: map[string]sourceValue{}}}
 	a, err := e.top(m.filter)
 	if errors.Is(err, errDenyAll) {
@@ -480,7 +480,7 @@ func (m *Module) Filter(ctx context.Context, st *Statuses, req *Request) (Filter
 // resource (row), or keys of the module that hold where the leaf is true,
 // false, and unknown because a value it reads failed.
 type leafStatus struct {
-	row          *rowAtom
+	row          bool
 	key          string
 	three, fails bool
 	// whole marks the one leaf of a condition that does not read the
@@ -494,7 +494,7 @@ type leafStatus struct {
 // unknown where the check denies over a failed value and false elsewhere:
 // where it is not unknown, the filter reads its status alone.
 func (fg *filterGen) leaves(key string, c *cond) [][]leafStatus {
-	if !anyLeaf(c, func(l leafRails) bool { return l.row != nil }) {
+	if !anyLeaf(c, func(l leafRails) bool { return l.row }) {
 		k := key + ".w"
 		if c.fails {
 			fg.record(k+"e", c.failedU())
@@ -505,7 +505,7 @@ func (fg *filterGen) leaves(key string, c *cond) [][]leafStatus {
 	for i, grp := range c.groups {
 		out[i] = make([]leafStatus, len(grp))
 		for j, l := range grp {
-			if l.row != nil && l.failed.isFalse() {
+			if l.row && l.failed.isFalse() {
 				out[i][j] = leafStatus{row: l.row}
 				continue
 			}

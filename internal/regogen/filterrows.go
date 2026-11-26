@@ -14,13 +14,6 @@
 
 package regogen
 
-import (
-	"regexp"
-	"strings"
-
-	"authz-agent/internal/policyir"
-)
-
 // A condition the filter reads without the resource has a value per row. A
 // leaf over the resource is true on the rows it matches; a leaf a failed
 // source leaves unknown is failed on every row, and so is a leaf unknown on
@@ -30,98 +23,53 @@ import (
 // unknown, and among them the rows where it is failed: unknown with a failed
 // leaf in a disjunct that has no false leaf, as [cond.failedU] holds for the
 // check. The check denies a resource whole where the condition of an
-// applicable rule is failed, so the filter denies those rows, whatever the
-// rule's effect and whatever its neighbors allow, and with them the rows where
-// the path of a leaf unknown on the others holds nothing, null, or an empty
-// collection.
+// applicable rule is failed, whatever the rule's effect and whatever its
+// neighbors allow. The filter writes no text derived from a condition or a
+// target (ADR-0099 R14), so it reads these sets only as no row, every row, or
+// rows that depend on what the row holds, and answers DENY where the failed
+// rows are not none.
 
-// rowsF is a set of rows as a formula of the leaves over the resource: true
-// (every row), false (none), a leaf, or a NOT, AND, or OR of formulas.
-type rowsF struct {
-	kind  string // "true", "false", "atom", "not", "and", "or"
-	atom  *rowAtom
-	parts []rowsF
-}
+// rowsF is a set of rows the leaves over the resource select, known only as
+// no row, every row, or rows that depend on what the row holds. fAnd, fOr,
+// and fNot keep no record of which leaf a set depends on, so a set that holds
+// no row, such as a leaf AND its negation, stays rowsDepend: the filter
+// then denies rows it could keep, never the reverse.
+type rowsF int8
 
-var (
-	rowsTrue  = rowsF{kind: "true"}
-	rowsFalse = rowsF{kind: "false"}
+const (
+	rowsFalse  rowsF = iota // no row; the zero value, which tri relies on
+	rowsTrue                // every row
+	rowsDepend              // the rows that depend on what the row holds
 )
-
-// rowAtom is a leaf over the resource. It has text where it compares a path
-// of keys with a string or number literal by == or !=, which rsql, sql, and
-// mongodb can write.
-type rowAtom struct {
-	key  string // the path without its leading dot
-	eq   bool
-	text bool
-	// q is the literal as rsql and mongodb write it, sq as sql does
-	q, sq string
-}
-
-var rowPathRE = regexp.MustCompile(`^(?:\.[A-Za-z_][A-Za-z0-9_]*)+$`)
-
-// rowAtomOf is the leaf over the resource of comparison c.
-func rowAtomOf(c policyir.Compare) *rowAtom {
-	a := &rowAtom{eq: c.Op == policyir.OpEQ}
-	if c.Op != policyir.OpEQ && c.Op != policyir.OpNE {
-		return a
-	}
-	res, lit := c.Left, c.Right
-	if _, ok := res.(policyir.Resource); !ok {
-		res, lit = lit, res
-	}
-	r, ok := res.(policyir.Resource)
-	if !ok || r.TrailingDot || !rowPathRE.MatchString(r.Path) {
-		return a
-	}
-	switch v := lit.(type) {
-	case policyir.Number:
-		a.q, a.sq = v.Text, v.Text
-	case policyir.String:
-		if strings.ContainsFunc(v.Value, func(r rune) bool { return r < 0x20 || strings.ContainsRune(`"'\`, r) }) {
-			return a
-		}
-		a.q, a.sq = `"`+v.Value+`"`, "'"+v.Value+"'"
-	default:
-		return a
-	}
-	a.key, a.text = r.Path[1:], true
-	return a
-}
 
 func fAnd(a, b rowsF) rowsF {
 	switch {
-	case a.kind == "false" || b.kind == "false":
+	case a == rowsFalse || b == rowsFalse:
 		return rowsFalse
-	case a.kind == "true":
+	case a == rowsTrue:
 		return b
-	case b.kind == "true":
-		return a
 	}
-	return rowsF{kind: "and", parts: []rowsF{a, b}}
+	return a
 }
 
 func fOr(a, b rowsF) rowsF {
 	switch {
-	case a.kind == "true" || b.kind == "true":
+	case a == rowsTrue || b == rowsTrue:
 		return rowsTrue
-	case a.kind == "false":
+	case a == rowsFalse:
 		return b
-	case b.kind == "false":
-		return a
 	}
-	return rowsF{kind: "or", parts: []rowsF{a, b}}
+	return a
 }
 
 func fNot(a rowsF) rowsF {
-	switch a.kind {
-	case "true":
+	switch a {
+	case rowsTrue:
 		return rowsFalse
-	case "false":
+	case rowsFalse:
 		return rowsTrue
 	}
-	return rowsF{kind: "not", parts: []rowsF{a}}
+	return rowsDepend
 }
 
 // rowsVal is a condition on the rows: where it is true, where unknown, and
@@ -141,51 +89,4 @@ func kleeneAnd(x, y rowsVal) rowsVal {
 func kleeneOr(x, y rowsVal) rowsVal {
 	notT := fAnd(fNot(x.t), fNot(y.t))
 	return rowsVal{t: fOr(x.t, y.t), u: fAnd(notT, fOr(x.u, y.u)), e: fAnd(notT, fOr(x.e, y.e))}
-}
-
-// rowsExpr is the predicate expression of the rows f, or of the others where
-// neg, with each NOT taken down to a leaf; nil where a leaf has no text.
-func rowsExpr(f rowsF, neg bool) *fexpr {
-	switch f.kind {
-	case "not":
-		return rowsExpr(f.parts[0], !neg)
-	case "atom":
-		if !f.atom.text {
-			return nil
-		}
-		return &fexpr{kind: "leaf", term: f.atom.term(neg)}
-	case "and", "or":
-		kind := f.kind
-		if neg {
-			kind = map[string]string{"and": "or", "or": "and"}[kind]
-		}
-		parts := make([]*fexpr, len(f.parts))
-		for i, p := range f.parts {
-			if parts[i] = rowsExpr(p, neg); parts[i] == nil {
-				return nil
-			}
-		}
-		return &fexpr{kind: kind, parts: parts}
-	}
-	return nil
-}
-
-// term is the predicate of the rows of a, or of the others where neg. The
-// text compares as the database does, which is stricter than == in the check:
-// a value that differs in case or type, a missing member, and a list that
-// holds the value are rows where the two may disagree. A rule's own
-// predicate, negated, has the same gap.
-func (a *rowAtom) term(neg bool) *fterm {
-	text := map[policyir.Dialect]string{policyir.DialectRSQL: a.key + "!=" + a.q,
-		policyir.DialectSQL: a.key + " <> " + a.sq, policyir.DialectMongoDB: `"` + a.key + `": { "$ne": ` + a.q + " }"}
-	if a.eq != neg {
-		text = map[policyir.Dialect]string{policyir.DialectRSQL: a.key + "==" + a.q,
-			policyir.DialectSQL: a.key + " = " + a.sq, policyir.DialectMongoDB: `"` + a.key + `": ` + a.q}
-	}
-	tmpl := map[policyir.Dialect]string{}
-	subst := map[policyir.Dialect]map[string]string{}
-	for d, t := range text {
-		tmpl[d], subst[d] = t, map[string]string{}
-	}
-	return &fterm{key: "row:" + a.key, text: text, template: tmpl, subst: subst}
 }

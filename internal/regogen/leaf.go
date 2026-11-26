@@ -45,7 +45,7 @@ type leafRails struct {
 	failed dnf
 	// row is set on a leaf over the resource in check/filter, which is true
 	// on the rows it matches.
-	row *rowAtom
+	row bool
 }
 
 type point struct {
@@ -154,7 +154,7 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 		// check/filter has no resource: what a comparison over it gives
 		// row by row is the predicate's part of the answer
 		g.reportLeaf(leafText(), nil)
-		rails := leafRails{threeValued: true, row: rowAtomOf(c)}
+		rails := leafRails{threeValued: true, row: true}
 		res, other, resRight := c.Left, c.Right, !readsResource(c.Left)
 		if resRight {
 			res, other = c.Right, c.Left
