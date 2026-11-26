@@ -78,16 +78,22 @@ func (e *RejectedError) Error() string {
 	return "the tenant has a form the agent cannot execute: " + strings.Join(parts, "; ")
 }
 
-// Failure is a part of the tenant that the module reads as a permanent
-// failure of its source: a set the legacy service never evaluates
-// ([policyir.PolicySet.AlwaysFails]), a set or a PIP declaration a damaged
-// export leaves unusable ([policyir.PolicySet.Isolated],
-// [policyir.PIP.Isolated]), a set or a policy with a MATCH pattern or an
-// operand the agent refuses ([policyir.Policy.Isolated]), a PIP a condition
-// reads and the tenant does not declare, or a PERMISSION_SCOPE PIP a condition
-// reads by its name rather than by a key. The module answers such a part as a
-// failed source does, and the tenant stays in service; the list is what a
-// health check reports.
+// Failure is a part of the tenant that the module cannot evaluate on any
+// request; the tenant stays in service, and the list is what a health check
+// reports. The module answers each kind of part in one of two ways.
+//
+// Three kinds of part are an unknown decision, [deny, permit] under its
+// target, so a resource is allowed only where the answer does not depend on
+// them: a set the legacy service never evaluates
+// ([policyir.PolicySet.AlwaysFails]), a set that a damaged export leaves
+// unusable ([policyir.PolicySet.Isolated]), and a set or a policy with a MATCH
+// pattern or an operand the agent refuses ([policyir.Policy.Isolated]).
+//
+// A PIP a condition reads that the tenant does not declare, an isolated PIP
+// declaration ([policyir.PIP.Isolated]), or a PERMISSION_SCOPE PIP a condition
+// reads by its name rather than by a key is a failed value: a rule whose
+// condition it leaves unknown denies the resource whole, as a PIP whose call
+// failed does.
 type Failure struct {
 	// Set is the ID of the failing set, of the set that holds the failing
 	// policy, or of the innermost set whose condition reads the failing PIP.
