@@ -32,16 +32,7 @@ import (
 // operand that a plain comparison beside it already breaks. A listed key is
 // logged; a listed key that no expression shows fails the test until its
 // entry is removed, and an unlisted one fails it.
-var textMeaningKnown = map[string]string{
-	"sql/AND with operand or-template":                  f18,
-	"sql/AND with operand escape-beside-placeholder-or": f18,
-	"sql/AND with operand and-under-or":                 f18,
-}
-
-const (
-	f18 = "F18: an AND writes an author's SQL template that is an OR without parentheses, so the AND " +
-		"binds only to the template's operand next to it"
-)
+var textMeaningKnown = map[string]string{}
 
 // textTemplate is a predicate an author writes for a rule, in every dialect.
 type textTemplate struct {

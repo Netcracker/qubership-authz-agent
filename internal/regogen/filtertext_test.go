@@ -45,6 +45,46 @@ func TestRSQLMayBeOr(t *testing.T) {
 	}
 }
 
+func TestSQLMayBeOr(t *testing.T) {
+	for _, tc := range []struct {
+		text string
+		want bool
+	}{
+		{"a = 1", false},
+		{"a = 1 AND b = 2", false},
+		{"a = 1 OR b = 2", true},
+		{"a = 1 or b = 2", true},
+		{"a = 1\tOr\nb = 2", true},
+		{"(a = 1 OR b = 2)", false},
+		{"(a = 1 OR b = 2) AND c = 3", false},
+		{"a IN (1, 2)", false},
+		{"color = 'red' AND origin = 'x'", false},
+		{"a = 'x OR y'", false},
+		{"a = 'it''s' OR b = 1", true},
+		{`"or" = 1`, false},
+		{"a <> 1.5 AND b::text >= 'x'", false},
+		{"a = 1OR b = 2", true},
+		{"a = 1 XOR b = 2", true},
+		{"a = 1 # note", true},
+		{"a | b = 1", true},
+		{"a = ?", true},
+		{"[it's] = 1 OR b = [x']", true},
+		{"a = 1 AND b = 2\u00a0OR c = 3", true},
+		{"a || b = 'xy'", true},
+		{"a = 'x\\' OR b = 1", true},
+		{"a = $$x$$", true},
+		{"a = 1 -- note", true},
+		{"a = 1 /* note */", true},
+		{"(a = 1", true},
+		{"a = 1)", true},
+		{"a = 'x", true},
+	} {
+		if got := sqlMayBeOr(tc.text); got != tc.want {
+			t.Errorf("sqlMayBeOr(%q) = %v, want %v", tc.text, got, tc.want)
+		}
+	}
+}
+
 // The text holds the values of placeholders, which the caller and the PIPs
 // give, so rsqlMayBeOr scans it rather than building a tree of its groups.
 // Parsing a value nested 4000 groups deep allocated tens of megabytes.

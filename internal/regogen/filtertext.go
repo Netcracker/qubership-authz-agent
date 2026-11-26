@@ -259,7 +259,7 @@ func render(x *fexpr, d policyir.Dialect) (string, bool) {
 		}
 		for i, p := range parts {
 			if (p.x.kind == "or" || p.x.kind == "and" || p.x.kind == "grp") && p.x.kind != x.kind ||
-				d == policyir.DialectRSQL && x.kind == "and" && rsqlMayBeOr(p.text) {
+				x.kind == "and" && mayBeOr(d, p.text) {
 				texts[i] = "(" + texts[i] + ")"
 			}
 		}
@@ -273,6 +273,21 @@ func render(x *fexpr, d policyir.Dialect) (string, bool) {
 		return acc, true
 	}
 	return `{ "$` + x.kind + `": [ ` + strings.Join(texts, ", ") + " ] }", true
+}
+
+// mayBeOr reports whether the text s of dialect d may be an OR at its top
+// level, which an AND around it has to put in parentheses: in RSQL and SQL an
+// AND binds tighter than an OR, and a part of an AND may be an author's
+// template written as an OR, or its negation. A QueryDSL or MongoDB part
+// stands inside the brackets of a call or an array, whatever it holds.
+func mayBeOr(d policyir.Dialect, s string) bool {
+	switch d {
+	case policyir.DialectRSQL:
+		return rsqlMayBeOr(s)
+	case policyir.DialectSQL:
+		return sqlMayBeOr(s)
+	}
+	return false
 }
 
 // rsqlMayBeOr reports whether the RSQL text s may be an OR at its top
@@ -303,6 +318,78 @@ func rsqlMayBeOr(s string) bool {
 		}
 	}
 	return depth != 0
+}
+
+// sqlMayBeOr reports whether the SQL text s may be an OR at its top level.
+// It answers false only for a text it reads through: words, numbers, quoted
+// strings and names with doubled quotes inside, parentheses that balance,
+// whitespace, and the operators in sqlOperatorBytes, with no word OR or XOR
+// outside parentheses. Anything else may be one, since SQL servers lex it
+// differently: a backslash inside a quote, a comment, a $, a |, a bracket,
+// which quotes a name on some servers, a number followed by a letter (1OR is
+// 1 OR on some servers), or any other byte, a non-ASCII one included. Like
+// rsqlMayBeOr, it scans the text once rather than parsing it.
+func sqlMayBeOr(s string) bool {
+	depth := 0
+	for i := 0; i < len(s); i++ {
+		switch c := s[i]; {
+		case c == '\'' || c == '"' || c == '`':
+			j := i + 1
+			for ; j < len(s); j++ {
+				if s[j] == '\\' {
+					return true
+				}
+				if s[j] == c {
+					if j+1 < len(s) && s[j+1] == c {
+						j++
+						continue
+					}
+					break
+				}
+			}
+			if j == len(s) {
+				return true
+			}
+			i = j
+		case c == '(':
+			depth++
+		case c == ')':
+			depth--
+			if depth < 0 {
+				return true
+			}
+		case c == ' ' || c == '\t' || c == '\n' || c == '\r':
+		case c >= '0' && c <= '9':
+			for i+1 < len(s) && (s[i+1] >= '0' && s[i+1] <= '9' || s[i+1] == '.') {
+				i++
+			}
+			if i+1 < len(s) && sqlWordByte(s[i+1]) {
+				return true
+			}
+		case sqlWordByte(c):
+			start := i
+			for i+1 < len(s) && (sqlWordByte(s[i+1]) || s[i+1] >= '0' && s[i+1] <= '9') {
+				i++
+			}
+			if depth == 0 && (strings.EqualFold(s[start:i+1], "or") || strings.EqualFold(s[start:i+1], "xor")) {
+				return true
+			}
+		case strings.HasPrefix(s[i:], "--"), strings.HasPrefix(s[i:], "/*"),
+			!strings.ContainsRune(sqlOperatorBytes, rune(c)):
+			return true
+		}
+	}
+	return depth != 0
+}
+
+// sqlOperatorBytes are the bytes of the operators sqlMayBeOr reads through:
+// none of them, alone or together, is an OR.
+const sqlOperatorBytes = "=<>!+-*/%,.:&^~@"
+
+// sqlWordByte reports whether b may start an SQL word: an ASCII letter or an
+// underscore.
+func sqlWordByte(b byte) bool {
+	return b == '_' || b >= 'a' && b <= 'z' || b >= 'A' && b <= 'Z'
 }
 
 // joinGroups joins the texts of groups by OR, each in its own parentheses,
