@@ -115,7 +115,7 @@ func jsonPIPOf(url, jsonPath string) string {
 // read, as the service writes it, or the error.
 func filterDoc(_ *testing.T, r *Registry) string {
 	op := "read"
-	a, err := r.Filter(context.Background(), FilterRequest{Tenant: "t", ResourceType: "doc", Operation: &op})
+	a, err := r.Filter(context.Background(), FilterRequest{Subject: Subject{Tenant: "t"}, ResourceType: "doc", Operation: &op})
 	if err != nil {
 		return "error: " + err.Error()
 	}

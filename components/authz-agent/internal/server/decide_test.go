@@ -194,10 +194,43 @@ func TestDecide_ACallerIsNotMatchedWithAnUnresolvedDefaultTenant(t *testing.T) {
 
 func TestDecide_ARefusedAdmissionAnswersWithItsAuthError(t *testing.T) {
 	app := newDecideApp(t)
-	code, got, _ := call(t, app, http.MethodPost, "/access/v1/check/resource?tenant_id=a",
-		`{"type":"doc","operation":"read"}`, nil)
-	if code != 403 || got != `{"message":"no subject"}` {
-		t.Errorf("POST without a subject = %d %s, want 403 {\"message\":\"no subject\"}", code, got)
+	for _, tc := range []struct{ name, path, body string }{
+		{"check/resource", "/access/v1/check/resource?tenant_id=a", `{"type":"doc","operation":"read"}`},
+		{"check/filter", "/access/v1/check/filter?tenant_id=a&resourceType=doc&operation=read", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			code, got, _ := call(t, app, http.MethodPost, tc.path, tc.body, nil)
+			if code != 403 || got != `{"message":"no subject"}` {
+				t.Errorf("POST %s without a subject = %d %s, want 403 {\"message\":\"no subject\"}", tc.path, code, got)
+			}
+		})
+	}
+}
+
+// PARITY_A carries a tenant-id claim and none of the claims an M2M token is
+// recognized by, so it stays a caller of tenant a alone however those
+// rules change.
+func TestDecide_ACallerOutsideItsTenantIsRefusedOnEveryRoute(t *testing.T) {
+	reg := registry(t, `{"policySets": [`+tenantSet("a", "true")+`,`+tenantSet("b", "true")+`]}`)
+	app := newPublicAppOver(t, map[string]string{"internals.rego": callerStub},
+		Options{Snapshots: reg, DefaultTenant: func() string { return "a" }})
+	headers := map[string]string{"Authorization": "Bearer PARITY_A"}
+	for _, route := range []struct{ name, path, query, body string }{
+		{"check/resource", "/access/v1/check/resource", "", `{"type":"doc","operation":"read","resource":{}}`},
+		{"check/filter", "/access/v1/check/filter", "&resourceType=doc&operation=read", ""},
+	} {
+		t.Run(route.name+", another tenant", func(t *testing.T) {
+			path := route.path + "?tenant_id=b" + route.query
+			if code, got, _ := call(t, app, http.MethodPost, path, route.body, headers); code != 403 || got != "" {
+				t.Errorf("POST %s as PARITY_A = %d %q, want 403 \"\"", path, code, got)
+			}
+		})
+		t.Run(route.name+", its own tenant", func(t *testing.T) {
+			path := route.path + "?tenant_id=a" + route.query
+			if code, got, _ := call(t, app, http.MethodPost, path, route.body, headers); code != 200 {
+				t.Errorf("POST %s as PARITY_A = %d %q, want 200", path, code, got)
+			}
+		})
 	}
 }
 
@@ -239,70 +272,22 @@ func TestDecide_ARefusedSubjectTokenDeniesEveryItem(t *testing.T) {
 	}
 }
 
-// TestDecide_ThePIPsGetNoTokenOfTheCaller: the headers a PIP may forward, or
-// a HEADER PIP may read into a url or a body, leave out the caller's tokens,
-// as input.requestHeaders does; the other headers stay. The Incoming-Token
-// travels apart, for a declaration that names it.
-func TestDecide_ThePIPsGetNoTokenOfTheCaller(t *testing.T) {
-	headers := map[string][]string{"Authorization": {"Bearer m2m"}, "Incoming-Token": {"eyJ.user.jwt"},
-		"X-Corr": {"c0", "c1"}, "Host": {"agent"}}
-	input := legacy.Input(headers)
-	want := map[string]string{"x-corr": "c1", "host": "agent"}
-	req, err := snapshotRequest("a", input, nil, headers, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !maps.Equal(req.Headers, want) {
-		t.Errorf("snapshotRequest headers = %v, want %v", req.Headers, want)
-	}
-	freq, err := filterRequest("a", input, nil, headers, legacy.Resource{ResourceType: "doc"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !maps.Equal(freq.Headers, want) {
-		t.Errorf("filterRequest headers = %v, want %v", freq.Headers, want)
-	}
-	if req.IncomingToken != "eyJ.user.jwt" || freq.IncomingToken != "eyJ.user.jwt" {
-		t.Errorf("IncomingToken = %q and %q, want eyJ.user.jwt in both", req.IncomingToken, freq.IncomingToken)
-	}
-}
-
-// TestDecide_TheRegistryGetsTheRequestID: the request id of the input,
-// which the requestID middleware always sets, reaches the registry, which
-// passes it to the calls of the PIPs.
-func TestDecide_TheRegistryGetsTheRequestID(t *testing.T) {
-	headers := map[string][]string{"X-Request-Id": {"abc"}}
-	input := legacy.Input(headers)
-	req, err := snapshotRequest("a", input, nil, headers, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	freq, err := filterRequest("a", input, nil, headers, legacy.Resource{ResourceType: "doc"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if req.RequestID != "abc" || freq.RequestID != "abc" {
-		t.Errorf("RequestID of snapshotRequest = %q, of filterRequest = %q, want abc in both", req.RequestID,
-			freq.RequestID)
-	}
-}
-
-// While the name of the default tenant is not translated, the policy data
+// While the name of the default tenant is not resolved, the policy data
 // held under that name may be another tenant's: a request that names no
 // tenant is denied on every route as in a tenant without policies, although
 // tenant default allows the read. Only an M2M caller reaches that denial; a
 // caller whose token has no tenant-id is refused before it, as it was. A
-// request that names the tenant, and a request after the translation, are
+// request that names the tenant, and a request after the resolution, are
 // decided by its policies.
-func TestDecide_TheDefaultTenantIsDeniedUntilItsNameIsTranslated(t *testing.T) {
+func TestDecide_TheDefaultTenantIsDeniedUntilItsNameIsResolved(t *testing.T) {
 	reg := registry(t, `{"policySets": [`+tenantSet("default", "true")+`]}`)
-	translated := false
+	resolved := false
 	eng, err := engine.New(engine.Options{Modules: map[string]string{"internals.rego": callerStub}})
 	if err != nil {
 		t.Fatalf("engine: %v", err)
 	}
 	srv := Register(fiber.New(fiber.Config{DisableStartupMessage: true}), eng, Options{Snapshots: reg,
-		DefaultTenant: func() string { return "default" }, DefaultTenantResolved: func() bool { return translated }})
+		DefaultTenant: func() string { return "default" }, DefaultTenantResolved: func() bool { return resolved }})
 	app := fiber.New(fiber.Config{Immutable: true, StrictRouting: true, CaseSensitive: true, DisableStartupMessage: true})
 	app.Use(platformContext)
 	// The reason of a denial reaches no response, so this route keeps the
@@ -332,7 +317,7 @@ func TestDecide_TheDefaultTenantIsDeniedUntilItsNameIsTranslated(t *testing.T) {
 	} {
 		code, got, _ := call(t, app, http.MethodPost, r.path, r.body, m2m)
 		if code != 200 || got != r.denied {
-			t.Errorf("untranslated: POST %s = %d %s, want 200 %s", r.path, code, got, r.denied)
+			t.Errorf("unresolved: POST %s = %d %s, want 200 %s", r.path, code, got, r.denied)
 		}
 	}
 	if code, _, _ := call(t, app, http.MethodPost, "/test/result", "", m2m); code != 200 {
@@ -341,24 +326,24 @@ func TestDecide_TheDefaultTenantIsDeniedUntilItsNameIsTranslated(t *testing.T) {
 	want := map[string]any{"rlsIgnored": false, "results": []any{map[string]any{"resourceType": "doc",
 		"operation": "read", "isAllowed": false, "reason": "no policies are published for tenant default"}}}
 	if !reflect.DeepEqual(result, want) {
-		t.Errorf("untranslated: the result of a request without a tenant = %v, want %v", result, want)
+		t.Errorf("unresolved: the result of a request without a tenant = %v, want %v", result, want)
 	}
 
 	for _, tc := range []struct {
 		name, token string
-		translated  bool
+		resolved    bool
 		query       string
 		header      map[string]string
 		status      int
 		want        string
 	}{
-		{"untranslated, a token without tenant-id", "PARITY_NONE", false, "", nil, 403, ""},
-		{"untranslated, the query parameter names it", "PARITY_ROLE_M2M", false, "?tenant_id=default", nil, 200, "true"},
-		{"untranslated, the header names it", "PARITY_ROLE_M2M", false, "", map[string]string{"Tenant": "default"}, 200, "true"},
-		{"translated", "PARITY_ROLE_M2M", true, "", nil, 200, "true"},
-		{"translated, a token without tenant-id", "PARITY_NONE", true, "", nil, 200, "true"},
+		{"unresolved, a token without tenant-id", "PARITY_NONE", false, "", nil, 403, ""},
+		{"unresolved, the query parameter names it", "PARITY_ROLE_M2M", false, "?tenant_id=default", nil, 200, "true"},
+		{"unresolved, the header names it", "PARITY_ROLE_M2M", false, "", map[string]string{"Tenant": "default"}, 200, "true"},
+		{"resolved", "PARITY_ROLE_M2M", true, "", nil, 200, "true"},
+		{"resolved, a token without tenant-id", "PARITY_NONE", true, "", nil, 200, "true"},
 	} {
-		translated = tc.translated
+		resolved = tc.resolved
 		headers := map[string]string{"Authorization": "Bearer " + tc.token}
 		maps.Copy(headers, tc.header)
 		path := check + tc.query
@@ -366,8 +351,8 @@ func TestDecide_TheDefaultTenantIsDeniedUntilItsNameIsTranslated(t *testing.T) {
 			t.Errorf("%s: POST %s = %d %q, want %d %q", tc.name, path, code, got, tc.status, tc.want)
 		}
 	}
-	translated = true
+	resolved = true
 	if code, got, _ := call(t, app, http.MethodPost, filter, "", m2m); code != 200 || got == deny {
-		t.Errorf("translated: POST %s = %d %s, want 200 and not DENY", filter, code, got)
+		t.Errorf("resolved: POST %s = %d %s, want 200 and not DENY", filter, code, got)
 	}
 }

@@ -14,8 +14,9 @@
 
 // Filter-corpus runs the check/filter requests the specification recorded
 // through the filter of the service: each bundle is loaded into a registry
-// of its own ([snapshot.Registry.Load]) and each request is answered by
-// [snapshot.Registry.Filter]. Every call of a PIP, the entitlements service,
+// of its own ([snapshot.Registry.Load]), and each request is projected as the
+// service projects an HTTP request ([snapshot.NewFilterRequest]) and answered
+// by [snapshot.Registry.Filter]. Every call of a PIP, the entitlements service,
 // or the permission scope is answered with the status and the body the
 // bundle recorded for its path, and any other call with 200 and a null body.
 //
@@ -42,6 +43,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"authz-agent/components/authz-agent/internal/corpus"
+	"authz-agent/components/authz-agent/internal/legacy"
 	"authz-agent/components/authz-agent/internal/snapshot"
 	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/regobuiltins"
@@ -206,8 +209,8 @@ func main() {
 						op = *req.Operation
 					}
 					t := time.Now()
-					res, err := r.Decide(context.Background(), snapshot.Request{Tenant: req.Tenant, Claims: req.Claims,
-						Anonymous: req.Anonymous, Headers: req.Headers, Items: []regogen.Body{{Operation: op,
+					res, err := r.Decide(context.Background(), snapshot.Request{Subject: req.Subject,
+						Items: []regogen.Body{{Operation: op,
 							ResourceType: req.ResourceType, Resource: jsonvalue.NewObject(), HasResource: true}}})
 					checkTotal += time.Since(t)
 					checked++
@@ -256,26 +259,24 @@ func sameJSON(a, b []byte) bool {
 	return reflect.DeepEqual(x, y)
 }
 
+// toRequest is the check/filter request of q, in the tenant its query names
+// or else in tenant, projected as the service projects the HTTP request
+// ([corpus.Subject], [snapshot.NewFilterRequest]).
 func toRequest(q request, tenant string) (snapshot.FilterRequest, error) {
-	req := snapshot.FilterRequest{Tenant: tenant, Anonymous: q.Anonymous, Headers: map[string]string{}}
 	if t, ok := q.Query["tenant_id"].(string); ok && t != "" {
-		req.Tenant = t
+		tenant = t
 	}
-	req.ResourceType, _ = q.Query["resourceType"].(string)
-	if op, ok := q.Query["operation"].(string); ok {
-		req.Operation = &op
+	sub, err := corpus.Subject(tenant, q.Headers, q.Claims, q.Anonymous)
+	if err != nil {
+		return snapshot.FilterRequest{}, err
 	}
-	for k, v := range q.Headers {
-		req.Headers[strings.ToLower(k)] = v
+	resourceType, _ := q.Query["resourceType"].(string)
+	operation, _ := q.Query["operation"].(string)
+	rs, rerr := legacy.CheckFilter(resourceType, operation)
+	if rerr != nil {
+		return snapshot.FilterRequest{}, rerr
 	}
-	if q.Claims != nil {
-		c, err := jsonvalue.Decode([]byte(*q.Claims))
-		if err != nil {
-			return req, fmt.Errorf("claims: %w", err)
-		}
-		req.Claims, _ = c.(*jsonvalue.Object)
-	}
-	return req, nil
+	return snapshot.NewFilterRequest(sub, rs[0]), nil
 }
 
 // knownPaths returns the first answer the bundles in file recorded for each

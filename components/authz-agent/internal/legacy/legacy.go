@@ -449,53 +449,55 @@ func RequestHeaders(headers map[string][]string) map[string]string {
 	return out
 }
 
-// IncomingToken returns the Incoming-Token header of a request as sent, the
-// last value of a repeated one, and "" without one.
-func IncomingToken(headers map[string][]string) string {
+// Header returns the value of the request header called name, matched
+// without regard to case: the last value of a repeated one, and "" without
+// one.
+func Header(headers map[string][]string, name string) string {
 	for k, values := range headers {
-		if strings.EqualFold(k, "incoming-token") && len(values) > 0 {
+		if strings.EqualFold(k, name) && len(values) > 0 {
 			return values[len(values)-1]
 		}
 	}
 	return ""
 }
 
+// IncomingToken returns the Incoming-Token header of a request as sent, the
+// last value of a repeated one, and "" without one.
+func IncomingToken(headers map[string][]string) string {
+	return Header(headers, "Incoming-Token")
+}
+
+// SubjectToken returns the subject's token of a request: Incoming-Token
+// when present, else Authorization, and "" when Authorization-Type is
+// anonymous.
+func SubjectToken(headers map[string][]string) string {
+	if strings.EqualFold(strings.TrimSpace(Header(headers, "Authorization-Type")), "anonymous") {
+		return ""
+	}
+	if subject := IncomingToken(headers); subject != "" {
+		return subject
+	}
+	return Header(headers, "Authorization")
+}
+
 // Input builds the input of the admission policies of a legacy request from
 // its headers. The input carries no resource: the policies decide on the
 // tokens alone, and a decoded resource would cost its size again. The
-// admission token is the Authorization header.
-// The subject is Incoming-Token when present, else Authorization, and empty
-// when Authorization-Type is anonymous. input.requestHeaders carries the
-// remaining headers under their lowercase names for the HEADER PIPs, and
-// input.requestId the X-Request-Id. A repeated header contributes its last
-// value.
+// admission token is the Authorization header, and the subject is
+// [SubjectToken]. input.requestHeaders carries the remaining headers under
+// their lowercase names for the HEADER PIPs, and input.requestId the
+// X-Request-Id. A repeated header contributes its last value.
 func Input(headers map[string][]string) map[string]any {
-	get := func(name string) string {
-		for k, values := range headers {
-			if strings.EqualFold(k, name) && len(values) > 0 {
-				return values[len(values)-1]
-			}
-		}
-		return ""
-	}
-	authType := get("authorization-type")
-	admission := get("authorization")
-	subject := ""
-	if !strings.EqualFold(strings.TrimSpace(authType), "anonymous") {
-		if subject = get("incoming-token"); subject == "" {
-			subject = admission
-		}
-	}
 	requestHeaders := map[string]any{}
 	for name, v := range RequestHeaders(headers) {
 		requestHeaders[name] = v
 	}
 	return map[string]any{
-		"authorizationToken": admission,
-		"subject":            subject,
-		"authorizationType":  authType,
+		"authorizationToken": Header(headers, "Authorization"),
+		"subject":            SubjectToken(headers),
+		"authorizationType":  Header(headers, "Authorization-Type"),
 		"requestHeaders":     requestHeaders,
-		"requestId":          get("x-request-id"),
+		"requestId":          Header(headers, "X-Request-Id"),
 	}
 }
 

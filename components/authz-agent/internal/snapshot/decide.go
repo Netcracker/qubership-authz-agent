@@ -26,30 +26,15 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/rego"
 
-	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/regobuiltins"
 	"authz-agent/internal/regogen"
 )
 
-// Request is one check request: the tenant it is decided in, its subject,
-// and one item per resource and operation, in the order of the answers.
+// Request is one check request: the [Subject] and one item per resource
+// and operation, in the order of the answers.
 type Request struct {
-	Tenant string
-	// Claims are the verified claims the subject is read from: those of
-	// the subject's token, or of the admission token for an anonymous
-	// request; nil for none.
-	Claims    *jsonvalue.Object
-	Anonymous bool
-	// Headers holds the request's headers by lower-case name, the last
-	// value of a repeated one.
-	Headers map[string]string
-	// IncomingToken is the Incoming-Token header as sent, which a PIP
-	// receives when its declaration names it; "" for none.
-	IncomingToken string
-	// RequestID is the id of the decision request, which every call of a
-	// PIP carries in X-Request-Id; "" for none.
-	RequestID string
-	Items     []regogen.Body
+	Subject
+	Items []regogen.Body
 }
 
 // Result is the answer for one item. Reason says why an item is denied.
@@ -85,24 +70,7 @@ func (r *Registry) Decide(ctx context.Context, req Request) ([]Result, error) {
 		return out, nil
 	}
 	m := s.Module
-	base := regogen.Request{Tenant: req.Tenant, Anonymous: req.Anonymous, Claims: req.Claims, Headers: req.Headers,
-		IncomingToken: req.IncomingToken, Entitlements: r.cfg.Entitlements}
-	claims := req.Claims
-	if claims == nil {
-		claims = jsonvalue.NewObject()
-	}
-	regogen.SubjectOf(claims, req.Anonymous, regogen.DefaultSubjectRules).Apply(&base)
-	unread := m.ResolveSubject(&base)
-	ctx = regobuiltins.WithRequestID(regobuiltins.WithCalls(ctx), req.RequestID)
-	if r.cfg.HTTP != nil {
-		ctx = r.cfg.HTTP.Context(ctx)
-	}
-	if m.Iterates {
-		base.Scope = m.ReadScope(ctx, &base)
-		if base.Scope.Failed {
-			unread = append(unread, regogen.ScopePIP)
-		}
-	}
+	base, unread, ctx := r.prepare(ctx, m, req.Subject)
 	var inputs []*regogen.Input
 	if len(req.Items) == 1 {
 		one := base

@@ -20,23 +20,13 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/rego"
 
-	"authz-agent/internal/jsonvalue"
-	"authz-agent/internal/regobuiltins"
 	"authz-agent/internal/regogen"
 )
 
-// FilterRequest is one check/filter request: the tenant, the subject as
-// [Request] holds it, the resource type, and the operation, nil where the
-// request names none.
+// FilterRequest is one check/filter request: the [Subject], the resource
+// type, and the operation, nil where the request names none.
 type FilterRequest struct {
-	Tenant    string
-	Claims    *jsonvalue.Object
-	Anonymous bool
-	Headers   map[string]string
-	// IncomingToken is [Request.IncomingToken].
-	IncomingToken string
-	// RequestID is [Request.RequestID].
-	RequestID    string
+	Subject
 	ResourceType string
 	Operation    *string
 }
@@ -57,21 +47,8 @@ func (r *Registry) Filter(ctx context.Context, req FilterRequest) (regogen.Filte
 		return deny, nil
 	}
 	m := s.Filter
-	in := regogen.Request{Tenant: req.Tenant, Anonymous: req.Anonymous, Claims: req.Claims, Headers: req.Headers,
-		IncomingToken: req.IncomingToken, Entitlements: r.cfg.Entitlements, Body: regogen.Body{Operation: op, ResourceType: req.ResourceType}}
-	claims := req.Claims
-	if claims == nil {
-		claims = jsonvalue.NewObject()
-	}
-	regogen.SubjectOf(claims, req.Anonymous, regogen.DefaultSubjectRules).Apply(&in)
-	m.ResolveSubject(&in)
-	ctx = regobuiltins.WithRequestID(regobuiltins.WithCalls(ctx), req.RequestID)
-	if r.cfg.HTTP != nil {
-		ctx = r.cfg.HTTP.Context(ctx)
-	}
-	if m.Iterates {
-		in.Scope = m.ReadScope(ctx, &in)
-	}
+	in, _, ctx := r.prepare(ctx, m, req.Subject)
+	in.Body = regogen.Body{Operation: op, ResourceType: req.ResourceType}
 	p, err := regogen.Project(m, in)
 	if err != nil {
 		return deny, fmt.Errorf("tenant %s: project the filter request: %w", req.Tenant, err)

@@ -25,7 +25,6 @@ import (
 
 	"authz-agent/components/authz-agent/internal/legacy"
 	"authz-agent/components/authz-agent/internal/snapshot"
-	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/regogen"
 )
 
@@ -39,9 +38,9 @@ const tenantHeader = "Tenant"
 // subject's token first: a refused admission token is answered with its
 // authError, and a refused subject token denies every item with its reason.
 // Without a registry, and for a request of the default tenant while its name
-// is not translated, every item is denied as in a tenant without policies.
+// is not resolved, every item is denied as in a tenant without policies.
 func (s *Server) decide(c *fiber.Ctx, resources []legacy.Resource, shape func(result any) []byte) error {
-	input, admission, untranslated, answered := s.admit(c)
+	input, admission, unresolved, answered := s.admit(c)
 	if answered != nil {
 		return answered()
 	}
@@ -54,13 +53,17 @@ func (s *Server) decide(c *fiber.Ctx, resources []legacy.Resource, shape func(re
 		for i := range results {
 			results[i].Reason = fmt.Sprint(reason)
 		}
-	case s.opts.Snapshots == nil || untranslated:
+	case s.opts.Snapshots == nil || unresolved:
 		results = make([]snapshot.Result, len(resources))
 		for i := range results {
 			results[i].Reason = fmt.Sprintf(snapshot.ReasonNoTenant, tenant)
 		}
 	default:
-		req, err := snapshotRequest(tenant, input, admission["tokenPayload"], c.GetReqHeaders(), resources)
+		sub, err := subject(c, tenant, admission)
+		var req snapshot.Request
+		if err == nil {
+			req, err = snapshot.NewRequest(sub, resources)
+		}
 		if err != nil {
 			s.opts.Log.DebugC(ctx, "legacy request rejected path=%s: %v", c.Path(), err)
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "bad request"})
@@ -71,30 +74,30 @@ func (s *Server) decide(c *fiber.Ctx, resources []legacy.Resource, shape func(re
 		}
 	}
 	result := legacyResult(resources, results)
-	s.log(c, input, result)
+	s.log(c, input)
 	return sendJSON(c, http.StatusOK, shape(result))
 }
 
 // filter answers a check/filter request with the generated filter of the
 // request's tenant, after the same checks of the caller and the subject's
 // token as decide: a refused subject token, a service without a registry,
-// and a request of the default tenant while its name is not translated get
+// and a request of the default tenant while its name is not resolved get
 // DENY.
 func (s *Server) filter(c *fiber.Ctx, r legacy.Resource) error {
-	input, admission, untranslated, answered := s.admit(c)
+	input, admission, unresolved, answered := s.admit(c)
 	if answered != nil {
 		return answered()
 	}
 	ctx := c.UserContext()
 	tenant := input["tenant"].(string)
 	answer := regogen.FilterAnswer{Result: regogen.FilterDeny}
-	if _, refused := admission["subjectError"]; !refused && s.opts.Snapshots != nil && !untranslated {
-		req, err := filterRequest(tenant, input, admission["tokenPayload"], c.GetReqHeaders(), r)
+	if _, refused := admission["subjectError"]; !refused && s.opts.Snapshots != nil && !unresolved {
+		sub, err := subject(c, tenant, admission)
 		if err != nil {
 			s.opts.Log.DebugC(ctx, "legacy request rejected path=%s: %v", c.Path(), err)
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "bad request"})
 		}
-		if answer, err = s.opts.Snapshots.Filter(ctx, req); err != nil {
+		if answer, err = s.opts.Snapshots.Filter(ctx, snapshot.NewFilterRequest(sub, r)); err != nil {
 			s.opts.Log.ErrorC(ctx, "filter failed tenant=%s: %v", tenant, err)
 			return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
 		}
@@ -103,23 +106,19 @@ func (s *Server) filter(c *fiber.Ctx, r legacy.Resource) error {
 	if err != nil {
 		return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
 	}
-	var result map[string]any
-	if err := json.Unmarshal(body, &result); err != nil {
-		return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
-	}
-	s.log(c, input, result)
+	s.log(c, input)
 	return sendJSON(c, http.StatusOK, body)
 }
 
 // admit builds the input of the embedded policies, with the tenant of the
 // request, and evaluates their checks of the caller and the
-// subject's token. untranslated reports what [Server.tenant] reports.
+// subject's token. unresolved reports what [Server.tenant] reports.
 // answered is non-nil when the request is answered already: a refused
 // admission token, with its authError; a caller outside its tenant
 // ([callerMayReach]), with 403 and an empty body; or a failed evaluation,
 // with 500.
 func (s *Server) admit(c *fiber.Ctx) (input, admission map[string]any,
-	untranslated bool, answered func() error) {
+	unresolved bool, answered func() error) {
 	ctx := c.UserContext()
 	input = legacy.Input(c.GetReqHeaders())
 	admission, err := s.admission(ctx, input)
@@ -127,12 +126,11 @@ func (s *Server) admit(c *fiber.Ctx) (input, admission map[string]any,
 		s.opts.Log.ErrorC(ctx, "admission failed: %v", err)
 		return nil, nil, false, func() error { return opaError(c, http.StatusInternalServerError, "internal_error", err.Error()) }
 	}
-	tenant, untranslated := s.tenant(c)
+	tenant, unresolved := s.tenant(c)
 	input["tenant"] = tenant
 	if raw, refused := admission["authError"]; refused {
-		result := map[string]any{"authError": raw}
-		s.log(c, input, result)
-		status, body, _ := legacy.AuthError(result)
+		s.log(c, input)
+		status, body, _ := legacy.AuthError(map[string]any{"authError": raw})
 		return nil, nil, false, func() error { return sendJSON(c, status, body) }
 	}
 	if claims, ok := admission["callerClaims"].(map[string]any); ok && !callerMayReach(claims, tenant, s.resolvedDefaultTenant()) {
@@ -142,7 +140,7 @@ func (s *Server) admit(c *fiber.Ctx) (input, admission map[string]any,
 			return nil
 		}
 	}
-	return input, admission, untranslated, nil
+	return input, admission, unresolved, nil
 }
 
 // callerMayReach reports whether the caller whose verified token carries
@@ -202,9 +200,9 @@ func (s *Server) resolvedDefaultTenant() string {
 	return s.defaultTenant()
 }
 
-// log reports a decision at debug. The line carries neither the input nor
-// the result, which hold the caller's token and claims.
-func (s *Server) log(c *fiber.Ctx, input map[string]any, _ map[string]any) {
+// log reports a decision at debug. The line carries the tenant and no part
+// of the input, which holds the caller's token and claims.
+func (s *Server) log(c *fiber.Ctx, input map[string]any) {
 	s.opts.Log.DebugC(c.UserContext(), "decision path=authorize tenant=%v", input["tenant"])
 }
 
@@ -228,106 +226,25 @@ func (s *Server) admission(ctx context.Context, input map[string]any) (map[strin
 // parameter with a space around the name is another tenant than the name.
 // HTTP strips the spaces around a header value before it gets here.
 //
-// untranslated reports that the tenant is the default tenant and its name
-// was not translated when the request arrived, so the tenant is a name whose
-// policy data, if any, is another tenant's. The flag is read before the
-// tenant, so a translation in between leaves it set.
-func (s *Server) tenant(c *fiber.Ctx) (tenant string, untranslated bool) {
+// unresolved reports that the tenant is the default tenant and tenant-manager
+// had not resolved its name to an ID when the request arrived, so the tenant
+// is a name whose policy data, if any, is another tenant's. The flag is read
+// before the tenant, so a resolution in between leaves it set.
+func (s *Server) tenant(c *fiber.Ctx) (tenant string, unresolved bool) {
 	if t := lastQuery(c, "tenant_id"); t != "" {
 		return t, false
 	}
 	if t := c.Get(tenantHeader); t != "" {
 		return t, false
 	}
-	untranslated = s.opts.DefaultTenantResolved != nil && !s.opts.DefaultTenantResolved()
-	return s.defaultTenant(), untranslated
+	unresolved = s.opts.DefaultTenantResolved != nil && !s.opts.DefaultTenantResolved()
+	return s.defaultTenant(), unresolved
 }
 
-// snapshotRequest builds the request of the registry from the verified
-// claims the subject is read from, which an anonymous request takes from
-// its admission token, the headers the policies read, as
-// [legacy.RequestHeaders] gives them, so no PIP receives the caller's
-// tokens, and the items as the request wrote them.
-func snapshotRequest(tenant string, input map[string]any, payload any, headers map[string][]string,
-	resources []legacy.Resource) (snapshot.Request, error) {
-	claims, err := claimsOf(payload)
-	if err != nil {
-		return snapshot.Request{}, err
-	}
-	req := snapshot.Request{Tenant: tenant, Headers: legacy.RequestHeaders(headers), Anonymous: input["subject"] == "",
-		Claims: claims, IncomingToken: legacy.IncomingToken(headers), RequestID: requestIDOf(input)}
-	for _, r := range resources {
-		b, err := body(r)
-		if err != nil {
-			return req, err
-		}
-		req.Items = append(req.Items, b)
-	}
-	return req, nil
-}
-
-// filterRequest is snapshotRequest for check/filter: the resource type and
-// the operation of r as the query sent them, an empty operation as none.
-func filterRequest(tenant string, input map[string]any, payload any, headers map[string][]string,
-	r legacy.Resource) (snapshot.FilterRequest, error) {
-	claims, err := claimsOf(payload)
-	if err != nil {
-		return snapshot.FilterRequest{}, err
-	}
-	req := snapshot.FilterRequest{Tenant: tenant, Headers: legacy.RequestHeaders(headers), Anonymous: input["subject"] == "",
-		Claims: claims, IncomingToken: legacy.IncomingToken(headers), RequestID: requestIDOf(input),
-		ResourceType: fmt.Sprint(r.ResourceType)}
-	if op := fmt.Sprint(r.Operation); op != "" {
-		req.Operation = &op
-	}
-	return req, nil
-}
-
-// requestIDOf is the id of the request whose input is input, which the
-// requestID middleware always sets.
-func requestIDOf(input map[string]any) string {
-	id, _ := input["requestId"].(string)
-	return id
-}
-
-// claimsOf is the token payload of the admission as claims, an empty
-// object for a payload that is not one.
-func claimsOf(payload any) (*jsonvalue.Object, error) {
-	raw, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-	v, err := jsonvalue.Decode(raw)
-	if err != nil {
-		return nil, err
-	}
-	claims, ok := v.(*jsonvalue.Object)
-	if !ok {
-		claims = jsonvalue.NewObject()
-	}
-	return claims, nil
-}
-
-// body is the projection's view of one resource; a field the request left
-// out is null, and a resource it left out is absent. The resource is the one
-// r carries, which the operations of a bulk/operations item share.
-func body(r legacy.Resource) (regogen.Body, error) {
-	b := regogen.Body{Resource: r.Resource, HasResource: len(r.Raw.Resource) > 0}
-	var err error
-	if b.ResourceType, err = decode(r.Raw.Type); err != nil {
-		return b, err
-	}
-	if b.Operation, err = decode(r.Raw.Operation); err != nil {
-		return b, err
-	}
-	return b, nil
-}
-
-func decode(raw json.RawMessage) (jsonvalue.Value, error) {
-	if len(raw) == 0 {
-		return nil, nil
-	}
-	return jsonvalue.Decode(raw)
+// subject is the [snapshot.Subject] of the admitted request c in tenant,
+// with the token payload of its admission.
+func subject(c *fiber.Ctx, tenant string, admission map[string]any) (snapshot.Subject, error) {
+	return snapshot.NewSubject(tenant, c.GetReqHeaders(), admission["tokenPayload"])
 }
 
 // legacyResult is the decision in the shape the response builders of

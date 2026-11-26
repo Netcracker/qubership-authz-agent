@@ -14,8 +14,10 @@
 
 // Snapshot-corpus runs the corpus of the specification through the decision
 // path of the service: each bundle is loaded into a registry of its own
-// ([snapshot.Registry.Load]) and each of its requests is decided from the
-// claims, the headers, and the body it carries ([snapshot.Registry.Decide]).
+// ([snapshot.Registry.Load]), and each of its requests is projected from the
+// headers, the claims, and the body it carries as the service projects an
+// HTTP request ([snapshot.NewSubject], [snapshot.NewRequest]) and decided
+// ([snapshot.Registry.Decide]).
 //
 // A request is compared with the answer of the agent profile unless its
 // module reads a GENERAL or FILTERED PIP, whose answers the bundle does not
@@ -50,8 +52,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"authz-agent/components/authz-agent/internal/corpus"
+	"authz-agent/components/authz-agent/internal/legacy"
 	"authz-agent/components/authz-agent/internal/snapshot"
-	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/regobuiltins"
 	"authz-agent/internal/regogen"
 	"authz-agent/internal/regogen/spectables"
@@ -132,27 +135,26 @@ func newRegistry(tab *spectables.Table, bulkWorkers int, tr http.RoundTripper) *
 			Token: func() (string, error) { return "own", nil }}}, tab, quiet{})
 }
 
-// toRequest is the decision request of q in tenant with the bodies given.
-func toRequest(q request, tenant string, bodies ...regogen.Body) (snapshot.Request, error) {
-	req := snapshot.Request{Tenant: tenant, Anonymous: q.Anonymous, Headers: map[string]string{}, Items: bodies}
-	for k, v := range q.Headers {
-		req.Headers[strings.ToLower(k)] = v
+// toRequest is the decision request of q in tenant with the resources
+// given, projected as the service projects the HTTP request ([corpus.Subject]).
+func toRequest(q request, tenant string, resources ...legacy.Resource) (snapshot.Request, error) {
+	sub, err := corpus.Subject(tenant, q.Headers, q.Claims, q.Anonymous)
+	if err != nil {
+		return snapshot.Request{}, err
 	}
-	if q.Claims != nil {
-		c, err := jsonvalue.Decode([]byte(*q.Claims))
-		if err != nil {
-			return req, fmt.Errorf("claims: %w", err)
-		}
-		req.Claims, _ = c.(*jsonvalue.Object)
-	}
-	return req, nil
+	return snapshot.NewRequest(sub, resources)
 }
 
-func body(q request) (regogen.Body, error) {
+// resources parses the body of q as the check/resource route does.
+func resources(q request) ([]legacy.Resource, error) {
 	if q.Body == nil {
-		return regogen.Body{}, fmt.Errorf("%s: the bundle carries no body", q.ID)
+		return nil, fmt.Errorf("%s: the bundle carries no body", q.ID)
 	}
-	return regogen.ReadBody([]byte(*q.Body))
+	rs, err := legacy.CheckResource([]byte(*q.Body))
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", q.ID, err)
+	}
+	return rs, nil
 }
 
 // comparable reports whether m reads only sources whose answers the bundle
@@ -202,12 +204,12 @@ func run(b bundle, tab *spectables.Table, reps int) outcome {
 		return o
 	}
 	for _, q := range b.Requests {
-		bd, err := body(q)
+		rs, err := resources(q)
 		if err != nil {
 			o.errors = append(o.errors, err.Error())
 			continue
 		}
-		req, err := toRequest(q, b.Tenant, bd)
+		req, err := toRequest(q, b.Tenant, rs...)
 		if err != nil {
 			o.errors = append(o.errors, q.ID+": "+err.Error())
 			continue
@@ -264,19 +266,19 @@ func bulk(b bundle, tab *spectables.Table, n, workers, reps int) ([]float64, err
 	if _, err := r.Load(context.Background(), b.PolicySets, b.PIPs); err != nil {
 		return nil, err
 	}
-	var bodies []regogen.Body
-	for len(bodies) < n {
+	var items []legacy.Resource
+	for len(items) < n {
 		for _, q := range b.Requests {
-			bd, err := body(q)
+			rs, err := resources(q)
 			if err != nil {
 				return nil, err
 			}
-			if len(bodies) < n {
-				bodies = append(bodies, bd)
+			if len(items) < n {
+				items = append(items, rs...)
 			}
 		}
 	}
-	req, err := toRequest(b.Requests[0], b.Tenant, bodies...)
+	req, err := toRequest(b.Requests[0], b.Tenant, items...)
 	if err != nil {
 		return nil, err
 	}
@@ -300,11 +302,11 @@ func underLoad(probe, big bundle, tab *spectables.Table, rounds int, load bool) 
 	}
 	var reqs []snapshot.Request
 	for _, q := range probe.Requests {
-		bd, err := body(q)
+		rs, err := resources(q)
 		if err != nil {
 			return nil, err
 		}
-		req, err := toRequest(q, probe.Tenant, bd)
+		req, err := toRequest(q, probe.Tenant, rs...)
 		if err != nil {
 			return nil, err
 		}

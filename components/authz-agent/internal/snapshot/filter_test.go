@@ -59,7 +59,7 @@ func filterOf(t *testing.T, r *Registry, tenant, op string) string {
 // filterOfClaims is filterOf for the subject of claims.
 func filterOfClaims(t *testing.T, r *Registry, claims *jsonvalue.Object, tenant, op string) string {
 	t.Helper()
-	a, err := r.Filter(context.Background(), FilterRequest{Tenant: tenant, Claims: claims, ResourceType: "doc", Operation: &op})
+	a, err := r.Filter(context.Background(), FilterRequest{Subject: Subject{Tenant: tenant, Claims: claims}, ResourceType: "doc", Operation: &op})
 	if err != nil {
 		t.Fatalf("Filter(doc, %s): %v", op, err)
 	}
@@ -171,7 +171,7 @@ func TestANegatedMongoDBPredicateWithAPlaceholderKeepsItsBracesOutsideNor(t *tes
 				t.Fatal(err)
 			}
 			op := "read"
-			a, err := r.Filter(context.Background(), FilterRequest{Tenant: "t", Claims: claims.(*jsonvalue.Object),
+			a, err := r.Filter(context.Background(), FilterRequest{Subject: Subject{Tenant: "t", Claims: claims.(*jsonvalue.Object)},
 				ResourceType: "doc", Operation: &op})
 			if err != nil {
 				t.Fatalf("Filter(doc, read): %v", err)
@@ -964,7 +964,7 @@ func TestAFailedConditionInAnIterateDeniesEveryRow(t *testing.T) {
 		t.Fatal(err)
 	}
 	op := "read"
-	a, err := r.Filter(context.Background(), FilterRequest{Tenant: "a", Claims: claims.(*jsonvalue.Object),
+	a, err := r.Filter(context.Background(), FilterRequest{Subject: Subject{Tenant: "a", Claims: claims.(*jsonvalue.Object)},
 		ResourceType: "doc", Operation: &op})
 	if err != nil {
 		t.Fatalf("Filter(doc, read): %v", err)

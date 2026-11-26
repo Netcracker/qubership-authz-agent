@@ -176,7 +176,7 @@ func readDocAs(t *testing.T, sub, tenant, a string, items int) Request {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req := Request{Tenant: tenant, Claims: claims.(*jsonvalue.Object), Headers: map[string]string{}}
+	req := Request{Subject: Subject{Tenant: tenant, Claims: claims.(*jsonvalue.Object), Headers: map[string]string{}}}
 	for range items {
 		req.Items = append(req.Items, regogen.Body{Operation: "read", ResourceType: "doc",
 			Resource: mustObject(t, `{"a": "`+a+`"}`), HasResource: true})
@@ -944,7 +944,7 @@ func TestACallOfAPIPCarriesTheRequestID(t *testing.T) {
 	req.Headers["x-request-id"] = "from-the-caller"
 	decide(t, r, req)
 	op := "read"
-	if _, err := r.Filter(context.Background(), FilterRequest{Tenant: "a", Claims: req.Claims, RequestID: "abc",
+	if _, err := r.Filter(context.Background(), FilterRequest{Subject: Subject{Tenant: "a", Claims: req.Claims, RequestID: "abc"},
 		ResourceType: "doc", Operation: &op}); err != nil {
 		t.Fatalf("Filter: %v", err)
 	}
