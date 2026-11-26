@@ -39,12 +39,7 @@ const deepNesting = 1 << 20
 
 // knownDeepCrashes lists the texts that still kill the process when nested
 // deepNesting levels deep, by the name of the case.
-var knownDeepCrashes = map[string]costcheck.Known{
-	"rule.rsqlPredicate of a DENY rule": {
-		Finding: "F82: the RSQL parser that negates a DENY predicate recurses once per bracket with no depth limit",
-		Frame:   "regogen.(*rsqlParser)",
-	},
-}
+var knownDeepCrashes = map[string]costcheck.Known{}
 
 // deepText is a text of a policy-sets or PIPs document, or of a PIP's
 // answer, that a parser reads, with its value nested n levels deep.

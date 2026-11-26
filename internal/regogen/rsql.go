@@ -18,6 +18,8 @@ import (
 	"errors"
 	"regexp"
 	"strings"
+
+	"authz-agent/internal/jsonvalue"
 )
 
 // The RSQL text of a DENY predicate is negated on its parse tree: the
@@ -129,9 +131,14 @@ type rsqlNode struct {
 	parts []*rsqlNode
 }
 
+// rsqlParser reads tokens into a tree, refusing groups nested deeper than
+// [jsonvalue.MaxDepth]: the text comes from a policy and is not bounded by
+// the decoder of the policy around it, and each group costs a frame of the
+// recursion here and in negate and write.
 type rsqlParser struct {
-	t []rsqlToken
-	i int
+	t     []rsqlToken
+	i     int
+	depth int
 }
 
 func (p *rsqlParser) peek() string {
@@ -184,7 +191,12 @@ func (p *rsqlParser) and() (*rsqlNode, error) { return p.join("and", "AND", p.co
 
 func (p *rsqlParser) constraint() (*rsqlNode, error) {
 	if p.peek() == "LP" {
+		if p.depth == jsonvalue.MaxDepth {
+			return nil, errRSQL
+		}
 		p.i++
+		p.depth++
+		defer func() { p.depth-- }()
 		e, err := p.or()
 		if err != nil {
 			return nil, err
@@ -304,7 +316,8 @@ func (n *rsqlNode) write() string {
 // negateRSQL returns the negation of the RSQL text s: its parse tree with
 // each comparison swapped to its opposite and each join by De Morgan, the
 // values as written. It returns false for a text the parser refuses and for
-// one with a comparison that has no opposite, such as =like=.
+// one with a comparison that has no opposite, such as =like=, or whose
+// groups nest deeper than [jsonvalue.MaxDepth].
 func negateRSQL(s string) (string, bool) {
 	n, err := parseRSQL(s)
 	if err != nil {
