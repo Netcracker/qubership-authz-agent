@@ -83,6 +83,7 @@ func do(t *testing.T, app *fiber.App, method, path, body string, headers map[str
 		t.Fatalf("%s %s: %v", method, path, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
+	checkAgainstSpec(t, app, req, resp.StatusCode)
 	raw, _ := io.ReadAll(resp.Body)
 	var parsed map[string]any
 	if len(raw) > 0 {
