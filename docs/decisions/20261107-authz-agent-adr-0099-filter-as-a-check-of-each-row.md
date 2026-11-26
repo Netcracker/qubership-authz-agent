@@ -230,6 +230,16 @@ case-sensitively, so the filter would admit that row where another rule allows i
 R11 accepts that cost for a template only because its author knows the store; the agent does not, so it writes no such
 text and narrows the answer under R5 (R14).
 
+Legacy builds the text of a filter only from the templates of rules. It writes the template of a rule that has one
+without evaluating the rule's condition, and leaves out a rule without a template whose condition reads the resource,
+so it never writes a text derived from a condition. Writing a derived text would add a behavior that legacy does not
+have, which ADR-0097 R6 allows only by a rule of an ADR, and the rule would have to accept rows that `check/resource`
+denies, against R1 and R5. With `subject.x == 'v' OR resource.a == 'y'` and a failed `subject.x`, ADR-0098 R11 leaves
+the rows where `a` is `y` to the rest of the tree. The derived text `a=="y"` selects fewer of them in a store that
+compares case-sensitively, and more in a store whose collation ignores accents or trailing spaces, because `==` folds
+only case. The owner decided on 2026-11-26 that such a subtraction gets `null`, and `DENY` where no dialect is left
+(R14).
+
 Policy authors already write quotes around a placeholder in their templates, such as `t='${subject.id}'`, and some
 templates substitute a list that forms part of the syntax of the predicate. Escaping a value for its dialect would
 change the predicates those templates produce today, so the agent writes the value as it is (R13). `customPredicate`
@@ -271,7 +281,11 @@ legacy filter, so each is named as allowing more (R8).
   the predicates they produce today.
 - **A13. Derive the text of the rows that ADR-0098 R11 denies from the condition, such as `a=="y"` for
   `resource.a == 'y'`.** Rejected by R14: the text compares by the rules of the store, and where another rule allows a
-  row, admits it although `check/resource` denies it.
+  row, admits it although `check/resource` denies it. Legacy writes no such text.
+- **A14. Derive that text only where it admits fewer rows than the rows ADR-0098 R11 leaves to the rest of the tree,
+  such as `a=="y"` for `subject.x == 'v' OR resource.a == 'y'` in a store that compares case-sensitively.** Rejected
+  by R14: a store whose collation ignores accents or trailing spaces matches rows that `==` does not, so the text can
+  still admit a row that `check/resource` denies.
 
 ## Consequences
 
@@ -330,6 +344,3 @@ Follow-ups:
   value that holds a placeholder is substituted again or fails the request too. Legacy sets no bound on the repeated
   substitution, so the placeholder that R13 leaves in the text after the bound is a departure whose direction this
   point settles as well. The owner of the policy decision code (`vlsi`) decides. The point affects R13.
-- **O3.** Whether the agent writes no text for the rows that ADR-0098 R11 item 2 denies, as R14 states, or writes a
-  text derived from the condition and names the rows it admits as a departure that allows more. The owner of the
-  policy decision code (`vlsi`) decides. The point affects R14.
