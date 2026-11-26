@@ -16,6 +16,7 @@ package regogen
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"slices"
@@ -223,7 +224,7 @@ func render(x *fexpr, d policyir.Dialect) (string, bool) {
 		case policyir.DialectQueryDSL:
 			return "(" + inner + ").not()", true
 		}
-		return negateMongoLeaf(leaf.term), true
+		return negateMongoLeaf(leaf.term)
 	}
 	type part struct {
 		x    *fexpr
@@ -329,22 +330,35 @@ func joinGroups(texts []string, d policyir.Dialect) (string, bool) {
 }
 
 // negateRSQLTerm is the RSQL text of the negation of t: its template
-// negated, and then each placeholder replaced by the text it became, so that
-// a value goes into the negation as it went into the predicate. It returns
-// false where the template has no negation.
+// negated, and then filled by [fillTemplate] with the text each placeholder
+// became in the predicate, so that a value and an escaped $${x} go into the
+// negation as they went into the predicate. It returns false where the
+// template has no negation, or where the negation holds a placeholder the
+// predicate did not substitute.
 func negateRSQLTerm(t *fterm) (string, bool) {
 	neg, ok := negateRSQL(t.template[policyir.DialectRSQL])
 	if !ok {
 		return "", false
 	}
-	subst := t.subst[policyir.DialectRSQL]
-	return placeholderRE.ReplaceAllStringFunc(neg, func(m string) string {
-		if v, ok := subst[m[2:len(m)-1]]; ok {
-			return v
-		}
-		return m
-	}), true
+	out, err := fillTemplate(neg, t.substituted(policyir.DialectRSQL))
+	return out, err == nil
 }
+
+// substituted returns the text each placeholder of the template of dialect d
+// became in the predicate of t, and errNoSubstitution for a placeholder the
+// predicate did not substitute.
+func (t *fterm) substituted(d policyir.Dialect) func(name string) (string, error) {
+	return func(name string) (string, error) {
+		if v, ok := t.subst[d][name]; ok {
+			return v, nil
+		}
+		return "", errNoSubstitution
+	}
+}
+
+// errNoSubstitution reports a placeholder in the negation of a template that
+// the predicate of the template did not substitute.
+var errNoSubstitution = errors.New("the negation of a template holds a placeholder its predicate does not")
 
 // mongoNegate maps each MongoDB comparison operator to its opposite.
 var mongoNegate = map[string]string{"$eq": "$ne", "$ne": "$eq", "$in": "$nin", "$nin": "$in", "$lt": "$gte",
@@ -368,20 +382,16 @@ func braceMongo(term *fterm, t string) string {
 
 // negateMongoLeaf is the MongoDB text of the negation of the predicate of
 // term, braces included: its template in the legacy braces, negated by
-// negateMongoText, and then each placeholder replaced by the text it became,
-// as negateRSQLTerm does. A term without a MongoDB template negates its text.
-func negateMongoLeaf(term *fterm) string {
+// negateMongoText, and then filled as negateRSQLTerm fills it. It returns
+// false where the negation holds a placeholder the predicate did not
+// substitute. A term without a MongoDB template negates its text.
+func negateMongoLeaf(term *fterm) (string, bool) {
 	tmpl, ok := term.template[policyir.DialectMongoDB]
 	if !ok {
-		return negateMongoText(braceMongo(term, term.text[policyir.DialectMongoDB]))
+		return negateMongoText(braceMongo(term, term.text[policyir.DialectMongoDB])), true
 	}
-	subst := term.subst[policyir.DialectMongoDB]
-	return placeholderRE.ReplaceAllStringFunc(negateMongoText(braceMongo(term, tmpl)), func(m string) string {
-		if v, ok := subst[m[2:len(m)-1]]; ok {
-			return v
-		}
-		return m
-	})
+	out, err := fillTemplate(negateMongoText(braceMongo(term, tmpl)), term.substituted(policyir.DialectMongoDB))
+	return out, err == nil
 }
 
 // mongoNode is a node of the tolerant tree of a MongoDB text: an object, an

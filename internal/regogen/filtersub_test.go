@@ -16,13 +16,16 @@ package regogen
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	gotoken "go/token"
 	"io"
+	"maps"
 	"net/http"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -40,13 +43,7 @@ import (
 // that answer otherwise today, by source, state, and effect. A listed row is
 // logged; a listed row that answers as the rule asks fails the test until its
 // entry is removed, and an unlisted one fails it.
-var placeholderKnown = map[string]string{
-	"roles/ERROR/ALLOW": f10,
-	"roles/ERROR/DENY":  f10,
-}
-
-const f10 = "F10: ${subject.roles} renders a roles claim in ERROR as an empty list, so the filter writes " +
-	"c=in=() or c=out=() instead of denying"
+var placeholderKnown = map[string]string{}
 
 // placeholderStateRule is what the answer of a filter whose predicate names
 // a source must be when the source is in a state: DENY where the agent could
@@ -274,15 +271,24 @@ var placeholderProducers = map[string]placeholderProducer{
 // iterates over the permission scope.
 func placeholderTree(t *testing.T, effect, name, pips string, iterate bool) (*policyir.Tree, error) {
 	t.Helper()
+	p := "${" + name + "}"
+	return predicateTree(t, effect, map[string]string{"rsqlPredicate": "c=in=(" + p + ")",
+		"sqlPredicate": "c IN (" + p + ")", "mongodbPredicate": `{"c": {"$in": ` + p + `}}`,
+		"predicate": "c.in(" + p + ")"}, pips, iterate)
+}
+
+// predicateTree is placeholderTree with the rule's predicate fields preds,
+// such as rsqlPredicate, as written.
+func predicateTree(t *testing.T, effect string, preds map[string]string, pips string,
+	iterate bool) (*policyir.Tree, error) {
+	t.Helper()
 	alg := map[string]string{"ALLOW": "DENY_UNLESS_PERMIT", "DENY": "PERMIT_UNLESS_DENY"}[effect]
 	it := ""
 	if iterate {
 		it = fmt.Sprintf(`"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": %q},`, alg)
 	}
-	p := "${" + name + "}"
-	rule := map[string]string{"ruleId": "r1", "target": "true", "effect": effect, "tenantId": "t1",
-		"rsqlPredicate": "c=in=(" + p + ")", "sqlPredicate": "c IN (" + p + ")",
-		"mongodbPredicate": `{"c": {"$in": ` + p + `}}`, "predicate": "c.in(" + p + ")"}
+	rule := map[string]string{"ruleId": "r1", "target": "true", "effect": effect, "tenantId": "t1"}
+	maps.Copy(rule, preds)
 	sets := fmt.Sprintf(`{"policySets": [{"policySetId": "s1", "name": "s1", "status": "ACTIVE",
 		"target": "resourceType == 'doc'", "combiningAlgorithm": %[1]q, "tenantId": "t1", %[2]s
 		"policies": [{"policyId": "p1", "target": "true", "combiningAlgorithm": %[1]q, "tenantId": "t1",
@@ -438,5 +444,174 @@ func TestAPlaceholderDeniesExactlyWhenItsSourceIsUnread(t *testing.T) {
 		if !rows[key] {
 			t.Errorf("the table has no row %s any longer; remove its entry from placeholderKnown", key)
 		}
+	}
+}
+
+// predicateAnswer answers check/filter for the request of s under one
+// unconditional rule of effect whose predicate fields are preds.
+func predicateAnswer(t *testing.T, effect string, preds map[string]string, s placeholderSetup) FilterAnswer {
+	t.Helper()
+	tree, err := predicateTree(t, effect, preds, s.pips, s.iterate)
+	if err != nil {
+		t.Fatalf("the tenant does not load: %v", err)
+	}
+	m, err := GenerateFilter(tree, table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("GenerateFilter: %v", err)
+	}
+	return placeholderAnswer(t, m, s)
+}
+
+func TestFillTemplateReplacesOnlyThePlaceholdersOfTheTemplate(t *testing.T) {
+	values := map[string]string{"x": "${x}${y}", "y": "v"}
+	for _, tc := range []struct{ name, tmpl, want string }{
+		{"a value that holds placeholders", "a==${x}", "a==${x}${y}"},
+		{"an escaped placeholder", "a==$${x}", "a==${x}"},
+		{"an escaped placeholder beside the same placeholder", "a==$${y};b==${y}", "a==${y};b==v"},
+		{"a dollar before an escaped placeholder", "a==$$${y}", "a==$${y}"},
+		{"empty braces", "a==${}", "a==${}"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := fillTemplate(tc.tmpl, func(name string) (string, error) {
+				if v, ok := values[name]; ok {
+					return v, nil
+				}
+				return "", fmt.Errorf("no value of %q", name)
+			})
+			if err != nil || got != tc.want {
+				t.Errorf("fillTemplate(%q) = %q, %v, want %q", tc.tmpl, got, err, tc.want)
+			}
+		})
+	}
+}
+
+// A value a source returns goes into the text as the source returned it, even
+// where it holds placeholders the request could resolve.
+func TestAPlaceholderValueIsWrittenAsTheSourceReturnedIt(t *testing.T) {
+	header := strings.Repeat("${subject.h}", 300)
+	headerPIP := func(value string) placeholderSetup {
+		return placeholderSetup{name: "subject.h", req: Request{Headers: map[string]string{"x-t": value}},
+			pips: `{"name": "subject.h", "pipType": "HEADER", "header": "X-T"}`}
+	}
+	answer := resolved(t, "VALUE", `["${subject.id}", "q"]`)
+	general := placeholderSetup{name: "subject.g", answer: &answer,
+		pips: `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g", "requestAttributes": {}}`,
+		req:  Request{Values: map[string]Resolved{specKey("subj", "id"): {State: spectables.StateValue, Value: "u1"}}}}
+	for _, tc := range []struct {
+		name  string
+		setup placeholderSetup
+		want  string
+	}{
+		{"a header that repeats its own placeholder", headerPIP(header), `c=in=("` + header + `")`},
+		{"a header that names the resource type", headerPIP("${resourceType}"), `c=in=("${resourceType}")`},
+		{"a GENERAL PIP answer that names the subject id", general, `c=in=("${subject.id}", "q")`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fa := predicateAnswer(t, "ALLOW", map[string]string{"rsqlPredicate": "c=in=(${" + tc.setup.name + "})"},
+				tc.setup)
+			if got := fa.Text[policyir.DialectRSQL]; fa.Result != FilterCondition || got != tc.want {
+				t.Errorf("rsql text = %s %q, want %s %q", fa.Result, got, FilterCondition, tc.want)
+			}
+		})
+	}
+}
+
+// $${x} in a template is the text ${x} in every dialect, ${resourceType} of
+// QueryDSL included, and in the negation a DENY rule writes.
+func TestAnEscapedPlaceholderIsItsTextInThePredicateAndItsNegation(t *testing.T) {
+	bob := placeholderSetup{req: Request{Values: map[string]Resolved{
+		specKey("subj", "name"): {State: spectables.StateValue, Value: "bob"}}}}
+	for _, tc := range []struct {
+		name, effect string
+		preds        map[string]string
+		want         map[policyir.Dialect]string
+	}{
+		{"beside the same placeholder", "DENY", map[string]string{
+			"rsqlPredicate":    "a==$${subject.name};b==${subject.name}",
+			"mongodbPredicate": `"a": {"$eq": "$${subject.name}"}, "b": {"$eq": "${subject.name}"}`},
+			map[policyir.Dialect]string{policyir.DialectRSQL: "a!=${subject.name},b!=bob",
+				policyir.DialectMongoDB: `{ "$nor": [ { "a": {"$eq": "${subject.name}"}, "b": {"$eq": "bob"} } ] }`}},
+		{"alone", "DENY", map[string]string{
+			"rsqlPredicate":    "a==$${subject.name}",
+			"mongodbPredicate": `"a": {"$eq": "$${subject.name}"}`},
+			map[policyir.Dialect]string{policyir.DialectRSQL: "a!=${subject.name}",
+				policyir.DialectMongoDB: `{ "a": {"$ne": "${subject.name}"} }`}},
+		{"of the resource type in QueryDSL", "ALLOW", map[string]string{
+			"predicate": `a.eq("$${resourceType}").and(b.eq("${resourceType}"))`},
+			map[policyir.Dialect]string{
+				policyir.DialectQueryDSL: `a.eq("${resourceType}").and(b.eq("doc"))`}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fa := predicateAnswer(t, tc.effect, tc.preds, bob)
+			for d, want := range tc.want {
+				if got := fa.Text[d]; got != want {
+					t.Errorf("%s text = %q, want %q", d, got, want)
+				}
+			}
+		})
+	}
+}
+
+// Every state a local source can take either renders or fails the filter: a
+// list source in each state renders in RSQL as listed, and DENY means
+// errDenyAll. A new state is a new row.
+func TestFromResolvedRendersAStateOrFailsTheFilter(t *testing.T) {
+	want := map[spectables.State]string{
+		spectables.StateValue:        `"x"`,
+		spectables.StateNull:         "",
+		spectables.StateAbsent:       "",
+		spectables.StateEmptyColl:    "",
+		spectables.StatePIPEmpty:     "",
+		spectables.StatePIPNull:      "",
+		spectables.StateError:        "DENY",
+		spectables.StateEmptySel:     "DENY",
+		spectables.StateIndexOOB:     "DENY",
+		spectables.StateSingleOdd:    "DENY",
+		spectables.StateScalarOdd:    "DENY",
+		spectables.StateScopeOutside: "DENY",
+	}
+	for _, state := range spectables.States {
+		w, ok := want[state]
+		if !ok {
+			t.Errorf("state %s has no row; add what a source in it renders as", state)
+			continue
+		}
+		v := Resolved{State: state}
+		if state == spectables.StateValue {
+			v.Value = []jsonvalue.Value{"x"}
+		}
+		got := "DENY"
+		if sv, err := fromResolved(v, valList); err == nil {
+			got = renderValue(sv, policyir.DialectRSQL)
+		} else if !errors.Is(err, errDenyAll) {
+			got = err.Error()
+		}
+		if got != w {
+			t.Errorf("fromResolved(%s) renders %q in RSQL, want %q", state, got, w)
+		}
+	}
+}
+
+// A customPredicate parameter that names a source reads it through the same
+// states as a placeholder: roles in ERROR fail the filter, roles in VALUE go
+// in as their list.
+func TestACustomParameterFailsTheFilterWhereItsSourceIsInError(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		roles   Resolved
+		want    jsonvalue.Value
+		wantErr error
+	}{
+		{"roles in ERROR", Resolved{State: spectables.StateError}, nil, errDenyAll},
+		{"roles in VALUE", Resolved{State: spectables.StateValue, Value: []jsonvalue.Value{"r"}},
+			[]jsonvalue.Value{"r"}, nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &substituter{req: &Request{Values: map[string]Resolved{specKey("subj", "roles"): tc.roles}}}
+			got, err := s.param(`"subject.roles"`, -1)
+			if !errors.Is(err, tc.wantErr) || !reflect.DeepEqual(got, tc.want) {
+				t.Errorf(`param("subject.roles") = %v, %v, want %v, %v`, got, err, tc.want, tc.wantErr)
+			}
+		})
 	}
 }

@@ -17,6 +17,7 @@ package regogen
 import (
 	"context"
 	"maps"
+	"regexp"
 	"slices"
 	"strings"
 	"unicode/utf16"
@@ -33,15 +34,16 @@ import (
 
 // A placeholder ${…} of a predicate is replaced by the value of its source,
 // as legacy renders it: without escaping, a scalar as its text, a list as its
-// items in the dialect's quotes. A value that holds a placeholder is
-// substituted again, and $${x} is the text ${x}. A source that fails, a
-// placeholder of an undeclared PIP, and one of the resource fail the whole
-// filter with DENY.
+// items in the dialect's quotes. Only the placeholders written in the
+// template are replaced, in one pass: the text of a value is final and is
+// never read for placeholders, where legacy substitutes it again.
+// $${x} is the text ${x}. A source in ERROR or in another state it cannot
+// render, a placeholder of an undeclared PIP, and one of the resource fail
+// the whole filter with DENY.
 //
-// The knobs of the agent profile this follows: idiom_template=
-// recursive_escape, idiom_render_number_text=plain_stripped,
-// idiom_render_quote=none, list_order=sorted, dedupe_lists=true,
-// permissions_order=hashset, permissions_capacity=GROWTH,
+// The knobs of the agent profile this follows, the template idiom aside:
+// idiom_render_number_text=plain_stripped, idiom_render_quote=none,
+// list_order=sorted, dedupe_lists=true, permissions_order=hashset, permissions_capacity=GROWTH,
 // mongo_uuid_for_mapping=true, mongo_uuid_for_untyped=true,
 // mongo_uuid_for_regular=false, object_placeholder=EMPTY,
 // scalar_body_placeholder=KEEP, null_body_keeps_placeholder=true,
@@ -84,9 +86,6 @@ func (s *substituter) term(preds policyir.Predicates, key string, pass int) (*fe
 		subst: map[policyir.Dialect]map[string]string{}}
 	for _, d := range slices.Sorted(maps.Keys(preds.Text)) {
 		text := preds.Text[d]
-		if d == policyir.DialectQueryDSL {
-			text = strings.ReplaceAll(text, "${resourceType}", s.resourceType())
-		}
 		t.template[d] = text
 		t.subst[d] = map[string]string{}
 		out, err := s.substitute(text, d, pass, t.subst[d])
@@ -110,33 +109,51 @@ func (s *substituter) term(preds policyir.Predicates, key string, pass int) (*fe
 }
 
 // substitute renders each placeholder of text for dialect d and records in
-// seen the text each became. A value holding a placeholder is rendered
-// again, four times at most; $${x} stays as the text ${x}.
+// seen the text each became.
 func (s *substituter) substitute(text string, d policyir.Dialect, pass int, seen map[string]string) (string, error) {
-	var failure error
-	one := func(m string) string {
-		name := m[2 : len(m)-1]
+	return fillTemplate(text, func(name string) (string, error) {
 		v, err := s.source(name, pass)
 		if err != nil {
-			failure = err
-			return m
+			return "", err
 		}
 		out := renderValue(v, d)
 		seen[name] = out
-		return out
-	}
-	out := placeholderRE.ReplaceAllStringFunc(strings.ReplaceAll(text, "$${", "\x00{"), one)
-	for range 4 {
-		again := placeholderRE.ReplaceAllStringFunc(out, one)
-		if again == out {
-			break
+		return out, nil
+	})
+}
+
+// templateRE matches, in a predicate template, the escape $${ or a
+// placeholder ${name}; the escape comes first, so the ${x} of $${x} is not a
+// placeholder.
+var templateRE = regexp.MustCompile(`\$\$\{|\$\{([^}]+)\}`)
+
+// fillTemplate returns tmpl with each placeholder ${name} replaced by
+// value(name) and each $${ by the text ${. It reads tmpl once, left to right,
+// and never scans what value returns for placeholders, so the result is at
+// most the length of tmpl plus the lengths of the values. If value fails,
+// fillTemplate stops and returns its error.
+//
+// Every text written from a predicate template goes through it: the
+// predicate, the negation of its template, and the placeholders
+// [predicateRejections] checks.
+func fillTemplate(tmpl string, value func(name string) (string, error)) (string, error) {
+	var b strings.Builder
+	at := 0
+	for _, m := range templateRE.FindAllStringSubmatchIndex(tmpl, -1) {
+		b.WriteString(tmpl[at:m[0]])
+		at = m[1]
+		if m[2] < 0 {
+			b.WriteString("${")
+			continue
 		}
-		out = again
+		v, err := value(tmpl[m[2]:m[3]])
+		if err != nil {
+			return "", err
+		}
+		b.WriteString(v)
 	}
-	if failure != nil {
-		return "", failure
-	}
-	return strings.ReplaceAll(out, "\x00{", "${"), nil
+	b.WriteString(tmpl[at:])
+	return b.String(), nil
 }
 
 func (s *substituter) resourceType() string {
@@ -160,25 +177,18 @@ func (s *substituter) source(expr string, pass int) (sourceValue, error) {
 	}
 	switch name {
 	case "id", "name", "type":
-		v := s.req.Values[specKey("subj", name)]
-		if v.State != spectables.StateValue {
-			return sourceValue{kind: valScalar, text: "None"}, nil
-		}
-		return sourceValue{kind: valScalar, text: filterScalarText(v.Value)}, nil
+		return fromResolved(s.req.Values[specKey("subj", name)], valScalar)
 	case "roles", "scopes":
-		v := s.req.Values[specKey("subj", name)]
-		l, _ := v.Value.([]jsonvalue.Value)
-		return sourceValue{kind: valList, items: l}, nil
+		return fromResolved(s.req.Values[specKey("subj", name)], valList)
 	case "permissions":
 		v := s.m.permissions(s.req)
-		switch v.State {
-		case spectables.StateValue:
-			l, _ := v.Value.([]jsonvalue.Value)
-			return sourceValue{kind: valUUID, items: hashSetOrder(l)}, nil
-		case spectables.StateEmptyColl:
-			return sourceValue{kind: valEmpty}, nil
+		if v.State == spectables.StateAbsent {
+			// no MAPPING PIP: the placeholder names a source the tenant lacks
+			return sourceValue{}, errDenyAll
 		}
-		return sourceValue{}, errDenyAll
+		sv, err := fromResolved(v, valUUID)
+		sv.items = hashSetOrder(sv.items)
+		return sv, err
 	}
 	if key, ok := strings.CutPrefix(name, "permissionScope."); ok {
 		sc := s.req.Scope
@@ -196,27 +206,42 @@ func (s *substituter) source(expr string, pass int) (sourceValue, error) {
 		return sourceValue{}, errDenyAll
 	}
 	switch decl.Type {
-	case policyir.PIPHeader, policyir.PIPToken:
-		var v Resolved
-		if decl.Type == policyir.PIPHeader {
-			v = headerPIP(decl, s.req.Headers)
-		} else {
-			v = tokenPIP(decl, s.req.Claims)
-		}
-		switch v.State {
-		case spectables.StateValue:
-			if l, ok := v.Value.([]jsonvalue.Value); ok {
-				return sourceValue{kind: valUUID, items: l}, nil
-			}
-			return sourceValue{kind: valUUID, items: []jsonvalue.Value{v.Value}}, nil
-		case spectables.StateError:
-			return sourceValue{}, errDenyAll
-		}
-		return sourceValue{kind: valEmpty}, nil
+	case policyir.PIPHeader:
+		return fromResolved(headerPIP(decl, s.req.Headers), valUUID)
+	case policyir.PIPToken:
+		return fromResolved(tokenPIP(decl, s.req.Claims), valUUID)
 	case policyir.PIPGeneral, policyir.PIPFiltered:
 		return s.generalValue(decl, expr)
 	}
 	// a MAPPING PIP by its own name reads as ABSENT, as in a condition
+	return sourceValue{}, errDenyAll
+}
+
+// fromResolved is the value of a source the request resolved to v, rendered
+// as kind (valScalar, valList, or valUUID). VALUE renders its value: as its
+// text for valScalar, and otherwise a list as its items and any other value
+// as one item. A state that holds no value (NULL, ABSENT, EMPTY_COLL,
+// PIP_EMPTY, PIP_NULL) renders as None for valScalar and as no items
+// otherwise. Any other state, ERROR among them, fails the filter with
+// errDenyAll.
+func fromResolved(v Resolved, kind valueKind) (sourceValue, error) {
+	switch v.State {
+	case spectables.StateValue:
+		if kind == valScalar {
+			return sourceValue{kind: valScalar, text: filterScalarText(v.Value)}, nil
+		}
+		l, ok := v.Value.([]jsonvalue.Value)
+		if !ok {
+			l = []jsonvalue.Value{v.Value}
+		}
+		return sourceValue{kind: kind, items: l}, nil
+	case spectables.StateNull, spectables.StateAbsent, spectables.StateEmptyColl, spectables.StatePIPEmpty,
+		spectables.StatePIPNull:
+		if kind == valScalar {
+			return sourceValue{kind: valScalar, text: "None"}, nil
+		}
+		return sourceValue{kind: valEmpty}, nil
+	}
 	return sourceValue{}, errDenyAll
 }
 
@@ -444,9 +469,10 @@ func predicateRejections(tree *policyir.Tree) []Rejection {
 	tree.EachPredicates(func(where string, p policyir.Predicates) {
 		var names []string
 		for _, d := range slices.Sorted(maps.Keys(p.Text)) {
-			for _, m := range placeholderRE.FindAllStringSubmatch(strings.ReplaceAll(p.Text[d], "$${", "\x00{"), -1) {
-				names = append(names, m[1])
-			}
+			_, _ = fillTemplate(p.Text[d], func(name string) (string, error) {
+				names = append(names, name)
+				return "", nil
+			})
 		}
 		if p.Custom != nil {
 			for _, k := range slices.Sorted(maps.Keys(p.Custom.Params)) {

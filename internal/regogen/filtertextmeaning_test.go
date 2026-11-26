@@ -36,17 +36,11 @@ var textMeaningKnown = map[string]string{
 	"sql/AND with operand or-template":                  f18,
 	"sql/AND with operand escape-beside-placeholder-or": f18,
 	"sql/AND with operand and-under-or":                 f18,
-	"rsql/NOT escape-beside-placeholder-or":             f90,
-	"rsql/NOT escaped-placeholder":                      f90,
-	"mongodb/NOT escape-beside-placeholder-or":          f90,
-	"mongodb/NOT escaped-placeholder":                   f90,
 }
 
 const (
 	f18 = "F18: an AND writes an author's SQL template that is an OR without parentheses, so the AND " +
 		"binds only to the template's operand next to it"
-	f90 = "F90: the negation of an RSQL or MongoDB template substitutes the ${x} inside an escaped $${x}, " +
-		"or keeps the $$, where the template itself reads the literal text ${x}"
 )
 
 // textTemplate is a predicate an author writes for a rule, in every dialect.
