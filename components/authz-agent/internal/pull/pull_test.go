@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -117,6 +118,13 @@ func (r *recorder) record(level, format string, args ...any) {
 func (r *recorder) Debugf(format string, args ...any) { r.record("debug", format, args...) }
 func (r *recorder) Infof(format string, args ...any)  { r.record("info", format, args...) }
 func (r *recorder) Warnf(format string, args ...any)  { r.record("warn", format, args...) }
+
+// snapshot returns a copy of the lines.
+func (r *recorder) snapshot() []string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return slices.Clone(r.lines)
+}
 
 // updates returns the lines reported for a completed load, oldest first.
 func (r *recorder) updates() []string {
@@ -424,30 +432,26 @@ func TestPullNow_WithoutASourceURLLoadsNothing(t *testing.T) {
 	}
 }
 
-// refusal is an error of a load that refused some tenants and left each of
-// them its previous snapshot.
-type refusal string
+// refusal is the error of a load that refused the tenants of refused; those
+// of unserved have no previous snapshot.
+type refusal struct{ refused, unserved []string }
 
-func (e refusal) Error() string    { return string(e) }
-func (refusal) Partial() bool      { return true }
-func (refusal) Unserved() []string { return nil }
+func (e refusal) Error() string      { return "refused: " + strings.Join(e.refused, ", ") }
+func (e refusal) Refused() []string  { return e.refused }
+func (e refusal) Unserved() []string { return e.unserved }
 
-// firstRefusal is the error of a load that refused the tenant it names,
-// which has no previous snapshot.
-type firstRefusal string
+// kept is a refusal of tenants that keep their previous snapshot.
+func kept(tenants ...string) refusal { return refusal{refused: tenants} }
 
-func (e firstRefusal) Error() string {
-	return "tenant " + string(e) + ": candidate snapshot refused, the tenant is not served"
-}
-func (firstRefusal) Partial() bool        { return true }
-func (e firstRefusal) Unserved() []string { return []string{string(e)} }
+// unserved is a refusal of tenants that have no snapshot.
+func unserved(tenants ...string) refusal { return refusal{refused: tenants, unserved: tenants} }
 
 // TestPull_APartialLoadMarksThePoliciesLoaded: a load that refused a tenant
 // which keeps its previous snapshot releases readiness, and PullOnce still
 // returns the refusal to its caller.
 func TestPull_APartialLoadMarksThePoliciesLoaded(t *testing.T) {
 	srv, _ := source(t, http.StatusOK)
-	snaps := &loader{err: refusal("tenant a: candidate snapshot refused")}
+	snaps := &loader{err: kept("a")}
 	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Snapshots: snaps}, nil, quiet{})
 
 	p.pull(context.Background())
@@ -463,7 +467,7 @@ func TestPull_APartialLoadMarksThePoliciesLoaded(t *testing.T) {
 
 func TestPullNow_ATenantWithoutASnapshotKeepsThePoliciesNotLoaded(t *testing.T) {
 	srv, _ := source(t, http.StatusOK)
-	snaps := &loader{err: firstRefusal("a")}
+	snaps := &loader{err: unserved("a")}
 	rec := &recorder{}
 	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Snapshots: snaps}, nil, rec)
 
@@ -475,8 +479,7 @@ func TestPullNow_ATenantWithoutASnapshotKeepsThePoliciesNotLoaded(t *testing.T) 
 	if got := p.Status(); got.PoliciesLoaded || !reflect.DeepEqual(got.Waiting, []string{"a"}) {
 		t.Errorf("Status() = %+v, want not loaded and waiting for [a]", got)
 	}
-	want := []string{"warn: policies: pulled from " + srv.URL + ", and the service is not ready until tenants a have a snapshot: " +
-		"load snapshots: tenant a: candidate snapshot refused, the tenant is not served"}
+	want := []string{"warn: policies: pulled from " + srv.URL + "; tenants refused: 1; the service is not ready until these tenants have a snapshot: a"}
 	if !reflect.DeepEqual(rec.lines, want) {
 		t.Errorf("lines =\n%s\nwant\n%s", strings.Join(rec.lines, "\n"), strings.Join(want, "\n"))
 	}
@@ -487,7 +490,7 @@ func TestPullNow_ATenantWithoutASnapshotKeepsThePoliciesNotLoaded(t *testing.T) 
 // nothing is waited for.
 func TestPullNow_ASnapshotOfTheLastWaitingTenantMarksThePoliciesLoaded(t *testing.T) {
 	srv, _ := source(t, http.StatusOK)
-	snaps := &loader{err: firstRefusal("a")}
+	snaps := &loader{err: unserved("a")}
 	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Snapshots: snaps}, nil, quiet{})
 	if err := p.PullNow(context.Background()); err != nil {
 		t.Fatalf("the refused PullNow() = %v", err)
@@ -516,7 +519,7 @@ func TestPullNow_ATenantRefusedAfterThePoliciesLoadedKeepsThemLoaded(t *testing.
 		t.Fatalf("the first PullNow() = %v", err)
 	}
 	snaps.mu.Lock()
-	snaps.err = firstRefusal("b")
+	snaps.err = unserved("b")
 	snaps.mu.Unlock()
 
 	if err := p.PullNow(context.Background()); err != nil {
@@ -528,20 +531,25 @@ func TestPullNow_ATenantRefusedAfterThePoliciesLoadedKeepsThemLoaded(t *testing.
 	}
 }
 
-// TestPull_ReportsARefusalWhenItChanges: a refusal is reported at warn on
-// the pull where it first appears or its text changes, not on every pull
-// that repeats it, and the pull that ends it is reported at info.
+// TestPull_ReportsARefusalWhenItChanges: a partial load is reported at warn
+// on the pull where the number of refused tenants or the unserved tenants
+// change, and not on a pull that repeats them. A pull that refuses other
+// tenants, as many as before, is not reported either: the loader warns of
+// each of those tenants. The pull that ends the partial load is reported at
+// info.
 func TestPull_ReportsARefusalWhenItChanges(t *testing.T) {
 	srv, _ := source(t, http.StatusOK)
 	snaps := &loader{}
 	rec := &recorder{}
 	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Snapshots: snaps}, nil, rec)
 	for _, err := range []error{
-		refusal("tenant a: refused"),
-		refusal("tenant a: refused"),
+		kept("a"),
+		kept("a"),
 		errors.New("source unreachable"),
-		refusal("tenant a: refused"),
-		refusal("tenant a: refused; tenant b: refused"),
+		kept("a"),
+		kept("b"),
+		kept("a", "b"),
+		refusal{refused: []string{"a", "b"}, unserved: []string{"b"}},
 		nil,
 		nil,
 	} {
@@ -558,11 +566,52 @@ func TestPull_ReportsARefusalWhenItChanges(t *testing.T) {
 		}
 	}
 	want := []string{
-		"warn: policies: pulled from " + srv.URL + ", and some tenants are not updated: load snapshots: tenant a: refused",
-		"warn: policies: pulled from " + srv.URL + ", and some tenants are not updated: load snapshots: tenant a: refused; tenant b: refused",
+		"warn: policies: pulled from " + srv.URL + "; tenants refused: 1, each keeps its previous snapshot",
+		"warn: policies: pulled from " + srv.URL + "; tenants refused: 2, each keeps its previous snapshot",
+		"warn: policies: pulled from " + srv.URL + "; tenants refused: 2; these tenants have no snapshot and deny every request: b",
 		"info: policies: pulled from " + srv.URL + ", and every tenant is updated",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("lines =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// TestRun_WithoutATokenSendsNothing: a token source that publishes no token
+// within the wait is reported as failing every pull, and the source receives
+// no request.
+func TestRun_WithoutATokenSendsNothing(t *testing.T) {
+	var requests atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(srv.Close)
+	rec := &recorder{}
+	p := New(Config{SourceURL: srv.URL, Interval: time.Hour}, &tokens{err: errors.New("no token yet"), ready: make(chan struct{})}, rec)
+	p.tokenWait = time.Millisecond
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		p.Run(ctx)
+	}()
+	for deadline := time.Now().Add(10 * time.Second); !slices.ContainsFunc(rec.snapshot(),
+		func(l string) bool { return strings.Contains(l, "pull failed") }); time.Sleep(time.Millisecond) {
+		if time.Now().After(deadline) {
+			cancel()
+			t.Fatalf("no failed pull reported within 10s; lines =\n%s", strings.Join(rec.snapshot(), "\n"))
+		}
+	}
+	cancel()
+	<-done
+
+	want := []string{
+		"info: policies: pulling from " + srv.URL + " every 1h0m0s",
+		"warn: policies: no m2m token after 1ms; each pull fails until the token source publishes one",
+		"warn: policies: pull failed, keeping the previous snapshots: fetch policySets: no token to present: no token yet",
+	}
+	if got := rec.snapshot(); !slices.Equal(got, want) || requests.Load() != 0 {
+		t.Errorf("lines =\n%s\nwant\n%s\nrequests to the source = %d, want 0",
+			strings.Join(got, "\n"), strings.Join(want, "\n"), requests.Load())
 	}
 }

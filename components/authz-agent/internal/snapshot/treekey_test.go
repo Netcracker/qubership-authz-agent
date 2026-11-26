@@ -20,6 +20,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 )
@@ -82,15 +83,18 @@ func TestAReloadFromAbsentToEmptyRequestAttributesCallsAsAFreshLoad(t *testing.T
 	}
 }
 
-// A load that changes another tenant leaves a tenant whose export is refused
-// as it was: the refusal is neither counted again nor replaced.
+// A load that changes another tenant, or moves the element that fails the
+// export of a tenant, leaves the refusal of that tenant as it was: it is
+// neither counted again nor warned of again, and keeps its time, while its
+// reason names the element where the export now has it.
 func TestAnUnchangedExportRefusalIsNotCountedAgain(t *testing.T) {
 	notGlobal := `{"type": "SIMPLIFIED", "tenantId": "a", "component": "C", "status": "ACTIVE",
 		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "policySetId": "s-all", "target": "true",
 		"policies": [{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true", "tenantId": "a",
 			"rules": [{"ruleId": "r-all", "effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'",
 				"tenantId": "a"}]}]}`
-	r := New(Config{}, tab(t), quiet{})
+	w := &warnings{}
+	r := New(Config{}, tab(t), w)
 	loadSets := func(sets ...string) LoadSummary {
 		t.Helper()
 		policySets, pipsDoc := documents(``, sets...)
@@ -108,14 +112,24 @@ func TestAnUnchangedExportRefusalIsNotCountedAgain(t *testing.T) {
 		t.Fatalf("health of a after the first load = %+v, want a refusal at stage export", before)
 	}
 
-	sum := loadSets(notGlobal, set("c", "false"))
+	for _, step := range []struct {
+		name, at string
+		sets     []string
+	}{
+		{"a load that changes only tenant c", "policy set 0", []string{notGlobal, set("c", "false")}},
+		{"a load that inserts a set of tenant d first", "policy set 1", []string{set("d", "true"), notGlobal, set("c", "false")}},
+	} {
+		w.lines = nil
+		sum := loadSets(step.sets...)
 
-	after, _ := tenantHealth(r, "a")
-	if sum.Rejected != 0 {
-		t.Errorf("summary of a load that changes only tenant c = %+v, want no refusal counted", sum)
-	}
-	if after.Rejected != before.Rejected {
-		t.Errorf("refusal of a after a load that changes only tenant c = %p %+v, want the same %p", after.Rejected,
-			after.Rejected, before.Rejected)
+		after, _ := tenantHealth(r, "a")
+		if sum.Rejected != 0 || len(w.lines) != 0 {
+			t.Errorf("after %s: summary %+v, warnings %q; want no refusal counted and no warning", step.name, sum, w.lines)
+		}
+		if after.Rejected == nil || after.Rejected.At != before.Rejected.At || after.Rejected.Stage != "export" ||
+			!strings.HasPrefix(after.Rejected.Reason, step.at+` "s-all": `) {
+			t.Errorf("refusal of a after %s = %+v, want the time %s and a reason that opens with %s",
+				step.name, after.Rejected, before.Rejected.At, step.at)
+		}
 	}
 }

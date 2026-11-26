@@ -416,8 +416,8 @@ func TestAPolicyOfResourceTypeAllThatIsNotGlobalKeepsThePreviousSnapshot(t *test
 // A policy whose MATCH pattern package regexp does not compile is a failure
 // the health check lists with its set and its policy, and the candidate is
 // generated: the policy denies with a reason that names it, the tenant
-// serves its other policies, and the load warns that the policy is left out
-// and answers as failed.
+// serves its other policies, and the load warns that the tree leaves the
+// policy out and that it fails permanently.
 func TestAPolicyWithAPatternRegexpRefusesIsAFailureOfTheTenant(t *testing.T) {
 	const refused = "MATCH pattern \"a)|(b\" is not a valid regular expression: " +
 		"error parsing regexp: unexpected ): `a)|(b`"
@@ -430,8 +430,9 @@ func TestAPolicyWithAPatternRegexpRefusesIsAFailureOfTheTenant(t *testing.T) {
 	}{
 		{"a pattern regexp refuses", "a)|(b", []Failure{{Set: "s-a", Policy: "p", Reason: "isolated: " + refused}},
 			false, "PIP resolution failed: policy p", []string{
-				`policies: tenant a: left out of the policies: policy set 0 "s-a": policy "p": isolated: ` + refused,
-				`policies: tenant a: answers as a failed source: policy set s-a: policy p: isolated: ` + refused,
+				`policies: tenant a: the tree leaves out an element, listed under dropped in /health: ` +
+					`policy set 0 "s-a": policy "p": isolated: ` + refused,
+				failsPermanently + `policy set s-a: policy p: isolated: ` + refused,
 			}},
 		{"a pattern that compiles", "y|z", nil, true, "", nil},
 	} {
@@ -468,10 +469,15 @@ func (w *warnings) Warnf(format string, args ...any) {
 	w.lines = append(w.lines, fmt.Sprintf(format, args...))
 }
 
+// failsPermanently opens the warning of a part of a published snapshot of
+// tenant a that fails permanently.
+const failsPermanently = `policies: tenant a: a part fails permanently and is listed under failures in /health; ` +
+	`a decision that depends on it denies with a reason that starts with "PIP resolution failed": `
+
 // A load warns of each element the export leaves out, each element that
-// names no tenant, and each part of a published snapshot that answers as a
-// failed source; a later load warns only of what the previous one did not
-// have.
+// names no tenant, and each part of a published snapshot that fails
+// permanently; a later load warns only of what the previous one did not
+// have, whatever the position of the element in the export.
 func TestALoadWarnsOfWhatItLeavesOutOnce(t *testing.T) {
 	w := &warnings{}
 	r := New(Config{}, tab(t), w)
@@ -481,9 +487,10 @@ func TestALoadWarnsOfWhatItLeavesOutOnce(t *testing.T) {
 	loadUnchecked(t, r, ``, set("a", "subject.g == 'x'"), inactive, orphan)
 
 	want := []string{
-		`policies: tenant a: left out of the policies: policy set 1 "s-a2": status INACTIVE`,
-		`policies: tenant a: answers as a failed source: policy set s-a: PIP subject.g: not declared`,
-		`policies: left out of the policies: policy set 2: tenantId absent, empty, or not a string`,
+		`policies: tenant a: the tree leaves out an element, listed under dropped in /health: policy set 1 "s-a2": status INACTIVE`,
+		failsPermanently + `policy set s-a: PIP subject.g: not declared`,
+		`policies: an element names no tenant and is listed under orphans in /health: policy set 2 "s-": ` +
+			`tenantId absent, empty, or not a string`,
 	}
 	slices.Sort(want)
 	got := slices.Sorted(slices.Values(w.lines))
@@ -494,8 +501,62 @@ func TestALoadWarnsOfWhatItLeavesOutOnce(t *testing.T) {
 	w.lines = nil
 	inactive3 := strings.Replace(inactive, `"s-a2"`, `"s-a3"`, 1)
 	loadUnchecked(t, r, ``, set("a", "subject.g == 'x'"), inactive, orphan, set("b", "true"), inactive3)
-	if want := []string{`policies: tenant a: left out of the policies: policy set 4 "s-a3": status INACTIVE`}; !slices.Equal(w.lines, want) {
+	if want := []string{`policies: tenant a: the tree leaves out an element, listed under dropped in /health: ` +
+		`policy set 4 "s-a3": status INACTIVE`}; !slices.Equal(w.lines, want) {
 		t.Errorf("warnings of a load that adds a tenant b and an inactive set s-a3 = %q, want %q", w.lines, want)
+	}
+
+	// a set inserted first moves every element after it, and an orphan the
+	// export already had is new when it occurs once more
+	w.lines = nil
+	inactive0 := strings.Replace(inactive, `"s-a2"`, `"s-a0"`, 1)
+	loadUnchecked(t, r, ``, inactive0, orphan, set("a", "subject.g == 'x'"), inactive, orphan, set("b", "true"), inactive3)
+	want = []string{
+		`policies: tenant a: the tree leaves out an element, listed under dropped in /health: policy set 0 "s-a0": status INACTIVE`,
+		`policies: an element names no tenant and is listed under orphans in /health: policy set 4 "s-": ` +
+			`tenantId absent, empty, or not a string`,
+	}
+	slices.Sort(want)
+	if got := slices.Sorted(slices.Values(w.lines)); !slices.Equal(got, want) {
+		t.Errorf("warnings of a load that inserts set s-a0 first and repeats the orphan:\n%s\nwant:\n%s",
+			strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// A load warns once of each tenant whose candidate is newly refused or
+// refused for another reason, and not of a tenant whose refusal is the one
+// the previous load had, whatever moved in the export.
+func TestALoadWarnsOfEachTenantWhoseRefusalIsNew(t *testing.T) {
+	w := &warnings{}
+	r := New(Config{}, tab(t), w)
+	const otherBroken = "resource.b =="
+	refusals := func() []string {
+		var out []string
+		for _, l := range w.lines {
+			if strings.Contains(l, "candidate snapshot refused") {
+				out = append(out, l)
+			}
+		}
+		w.lines = nil
+		return out
+	}
+
+	loadUnchecked(t, r, ``, set("a", broken), set("b", broken), set("c", "true"))
+	if got := refusals(); len(got) != 2 || !strings.HasPrefix(got[0], "policies: tenant a: candidate snapshot refused, "+
+		"the tenant is not served: unsupported: ") || !strings.HasPrefix(got[1], "policies: tenant b: ") {
+		t.Errorf("refusal warnings of the first load = %q, want one for tenant a and one for tenant b", got)
+	}
+
+	loadUnchecked(t, r, ``, set("c", "false"), set("a", broken), set("b", otherBroken))
+	got := refusals()
+	if len(got) != 1 || !strings.HasPrefix(got[0], "policies: tenant b: candidate snapshot refused, the tenant is not served: ") ||
+		!strings.Contains(got[0], "resource.b") {
+		t.Errorf("refusal warnings of a load that changes only the refusal of b = %q, want one naming b and resource.b", got)
+	}
+
+	loadUnchecked(t, r, ``, set("c", "false"), set("a", broken), set("b", otherBroken))
+	if got := refusals(); got != nil {
+		t.Errorf("refusal warnings of a load of the same documents = %q, want none", got)
 	}
 }
 
@@ -647,8 +708,8 @@ func TestLoadSnapshotsFailsWhileACandidateIsRefused(t *testing.T) {
 			t.Errorf("LoadSnapshots after %s refused %+v, want tenant a served by its previous snapshot at stage unsupported",
 				step.name, refused.Tenants)
 		}
-		if !strings.Contains(err.Error(), "tenant a: candidate snapshot refused, the previous snapshot stays: unsupported: ") {
-			t.Errorf("LoadSnapshots after %s = %q, want the tenant, what it keeps, and the stage", step.name, err)
+		if want := "tenants with a refused candidate snapshot: 1"; err.Error() != want {
+			t.Errorf("LoadSnapshots after %s = %q, want %q", step.name, err, want)
 		}
 		if got := refused.Unserved(); got != nil {
 			t.Errorf("Unserved() after %s = %q, want none: tenant a keeps its previous snapshot", step.name, got)
@@ -669,8 +730,8 @@ func TestLoadSnapshotsNamesARefusedTenantWithNoSnapshotAsNotServed(t *testing.T)
 	if !errors.As(err, &refused) || len(refused.Tenants) != 1 || refused.Tenants[0].Served {
 		t.Fatalf("LoadSnapshots = %v, want a *RefusedError naming tenant a as not served", err)
 	}
-	if !strings.Contains(err.Error(), "tenant a: candidate snapshot refused, the tenant is not served: ") {
-		t.Errorf("LoadSnapshots = %q, want the tenant and that it is not served", err)
+	if want := "tenants with a refused candidate snapshot: 1; not served: a"; err.Error() != want {
+		t.Errorf("LoadSnapshots = %q, want %q", err, want)
 	}
 	if got := refused.Unserved(); !reflect.DeepEqual(got, []string{"a"}) {
 		t.Errorf("Unserved() = %q, want [a]", got)
@@ -1443,5 +1504,28 @@ func TestAComparisonWithSubjectIsM2MIsNeverTrueAndTheLoadWarnsOfIt(t *testing.T)
 	loadUnchecked(t, r, ``, set("a", "subject.isM2M == 'yes'"), deny, set("c", "subject.isM2M"))
 	if len(w.lines) != 0 {
 		t.Errorf("warnings of the same load again = %q, want none", w.lines)
+	}
+}
+
+// A rule with no effect counts as NOT_APPLICABLE, so under PERMIT_UNLESS_DENY
+// the resource it was written to deny is allowed; the load warns once,
+// naming the rule, and not of a rule that names its effect.
+func TestALoadWarnsOfARuleWithNoEffect(t *testing.T) {
+	w := &warnings{}
+	r := New(Config{}, tab(t), w)
+	loadUnchecked(t, r, ``, `{"policySetId": "s-a", "status": "ACTIVE", "tenantId": "a",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "PERMIT_UNLESS_DENY", "tenantId": "a",
+			"rules": [{"ruleId": "r-none", "target": "true", "condition": "resource.a == 'y'", "tenantId": "a"},
+				{"ruleId": "r-deny", "target": "true", "condition": "resource.a == 'z'", "effect": "DENY",
+					"tenantId": "a"}]}]}`)
+
+	want := []string{`policies: tenant a: set "s-a" > policy "p" > rule "r-none": names no effect, ` +
+		`so the rule counts as NOT_APPLICABLE and neither permits nor denies`}
+	if !slices.Equal(w.lines, want) {
+		t.Errorf("warnings of the load:\n%s\nwant:\n%s", strings.Join(w.lines, "\n"), strings.Join(want, "\n"))
+	}
+	if got := decide(t, r, readDoc(t, "a", "y", 1)); !got[0].Allowed {
+		t.Errorf("Decide(read doc with a = y) = %+v, want allowed: the rule with no effect denies nothing", got[0])
 	}
 }

@@ -98,7 +98,10 @@ type queries struct {
 type state struct {
 	snapshots map[string]*Snapshot
 	tenants   map[string]TenantHealth
-	orphans   []string
+	orphans   []policyir.Element
+	// dropped maps a tenant to the elements its tree leaves out, which
+	// [TenantHealth.Dropped] lists as text.
+	dropped map[string][]policyir.Element
 	// refused holds each tenant's refused candidate, so that an unchanged
 	// candidate is not refused and reported again.
 	refused   map[string]refusal
@@ -177,19 +180,25 @@ type RefusedError struct {
 	Tenants []TenantRefusal
 }
 
+// Error counts the refused tenants and names those that are not served. The
+// reason of each refusal is in [Registry.Health] and in the warning the load
+// writes when the refusal is new.
 func (e *RefusedError) Error() string {
-	var b strings.Builder
-	for i, t := range e.Tenants {
-		if i > 0 {
-			b.WriteString("; ")
-		}
-		fmt.Fprintf(&b, "tenant %s: candidate snapshot refused, %s: %s: %s", t.Tenant, keepsWhat(t.Served), t.Stage, t.Reason)
+	msg := fmt.Sprintf("tenants with a refused candidate snapshot: %d", len(e.Tenants))
+	if u := e.Unserved(); len(u) > 0 {
+		msg += "; not served: " + strings.Join(u, ", ")
 	}
-	return b.String()
+	return msg
 }
 
-// Partial reports that the load published the tenants e does not name.
-func (e *RefusedError) Partial() bool { return true }
+// Refused returns the refused tenants, in the order of e.Tenants.
+func (e *RefusedError) Refused() []string {
+	out := make([]string, len(e.Tenants))
+	for i, t := range e.Tenants {
+		out[i] = t.Tenant
+	}
+	return out
+}
 
 // Unserved returns the refused tenants that have no previous snapshot and
 // deny every request, in the order of e.Tenants.
@@ -239,11 +248,10 @@ func (r *Registry) Load(ctx context.Context, policySets, pips []byte) (LoadSumma
 		snapshots: map[string]*Snapshot{},
 		tenants:   map[string]TenantHealth{},
 		refused:   map[string]refusal{},
+		dropped:   exp.Dropped,
+		orphans:   exp.Orphans,
 		loadedAt:  time.Now(),
 		sourceKey: sourceKey,
-	}
-	for _, o := range exp.Orphans {
-		next.orphans = append(next.orphans, o.Error())
 	}
 	names := slices.Sorted(maps.Keys(exp.Trees))
 	for t := range exp.Failed {
@@ -285,7 +293,9 @@ func (r *Registry) Load(ctx context.Context, policySets, pips []byte) (LoadSumma
 		old, hadOld := prev.snapshots[t]
 		th := b.health
 		th.Tenant = t
-		th.Dropped = exp.Dropped[t]
+		for _, d := range exp.Dropped[t] {
+			th.Dropped = append(th.Dropped, d.String())
+		}
 		if tree, ok := exp.Trees[t]; ok {
 			th.Warnings = tree.Warnings()
 		}
@@ -364,10 +374,22 @@ type build struct {
 }
 
 // refusal is a refused candidate: the key of its tree, or the reason the
-// export has no tree for the tenant.
+// export has no tree for the tenant, without the position of the element
+// that fails it.
 type refusal struct {
 	tree   policyir.Key
 	export string
+}
+
+// exportFailure returns the text of err, naming the element that fails the
+// export by its [policyir.Element.Identity], so that moving the element in
+// the export does not make the refusal new.
+func exportFailure(err error) string {
+	var ee *policyir.ElementError
+	if errors.As(err, &ee) {
+		return ee.Element.Identity().String()
+	}
+	return err.Error()
 }
 
 // build generates and compiles the candidate of tenant t, or keeps its
@@ -378,9 +400,12 @@ func (r *Registry) build(ctx context.Context, t string, exp *policyir.Export, pr
 	tree, ok := exp.Trees[t]
 	if !ok {
 		reason := exp.Failed[t].Error()
-		b.refused = &refusal{export: reason}
+		b.refused = &refusal{export: exportFailure(exp.Failed[t])}
 		if p, ok := prev.refused[t]; ok && p == *b.refused {
-			b.health.Rejected, b.repeat = prev.tenants[t].Rejected, true
+			// the reason names the element by its position in this export
+			rej := *prev.tenants[t].Rejected
+			rej.Reason = reason
+			b.health.Rejected, b.repeat = &rej, true
 			return b
 		}
 		b.health.Rejected = &Rejection{At: now(), Stage: "export", Reason: reason}
@@ -488,28 +513,31 @@ func (r *Registry) LoadSnapshots(ctx context.Context, policySets, pips []byte) e
 	return nil
 }
 
-// warnNew warns of each element that next leaves out of the policies or
-// names no tenant, of each part of a published snapshot that answers as a
-// failed source, and of each warning of a tenant's tree, where prev did not
-// have it: a rule that loses a key or a set that is dropped changes the
-// answers while every tenant stays ready, so /health alone does not reach the
-// operator.
+// warnNew warns of what next has and prev did not: an element that names no
+// tenant or that a tenant's tree leaves out, each compared by
+// [policyir.Element.Identity]; a refused candidate; a part of a published
+// snapshot that fails permanently; and a warning of a tenant's tree. A rule
+// that loses a key or a set that is dropped changes the answers while every
+// tenant stays ready, so /health alone does not reach the operator.
 func (r *Registry) warnNew(prev, next *state) {
-	for _, o := range next.orphans {
-		if !slices.Contains(prev.orphans, o) {
-			r.log.Warnf("policies: left out of the policies: %s", o)
-		}
+	for _, o := range newElements(prev.orphans, next.orphans) {
+		r.log.Warnf("policies: an element names no tenant and is listed under orphans in /health: %s", o)
 	}
 	for _, t := range slices.Sorted(maps.Keys(next.tenants)) {
 		th, old := next.tenants[t], prev.tenants[t]
-		for _, d := range th.Dropped {
-			if !slices.Contains(old.Dropped, d) {
-				r.log.Warnf("policies: tenant %s: left out of the policies: %s", t, d)
+		for _, d := range newElements(prev.dropped[t], next.dropped[t]) {
+			r.log.Warnf("policies: tenant %s: the tree leaves out an element, listed under dropped in /health: %s", t, d)
+		}
+		if rf, ok := next.refused[t]; ok {
+			if p, had := prev.refused[t]; !had || p != rf {
+				r.log.Warnf("policies: tenant %s: candidate snapshot refused, %s: %s: %s",
+					t, keepsWhat(th.Ready), th.Rejected.Stage, th.Rejected.Reason)
 			}
 		}
 		for _, f := range th.Failures {
 			if !slices.Contains(old.Failures, f) {
-				r.log.Warnf("policies: tenant %s: answers as a failed source: %s", t, f)
+				r.log.Warnf("policies: tenant %s: a part fails permanently and is listed under failures in /health; "+
+					"a decision that depends on it denies with a reason that starts with %q: %s", t, ReasonUnknown, f)
 			}
 		}
 		for _, w := range th.Warnings {
@@ -518,4 +546,22 @@ func (r *Registry) warnNew(prev, next *state) {
 			}
 		}
 	}
+}
+
+// newElements returns the elements of next whose identity next holds more
+// times than prev does, in the order of next.
+func newElements(prev, next []policyir.Element) []policyir.Element {
+	seen := map[policyir.Element]int{}
+	for _, e := range prev {
+		seen[e.Identity()]++
+	}
+	var out []policyir.Element
+	for _, e := range next {
+		if k := e.Identity(); seen[k] > 0 {
+			seen[k]--
+			continue
+		}
+		out = append(out, e)
+	}
+	return out
 }

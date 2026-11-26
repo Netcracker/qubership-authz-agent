@@ -95,7 +95,7 @@ type TenantCounts struct {
 	// Rejected counts the tenants whose latest candidate was refused.
 	Rejected int `json:"rejected"`
 	// Failing counts the tenants whose published snapshot has a part that
-	// answers as a failed source.
+	// fails permanently, as the internal /health lists under failures.
 	Failing int `json:"failing"`
 }
 

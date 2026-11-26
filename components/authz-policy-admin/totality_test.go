@@ -444,7 +444,7 @@ func loadInAgent(u upload, tab *spectables.Table) outcome {
 		return out
 	}
 	if d := exp.Dropped[defaultTenant]; len(d) > 0 {
-		out.violations["the export reader leaves a part out"] = d[0]
+		out.violations["the export reader leaves a part out"] = d[0].String()
 	}
 	if _, err := regogen.Generate(tree, tab, regogen.DefaultOptions()); err != nil {
 		if _, ok := errors.AsType[*regogen.RejectedError](err); ok {

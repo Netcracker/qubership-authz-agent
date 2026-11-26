@@ -259,7 +259,7 @@ func TestFromRegularRejectsAPolicyOfResourceTypeAllThatIsNotGlobal(t *testing.T)
 			t.Parallel()
 			e := fromRegular(t, `[`+resourceTypeAllSet(tc.component, tc.policies)+`]`, `[]`)
 
-			want := `policy set "s": simplified policy "r1" has resourceType ALL and is not a global policy: ` + tc.why
+			want := `policy set 0 "s": simplified policy "r1" has resourceType ALL and is not a global policy: ` + tc.why
 			if err := e.Failed["t"]; err == nil || err.Error() != want {
 				t.Errorf("Failed[t] = %v, want %s", err, want)
 			}
@@ -378,7 +378,7 @@ func TestFromRegularIsolatesAPIPNameDeclaredMoreThanOnce(t *testing.T) {
 		t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
 	}
 	wantDropped := []string{`pip "subject.x": isolated: declared 3 times`}
-	if got := e.Dropped["t"]; !slices.Equal(got, wantDropped) {
+	if got := droppedOf(e, "t"); !slices.Equal(got, wantDropped) {
 		t.Errorf("Dropped[t] = %q, want %q", got, wantDropped)
 	}
 }
@@ -395,7 +395,7 @@ func TestFromRegularReadsOnceAPIPNameDeclaredMoreThanOnceIdentically(t *testing.
 		t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
 	}
 	wantDropped := []string{`pip "subject.x": declared 2 times identically, read once`}
-	if got := e.Dropped["t"]; !slices.Equal(got, wantDropped) {
+	if got := droppedOf(e, "t"); !slices.Equal(got, wantDropped) {
 		t.Errorf("Dropped[t] = %q, want %q", got, wantDropped)
 	}
 }
@@ -463,7 +463,7 @@ func TestFromRegularReadsThePIPsOfANameOnceOnlyWhenTheyAreEqual(t *testing.T) {
 			t.Run(tc.name+" "+order.name, func(t *testing.T) {
 				t.Parallel()
 				e := fromRegular(t, `[]`, order.pips)
-				if got := e.Dropped["t"]; !slices.Equal(got, []string{tc.wantDropped}) {
+				if got := droppedOf(e, "t"); !slices.Equal(got, []string{tc.wantDropped}) {
 					t.Errorf("Dropped[t] = %q, want [%q]", got, tc.wantDropped)
 				}
 			})
@@ -479,7 +479,7 @@ func TestFromRegularReadsThePIPsOfANameOnceOnlyWhenTheyAreEqual(t *testing.T) {
 func TestFromRegularReadsTheSetsOfAPolicySetIdOnceOnlyWhenTheyAreEqual(t *testing.T) {
 	t.Parallel()
 
-	const identical = `policy set 1 "s": identical to policy set 0, read once`
+	const identical = `policy set 1 "s": identical to the first top-level set of this policySetId, read once`
 	const isolated = `policy set 0 "s": isolated: the tenant has 2 top-level sets with this policySetId`
 	set := func(rest string) string {
 		return `{"tenantId": "t", "policySetId": "s", "target": "resourceType == 'R'"` + rest + `}`
@@ -506,7 +506,7 @@ func TestFromRegularReadsTheSetsOfAPolicySetIdOnceOnlyWhenTheyAreEqual(t *testin
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			e := fromRegular(t, `[`+tc.first+`, `+tc.second+`]`, `[]`)
-			if got := e.Dropped["t"]; !slices.Contains(got, tc.want) {
+			if got := droppedOf(e, "t"); !slices.Contains(got, tc.want) {
 				t.Errorf("Dropped[t] = %q, want it to hold %q", got, tc.want)
 			}
 		})
@@ -556,7 +556,7 @@ func TestFromRegularIsolatesASetWithAnElementOfAnotherTenant(t *testing.T) {
 				t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
 			}
 			wantDropped := []string{`policy set 0 "s": isolated: ` + tc.wantReason}
-			if got := e.Dropped["t"]; !slices.Equal(got, wantDropped) {
+			if got := droppedOf(e, "t"); !slices.Equal(got, wantDropped) {
 				t.Errorf("Dropped[t] = %q, want %q", got, wantDropped)
 			}
 		})
@@ -597,11 +597,11 @@ func TestFromRegularIsolatesTheSetsOfAPolicySetIdATenantHasTwice(t *testing.T) {
 		{"two identical sets", `{"tenantId": "t", "policySetId": "s", "status": "ACTIVE",
 			"target": "resourceType == 'R1'"}`,
 			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  target[set_target]: resourceType EQ \"R1\"\n",
-			[]string{`policy set 1 "s": identical to policy set 0, read once`}},
+			[]string{`policy set 1 "s": identical to the first top-level set of this policySetId, read once`}},
 		{"two sets that differ in the spaces around the target", `{"tenantId": "t", "policySetId": "s",
 			"status": "ACTIVE", "target": "  resourceType == 'R1' "}`,
 			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  target[set_target]: resourceType EQ \"R1\"\n",
-			[]string{`policy set 1 "s": identical to policy set 0, read once`}},
+			[]string{`policy set 1 "s": identical to the first top-level set of this policySetId, read once`}},
 		{"two sets that differ in an unknown key", `{"tenantId": "t", "policySetId": "s", "status": "ACTIVE",
 			"target": "resourceType == 'R1'", "PARITY_extra": 1}`,
 			"set \"s\" name=\"\" domain=\"\" algorithm=absent\n  isolated: \"" + reason + "\"\n" +
@@ -629,7 +629,7 @@ func TestFromRegularIsolatesTheSetsOfAPolicySetIdATenantHasTwice(t *testing.T) {
 			if got := tree(t, e, "t").Dump(); got != tc.wantDump {
 				t.Errorf("Dump() of t =\n%s\nwant\n%s", got, tc.wantDump)
 			}
-			if got := e.Dropped["t"]; !slices.Equal(got, tc.wantDropped) {
+			if got := droppedOf(e, "t"); !slices.Equal(got, tc.wantDropped) {
 				t.Errorf("Dropped[t] = %q, want %q", got, tc.wantDropped)
 			}
 			wantOther := "set \"s\" name=\"\" domain=\"\" algorithm=absent\n  target[set_target]: resourceType EQ \"R\"\n"
@@ -684,7 +684,7 @@ func TestFromRegularIsolatesAPolicyWithAPatternRegexpRefuses(t *testing.T) {
 				t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
 			}
 			wantDropped := []string{`policy set 0 "s": policy "p1": isolated: ` + refusedPattern}
-			if got := e.Dropped["t"]; !slices.Equal(got, wantDropped) {
+			if got := droppedOf(e, "t"); !slices.Equal(got, wantDropped) {
 				t.Errorf("Dropped[t] = %q, want %q", got, wantDropped)
 			}
 		})
@@ -730,7 +730,7 @@ func TestFromRegularIsolatesAPolicyWithASubjectOperandThatNamesNoSubjectAttribut
 				t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
 			}
 			wantDropped := []string{`policy set 0 "s": policy "p1": isolated: ` + why}
-			if got := e.Dropped["t"]; !slices.Equal(got, wantDropped) {
+			if got := droppedOf(e, "t"); !slices.Equal(got, wantDropped) {
 				t.Errorf("Dropped[t] = %q, want %q", got, wantDropped)
 			}
 		})
@@ -783,7 +783,7 @@ func TestFromRegularIsolatesASetWithAPatternRegexpRefuses(t *testing.T) {
 			if got, want := tree(t, e, "t").Dump(), tc.wantDump+controlDump; got != want {
 				t.Errorf("Dump() =\n%s\nwant\n%s", got, want)
 			}
-			if got := e.Dropped["t"]; !slices.Equal(got, []string{tc.wantDropped}) {
+			if got := droppedOf(e, "t"); !slices.Equal(got, []string{tc.wantDropped}) {
 				t.Errorf("Dropped[t] = %q, want [%q]", got, tc.wantDropped)
 			}
 		})
@@ -830,7 +830,7 @@ func TestFromRegularGivesASetIsolatedForAnotherReasonTheTargetTrueForAPatternReg
 			if got := tree(t, e, "t").Dump(); got != tc.wantDump {
 				t.Errorf("Dump() =\n%s\nwant\n%s", got, tc.wantDump)
 			}
-			if got := e.Dropped["t"]; !slices.Equal(got, tc.wantDropped) {
+			if got := droppedOf(e, "t"); !slices.Equal(got, tc.wantDropped) {
 				t.Errorf("Dropped[t] = %q, want %q", got, tc.wantDropped)
 			}
 		})
@@ -852,7 +852,7 @@ func TestFromRegularListsEveryUnknownKey(t *testing.T) {
 		`policy set 1 "s": unknown key STATUS`,
 		`pip 1 "subject.x": unknown key Claim`,
 	}
-	if got := e.Dropped["t"]; !slices.Equal(got, want) {
+	if got := droppedOf(e, "t"); !slices.Equal(got, want) {
 		t.Errorf("Dropped[t] =\n%q\nwant\n%q", got, want)
 	}
 }
@@ -885,8 +885,8 @@ func TestFromRegularAppliesTopLevelStatuses(t *testing.T) {
 			if tc.want && len(tr.Sets[0].Sets) != 1 {
 				t.Errorf("nested INACTIVE set dropped from a set of status %q", tc.status)
 			}
-			if got := len(e.Dropped["t"]) == 0; got != tc.want {
-				t.Errorf("Dropped[t] = %q for a top-level set of status %q", e.Dropped["t"], tc.status)
+			if got := len(droppedOf(e, "t")) == 0; got != tc.want {
+				t.Errorf("Dropped[t] = %q for a top-level set of status %q", droppedOf(e, "t"), tc.status)
 			}
 		})
 	}
@@ -902,7 +902,7 @@ func TestFromRegularDropsAnInactiveSetBeforeReadingIt(t *testing.T) {
 	if tr := tree(t, e, "t"); len(tr.Sets) != 0 {
 		t.Errorf("sets = %d, want none", len(tr.Sets))
 	}
-	if got, want := e.Dropped["t"], []string{`policy set 0 "s": status INACTIVE`}; !slices.Equal(got, want) {
+	if got, want := droppedOf(e, "t"), []string{`policy set 0 "s": status INACTIVE`}; !slices.Equal(got, want) {
 		t.Errorf("Dropped[t] = %q, want %q", got, want)
 	}
 }
@@ -1017,7 +1017,7 @@ func TestFromRegularNamesTheNodesAroundABadElement(t *testing.T) {
 	e := fromRegular(t, `[{"tenantId": "t", "policySetId": "top", "policySets": [{"policySetId": "mid",
 		"policies": [{"policyId": "p", "rules": [{"ruleId": "r", "effect": "PERMIT"}]}]}]}]`, `[]`)
 
-	want := `policy set "top": policy set "mid": policy "p": rule "r": effect "PERMIT" unknown`
+	want := `policy set 0 "top": policy set "mid": policy "p": rule "r": effect "PERMIT" unknown`
 	if err := e.Failed["t"]; err == nil || err.Error() != want {
 		t.Errorf("Failed[t] = %v, want %s", err, want)
 	}
@@ -1075,7 +1075,7 @@ func TestFromRegularSkipsTheLegacyKeysNoDecisionReads(t *testing.T) {
 			if tc.want != "" {
 				want = []string{tc.want}
 			}
-			if got := fromRegular(t, set, pip).Dropped["t"]; !slices.Equal(got, want) {
+			if got := droppedOf(fromRegular(t, set, pip), "t"); !slices.Equal(got, want) {
 				t.Errorf("Dropped[t] = %q, want %q", got, want)
 			}
 		})
@@ -1119,7 +1119,7 @@ func TestFromRegularListsQuerydslPredicateAsAnUnknownKey(t *testing.T) {
 				t.Errorf("Unsupported() = %v, want none", got)
 			}
 			want := []string{`policy set 0 "s": unknown key policies[0].rules[0].querydslPredicate`}
-			if got := e.Dropped["t"]; !slices.Equal(got, want) {
+			if got := droppedOf(e, "t"); !slices.Equal(got, want) {
 				t.Errorf("Dropped[t] = %q, want %q", got, want)
 			}
 		})
@@ -1184,7 +1184,7 @@ func TestFromRegularCutsTheSpacesAroundEveryEnumField(t *testing.T) {
 
 	inactive := fromRegular(t, `[{"tenantId": "t", "policySetId": "s", "status": " INACTIVE\t"},
 		{"tenantId": "t", "policySetId": "n", "status": "\u00a0INACTIVE"}]`, `[]`)
-	if got, want := inactive.Dropped["t"], []string{`policy set 0 "s": status INACTIVE`}; !slices.Equal(got, want) {
+	if got, want := droppedOf(inactive, "t"), []string{`policy set 0 "s": status INACTIVE`}; !slices.Equal(got, want) {
 		t.Errorf("Dropped[t] = %q, want %q", got, want)
 	}
 
@@ -1370,7 +1370,7 @@ func TestFromRegularListsNothingDroppedFromAFailedTenant(t *testing.T) {
 		t.Fatalf("Failed[t] = nil, want the error of set s")
 	}
 	if got, ok := e.Dropped["t"]; ok {
-		t.Errorf("Dropped[t] = %q, want no entry", got)
+		t.Errorf("Dropped[t] = %v, want no entry", got)
 	}
 }
 
@@ -1522,6 +1522,16 @@ func TestFromRegularListsNothingDroppedFromATenantNewTreeRefuses(t *testing.T) {
 		t.Fatalf("Failed[t] = nil, want the error of the PIP named x")
 	}
 	if got, ok := e.Dropped["t"]; ok {
-		t.Errorf("Dropped[t] = %q, want no entry", got)
+		t.Errorf("Dropped[t] = %v, want no entry", got)
 	}
+}
+
+// droppedOf returns the text of each element that the tree of tenant leaves
+// out of e.
+func droppedOf(e *Export, tenant string) []string {
+	var out []string
+	for _, d := range e.Dropped[tenant] {
+		out = append(out, d.String())
+	}
+	return out
 }

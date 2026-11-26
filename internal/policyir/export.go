@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 
 	"authz-agent/internal/jsonvalue"
@@ -33,17 +34,67 @@ type Export struct {
 	// that tenant.
 	Trees map[string]*Tree
 	// Failed maps a tenant ID to the reason no tree of that tenant could be
-	// built. Such a tenant has no entry in Trees.
+	// built. Such a tenant has no entry in Trees. A failure at one element
+	// of the export is an *ElementError that names the element.
 	Failed map[string]error
 	// Orphans lists the elements that name no tenant, which belong to no
 	// tree.
-	Orphans []error
+	Orphans []Element
 	// Dropped maps a tenant ID to what its tree leaves out by the rules of
-	// [FromRegular], one line per dropped set, unknown key, isolated set, set
-	// read once, isolated PIP name, or PIP name read once, naming it and the
-	// rule.
-	Dropped map[string][]string
+	// [FromRegular], one element per dropped set, unknown key, isolated set,
+	// set read once, isolated PIP name, or PIP name read once, with the rule
+	// as its reason.
+	Dropped map[string][]Element
 }
+
+// Element is a top-level policy set or a PIP declaration of the export, with
+// what [FromRegular] did to it.
+type Element struct {
+	// Kind is "policy set" or "pip".
+	Kind string
+	// Index is the position of the element in its array of the export, or -1
+	// for a PIP name, which covers every declaration of the name.
+	Index int
+	// ID is the policySetId of a set or the name of a PIP declaration, empty
+	// when the element has none.
+	ID     string
+	Reason string
+}
+
+// String names the element by its kind, its position, and its ID, followed
+// by the reason, such as `policy set 3 "s": status INACTIVE`.
+func (e Element) String() string {
+	s := e.Kind
+	if e.Index >= 0 {
+		s += " " + strconv.Itoa(e.Index)
+	}
+	if e.ID != "" {
+		s += " " + strconv.Quote(e.ID)
+	}
+	return s + ": " + e.Reason
+}
+
+// Identity returns e with the Index -1. An element inserted ahead of e in
+// the export changes the position of e and nothing else, so two loads of the
+// export compare their elements by identity.
+func (e Element) Identity() Element {
+	e.Index = -1
+	return e
+}
+
+// ElementError is the failure of a tenant at one element of the export. The
+// Reason of its Element is the text of Err.
+type ElementError struct {
+	Element Element
+	Err     error
+}
+
+func elementError(kind string, i int, id string, err error) *ElementError {
+	return &ElementError{Element: Element{Kind: kind, Index: i, ID: id, Reason: err.Error()}, Err: err}
+}
+
+func (e *ElementError) Error() string { return e.Element.String() }
+func (e *ElementError) Unwrap() error { return e.Err }
 
 // FromRegular reads the documents of GET /access/v3/config/policySets and GET
 // /access/v3/config/pips into one tree per tenant. It returns an error only
@@ -124,10 +175,11 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 	}
 	tenants := map[string]*tenant{}
 	var order []string
-	out := &Export{Trees: map[string]*Tree{}, Failed: map[string]error{}, Dropped: map[string][]string{}}
-	get := func(kind string, i int, head *exportHead) *tenant {
+	out := &Export{Trees: map[string]*Tree{}, Failed: map[string]error{}, Dropped: map[string][]Element{}}
+	get := func(kind string, i int, id string, head *exportHead) *tenant {
 		if head.TenantID == nil || *head.TenantID == "" {
-			out.Orphans = append(out.Orphans, fmt.Errorf("%s %d: tenantId absent, empty, or not a string", kind, i))
+			out.Orphans = append(out.Orphans, Element{Kind: kind, Index: i, ID: id,
+				Reason: "tenantId absent, empty, or not a string"})
 			return nil
 		}
 		t, ok := tenants[*head.TenantID]
@@ -144,7 +196,7 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 	sameID := map[setKey][]int{}
 	for i, raw := range *setsDoc.PolicySets {
 		heads[i] = readHead(raw)
-		if t := get("policy set", i, heads[i]); t != nil {
+		if t := get("policy set", i, heads[i].ID, heads[i]); t != nil {
 			t.setCount[heads[i].ID]++
 			k := setKey{*heads[i].TenantID, heads[i].ID}
 			sameID[k] = append(sameID[k], i)
@@ -173,25 +225,25 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 		}
 		if !topLevelApplies(head.Status) {
 			id := *head.TenantID
-			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: status %s", i, head.ID, head.Status))
+			out.Dropped[id] = append(out.Dropped[id], setElement(i, head, "status "+head.Status))
 			continue
 		}
-		if first, ok := copyOf[i]; ok {
+		if _, ok := copyOf[i]; ok {
 			id := *head.TenantID
 			out.Dropped[id] = append(out.Dropped[id],
-				fmt.Sprintf("policy set %d %q: identical to policy set %d, read once", i, head.ID, first))
+				setElement(i, head, "identical to the first top-level set of this policySetId, read once"))
 			continue
 		}
 		var s exportSet
 		unknown, err := decodeReporting(raw, &s)
 		if err != nil {
-			t.err = fmt.Errorf("policy set %d: %w", i, err)
+			t.err = elementError("policy set", i, head.ID, err)
 			continue
 		}
 		s.cutTexts()
 		for _, key := range unknown {
 			id := *head.TenantID
-			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: unknown key %s", i, head.ID, key))
+			out.Dropped[id] = append(out.Dropped[id], setElement(i, head, "unknown key "+key))
 		}
 		reason := ""
 		if n := t.setCount[head.ID]; n > 1 {
@@ -201,7 +253,7 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 		}
 		if reason != "" {
 			id := *head.TenantID
-			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: isolated: %s", i, head.ID, reason))
+			out.Dropped[id] = append(out.Dropped[id], setElement(i, head, "isolated: "+reason))
 			t.sets = append(t.sets, &PolicySet{
 				ID: s.PolicySetID, Name: s.Name, Domain: s.Domain, ExternalID: s.ExternalID,
 				Target: isolatedTarget(condition(s.Target, PlaceSetTarget, "")), Isolated: reason,
@@ -209,13 +261,13 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 			continue
 		}
 		if why := notGlobal(&s); why != "" {
-			t.err = fmt.Errorf("policy set %q: %s", s.PolicySetID, why)
+			t.err = elementError("policy set", i, head.ID, errors.New(why))
 			continue
 		}
 		if g, ok := simplifiedGroup(&s); ok {
 			if why := groupRefused(g); why != "" {
 				id := *head.TenantID
-				out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: isolated: %s", i, head.ID, why))
+				out.Dropped[id] = append(out.Dropped[id], setElement(i, head, "isolated: "+why))
 				t.sets = append(t.sets, &PolicySet{
 					ID: s.PolicySetID, Name: s.Name, Domain: s.Domain, ExternalID: s.ExternalID,
 					Target: isolatedTarget(condition(s.Target, PlaceSetTarget, "")), Isolated: why,
@@ -229,29 +281,29 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 		b := setBuilder{vars: &t.vars, notes: &notes}
 		ps, err := b.set(&s, "")
 		if err != nil {
-			t.err = fmt.Errorf("policy set %q: %w", s.PolicySetID, err)
+			t.err = elementError("policy set", i, head.ID, err)
 			continue
 		}
 		for _, n := range notes {
 			id := *head.TenantID
-			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("policy set %d %q: %s", i, head.ID, n))
+			out.Dropped[id] = append(out.Dropped[id], setElement(i, head, n))
 		}
 		t.sets = append(t.sets, ps)
 	}
 	for i, raw := range *pipsDoc.PIPs {
 		head := readHead(raw)
-		t := get("pip", i, head)
+		t := get("pip", i, head.Name, head)
 		if t == nil || t.err != nil {
 			continue
 		}
 		p, unknown, err := readPIP(raw)
 		if err != nil {
-			t.err = fmt.Errorf("pip %d: %w", i, err)
+			t.err = elementError("pip", i, head.Name, err)
 			continue
 		}
 		for _, key := range unknown {
 			id := *head.TenantID
-			out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("pip %d %q: unknown key %s", i, p.Name, key))
+			out.Dropped[id] = append(out.Dropped[id], Element{Kind: "pip", Index: i, ID: p.Name, Reason: "unknown key " + key})
 		}
 		t.pips = append(t.pips, p)
 		t.pipCount[p.Name]++
@@ -282,12 +334,12 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 				pips = append(pips, p)
 			case n > 1 && identical[p.Name]:
 				out.Dropped[id] = append(out.Dropped[id],
-					fmt.Sprintf("pip %q: declared %d times identically, read once", p.Name, n))
+					Element{Kind: "pip", Index: -1, ID: p.Name, Reason: fmt.Sprintf("declared %d times identically, read once", n)})
 				pips = append(pips, p)
 				t.pipCount[p.Name] = 0
 			case n > 1:
 				reason := fmt.Sprintf("declared %d times", n)
-				out.Dropped[id] = append(out.Dropped[id], fmt.Sprintf("pip %q: isolated: %s", p.Name, reason))
+				out.Dropped[id] = append(out.Dropped[id], Element{Kind: "pip", Index: -1, ID: p.Name, Reason: "isolated: " + reason})
 				pips = append(pips, &PIP{Name: p.Name, Isolated: reason})
 				t.pipCount[p.Name] = 0
 			}
@@ -416,8 +468,10 @@ func sameJSON(a, b string) bool {
 // itself: the tenant, and the ID and status of a set.
 type exportHead struct {
 	TenantID *string
-	ID       string
-	Status   string
+	// ID is the policySetId of a set, and Name the name of a PIP declaration.
+	ID     string
+	Name   string
+	Status string
 }
 
 // readHead reads the head of raw, with the status cut as [enumText] cuts it.
@@ -428,6 +482,7 @@ func readHead(raw json.RawMessage) *exportHead {
 	var fields struct {
 		TenantID    json.RawMessage `json:"tenantId"`
 		PolicySetID json.RawMessage `json:"policySetId"`
+		Name        json.RawMessage `json:"name"`
 		Status      json.RawMessage `json:"status"`
 	}
 	h := &exportHead{}
@@ -439,6 +494,7 @@ func readHead(raw json.RawMessage) *exportHead {
 		h.TenantID = &tenant
 	}
 	_ = json.Unmarshal(fields.PolicySetID, &h.ID)
+	_ = json.Unmarshal(fields.Name, &h.Name)
 	_ = json.Unmarshal(fields.Status, &h.Status)
 	h.Status = enumText(h.Status)
 	return h
@@ -1345,4 +1401,10 @@ func skipSpace(data []byte, i int) int {
 		i++
 	}
 	return i
+}
+
+// setElement is the top-level set at position i of the export, whose head is
+// head, with reason.
+func setElement(i int, head *exportHead, reason string) Element {
+	return Element{Kind: "policy set", Index: i, ID: head.ID, Reason: reason}
 }

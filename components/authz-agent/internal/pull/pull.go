@@ -34,8 +34,9 @@ import (
 const (
 	DefaultInterval    = 30 * time.Second
 	DefaultHTTPTimeout = 30 * time.Second
-	// tokenWait bounds how long the first pull waits for the m2m token.
-	tokenWait = 15 * time.Second
+	// defaultTokenWait bounds how long the first pull waits for the m2m
+	// token.
+	defaultTokenWait = 15 * time.Second
 )
 
 // Config selects the source. A zero Interval or an empty SourceURL
@@ -57,18 +58,18 @@ type Config struct {
 // SnapshotLoader builds the per-tenant policies from the documents of
 // /access/v3/config/policySets and /access/v3/config/pips. An error means
 // the documents could not be read at all, and nothing was published, unless
-// it wraps a [PartialLoad] whose Partial returns true.
+// it wraps a [PartialLoad].
 type SnapshotLoader interface {
 	LoadSnapshots(ctx context.Context, policySets, pips []byte) error
 }
 
 // PartialLoad is implemented by an error of [SnapshotLoader.LoadSnapshots]
-// that may report a load which published the documents for some tenants
-// and refused the others; Partial reports whether it does. Unserved names
-// the refused tenants that have no snapshot at all and deny every request;
-// a refused tenant that keeps its previous snapshot is not among them.
+// that reports a load which published the documents for some tenants and
+// refused the others. Refused names the refused tenants. Unserved names
+// those of them that have no snapshot at all and deny every request; a
+// refused tenant that keeps its previous snapshot is not among them.
 type PartialLoad interface {
-	Partial() bool
+	Refused() []string
 	Unserved() []string
 }
 
@@ -108,6 +109,8 @@ type Puller struct {
 	tokens Tokens
 	log    Logger
 	client *http.Client
+	// tokenWait is [defaultTokenWait] outside tests.
+	tokenWait time.Duration
 
 	// loadMu serializes the loads, so a load that fetched the documents
 	// before a change at the source cannot store them after a load that
@@ -117,10 +120,10 @@ type Puller struct {
 	mu           sync.Mutex
 	status       Status
 	firstSuccess time.Time
-	// refusal is the text of the partial load of the last pull that loaded,
-	// empty when that pull published every tenant. A failed pull leaves it
-	// unchanged.
-	refusal string
+	// partial is the number of refused tenants and the unserved tenants of
+	// the last pull that loaded, the zero value when that pull published
+	// every tenant. A failed pull leaves it unchanged.
+	partial partialState
 }
 
 // New returns a puller for cfg; an HTTPTimeout that is zero or negative
@@ -133,10 +136,11 @@ func New(cfg Config, tokens Tokens, logger Logger) *Puller {
 		cfg.HTTPTimeout = DefaultHTTPTimeout
 	}
 	return &Puller{
-		cfg:    cfg,
-		tokens: tokens,
-		log:    logger,
-		client: &http.Client{Timeout: cfg.HTTPTimeout},
+		cfg:       cfg,
+		tokens:    tokens,
+		log:       logger,
+		client:    &http.Client{Timeout: cfg.HTTPTimeout},
+		tokenWait: defaultTokenWait,
 	}
 }
 
@@ -183,46 +187,59 @@ func (p *Puller) pull(ctx context.Context) {
 	}
 }
 
+// partialState is what [Puller.PullNow] reports of a partial load.
+type partialState struct {
+	refused  int
+	unserved string
+}
+
 // PullNow loads the snapshots once, as a tick of [Puller.Run] does, and
 // returns once they are loaded or the load has failed. The policies it
 // loads were fetched after the call: a load already in progress finishes
 // first. A failed load keeps the previous snapshots and is returned. A
 // partial load published the tenants it did not refuse, and PullNow
-// returns nil for it; its refusals are reported when they differ from the
-// previous pull's, and their end at info. A partial load that leaves a
-// tenant without a snapshot sets no [Status.PoliciesLoaded] unless an
-// earlier load did. It loads whatever the pull interval, even 0; with no
-// source URL it returns an error and loads nothing.
+// returns nil for it; it reports the number of refused tenants and the
+// unserved ones when either differs from the previous pull's, and their end
+// at info. A
+// partial load that leaves a tenant without a snapshot sets no
+// [Status.PoliciesLoaded] unless an earlier load did. It loads whatever the
+// pull interval, even 0; with no source URL it returns an error and loads
+// nothing.
 func (p *Puller) PullNow(ctx context.Context) error {
 	if strings.TrimSpace(p.cfg.SourceURL) == "" {
 		return errors.New("pull disabled: source URL empty")
 	}
 	err := p.PullOnce(ctx)
 	var partial PartialLoad
-	if err != nil && (!errors.As(err, &partial) || !partial.Partial()) {
+	if err != nil && !errors.As(err, &partial) {
 		return err
 	}
-	refusal := ""
+	var now partialState
 	var unserved []string
 	if err != nil {
-		refusal = err.Error()
 		unserved = partial.Unserved()
+		now = partialState{refused: len(partial.Refused()), unserved: strings.Join(unserved, ", ")}
 	}
 	p.mu.Lock()
-	previous := p.refusal
-	p.refusal = refusal
+	previous := p.partial
+	p.partial = now
 	waiting := !p.status.PoliciesLoaded && len(unserved) > 0
 	if waiting {
 		p.status.Waiting = unserved
 	}
 	p.mu.Unlock()
 	switch {
-	case refusal != "" && refusal != previous && waiting:
-		p.log.Warnf("policies: pulled from %s, and the service is not ready until tenants %s have a snapshot: %s",
-			p.cfg.SourceURL, strings.Join(unserved, ", "), refusal)
-	case refusal != "" && refusal != previous:
-		p.log.Warnf("policies: pulled from %s, and some tenants are not updated: %s", p.cfg.SourceURL, refusal)
-	case refusal == "" && previous != "":
+	case now == previous:
+	case waiting:
+		p.log.Warnf("policies: pulled from %s; tenants refused: %d; the service is not ready until these tenants have a snapshot: %s",
+			p.cfg.SourceURL, now.refused, now.unserved)
+	case now.unserved != "":
+		p.log.Warnf("policies: pulled from %s; tenants refused: %d; these tenants have no snapshot and deny every request: %s",
+			p.cfg.SourceURL, now.refused, now.unserved)
+	case now.refused > 0:
+		p.log.Warnf("policies: pulled from %s; tenants refused: %d, each keeps its previous snapshot",
+			p.cfg.SourceURL, now.refused)
+	default:
 		p.log.Infof("policies: pulled from %s, and every tenant is updated", p.cfg.SourceURL)
 	}
 	if !waiting {
@@ -232,7 +249,7 @@ func (p *Puller) PullNow(ctx context.Context) error {
 }
 
 // waitForToken gives the token source a bounded time to obtain the first
-// token, so the first pull is not a foreseeable 401.
+// token before the first pull.
 func (p *Puller) waitForToken(ctx context.Context) {
 	if p.tokens == nil {
 		return
@@ -240,8 +257,8 @@ func (p *Puller) waitForToken(ctx context.Context) {
 	select {
 	case <-p.tokens.Ready():
 	case <-ctx.Done():
-	case <-time.After(tokenWait):
-		p.log.Warnf("policies: no m2m token after %s, pulling without one", tokenWait)
+	case <-time.After(p.tokenWait):
+		p.log.Warnf("policies: no m2m token after %s; each pull fails until the token source publishes one", p.tokenWait)
 	}
 }
 

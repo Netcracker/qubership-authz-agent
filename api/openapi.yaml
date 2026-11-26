@@ -884,8 +884,8 @@ components:
         failing:
           type: integer
           description: |
-            Tenants whose published policies have a part that answers
-            as a failed source.
+            Tenants whose published policies have a part that fails
+            permanently, which the internal /health lists under failures.
     LegacyErrorResponse:
       type: object
       additionalProperties: false

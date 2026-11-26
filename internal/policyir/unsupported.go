@@ -84,7 +84,7 @@ func (t *Tree) Unsupported() []Finding {
 			out = append(out, Finding{Where: fmt.Sprintf("pip %q", p.Name), Form: FormPIPExtension, Text: p.Unsupported})
 		}
 	}
-	t.walkConditions(func(where *node, c *Condition) {
+	t.walk(func(where *node, c *Condition) {
 		for _, d := range c.Disjuncts {
 			for _, a := range d {
 				switch v := a.(type) {
@@ -101,18 +101,19 @@ func (t *Tree) Unsupported() []Finding {
 		}
 	}, func(where *node, s *PolicySet) {
 		out = append(out, Finding{Where: where.String(), Form: FormNestedIterate, Text: "iterate var " + s.Iterate.Var})
-	})
+	}, nil)
 	return out
 }
 
-// Warnings lists, in tree order, the comparisons the agent evaluates
-// otherwise than their author likely meant, each with the place of its
-// condition: a comparison over subject.isM2M, which reads subject.isM2M as
-// absent whatever the token, where the condition subject.isM2M alone tests
-// the M2M token.
+// Warnings lists, in tree order, the parts of the tree the agent evaluates
+// otherwise than their author likely meant, each with its place: a
+// comparison over subject.isM2M, which reads subject.isM2M as absent whatever
+// the token, where the condition subject.isM2M alone tests the M2M token; and
+// a rule with no effect, which counts as NOT_APPLICABLE and neither permits
+// nor denies.
 func (t *Tree) Warnings() []string {
 	var out []string
-	t.walkConditions(func(where *node, c *Condition) {
+	t.walk(func(where *node, c *Condition) {
 		for _, d := range c.Disjuncts {
 			for _, a := range d {
 				cmp, ok := a.(Compare)
@@ -123,15 +124,22 @@ func (t *Tree) Warnings() []string {
 					"the condition subject.isM2M alone tests whether the token is M2M", where, formatAtom(cmp, false)))
 			}
 		}
-	}, nil)
+	}, nil, func(where *node, r *Rule) {
+		if r.Effect == EffectAbsent {
+			out = append(out, fmt.Sprintf("%s: names no effect, so the rule counts as NOT_APPLICABLE and neither "+
+				"permits nor denies", where))
+		}
+	})
 	return out
 }
 
-// walkConditions calls cond for every condition of the tree with its place:
-// the conditions of the simplified groups, then those of the sets in tree
-// order. It calls nested, where nested is not nil, for every set with
-// iterate inside a set with iterate.
-func (t *Tree) walkConditions(cond func(where *node, c *Condition), nested func(where *node, s *PolicySet)) {
+// walk calls cond for every condition of the tree with its place: the
+// conditions of the simplified groups, then those of the sets in tree order.
+// It calls nested, where nested is not nil, for every set with iterate inside
+// a set with iterate, and rule, where rule is not nil, for every rule of a
+// set, after the conditions of the rule.
+func (t *Tree) walk(cond func(where *node, c *Condition), nested func(where *node, s *PolicySet),
+	rule func(where *node, r *Rule)) {
 	visit := func(where *node, c *Condition) {
 		if c != nil {
 			cond(where, c)
@@ -160,6 +168,9 @@ func (t *Tree) walkConditions(cond func(where *node, c *Condition), nested func(
 				rp := pp.child(rules[j])
 				visit(rp.child("target"), r.Target)
 				visit(rp.child("condition"), r.Condition)
+				if rule != nil {
+					rule(rp, r)
+				}
 			}
 		}
 		children := labels(s.Sets, setLabel)

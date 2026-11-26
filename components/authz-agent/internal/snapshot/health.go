@@ -28,7 +28,8 @@ type Health struct {
 	LoadedAt string `json:"loadedAt,omitempty"`
 	// Tenants holds every tenant the last export named, by tenant ID order.
 	Tenants []TenantHealth `json:"tenants"`
-	// Orphans lists the elements of the export that name no tenant.
+	// Orphans lists the elements of the export that name no tenant, one line
+	// per element.
 	Orphans []string `json:"orphans,omitempty"`
 }
 
@@ -40,10 +41,11 @@ type TenantHealth struct {
 	Ready       bool   `json:"ready"`
 	Snapshot    string `json:"snapshot,omitempty"`
 	PublishedAt string `json:"publishedAt,omitempty"`
-	// Failures lists the parts of the published snapshot that answer as a
-	// permanently failed source: a set the legacy service never evaluates,
-	// a PIP the tenant does not declare, and the like. The rest of the
-	// tenant is served.
+	// Failures lists the parts of the published snapshot that fail
+	// permanently: a set the legacy service never evaluates, a PIP the
+	// tenant does not declare, and the like. A decision that depends on such
+	// a part denies with a reason that starts with [ReasonUnknown]; the rest
+	// of the tenant is served.
 	Failures []Failure `json:"failures,omitempty"`
 	// Rejected is the refusal of the tenant's latest candidate, nil when
 	// the published snapshot is the latest candidate.
@@ -51,13 +53,13 @@ type TenantHealth struct {
 	// Dropped lists what the tenant's tree leaves out of the export, one
 	// line per element.
 	Dropped []string `json:"dropped,omitempty"`
-	// Warnings lists the comparisons of the tenant's tree that the agent
+	// Warnings lists the parts of the tenant's tree that the agent
 	// evaluates otherwise than their author likely meant, as
 	// policyir.Tree.Warnings finds them.
 	Warnings []string `json:"warnings,omitempty"`
 }
 
-// Failure is a part of a tenant that answers as a failed source.
+// Failure is a part of a tenant that fails permanently.
 type Failure struct {
 	Set    string `json:"set,omitempty"`
 	Policy string `json:"policy,omitempty"`
@@ -101,7 +103,10 @@ type Form struct {
 // Health returns the state of every tenant of the last load.
 func (r *Registry) Health() Health {
 	s := r.cur.Load()
-	h := Health{Tenants: []TenantHealth{}, Orphans: s.orphans}
+	h := Health{Tenants: []TenantHealth{}}
+	for _, o := range s.orphans {
+		h.Orphans = append(h.Orphans, o.String())
+	}
 	if !s.loadedAt.IsZero() {
 		h.LoadedAt = s.loadedAt.UTC().Format(time.RFC3339)
 	}

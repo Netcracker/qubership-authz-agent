@@ -64,16 +64,19 @@ of a PIP, the entitlements service, or the permission scope carries it in `X-Req
 
 `GET /health` is 200 once the trusted providers meet the bootstrap rules, and 503 with the reason and its details until
 then. On the internal port, its `snapshots` member lists each tenant of the last policy load: whether it is `ready`, the
-snapshot it answers from, the sets, policies, and PIPs that answer as failed, what the load left out, and the
-`rejected` reason of a candidate that was not published. A load also writes a warning for each element it leaves out
-and each set, policy, or PIP that answers as failed,
-unless the previous load reported the same text; the text names an element by its position in the document. A tenant
-keeps its previous snapshot when a new candidate is rejected; a tenant rejected on its first load is not ready and
-denies every check request. The gauge `authz_agent_policy_tenants` on `/prometheus` counts the tenants by the snapshot
-they answer from: `current`, `stale` (an earlier snapshot, after a rejected candidate), or `none`. `GET /ready`, on the
-internal port, adds the policies: 503 with the same details until a load gives every tenant the source names a snapshot,
-then 200 `{"status":"ready"}`. The 503 reason is `no snapshot accepted yet for tenants <tenants>` while a tenant
-rejected on its first load holds readiness back, and `policies not loaded yet` before any load. With
+snapshot it answers from, the sets, policies, and PIPs that fail permanently (`failures`), what the load left out
+(`dropped`), and the `rejected` reason of a candidate that was not published; its `orphans` member lists the elements
+that name no tenant. A check request whose decision depends on a part listed under `failures` is denied with a reason
+that starts with `PIP resolution failed`; the rest of the tenant is served. A load writes a warning for each element
+under `orphans` or `dropped`, each part under `failures`, and each tenant whose candidate is rejected, unless the
+previous load had the same one. An element is the same when its kind, its ID, and the reason match, whatever its
+position in the document; the warning and `/health` name a set or a PIP declaration by its position in this load's
+document. A tenant keeps its previous snapshot when a new candidate is rejected; a tenant rejected on its first load is
+not ready and denies every check request. The gauge `authz_agent_policy_tenants` on `/prometheus` counts the tenants by
+the snapshot they answer from: `current`, `stale` (an earlier snapshot, after a rejected candidate), or `none`. `GET
+/ready`, on the internal port, adds the policies: 503 with the same details until a load gives every tenant the source
+names a snapshot, then 200 `{"status":"ready"}`. The 503 reason is `no snapshot accepted yet for tenants <tenants>`
+while a tenant rejected on its first load holds readiness back, and `policies not loaded yet` before any load. With
 `AUTHZ_TENANT_MANAGER_URL` set, `/ready` also waits until tenant-manager resolves `AUTHZ_DEFAULT_TENANT` to its tenant
 ID, with the reason `default tenant "<name>" not resolved via tenant-manager yet`; the agent retries the lookup after 1,
 2, 4, 8, and then every 10 seconds, and logs a warning for each failed attempt. The reason names each unmet condition,
@@ -81,15 +84,14 @@ separated by semicolons. `GET /health` does not wait for tenant-manager. Until t
 request that names no tenant is denied with the reason `no policies are published for tenant <name>`, whatever the
 policy data holds under the name: `check/resource` answers `false`, a bulk route allows no id, and `check/filter`
 answers `DENY`. A caller whose token is not an M2M token gets that answer only when the `tenant-id` claim of its token
-equals the name, and 403 otherwise. Once ready, the service
-stays ready: a pull that fails later, or a later load that rejects a tenant, keeps the published snapshots and both
-verdicts. An empty `AUTHZ_PAP_CLIENT_SOURCE_URL` or an `AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and
-`/ready` then answers 200 as soon as the trusted providers meet the bootstrap rules and the default tenant is resolved,
-with no policies loaded.
+equals the name, and 403 otherwise. Once ready, the service stays ready: a pull that fails later, or a later load that
+rejects a tenant, keeps the published snapshots and both verdicts. An empty `AUTHZ_PAP_CLIENT_SOURCE_URL` or an
+`AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and `/ready` then answers 200 as soon as the trusted
+providers meet the bootstrap rules and the default tenant is resolved, with no policies loaded.
 
 `GET /health` on the public port gives the same status, 200 `healthy` or 503 `unhealthy`, and counts the tenants
 instead of naming them: `tenants`, `served` (with a published snapshot), `rejected` (whose latest candidate was
-refused), and `failing` (whose snapshot has a part that answers as failed). It names no tenant and no reason.
+refused), and `failing` (whose snapshot has a part listed under `failures`). It names no tenant and no reason.
 
 ## Comparisons in conditions
 
@@ -110,10 +112,11 @@ their case.
 
 The regular expression a pattern stands for follows the RE2 syntax of the Go `regexp` package, not that of Java. A
 pattern that this syntax refuses, such as `a)|(b` or the backreference `(a)\1`, leaves its policy out of
-the evaluation: the policy, or the set whose target holds the pattern, answers as failed under its target, and the
-tenant's other policies answer as usual. A set of simplified policies with such a pattern in a condition answers as
-failed as a whole. The tenant then counts as `failing`, and the internal `/health` names the set, the policy, and the
-pattern.
+the evaluation: the policy, or the set whose target holds the pattern, fails permanently under its target, and the
+tenant's other policies are evaluated as usual. A set of simplified policies with such a pattern in a condition fails
+permanently as a whole. A decision that depends on it is denied with a reason that starts with `PIP resolution failed`.
+The tenant then counts as `failing`, and the internal `/health` names the set, the policy, and the pattern under
+`failures`.
 
 An operand written `subject.<name>` reads the subject: a built-in attribute such as `subject.roles`, a key such as
 `subject.permissionScope.region`, or a PIP of that name. An operand that is none of these, such as `subject.roles[0]`,
@@ -124,8 +127,14 @@ The admin refuses such a condition on upload. A `MATCH` pattern written `subject
 is not affected.
 
 A comparison with `subject.isM2M`, such as `subject.isM2M == true`, is never true. The condition `subject.isM2M` alone
-tests whether the token is M2M. The internal `/health` lists each such comparison under the tenant's `warnings`, and
-the load logs it once.
+tests whether the token is M2M. The internal `/health` lists each such comparison under the tenant's `warnings`. The
+load that finds it logs it once, and a later load logs it again only where a policy or a rule with no ID is inserted
+before it.
+
+A rule with no `effect` counts as `NOT_APPLICABLE`: it neither permits nor denies, so under `PERMIT_UNLESS_DENY` the
+resource it was written to deny is allowed. The internal `/health` lists each such rule under the tenant's `warnings`.
+The load that finds it logs it once, and a later load logs it again only where a policy or a rule with no ID is
+inserted before it.
 
 ### The limit on looking up nested values
 
