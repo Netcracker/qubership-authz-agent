@@ -53,7 +53,13 @@ func filter(t *testing.T, first bool, op string, sets ...string) string {
 // operation op, as the service writes it.
 func filterOf(t *testing.T, r *Registry, tenant, op string) string {
 	t.Helper()
-	a, err := r.Filter(context.Background(), FilterRequest{Tenant: tenant, ResourceType: "doc", Operation: &op})
+	return filterOfClaims(t, r, nil, tenant, op)
+}
+
+// filterOfClaims is filterOf for the subject of claims.
+func filterOfClaims(t *testing.T, r *Registry, claims *jsonvalue.Object, tenant, op string) string {
+	t.Helper()
+	a, err := r.Filter(context.Background(), FilterRequest{Tenant: tenant, Claims: claims, ResourceType: "doc", Operation: &op})
 	if err != nil {
 		t.Fatalf("Filter(doc, %s): %v", op, err)
 	}
@@ -471,7 +477,7 @@ func TestAPolicyWithAPatternRegexpRefusesDeniesEveryRow(t *testing.T) {
 	} {
 		t.Run(tc.pattern, func(t *testing.T) {
 			r := New(Config{}, tab(t), quiet{})
-			load(t, r, ``, policySetBeside("true", "true", "resource.a MATCH "+tc.pattern, "ALLOW"))
+			loadUnchecked(t, r, ``, policySetBeside("true", "true", "resource.a MATCH "+tc.pattern, "ALLOW"))
 			if got := filterOf(t, r, "a", "read"); got != tc.want {
 				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
 			}
@@ -966,15 +972,15 @@ func TestAFailedConditionInAnIterateDeniesTheRowsWhereItIsUnknown(t *testing.T) 
 func TestASimplifiedPolicyOverAFailedSourceDeniesTheRowsWhereItIsUnknown(t *testing.T) {
 	srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
 	r := pipRegistry(t)
-	load(t, r, generalPIP(srv.URL, ""), `{"policySetId": "s", "name": "s", "status": "ACTIVE", "type": "SIMPLIFIED",
+	loadSimplified(t, r, generalPIP(srv.URL, ""), `{"policySetId": "s", "name": "s", "status": "ACTIVE", "type": "SIMPLIFIED",
 		"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
 		"policies": [{"policyId": "p", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-			"tenantId": "a", "rules": [{"ruleId": "r", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
+			"tenantId": "a", "rules": [{"ruleId": "r", "target": "subject.roles CONTAINS ANY 'R'", "effect": "ALLOW", "tenantId": "a"}]},
 			{"policyId": "q", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-			"tenantId": "a", "rules": [{"ruleId": "r", "target": "true",
+			"tenantId": "a", "rules": [{"ruleId": "r", "target": "subject.roles CONTAINS ANY 'R'",
 			"condition": "subject.g == 'x' AND resource.a == 'y'", "effect": "ALLOW", "tenantId": "a",
 			"sqlPredicate": "b = 2"}]}]}`)
-	if got, want := filterOf(t, r, "a", "read"), answerOf("", `{"a": { "$ne": "y" }}`, `a!="y"`, `a <> 'y'`); got != want {
-		t.Errorf("Filter(doc, read) = %s, want %s", got, want)
-	}
+	claims := mustObject(t, `{"sub": "u1", "realm_access": {"roles": ["R"]}}`).(*jsonvalue.Object)
+	got, want := filterOfClaims(t, r, claims, "a", "read"), answerOf("", `{"a": { "$ne": "y" }}`, `a!="y"`, `a <> 'y'`)
+	assertOrKnown(t, got == want, "Filter(doc, read) = %s, want %s", got, want)
 }

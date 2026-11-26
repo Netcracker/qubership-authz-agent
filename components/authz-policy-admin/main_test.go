@@ -142,9 +142,7 @@ func TestBuild_ServesTheExport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("build: %v", err)
 	}
-	if rec := do(t, mux, http.MethodGet, "/access/v3/config/policySets", ""); rec.Code != http.StatusOK {
-		t.Errorf("GET /access/v3/config/policySets = %d, want 200", rec.Code)
-	}
+	do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK)
 }
 
 // The chart always sets the port, and `docker run` of this image without one
@@ -182,7 +180,7 @@ func TestBuild_RequiresDeclaredPIPsWhenAsked(t *testing.T) {
 		if err != nil {
 			t.Fatalf("build(%q) = %v", value, err)
 		}
-		if rec := do(t, mux, http.MethodPut, policiesPath+"billing", body); rec.Code != want {
+		if rec := serve(mux, http.MethodPut, policiesPath+"billing", body, ""); rec.Code != want {
 			t.Errorf("with %q, PUT of a policy reading an undeclared PIP = %d %s, want %d", value, rec.Code, rec.Body, want)
 		}
 	}
