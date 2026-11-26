@@ -86,14 +86,16 @@ func TestReport(t *testing.T) {
 
 // The agent runs as a child process of this test binary, which calls main
 // when AUTHZ_AGENT_TEST_RUN_MAIN is 1. The child reads no trusted providers
-// file and has a token endpoint, the one value the agent requires, so that
-// only the value under test stops it.
+// file and has a token endpoint and client credentials files, the values the
+// agent requires in its default mode, so that only the value under test stops
+// it.
 func TestStart_StopsAndNamesTheVariable(t *testing.T) {
 	if os.Getenv("AUTHZ_AGENT_TEST_RUN_MAIN") == "1" {
 		main()
 		return
 	}
 	busy := busyAddress(t)
+	id, secret, token := fileHolding(t, "authz-agent", 0o600), fileHolding(t, "secret", 0o600), tokenFile(t)
 	for _, tt := range []struct {
 		name  string
 		env   []string
@@ -115,6 +117,9 @@ func TestStart_StopsAndNamesTheVariable(t *testing.T) {
 			`public listener on AUTHZ_PUBLIC_ADDR="` + busy + `": `},
 		{"an internal address in use at the log level fatal", []string{"AUTHZ_HTTP_ADDR=" + busy}, "fatal",
 			`internal listener on AUTHZ_HTTP_ADDR="` + busy + `": `},
+		{"a hybrid agent that names its token before a public address in use stops it",
+			[]string{"M2M_AUTH_MODE=hybrid", "AUTHZ_PAP_CLIENT_TOKEN_FILE=" + token, "AUTHZ_PUBLIC_ADDR=" + busy}, "",
+			`authz-agent: M2M_AUTH_MODE is hybrid and ` + token + ` exists, so the agent sends the token in that file`},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -122,7 +127,8 @@ func TestStart_StopsAndNamesTheVariable(t *testing.T) {
 			agent := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestStart_StopsAndNamesTheVariable$")
 			agent.Env = append(childEnvironment(), "AUTHZ_AGENT_TEST_RUN_MAIN=1", "LOGGING_LEVEL_ROOT="+tt.level,
 				"AUTHZ_HTTP_ADDR=127.0.0.1:0", "AUTHZ_PUBLIC_ADDR=127.0.0.1:0",
-				"AUTHZ_TRUSTED_PROVIDERS_FILE=", "AUTHZ_OUTGOING_TOKEN_URL=http://127.0.0.1:1/token")
+				"AUTHZ_TRUSTED_PROVIDERS_FILE=", "AUTHZ_OUTGOING_TOKEN_URL=http://127.0.0.1:1/token",
+				"AUTHZ_OUTGOING_CLIENT_ID_FILE="+id, "AUTHZ_OUTGOING_CLIENT_SECRET_FILE="+secret)
 			agent.Env = append(agent.Env, tt.env...)
 			out, err := agent.CombinedOutput()
 			var exit *exec.ExitError
@@ -138,14 +144,15 @@ func TestStart_StopsAndNamesTheVariable(t *testing.T) {
 
 // childEnvironment is the environment of this test process without the
 // variables that the agent or the platform logger can read: every variable
-// whose name starts with authz., log.level, or logging.level once folded as
-// configloader folds it, to lower case with dots for underscores.
+// whose name starts with authz., m2m., log.level, or logging.level once
+// folded as configloader folds it, to lower case with dots for underscores.
 func childEnvironment() []string {
 	var kept []string
 	for _, entry := range os.Environ() {
 		name, _, _ := strings.Cut(entry, "=")
 		key := strings.ReplaceAll(strings.ToLower(name), "_", ".")
-		if strings.HasPrefix(key, "authz.") || strings.HasPrefix(key, "log.level") || strings.HasPrefix(key, "logging.level") {
+		if strings.HasPrefix(key, "authz.") || strings.HasPrefix(key, "m2m.") || strings.HasPrefix(key, "log.level") ||
+			strings.HasPrefix(key, "logging.level") {
 			continue
 		}
 		kept = append(kept, entry)
@@ -219,7 +226,7 @@ func TestLoadConfig_RefusesAValueBesideAVariableThatExtendsItsName(t *testing.T)
 				t.Setenv(name, value)
 			}
 			configloader.Init(configloader.EnvPropertySource())
-			if _, err := loadConfig(get); err == nil || !strings.Contains(err.Error(), tt.want) {
+			if _, err := loadConfig(get, defaultFiles); err == nil || !strings.Contains(err.Error(), tt.want) {
 				t.Errorf("loadConfig(get) with %v in the environment = %v, want an error with %q", tt.env, err, tt.want)
 			}
 		})

@@ -337,20 +337,21 @@ func jwtExpiry(token string) (time.Time, error) {
 }
 
 var (
-	errNoToken    = errors.New("holds no token")
+	errEmpty      = errors.New("is empty or holds white space alone")
 	errNotRegular = errors.New("is not a regular file")
 )
 
-// CheckTokenFile returns nil when the file at path holds a token, the content
-// that a [Source] without a TokenURL publishes. Otherwise it returns why it
-// does not: an [*fs.PathError] for a path that names nothing, a file the
-// process cannot read, or anything but a regular file after symbolic links
-// are followed, and an error that names no path for a file that is empty or
-// holds white space alone.
-func CheckTokenFile(path string) error {
-	token, err := readToken(path)
-	if err == nil && token == "" {
-		return errNoToken
+// CheckFile returns nil when the file at path holds something other than
+// white space, as the token file of a [Source] without a TokenURL, the client
+// id file, and the client secret file have to. Otherwise it returns why it
+// does not: an [*fs.PathError] wherever the path cannot be resolved or read,
+// or names anything but a regular file after symbolic links are followed, and
+// an error that names no path for a file that is empty or holds white space
+// alone.
+func CheckFile(path string) error {
+	content, err := readToken(path)
+	if err == nil && content == "" {
+		return errEmpty
 	}
 	return err
 }

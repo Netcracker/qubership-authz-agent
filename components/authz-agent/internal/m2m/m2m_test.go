@@ -436,7 +436,7 @@ func TestFile_PublishesEachChange(t *testing.T) {
 	}
 }
 
-func TestCheckTokenFile(t *testing.T) {
+func TestCheckFile(t *testing.T) {
 	dir := t.TempDir()
 	for _, tt := range []struct {
 		name string
@@ -444,8 +444,8 @@ func TestCheckTokenFile(t *testing.T) {
 		want error
 	}{
 		{"a token", writeFile(t, "token", "a\n"), nil},
-		{"an empty file", writeFile(t, "token", ""), errNoToken},
-		{"white space alone", writeFile(t, "token", " \n"), errNoToken},
+		{"an empty file", writeFile(t, "token", ""), errEmpty},
+		{"white space alone", writeFile(t, "token", " \n"), errEmpty},
 		{"a missing file", filepath.Join(dir, "missing"), fs.ErrNotExist},
 		{"a directory", dir, errNotRegular},
 		{"a projected volume, links to a token", projectedToken(t), nil},
@@ -453,8 +453,8 @@ func TestCheckTokenFile(t *testing.T) {
 		{"a dangling link", symlink(t, filepath.Join(dir, "missing")), fs.ErrNotExist},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := CheckTokenFile(tt.path); !errors.Is(err, tt.want) {
-				t.Errorf("CheckTokenFile(%q) = %v, want %v", tt.path, err, tt.want)
+			if err := CheckFile(tt.path); !errors.Is(err, tt.want) {
+				t.Errorf("CheckFile(%q) = %v, want %v", tt.path, err, tt.want)
 			}
 		})
 	}

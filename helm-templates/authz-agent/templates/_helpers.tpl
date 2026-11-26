@@ -93,25 +93,26 @@ route in the shape access-control's clients expect.
 Cross-value guards. These combinations render superficially valid manifests but
 do nothing useful at runtime — they fail at template time instead.
 
-Note on AUTHZ_OUTGOING_TOKEN_SOURCE=client-credentials, the default: The Secret
+Note on M2M_AUTH_MODE=legacy, the default: The Secret
 '{{ .Values.SERVICE_NAME }}-client-credentials' MUST exist before helm install.
 It is provisioned externally by the platform (security-scripts or manual creation
 with label core.netcracker.com/secret-type=m2m). If the Secret is missing, the
-agent cannot obtain its client credentials token, the pull loop never
-authenticates, and the Pod stays NotReady indefinitely. Helm cannot verify
-Secret existence at template time.
+kubelet does not start the agent's container, and the Pod stays in
+ContainerCreating. Helm cannot verify Secret existence at template time. In
+hybrid the chart mounts the Secret as optional, since the agent sends the
+projected token there.
 */}}
 {{/*
-authz-agent.outgoingTokenSource is AUTHZ_OUTGOING_TOKEN_SOURCE, which the values
-schema limits to client-credentials and token-file.
+authz-agent.m2mAuthMode is M2M_AUTH_MODE, which the values schema limits to
+legacy, hybrid, and k8s, and legacy where the key is absent.
 */}}
-{{- define "authz-agent.outgoingTokenSource" -}}
-{{- .Values.AUTHZ_OUTGOING_TOKEN_SOURCE | default "client-credentials" -}}
+{{- define "authz-agent.m2mAuthMode" -}}
+{{- .Values.M2M_AUTH_MODE | default "legacy" -}}
 {{- end -}}
 
 {{/*
-authz-agent.outgoingTokenURL is the token endpoint of client-credentials: the
-value AUTHZ_OUTGOING_TOKEN_URL where it is set, and otherwise
+authz-agent.outgoingTokenURL is the token endpoint of the agent's client
+credentials token: the value AUTHZ_OUTGOING_TOKEN_URL where it is set, and otherwise
 IDENTITY_PROVIDER_URL, less one trailing slash, followed by the token path of
 the realm cloud-common.
 */}}
@@ -146,13 +147,13 @@ not, since the policies render either way.
 {{- end -}}
 {{- end -}}
 {{/*
-The chart builds two values from IDENTITY_PROVIDER_URL. With
-AUTHZ_OUTGOING_TOKEN_SOURCE client-credentials and AUTHZ_OUTGOING_TOKEN_URL
-empty, the Deployment sets AUTHZ_OUTGOING_TOKEN_URL to it followed by the token
-path of the realm cloud-common, whatever AUTHZ_TRUSTED_PROVIDERS holds. With
+The chart builds two values from IDENTITY_PROVIDER_URL. With M2M_AUTH_MODE
+legacy or hybrid and AUTHZ_OUTGOING_TOKEN_URL empty, the Deployment sets
+AUTHZ_OUTGOING_TOKEN_URL to it followed by the token path of the realm
+cloud-common, whatever AUTHZ_TRUSTED_PROVIDERS holds. With
 AUTHZ_TRUSTED_PROVIDERS empty, the trusted-providers ConfigMap gets the issuer
 `<base>/auth/realms/<realm>` for each realm in AUTHZ_IDP_REALMS, whatever
-AUTHZ_OUTGOING_TOKEN_SOURCE is. Where the chart builds either one, this check
+M2M_AUTH_MODE is. Where the chart builds either one, this check
 refuses a value that is empty or has no http or https scheme or no host. The
 message has one sentence for each value built, naming the setting that makes the
 chart build it.
@@ -180,8 +181,8 @@ start, and the discovery of an issuer with a port that is not a number, or with
 a newline, fails.
 */}}
 {{- $uses := list -}}
-{{- if and (eq (include "authz-agent.outgoingTokenSource" .) "client-credentials") (not .Values.AUTHZ_OUTGOING_TOKEN_URL) -}}
-{{- $uses = append $uses "While AUTHZ_OUTGOING_TOKEN_SOURCE is client-credentials and AUTHZ_OUTGOING_TOKEN_URL is empty, their defaults, the chart builds the agent's token endpoint AUTHZ_OUTGOING_TOKEN_URL from it." -}}
+{{- if and (ne (include "authz-agent.m2mAuthMode" .) "k8s") (not .Values.AUTHZ_OUTGOING_TOKEN_URL) -}}
+{{- $uses = append $uses "While M2M_AUTH_MODE is legacy or hybrid and AUTHZ_OUTGOING_TOKEN_URL is empty, the chart builds the agent's token endpoint AUTHZ_OUTGOING_TOKEN_URL from it." -}}
 {{- end -}}
 {{- if and (not .Values.AUTHZ_TRUSTED_PROVIDERS) .Values.AUTHZ_IDP_REALMS -}}
 {{- $uses = append $uses "While AUTHZ_TRUSTED_PROVIDERS is empty, its default, the chart builds the issuer of each realm in AUTHZ_IDP_REALMS from it." -}}

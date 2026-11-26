@@ -20,10 +20,10 @@ data:
   trusted-providers.json: |-
 {{ (dict "providers" (include "authz-agent.trustedProviders" . | fromJsonArray)) | toPrettyJson | indent 4 }}
 ---
-# ServiceAccount of the agent's Pod. With AUTHZ_OUTGOING_TOKEN_SOURCE=token-file
-# the kubelet projects its token for the netcracker audience into the Pod, and
-# the agent sends that token as a Bearer credential on the policy pull and on
-# its PIP calls. The ServiceAccount itself needs no RBAC.
+# ServiceAccount of the agent's Pod. With M2M_AUTH_MODE k8s or hybrid the
+# kubelet projects its token for the netcracker audience into the Pod, and the
+# agent sends that token as a Bearer credential on the policy pull and on its
+# PIP calls. The ServiceAccount itself needs no RBAC.
 apiVersion: v1
 kind: ServiceAccount
 metadata:

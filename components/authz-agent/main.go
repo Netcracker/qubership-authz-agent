@@ -59,7 +59,7 @@ func init() {
 }
 
 func main() {
-	cfg, err := loadConfig(get)
+	cfg, err := loadConfig(get, defaultFiles)
 	refused := otherRootLevelNames(os.Environ())
 	if err != nil {
 		refused = append([]string{err.Error()}, refused...)
@@ -67,6 +67,9 @@ func main() {
 	if len(refused) > 0 {
 		logStop("configuration: %s", strings.Join(refused, "; "))
 		os.Exit(1)
+	}
+	if choice := cfg.tokenChoice(); choice != "" {
+		logger.Infof("authz-agent: %s", choice)
 	}
 	modules, err := policies.Modules()
 	if err != nil {

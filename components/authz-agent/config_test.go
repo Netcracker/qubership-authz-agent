@@ -17,7 +17,9 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -53,29 +55,35 @@ func fileHolding(t *testing.T, content string, perm os.FileMode) string {
 	return path
 }
 
-// missingEndpoint is the refusal of an unset or empty AUTHZ_OUTGOING_TOKEN_URL
-// with AUTHZ_OUTGOING_TOKEN_SOURCE client-credentials, its default.
-const missingEndpoint = `AUTHZ_OUTGOING_TOKEN_URL="": expected the http or https URL of the token endpoint, ` +
-	`required while AUTHZ_OUTGOING_TOKEN_SOURCE is client-credentials, which is its default; ` +
-	`AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends a token from a file instead`
+// missingToken is a path that names nothing, under a directory that no test
+// creates, for a token file whose path a refusal quotes.
+const missingToken = "/nonexistent-authz-agent/token"
 
-// tokenFile writes a token to a new file and returns its path, which differs
-// from call to call.
-func tokenFile(t *testing.T) string {
+// missingEndpoint is the refusal of an unset or empty AUTHZ_OUTGOING_TOKEN_URL
+// with M2M_AUTH_MODE legacy, its default, and the token file at missingToken.
+const missingEndpoint = `AUTHZ_OUTGOING_TOKEN_URL="": expected the http or https URL of the token endpoint, ` +
+	`required while M2M_AUTH_MODE is legacy, which is its default; ` +
+	`M2M_AUTH_MODE=k8s sends the token in /nonexistent-authz-agent/token instead`
+
+// usableFiles writes a token, a client id, and a client secret to new files,
+// for loadConfig to take where no variable names a file.
+func usableFiles(t *testing.T) deploymentFiles {
 	t.Helper()
-	return fileHolding(t, "token", 0o600)
+	return deploymentFiles{
+		TokenFile:        tokenFile(t),
+		ClientIDFile:     fileHolding(t, "authz-agent", 0o600),
+		ClientSecretFile: fileHolding(t, "secret", 0o600),
+	}
 }
 
-// load is loadConfig over values with a token endpoint and an existing token
-// file added, so that either value of AUTHZ_OUTGOING_TOKEN_SOURCE loads; a key
-// of values replaces the added one.
+// load is loadConfig over values with a token endpoint added and with
+// usableFiles, so that every value of M2M_AUTH_MODE loads; a key of values
+// replaces the added one.
 func load(t *testing.T, values map[string]string) (config, error) {
 	t.Helper()
-	merged := map[string]string{"authz.outgoing.token.url": "http://idp/token", "authz.pap.client.token.file": tokenFile(t)}
-	for key, value := range values {
-		merged[key] = value
-	}
-	return loadConfig(fromMap(merged))
+	merged := map[string]string{tokenURLKey: "http://idp/token"}
+	maps.Copy(merged, values)
+	return loadConfig(fromMap(merged), usableFiles(t))
 }
 
 // mustLoad is load over values; a refused value fails the test.
@@ -121,7 +129,8 @@ func TestLoadConfig_EnvironmentOnly(t *testing.T) {
 // pull and the realm lookup off; each key of the loops is read from its
 // variable.
 func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
-	cfg, err := loadConfig(fromMap(map[string]string{"authz.outgoing.token.url": "http://idp/token"}))
+	files := usableFiles(t)
+	cfg, err := loadConfig(fromMap(map[string]string{tokenURLKey: "http://idp/token"}), files)
 	if err != nil {
 		t.Fatalf("loadConfig() with a token endpoint alone error = %v, want none", err)
 	}
@@ -134,11 +143,12 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	if cfg.Pull != wantPull {
 		t.Errorf("default pull = %+v, want %+v", cfg.Pull, wantPull)
 	}
-	wantM2M := m2m.Config{TokenURL: "http://idp/token", ClientIDFile: "/etc/secret/username", ClientSecretFile: "/etc/secret/password",
-		RenewBefore: 60 * time.Second, TokenFile: "/var/run/secrets/tokens/netcracker/token", WatchInterval: 15 * time.Second}
-	if cfg.M2M != wantM2M {
-		t.Errorf("default m2m = %+v, want %+v", cfg.M2M, wantM2M)
+	wantM2M := m2m.Config{TokenURL: "http://idp/token", ClientIDFile: files.ClientIDFile, ClientSecretFile: files.ClientSecretFile,
+		RenewBefore: 60 * time.Second, TokenFile: files.TokenFile, WatchInterval: 15 * time.Second}
+	if cfg.M2M != wantM2M || cfg.Mode != "legacy" {
+		t.Errorf("default m2m = %+v in mode %q, want %+v in mode legacy", cfg.M2M, cfg.Mode, wantM2M)
 	}
+	id, secret := fileHolding(t, "authz-agent", 0o600), fileHolding(t, "secret", 0o600)
 	cfg = mustLoad(t, map[string]string{
 		"authz.trusted.providers.file":            "/p.json",
 		"authz.jwks.bootstrap.required":           "false",
@@ -150,8 +160,8 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		"authz.pap.client.pull.interval":          "2",
 		"authz.pap.client.token.file":             "/t",
 		"authz.outgoing.token.url":                "http://idp/token",
-		"authz.outgoing.client.id.file":           "/id",
-		"authz.outgoing.client.secret.file":       "/secret",
+		"authz.outgoing.client.id.file":           id,
+		"authz.outgoing.client.secret.file":       secret,
 		"authz.outgoing.renew.before.seconds":     "30",
 	})
 	if cfg.Authn.File != "/p.json" || cfg.Authn.Required || cfg.Authn.HTTPTimeout != 2*time.Second || cfg.Authn.HTTPRetries != 20 ||
@@ -161,7 +171,7 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	if cfg.Pull.SourceURL != "http://policy-admin:18090" || cfg.Pull.Interval != 2*time.Second {
 		t.Errorf("pull from env = %+v", cfg.Pull)
 	}
-	if cfg.M2M.TokenURL != "http://idp/token" || cfg.M2M.ClientIDFile != "/id" || cfg.M2M.ClientSecretFile != "/secret" ||
+	if cfg.M2M.TokenURL != "http://idp/token" || cfg.M2M.ClientIDFile != id || cfg.M2M.ClientSecretFile != secret ||
 		cfg.M2M.RenewBefore != 30*time.Second || cfg.M2M.TokenFile != "/t" {
 		t.Errorf("m2m from env = %+v", cfg.M2M)
 	}
@@ -397,14 +407,19 @@ func TestLoadConfig_EmptyValuesTakeTheDefaults(t *testing.T) {
 		"authz.tenant.manager.url":                "",
 		"authz.pap.client.source.url":             "",
 		"authz.entitlements.url":                  "",
-		"authz.outgoing.token.source":             "",
+		"authz.outgoing.client.id.file":           "",
+		"authz.outgoing.client.secret.file":       "",
+		"m2m.auth.mode":                           "",
+		tokenURLKey:                               "http://idp/token",
 	}
-	want, err := loadConfig(fromMap(map[string]string{"authz.outgoing.token.url": "http://idp/token"}))
+	files := usableFiles(t)
+	want, err := loadConfig(fromMap(map[string]string{tokenURLKey: "http://idp/token"}), files)
 	if err != nil {
 		t.Fatalf("loadConfig() with a token endpoint alone error = %v, want none", err)
 	}
-	if got := mustLoad(t, empty); got != want {
-		t.Errorf("loadConfig() with the variables empty = %+v, want the defaults %+v", got, want)
+	got, err := loadConfig(fromMap(empty), files)
+	if err != nil || got != want {
+		t.Errorf("loadConfig() with the variables empty = %+v, %v, want the defaults %+v", got, err, want)
 	}
 }
 
@@ -418,13 +433,14 @@ func TestLoadConfig_RefusesEveryInvalidValueInOneError(t *testing.T) {
 		{"a timeout and a log level", map[string]string{"authz.jwks.http.timeout": "0", "logging.level.root": "verbose"},
 			`AUTHZ_JWKS_HTTP_TIMEOUT="0": expected an integer number of seconds from 1 to 9223372036; ` +
 				`LOGGING_LEVEL_ROOT="verbose": expected one of debug, info, warn, error, fatal`},
-		{"a timeout and no token endpoint", map[string]string{"authz.jwks.http.timeout": "0", "authz.outgoing.token.url": ""},
+		{"a timeout and no token endpoint",
+			map[string]string{"authz.jwks.http.timeout": "0", tokenURLKey: "", tokenFileKey: missingToken},
 			`AUTHZ_JWKS_HTTP_TIMEOUT="0": expected an integer number of seconds from 1 to 9223372036; ` +
 				missingEndpoint},
-		{"a timeout and no token file with token-file",
-			map[string]string{"authz.jwks.http.timeout": "0", "authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": missing},
+		{"a timeout and no token file in k8s",
+			map[string]string{"authz.jwks.http.timeout": "0", "m2m.auth.mode": "k8s", tokenFileKey: missing},
 			`AUTHZ_JWKS_HTTP_TIMEOUT="0": expected an integer number of seconds from 1 to 9223372036; ` +
-				`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + missing + `": no such file or directory, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`},
+				`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + missing + `": no such file or directory, and M2M_AUTH_MODE=k8s sends the token in this file`},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := refusal(t, tt.values); got != tt.want {
@@ -458,119 +474,334 @@ func TestLoadConfig_PinsTheEntitlementsPIPOnlyWithAURL(t *testing.T) {
 	}
 }
 
-func TestLoadConfig_TokenFileReadsTheTokenFileAlone(t *testing.T) {
-	file := tokenFile(t)
-	cfg := mustLoad(t, map[string]string{
-		"authz.outgoing.token.source": "TOKEN-FILE",
-		"authz.outgoing.token.url":    "http://idp/token",
-		"authz.pap.client.token.file": file,
-	})
-	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != file {
-		t.Errorf("loadConfig() with AUTHZ_OUTGOING_TOKEN_SOURCE=TOKEN-FILE took the token from %q and %q, want the file %q alone",
-			cfg.M2M.TokenURL, cfg.M2M.TokenFile, file)
-	}
-}
-
-func TestLoadConfig_ByDefaultAnUnsetTokenEndpointIsRefused(t *testing.T) {
-	want := missingEndpoint
-	if _, err := loadConfig(fromMap(map[string]string{})); err == nil || err.Error() != want {
-		t.Errorf("loadConfig() with no variable set returned %v, want %q", err, want)
-	}
-}
-
-func TestLoadConfig_TokenFileNeedsNoTokenEndpoint(t *testing.T) {
-	file := tokenFile(t)
-	cfg := mustLoad(t, map[string]string{
-		"authz.outgoing.token.source": "token-file",
-		"authz.outgoing.token.url":    "",
-		"authz.pap.client.token.file": file,
-	})
-	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != file {
-		t.Errorf("loadConfig() with AUTHZ_OUTGOING_TOKEN_SOURCE=token-file and no token endpoint took the token from %q and %q, want the file %q alone",
-			cfg.M2M.TokenURL, cfg.M2M.TokenFile, file)
-	}
-}
-
-func TestLoadConfig_ClientCredentialsReadsTheTokenEndpointAlone(t *testing.T) {
-	missing := filepath.Join(t.TempDir(), "missing")
-	for _, tt := range []struct {
-		name   string
-		values map[string]string
-	}{
-		{"unset", map[string]string{"authz.pap.client.token.file": missing}},
-		{"client-credentials", map[string]string{"authz.outgoing.token.source": "client-credentials", "authz.pap.client.token.file": missing}},
-		{"client-credentials in capitals", map[string]string{"authz.outgoing.token.source": "CLIENT-CREDENTIALS", "authz.pap.client.token.file": missing}},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := mustLoad(t, tt.values).M2M.TokenURL; got != "http://idp/token" {
-				t.Errorf("loadConfig(%v) took the token endpoint %q, want http://idp/token", tt.values, got)
-			}
-		})
-	}
-}
-
-func TestLoadConfig_RefusesATokenSourceItCannotUse(t *testing.T) {
-	directory := t.TempDir()
-	missing := filepath.Join(directory, "missing")
-	empty := fileHolding(t, "", 0o600)
-	blank := fileHolding(t, " \n", 0o600)
+func TestLoadConfig_ReadsM2MAuthModeWithoutRegardToCase(t *testing.T) {
 	for _, tt := range []struct {
 		name   string
 		values map[string]string
 		want   string
 	}{
-		{"no token endpoint with client-credentials, the default", map[string]string{"authz.outgoing.token.url": ""},
-			missingEndpoint},
-		{"a misspelled AUTHZ_OUTGOING_TOKEN_SOURCE and no token endpoint", map[string]string{"authz.outgoing.token.source": "tokenfile", "authz.outgoing.token.url": ""},
-			`AUTHZ_OUTGOING_TOKEN_SOURCE="tokenfile": expected one of client-credentials, token-file`},
-		{"a token endpoint without a scheme with client-credentials", map[string]string{"authz.outgoing.token.url": "idp/token"},
-			`AUTHZ_OUTGOING_TOKEN_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
-		{"a token endpoint without a scheme with token-file", map[string]string{"authz.outgoing.token.source": "token-file", "authz.outgoing.token.url": "idp/token"},
-			`AUTHZ_OUTGOING_TOKEN_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
-		{"no token file with token-file", map[string]string{"authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": missing},
-			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + missing + `": no such file or directory, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`},
-		{"an empty token file with token-file", map[string]string{"authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": empty},
-			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + empty + `": holds no token, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`},
-		{"a token file of white space alone with token-file", map[string]string{"authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": blank},
-			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + blank + `": holds no token, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`},
-		{"a directory for the token file with token-file", map[string]string{"authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": directory},
-			`AUTHZ_PAP_CLIENT_TOKEN_FILE="` + directory + `": is not a regular file, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`},
+		{"unset", map[string]string{}, "legacy"},
+		{"empty", map[string]string{"m2m.auth.mode": ""}, "legacy"},
+		{"legacy", map[string]string{"m2m.auth.mode": "legacy"}, "legacy"},
+		{"legacy in capitals", map[string]string{"m2m.auth.mode": "LEGACY"}, "legacy"},
+		{"hybrid", map[string]string{"m2m.auth.mode": "hybrid"}, "hybrid"},
+		{"hybrid in mixed case", map[string]string{"m2m.auth.mode": "Hybrid"}, "hybrid"},
+		{"k8s", map[string]string{"m2m.auth.mode": "k8s"}, "k8s"},
+		{"k8s in capitals", map[string]string{"m2m.auth.mode": "K8S"}, "k8s"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := refusal(t, tt.values); got != tt.want {
-				t.Errorf("loadConfig(%v) refused with %q, want %q", tt.values, got, tt.want)
+			if got := mustLoad(t, tt.values).Mode; got != tt.want {
+				t.Errorf("loadConfig(%v) read the mode %q, want %q", tt.values, got, tt.want)
 			}
 		})
 	}
 }
 
-func TestLoadConfig_TokenFileRefusesAFileItCannotRead(t *testing.T) {
-	if os.Geteuid() == 0 {
-		t.Skip("root reads a file of mode 0000")
-	}
-	file := fileHolding(t, "token", 0o000)
-	values := map[string]string{"authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": file}
-	want := `AUTHZ_PAP_CLIENT_TOKEN_FILE="` + file + `": permission denied, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`
-	if got := refusal(t, values); got != want {
-		t.Errorf("loadConfig(%v) refused with %q, want %q", values, got, want)
+// A refused mode chooses no token, so the refusal names neither the empty
+// token endpoint nor the missing files beside it.
+func TestLoadConfig_RefusesAnUnknownM2MAuthModeAlone(t *testing.T) {
+	for _, value := range []string{"foo", "kubernetes", " k8s"} {
+		t.Run(value, func(t *testing.T) {
+			values := map[string]string{"m2m.auth.mode": value, tokenURLKey: "", tokenFileKey: missingToken,
+				"authz.outgoing.client.id.file": "/nonexistent-authz-agent/username"}
+			want := `M2M_AUTH_MODE="` + value + `": expected one of legacy, hybrid, k8s`
+			if got := refusal(t, values); got != want {
+				t.Errorf("loadConfig(%v) refused with %q, want %q", values, got, want)
+			}
+		})
 	}
 }
 
-func TestLoadConfig_TokenFileChecksTheDefaultPathForAnUnsetOrEmptyOne(t *testing.T) {
-	if _, err := os.Stat(m2m.DefaultTokenFile); !errors.Is(err, fs.ErrNotExist) {
-		t.Skipf("os.Stat(%s) = %v, and the refusal below expects no such file", m2m.DefaultTokenFile, err)
+// The states of a file path that the tests give the agent, each made in a new
+// temporary directory.
+
+// nothingAt returns a path in an existing directory that names nothing.
+func nothingAt(t *testing.T) string {
+	return filepath.Join(t.TempDir(), "token")
+}
+
+// danglingLink returns a symbolic link to a path that names nothing.
+func danglingLink(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	return symlink(t, filepath.Join(dir, "missing"), filepath.Join(dir, "token"))
+}
+
+// tokenFile writes a token to a new file and returns its path, which differs
+// from call to call.
+func tokenFile(t *testing.T) string {
+	t.Helper()
+	return fileHolding(t, "token", 0o600)
+}
+
+func emptyFile(t *testing.T) string {
+	t.Helper()
+	return fileHolding(t, "", 0o600)
+}
+
+func directoryAt(t *testing.T) string {
+	return t.TempDir()
+}
+
+func unreadableFile(t *testing.T) string {
+	t.Helper()
+	skipAsRoot(t)
+	return fileHolding(t, "token", 0o000)
+}
+
+// behindAClosedDirectory returns a token file in a directory that the test
+// process may not search, so that os.Stat of the file fails.
+func behindAClosedDirectory(t *testing.T) string {
+	t.Helper()
+	skipAsRoot(t)
+	path := tokenFile(t)
+	dir := filepath.Dir(path)
+	if err := os.Chmod(dir, 0o600); err != nil {
+		t.Fatal(err)
 	}
-	want := `AUTHZ_PAP_CLIENT_TOKEN_FILE="/var/run/secrets/tokens/netcracker/token": no such file or directory, and AUTHZ_OUTGOING_TOKEN_SOURCE=token-file sends the token in this file`
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
+	return path
+}
+
+// linkLoop returns one of two symbolic links that point at each other.
+func linkLoop(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	symlink(t, filepath.Join(dir, "b"), filepath.Join(dir, "a"))
+	return symlink(t, filepath.Join(dir, "a"), filepath.Join(dir, "b"))
+}
+
+// underAFile returns a path whose parent is a regular file.
+func underAFile(t *testing.T) string {
+	t.Helper()
+	return filepath.Join(tokenFile(t), "token")
+}
+
+func symlink(t *testing.T, target, link string) string {
+	t.Helper()
+	if err := os.Symlink(target, link); err != nil {
+		t.Fatal(err)
+	}
+	return link
+}
+
+func skipAsRoot(t *testing.T) {
+	t.Helper()
+	if os.Geteuid() == 0 {
+		t.Skip("root reads a file and searches a directory whatever their modes")
+	}
+}
+
+// The agent sends the content of the token file where TokenURL is empty, and
+// the token from TokenURL otherwise. An input of the token that the mode does
+// not choose is left unread, so an unusable one is accepted.
+func TestLoadConfig_SendsTheTokenThatTheModeChooses(t *testing.T) {
+	missingCredentials := map[string]string{tokenURLKey: "",
+		"authz.outgoing.client.id.file":     "/nonexistent-authz-agent/username",
+		"authz.outgoing.client.secret.file": "/nonexistent-authz-agent/password"}
+	for _, tt := range []struct {
+		name    string
+		mode    string
+		path    func(*testing.T) string
+		values  map[string]string
+		wantURL string
+	}{
+		{"legacy beside nothing at the token path", "legacy", nothingAt, nil, "http://idp/token"},
+		{"legacy beside a dangling link", "legacy", danglingLink, nil, "http://idp/token"},
+		{"legacy beside a token file", "legacy", tokenFile, nil, "http://idp/token"},
+		{"legacy beside an empty token file", "legacy", emptyFile, nil, "http://idp/token"},
+		{"legacy beside a directory", "legacy", directoryAt, nil, "http://idp/token"},
+		{"legacy beside an unreadable token file", "legacy", unreadableFile, nil, "http://idp/token"},
+		{"legacy beside a token file in a closed directory", "legacy", behindAClosedDirectory, nil, "http://idp/token"},
+		{"legacy beside a link loop", "legacy", linkLoop, nil, "http://idp/token"},
+		{"legacy beside a path under a file", "legacy", underAFile, nil, "http://idp/token"},
+		{"hybrid with nothing at the token path", "hybrid", nothingAt, nil, "http://idp/token"},
+		{"hybrid with a dangling link", "hybrid", danglingLink, nil, "http://idp/token"},
+		{"hybrid with a token file", "hybrid", tokenFile, nil, ""},
+		{"hybrid with a token file and no client credentials", "hybrid", tokenFile, missingCredentials, ""},
+		{"k8s with a token file", "k8s", tokenFile, nil, ""},
+		{"k8s with a token file and no client credentials", "k8s", tokenFile, missingCredentials, ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			path := tt.path(t)
+			values := map[string]string{"m2m.auth.mode": tt.mode, tokenFileKey: path}
+			maps.Copy(values, tt.values)
+			cfg := mustLoad(t, values)
+			if cfg.M2M.TokenURL != tt.wantURL || cfg.M2M.TokenFile != path {
+				t.Errorf("loadConfig(%v) took the token from %q and %q, want %q and %q", values, cfg.M2M.TokenURL, cfg.M2M.TokenFile, tt.wantURL, path)
+			}
+		})
+	}
+}
+
+// Each want is a format whose %q is the path of the token file.
+func TestLoadConfig_RefusesATokenFileItCannotUse(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		mode string
+		path func(*testing.T) string
+		want string
+	}{
+		{"hybrid with an empty token file", "hybrid", emptyFile,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: is empty or holds white space alone, and M2M_AUTH_MODE=hybrid sends the token in this file, since the path exists`},
+		{"hybrid with a directory", "hybrid", directoryAt,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: is not a regular file, and M2M_AUTH_MODE=hybrid sends the token in this file, since the path exists`},
+		{"hybrid with an unreadable token file", "hybrid", unreadableFile,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: permission denied, and M2M_AUTH_MODE=hybrid sends the token in this file, since the path exists`},
+		{"hybrid with a token file in a closed directory", "hybrid", behindAClosedDirectory,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: permission denied, and M2M_AUTH_MODE=hybrid needs the path either to hold the token or not to exist`},
+		{"hybrid with a link loop", "hybrid", linkLoop,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: too many levels of symbolic links, and M2M_AUTH_MODE=hybrid needs the path either to hold the token or not to exist`},
+		{"hybrid with a path under a file", "hybrid", underAFile,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: not a directory, and M2M_AUTH_MODE=hybrid needs the path either to hold the token or not to exist`},
+		{"k8s with nothing at the token path", "k8s", nothingAt,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: no such file or directory, and M2M_AUTH_MODE=k8s sends the token in this file`},
+		{"k8s with a dangling link", "k8s", danglingLink,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: no such file or directory, and M2M_AUTH_MODE=k8s sends the token in this file`},
+		{"k8s with an empty token file", "k8s", emptyFile,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: is empty or holds white space alone, and M2M_AUTH_MODE=k8s sends the token in this file`},
+		{"k8s with a directory", "k8s", directoryAt,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: is not a regular file, and M2M_AUTH_MODE=k8s sends the token in this file`},
+		{"k8s with an unreadable token file", "k8s", unreadableFile,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: permission denied, and M2M_AUTH_MODE=k8s sends the token in this file`},
+		{"k8s with a token file in a closed directory", "k8s", behindAClosedDirectory,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: permission denied, and M2M_AUTH_MODE=k8s sends the token in this file`},
+		{"k8s with a link loop", "k8s", linkLoop,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: too many levels of symbolic links, and M2M_AUTH_MODE=k8s sends the token in this file`},
+		{"k8s with a path under a file", "k8s", underAFile,
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE=%q: not a directory, and M2M_AUTH_MODE=k8s sends the token in this file`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			path := tt.path(t)
+			values := map[string]string{"m2m.auth.mode": tt.mode, tokenFileKey: path}
+			if got, want := refusal(t, values), fmt.Sprintf(tt.want, path); got != want {
+				t.Errorf("loadConfig(%v) refused with %q, want %q", values, got, want)
+			}
+		})
+	}
+}
+
+// The token file is at missingToken, except where a row sets it, so hybrid
+// sends the client credentials token too.
+func TestLoadConfig_RefusesAnEndpointItCannotUse(t *testing.T) {
 	for _, tt := range []struct {
 		name   string
 		values map[string]string
+		want   string
 	}{
-		{"unset", map[string]string{"authz.outgoing.token.source": "token-file"}},
-		{"empty", map[string]string{"authz.outgoing.token.source": "token-file", "authz.pap.client.token.file": ""}},
+		{"legacy with no token endpoint", map[string]string{"m2m.auth.mode": "legacy", tokenURLKey: ""},
+			missingEndpoint},
+		{"hybrid with no token endpoint", map[string]string{"m2m.auth.mode": "hybrid", tokenURLKey: ""},
+			`AUTHZ_OUTGOING_TOKEN_URL="": expected the http or https URL of the token endpoint, required while M2M_AUTH_MODE is hybrid and /nonexistent-authz-agent/token does not exist`},
+		{"k8s with a token endpoint without a scheme", map[string]string{"m2m.auth.mode": "k8s", tokenURLKey: "idp/token", tokenFileKey: ""},
+			`AUTHZ_OUTGOING_TOKEN_URL has no http or https scheme: expected an http or https URL with a host, a port from 1 to 65535 if it has one, and no user, query, or fragment, in the characters RFC 3986 allows`},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			if _, err := loadConfig(fromMap(tt.values)); err == nil || err.Error() != want {
-				t.Errorf("loadConfig(%v) returned %v, want %q", tt.values, err, want)
+			values := map[string]string{tokenFileKey: missingToken}
+			maps.Copy(values, tt.values)
+			if got := refusal(t, values); got != tt.want {
+				t.Errorf("loadConfig(%v) refused with %q, want %q", values, got, tt.want)
+			}
+		})
+	}
+}
+
+// The chart mounts the token file and the client credentials Secret at these
+// paths, and a deployment without the chart that sets no path puts the files
+// there too.
+func TestLoadConfig_ByDefaultReadsTheFilesAtTheChartsPaths(t *testing.T) {
+	for _, path := range []string{"/var/run/secrets/tokens/netcracker/token", "/etc/secret/username", "/etc/secret/password"} {
+		if _, err := os.Stat(path); !errors.Is(err, fs.ErrNotExist) {
+			t.Skipf("os.Stat(%s) = %v, and the refusals below expect no such file", path, err)
+		}
+	}
+	for _, tt := range []struct {
+		name   string
+		values map[string]string
+		want   string
+	}{
+		{"the token file in k8s", map[string]string{"m2m.auth.mode": "k8s"},
+			`AUTHZ_PAP_CLIENT_TOKEN_FILE="/var/run/secrets/tokens/netcracker/token": no such file or directory, and M2M_AUTH_MODE=k8s sends the token in this file`},
+		{"the client credentials files in legacy", map[string]string{tokenURLKey: "http://idp/token"},
+			`AUTHZ_OUTGOING_CLIENT_ID_FILE="/etc/secret/username": no such file or directory, ` +
+				`and the agent reads the client id from this file while M2M_AUTH_MODE is legacy, which is its default; ` +
+				`AUTHZ_OUTGOING_CLIENT_SECRET_FILE="/etc/secret/password": no such file or directory, ` +
+				`and the agent reads the client secret from this file while M2M_AUTH_MODE is legacy, which is its default`},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, err := loadConfig(fromMap(tt.values), defaultFiles); err == nil || err.Error() != tt.want {
+				t.Errorf("loadConfig(%v) with the default paths returned %v, want %q", tt.values, err, tt.want)
+			}
+		})
+	}
+}
+
+func TestLoadConfig_ByDefaultAnUnsetTokenEndpointIsRefused(t *testing.T) {
+	files := usableFiles(t)
+	files.TokenFile = missingToken
+	if _, err := loadConfig(fromMap(map[string]string{}), files); err == nil || err.Error() != missingEndpoint {
+		t.Errorf("loadConfig() with no variable set returned %v, want %q", err, missingEndpoint)
+	}
+}
+
+// Each want is a format whose %q is the path of the client credentials file.
+// The token file is at missingToken, so hybrid sends the client credentials
+// token too.
+func TestLoadConfig_RefusesAClientCredentialsFileItCannotUse(t *testing.T) {
+	const (
+		legacy = "while M2M_AUTH_MODE is legacy, which is its default"
+		hybrid = "while M2M_AUTH_MODE is hybrid and /nonexistent-authz-agent/token does not exist"
+	)
+	for _, tt := range []struct {
+		name string
+		mode string
+		key  string
+		path func(*testing.T) string
+		want string
+	}{
+		{"legacy with no client id file", "legacy", "authz.outgoing.client.id.file", nothingAt,
+			`AUTHZ_OUTGOING_CLIENT_ID_FILE=%q: no such file or directory, and the agent reads the client id from this file ` + legacy},
+		{"legacy with an empty client id file", "legacy", "authz.outgoing.client.id.file", emptyFile,
+			`AUTHZ_OUTGOING_CLIENT_ID_FILE=%q: is empty or holds white space alone, and the agent reads the client id from this file ` + legacy},
+		{"legacy with a directory for the client id", "legacy", "authz.outgoing.client.id.file", directoryAt,
+			`AUTHZ_OUTGOING_CLIENT_ID_FILE=%q: is not a regular file, and the agent reads the client id from this file ` + legacy},
+		{"legacy with an unreadable client id file", "legacy", "authz.outgoing.client.id.file", unreadableFile,
+			`AUTHZ_OUTGOING_CLIENT_ID_FILE=%q: permission denied, and the agent reads the client id from this file ` + legacy},
+		{"legacy with no client secret file", "legacy", "authz.outgoing.client.secret.file", nothingAt,
+			`AUTHZ_OUTGOING_CLIENT_SECRET_FILE=%q: no such file or directory, and the agent reads the client secret from this file ` + legacy},
+		{"legacy with an empty client secret file", "legacy", "authz.outgoing.client.secret.file", emptyFile,
+			`AUTHZ_OUTGOING_CLIENT_SECRET_FILE=%q: is empty or holds white space alone, and the agent reads the client secret from this file ` + legacy},
+		{"hybrid with no client id file", "hybrid", "authz.outgoing.client.id.file", nothingAt,
+			`AUTHZ_OUTGOING_CLIENT_ID_FILE=%q: no such file or directory, and the agent reads the client id from this file ` + hybrid},
+		{"hybrid with an empty client secret file", "hybrid", "authz.outgoing.client.secret.file", emptyFile,
+			`AUTHZ_OUTGOING_CLIENT_SECRET_FILE=%q: is empty or holds white space alone, and the agent reads the client secret from this file ` + hybrid},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			path := tt.path(t)
+			values := map[string]string{"m2m.auth.mode": tt.mode, tokenFileKey: missingToken, tt.key: path}
+			if got, want := refusal(t, values), fmt.Sprintf(tt.want, path); got != want {
+				t.Errorf("loadConfig(%v) refused with %q, want %q", values, got, want)
+			}
+		})
+	}
+}
+
+func TestConfig_TokenChoice(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		cfg  config
+		want string
+	}{
+		{"hybrid with the token file present", config{Mode: "hybrid", M2M: m2m.Config{TokenFile: "/t/token"}},
+			"M2M_AUTH_MODE is hybrid and /t/token exists, so the agent sends the token in that file"},
+		{"hybrid with the token file absent", config{Mode: "hybrid", M2M: m2m.Config{TokenURL: "http://idp/token", TokenFile: "/t/token"}},
+			"M2M_AUTH_MODE is hybrid and /t/token does not exist, so the agent sends its client credentials token from http://idp/token"},
+		{"legacy", config{Mode: "legacy", M2M: m2m.Config{TokenURL: "http://idp/token", TokenFile: "/t/token"}}, ""},
+		{"k8s", config{Mode: "k8s", M2M: m2m.Config{TokenFile: "/t/token"}}, ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.cfg.tokenChoice(); got != tt.want {
+				t.Errorf("tokenChoice() of %+v = %q, want %q", tt.cfg, got, tt.want)
 			}
 		})
 	}
@@ -648,7 +879,7 @@ func agentVariables() map[string]bool {
 	_, _ = loadConfig(func(key, fallback string) string {
 		read[variable(key)] = true
 		return fallback
-	})
+	}, deploymentFiles{})
 	return read
 }
 

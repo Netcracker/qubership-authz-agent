@@ -102,7 +102,8 @@ spec:
         - name: trusted-providers
           configMap:
             name: '{{ .Values.SERVICE_NAME }}-trusted-providers'
-        {{- if eq (include "authz-agent.outgoingTokenSource" .) "token-file" }}
+        {{- $mode := include "authz-agent.m2mAuthMode" . }}
+        {{- if ne $mode "legacy" }}
         # The platform's layout for projected tokens, which its charts mount
         # at /var/run/secrets/tokens with one directory per audience and its
         # Go library reads from there; netcracker is the audience for M2M
@@ -115,11 +116,18 @@ spec:
                   audience: netcracker
                   expirationSeconds: 600
             defaultMode: 292
-        {{- else }}
+        {{- end }}
+        {{- if ne $mode "k8s" }}
         - name: client-credentials
           secret:
             secretName: '{{ .Values.SERVICE_NAME }}-client-credentials'
             defaultMode: 292
+            {{- if eq $mode "hybrid" }}
+            # In hybrid the agent sends the projected token, which the kubelet
+            # writes before the container starts, so a missing Secret does not
+            # keep the Pod from starting.
+            optional: true
+            {{- end }}
         {{- end }}
       containers:
         - name: '{{ .Values.SERVICE_NAME }}'
@@ -157,11 +165,12 @@ spec:
               value: '{{ .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL }}'
             - name: AUTHZ_PAP_CLIENT_TOKEN_FILE
               value: '{{ .Values.AUTHZ_PAP_CLIENT_TOKEN_FILE }}'
-            - name: AUTHZ_OUTGOING_TOKEN_SOURCE
-              value: '{{ include "authz-agent.outgoingTokenSource" . }}'
-            {{- if eq (include "authz-agent.outgoingTokenSource" .) "client-credentials" }}
-            # Client credentials: the service obtains its client credentials
-            # token itself and refreshes it before it expires.
+            - name: M2M_AUTH_MODE
+              value: {{ $mode | quote }}
+            {{- if ne $mode "k8s" }}
+            # Client credentials: in legacy, and in hybrid without the token
+            # file, the service obtains its client credentials token itself
+            # and refreshes it before it expires.
             - name: AUTHZ_OUTGOING_TOKEN_URL
               value: {{ include "authz-agent.outgoingTokenURL" . | quote }}
             - name: AUTHZ_OUTGOING_CLIENT_ID_FILE
@@ -181,11 +190,12 @@ spec:
             - name: trusted-providers
               mountPath: /etc/authz
               readOnly: true
-            {{- if eq (include "authz-agent.outgoingTokenSource" .) "token-file" }}
+            {{- if ne $mode "legacy" }}
             - name: projected-tokens
               mountPath: /var/run/secrets/tokens
               readOnly: true
-            {{- else }}
+            {{- end }}
+            {{- if ne $mode "k8s" }}
             - name: client-credentials
               mountPath: /etc/secret
               readOnly: true
