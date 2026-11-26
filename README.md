@@ -113,6 +113,15 @@ cd test/integration/tenantmanager && go test -count=1 ./...
 cd tools/mutationreport && go test -count=1 ./...
 ```
 
+### Complexity tests — Go
+
+The tests that check that the cost of a request, or of compiling a tenant's policies, grows linearly in the size of its
+input build only under the `complexity` tag, so `go test ./...` leaves them out. They take over a minute:
+
+```sh
+make complexity-tests
+```
+
 ### Mutation testing of a change
 
 `make mutation-diff` mutates the Go lines your branch changes outside `test/` and reports every mutant on them that no

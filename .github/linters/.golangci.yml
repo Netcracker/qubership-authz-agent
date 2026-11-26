@@ -1,6 +1,9 @@
 version: "2"
 run:
   timeout: 10m
+  # The tests that make complexity-tests runs build only under this tag.
+  build-tags:
+    - complexity
 linters:
   enable:
     - gocritic

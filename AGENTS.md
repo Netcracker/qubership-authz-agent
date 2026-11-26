@@ -9,6 +9,9 @@ caller and PIPs. Reading a byte once per nesting level or per item of another ar
 keeps it linear. Cost should stay polynomial in policy size. Input too big or too deep fails its request or load, not
 the process. The Rego in `policies/` stays exempt.
 
+A test that measures how that cost grows with the size of the input builds only under `//go:build unix && complexity`.
+`make complexity-tests` runs it, and `go test ./...` leaves it out.
+
 Tests: Go `testing` from the standard library, with `testing/synctest` for code that waits on goroutines or timers. testify is used only in `test/integration/testify` and `test/parity/suite`, and go-cmp only in `test/parity/suite`; new tests elsewhere use neither. Mutation: mutago, through `make mutation-diff`.
 
 For a branch that changes Go code outside `test/`, run `make mutation-diff` after `git fetch` and act on the report it prints. Do not run mutago with `--update-baseline`.

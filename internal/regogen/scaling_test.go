@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build unix
+// These tests check that the cost of an act grows linearly in the size of its
+// input. Together they take over a minute, so they build only under the
+// complexity tag, and make complexity-tests runs them.
+
+//go:build unix && complexity
 
 package regogen
 
@@ -259,6 +263,15 @@ func TestBulkCostIsLinearInItsItems(t *testing.T) {
 				}
 			}
 		}
+	})
+}
+
+// The negation of a MongoDB $or of n elements makes an edit per element, and
+// allocates in proportion to the text rather than to n times the text.
+func TestTheNegationOfAMongoDBOrGrowsLinearly(t *testing.T) {
+	checkGrowth(t, 8192, 3, requestBudget, false, func(n int) func() {
+		s := `{"$or": [` + strings.Repeat(`{"a": 5}, `, n) + `{"b": {"$lt": 1}}]}`
+		return func() { negateMongoText(s) }
 	})
 }
 
