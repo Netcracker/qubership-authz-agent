@@ -23,6 +23,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 
 	"authz-agent/internal/jsonvalue"
@@ -220,10 +221,12 @@ func BenchmarkBulk50(b *testing.B) {
 
 // TestBulkItemSendsItsOwnPIPRequest: the request of a PIP whose
 // requestAttributes read the resource carries each item's resource, as the
-// item's request alone does.
+// item's request alone does, and keeps ${operation} as written, whatever
+// the item's operation.
 func TestBulkItemSendsItsOwnPIPRequest(t *testing.T) {
 	tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.g == 'acc-7'",
-		`{"name": "subject.g", "pipType": "GENERAL", "url": "http://g", "requestAttributes": {"r": "${resource.a}"}}`)
+		`{"name": "subject.g", "pipType": "GENERAL", "url": "http://g",
+			"requestAttributes": {"r": "${resource.a}", "op": "${operation}"}}`)
 	m, err := Generate(tree, table(t), DefaultOptions())
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
@@ -243,14 +246,19 @@ func TestBulkItemSendsItsOwnPIPRequest(t *testing.T) {
 		}
 	}
 	for _, a := range []string{"r1", "r2"} {
-		b, err := ReadBody([]byte(`{"operation": "read", "resourceType": "doc", "resource": {"a": "` + a + `"}}`))
+		read, err := ReadBody([]byte(`{"operation": "read", "resourceType": "doc", "resource": {"a": "` + a + `"}}`))
 		if err != nil {
 			t.Fatal(err)
 		}
-		q := bulkItem(t, bulk, b).calls.Get(strTerm(id))
-		if got := q.Get(strTerm("body")); got == nil || !strings.Contains(got.String(), `"r": "`+a+`"`) {
-			t.Errorf("body of the PIP request of the item with resource.a %s = %v, want requestAttributes.r %s",
-				a, got, a)
+		// the operations of one bulk/operations item share the decoded resource
+		write := read
+		write.Operation = "write"
+		for _, b := range []Body{read, write} {
+			got := bulkItem(t, bulk, b).calls.Get(strTerm(id)).Get(strTerm("body"))
+			if want := ast.MustParseTerm(`{"requestAttributes": {"r": "` + a + `", "op": "${operation}"}}`); got == nil || !got.Equal(want) {
+				t.Errorf("body of the PIP request of the item with resource.a %s and operation %s = %v, want %v",
+					a, b.Operation, got, want)
+			}
 		}
 	}
 }

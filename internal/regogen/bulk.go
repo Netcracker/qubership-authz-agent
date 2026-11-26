@@ -49,10 +49,10 @@ type Bulk struct {
 
 // resourceView is what the items of a bulk request derive from one decoded
 // resource: the records of the resource operands, the term of the member
-// resource, and the records of the lazily read paths. The items whose bodies
-// carry the same decoded value share one view, so what it holds is derived
-// once per request, not once per item. The requests of GENERAL and FILTERED
-// PIPs are not in it: [Bulk.Item] builds them per item.
+// resource, the records of the lazily read paths, and the requests of the
+// GENERAL and FILTERED PIPs and of the entitlements service. The items whose
+// bodies carry the same decoded value share one view, so what it holds is
+// derived once per request, not once per item.
 type resourceView struct {
 	resource jsonvalue.Value
 	// records holds the record of each resource operand of [Bulk.items] by
@@ -70,6 +70,12 @@ type resourceView struct {
 	// pathsMu guards it, since the items are evaluated concurrently.
 	pathsMu sync.Mutex
 	paths   map[pathKey]*ast.Term
+	// calls and pipValues are the [Input] members of the same names, which
+	// [resourceView.setCalls] builds at the first item that carries the
+	// resource.
+	callsOnce sync.Once
+	calls     ast.Object
+	pipValues map[string]Resolved
 }
 
 // listKey identifies a non-empty list by its first element and length.
@@ -164,6 +170,23 @@ func (v *resourceView) path(p string, read fieldSet) (*ast.Term, error) {
 	return r, err
 }
 
+// setCalls sets the requests of the PIPs of in, the input of an item that
+// carries the view's resource, to those of the view. A request reads the
+// subject, which b.req holds, and the resource, and no other part of the
+// item's body, so the view builds them from a body that holds the resource
+// alone.
+func (v *resourceView) setCalls(b *Bulk, in *Input) {
+	v.callsOnce.Do(func() {
+		req := b.req
+		req.Body = Body{Resource: v.resource, HasResource: true}
+		own := &Input{}
+		// NewBulk checked the values setCalls requires
+		_ = own.setCalls(b.m, &req)
+		v.calls, v.pipValues = own.calls, own.pipValues
+	})
+	in.calls, in.pipValues = v.calls, v.pipValues
+}
+
 // itemOperand reports whether each item of a bulk request resolves r from
 // its own body.
 func itemOperand(r *Ref) bool {
@@ -212,9 +235,8 @@ func NewBulk(m *Module, req Request) (*Bulk, error) {
 // Item returns the input of one item of the bulk request, whose body is
 // body. The input shares the subject's part with every other item: its
 // Records hold the item's records only, and its Value reuses the shared
-// terms. The requests of its PIPs are the item's own, since a request may
-// read the resource. The items whose bodies carry the same decoded resource
-// share what is derived from it ([resourceView]). It fails where a value of
+// terms. The items whose bodies carry the same decoded resource share what
+// is derived from it ([resourceView]), the requests of the PIPs included. It fails where a value of
 // the item other than the answer of a source is too big to compare
 // ([Record.TooBig]).
 func (b *Bulk) Item(body Body) (*Input, error) {
@@ -259,6 +281,10 @@ func (b *Bulk) Item(body Body) (*Input, error) {
 			return nil, err
 		}
 		in.Records[r.ID] = rec
+	}
+	if in.view != nil {
+		in.view.setCalls(b, in)
+		return in, nil
 	}
 	req := b.req
 	req.Body = body

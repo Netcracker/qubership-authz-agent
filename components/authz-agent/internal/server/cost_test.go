@@ -15,8 +15,10 @@
 package server
 
 import (
+	"io"
 	"math"
 	"net/http"
+	"net/http/httptest"
 	"runtime"
 	"strings"
 	"testing"
@@ -64,8 +66,9 @@ func operations(op string, n int) string {
 
 // The operations of one bulk/operations item share its resource, so an
 // item of 100 operations allocates about what one operation does, whether
-// the policy reads a member of the resource, a jsonPath filter, or a deep
-// scan, and whatever the operations are.
+// the policy reads a member of the resource, a jsonPath filter, a deep
+// scan, or a PIP whose request reads the resource, and whatever the
+// operations are.
 func TestBulkOperations_TheCostOfAnItemDoesNotGrowWithItsOperations(t *testing.T) {
 	routes := []struct {
 		name, path string
@@ -80,12 +83,20 @@ func TestBulkOperations_TheCostOfAnItemDoesNotGrowWithItsOperations(t *testing.T
 				return `{"type":"doc","entries":[{"id":"1","operations":` + ops + `,"resource":` + bigResource + `}]}`
 			}},
 	}
-	for _, cond := range []struct{ name, condition string }{
-		{"a member", "resource.b == 'x'"},
-		{"a jsonPath filter", "resource.a[?(@.x == 'z')].x == 'z'"},
-		{"a deep scan", "resource..x == 'z'"},
+	pip := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
+		_, _ = w.Write([]byte(`"x"`))
+	}))
+	t.Cleanup(pip.Close)
+	readsTheResource := `{"pips": [{"tenantId": "a", "name": "subject.g", "pipType": "GENERAL", "httpMethod": "POST",
+		"url": "` + pip.URL + `/${resource.b}", "requestAttributes": {"list": "${resource.a}", "op": "${operation}"}}]}`
+	for _, cond := range []struct{ name, condition, pips string }{
+		{"a member", "resource.b == 'x'", `{"pips": []}`},
+		{"a jsonPath filter", "resource.a[?(@.x == 'z')].x == 'z'", `{"pips": []}`},
+		{"a deep scan", "resource..x == 'z'", `{"pips": []}`},
+		{"a PIP whose request reads the resource", "subject.g == 'x'", readsTheResource},
 	} {
-		reg := registry(t, `{"policySets": [`+tenantSet("a", cond.condition)+`]}`)
+		reg := registryWithPIPs(t, `{"policySets": [`+tenantSet("a", cond.condition)+`]}`, cond.pips)
 		app := newPublicAppOver(t, map[string]string{"internals.rego": admissionStub}, inTenantA(reg))
 		for _, route := range routes {
 			for _, op := range []string{`"read"`, `""`} {

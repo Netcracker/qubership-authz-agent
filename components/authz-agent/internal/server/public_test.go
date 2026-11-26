@@ -63,12 +63,19 @@ func newPublicAppWithLog(t *testing.T, log Logger) *fiber.App {
 // no PIPs.
 func registry(t *testing.T, sets string) *snapshot.Registry {
 	t.Helper()
+	return registryWithPIPs(t, sets, `{"pips": []}`)
+}
+
+// registryWithPIPs is a snapshot registry loaded with the policy sets of
+// sets and the PIP declarations of pips.
+func registryWithPIPs(t *testing.T, sets, pips string) *snapshot.Registry {
+	t.Helper()
 	tab, err := regogen.DefaultTable()
 	if err != nil {
 		t.Fatal(err)
 	}
 	reg := snapshot.New(snapshot.Config{}, tab, quietLoader{})
-	if _, err := reg.Load(context.Background(), []byte(sets), []byte(`{"pips": []}`)); err != nil {
+	if _, err := reg.Load(context.Background(), []byte(sets), []byte(pips)); err != nil {
 		t.Fatal(err)
 	}
 	return reg
