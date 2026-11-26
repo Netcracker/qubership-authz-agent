@@ -400,12 +400,13 @@ func TestFromRegularReadsOnceAPIPNameDeclaredMoreThanOnceIdentically(t *testing.
 	}
 }
 
-// Two declarations of one name read as identical when a request attribute or
-// the default value holds a JSON object with its members in another order, and
-// as different when the value differs. A mapping with its members in another
-// order keeps them isolated, since the permissions come in the mapping's
-// order, and so does a mapping value that differs.
-func TestFromRegularComparesThePIPsOfANameInAnyMemberOrder(t *testing.T) {
+// Two declarations of one name are read once only when each field holds the
+// same value, and a field that holds JSON text holds the same JSON value as the
+// generator reads it: the members of an object in document order, the text of
+// a number, a string with its escapes read, and the last of repeated members.
+// Each pair is read in both orders, since the declaration read once is the
+// first one.
+func TestFromRegularReadsThePIPsOfANameOnceOnlyWhenTheyAreEqual(t *testing.T) {
 	t.Parallel()
 
 	mapping := func(roles string) string {
@@ -423,38 +424,59 @@ func TestFromRegularComparesThePIPsOfANameInAnyMemberOrder(t *testing.T) {
 		return `{"name": "subject.x", "pipType": "TOKEN", "claim": "c", "tenantId": "t", "defaultValue": ` + v + `}`
 	}
 	const identical = `pip "subject.x": declared 2 times identically, read once`
+	const isolated = `pip "subject.x": isolated: declared 2 times`
 	cases := []struct {
 		name, first, second, wantDropped string
 	}{
 		{"mapping members in another order", mapping(`{"ROLE_A": ["p"], "ROLE_B": ["q"]}`),
-			mapping(`{"ROLE_B": ["q"], "ROLE_A": ["p"]}`), `pip "subject.x": isolated: declared 2 times`},
+			mapping(`{"ROLE_B": ["q"], "ROLE_A": ["p"]}`), isolated},
 		{"a mapping value that differs", mapping(`{"ROLE_A": ["p"], "ROLE_B": ["q"]}`),
-			mapping(`{"ROLE_B": ["q"], "ROLE_A": ["r"]}`), `pip "subject.x": isolated: declared 2 times`},
-		{"request attribute members in another order", attributes(`{"x": 1, "y": 2}`), attributes(`{"y": 2, "x": 1}`),
-			identical},
-		{"a request attribute that differs", attributes(`{"x": 1, "y": 2}`), attributes(`{"x": 1, "y": 3}`),
-			`pip "subject.x": isolated: declared 2 times`},
+			mapping(`{"ROLE_B": ["q"], "ROLE_A": ["r"]}`), isolated},
 		{"custom mapping members in another order", custom(`{"ROLE_A": ["p"], "ROLE_B": ["q"]}`),
-			custom(`{"ROLE_B": ["q"], "ROLE_A": ["p"]}`), `pip "subject.x": isolated: declared 2 times`},
-		{"default value members in another order", defaultValue(`{"x": 1, "y": 2}`), defaultValue(`{"y": 2, "x": 1}`),
-			identical},
+			custom(`{"ROLE_B": ["q"], "ROLE_A": ["p"]}`), isolated},
+		{"request attributes written alike but for white space", attributes(`{"x": 1, "y": 2}`),
+			attributes(`{"x":1,"y":2}`), identical},
+		{"request attribute members in another order", attributes(`{"x": 1, "y": 2}`), attributes(`{"y": 2, "x": 1}`),
+			isolated},
+		{"a request attribute with an escape and without", attributes(`"\u0024{subject.id}"`),
+			attributes(`"${subject.id}"`), identical},
+		{"a request attribute that differs", attributes(`{"x": 1, "y": 2}`), attributes(`{"x": 1, "y": 3}`), isolated},
+		{"empty request attributes and none", `{"name": "subject.x", "pipType": "MAPPING", "tenantId": "t"}`,
+			`{"name": "subject.x", "pipType": "MAPPING", "tenantId": "t", "requestAttributes": {}}`, isolated},
+		{"default values written alike but for white space", defaultValue(`{"a": "1", "b": "2"}`),
+			defaultValue(`{"a":"1","b":"2"}`), identical},
+		{"default value members in another order", defaultValue(`{"a": "1", "b": "2"}`),
+			defaultValue(`{"b": "2", "a": "1"}`), isolated},
+		{"nested default value members in another order", defaultValue(`[{"o": {"a": 1, "b": 2}}]`),
+			defaultValue(`[{"o": {"b": 2, "a": 1}}]`), isolated},
+		{"default values 1 and 1.0", defaultValue(`1`), defaultValue(`1.0`), isolated},
+		{"a default value with an escape and without", defaultValue(`"\u0041"`), defaultValue(`"A"`), identical},
+		{"a default value with a repeated member and without", defaultValue(`{"a": 1, "a": 2}`),
+			defaultValue(`{"a": 2}`), identical},
+		{"nested default values 1 and 1.0", defaultValue(`{"n": [1]}`), defaultValue(`{"n": [1.0]}`), isolated},
 	}
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			e := fromRegular(t, `[]`, `[`+tc.first+`, `+tc.second+`]`)
-			if got := e.Dropped["t"]; !slices.Equal(got, []string{tc.wantDropped}) {
-				t.Errorf("Dropped[t] = %q, want [%q]", got, tc.wantDropped)
-			}
-		})
+		for _, order := range []struct{ name, pips string }{
+			{"in the order written", `[` + tc.first + `, ` + tc.second + `]`},
+			{"in the reverse order", `[` + tc.second + `, ` + tc.first + `]`},
+		} {
+			t.Run(tc.name+" "+order.name, func(t *testing.T) {
+				t.Parallel()
+				e := fromRegular(t, `[]`, order.pips)
+				if got := e.Dropped["t"]; !slices.Equal(got, []string{tc.wantDropped}) {
+					t.Errorf("Dropped[t] = %q, want [%q]", got, tc.wantDropped)
+				}
+			})
+		}
 	}
 }
 
-// Two top-level sets of one policySetId read as identical when a JSON object
-// they hold has its members in another order: the unknown keys of the set, or
-// the value of a custom predicate's parameter. A parameter value that differs
-// keeps them isolated.
-func TestFromRegularComparesTheSetsOfAPolicySetIdInAnyMemberOrder(t *testing.T) {
+// Two top-level sets of one policySetId read as identical when they list the
+// same unknown keys in any order, since no decision reads them, and stay
+// isolated when a custom predicate's parameter holds another decoded JSON
+// value: the members of an object in document order and the text of a number
+// count, white space and escapes do not.
+func TestFromRegularReadsTheSetsOfAPolicySetIdOnceOnlyWhenTheyAreEqual(t *testing.T) {
 	t.Parallel()
 
 	const identical = `policy set 1 "s": identical to policy set 0, read once`
@@ -470,8 +492,15 @@ func TestFromRegularComparesTheSetsOfAPolicySetIdInAnyMemberOrder(t *testing.T) 
 		name, first, second, want string
 	}{
 		{"unknown keys in another order", set(`, "PARITY_x": 1, "PARITY_y": 2`), set(`, "PARITY_y": 2, "PARITY_x": 1`), identical},
-		{"a parameter's members in another order", set(custom(`{"x": 1, "y": 2}`)), set(custom(`{"y": 2, "x": 1}`)), identical},
+		{"parameters written alike but for white space", set(custom(`{"x": 1, "y": 2}`)), set(custom(`{"x":1,"y":2}`)),
+			identical},
+		{"a parameter's members in another order", set(custom(`{"x": 1, "y": 2}`)), set(custom(`{"y": 2, "x": 1}`)), isolated},
 		{"a parameter that differs", set(custom(`{"x": 1, "y": 2}`)), set(custom(`{"y": 2, "x": 3}`)), isolated},
+		{"parameters 1 and 1.0", set(custom(`1`)), set(custom(`1.0`)), isolated},
+		{"a parameter with an escape and without", set(custom(`"\u0041"`)), set(custom(`"A"`)), identical},
+		{"empty parameters and none", set(`, "policies": [{"rules": [{"effect": "ALLOW", "customPredicate": {"predicate": "own"}}]}]`),
+			set(`, "policies": [{"rules": [{"effect": "ALLOW", "customPredicate": {"predicate": "own", "params": {}}}]}]`),
+			identical},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

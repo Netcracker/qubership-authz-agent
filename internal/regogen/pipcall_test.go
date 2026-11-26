@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
@@ -338,6 +339,35 @@ func TestPIPFunction_SendsTheRequestOfTheDeclaration(t *testing.T) {
 			want: `{"method": "POST", "url": "http://g", "headers": {}, "raise_error": false, "pip": "subject.g",
 				"body": {"requestAttributes": {"id": [], "name": null}}}`, response: answer, state: "VALUE"}})
 	})
+}
+
+// The operands a module asks [Project] for are the placeholders the request
+// substitutes in the decoded requestAttributes, in no defined order.
+func TestModule_PlaceholdersAreThoseOfTheDecodedRequestAttributes(t *testing.T) {
+	tests := []struct {
+		name, attributes string
+		want             []string
+	}{
+		{"a placeholder as written", `{"id": "${subject.id}"}`, []string{`["subj","id"]`}},
+		{"a placeholder written with an escape", `{"id": "\u0024{subject.id}"}`, []string{`["subj","id"]`}},
+		{"a placeholder in a nested object", `{"n": {"r": "${subject.id}"}}`, []string{`["subj","id"]`}},
+		{"a placeholder in a list", `{"l": ["${subject.id}"]}`, nil},
+		{"a placeholder among other text", `{"t": "x ${subject.id}"}`, nil},
+		{"a placeholder a repeated member replaces", `{"o": {"id": "${subject.id}", "id": "lit"}}`, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tree := tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", "subject.g == 'acc-7'",
+				`{"name": "subject.g", "pipType": "GENERAL", "url": "http://g", "requestAttributes": `+tt.attributes+`}`)
+			m, err := Generate(tree, table(t), DefaultOptions())
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			if got := slices.Sorted(slices.Values(m.Placeholders())); !slices.Equal(got, tt.want) {
+				t.Errorf("Placeholders() = %q, want %q", got, tt.want)
+			}
+		})
+	}
 }
 
 // TestPIPFunction_ReadsATokenPlaceholderFromTheClaims: a TOKEN PIP that only

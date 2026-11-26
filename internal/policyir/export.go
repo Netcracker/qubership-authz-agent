@@ -22,6 +22,8 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+
+	"authz-agent/internal/jsonvalue"
 )
 
 // Export is the configuration of every tenant that a v3 configuration export
@@ -262,8 +264,8 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 			continue
 		}
 		// identical maps a name the tenant declares more than once to whether
-		// every declaration of it equals the first: the tenant's own
-		// declaration is then one of them, whichever it is.
+		// every declaration of it equals the first, as [samePIP] compares them:
+		// the tenant's own declaration is then one of them, whichever it is.
 		identical := map[string]bool{}
 		firstPIP := map[string]*PIP{}
 		for _, p := range t.pips {
@@ -301,14 +303,15 @@ func FromRegular(policySets, pips []byte) (*Export, error) {
 	return out, nil
 }
 
-// identicalSets reports whether the sets of raws at idx read as the same set,
-// field by field, with the texts cut as [enumText] cuts them and with the same
-// unknown keys. The members of a JSON object compare in any order, here and in
-// a value the set holds as raw JSON, such as a parameter of a custom
-// predicate. A set that cannot be read is identical to none.
+// identicalSets reports whether the sets of raws at idx read as the same set:
+// the decoded sets, with the texts cut as [enumText] cuts them, are equal
+// field by field, and the sets have the same unknown keys in any order. The
+// parameters of a custom predicate compare as [sameJSON] compares them. A set
+// that cannot be read is identical to none.
 func identicalSets(raws []json.RawMessage, idx []int) bool {
-	var first string
+	var first []byte
 	var firstUnknown []string
+	var firstParams []map[string]json.RawMessage
 	for n, i := range idx {
 		var s exportSet
 		unknown, err := decodeReporting(raws[i], &s)
@@ -316,61 +319,97 @@ func identicalSets(raws []json.RawMessage, idx []int) bool {
 			return false
 		}
 		s.cutTexts()
+		params := s.takeParams(nil)
 		text, err := json.Marshal(s)
 		if err != nil {
 			return false
 		}
-		canonical, unknown := canonicalJSON(string(text)), slices.Sorted(slices.Values(unknown))
+		unknown = slices.Sorted(slices.Values(unknown))
 		if n == 0 {
-			first, firstUnknown = canonical, unknown
-		} else if canonical != first || !slices.Equal(firstUnknown, unknown) {
+			first, firstUnknown, firstParams = text, unknown, params
+			continue
+		}
+		if !bytes.Equal(text, first) || !slices.Equal(firstUnknown, unknown) ||
+			!slices.EqualFunc(firstParams, params, sameJSONMap) {
 			return false
 		}
 	}
 	return true
 }
 
-// canonicalJSON returns the JSON value text with the members of every object
-// sorted by key and no spaces, so that two texts of one value compare equal.
-// A number keeps its text, so 1 and 1.0 differ. A text that is not one JSON
-// value is returned as is.
-func canonicalJSON(text string) string {
-	d := json.NewDecoder(strings.NewReader(text))
-	d.UseNumber()
-	var v any
-	if err := d.Decode(&v); err != nil || d.More() {
-		return text
-	}
-	out, err := json.Marshal(v)
-	if err != nil {
-		return text
-	}
-	return string(out)
-}
-
-// samePIP reports whether a and b are the same declaration, with the members
-// of a JSON object in a field that holds JSON text compared in any order,
-// except in productMapping and customMapping: the permissions of a MAPPING
-// PIP come in the order of those tables' members.
-func samePIP(a, b *PIP) bool {
-	ca, cb := canonicalPIP(*a), canonicalPIP(*b)
-	return reflect.DeepEqual(ca, cb)
-}
-
-// canonicalPIP returns p with every field that holds JSON text, except the
-// two mappings, in the form of [canonicalJSON].
-func canonicalPIP(p PIP) PIP {
-	for _, f := range []*string{&p.DefaultValue, &p.Cacheable, &p.CachePeriod} {
-		*f = canonicalJSON(*f)
-	}
-	if p.RequestAttributes != nil {
-		attrs := make(map[string]string, len(p.RequestAttributes))
-		for k, v := range p.RequestAttributes {
-			attrs[k] = canonicalJSON(v)
+// takeParams appends to params the parameters of every custom predicate in s
+// and in the sets it holds, in document order, and clears them in s. Empty
+// parameters are appended as nil: the tree holds no parameters for them, as
+// for absent ones.
+func (s *exportSet) takeParams(params []map[string]json.RawMessage) []map[string]json.RawMessage {
+	for i := range s.Policies {
+		for j := range s.Policies[i].Rules {
+			if c := s.Policies[i].Rules[j].CustomPredicate; c != nil {
+				if len(c.Params) == 0 {
+					c.Params = nil
+				}
+				params = append(params, c.Params)
+				c.Params = nil
+			}
 		}
-		p.RequestAttributes = attrs
 	}
-	return p
+	for i := range s.PolicySets {
+		params = s.PolicySets[i].takeParams(params)
+	}
+	return params
+}
+
+// samePIP reports whether a and b are the same declaration: every field holds
+// the same value, and a field that holds JSON text holds the same value as
+// [sameJSON] compares them.
+func samePIP(a, b *PIP) bool {
+	x, y := *a, *b
+	for _, f := range [][2]*string{
+		{&x.DefaultValue, &y.DefaultValue}, {&x.ProductMapping, &y.ProductMapping},
+		{&x.CustomMapping, &y.CustomMapping}, {&x.Cacheable, &y.Cacheable}, {&x.CachePeriod, &y.CachePeriod},
+	} {
+		if !sameJSON(*f[0], *f[1]) {
+			return false
+		}
+		*f[0], *f[1] = "", ""
+	}
+	if !sameJSONMap(x.RequestAttributes, y.RequestAttributes) {
+		return false
+	}
+	x.RequestAttributes, y.RequestAttributes = nil, nil
+	return reflect.DeepEqual(x, y)
+}
+
+// sameJSONMap reports whether a and b are both nil, or both non-nil with the
+// same keys, each holding the same value as [sameJSON] compares them.
+func sameJSONMap[V ~string | ~[]byte](a, b map[string]V) bool {
+	if (a == nil) != (b == nil) || len(a) != len(b) {
+		return false
+	}
+	for k, v := range a {
+		w, ok := b[k]
+		if !ok || !sameJSON(string(v), string(w)) {
+			return false
+		}
+	}
+	return true
+}
+
+// sameJSON reports whether the JSON texts a and b hold the same value as
+// [jsonvalue.Decode] reads it: the members of an object compare in document
+// order, a number compares by its text, so 1 and 1.0 differ, a string
+// compares after its escapes are read, and of repeated members the last
+// counts. The generator decodes every JSON field of a declaration that way;
+// a reader that keeps less of the value, such as a custom predicate's
+// parameter in a filter, still tells apart no two values this compares equal.
+// Where a or b is not one JSON value, they compare as text.
+func sameJSON(a, b string) bool {
+	x, errX := jsonvalue.Decode([]byte(a))
+	y, errY := jsonvalue.Decode([]byte(b))
+	if errX != nil || errY != nil {
+		return a == b
+	}
+	return reflect.DeepEqual(x, y)
 }
 
 // exportHead is what [FromRegular] reads of an element before the element

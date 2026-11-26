@@ -129,25 +129,32 @@ var (
 // pipPlaceholders returns the keys of the subject's operands that the url or
 // the requestAttributes of decl put into its request, which [Project] needs
 // in [Request.Values]: a HEADER PIP is read from [Request.Headers] instead,
-// and a TOKEN PIP from [Request.Claims].
+// and a TOKEN PIP from [Request.Claims]. The placeholders of requestAttributes
+// are those [substituteAttr] replaces.
 func pipPlaceholders(decl *policyir.PIP, pips func(string) (*policyir.PIP, bool)) []string {
-	texts := []string{decl.URL}
-	for _, v := range decl.RequestAttributes {
-		texts = append(texts, v)
+	var exprs []string
+	for _, m := range placeholderRE.FindAllStringSubmatch(decl.URL, -1) {
+		exprs = append(exprs, m[1])
+	}
+	for _, k := range slices.Sorted(mapsKeys(decl.RequestAttributes)) {
+		if v, err := jsonvalue.Decode([]byte(decl.RequestAttributes[k])); err == nil {
+			mapAttrPlaceholders(v, func(expr string) jsonvalue.Value {
+				exprs = append(exprs, expr)
+				return nil
+			})
+		}
 	}
 	var keys []string
-	for _, t := range texts {
-		for _, m := range placeholderRE.FindAllStringSubmatch(t, -1) {
-			attr, ok := strings.CutPrefix(m[1], "subject.")
-			if !ok || attr == "isM2M" {
-				continue
-			}
-			if p, ok := pips(m[1]); ok && (p.Type == policyir.PIPHeader || p.Type == policyir.PIPToken) {
-				continue
-			}
-			if k := specKey("subj", attr); !slices.Contains(keys, k) {
-				keys = append(keys, k)
-			}
+	for _, expr := range exprs {
+		attr, ok := strings.CutPrefix(expr, "subject.")
+		if !ok || attr == "isM2M" {
+			continue
+		}
+		if p, ok := pips(expr); ok && (p.Type == policyir.PIPHeader || p.Type == policyir.PIPToken) {
+			continue
+		}
+		if k := specKey("subj", attr); !slices.Contains(keys, k) {
+			keys = append(keys, k)
 		}
 	}
 	return keys
@@ -369,23 +376,33 @@ func remoteRefused(req *Request) (spectables.State, bool) {
 }
 
 // substituteAttr returns the value v of requestAttributes with a string that
-// is one placeholder of the subject or the resource replaced by its value. A
-// placeholder of another source, a string with a placeholder among other
-// text, and a list stay as written.
+// is one placeholder of the subject or the resource replaced by its value, as
+// [mapAttrPlaceholders] finds them.
 func substituteAttr(v jsonvalue.Value, req *Request, pips func(string) (*policyir.PIP, bool)) jsonvalue.Value {
+	return mapAttrPlaceholders(v, func(expr string) jsonvalue.Value {
+		val, _ := placeholderValue(expr, req, pips)
+		return val
+	})
+}
+
+// mapAttrPlaceholders returns v with each string that is one placeholder of
+// the subject or the resource, in v or in an object v holds at any depth,
+// replaced by f of the placeholder's expression. A placeholder of another
+// source, a string with a placeholder among other text, and a list stay as
+// written.
+func mapAttrPlaceholders(v jsonvalue.Value, f func(expr string) jsonvalue.Value) jsonvalue.Value {
 	switch x := v.(type) {
 	case string:
 		m := fullPlaceholderRE.FindStringSubmatch(x)
 		if m == nil || !strings.HasPrefix(m[1], "subject.") && !strings.HasPrefix(m[1], "resource") {
 			return x
 		}
-		val, _ := placeholderValue(m[1], req, pips)
-		return val
+		return f(m[1])
 	case *jsonvalue.Object:
 		o := jsonvalue.NewObject()
 		for _, k := range x.Keys() {
 			e, _ := x.Get(k)
-			o.Set(k, substituteAttr(e, req, pips))
+			o.Set(k, mapAttrPlaceholders(e, f))
 		}
 		return o
 	}
