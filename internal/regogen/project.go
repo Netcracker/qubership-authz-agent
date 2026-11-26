@@ -17,6 +17,7 @@ package regogen
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"slices"
@@ -147,6 +148,9 @@ type Record struct {
 	// the answer of a source, which then reads as failed ([sourceRecord], and
 	// [Input.ScopeFailed] for a pass of the permission scope).
 	TooBig bool
+	// outsideKind is the kind of an operand whose state its domain does not
+	// hold ([record]); the record holds the state alone.
+	outsideKind spectables.Kind
 }
 
 // Input is the projection of a request into the input of a module.
@@ -209,8 +213,47 @@ func class(v jsonvalue.Value, lv legacyvalue.Record) spectables.Class {
 var errIndexTooBig = fmt.Errorf("a list holds elements of one shape that write their numbers in too many ways: "+
 	"a lookup among them would read more than %d groups and scanned elements", maxLookup)
 
-// record returns the record of v as r reads it, or a [Record.TooBig] one.
+// errOutsideDomain fails a request in which an operand has a state the domain
+// of its kind does not hold. The module has a leaf for each state of the
+// domain alone, so such an operand would make its leaves neither true, false,
+// nor failed; the state comes from a resolver of the agent, not from the
+// request.
+var errOutsideDomain = errors.New("a resolver of the agent gave an operand a state its kind does not hold; report it as a defect of the agent")
+
+// kindState is a state of an operand of a kind.
+type kindState struct {
+	kind  spectables.Kind
+	state spectables.State
+}
+
+// knownOutsideDomain lists the states outside the domain of a kind that a
+// resolver gives on purpose until the defect named beside each is fixed;
+// record keeps such a state rather than failing the request.
+// TestResolvedStatesStayInTheDomainOfTheirKind fails on an entry no resolver
+// gives any more.
+var knownOutsideDomain = map[kindState]string{
+	{spectables.KindSubjPermissionScope, spectables.StateError}: "F79: ResolveSubject reads a bare " +
+		"subject.permissionScope as ERROR, which its domain lacks, so its leaf is neither true, false, nor failed",
+}
+
+// inDomain reports whether r may hold state s: s is a state of the domain
+// of r's kind, or knownOutsideDomain lists it. A reference that a built-in
+// function rebuilds from its options carries no domain and holds any state.
+func inDomain(r *Ref, s spectables.State) bool {
+	if len(r.domain.States) == 0 || slices.Contains(r.domain.States, s) {
+		return true
+	}
+	_, known := knownOutsideDomain[kindState{r.Kind, s}]
+	return known
+}
+
+// record returns the record of v as r reads it, or a [Record.TooBig] one. A
+// state that r may not hold ([inDomain]) gives a record that holds the state
+// alone and fails the request ([Record.err]).
 func record(r *Ref, v Resolved) Record {
+	if !inDomain(r, v.State) {
+		return Record{State: string(v.State), outsideKind: r.Kind}
+	}
 	rec := buildRecord(r, v)
 	if r.reads(fieldEqIndex) && rec.EqIndex.tooBig() || r.reads(fieldElementIndex) && rec.ElementIndex.tooBig() ||
 		r.reads(fieldSubsetIndex) && rec.SubsetIndex.tooBig() {
@@ -219,9 +262,14 @@ func record(r *Ref, v Resolved) Record {
 	return rec
 }
 
-// err is the error of a request that holds rec, read as name: nil, or
-// errIndexTooBig where rec is TooBig.
+// err is the error of a request that holds rec, read as name: nil,
+// errIndexTooBig where rec is TooBig, or errOutsideDomain where its state is
+// outside the domain of its kind.
 func (rec Record) err(name string) error {
+	if rec.outsideKind != "" {
+		return fmt.Errorf("the value of %s is in state %s, outside the domain of kind %s: %w",
+			name, rec.State, rec.outsideKind, errOutsideDomain)
+	}
 	if rec.TooBig {
 		return fmt.Errorf("the value of %s: %w", name, errIndexTooBig)
 	}
@@ -274,12 +322,15 @@ func sourceRecord(r *Ref, v Resolved) Record {
 }
 
 // projectRecord is the record of r the projection builds before evaluation,
-// or the error of a request with a value too big to compare.
+// or the error of a request with a value too big to compare or a state
+// outside the domain of r's kind.
 func projectRecord(r *Ref, v Resolved) (Record, error) {
+	var rec Record
 	if r.pip != nil || r.ent != nil {
-		return sourceRecord(r, v), nil
+		rec = sourceRecord(r, v)
+	} else {
+		rec = record(r, v)
 	}
-	rec := record(r, v)
 	return rec, rec.err(r.ID)
 }
 
@@ -489,6 +540,9 @@ func Project(m *Module, req Request) (*Input, error) {
 					// too big to compare reads as one that failed
 					in.ScopeFailed, in.Passes = true, nil
 					break passes
+				}
+				if err := rec.err(r.ID); err != nil {
+					return nil, err
 				}
 				pass[r.ID] = rec
 			}
