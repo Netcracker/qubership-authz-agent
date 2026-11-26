@@ -23,14 +23,17 @@ import (
 
 // A condition the filter reads without the resource has a value per row. A
 // leaf over the resource is true on the rows it matches; a leaf a failed
-// source leaves unknown is unknown on every row, and so is a leaf unknown on
-// every row where its path holds a value; any other leaf is true or false on
-// every row. Kleene's AND and OR over these give the rows where the condition is
-// true and the rows where it is unknown. The check denies a resource whole
-// where the condition of an applicable rule is unknown, so the filter denies
-// those rows, whatever the rule's effect and whatever its neighbors allow,
-// and with them the rows where the path of a leaf unknown on the others
-// holds nothing, null, or an empty collection.
+// source leaves unknown is failed on every row, and so is a leaf unknown on
+// every row where its path holds a value; any other leaf has its status on
+// the request on every row: true, false, or unknown. Kleene's AND and OR over
+// these give the rows where the condition is true, the rows where it is
+// unknown, and among them the rows where it is failed: unknown with a failed
+// leaf in a disjunct that has no false leaf, as [cond.failedU] holds for the
+// check. The check denies a resource whole where the condition of an
+// applicable rule is failed, so the filter denies those rows, whatever the
+// rule's effect and whatever its neighbors allow, and with them the rows where
+// the path of a leaf unknown on the others holds nothing, null, or an empty
+// collection.
 
 // rowsF is a set of rows as a formula of the leaves over the resource: true
 // (every row), false (none), a leaf, or a NOT, AND, or OR of formulas.
@@ -121,17 +124,23 @@ func fNot(a rowsF) rowsF {
 	return rowsF{kind: "not", parts: []rowsF{a}}
 }
 
-// rowsVal is a condition on the rows: where it is true and where unknown.
-type rowsVal struct{ t, u rowsF }
+// rowsVal is a condition on the rows: where it is true, where unknown, and
+// where it is unknown because a value it reads failed, which e holds as
+// [cond.failedU] does for the check. e is part of u.
+type rowsVal struct{ t, u, e rowsF }
 
-// kleeneAnd is unknown where neither operand is false and one is unknown.
+// kleeneAnd is unknown where neither operand is false and one is unknown,
+// and failed where neither is false and one is failed.
 func kleeneAnd(x, y rowsVal) rowsVal {
-	return rowsVal{t: fAnd(x.t, y.t), u: fAnd(fAnd(fOr(x.t, x.u), fOr(y.t, y.u)), fOr(x.u, y.u))}
+	notF := fAnd(fOr(x.t, x.u), fOr(y.t, y.u))
+	return rowsVal{t: fAnd(x.t, y.t), u: fAnd(notF, fOr(x.u, y.u)), e: fAnd(notF, fOr(x.e, y.e))}
 }
 
-// kleeneOr is unknown where neither operand is true and one is unknown.
+// kleeneOr is unknown where neither operand is true and one is unknown, and
+// failed where neither is true and one is failed.
 func kleeneOr(x, y rowsVal) rowsVal {
-	return rowsVal{t: fOr(x.t, y.t), u: fAnd(fAnd(fNot(x.t), fNot(y.t)), fOr(x.u, y.u))}
+	notT := fAnd(fNot(x.t), fNot(y.t))
+	return rowsVal{t: fOr(x.t, y.t), u: fAnd(notT, fOr(x.u, y.u)), e: fAnd(notT, fOr(x.e, y.e))}
 }
 
 // rowsExpr is the predicate expression of the rows f, or of the others where

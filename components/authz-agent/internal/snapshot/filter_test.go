@@ -986,20 +986,40 @@ func TestAFailedConditionInAnIterateDeniesTheRowsWhereItIsUnknown(t *testing.T) 
 }
 
 // A simplified policy whose condition a PIP whose call failed leaves unknown
-// on the rows with a = 'y' denies those rows, and the simplified policy
-// beside it that allows every row does not lift the denial.
+// denies the rows where it is unknown: those with a = 'y', or every row. The
+// simplified policy beside it that allows every row does not lift the denial,
+// in either order.
 func TestASimplifiedPolicyOverAFailedSourceDeniesTheRowsWhereItIsUnknown(t *testing.T) {
 	srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
-	r := pipRegistry(t)
-	loadSimplified(t, r, generalPIP(srv.URL, ""), `{"policySetId": "s", "name": "s", "status": "ACTIVE", "type": "SIMPLIFIED",
-		"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-		"policies": [{"policyId": "p", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-			"tenantId": "a", "rules": [{"ruleId": "r", "target": "subject.roles CONTAINS ANY 'R'", "effect": "ALLOW", "tenantId": "a"}]},
-			{"policyId": "q", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+	allows := `{"policyId": "p", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		"tenantId": "a", "rules": [{"ruleId": "r", "target": "subject.roles CONTAINS ANY 'R'", "effect": "ALLOW", "tenantId": "a"}]}`
+	overG := func(condition string) string {
+		return `{"policyId": "q", "target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
 			"tenantId": "a", "rules": [{"ruleId": "r", "target": "subject.roles CONTAINS ANY 'R'",
-			"condition": "subject.g == 'x' AND resource.a == 'y'", "effect": "ALLOW", "tenantId": "a",
-			"sqlPredicate": "b = 2"}]}]}`)
-	claims := mustObject(t, `{"sub": "u1", "realm_access": {"roles": ["R"]}}`).(*jsonvalue.Object)
-	got, want := filterOfClaims(t, r, claims, "a", "read"), answerOf("", `{"a": { "$ne": "y" }}`, `a!="y"`, `a <> 'y'`)
-	assertOrKnown(t, got == want, "Filter(doc, read) = %s, want %s", got, want)
+			"condition": "` + condition + `", "effect": "ALLOW", "tenantId": "a", "sqlPredicate": "b = 2"}]}`
+	}
+	notY := answerOf("", `{"a": { "$ne": "y" }}`, `a!="y"`, `a <> 'y'`)
+	tests := []struct {
+		name     string
+		policies string
+		want     string
+	}{
+		{"over the resource, after a policy that allows every row",
+			allows + "," + overG("subject.g == 'x' AND resource.a == 'y'"), notY},
+		{"over the resource, before a policy that allows every row",
+			overG("subject.g == 'x' AND resource.a == 'y'") + "," + allows, notY},
+		{"over the subject alone, after a policy that allows every row", allows + "," + overG("subject.g == 'x'"), deny},
+		{"over the subject alone, before a policy that allows every row", overG("subject.g == 'x'") + "," + allows, deny},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := pipRegistry(t)
+			loadSimplified(t, r, generalPIP(srv.URL, ""), `{"policySetId": "s", "name": "s", "status": "ACTIVE",
+				"type": "SIMPLIFIED", "tenantId": "a", "target": "resourceType == 'doc'",
+				"combiningAlgorithm": "DENY_UNLESS_PERMIT", "policies": [`+tt.policies+`]}`)
+			claims := mustObject(t, `{"sub": "u1", "realm_access": {"roles": ["R"]}}`).(*jsonvalue.Object)
+			got := filterOfClaims(t, r, claims, "a", "read")
+			assertOrKnown(t, got == tt.want, "Filter(doc, read) = %s, want %s", got, tt.want)
+		})
+	}
 }

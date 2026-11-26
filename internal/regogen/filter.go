@@ -61,9 +61,13 @@ type status struct {
 	// pass is set for a status inside an iterate, which the module answers
 	// per pass.
 	pass bool
-	// leaves are the statuses of the leaves of a condition that a failed
-	// source may leave unknown, by disjunct, from which the filter reads its
-	// value on each row.
+	// resource is set when a leaf reads the resource, so that the status may
+	// be unknown because of the row alone.
+	resource bool
+	// leaves are the statuses of the leaves, by disjunct, from which the
+	// filter reads the value on each row: of a condition that a failed source
+	// may leave unknown, or that reads the resource beside a leaf that may be
+	// unknown on every row.
 	leaves [][]leafStatus
 }
 
@@ -185,13 +189,13 @@ func (fg *filterGen) status(key string, prefix dnf, c *cond) status {
 		return status{konst: *c.isTrue && !prefix.isFalse()}
 	}
 	g := fg.g
-	s := status{key: key, three: c.three, pass: g.pass}
+	s := status{key: key, three: c.three, pass: g.pass, resource: anyLeaf(c, func(l leafRails) bool { return l.row != nil })}
 	fg.order = append(fg.order, key)
 	fg.t[key] = g.product(prefix, c.T())
 	if c.three {
 		fg.f[key] = g.product(prefix, c.F())
 	}
-	if c.fails {
+	if c.fails || s.resource && anyLeaf(c, func(l leafRails) bool { return l.row == nil && l.threeValued }) {
 		s.leaves = fg.leaves(key, c)
 	}
 	if g.pass {
@@ -201,6 +205,11 @@ func (fg *filterGen) status(key string, prefix dnf, c *cond) status {
 		fg.pass[key] = true
 	}
 	return s
+}
+
+// anyLeaf reports whether a leaf of condition c satisfies p.
+func anyLeaf(c *cond, p func(leafRails) bool) bool {
+	return slices.ContainsFunc(c.groups, func(grp []leafRails) bool { return slices.ContainsFunc(grp, p) })
 }
 
 // dnfStatus records d, a two-valued disjunction, as a status.
@@ -485,9 +494,7 @@ type leafStatus struct {
 // unknown where the check denies over a failed value and false elsewhere:
 // where it is not unknown, the filter reads its status alone.
 func (fg *filterGen) leaves(key string, c *cond) [][]leafStatus {
-	if !slices.ContainsFunc(c.groups, func(grp []leafRails) bool {
-		return slices.ContainsFunc(grp, func(l leafRails) bool { return l.row != nil })
-	}) {
+	if !anyLeaf(c, func(l leafRails) bool { return l.row != nil }) {
 		k := key + ".w"
 		if c.fails {
 			fg.record(k+"e", c.failedU())

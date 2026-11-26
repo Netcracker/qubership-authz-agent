@@ -22,11 +22,7 @@ import (
 // knownViolations maps the name of a test to the known defect its check
 // fails on: the finding ID and the defect in one phrase. A fix of the defect
 // removes the entry.
-var knownViolations = map[string]string{
-	"TestASimplifiedPolicyOverAFailedSourceDeniesTheRowsWhereItIsUnknown": "F76: the filter of simplified " +
-		"policies stops at the first policy of an operation that allows every row and never sees the veto of a " +
-		"later policy whose condition reads a failed source",
-}
+var knownViolations = map[string]string{}
 
 // assertOrKnown fails t with the message format unless ok holds. A test
 // listed in [knownViolations] logs the failed check instead, and fails when

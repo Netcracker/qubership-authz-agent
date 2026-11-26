@@ -40,8 +40,11 @@ import (
 // Where the condition of a rule that applies is unknown on some row because a
 // value it reads failed, the check denies that resource whole, so the answer
 // is ANDed with the rows where no such condition is unknown ([rowsVal]),
-// whatever the algorithms give: a veto. A veto no dialect can write, such as
-// over every row, makes the answer DENY.
+// whatever the algorithms give: a veto. The vetoes are collected by a walk of
+// their own over every node whose target is not false, the way check/resource
+// denies a resource whose applicable rule's condition failed, so neither the
+// algorithms nor the order of the nodes decides which of them apply. A veto no dialect can write, such as over every
+// row, makes the answer DENY.
 //
 // A set the agent cannot write as a predicate shrinks A and never grows it,
 // so the filter never returns a row the check would deny. D may grow for the
@@ -125,8 +128,8 @@ type filterEval struct {
 	// set where one leaves no row a dialect can write.
 	vetoes  []*fexpr
 	vetoAll bool
-	// path is the rows where the targets of the nodes being evaluated may
-	// hold; a veto keeps to them.
+	// path is the rows where the targets above the node that
+	// [filterEval.collectVetoes] walks may hold; a veto keeps to them.
 	path rowsF
 	// approx is the first approximation of the plan: a node's A loses every
 	// row once any of its children denies a row it can name.
@@ -136,10 +139,15 @@ type filterEval struct {
 
 // tri is a three-valued status: true, false, or unknown. veto, of a
 // condition, is the rows where a failed source leaves it unknown; v is then
-// its value on the other rows.
+// 1 where the condition is true on every other row, 0 where it is true on
+// none, and -1 otherwise. unknown is the rows where the condition is unknown
+// whatever the leaves over the resource give on the row, because another leaf
+// is unknown on the request: an ALLOW rule then allows no row, and a DENY rule
+// denies them.
 type tri struct {
-	v    int8 // 1 true, 0 false, -1 unknown
-	veto *rowsF
+	v       int8 // 1 true, 0 false, -1 unknown
+	veto    *rowsF
+	unknown *rowsF
 }
 
 func (e *filterEval) status(s status, pass int) tri {
@@ -165,49 +173,72 @@ func (e *filterEval) status(s status, pass int) tri {
 }
 
 // cond is the status of the condition s, with its rows where a failed source
-// leaves it unknown.
+// leaves it unknown and its rows where it is unknown for another reason.
 func (e *filterEval) cond(s status, pass int) tri {
 	c := e.status(s, pass)
-	if c.v != -1 || s.leaves == nil {
+	if c.v != -1 {
 		return c
 	}
-	r := e.rows(s, pass)
-	if r.u.kind == "false" {
+	if s.leaves == nil || s.leaves[0][0].whole {
+		// no leaf of the condition is read row by row
+		if s.leaves != nil && e.holds(s, s.leaves[0][0].key+"e", pass) {
+			c.v, c.veto = 0, &rowsTrue
+			return c
+		}
+		if !s.resource {
+			c.unknown = &rowsTrue
+		}
 		return c
 	}
+	r, opaque := e.rows(s, pass)
 	switch r.t.kind {
 	case "true":
 		c.v = 1
 	case "false":
 		c.v = 0
 	}
-	c.veto = &r.u
+	if r.e.kind != "false" {
+		c.veto = &r.e
+	}
+	if u := fAnd(r.u, fNot(r.e)); opaque && u.kind != "false" {
+		c.unknown = &u
+	}
 	return c
+}
+
+// holds reports whether key of status s is in the set t of the module.
+func (e *filterEval) holds(s status, key string, pass int) bool {
+	if s.pass {
+		return e.st.tp[passKey{key, pass}]
+	}
+	return e.st.t[key]
 }
 
 // rows is the condition s on the rows by Kleene's logic: a leaf over the
 // resource is true on the rows it matches, a leaf a failed source leaves
-// unknown is unknown on every row, and any other leaf that is not true is
-// false.
-func (e *filterEval) rows(s status, pass int) rowsVal {
-	holds := func(key string) bool {
+// unknown is failed on every row, and any other leaf has its status on every
+// row: true, false, or unknown. opaque reports a leaf of the last kind, which
+// the check reads as unknown on any resource of the row.
+func (e *filterEval) rows(s status, pass int) (acc rowsVal, opaque bool) {
+	isF := func(key string) bool {
 		if s.pass {
-			return e.st.tp[passKey{key, pass}]
+			return e.st.fp[passKey{key, pass}]
 		}
-		return e.st.t[key]
+		return e.st.f[key]
 	}
-	var acc rowsVal
 	for i, grp := range s.leaves {
 		var g rowsVal
 		for j, l := range grp {
-			v := rowsVal{t: rowsFalse, u: rowsFalse}
+			v := rowsVal{t: rowsFalse, u: rowsFalse, e: rowsFalse}
 			switch {
-			case l.fails && holds(l.key+"e"):
-				v.u = rowsTrue
+			case l.fails && e.holds(s, l.key+"e", pass):
+				v.u, v.e = rowsTrue, rowsTrue
 			case l.row != nil:
 				v.t = rowsF{kind: "atom", atom: l.row}
-			case holds(l.key):
+			case e.holds(s, l.key, pass):
 				v.t = rowsTrue
+			case l.three && !isF(l.key):
+				v.u, opaque = rowsTrue, true
 			}
 			if j == 0 {
 				g = v
@@ -221,7 +252,7 @@ func (e *filterEval) rows(s status, pass int) rowsVal {
 			acc = kleeneOr(acc, g)
 		}
 	}
-	return acc
+	return acc, opaque
 }
 
 // veto denies the rows u, where a failed source leaves a condition unknown.
@@ -239,12 +270,15 @@ func (e *filterEval) within(s status, pass int) rowsF {
 	if s.leaves == nil || s.leaves[0][0].whole {
 		return rowsTrue
 	}
-	r := e.rows(s, pass)
+	r, _ := e.rows(s, pass)
 	return fOr(r.t, r.u)
 }
 
 // top returns A of the root.
 func (e *filterEval) top(plan *filterPlan) (rows, error) {
+	for _, n := range plan.tops {
+		e.collectVetoes(n, -1)
+	}
 	var as []rows
 	for _, n := range plan.tops {
 		var p pair
@@ -285,6 +319,65 @@ func andOrOne(xs []*fexpr) *fexpr {
 	return &fexpr{kind: "and", parts: xs}
 }
 
+// collectVetoes registers the veto of every condition at or below n that
+// applies in pass (-1 outside an iterate): under targets that are not false,
+// in an iterate whose permission scope was read, and in a simplified policy
+// whose resource type, operation, and roles match. Each veto keeps to the
+// rows where the targets above it may hold.
+func (e *filterEval) collectVetoes(n *fnode, pass int) {
+	switch n.kind {
+	case kindSimplified:
+		for _, s := range n.simp {
+			if e.status(s.match, -1).v != 1 {
+				continue
+			}
+			if c := e.cond(s.cond, -1); c.veto != nil {
+				e.veto(*c.veto)
+			}
+		}
+		return
+	case kindRule:
+		if !n.vetoes {
+			return
+		}
+		t := e.status(n.tgt, pass)
+		if t.v == 0 {
+			return
+		}
+		if c := e.cond(n.cond, pass); c.veto != nil {
+			u := *c.veto
+			if t.v == -1 {
+				u = fAnd(u, e.within(n.tgt, pass))
+			}
+			e.veto(u)
+		}
+		return
+	}
+	if !n.vetoes {
+		return
+	}
+	t := e.status(n.tgt, pass)
+	if t.v == 0 {
+		return
+	}
+	path := e.path
+	if t.v == -1 && n.tgt.leaves != nil {
+		e.path = fAnd(path, e.within(n.tgt, pass))
+	}
+	if n.kind == kindIterate {
+		if sc := e.req.Scope; sc != nil && !sc.Failed {
+			for i := range sc.Passes {
+				e.collectVetoes(n.kids[0], i)
+			}
+		}
+	} else {
+		for _, k := range n.kids {
+			e.collectVetoes(k, pass)
+		}
+	}
+	e.path = path
+}
+
 // simplified evaluates the policies of one operation of a simplified group.
 func (e *filterEval) simplified(n *fnode) (pair, error) {
 	var terms []*fexpr
@@ -293,8 +386,10 @@ func (e *filterEval) simplified(n *fnode) (pair, error) {
 			continue
 		}
 		c := e.cond(s.cond, -1)
-		if c.veto != nil {
-			e.veto(*c.veto)
+		if c.unknown != nil {
+			// the filter cannot write the rows apart from those where the
+			// condition is unknown, so the policy allows no row
+			continue
 		}
 		if hasPredicate(s.preds) {
 			if c.v == 0 {
@@ -322,21 +417,15 @@ func (e *filterEval) simplified(n *fnode) (pair, error) {
 // pass evaluates.
 //
 // A node whose target is unknown, over a failed source or over the resource,
-// is evaluated as if its target held, with its vetoes kept to the rows where
-// its target may hold. Where its predicates deny some row, it denies rows the
-// filter cannot name; otherwise it does not apply. On each row, the check
-// gives such a node either its answer or not applicable.
+// is evaluated as if its target held. Where its predicates deny some row, it
+// denies rows the filter cannot name; otherwise it does not apply. On each
+// row, the check gives such a node either its answer or not applicable.
 func (e *filterEval) node(n *fnode, pass int, prefix string) (pair, error) {
 	t := e.status(n.tgt, pass)
 	if t.v == 0 {
 		return pair{}, nil
 	}
-	path := e.path
-	if t.v == -1 && n.tgt.leaves != nil {
-		e.path = fAnd(path, e.within(n.tgt, pass))
-	}
 	p, err := e.body(n, pass, prefix)
-	e.path = path
 	if t.v == 1 {
 		return p, err
 	}
@@ -417,13 +506,12 @@ func (e *filterEval) policy(n *fnode, pass int, prefix string) (pair, error) {
 			// the filter cannot name the rows where the target holds, so an
 			// ALLOW rule allows none, and a DENY rule whose condition is not
 			// false denies by its predicate, which may deny rows the check
-			// allows, or denies rows the filter cannot name; a rule of any
-			// effect vetoes the rows where its condition fails and its target
-			// may hold
-			if c.veto != nil {
-				e.veto(fAnd(*c.veto, e.within(r.tgt, pass)))
+			// allows, or denies rows the filter cannot name
+			if r.effect != "DENY" || c.v == 0 && c.unknown == nil {
+				continue
 			}
-			if r.effect != "DENY" || c.v == 0 {
+			if c.unknown != nil {
+				denyUnknown = true
 				continue
 			}
 			if !hasPredicate(r.preds) {
@@ -437,10 +525,20 @@ func (e *filterEval) policy(n *fnode, pass int, prefix string) (pair, error) {
 			deny = append(deny, term)
 			continue
 		}
-		if c.veto != nil {
-			e.veto(*c.veto)
-		}
 		if r.effect != "ALLOW" && r.effect != "DENY" {
+			continue
+		}
+		if c.unknown != nil {
+			// the filter cannot write the rows apart from those where the
+			// condition is unknown whatever the resource: an ALLOW rule allows
+			// no row, and a DENY rule denies every row where it may hold
+			switch {
+			case r.effect == "ALLOW":
+			case c.unknown.kind == "true":
+				denyAll = true
+			default:
+				denyUnknown = true
+			}
 			continue
 		}
 		if hasPredicate(r.preds) {

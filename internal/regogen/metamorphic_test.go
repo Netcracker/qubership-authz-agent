@@ -37,20 +37,7 @@ import (
 // unlisted one fails it. A generated tree is named by its index under the
 // default seed, so a change to the generator renumbers them, and its entries
 // are found again by a run with this map empty.
-var metamorphicKnown = map[string]string{
-	"named/an unconditional simplified policy before one over a PIP/reverse":                           f76,
-	"named/an unconditional simplified policy before one over a PIP/shuffle policies":                  f76,
-	"named/an unconditional simplified policy before one over a PIP and the resource/reverse":          f76,
-	"named/an unconditional simplified policy before one over a PIP and the resource/shuffle policies": f76,
-	"generated/53/reverse":          f76,
-	"generated/60/reverse":          f76,
-	"generated/60/shuffle policies": f76,
-	"generated/60/shuffle rules":    f76,
-}
-
-const f76 = "F76: a simplified policy that allows every row ends the walk of check/filter, so the veto of a " +
-	"later simplified policy of the same operation over a failed source is lost, and the filter answer " +
-	"depends on the order of the policies"
+var metamorphicKnown = map[string]string{}
 
 // metamorphicSubjects are the subjects every tree is asked about: g holds x,
 // holds y, failed, or is null; h holds x or failed; the roles are x, which
