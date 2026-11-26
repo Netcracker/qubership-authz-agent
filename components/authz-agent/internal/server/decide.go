@@ -41,7 +41,7 @@ const tenantHeader = "Tenant"
 // Without a registry, and for a request of the default tenant while its name
 // is not translated, every item is denied as in a tenant without policies.
 func (s *Server) decide(c *fiber.Ctx, resources []legacy.Resource, shape func(result any) []byte) error {
-	input, admission, untranslated, answered := s.admit(c, resources)
+	input, admission, untranslated, answered := s.admit(c)
 	if answered != nil {
 		return answered()
 	}
@@ -81,7 +81,7 @@ func (s *Server) decide(c *fiber.Ctx, resources []legacy.Resource, shape func(re
 // and a request of the default tenant while its name is not translated get
 // DENY.
 func (s *Server) filter(c *fiber.Ctx, r legacy.Resource) error {
-	input, admission, untranslated, answered := s.admit(c, []legacy.Resource{r})
+	input, admission, untranslated, answered := s.admit(c)
 	if answered != nil {
 		return answered()
 	}
@@ -111,17 +111,17 @@ func (s *Server) filter(c *fiber.Ctx, r legacy.Resource) error {
 	return sendJSON(c, http.StatusOK, body)
 }
 
-// admit builds the input of the embedded policies for resources, with the
-// tenant of the request, and evaluates their checks of the caller and the
+// admit builds the input of the embedded policies, with the tenant of the
+// request, and evaluates their checks of the caller and the
 // subject's token. untranslated reports what [Server.tenant] reports.
 // answered is non-nil when the request is answered already: a refused
 // admission token, with its authError; a caller outside its tenant
 // ([callerMayReach]), with 403 and an empty body; or a failed evaluation,
 // with 500.
-func (s *Server) admit(c *fiber.Ctx, resources []legacy.Resource) (input, admission map[string]any,
+func (s *Server) admit(c *fiber.Ctx) (input, admission map[string]any,
 	untranslated bool, answered func() error) {
 	ctx := c.UserContext()
-	input = legacy.Input(c.GetReqHeaders(), resources)
+	input = legacy.Input(c.GetReqHeaders())
 	admission, err := s.admission(ctx, input)
 	if err != nil {
 		s.opts.Log.ErrorC(ctx, "admission failed: %v", err)
@@ -257,7 +257,7 @@ func snapshotRequest(tenant string, input map[string]any, payload any, headers m
 	req := snapshot.Request{Tenant: tenant, Headers: legacy.RequestHeaders(headers), Anonymous: input["subject"] == "",
 		Claims: claims, IncomingToken: legacy.IncomingToken(headers)}
 	for _, r := range resources {
-		b, err := body(r.Raw)
+		b, err := body(r)
 		if err != nil {
 			return req, err
 		}
@@ -301,21 +301,16 @@ func claimsOf(payload any) (*jsonvalue.Object, error) {
 }
 
 // body is the projection's view of one resource; a field the request left
-// out is null, and a resource it left out is absent.
-func body(raw legacy.RawResource) (regogen.Body, error) {
-	var b regogen.Body
+// out is null, and a resource it left out is absent. The resource is the one
+// r carries, which the operations of a bulk/operations item share.
+func body(r legacy.Resource) (regogen.Body, error) {
+	b := regogen.Body{Resource: r.Resource, HasResource: len(r.Raw.Resource) > 0}
 	var err error
-	if b.ResourceType, err = decode(raw.Type); err != nil {
+	if b.ResourceType, err = decode(r.Raw.Type); err != nil {
 		return b, err
 	}
-	if b.Operation, err = decode(raw.Operation); err != nil {
+	if b.Operation, err = decode(r.Raw.Operation); err != nil {
 		return b, err
-	}
-	if len(raw.Resource) > 0 {
-		b.HasResource = true
-		if b.Resource, err = decode(raw.Resource); err != nil {
-			return b, err
-		}
 	}
 	return b, nil
 }

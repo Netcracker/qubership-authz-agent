@@ -63,10 +63,12 @@ func pathText(r *Ref) string {
 }
 
 // jsonPathFunction is the implementation of nc.resource_path. It returns the
-// record the projection built for a path that reads an index, and keeps any
-// other record in the query's built-in cache by the identity of the document, the
-// path, and the fields read. OPA's Memoize would key the cache by the text of
-// the arguments, which prints the whole resource on every call.
+// record the projection built for a path that reads an index. For an item of
+// a bulk request it keeps any other record in the item's resourceView, which
+// the items that share the resource share; elsewhere it keeps it in the
+// query's built-in cache by the identity of the document, the path, and the
+// fields read. OPA's Memoize would key the cache by the text of the
+// arguments, which prints the whole resource on every call.
 func jsonPathFunction() func(*rego.Rego) {
 	return rego.Function3(&rego.Function{Name: JSONPathDecl.Name, Decl: JSONPathDecl.Decl},
 		func(bctx rego.BuiltinContext, doc, path, read *ast.Term) (*ast.Term, error) {
@@ -87,6 +89,11 @@ func jsonPathFunction() func(*rego.Rego) {
 			if in, ok := bctx.Context.Value(inputKey{}).(*Input); ok {
 				if r, ok := in.paths[pathKey{string(p), fieldSet(fs)}]; ok {
 					return r, nil
+				}
+				// the items of a bulk request that share the resource share
+				// its records too
+				if v := in.view; v != nil && doc.Value == v.memberTerm().Value {
+					return v.path(string(p), fieldSet(fs))
 				}
 			}
 			// a key holds an object or a list, whose identity is a pointer;

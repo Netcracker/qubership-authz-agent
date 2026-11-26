@@ -303,6 +303,36 @@ func denyWhere(condition string) string {
 		condition)
 }
 
+// Items that share one decoded resource are each decided on it while
+// several workers evaluate them, and an item among them with a resource of
+// its own is decided on that one.
+func TestItemsThatShareAResourceAreDecidedOnIt(t *testing.T) {
+	r := New(Config{BulkWorkers: 4}, tab(t), quiet{})
+	load(t, r, ``, set("a", "resource..secret IS NOT NULL"))
+	for _, tc := range []struct{ name, shared, own string }{
+		{"an object", `{"c": {"secret": 1}}`, `{"c": {}}`},
+		{"a list", `[{"secret": 1}]`, `[{}]`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := readDoc(t, "a", "x", 9)
+			shared := mustObject(t, tc.shared)
+			for i := range req.Items {
+				req.Items[i].Resource = shared
+			}
+			req.Items[4].Resource = mustObject(t, tc.own)
+			got := decide(t, r, req)
+			for i := range got {
+				if i != 4 && got[i] != (Result{Allowed: true}) {
+					t.Errorf("Decide item %d of resource %s = %+v, want allowed", i, tc.shared, got[i])
+				}
+			}
+			if got[4] != (Result{Reason: ReasonDenied}) {
+				t.Errorf("Decide item 4 of resource %s = %+v, want %+v", tc.own, got[4], Result{Reason: ReasonDenied})
+			}
+		})
+	}
+}
+
 // A deep scan the jsonpath package stops as too large leaves a DENY rule
 // over it unknown, so the item is denied as on a failed source. Such a
 // selection used to fall on neither rail of a two-valued leaf, and the DENY

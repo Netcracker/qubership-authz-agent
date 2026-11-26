@@ -19,7 +19,7 @@
 // container did before the service took the routes over.
 //
 // The Check functions parse a request and return its resources; [Input]
-// wraps them with the tokens and headers into the policy input; the
+// reads the tokens and headers into the input of the admission policies; the
 // Response functions shape the decision. A request the legacy API refuses
 // before any policy runs comes back as a *RequestError.
 package legacy
@@ -30,6 +30,8 @@ import (
 	"strings"
 
 	"github.com/open-policy-agent/opa/v1/util"
+
+	"authz-agent/internal/jsonvalue"
 )
 
 // RequestError is a request the legacy API refuses before any policy runs.
@@ -49,15 +51,20 @@ func errMissing(parameter string) *RequestError {
 	return &RequestError{Message: "Missing required parameter: " + parameter}
 }
 
-// Resource is one entry of input.resources. The values are kept as the
-// caller sent them, so a resource type that is a number or a boolean reaches
-// the policy unchanged, and so does such an operation on check/resource and
-// check/resource/bulk. The bulk/operations routes give the policy the text
-// of each operation.
+// Resource is one item a request asks about, or one operation of a
+// bulk/operations item. The type and operation are
+// kept as the caller sent them, so a resource type that is a number or a
+// boolean reaches the policy unchanged, and so does such an operation on
+// check/resource and check/resource/bulk. The bulk/operations routes give the
+// policy the text of each operation.
 type Resource struct {
 	ResourceType any
 	Operation    any
-	Resource     any
+	// Resource is the resource decoded once per item of the request: the
+	// Resources of the operations of one bulk/operations item share it, so
+	// it must not be modified. It is nil where the request left the resource
+	// out or sent null.
+	Resource jsonvalue.Value
 	// Raw holds the same three fields as the request wrote them, member
 	// order and number text included, for the generated policies; a field
 	// the request left out is empty.
@@ -110,11 +117,11 @@ type v2Entry struct {
 }
 
 // CheckResource parses the body of the check/resource routes: an object
-// with type and operation, and an optional resource that defaults to an
-// empty object. A body that is empty, or JSON that is neither an object
-// nor null, is refused as "bad request"; a missing, null, or empty type or
-// operation names the parameter, so a null body is missing its type. Only
-// the top-level fields count: a type inside the resource is not the type.
+// with type and operation, and an optional resource. A body that is
+// empty, or JSON that is neither an object nor null, is refused as "bad
+// request"; a missing, null, or empty type or operation names the
+// parameter, so a null body is missing its type. Only the top-level fields
+// count: a type inside the resource is not the type.
 func CheckResource(body []byte) ([]Resource, *RequestError) {
 	if len(bytes.TrimSpace(body)) == 0 {
 		return nil, errBadRequest
@@ -250,7 +257,7 @@ func CheckFilter(resourceType, operation string) ([]Resource, *RequestError) {
 	if strings.TrimSpace(resourceType) == "" {
 		return nil, errBadRequest
 	}
-	return []Resource{{ResourceType: resourceType, Operation: operation, Resource: map[string]any{}}}, nil
+	return []Resource{{ResourceType: resourceType, Operation: operation}}, nil
 }
 
 // resource validates the item and converts it.
@@ -264,28 +271,41 @@ func (it checkItem) resource() (Resource, *RequestError) {
 	return newResource(it.Type, it.Operation, it.Resource)
 }
 
-// newResource converts the raw fields; a missing resource is an empty
-// object. A type or operation that is a list or an object is a bad
-// request: the policies compare both as text, and a structure has no text
-// a caller could mean.
+// newResource converts the raw fields. A type or operation that is a list
+// or an object is a bad request: the policies compare both as text, and a
+// structure has no text a caller could mean.
 func newResource(typ, op, res json.RawMessage) (Resource, *RequestError) {
-	t, err := value(typ, "")
+	t, err := scalar(typ)
 	if err != nil {
 		return Resource{}, err
 	}
-	o, err := value(op, "")
+	o, err := scalar(op)
 	if err != nil {
 		return Resource{}, err
 	}
-	if structure(t) || structure(o) {
-		return Resource{}, errBadRequest
+	r := Resource{ResourceType: t, Operation: o, Raw: RawResource{Type: typ, Operation: op, Resource: res}}
+	if len(res) > 0 {
+		v, err := jsonvalue.Decode(res)
+		if err != nil {
+			return Resource{}, errBadRequest
+		}
+		r.Resource = v
 	}
-	r, err := value(res, map[string]any{})
-	if err != nil {
-		return Resource{}, err
+	return r, nil
+}
+
+// scalar decodes a type or an operation into the Go value the engine takes,
+// with numbers as json.Number and "" where the field is absent, and refuses
+// a list or an object.
+func scalar(raw json.RawMessage) (any, *RequestError) {
+	if len(raw) == 0 {
+		return "", nil
 	}
-	return Resource{ResourceType: t, Operation: o, Resource: r,
-		Raw: RawResource{Type: typ, Operation: op, Resource: res}}, nil
+	var v any
+	if err := util.UnmarshalJSON(raw, &v); err != nil || structure(v) {
+		return nil, errBadRequest
+	}
+	return v, nil
 }
 
 // structure reports whether v is a list or an object.
@@ -300,17 +320,27 @@ func structure(v any) bool {
 // expand appends one Resource and Entry per operation of a bulk/operations
 // item, skipping operations that are null. An empty operation is decided like
 // any other, so the answer lists it, with the ids it allows. An operation
-// that is a list or an object is a bad request, as in [newResource].
+// that is a list or an object is a bad request, as in [newResource]. The type
+// and the resource are decoded once, at the first operation that is not
+// null, and the Resources of the item share them.
 func expand(resources []Resource, entries []Entry, typ json.RawMessage, ops []json.RawMessage, res json.RawMessage, id string) ([]Resource, []Entry, *RequestError) {
+	var item *Resource
 	for _, op := range ops {
 		if s := string(bytes.TrimSpace(op)); s == "" || s == "null" {
 			continue
 		}
-		name := text(op)
-		r, err := newResource(typ, op, res)
-		if err != nil {
+		if _, err := scalar(op); err != nil {
 			return nil, nil, err
 		}
+		if item == nil {
+			r, err := newResource(typ, nil, res)
+			if err != nil {
+				return nil, nil, err
+			}
+			item = &r
+		}
+		r := *item
+		name := text(op)
 		r.Operation = name
 		r.Raw.Operation = op
 		resources = append(resources, r)
@@ -354,19 +384,6 @@ func present(raw json.RawMessage) bool {
 		return false
 	}
 	return true
-}
-
-// value decodes a field into the Go value the engine takes, with numbers
-// as json.Number, and returns fallback when the field is absent.
-func value(raw json.RawMessage, fallback any) (any, *RequestError) {
-	if len(raw) == 0 {
-		return fallback, nil
-	}
-	var v any
-	if err := util.UnmarshalJSON(raw, &v); err != nil {
-		return nil, errBadRequest
-	}
-	return v, nil
 }
 
 // text is a scalar field as the response names it: a JSON string decoded,
@@ -443,14 +460,16 @@ func IncomingToken(headers map[string][]string) string {
 	return ""
 }
 
-// Input builds the canonical authorize input of a legacy request from its
-// headers and resources. The admission token is the Authorization header.
+// Input builds the input of the admission policies of a legacy request from
+// its headers. The input carries no resource: the policies decide on the
+// tokens alone, and a decoded resource would cost its size again. The
+// admission token is the Authorization header.
 // The subject is Incoming-Token when present, else Authorization, and empty
 // when Authorization-Type is anonymous. input.requestHeaders carries the
 // remaining headers under their lowercase names for the HEADER PIPs, and
 // input.requestId the X-Request-Id. A repeated header contributes its last
 // value.
-func Input(headers map[string][]string, resources []Resource) map[string]any {
+func Input(headers map[string][]string) map[string]any {
 	get := func(name string) string {
 		for k, values := range headers {
 			if strings.EqualFold(k, name) && len(values) > 0 {
@@ -471,17 +490,12 @@ func Input(headers map[string][]string, resources []Resource) map[string]any {
 	for name, v := range RequestHeaders(headers) {
 		requestHeaders[name] = v
 	}
-	list := make([]any, len(resources))
-	for i, r := range resources {
-		list[i] = map[string]any{"resourceType": r.ResourceType, "operation": r.Operation, "resource": r.Resource}
-	}
 	return map[string]any{
 		"authorizationToken": admission,
 		"subject":            subject,
 		"authorizationType":  authType,
 		"requestHeaders":     requestHeaders,
 		"requestId":          get("x-request-id"),
-		"resources":          list,
 	}
 }
 

@@ -173,6 +173,9 @@ type Input struct {
 	// whose index the module reads, which [Input.checkPaths] built and
 	// nc.resource_path returns.
 	paths map[pathKey]*ast.Term
+	// view is what the input of a bulk item shares with the other items that
+	// carry its resource ([Bulk.Item]); nil elsewhere.
+	view *resourceView
 	// calls holds the q of each GENERAL or FILTERED PIP by reference ID,
 	// the member pip_requests of the input; nil for a module without one.
 	// pipValues holds the values [Request.Values] gave those PIPs, by

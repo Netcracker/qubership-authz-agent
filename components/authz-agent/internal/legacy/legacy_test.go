@@ -19,7 +19,18 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+
+	"authz-agent/internal/jsonvalue"
 )
+
+// doc is the JSON text s decoded; it panics on text that is not JSON.
+func doc(s string) jsonvalue.Value {
+	v, err := jsonvalue.Decode([]byte(s))
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
 
 // message is the error's message, or "" for a nil error.
 func message(err *RequestError) string {
@@ -30,7 +41,6 @@ func message(err *RequestError) string {
 }
 
 func TestCheckResource(t *testing.T) {
-	empty := map[string]any{}
 	cases := []struct {
 		name string
 		body string
@@ -38,19 +48,19 @@ func TestCheckResource(t *testing.T) {
 		err  string
 	}{
 		{"type, operation, and resource as sent", `{"type":"ORDER","operation":"READ","resource":{"id":1}}`,
-			[]Resource{{ResourceType: "ORDER", Operation: "READ", Resource: map[string]any{"id": json.Number("1")}}}, ""},
-		{"resource defaults to an empty object", `{"type":"ORDER","operation":"READ"}`,
-			[]Resource{{ResourceType: "ORDER", Operation: "READ", Resource: empty}}, ""},
+			[]Resource{{ResourceType: "ORDER", Operation: "READ", Resource: doc(`{"id":1}`)}}, ""},
+		{"an absent resource is nil", `{"type":"ORDER","operation":"READ"}`,
+			[]Resource{{ResourceType: "ORDER", Operation: "READ"}}, ""},
 		{"a null resource stays null", `{"type":"ORDER","operation":"READ","resource":null}`,
 			[]Resource{{ResourceType: "ORDER", Operation: "READ", Resource: nil}}, ""},
 		{"a type that is not a string reaches the policy unchanged", `{"type":5,"operation":"READ"}`,
-			[]Resource{{ResourceType: json.Number("5"), Operation: "READ", Resource: empty}}, ""},
+			[]Resource{{ResourceType: json.Number("5"), Operation: "READ"}}, ""},
 		{"a type that is a list is a bad request", `{"type":["ORDER"],"operation":"READ"}`, nil, "bad request"},
 		{"a type that is an object is a bad request", `{"type":{"a":1},"operation":"READ"}`, nil, "bad request"},
 		{"an operation that is a list is a bad request", `{"type":"ORDER","operation":["DELETE"]}`, nil, "bad request"},
 		{"an operation that is an object is a bad request", `{"type":"ORDER","operation":{"a":1}}`, nil, "bad request"},
 		{"an operation that is a number reaches the policy unchanged", `{"type":"ORDER","operation":5}`,
-			[]Resource{{ResourceType: "ORDER", Operation: json.Number("5"), Resource: empty}}, ""},
+			[]Resource{{ResourceType: "ORDER", Operation: json.Number("5")}}, ""},
 		{"an empty body is a bad request", ``, nil, "bad request"},
 		{"a blank body is a bad request", " \n\t", nil, "bad request"},
 		{"an array body is a bad request", `[{"type":"ORDER","operation":"READ"}]`, nil, "bad request"},
@@ -65,7 +75,7 @@ func TestCheckResource(t *testing.T) {
 		{"a type inside the resource is not the type", `{"resource":{"type":"X"},"operation":"READ"}`, nil, "Missing required parameter: type"},
 		{"an empty operation is missing", `{"type":"ORDER","operation":""}`, nil, "Missing required parameter: operation"},
 		{"a blank type is present", `{"type":" ","operation":"READ"}`,
-			[]Resource{{ResourceType: " ", Operation: "READ", Resource: empty}}, ""},
+			[]Resource{{ResourceType: " ", Operation: "READ"}}, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -135,12 +145,12 @@ func TestCheckResourceBulkOperations_ExpandsOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CheckResourceBulkOperations(%s) error = %q", body, err.Message)
 	}
-	kv := map[string]any{"k": "v"}
+	kv := doc(`{"k":"v"}`)
 	wantResources := []Resource{
 		{ResourceType: "ORDER", Operation: "READ", Resource: kv},
 		{ResourceType: "ORDER", Operation: "5", Resource: kv},
 		{ResourceType: "ORDER", Operation: "", Resource: kv},
-		{ResourceType: "DOC", Operation: "WRITE", Resource: map[string]any{}},
+		{ResourceType: "DOC", Operation: "WRITE"},
 	}
 	if got := decoded(resources); !reflect.DeepEqual(got, wantResources) {
 		t.Errorf("resources = %#v, want %#v", got, wantResources)
@@ -195,11 +205,10 @@ func TestCheckResourceBulkOperationsV2_SharesTheType(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CheckResourceBulkOperationsV2(%s) error = %q", body, err.Message)
 	}
-	empty := map[string]any{}
 	wantResources := []Resource{
-		{ResourceType: "ORDER", Operation: "READ", Resource: empty},
-		{ResourceType: "ORDER", Operation: "WRITE", Resource: empty},
-		{ResourceType: "ORDER", Operation: "READ", Resource: map[string]any{"o": json.Number("1")}},
+		{ResourceType: "ORDER", Operation: "READ"},
+		{ResourceType: "ORDER", Operation: "WRITE"},
+		{ResourceType: "ORDER", Operation: "READ", Resource: doc(`{"o":1}`)},
 	}
 	if got := decoded(resources); !reflect.DeepEqual(got, wantResources) {
 		t.Errorf("resources = %#v, want %#v", got, wantResources)
@@ -255,8 +264,8 @@ func TestCheckFilter(t *testing.T) {
 		want                    []Resource
 		err                     string
 	}{
-		{"an absent operation stays empty", "ORDER", "", []Resource{{ResourceType: "ORDER", Operation: "", Resource: map[string]any{}}}, ""},
-		{"values keep their spaces", " ORDER ", " READ", []Resource{{ResourceType: " ORDER ", Operation: " READ", Resource: map[string]any{}}}, ""},
+		{"an absent operation stays empty", "ORDER", "", []Resource{{ResourceType: "ORDER", Operation: ""}}, ""},
+		{"values keep their spaces", " ORDER ", " READ", []Resource{{ResourceType: " ORDER ", Operation: " READ"}}, ""},
 		{"a blank resource type is a bad request", " ", "READ", nil, "bad request"},
 		{"an absent resource type is a bad request", "", "", nil, "bad request"},
 	}
@@ -274,8 +283,6 @@ func TestCheckFilter(t *testing.T) {
 }
 
 func TestInput(t *testing.T) {
-	resources := []Resource{{ResourceType: "ORDER", Operation: "READ", Resource: map[string]any{}}}
-	wantResources := []any{map[string]any{"resourceType": "ORDER", "operation": "READ", "resource": map[string]any{}}}
 	cases := []struct {
 		name    string
 		headers map[string][]string
@@ -290,42 +297,41 @@ func TestInput(t *testing.T) {
 				"authorizationToken": "Bearer m2m", "subject": "Bearer user", "authorizationType": "",
 				"requestHeaders": map[string]any{"authorization-type": "", "x-tenant": "acme", "host": "agent",
 					"content-type": "application/json"}, "requestId": "r1",
-				"resources": wantResources,
 			}},
 		{"the subject falls back to the admission token",
 			map[string][]string{"Authorization": {"Bearer m2m"}},
 			map[string]any{
 				"authorizationToken": "Bearer m2m", "subject": "Bearer m2m", "authorizationType": "",
-				"requestHeaders": map[string]any{}, "requestId": "", "resources": wantResources,
+				"requestHeaders": map[string]any{}, "requestId": "",
 			}},
 		{"an authorization type other than anonymous keeps the subject",
 			map[string][]string{"Authorization": {"Bearer m2m"}, "Incoming-Token": {"Bearer user"}, "Authorization-Type": {"Basic"}},
 			map[string]any{
 				"authorizationToken": "Bearer m2m", "subject": "Bearer user", "authorizationType": "Basic",
-				"requestHeaders": map[string]any{"authorization-type": "Basic"}, "requestId": "", "resources": wantResources,
+				"requestHeaders": map[string]any{"authorization-type": "Basic"}, "requestId": "",
 			}},
 		{"an anonymous caller has no subject and keeps the admission token",
 			map[string][]string{"Authorization": {"Bearer m2m"}, "Incoming-Token": {"Bearer user"}, "Authorization-Type": {" Anonymous "}},
 			map[string]any{
 				"authorizationToken": "Bearer m2m", "subject": "", "authorizationType": " Anonymous ",
-				"requestHeaders": map[string]any{"authorization-type": " Anonymous "}, "requestId": "", "resources": wantResources,
+				"requestHeaders": map[string]any{"authorization-type": " Anonymous "}, "requestId": "",
 			}},
 		{"a repeated header contributes its last value",
 			map[string][]string{"Authorization": {"Bearer first", "Bearer last"}, "X-Tenant": {"a", "b"}},
 			map[string]any{
 				"authorizationToken": "Bearer last", "subject": "Bearer last", "authorizationType": "",
-				"requestHeaders": map[string]any{"x-tenant": "b"}, "requestId": "", "resources": wantResources,
+				"requestHeaders": map[string]any{"x-tenant": "b"}, "requestId": "",
 			}},
 		{"no headers at all",
 			nil,
 			map[string]any{
 				"authorizationToken": "", "subject": "", "authorizationType": "",
-				"requestHeaders": map[string]any{}, "requestId": "", "resources": wantResources,
+				"requestHeaders": map[string]any{}, "requestId": "",
 			}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := Input(tc.headers, resources); !reflect.DeepEqual(got, tc.want) {
+			if got := Input(tc.headers); !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("Input(%v) = %#v, want %#v", tc.headers, got, tc.want)
 			}
 		})

@@ -15,8 +15,11 @@
 package regogen
 
 import (
+	"sync"
+
 	"github.com/open-policy-agent/opa/v1/ast"
 
+	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/regobuiltins"
 	"authz-agent/internal/regogen/spectables"
 )
@@ -38,6 +41,127 @@ type Bulk struct {
 	// its GENERAL and FILTERED PIPs read with each item's body.
 	m   *Module
 	req Request
+	// views holds the [resourceView] of each resource an item has carried,
+	// by [identity]; mu guards it.
+	mu    sync.Mutex
+	views map[any]*resourceView
+}
+
+// resourceView is what the items of a bulk request derive from one decoded
+// resource: the records of the resource operands, the term of the member
+// resource, and the records of the lazily read paths. The items whose bodies
+// carry the same decoded value share one view, so what it holds is derived
+// once per request, not once per item. The requests of GENERAL and FILTERED
+// PIPs are not in it: [Bulk.Item] builds them per item.
+type resourceView struct {
+	resource jsonvalue.Value
+	// records holds the record of each resource operand of [Bulk.items] by
+	// reference ID; err is the first error a record or a path of an index
+	// gave, which fails every item that carries the resource.
+	records map[string]Record
+	err     error
+	// term is the member resource, which [resourceView.memberTerm] builds in
+	// docs at the first item evaluated, on that item's worker.
+	termOnce sync.Once
+	term     *ast.Term
+	docs     *regobuiltins.Documents
+	// paths holds the record of each lazily read path, those of an index
+	// built with the view and the rest as nc.resource_path asks for them;
+	// pathsMu guards it, since the items are evaluated concurrently.
+	pathsMu sync.Mutex
+	paths   map[pathKey]*ast.Term
+}
+
+// listKey identifies a non-empty list by its first element and length.
+type listKey struct {
+	first *jsonvalue.Value
+	n     int
+}
+
+// identity returns a key that two decoded values share only where they are
+// the same value in memory, and ok false for a scalar or an empty list,
+// whose records cost no more than the lookup.
+func identity(v jsonvalue.Value) (key any, ok bool) {
+	switch x := v.(type) {
+	case *jsonvalue.Object:
+		return x, true
+	case []jsonvalue.Value:
+		if len(x) > 0 {
+			return listKey{&x[0], len(x)}, true
+		}
+	}
+	return nil, false
+}
+
+// view returns the view of res, built at its first item, or nil where res
+// has no [identity].
+func (b *Bulk) view(res jsonvalue.Value) *resourceView {
+	key, ok := identity(res)
+	if !ok {
+		return nil
+	}
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if v, ok := b.views[key]; ok {
+		return v
+	}
+	v := b.newView(res)
+	if b.views == nil {
+		b.views = map[any]*resourceView{}
+	}
+	b.views[key] = v
+	return v
+}
+
+func (b *Bulk) newView(res jsonvalue.Value) *resourceView {
+	v := &resourceView{resource: res, docs: regobuiltins.NewDocuments(), records: map[string]Record{}}
+	probe := &Input{resource: res, refs: b.in.refs}
+	if v.err = probe.checkPaths(); v.err != nil {
+		return v
+	}
+	v.paths = probe.paths
+	if v.paths == nil {
+		v.paths = map[pathKey]*ast.Term{}
+	}
+	body := Body{Resource: res, HasResource: true}
+	for _, r := range b.items {
+		if r.Kind == spectables.KindOperation || r.Kind == spectables.KindResourceType {
+			continue
+		}
+		rec, err := projectRecord(r, body.resolve(r))
+		if err != nil {
+			v.err = err
+			return v
+		}
+		v.records[r.ID] = rec
+	}
+	return v
+}
+
+// memberTerm returns the term of the view's resource. Every item reads its
+// docs only after this call, so no query reads them while they are built.
+func (v *resourceView) memberTerm() *ast.Term {
+	v.termOnce.Do(func() {
+		// a jsonvalue.Value always has a term
+		v.term, _ = v.docs.Term(v.resource)
+	})
+	return v.term
+}
+
+// path returns the record of the lazily read path p of the view's resource
+// as read reads it, built at its first call.
+func (v *resourceView) path(p string, read fieldSet) (*ast.Term, error) {
+	v.pathsMu.Lock()
+	defer v.pathsMu.Unlock()
+	k := pathKey{p, read}
+	if r, ok := v.paths[k]; ok {
+		return r, nil
+	}
+	r, err := jsonPathRecord(v.resource, p, read)
+	if err == nil {
+		v.paths[k] = r
+	}
+	return r, err
 }
 
 // itemOperand reports whether each item of a bulk request resolves r from
@@ -89,8 +213,10 @@ func NewBulk(m *Module, req Request) (*Bulk, error) {
 // body. The input shares the subject's part with every other item: its
 // Records hold the item's records only, and its Value reuses the shared
 // terms. The requests of its PIPs are the item's own, since a request may
-// read the resource. It fails where a value of the item other than the
-// answer of a source is too big to compare ([Record.TooBig]).
+// read the resource. The items whose bodies carry the same decoded resource
+// share what is derived from it ([resourceView]). It fails where a value of
+// the item other than the answer of a source is too big to compare
+// ([Record.TooBig]).
 func (b *Bulk) Item(body Body) (*Input, error) {
 	in := &Input{
 		Records:       make(map[string]Record, len(b.items)),
@@ -105,7 +231,12 @@ func (b *Bulk) Item(body Body) (*Input, error) {
 	}
 	if body.HasResource {
 		in.resource = body.Resource
-		if err := in.checkPaths(); err != nil {
+		if in.view = b.view(body.Resource); in.view != nil {
+			if in.view.err != nil {
+				return nil, in.view.err
+			}
+			in.docs = in.view.docs
+		} else if err := in.checkPaths(); err != nil {
 			return nil, err
 		}
 	}
@@ -117,6 +248,10 @@ func (b *Bulk) Item(body Body) (*Input, error) {
 		case spectables.KindResourceType:
 			v = Resolved{State: spectables.StateValue, Value: body.ResourceType}
 		default:
+			if in.view != nil {
+				in.Records[r.ID] = in.view.records[r.ID]
+				continue
+			}
 			v = body.resolve(r)
 		}
 		rec, err := projectRecord(r, v)
@@ -164,7 +299,10 @@ func (b *Bulk) value(in *Input) ast.Value {
 	}
 	if b.in.resourceMember() {
 		res := ast.NullTerm()
-		if in.resource != nil {
+		switch {
+		case in.view != nil:
+			res = in.view.memberTerm()
+		case in.resource != nil:
 			// a jsonvalue.Value always has a term
 			res, _ = in.docs.Term(in.resource)
 		}

@@ -246,7 +246,7 @@ func TestDecide_ARefusedSubjectTokenDeniesEveryItem(t *testing.T) {
 func TestDecide_ThePIPsGetNoTokenOfTheCaller(t *testing.T) {
 	headers := map[string][]string{"Authorization": {"Bearer m2m"}, "Incoming-Token": {"eyJ.user.jwt"},
 		"X-Corr": {"c0", "c1"}, "Host": {"agent"}}
-	input := legacy.Input(headers, nil)
+	input := legacy.Input(headers)
 	want := map[string]string{"x-corr": "c1", "host": "agent"}
 	req, err := snapshotRequest("a", input, nil, headers, nil)
 	if err != nil {
