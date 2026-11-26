@@ -67,6 +67,16 @@ var acceptedDivergences = map[string]AcceptedDivergence{
 		Reason:   "Same dict-alias resolution as row 2, on the v2 response shape.",
 		Decision: "docs/parity/general-pip-dict-divergences.md",
 	},
+	key(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, "isolated/q15-a-text-body-is-null/true-value"): {
+		Reason: "A PIP answer with status 200 and a body that is not empty and not JSON fails the PIP in the " +
+			"agent, so IS NULL over it is not true and the agent denies, where legacy reads the PIP as null and allows.",
+		Decision: "docs/parity/pip-and-filter-template-divergences.md",
+	},
+	key(PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, "regular/id44-template-0/filter"): {
+		Reason: "The agent fills the placeholders of a predicate template in one pass, so a PIP value that holds " +
+			"${subject.id} stays that text in the filter, where legacy substitutes it again with the subject id.",
+		Decision: "docs/parity/pip-and-filter-template-divergences.md",
+	},
 }
 
 // acceptedExportDivergences is keyed by the difference class the
