@@ -19,14 +19,15 @@ kichasov
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   the term stops the start, and ADR-0091 R64, the removal of `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
-  ADR-0092 R15, under which the agent starts whatever the value of `M2M_AUTH_MODE`.
+  ADR-0092 R15 as [#338](https://github.com/Netcracker/qubership-authz-agent/pull/338) narrows it: what `M2M_AUTH_MODE`
+  changes in the tokens the agent accepts and in whether the agent starts.
 - [authz-agent-ADR-0093: Take the tenant of a decision from the verified user token, then from the request](20261029-authz-agent-adr-0093-tenant-of-a-decision.md):
   ADR-0093 R11 and R14, the default tenant with and without tenant-manager.
-- [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
-  ADR-0096 R1, R3, and R20 as [#338](https://github.com/Netcracker/qubership-authz-agent/pull/338) rewrites them:
-  `AUTHZ_OUTGOING_TOKEN_SOURCE`, how the agent reads it, which R2 of this record follows for every value from a list,
-  and the inputs that the agent reads for each value, among them the token endpoint in `AUTHZ_OUTGOING_TOKEN_URL` that
-  `client-credentials` requires.
+- [authz-agent-ADR-0096: Choose the token the agent sends by M2M_AUTH_MODE](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
+  ADR-0096 R1, R2, R3, and R20 as [#338](https://github.com/Netcracker/qubership-authz-agent/pull/338) rewrites them:
+  `M2M_AUTH_MODE` and the token it chooses for the agent to send, how the agent reads it, which R2 of this record
+  follows for every value from a list, and the inputs that the agent reads for each value, among them the token endpoint
+  in `AUTHZ_OUTGOING_TOKEN_URL`.
 - [authz-agent-ADR-0101: Run the agent from its image in a container runtime without Kubernetes](https://github.com/Netcracker/qubership-authz-agent/pull/235),
   proposed in #235: the target where no chart renders the agent variables.
 
@@ -61,8 +62,9 @@ the chart and without it.
 ### Terms
 
 - **Agent variable**: an environment variable that code built into the agent binary from `components/authz-agent` or
-  `internal` reads by name, `LOGGING_LEVEL_ROOT` included, whatever the values of other agent variables:
-  `AUTHZ_OUTGOING_TOKEN_URL` is one also where `token-file` leaves it unread. A variable that only a test, the Go
+  `internal` reads by name, `LOGGING_LEVEL_ROOT` included, whatever the values of other agent variables and the files
+  present at start. `AUTHZ_OUTGOING_TOKEN_URL` is one also where the agent leaves it unread, with `M2M_AUTH_MODE=k8s`
+  and with `M2M_AUTH_MODE=hybrid` when the agent's token file is present at start. A variable that only a test, the Go
   runtime, or the standard library reads, such as `GOMEMLIMIT` or `HTTPS_PROXY`, is not one, and neither is `LOG_LEVEL`,
   which R5 governs.
 - **Settings table**: the table of agent variables under `## Configuration` in `components/authz-agent/README.md`, with
@@ -75,6 +77,7 @@ the chart and without it.
   `SCTP`.
 - **Policy-admin variable**: an environment variable whose name begins with `AUTHZ_POLICY_ADMIN_`.
 - **Stops the start**: as ADR-0091 defines it.
+- **The agent's token file**: as ADR-0096 defines it.
 
 ### Rules
 
@@ -87,21 +90,22 @@ the chart and without it.
   chart is a value that the chart renders.
 - **R2** (`startup`, `client`). Before it serves a request, the agent checks the value of every agent variable. A value
   that the row of the variable in the settings table does not accept stops the start, with a message that names the
-  variable and the values its row accepts. A variable that its row marks as required, always or under values of other
-  agent variables, stops the start when it is unset or empty while it is required, with a message that names it and,
-  where values of others require it, those values. The agent reads an integer as decimal digits with an optional sign, a
-  boolean as `true` or `false` alone, without regard to case, and a value from a list without regard to case. An unset
-  agent variable that is not required, and an empty integer, boolean, or value from a list that is not required, takes
-  the default of its row, or does what the row says where the row gives no default. Any other empty value does what its
-  row says.
+  variable and the values its row accepts. A variable that its row marks as required, always or under a condition that
+  the row names, stops the start when it is unset or empty while it is required, with a message that names it and, where
+  a condition requires it, that condition. The agent reads an integer as decimal digits with an optional sign, a boolean
+  as `true` or `false` alone, without regard to case, and a value from a list without regard to case. An unset agent
+  variable that is not required, and an empty integer, boolean, or value from a list that is not required, takes the
+  default of its row, or does what the row says where the row gives no default. Any other empty value does what its row
+  says.
 - **R3** (`startup`, `client`). The settings table gives an empty default to every agent variable that holds the address
   of a service the agent calls, `AUTHZ_TENANT_MANAGER_URL` included.
 - **R4** (`startup`, `client`). The settings table has a row for each agent variable; a row may name several variables.
   A row gives the type and the values or the range accepted, itself or by naming a form that the settings table defines
   once. It gives the default, or, where the variable has none, what the agent does without a value. It says whether the
-  variable is required, always or under values of other agent variables that the row names, and what an empty value does
-  where the type admits one. An empty default is a default. The range of a number lies within the values that its
-  destination type holds in its unit.
+  variable is required: always, or under a condition that the row names and that the agent can evaluate at start, such
+  as values of other agent variables or whether a file is present at start. It says what an empty value does where the
+  type admits one. An empty default is a default. The range of a number lies within the values that its destination type
+  holds in its unit.
 
 #### Names
 
@@ -132,13 +136,14 @@ normalization the chart gains later. The defaults of the chart are chosen for a 
 
 A mistyped value of any agent variable stops the start, so an operator learns of it at once rather than running with a
 default they did not choose (R2). A required variable has no default to fall back on while it is required, so a missing
-value is one more value that its row does not accept (R2). A variable that the values of others require, such as
-`AUTHZ_OUTGOING_TOKEN_URL` with `AUTHZ_OUTGOING_TOKEN_SOURCE=client-credentials` under ADR-0096 R20, is marked in its
-row (R4). R2 reads a value from a list as ADR-0096 R3 reads `AUTHZ_OUTGOING_TOKEN_SOURCE`, so that no setting accepts a
-spelling another one refuses. The settings table keeps the list in one file, so a new variable joins it in the change
-that adds it (R4). A variable can be optional and still have no default, so a row gives the default and whether the
-variable is required separately (R4). A number that its destination type cannot hold would overflow instead of being
-refused, so its range ends within that type, and the row gives the bound (R4).
+value is one more value that its row does not accept (R2). A variable that a condition requires is marked in its row
+with that condition (R4). The condition can rest on a file as well as on values: ADR-0096 R20 makes
+`AUTHZ_OUTGOING_TOKEN_URL` required under conditions that include whether the agent's token file is present at start. So
+R2 and R4 speak of a condition that the row names. R2 reads a value from a list as ADR-0096 R3 reads `M2M_AUTH_MODE`, so
+that no setting accepts a spelling another one refuses. The settings table keeps the list in one file, so a new variable
+joins it in the change that adds it (R4). A variable can be optional and still have no default, so a row gives the
+default and whether the variable is required separately (R4). A number that its destination type cannot hold would
+overflow instead of being refused, so its range ends within that type, and the row gives the bound (R4).
 
 A default address such as `http://tenant-manager:8080` names a service that only some networks have, whether the name
 belongs to a Kubernetes Service or to a Compose service. With an address of tenant-manager the agent stays not ready
@@ -153,11 +158,13 @@ only a warning. So the root log level has one name, `LOGGING_LEVEL_ROOT`, and a 
 A misspelled name, such as `AUTHZ_PAP_CLIENT_PULL_INTERVALS`, would leave its variable at the default with no message,
 the outcome that R2 refuses for a value. So a name in the prefix `AUTHZ_` that is not an agent variable stops the start,
 and a variable that the agent no longer reads, such as `AUTHZ_JWKS_BOOTSTRAP_REQUIRED` after ADR-0091 R64, falls under
-the same rule (R6). Names outside the prefix belong to the runtime, the platform, and other programs: the deployer
-passes `M2M_AUTH_MODE` to every service, and the agent starts whatever its value (ADR-0092 R15). So R6 refuses no name
-outside the prefix, and only `LOG_LEVEL`, which the platform logger inside the agent reads, has a rule of its own (R5).
-Inside the prefix, Kubernetes gives the container of the agent a service variable for each Service of its namespace,
-`AUTHZ_AGENT_SERVICE_HOST` for the Service `authz-agent` among them, and an environment file shared with
+the same rule (R6). Names outside the prefix belong to the runtime and to other programs, such as `PATH` and `HOSTNAME`,
+and a misspelling there cannot be told from a variable meant for another program. So R6 refuses no name outside the
+prefix, and of the names outside the prefix that are not agent variables, only `LOG_LEVEL`, which the platform logger
+inside the agent reads, has a rule of its own (R5). `M2M_AUTH_MODE`, which the platform's deployer passes to every
+service, chooses the token the agent sends (ADR-0096 R2, ADR-0092 R15), so it is an agent variable, and R2 checks its
+value. Inside the prefix, Kubernetes gives the container of the agent a service variable for each Service of its
+namespace, `AUTHZ_AGENT_SERVICE_HOST` for the Service `authz-agent` among them, and an environment file shared with
 authz-policy-admin holds its policy-admin variables, so R6 accepts both. A misplaced secret lands in an unknown name as
 easily as in a known one, so the message leaves the value out (R6). Releases up to v0.1.0 matched a name without regard
 to case, and the agent now reads it as written, so R6 compares the prefix without regard to case, and
@@ -174,8 +181,8 @@ to case, and the agent now reads it as written, so R6 compares the prefix withou
 - **A4. Leave the checks to the values schema of the chart.** Rejected by R1 and R2: an installation without the chart
   would get none of them.
 - **A5. Refuse every set variable that is not an agent variable.** Rejected by R6: the environment of a container holds
-  variables of the runtime and of the platform, such as `PATH`, `HOSTNAME`, and `M2M_AUTH_MODE`, and the agent would
-  stop in every installation.
+  variables of the runtime and of other programs, such as `PATH` and `HOSTNAME`, and the agent would stop in every
+  installation.
 - **A6. Turn the service variables off in the chart with `enableServiceLinks: false`, and refuse them too.** Rejected by
   R6: a Pod from manifests other than the chart would still get the service variables of `authz-agent`, and the agent
   would stop there.
@@ -191,7 +198,8 @@ Negative:
 - An installation without the chart whose environment sets the variable `LOG_LEVEL` now stops the start, and moves the
   value to `LOGGING_LEVEL_ROOT` (R5).
 - An installation that ran v0.1.0 without the chart and uses tenant-manager sets `AUTHZ_TENANT_MANAGER_URL` before it
-  upgrades. Without it the agent sends no request to tenant-manager: it uses the default tenant as given (R3, ADR-0093 R14).
+  upgrades. Without it the agent sends no request to tenant-manager: it uses the default tenant as given (R3,
+  ADR-0093 R14).
 - An installation without the chart whose environment still sets a variable that the agent no longer reads, such as
   `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, now stops the start, and removes the variable before it upgrades (R6).
 - A misspelled name in the prefix `AUTHZ_` that has the form of a service variable, such as `AUTHZ_PUBLIC_PORT`, or that
