@@ -94,8 +94,24 @@ func newPublicAppOver(t *testing.T, modules map[string]string, opts Options) *fi
 }
 
 // call sends one request and returns the status, the body, and the
-// Content-Type of the response.
+// Content-Type of the response. It fails the test where api/openapi.yaml
+// does not declare a query parameter or a header of the request, or the
+// status of the response, on the operation the request reaches, except in
+// the cases knownSpecDrift lists, which it logs.
 func call(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string) (int, string, string) {
+	t.Helper()
+	return send(t, app, method, path, body, headers, true)
+}
+
+// callUndeclared is call without the check against api/openapi.yaml, for a
+// request that deliberately sends a parameter the spec does not declare, to
+// show that the route ignores it.
+func callUndeclared(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string) (int, string, string) {
+	t.Helper()
+	return send(t, app, method, path, body, headers, false)
+}
+
+func send(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string, conform bool) (int, string, string) {
 	t.Helper()
 	var reader io.Reader
 	if body != "" {
@@ -111,6 +127,9 @@ func call(t *testing.T, app *fiber.App, method, path, body string, headers map[s
 	}
 	defer func() { _ = resp.Body.Close() }()
 	raw, _ := io.ReadAll(resp.Body)
+	if conform {
+		checkAgainstSpec(t, app, req, resp.StatusCode)
+	}
 	return resp.StatusCode, string(raw), resp.Header.Get(fiber.HeaderContentType)
 }
 
@@ -196,6 +215,7 @@ func checkResourceWithID(t *testing.T, app *fiber.App, given string) *http.Respo
 	if err != nil {
 		t.Fatalf("POST /access/v1/check/resource: %v", err)
 	}
+	checkAgainstSpec(t, app, req, resp.StatusCode)
 	if resp.StatusCode != http.StatusForbidden {
 		t.Fatalf("POST /access/v1/check/resource = %d, want 403", resp.StatusCode)
 	}
@@ -436,7 +456,7 @@ func TestPublic_CheckRoutesIgnoreExplain(t *testing.T) {
 	app := newPublicApp(t)
 	body := `{"type":"ORDER","operation":"READ"}`
 	for _, path := range []string{"/access/v1/check/resource", "/access/v1/check/resource?explain=full"} {
-		if code, got, _ := call(t, app, http.MethodPost, path, body, admin); code != 200 || got != "true" {
+		if code, got, _ := callUndeclared(t, app, http.MethodPost, path, body, admin); code != 200 || got != "true" {
 			t.Errorf("POST %s = %d %s, want 200 true", path, code, got)
 		}
 	}

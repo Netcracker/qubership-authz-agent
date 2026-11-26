@@ -10,6 +10,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go/v3 v3.15.4
 	github.com/open-policy-agent/opa v1.22.2
 	github.com/prometheus/client_golang v1.25.0
+	go.yaml.in/yaml/v3 v3.0.5
 )
 
 require (
@@ -74,7 +75,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
-	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.59.0 // indirect
 	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
