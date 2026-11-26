@@ -69,7 +69,10 @@ emulator is not published.
    ```
 
 `helm test` exits non-zero when the suite fails, and deletes the Job of the previous run before it starts a new one. It
-waits no longer than `--timeout`. Three limits bound a run, each no lower than the one before: `-test.timeout` in
+waits no longer than `--timeout`. The suite also fails when no step or case of it ran to the end, as on a `-test.run`
+pattern in `suite.args` that selects none. `SUITE_REQUIRE_CHECKS: "true"` in `suite.env` turns this check on, and the
+chart sets it by default. The log of such a run has a line that starts with `TestParitySuite checked nothing:`,
+followed by the pattern. Three limits bound a run, each no lower than the one before: `-test.timeout` in
 `suite.args`, `suite.activeDeadlineSeconds`, and `--timeout`. The chart supports Helm 3.19 or later, or Helm 4.x,
 except that Helm 4.0.0 to 4.1.0 do not end `helm test` when the Job fails and wait out `--timeout`; the Makefile
 targets stop it themselves, and by hand use Helm 3, or Helm 4.1.1 or later.

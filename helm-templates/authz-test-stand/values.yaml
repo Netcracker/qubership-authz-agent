@@ -105,8 +105,13 @@ suite:
   # no higher than the `helm test --timeout` (E2E_SUITE_TIMEOUT or
   # PARITY_SUITE_TIMEOUT on kind, 15m).
   activeDeadlineSeconds: 900
-  # Plain variables, by name.
-  env: {}
+  # Plain variables, by name. SUITE_REQUIRE_CHECKS=true makes the suite binary
+  # exit 1, and `helm test` fail, when no step or case of its suite ran to the
+  # end, such as when the -test.run pattern selects no test. Without it the
+  # binary exits 0 on such a run. A stand's values file that sets env keeps it,
+  # since Helm merges the two maps.
+  env:
+    SUITE_REQUIRE_CHECKS: "true"
   # Variables read from a Secret key, by name: {secret: <name>, key: <key>}.
   secretEnv: {}
   # A ServiceAccount of the Job's name, granted no rules. The Job does not

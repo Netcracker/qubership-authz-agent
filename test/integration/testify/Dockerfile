@@ -13,6 +13,7 @@ ARG TARGETOS
 ARG TARGETARCH
 
 WORKDIR /src/test/integration/testify
+COPY test/suitecheck/ /src/test/suitecheck/
 COPY test/integration/testify/go.mod test/integration/testify/go.sum ./
 RUN go mod download
 COPY test/integration/testify/ ./

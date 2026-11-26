@@ -21,6 +21,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+
+	"authz-agent/test/suitecheck"
 )
 
 // ParitySuite is the testify entry point per D-A, with one test method per
@@ -28,7 +30,7 @@ import (
 // pip-mock and entitlements-mock so every sub-case starts from a known
 // state per D-O.
 type ParitySuite struct {
-	suite.Suite
+	suitecheck.Suite
 
 	cfg        Config
 	tokens     *TokenFactory
@@ -41,6 +43,14 @@ type ParitySuite struct {
 // `go test -tags integration -run ^TestParitySuite$ ./...` to drive it.
 func TestParitySuite(t *testing.T) {
 	suite.Run(t, new(ParitySuite))
+}
+
+// TestMain fails a run in which no case of TestParitySuite ran to the end when
+// SUITE_REQUIRE_CHECKS is "true"; see [suitecheck.Main]. It lives beside
+// TestParitySuite, in the file the integration tag builds, so a run of the
+// package's other tests does not depend on the variable.
+func TestMain(m *testing.M) {
+	suitecheck.Main(m, suitecheck.Names{Suite: "TestParitySuite", Unit: "case", Example: "^TestParitySuite$/^TestRow01ApiVersion$"})
 }
 
 func (s *ParitySuite) SetupSuite() {

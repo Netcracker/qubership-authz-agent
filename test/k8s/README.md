@@ -85,6 +85,12 @@ waits a pull interval after each upload instead of asking the local agent to pul
 The suite Job of `test-stand-values.yaml` runs the whole Testify suite, including the two
 coverage checks that need a full run (`FULL_RUNTIME_SUITE=true`).
 
+The chart sets `SUITE_REQUIRE_CHECKS=true` for the Job of either suite, so the suite fails a run in which no step or
+case ran to the end, such as one whose `-test.run` pattern selects none. Its log then has a line that starts with
+`TestRuntimeSuite checked nothing:` or `TestParitySuite checked nothing:`; the troubleshooting table of
+[docs/local-integration-tests.md](../../docs/local-integration-tests.md#8-troubleshooting) says where each stand sets
+the pattern.
+
 The Job reaches every target by Service name and asks the API server for
 nothing, so the `runtime-suite` ServiceAccount the chart creates for it
 is granted no rules and its token is not mounted.

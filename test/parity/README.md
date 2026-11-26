@@ -39,7 +39,7 @@ the suite image built from [`suite/Dockerfile`](suite/Dockerfile)), then:
 | --- | --- |
 | `parity-harness` | The test-stand chart with [`test/k8s/parity/test-stand-values.yaml`](../k8s/parity/test-stand-values.yaml) in namespace `authz-parity`: Keycloak as `idp` in dev mode with the parity realms; `pip-mock`; `entitlements-mock`; the M2M client-credentials Secret |
 | `parity-install` | `helm upgrade --install` of the stub chart with its dev resource profile and [`test/k8s/parity/policy-admin-values.yaml`](../k8s/parity/policy-admin-values.yaml), then of the agent chart with its dev resource profile and [`test/k8s/parity/values.yaml`](../k8s/parity/values.yaml) |
-| `parity-suite` | The suite Job of the test-stand release, run by `helm test`; its log is streamed |
+| `parity-suite` | The suite Job of the test-stand release, run by `helm test`; its log is streamed. The Job fails when no case of `TestParitySuite` ran to the end, as on a `-test.run` pattern in `suite.args` that selects none; see the troubleshooting table of [docs/local-integration-tests.md](../../docs/local-integration-tests.md#8-troubleshooting) |
 
 Expected result: 135/135 cases green against authz-agent. CI runs the same targets (job `Parity on kind` in
 `.github/workflows/integration-tests.yaml`).

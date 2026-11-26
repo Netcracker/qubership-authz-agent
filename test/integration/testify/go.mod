@@ -16,3 +16,7 @@ require (
 	go.yaml.in/yaml/v4 v4.0.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
 )
+
+require authz-agent/test/suitecheck v0.0.0
+
+replace authz-agent/test/suitecheck => ../../suitecheck

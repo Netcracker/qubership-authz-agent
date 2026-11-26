@@ -8,3 +8,7 @@ require (
 )
 
 require go.yaml.in/yaml/v3 v3.0.5 // indirect
+
+require authz-agent/test/suitecheck v0.0.0
+
+replace authz-agent/test/suitecheck => ../../suitecheck
