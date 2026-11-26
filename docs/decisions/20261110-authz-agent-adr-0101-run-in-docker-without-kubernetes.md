@@ -27,7 +27,7 @@ kichasov
   ADR-0093 R11 and R13, the translation of the default tenant through tenant-manager with the agent's token.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
   the topology file and the token for the API server, which exist only in a cluster.
-- [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
+- [authz-agent-ADR-0096: Choose the token the agent sends by `M2M_AUTH_MODE`](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
   the agent's token and the agent's client credentials token, as
   [#338](https://github.com/Netcracker/qubership-authz-agent/pull/338) defines them.
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](https://github.com/Netcracker/qubership-authz-agent/pull/329),
