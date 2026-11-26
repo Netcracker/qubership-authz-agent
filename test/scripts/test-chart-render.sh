@@ -979,6 +979,29 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
   done
 done
 
+# ── Test-stand pip-stub resources ────────────────────────────────────────
+#
+# An instance that sets resources gets exactly that map, an empty one included,
+# and an instance that omits the key gets pipStub.resources.
+TEST_STAND_CHART_DIR="${ROOT_DIR}/helm-templates/authz-test-stand"
+pip_stub_resources_of() {
+  helm template t "${TEST_STAND_CHART_DIR}" --set TAG=test --set-json "pipStub.instances={\"stub\":$1}" \
+    --show-only templates/pip-stub.yaml 2>&1 \
+    | sed -n '/^          resources:/,/^          [a-zA-Z]/p' | sed -n '2,$p' | sed '/^          [a-zA-Z]/d;/^$/d' || true
+}
+for row in \
+  'resources omitted|{"port":8090}|limits:,ephemeral-storage: 128Mi,memory: 64Mi,requests:,cpu: 50m,ephemeral-storage: 64Mi,memory: 32Mi' \
+  'resources set to {}|{"port":8090,"resources":{}}|{}' \
+  'only a memory limit set|{"port":8090,"resources":{"limits":{"memory":"256Mi"}}}|limits:,memory: 256Mi'; do
+  IFS='|' read -r label instance want <<<"${row}"
+  got="$(pip_stub_resources_of "${instance}" | sed 's/^ *//' | paste -sd, -)"
+  if [[ "${got}" == "${want}" ]]; then
+    pass "a test-stand pip-stub instance with ${label} renders resources ${want}"
+  else
+    fail "a test-stand pip-stub instance with ${label} renders resources '${got}', expected '${want}'"
+  fi
+done
+
 echo
 if (( failures > 0 )); then
   echo "chart render checks: ${failures} failure(s)"
