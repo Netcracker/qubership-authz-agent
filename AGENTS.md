@@ -25,10 +25,11 @@ It mutates the lines changed since the merge base with `MUTATION_BASE`, `origin/
 ## Design choices
 
 The preferences below apply by default to a design, to code, to an ADR you write or update, and to a review. A
-requirement, an ADR, another rule of this file, or compatibility with legacy access-control outranks them, and a shape
-that one of these prescribes is not a defect under this section. An ADR you write or update that departs from them says
-in the record why. A choice that no rule of [the decision records](docs/decisions/README.md) states is left to the
-implementer, and these preferences guide it.
+requirement, an ADR, another rule of this file, or compatibility with legacy access-control as
+[ADR-0097](docs/decisions/20261107-authz-agent-adr-0097-departures-from-legacy.md) defines it outranks them, and a shape
+that one of these prescribes is not a defect under this section. Where a rule you write or change in an ADR departs from
+them, the record says why. A choice that no rule of [the decision records](docs/decisions/README.md) states is left to
+the implementer, and these preferences guide it.
 
 Prefer a convention of Kubernetes, Helm, or OIDC, a widely used library, or a built-in mechanism over code written for
 authz-agent.
@@ -46,10 +47,12 @@ where it is rejected.
 
 Fail fast: report a defect in the code, the configuration, or a policy at the earliest point that can detect it. The
 points, from earliest, are compilation, the chart's values schema, the install or the start of the agent, the load of
-the policies, and only last the first request that needs the setting. Name the setting or the policy in the error. A
-defect in this sense is something that stays wrong until someone changes the code, the configuration, or the policy. A
-dependency that does not answer, or answers without the data, such as a JWKS endpoint, an absent realm, or the policy
-source, is not one, and the agent keeps running.
+the policies, and only last the first request that needs the setting. A check that the chart runs does not replace the
+check at the start, because the agent also runs without the chart. Name the setting or the policy in the error. A defect
+in this sense is one that the text of the code, the configuration, or a policy shows by itself, such as a malformed URL.
+A dependency that does not answer, or answers without the data, such as a JWKS endpoint, an absent realm, or the policy
+source, is not one: the agent keeps running, and its liveness does not depend on that dependency
+([ADR-0091 R18](docs/decisions/20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md)).
 
 Prefer one general rule over a list of special cases, so that an operator can predict the behavior from the
 configuration. When fixing a defect, name its class in words that also describe a second input, and make the fix and its
