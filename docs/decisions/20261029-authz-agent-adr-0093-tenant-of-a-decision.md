@@ -28,7 +28,7 @@ kichasov
   ADR-0095 R1, the order of the steps before policy evaluation, ADR-0095 R3, the 503 for an `Incoming-Token` whose keys
   cannot be loaded, ADR-0095 R4 and R5, which name R22 as their exception, ADR-0095 R6 and R7, the form of the refusal
   of R22, and ADR-0095 R16, which indexes its reason code.
-- [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
+- [authz-agent-ADR-0096: Choose the token the agent sends by `M2M_AUTH_MODE`](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
   the agent's token, which the call to tenant-manager carries.
 
 ## Context

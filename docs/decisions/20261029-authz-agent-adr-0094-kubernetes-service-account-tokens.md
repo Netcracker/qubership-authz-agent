@@ -26,8 +26,8 @@ kichasov
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
   ADR-0092 R11, which accepts a Kubernetes token in `Authorization`, and ADR-0092 R7, a Kubernetes token as an M2M
   token.
-- [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
-  which token the agent sends, which this record does not decide.
+- [authz-agent-ADR-0096: Choose the token the agent sends by `M2M_AUTH_MODE`](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
+  which token the agent sends, and ADR-0096 R20, which states when the chart mounts the token for `netcracker`.
 
 ## Context
 
@@ -79,7 +79,8 @@ namespace belongs to the installation.
 - **R2** (`chart`). The chart mounts the token for the API server and the cluster CA.
 - **R30** (`chart`). The chart writes the marked provider.
 - **R31** (`chart`). The agent's Pod sets `automountServiceAccountToken: false`.
-- **R3** (`chart`). The chart mounts the token for `netcracker` when ADR-0096 R2 chooses it.
+- **R3** (`chart`). The chart mounts the token for `netcracker` as a projected service account token with the audience
+  `netcracker`, in the modes that ADR-0096 R20 names.
 - **R4** (`keys`). The `issuer` of the marked provider is the `iss` of the token for the API server. The agent reads it
   at start without checking its signature, because the kubelet wrote the file.
 - **R5** (`keys`). A missing token for the API server stops the start when the trusted providers file holds the marked
