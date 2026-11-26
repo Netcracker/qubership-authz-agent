@@ -58,7 +58,7 @@ kichasov
   R3), and the index of reason codes (ADR-0095 R16). This request makes steps 1 and 2 of ADR-0095 R1 name the checks of
   this record, and makes ADR-0095 R16 index `TOKEN_ISSUER_UNKNOWN` by R21, and `TOKEN_AUDIENCE_MISSING` and
   `TOKEN_AUDIENCE_INVALID` by R26.
-- [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
+- [authz-agent-ADR-0096: Choose the token the agent sends by `M2M_AUTH_MODE`](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
   the token that the agent obtains from the realm `cloud-common`, which is an identity-provider token under R22. This
   request makes ADR-0096 call that token an identity-provider token, and cite R14 of this record where it cited
   ADR-0094 R5.
