@@ -81,7 +81,7 @@ paths:
                   summary: Reject.
                   value: false
         '400':
-          description: Malformed body or missing required field.
+          description: Malformed body, missing required field, or a value a condition compares that is too big to look up (a lookup that would read more than 16 groups and scanned elements).
           content:
             application/json:
               schema:
@@ -149,7 +149,7 @@ paths:
                   summary: No entry permitted.
                   value: []
         '400':
-          description: Malformed body, missing required field, or duplicate id.
+          description: Malformed body, missing required field, duplicate id, or a value a condition compares that is too big to look up (a lookup that would read more than 16 groups and scanned elements).
           content:
             application/json:
               schema:
@@ -214,7 +214,7 @@ paths:
                   summary: Entry denied for READ.
                   value: { "READ": [] }
         '400':
-          description: Malformed body or missing required field on any entry.
+          description: Malformed body, missing required field on any entry, or a value a condition compares that is too big to look up (a lookup that would read more than 16 groups and scanned elements).
           content:
             application/json:
               schema:
@@ -277,7 +277,7 @@ paths:
                   summary: Entry denied for READ.
                   value: { "READ": [] }
         '400':
-          description: Malformed body or missing required field on any entry.
+          description: Malformed body, missing required field on any entry, or a value a condition compares that is too big to look up (a lookup that would read more than 16 groups and scanned elements).
           content:
             application/json:
               schema:
@@ -357,7 +357,7 @@ paths:
                   summary: ALLOW conditioned on a row-level RSQL predicate.
                   value: { "calculationResult": "USE_FILTER_CONDITION", "filterCondition": "", "mongodbFilterCondition": "", "rsqlFilterCondition": "dept==engineering,dept==management", "sqlFilterCondition": "", "customFilterCondition": null }
         '400':
-          description: The token payload the admission policies verified cannot be read as claims.
+          description: The token payload the admission policies verified cannot be read as claims, or a value a condition compares that is too big to look up (a lookup that would read more than 16 groups and scanned elements).
           content:
             application/json:
               schema:
@@ -420,7 +420,7 @@ paths:
                   summary: Reject.
                   value: { "decision": false }
         '400':
-          description: Malformed body or missing required field.
+          description: Malformed body, missing required field, or a value a condition compares that is too big to look up (a lookup that would read more than 16 groups and scanned elements).
           content:
             application/json:
               schema:
@@ -482,7 +482,7 @@ paths:
                   summary: Entry denied for READ.
                   value: { "decision": { "READ": [] } }
         '400':
-          description: Malformed body or missing required field on any entry.
+          description: Malformed body, missing required field on any entry, or a value a condition compares that is too big to look up (a lookup that would read more than 16 groups and scanned elements).
           content:
             application/json:
               schema:
@@ -541,7 +541,7 @@ paths:
                   summary: Entry denied for READ.
                   value: { "decision": { "READ": [] } }
         '400':
-          description: Malformed body or missing required field on any entry.
+          description: Malformed body, missing required field on any entry, or a value a condition compares that is too big to look up (a lookup that would read more than 16 groups and scanned elements).
           content:
             application/json:
               schema:
@@ -617,7 +617,7 @@ paths:
                   summary: ALLOW conditioned on a row-level RSQL predicate.
                   value: { "calculationResult": "USE_FILTER_CONDITION", "filterCondition": "", "mongodbFilterCondition": "", "rsqlFilterCondition": "dept==engineering,dept==management", "sqlFilterCondition": "", "customFilterCondition": null }
         '400':
-          description: The token payload the admission policies verified cannot be read as claims.
+          description: The token payload the admission policies verified cannot be read as claims, or a value a condition compares that is too big to look up (a lookup that would read more than 16 groups and scanned elements).
           content:
             application/json:
               schema:

@@ -15,6 +15,7 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -24,6 +25,7 @@ import (
 
 	"authz-agent/components/authz-agent/internal/legacy"
 	"authz-agent/components/authz-agent/internal/snapshot"
+	"authz-agent/internal/badrequest"
 )
 
 // RegisterPublic adds the public routes to app: the check routes of the
@@ -198,11 +200,16 @@ func lastQuery(c *fiber.Ctx, key string) string {
 	return value
 }
 
-// refuse writes a request the legacy API rejects before any policy runs:
-// 400 with the error's message.
-func (s *Server) refuse(c *fiber.Ctx, err *legacy.RequestError) error {
-	s.opts.Log.DebugC(c.UserContext(), "legacy request rejected path=%s: %s", c.Path(), err.Message)
-	return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": err.Message})
+// refuse writes a request that fails because of what the caller sent, an
+// err that is or wraps a [badrequest.Error]: 400 with the Message of the
+// first one in its chain, and err whole in the debug log.
+func (s *Server) refuse(c *fiber.Ctx, err error) error {
+	s.opts.Log.DebugC(c.UserContext(), "legacy request rejected path=%s: %v", c.Path(), err)
+	message := err.Error()
+	if re, ok := errors.AsType[*badrequest.Error](err); ok {
+		message = re.Message
+	}
+	return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": message})
 }
 
 func sendJSON(c *fiber.Ctx, status int, body []byte) error {

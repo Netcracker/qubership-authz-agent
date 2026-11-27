@@ -34,8 +34,12 @@ type FilterRequest struct {
 // Filter answers req with the snapshot of req.Tenant: the rows of
 // req.ResourceType the subject may read with the operation, READ where the
 // request names none. The operation ALL, and a tenant without a snapshot,
-// give DENY. The error is a defect of the projection or the evaluation, not
-// a denial.
+// give DENY. The error is not a denial. An error that wraps a
+// badrequest.Error fails the request because a value of the subject that
+// the request carries is too big to compare. Any other error is a failure
+// of the agent: a defect of the projection or the evaluation, or of the
+// tenant's configuration, such as a permission too big to compare that its
+// mapping tables grant.
 func (r *Registry) Filter(ctx context.Context, req FilterRequest) (regogen.FilterAnswer, error) {
 	deny := regogen.FilterAnswer{Result: regogen.FilterDeny}
 	op := "READ"

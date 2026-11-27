@@ -352,3 +352,37 @@ func TestMarkEmittedSetsTheFieldsTheTextReads(t *testing.T) {
 		t.Errorf("input.element_keys with no index: emit %b and %b, want %b for both", x.emit, ab.emit, want)
 	}
 }
+
+// Each operand kind is classified by whether the request carries its value,
+// which decides whether a value too big to compare is the caller's error. A
+// kind added to [spectables.Kinds] fails here until it has a row.
+func TestEveryOperandKindSaysWhetherTheRequestCarriesItsValue(t *testing.T) {
+	want := map[spectables.Kind]bool{
+		spectables.KindOperation: true, spectables.KindResourceType: true,
+		spectables.KindResource: true, spectables.KindResPath: true, spectables.KindResNested: true,
+		spectables.KindResJSONPath: true,
+		// the subject's token gives these
+		spectables.KindSubjID: true, spectables.KindSubjName: true, spectables.KindSubjType: true,
+		spectables.KindSubjServiceAccount: true, spectables.KindSubjRoles: true, spectables.KindSubjScopes: true,
+		spectables.KindSubjIsM2M: true, spectables.KindPIPToken: true, spectables.KindPIPHeader: true,
+		// the tenant's mapping tables give these
+		spectables.KindSubjPermissions: false, spectables.KindPIPMapping: false,
+		// a source the module calls gives these
+		spectables.KindSubjPermissionScope: false, spectables.KindPIPGeneral: false,
+		spectables.KindPIPFiltered: false, spectables.KindEntitled: false,
+		// the policy gives these
+		spectables.KindLitStr: false, spectables.KindLitNum: false, spectables.KindLitBool: false,
+		spectables.KindNull: false, spectables.KindListStr1: false, spectables.KindListStrN: false,
+		spectables.KindListNum1: false, spectables.KindListNumN: false, spectables.KindPattern: false,
+	}
+	for _, k := range spectables.Kinds {
+		w, ok := want[k]
+		if !ok {
+			t.Errorf("kind %s has no row: add whether the request carries its value", k)
+			continue
+		}
+		if got := fromRequest(k); got != w {
+			t.Errorf("fromRequest(%s) = %v, want %v", k, got, w)
+		}
+	}
+}

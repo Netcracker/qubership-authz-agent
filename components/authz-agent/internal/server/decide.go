@@ -17,6 +17,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -25,6 +26,7 @@ import (
 
 	"authz-agent/components/authz-agent/internal/legacy"
 	"authz-agent/components/authz-agent/internal/snapshot"
+	"authz-agent/internal/badrequest"
 	"authz-agent/internal/regogen"
 )
 
@@ -69,8 +71,7 @@ func (s *Server) decide(c *fiber.Ctx, resources []legacy.Resource, shape func(re
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "bad request"})
 		}
 		if results, err = s.opts.Snapshots.Decide(ctx, req); err != nil {
-			s.opts.Log.ErrorC(ctx, "decision failed tenant=%s: %v", tenant, err)
-			return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
+			return s.failed(c, "decision", tenant, err)
 		}
 	}
 	result := legacyResult(resources, results)
@@ -98,8 +99,7 @@ func (s *Server) filter(c *fiber.Ctx, r legacy.Resource) error {
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "bad request"})
 		}
 		if answer, err = s.opts.Snapshots.Filter(ctx, snapshot.NewFilterRequest(sub, r)); err != nil {
-			s.opts.Log.ErrorC(ctx, "filter failed tenant=%s: %v", tenant, err)
-			return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
+			return s.failed(c, "filter", tenant, err)
 		}
 	}
 	body, err := json.Marshal(answer)
@@ -108,6 +108,19 @@ func (s *Server) filter(c *fiber.Ctx, r legacy.Resource) error {
 	}
 	s.log(c, input)
 	return sendJSON(c, http.StatusOK, body)
+}
+
+// failed answers a request of tenant whose decision or filter, named by
+// what, failed with err. An err that wraps a [badrequest.Error] is the
+// caller's, and the request is refused as a malformed one is
+// ([Server.refuse]); any other err is a failure of the agent: 500
+// internal_error, logged as an error.
+func (s *Server) failed(c *fiber.Ctx, what, tenant string, err error) error {
+	if _, ok := errors.AsType[*badrequest.Error](err); ok {
+		return s.refuse(c, err)
+	}
+	s.opts.Log.ErrorC(c.UserContext(), "%s failed tenant=%s: %v", what, tenant, err)
+	return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
 }
 
 // admit builds the input of the embedded policies, with the tenant of the

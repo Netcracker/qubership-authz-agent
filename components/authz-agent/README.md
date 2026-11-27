@@ -195,17 +195,23 @@ inserted before it.
 
 A request fails when a value a comparison reads is a list of nested lists or objects whose elements hold numbers as
 strings in too many ways, such as `"1"`, `"1.0"`, and `"01"` at differing positions, so that looking a value up among
-them would read more than 16 groups and scanned elements. The agent answers such a `check/resource` or
-`check/filter` request, or a bulk request with such an item, with 500, and its `message` ends with:
+them would read more than 16 groups and scanned elements. Such a value is the caller's error when the request carries
+it: in the body, or in a token claim that a TOKEN PIP or a built-in subject attribute reads. The agent answers such a
+`check/resource` or `check/filter` request with 400, as it answers a malformed body, and logs it at `debug`. One such
+item refuses a whole bulk request, as one malformed item does. The `message` of the response names the operand, as in
+`the value of resource.b:`, and goes on with:
 
 ```text
-a list holds elements of one shape that write their numbers in too many ways: a lookup among them would read more than 16 groups and scanned elements
+a list holds elements of one shape that write their numbers in too many ways: a lookup among them would read more than 16 groups and scanned elements; the limit keeps the cost of a request linear in its size, and a list whose elements write their numbers alike stays below it
 ```
 
 A list whose elements write their numbers alike stays far below the limit.
 
 An answer over the limit from a GENERAL or FILTERED PIP, the entitlements service, or the permission scope does not
 fail the request: the condition reads that source as failed, as it reads a call that failed.
+
+A value over the limit that the tenant's MAPPING tables grant as `subject.permissions` is not the caller's error: the
+agent answers 500 `internal_error` and logs an error, and the mapping table has to change.
 
 ## Running it
 

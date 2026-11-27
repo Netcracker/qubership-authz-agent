@@ -59,7 +59,12 @@ const (
 // Decide answers each item of req with the snapshot of req.Tenant. A
 // tenant without one denies every item. A GENERAL or FILTERED PIP the
 // items read is called once per distinct request across all items. The
-// error is a defect of the projection or the evaluation, not a denial.
+// error is not a denial. An error that wraps a badrequest.Error fails the
+// whole request because a value the request carries, of the subject or of
+// one item, is too big to compare. Any other error is a failure of the
+// agent: a defect of the projection or the evaluation, or of the tenant's
+// configuration, such as a permission too big to compare that its mapping
+// tables grant.
 func (r *Registry) Decide(ctx context.Context, req Request) ([]Result, error) {
 	out := make([]Result, len(req.Items))
 	s, ok := r.Snapshot(req.Tenant)

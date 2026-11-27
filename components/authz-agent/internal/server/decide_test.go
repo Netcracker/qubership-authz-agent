@@ -19,6 +19,7 @@ import (
 	"maps"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -355,4 +356,148 @@ func TestDecide_TheDefaultTenantIsDeniedUntilItsNameIsResolved(t *testing.T) {
 	if code, got, _ := call(t, app, http.MethodPost, filter, "", m2m); code != 200 || got == deny {
 		t.Errorf("resolved: POST %s = %d %s, want 200 and not DENY", filter, code, got)
 	}
+}
+
+// fourTexts is a list of n lists of four strings of numbers, of one shape,
+// each spelling 0 its own way: a lookup among 16 of them is over the limit,
+// and among 15 it is not.
+func fourTexts(n int) string {
+	elems := make([]string, n)
+	for i := range elems {
+		elems[i] = fmt.Sprintf(`["1", "2", "3", "0e%d"]`, i)
+	}
+	return "[" + strings.Join(elems, ",") + "]"
+}
+
+// A value that a comparison reads and that would need a lookup of more than
+// 16 groups is the caller's error, whether it comes in the body or in a claim
+// of the subject's token: the route answers 400 and logs no error. One such
+// item refuses a whole bulk request.
+func TestDecide_AValueTooBigToLookUpIsRefusedAsABadRequest(t *testing.T) {
+	const (
+		inBody    = "resource.a CONTAINS ANY resource.b"
+		inClaims  = "subject.a CONTAINS ANY subject.b"
+		claimPIPs = `{"pips": [{"tenantId": "a", "name": "subject.a", "pipType": "TOKEN", "claim": "a"},
+			{"tenantId": "a", "name": "subject.b", "pipType": "TOKEN", "claim": "b"}]}`
+	)
+	for _, tc := range []struct {
+		name, condition, path string
+		// value is the operand whose value is too big
+		value string
+		// body is the request body with b of n lists
+		body func(b string) string
+	}{
+		{"check/resource, a value of the resource", inBody, "/access/v1/check/resource?tenant_id=a", "resource.b",
+			func(b string) string {
+				return `{"type":"doc","operation":"read","resource":{"a":[["z"]],"b":` + b + `}}`
+			}},
+		{"check/resource v2, a value of the resource", inBody, "/access/v2/check/resource?tenant_id=a", "resource.b",
+			func(b string) string {
+				return `{"type":"doc","operation":"read","resource":{"a":[["z"]],"b":` + b + `}}`
+			}},
+		{"bulk, the second of two items", inBody, "/access/v1/check/resource/bulk?tenant_id=a", "resource.b",
+			func(b string) string {
+				return `[{"id":"x","type":"doc","operation":"read","resource":{"a":[["z"]],"b":[["z"]]}},` +
+					`{"id":"y","type":"doc","operation":"read","resource":{"a":[["z"]],"b":` + b + `}}]`
+			}},
+		{"bulk/operations, a value of the resource", inBody,
+			"/access/v1/check/resource/bulk/operations?tenant_id=a", "resource.b",
+			func(b string) string {
+				return `[{"id":"x","type":"doc","operations":["read"],"resource":{"a":[["z"]],"b":` + b + `}}]`
+			}},
+		{"check/resource, a claim of the token", inClaims, "/access/v1/check/resource?tenant_id=a", "subject.b",
+			func(string) string { return `{"type":"doc","operation":"read","resource":{}}` }},
+		{"check/filter, a claim of the token", inClaims,
+			"/access/v1/check/filter?tenant_id=a&resourceType=doc&operation=read", "subject.b",
+			func(string) string { return "" }},
+	} {
+		// app is the public surface over tenant a, which allows a read of
+		// a doc where tc.condition holds, for a subject whose claim b is b and
+		// whose claims a and b the TOKEN PIPs subject.a and subject.b read.
+		app := func(b string) (*fiber.App, *levels) {
+			reported := &levels{}
+			stub := `package authorize_internals
+
+import rego.v1
+
+admission := {"tokenPayload": {"sub": "u1", "a": [["z"]], "b": ` + b + `}}
+`
+			return newPublicAppOver(t, map[string]string{"internals.rego": stub},
+				Options{Log: reported, Snapshots: registryWithPIPs(t, `{"policySets": [`+tenantSet("a", tc.condition)+`]}`,
+					claimPIPs), DefaultTenant: func() string { return "a" }}), reported
+		}
+		t.Run(tc.name+", 16 lists", func(t *testing.T) {
+			a, reported := app(fourTexts(16))
+			code, got, _ := call(t, a, http.MethodPost, tc.path, tc.body(fourTexts(16)), admin)
+			prefix := `{"message":"the value of ` + tc.value + `: `
+			const limit = "a lookup among them would read more than 16 groups and scanned elements"
+			if code != http.StatusBadRequest || !strings.HasPrefix(got, prefix) || !strings.Contains(got, limit) {
+				t.Errorf("POST %s = %d %s, want 400 with a message that starts with %q and holds %q", tc.path, code,
+					got, prefix, limit)
+			}
+			if lines := reported.at("error"); len(lines) != 0 {
+				t.Errorf("POST %s logged at error: %q, want no line", tc.path, lines)
+			}
+			var refused []string
+			for _, line := range reported.at("debug") {
+				if strings.Contains(line, "rejected") && strings.Contains(line, limit) {
+					refused = append(refused, line)
+				}
+			}
+			if len(refused) != 1 {
+				t.Errorf("POST %s logged at debug %q, want one line that the request was rejected for %q",
+					tc.path, reported.at("debug"), limit)
+			}
+		})
+		t.Run(tc.name+", 15 lists", func(t *testing.T) {
+			a, _ := app(fourTexts(15))
+			if code, got, _ := call(t, a, http.MethodPost, tc.path, tc.body(fourTexts(15)), admin); code != http.StatusOK {
+				t.Errorf("POST %s = %d %s, want 200", tc.path, code, got)
+			}
+		})
+	}
+}
+
+// A permission too big to compare that the tenant's mapping tables grant is
+// not the caller's error: the request sent only a role. The route answers
+// 500 internal_error and logs an error, so that an operator fixes the
+// mapping.
+func TestDecide_AMappedPermissionTooBigToLookUpFailsTheAgent(t *testing.T) {
+	const path = "/access/v1/check/resource?tenant_id=a"
+	const body = `{"type":"doc","operation":"read","resource":{"a":[["z"]]}}`
+	// app is the public surface over tenant a, whose mapping table grants
+	// the role r of every subject the permissions perms.
+	app := func(perms string) (*fiber.App, *levels) {
+		reported := &levels{}
+		const stub = `package authorize_internals
+
+import rego.v1
+
+admission := {"tokenPayload": {"sub": "u1", "realm_access": {"roles": ["r"]}}}
+`
+		pips := `{"pips": [{"tenantId": "a", "name": "subject.permissions", "pipType": "MAPPING",
+			"customMapping": {"subject.roles": {"r": ` + perms + `}}}]}`
+		reg := registryWithPIPs(t, `{"policySets": [`+tenantSet("a", "resource.a CONTAINS ANY subject.permissions")+`]}`,
+			pips)
+		return newPublicAppOver(t, map[string]string{"internals.rego": stub},
+			Options{Log: reported, Snapshots: reg, DefaultTenant: func() string { return "a" }}), reported
+	}
+	t.Run("16 lists", func(t *testing.T) {
+		a, reported := app(fourTexts(16))
+		code, got, _ := call(t, a, http.MethodPost, path, body, admin)
+		const limit = "a lookup among them would read more than 16 groups and scanned elements"
+		if code != http.StatusInternalServerError || !strings.Contains(got, `"code":"internal_error"`) ||
+			!strings.Contains(got, limit) {
+			t.Errorf("POST %s = %d %s, want 500 internal_error with a message that holds %q", path, code, got, limit)
+		}
+		if lines := reported.at("error"); len(lines) != 1 {
+			t.Errorf("POST %s logged at error: %q, want one line", path, lines)
+		}
+	})
+	t.Run("15 lists", func(t *testing.T) {
+		a, _ := app(fourTexts(15))
+		if code, got, _ := call(t, a, http.MethodPost, path, body, admin); code != http.StatusOK {
+			t.Errorf("POST %s = %d %s, want 200", path, code, got)
+		}
+	})
 }

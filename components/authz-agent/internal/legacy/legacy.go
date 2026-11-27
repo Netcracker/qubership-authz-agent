@@ -31,16 +31,14 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/util"
 
+	"authz-agent/internal/badrequest"
 	"authz-agent/internal/jsonvalue"
 )
 
-// RequestError is a request the legacy API refuses before any policy runs.
-// The response is status 400 with Message as its message.
-type RequestError struct {
-	Message string
-}
-
-func (e *RequestError) Error() string { return e.Message }
+// RequestError is the error this package gives a request the legacy API
+// refuses before any policy runs. It is a [badrequest.Error], so the
+// response is status 400 with Message as its message.
+type RequestError = badrequest.Error
 
 var (
 	errBadRequest  = &RequestError{Message: "bad request"}

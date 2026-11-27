@@ -24,6 +24,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 
+	"authz-agent/internal/badrequest"
 	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/legacyvalue"
 	"authz-agent/internal/regobuiltins"
@@ -149,6 +150,9 @@ type Record struct {
 	// outsideKind is the kind of an operand whose state its domain does not
 	// hold ([record]); the record holds the state alone.
 	outsideKind spectables.Kind
+	// callerSent is set on a TooBig record of an operand whose value the
+	// request carries ([fromRequest]).
+	callerSent bool
 }
 
 // Input is the projection of a request into the input of a module.
@@ -210,9 +214,28 @@ func class(v jsonvalue.Value, lv legacyvalue.Record) spectables.Class {
 
 // errIndexTooBig fails a request with a value whose index is too big to look
 // up in linear time: a request is untrusted input, and its cost has to stay
-// linear in its size.
+// linear in its size. [Record.err] wraps it.
 var errIndexTooBig = fmt.Errorf("a list holds elements of one shape that write their numbers in too many ways: "+
-	"a lookup among them would read more than %d groups and scanned elements", maxLookup)
+	"a lookup among them would read more than %d groups and scanned elements; the limit keeps the cost of a "+
+	"request linear in its size, and a list whose elements write their numbers alike stays below it", maxLookup)
+
+// fromRequest reports whether the request carries the value of an operand
+// of kind k: its body, or the subject's token or headers. Such a value over
+// a limit is the caller's error, a [badrequest.Error]. The tenant's mapping
+// tables give subject.permissions, and a value over a limit there is not the
+// caller's; a source the module calls gives the rest, and its answer over
+// the limit reads as the source's failure ([sourceRecord]). The policy
+// gives a literal, which has no record.
+func fromRequest(k spectables.Kind) bool {
+	switch k {
+	case spectables.KindOperation, spectables.KindResourceType, spectables.KindResource, spectables.KindResPath,
+		spectables.KindResNested, spectables.KindResJSONPath, spectables.KindSubjID, spectables.KindSubjName,
+		spectables.KindSubjType, spectables.KindSubjServiceAccount, spectables.KindSubjRoles,
+		spectables.KindSubjScopes, spectables.KindSubjIsM2M, spectables.KindPIPToken, spectables.KindPIPHeader:
+		return true
+	}
+	return false
+}
 
 // errOutsideDomain fails a request in which an operand has a state the domain
 // of its kind does not hold. The module has a leaf for each state of the
@@ -255,21 +278,26 @@ func record(r *Ref, v Resolved) Record {
 	rec := buildRecord(r, v)
 	if r.reads(fieldEqIndex) && rec.EqIndex.tooBig() || r.reads(fieldElementIndex) && rec.ElementIndex.tooBig() ||
 		r.reads(fieldSubsetIndex) && rec.SubsetIndex.tooBig() {
-		return Record{State: rec.State, TooBig: true}
+		return Record{State: rec.State, TooBig: true, callerSent: fromRequest(r.Kind)}
 	}
 	return rec
 }
 
-// err is the error of a request that holds rec, read as name: nil,
-// errIndexTooBig where rec is TooBig, or errOutsideDomain where its state is
-// outside the domain of its kind.
+// err is the error of a request that holds rec, read as name. It is nil for
+// a valid rec. For a TooBig rec it wraps errIndexTooBig, and it is a
+// [badrequest.Error] where the request carries the value ([fromRequest]).
+// For a state outside the domain of its kind it wraps errOutsideDomain.
 func (rec Record) err(name string) error {
 	if rec.outsideKind != "" {
 		return fmt.Errorf("the value of %s is in state %s, outside the domain of kind %s: %w",
 			name, rec.State, rec.outsideKind, errOutsideDomain)
 	}
 	if rec.TooBig {
-		return fmt.Errorf("the value of %s: %w", name, errIndexTooBig)
+		err := fmt.Errorf("the value of %s: %w", name, errIndexTooBig)
+		if rec.callerSent {
+			return &badrequest.Error{Message: err.Error(), Err: err}
+		}
+		return err
 	}
 	return nil
 }
