@@ -28,6 +28,8 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/open-policy-agent/opa/v1/rego"
+
 	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/policyir"
 	"authz-agent/internal/regobuiltins"
@@ -387,6 +389,80 @@ func TestARefusedCandidateKeepsThePreviousSnapshot(t *testing.T) {
 	}
 }
 
+// A tenant whose candidate fails at a stage after the export keeps answering
+// from its previous snapshot, and its health names the stage, while another
+// tenant of the same load is published. The replaced stage fails only on a
+// text that contains the marker. Tenant a's new set has the marker in its
+// condition, which the module and the decision module contain, and in its
+// ID, which the filter contains.
+func TestACandidateRefusedAfterTheExportKeepsThePreviousSnapshot(t *testing.T) {
+	const marker = "zzrefused"
+	errStage := errors.New("refused by the test")
+	failGenerate := func(gen func(*policyir.Tree, *spectables.Table, regogen.Options) (*regogen.Module, error)) func(
+		*policyir.Tree, *spectables.Table, regogen.Options) (*regogen.Module, error) {
+		return func(tree *policyir.Tree, tab *spectables.Table, opt regogen.Options) (*regogen.Module, error) {
+			m, err := gen(tree, tab, opt)
+			if err == nil && strings.Contains(m.Text, marker) {
+				return nil, errStage
+			}
+			return m, err
+		}
+	}
+	failPrepare := func(file string) func(context.Context, string, string, string) (rego.PreparedEvalQuery, error) {
+		return func(ctx context.Context, query, f, text string) (rego.PreparedEvalQuery, error) {
+			if f == file && strings.Contains(text, marker) {
+				return rego.PreparedEvalQuery{}, errStage
+			}
+			return prepareQuery(ctx, query, f, text)
+		}
+	}
+	for _, tc := range []struct {
+		name       string
+		fail       func(r *Registry)
+		wantStage  string
+		wantReason string
+	}{
+		{"the module is not generated", func(r *Registry) { r.generate = failGenerate(r.generate) },
+			"generate", "refused by the test"},
+		{"the filter is not generated", func(r *Registry) { r.generateFilter = failGenerate(r.generateFilter) },
+			"generate", "the filter: refused by the test"},
+		{"the module does not compile", func(r *Registry) { r.prepareQuery = failPrepare("tenant.rego") },
+			"compile", "compile the module: refused by the test"},
+		{"the decision module does not compile", func(r *Registry) { r.prepareQuery = failPrepare("decision.rego") },
+			"compile", "compile the decision module: refused by the test"},
+		{"the filter does not compile", func(r *Registry) { r.prepareQuery = failPrepare("filter.rego") },
+			"compile", "compile the filter module: refused by the test"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, ``, set("a", "true"), set("b", "false"))
+			prev, _ := r.Snapshot("a")
+			tc.fail(r)
+
+			refused := strings.Replace(set("a", "resource.a == '"+marker+"'"), `"s-a"`, `"s-`+marker+`"`, 1)
+			sum := loadUnchecked(t, r, ``, refused, set("b", "true"))
+
+			if sum.Rejected != 1 || sum.Generated != 1 {
+				t.Errorf("Load summary = %+v, want 1 refused and 1 generated", sum)
+			}
+			if got, _ := r.Snapshot("a"); got != prev {
+				t.Errorf("snapshot of a = %+v, want the previous one %+v", got, prev)
+			}
+			if got := decide(t, r, readDoc(t, "a", "y", 1)); !got[0].Allowed {
+				t.Errorf("Decide(tenant a) = %+v, want allowed by the previous snapshot", got[0])
+			}
+			if got := decide(t, r, readDoc(t, "b", "y", 1)); !got[0].Allowed {
+				t.Errorf("Decide(tenant b) = %+v, want allowed by the new snapshot", got[0])
+			}
+			th, _ := tenantHealth(r, "a")
+			if !th.Ready || th.Rejected == nil || th.Rejected.Stage != tc.wantStage || th.Rejected.Reason != tc.wantReason {
+				t.Errorf("health of a = %+v, refused %+v, want ready with a refusal at stage %s: %q",
+					th, th.Rejected, tc.wantStage, tc.wantReason)
+			}
+		})
+	}
+}
+
 // A candidate that holds a simplified policy of resourceType ALL that is not
 // a global policy is refused, and the tenant keeps its previous snapshot
 // (ADR-0102 R4, ADR-0100 R7).
@@ -741,6 +817,21 @@ func TestLoadSnapshotsNamesARefusedTenantWithNoSnapshotAsNotServed(t *testing.T)
 	}
 }
 
+// The error of a load counts every refused tenant and names only those
+// without a previous snapshot.
+func TestLoadSnapshotsCountsEveryRefusedTenantAndNamesTheUnserved(t *testing.T) {
+	r := New(Config{}, tab(t), quiet{})
+	if err := loadSnapshots(r, set("a", "true")); err != nil {
+		t.Fatalf("LoadSnapshots of a valid tenant = %v, want nil", err)
+	}
+
+	err := loadSnapshots(r, set("a", broken), set("b", broken), set("c", "true"))
+
+	if want := "tenants with a refused candidate snapshot: 2; not served: b"; err == nil || err.Error() != want {
+		t.Errorf("LoadSnapshots = %v, want %q", err, want)
+	}
+}
+
 // Refused tenants are named in the order of their IDs, and a load of the
 // same documents, which the registry skips, names them with the same text.
 // The pull reports a refusal only when its text changes, so a text that
@@ -760,6 +851,9 @@ func TestLoadSnapshotsNamesRefusedTenantsInOrderAcrossLoads(t *testing.T) {
 	}
 	if !reflect.DeepEqual(tenants, []string{"a", "b"}) {
 		t.Errorf("refused tenants = %q, want [a b]", tenants)
+	}
+	if want := "tenants with a refused candidate snapshot: 2; not served: a, b"; first.Error() != want {
+		t.Errorf("LoadSnapshots = %q, want %q", first, want)
 	}
 	if second == nil || second.Error() != first.Error() {
 		t.Errorf("LoadSnapshots of the same documents =\n%v\nwant\n%v", second, first)

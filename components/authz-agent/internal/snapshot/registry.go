@@ -74,8 +74,8 @@ type Config struct {
 // Snapshot is the compiled module of one tenant.
 type Snapshot struct {
 	Tenant string
-	// Hash identifies the module text and the decision text; tenants with
-	// equal text share the compiled queries.
+	// Hash identifies the module text, the decision text, and the filter
+	// text; tenants with equal texts share the compiled queries.
 	Hash   string
 	Module *regogen.Module
 	// Filter is the module that answers check/filter.
@@ -116,6 +116,12 @@ type Registry struct {
 	tab *spectables.Table
 	opt regogen.Options
 	log Logger
+	// generate, generateFilter, and prepareQuery are [regogen.Generate],
+	// [regogen.GenerateFilter], and [prepareQuery]: they generate the module
+	// and the filter, and prepare each query of the compile stage. A test
+	// replaces one to refuse a candidate there.
+	generate, generateFilter func(*policyir.Tree, *spectables.Table, regogen.Options) (*regogen.Module, error)
+	prepareQuery             func(ctx context.Context, query, file, text string) (rego.PreparedEvalQuery, error)
 
 	load sync.Mutex
 	cur  atomic.Pointer[state]
@@ -133,7 +139,8 @@ func New(cfg Config, tab *spectables.Table, log Logger) *Registry {
 	opt := regogen.DefaultOptions()
 	opt.Groups, opt.Decision = true, true
 	opt.FirstApproximation = cfg.FilterFirstApproximation
-	r := &Registry{cfg: cfg, tab: tab, opt: opt, log: log}
+	r := &Registry{cfg: cfg, tab: tab, opt: opt, log: log,
+		generate: regogen.Generate, generateFilter: regogen.GenerateFilter, prepareQuery: prepareQuery}
 	r.cur.Store(&state{snapshots: map[string]*Snapshot{}, tenants: map[string]TenantHealth{}})
 	return r
 }
@@ -422,7 +429,7 @@ func (r *Registry) build(ctx context.Context, t string, exp *policyir.Export, pr
 		b.health.Rejected, b.repeat = prev.tenants[t].Rejected, true
 		return b
 	}
-	m, err := regogen.Generate(tree, r.tab, r.opt)
+	m, err := r.generate(tree, r.tab, r.opt)
 	if err != nil {
 		rej := &Rejection{At: now(), Stage: "generate", Reason: err.Error()}
 		var re *regogen.RejectedError
@@ -437,7 +444,7 @@ func (r *Registry) build(ctx context.Context, t string, exp *policyir.Export, pr
 	}
 	fopt := r.opt
 	fopt.Package += "_filter"
-	f, err := regogen.GenerateFilter(tree, r.tab, fopt)
+	f, err := r.generateFilter(tree, r.tab, fopt)
 	if err != nil {
 		b.health.Rejected = &Rejection{At: now(), Stage: "generate", Reason: "the filter: " + err.Error()}
 		return b
@@ -467,28 +474,30 @@ func (r *Registry) build(ctx context.Context, t string, exp *policyir.Export, pr
 // the filter f.
 func (r *Registry) compile(ctx context.Context, m, f *regogen.Module) (*queries, error) {
 	start := time.Now()
-	allow, err := rego.New(append([]func(*rego.Rego){
-		rego.Query("data." + r.opt.Package + ".allow"),
-		rego.Module("tenant.rego", m.Text),
-	}, regogen.Builtins()...)...).PrepareForEval(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("compile the module: %w", err)
+	var q queries
+	for _, c := range []struct {
+		dst                     *rego.PreparedEvalQuery
+		what, query, file, text string
+	}{
+		{&q.allow, "module", "data." + r.opt.Package + ".allow", "tenant.rego", m.Text},
+		{&q.maybe, "decision module", "data." + r.opt.Package + "_decision.maybe", "decision.rego", m.DecisionText},
+		{&q.filter, "filter module", regogen.FilterQuery(r.opt.Package + "_filter"), "filter.rego", f.Text},
+	} {
+		p, err := r.prepareQuery(ctx, c.query, c.file, c.text)
+		if err != nil {
+			return nil, fmt.Errorf("compile the %s: %w", c.what, err)
+		}
+		*c.dst = p
 	}
-	maybe, err := rego.New(append([]func(*rego.Rego){
-		rego.Query("data." + r.opt.Package + "_decision.maybe"),
-		rego.Module("decision.rego", m.DecisionText),
-	}, regogen.Builtins()...)...).PrepareForEval(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("compile the decision module: %w", err)
-	}
-	filter, err := rego.New(append([]func(*rego.Rego){
-		rego.Query(regogen.FilterQuery(r.opt.Package + "_filter")),
-		rego.Module("filter.rego", f.Text),
-	}, regogen.Builtins()...)...).PrepareForEval(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("compile the filter module: %w", err)
-	}
-	return &queries{allow: allow, maybe: maybe, filter: filter, compile: time.Since(start)}, nil
+	q.compile = time.Since(start)
+	return &q, nil
+}
+
+// prepareQuery prepares query over one module, named file, whose source is
+// text, with the built-in functions of a generated module.
+func prepareQuery(ctx context.Context, query, file, text string) (rego.PreparedEvalQuery, error) {
+	return rego.New(append([]func(*rego.Rego){rego.Query(query), rego.Module(file, text)},
+		regogen.Builtins()...)...).PrepareForEval(ctx)
 }
 
 func now() string { return time.Now().UTC().Format(time.RFC3339) }
