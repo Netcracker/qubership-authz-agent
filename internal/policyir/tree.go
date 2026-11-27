@@ -324,23 +324,33 @@ type checker struct {
 	bound map[string]bool
 }
 
-// node is a path from the root of the tree, held as a label and a link to the
-// parent path. Its text is built only when an error or a finding names it, so
-// a check of a deep tree or of a set with a long ID does not copy the
-// ancestors' labels at every node.
+// node is a path from the root of the tree, held as the sibling the path ends
+// at and a link to the parent path. Its text is built only when an error or a
+// finding names it, so a check of a deep tree or of a set with a long ID does
+// not copy the ancestors' labels at every node.
 type node struct {
 	parent *node
-	label  string
+	sibling
 }
 
-func (n *node) child(label string) *node { return &node{parent: n, label: label} }
+func (n *node) child(label string) *node { return n.at(sibling{label: label, pos: -1}) }
 
-// String returns the labels from the root to n, joined by " > ", or empty for
-// a nil n.
-func (n *node) String() string {
+func (n *node) at(s sibling) *node { return &node{parent: n, sibling: s} }
+
+// String returns the labels from the root to n, each with its position where
+// it has one, joined by " > ", or empty for a nil n.
+func (n *node) String() string { return n.path(true) }
+
+// path returns the labels from the root to n, joined by " > ", each with its
+// position only where positions is true.
+func (n *node) path(positions bool) string {
 	var labels []string
 	for ; n != nil; n = n.parent {
-		labels = append(labels, n.label)
+		if positions {
+			labels = append(labels, n.sibling.String())
+		} else {
+			labels = append(labels, n.label)
+		}
 	}
 	slices.Reverse(labels)
 	return strings.Join(labels, " > ")
@@ -393,10 +403,10 @@ func (t *Tree) validate() error {
 		if j := slices.Index(g.Policies, nil); j >= 0 {
 			return fmt.Errorf("%s: policy %d: nil", groups[i], j)
 		}
-		group := (*node)(nil).child(groups[i])
+		group := (*node)(nil).at(groups[i])
 		for j, l := range labels(g.Policies, simplifiedPolicyLabel) {
 			p := g.Policies[j]
-			here := group.child(l)
+			here := group.at(l)
 			if err := c.condition(here.child("condition"), p.Condition, PlaceSimplified); err != nil {
 				return err
 			}
@@ -413,7 +423,7 @@ func (c *checker) sets(parent *node, sets []*PolicySet) error {
 		return fmt.Errorf("%s: set %d: nil", parent.child("sets"), i)
 	}
 	for i, l := range labels(sets, setLabel) {
-		if err := c.set(parent.child(l), sets[i]); err != nil {
+		if err := c.set(parent.at(l), sets[i]); err != nil {
 			return err
 		}
 	}
@@ -450,7 +460,7 @@ func (c *checker) set(here *node, s *PolicySet) error {
 		return fmt.Errorf("%s: policy %d: nil", here, i)
 	}
 	for i, l := range labels(s.Policies, policyLabel) {
-		if err := c.policy(here.child(l), s.Policies[i]); err != nil {
+		if err := c.policy(here.at(l), s.Policies[i]); err != nil {
 			return err
 		}
 	}
@@ -472,7 +482,7 @@ func (c *checker) policy(here *node, p *Policy) error {
 	}
 	for i, l := range labels(p.Rules, ruleLabel) {
 		r := p.Rules[i]
-		rp := here.child(l)
+		rp := here.at(l)
 		if !slices.Contains(effects, r.Effect) {
 			return fmt.Errorf("%s: effect %q unknown", rp, r.Effect)
 		}

@@ -1639,3 +1639,91 @@ func TestALoadWarnsOfARuleWithNoEffect(t *testing.T) {
 		t.Errorf("Decide(read doc with a = y) = %+v, want allowed: the rule with no effect denies nothing", got[0])
 	}
 }
+
+// warnedSet is the set s-a of tenant a that holds policies, each a JSON
+// object that [warnedPolicy] builds.
+func warnedSet(policies ...string) string {
+	return `{"policySetId": "s-a", "status": "ACTIVE", "tenantId": "a", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "policies": [` + strings.Join(policies, ",") + `]}`
+}
+
+// warnedPolicy is the policy p of tenant a, under PERMIT_UNLESS_DENY, with
+// target and rules, each a JSON object that [warnedRule] builds.
+func warnedPolicy(target string, rules ...string) string {
+	return fmt.Sprintf(`{"policyId": "p", "target": %q, "combiningAlgorithm": "PERMIT_UNLESS_DENY", "tenantId": "a",
+		"rules": [%s]}`, target, strings.Join(rules, ","))
+}
+
+// warnedRule is the rule r of tenant a with condition, and with effect where
+// effect is not empty.
+func warnedRule(condition, effect string) string {
+	e := ""
+	if effect != "" {
+		e = fmt.Sprintf(`, "effect": %q`, effect)
+	}
+	return fmt.Sprintf(`{"ruleId": "r", "target": "true", "condition": %q, "tenantId": "a"%s}`, condition, e)
+}
+
+// A load warns of a warning of the tree that the previous load did not
+// have, comparing the node of each warning without the position that tells
+// apart siblings sharing an ID: a sibling inserted ahead of the node moves
+// its position and draws no warning again, and one more node of the same ID
+// and warning draws one.
+func TestALoadWarnsOfATreeWarningByItsNodeNotItsPosition(t *testing.T) {
+	const noEffect = `: names no effect, so the rule counts as NOT_APPLICABLE and neither permits nor denies`
+	const m2m = `subject.isM2M EQ "yes" reads subject.isM2M as absent whatever the token; ` +
+		`the condition subject.isM2M alone tests whether the token is M2M`
+	none := warnedRule("resource.a == 'y'", "")
+	deny := warnedRule("resource.a == 'z'", "DENY")
+	m2mRule := warnedRule("subject.isM2M == 'yes'", "ALLOW")
+	plain := warnedPolicy("true", deny)
+	for _, tc := range []struct {
+		name          string
+		before, after string
+		want          []string
+	}{{
+		name:   "a rule with no effect moves behind a rule of its ID",
+		before: warnedSet(warnedPolicy("true", none)),
+		after:  warnedSet(warnedPolicy("true", deny, none)),
+	}, {
+		name:   "a policy with a comparison over subject.isM2M moves behind a policy of its ID",
+		before: warnedSet(warnedPolicy("subject.isM2M == 'yes'", deny)),
+		after:  warnedSet(plain, warnedPolicy("subject.isM2M == 'yes'", deny)),
+	}, {
+		name:   "two rules with no effect move behind a rule of their ID",
+		before: warnedSet(warnedPolicy("true", none, none)),
+		after:  warnedSet(warnedPolicy("true", deny, none, none)),
+	}, {
+		name:   "a second rule of the ID with the same comparison over subject.isM2M",
+		before: warnedSet(warnedPolicy("true", m2mRule)),
+		after:  warnedSet(warnedPolicy("true", m2mRule, m2mRule)),
+		want:   []string{`policies: tenant a: set "s-a" > policy "p" > rule "r" #1 > condition: ` + m2m},
+	}, {
+		name:   "one of two rules of the ID with the same comparison over subject.isM2M removed",
+		before: warnedSet(warnedPolicy("true", m2mRule, m2mRule)),
+		after:  warnedSet(warnedPolicy("true", m2mRule)),
+	}, {
+		name:   "another comparison over subject.isM2M in the same rule",
+		before: warnedSet(warnedPolicy("true", m2mRule)),
+		after:  warnedSet(warnedPolicy("true", warnedRule("subject.isM2M == 'no'", "ALLOW"))),
+		want: []string{`policies: tenant a: set "s-a" > policy "p" > rule "r" > condition: ` +
+			strings.Replace(m2m, `"yes"`, `"no"`, 1)},
+	}, {
+		name:   "a rule with no effect in place of a rule of its ID with an effect",
+		before: warnedSet(warnedPolicy("true", deny, deny)),
+		after:  warnedSet(warnedPolicy("true", deny, none)),
+		want:   []string{`policies: tenant a: set "s-a" > policy "p" > rule "r" #1` + noEffect},
+	}} {
+		t.Run(tc.name, func(t *testing.T) {
+			w := &warnings{}
+			r := New(Config{}, tab(t), w)
+			loadUnchecked(t, r, ``, tc.before)
+			w.lines = nil
+			loadUnchecked(t, r, ``, tc.after)
+			if !slices.Equal(w.lines, tc.want) {
+				t.Errorf("warnings of the second load:\n%s\nwant:\n%s",
+					strings.Join(w.lines, "\n"), strings.Join(tc.want, "\n"))
+			}
+		})
+	}
+}

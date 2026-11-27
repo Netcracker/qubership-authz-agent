@@ -102,6 +102,9 @@ type state struct {
 	// dropped maps a tenant to the elements its tree leaves out, which
 	// [TenantHealth.Dropped] lists as text.
 	dropped map[string][]policyir.Element
+	// warnings maps a tenant to the warnings of its tree, which
+	// [TenantHealth.Warnings] lists as text.
+	warnings map[string][]policyir.Warning
 	// refused holds each tenant's refused candidate, so that an unchanged
 	// candidate is not refused and reported again.
 	refused   map[string]refusal
@@ -256,6 +259,7 @@ func (r *Registry) Load(ctx context.Context, policySets, pips []byte) (LoadSumma
 		tenants:   map[string]TenantHealth{},
 		refused:   map[string]refusal{},
 		dropped:   exp.Dropped,
+		warnings:  map[string][]policyir.Warning{},
 		orphans:   exp.Orphans,
 		loadedAt:  time.Now(),
 		sourceKey: sourceKey,
@@ -304,7 +308,10 @@ func (r *Registry) Load(ctx context.Context, policySets, pips []byte) (LoadSumma
 			th.Dropped = append(th.Dropped, d.String())
 		}
 		if tree, ok := exp.Trees[t]; ok {
-			th.Warnings = tree.Warnings()
+			next.warnings[t] = tree.Warnings()
+			for _, w := range next.warnings[t] {
+				th.Warnings = append(th.Warnings, w.String())
+			}
 		}
 		switch {
 		case b.snap != nil:
@@ -525,9 +532,10 @@ func (r *Registry) LoadSnapshots(ctx context.Context, policySets, pips []byte) e
 // warnNew warns of what next has and prev did not: an element that names no
 // tenant or that a tenant's tree leaves out, each compared by
 // [policyir.Element.Identity]; a refused candidate; a part of a published
-// snapshot that fails permanently; and a warning of a tenant's tree. A rule
-// that loses a key or a set that is dropped changes the answers while every
-// tenant stays ready, so /health alone does not reach the operator.
+// snapshot that fails permanently; and a warning of a tenant's tree,
+// compared by [policyir.Warning.Identity]. A rule that loses a key or a set
+// that is dropped changes the answers while every tenant stays ready, so
+// /health alone does not reach the operator.
 func (r *Registry) warnNew(prev, next *state) {
 	for _, o := range newElements(prev.orphans, next.orphans) {
 		r.log.Warnf("policies: an element names no tenant and is listed under orphans in /health: %s", o)
@@ -549,22 +557,23 @@ func (r *Registry) warnNew(prev, next *state) {
 					"a decision that depends on it denies with a reason that starts with %q: %s", t, ReasonUnknown, f)
 			}
 		}
-		for _, w := range th.Warnings {
-			if !slices.Contains(old.Warnings, w) {
-				r.log.Warnf("policies: tenant %s: %s", t, w)
-			}
+		for _, w := range newElements(prev.warnings[t], next.warnings[t]) {
+			r.log.Warnf("policies: tenant %s: %s", t, w)
 		}
 	}
 }
 
 // newElements returns the elements of next whose identity next holds more
 // times than prev does, in the order of next.
-func newElements(prev, next []policyir.Element) []policyir.Element {
-	seen := map[policyir.Element]int{}
+func newElements[E interface {
+	comparable
+	Identity() E
+}](prev, next []E) []E {
+	seen := map[E]int{}
 	for _, e := range prev {
 		seen[e.Identity()]++
 	}
-	var out []policyir.Element
+	var out []E
 	for _, e := range next {
 		if k := e.Identity(); seen[k] > 0 {
 			seen[k]--

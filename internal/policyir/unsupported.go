@@ -105,14 +105,65 @@ func (t *Tree) Unsupported() []Finding {
 	return out
 }
 
+// WarningKind names why the agent evaluates a part of a tree otherwise than
+// its author likely meant.
+type WarningKind string
+
+const (
+	// WarnIsM2MComparison is a comparison over subject.isM2M. The agent reads
+	// subject.isM2M as absent whatever the token, where the condition
+	// subject.isM2M alone tests the M2M token.
+	WarnIsM2MComparison WarningKind = "is-m2m-comparison"
+	// WarnNoEffect is a rule with no effect, which counts as NOT_APPLICABLE
+	// and neither permits nor denies.
+	WarnNoEffect WarningKind = "no-effect"
+)
+
+// Warning is a part of a [Tree] that the agent evaluates otherwise than its
+// author likely meant. A Warning is comparable; two loads of an export
+// compare their warnings by [Warning.Identity].
+type Warning struct {
+	// Where is the path of the node, as in [Finding].
+	Where string
+	// node is Where without the positions of the siblings that share an ID.
+	node string
+	Kind WarningKind
+	// Atom is the comparison of a WarnIsM2MComparison, empty for the other
+	// kinds.
+	Atom string
+}
+
+// String names the node of w and what the agent does with it.
+func (w Warning) String() string {
+	switch w.Kind {
+	case WarnIsM2MComparison:
+		return fmt.Sprintf("%s: %s reads subject.isM2M as absent whatever the token; "+
+			"the condition subject.isM2M alone tests whether the token is M2M", w.Where, w.Atom)
+	case WarnNoEffect:
+		return w.Where + ": names no effect, so the rule counts as NOT_APPLICABLE and neither permits nor denies"
+	}
+	return fmt.Sprintf("%s: %s", w.Where, w.Kind)
+}
+
+// Identity returns w with the positions of its path left out. A sibling of
+// the same ID inserted ahead of the node changes those positions and nothing
+// else. Siblings that share an ID and a warning have one identity, so a
+// caller that compares two loads counts the identities of each.
+func (w Warning) Identity() Warning {
+	w.Where = w.node
+	return w
+}
+
+func warning(where *node, kind WarningKind, atom string) Warning {
+	return Warning{Where: where.String(), node: where.path(false), Kind: kind, Atom: atom}
+}
+
 // Warnings lists, in tree order, the parts of the tree the agent evaluates
-// otherwise than their author likely meant, each with its place: a
-// comparison over subject.isM2M, which reads subject.isM2M as absent whatever
-// the token, where the condition subject.isM2M alone tests the M2M token; and
-// a rule with no effect, which counts as NOT_APPLICABLE and neither permits
-// nor denies.
-func (t *Tree) Warnings() []string {
-	var out []string
+// otherwise than their author likely meant: one [WarnIsM2MComparison] for
+// each comparison over subject.isM2M and one [WarnNoEffect] for each rule
+// with no effect.
+func (t *Tree) Warnings() []Warning {
+	var out []Warning
 	t.walk(func(where *node, c *Condition) {
 		for _, d := range c.Disjuncts {
 			for _, a := range d {
@@ -120,14 +171,12 @@ func (t *Tree) Warnings() []string {
 				if !ok || cmp.Left != Operand(Subject{Attr: SubjectIsM2M}) && cmp.Right != Operand(Subject{Attr: SubjectIsM2M}) {
 					continue
 				}
-				out = append(out, fmt.Sprintf("%s: %s reads subject.isM2M as absent whatever the token; "+
-					"the condition subject.isM2M alone tests whether the token is M2M", where, formatAtom(cmp, false)))
+				out = append(out, warning(where, WarnIsM2MComparison, formatAtom(cmp, false)))
 			}
 		}
 	}, nil, func(where *node, r *Rule) {
 		if r.Effect == EffectAbsent {
-			out = append(out, fmt.Sprintf("%s: names no effect, so the rule counts as NOT_APPLICABLE and neither "+
-				"permits nor denies", where))
+			out = append(out, warning(where, WarnNoEffect, ""))
 		}
 	})
 	return out
@@ -147,10 +196,10 @@ func (t *Tree) walk(cond func(where *node, c *Condition), nested func(where *nod
 	}
 	groups := labels(t.Simplified, groupLabel)
 	for i, g := range t.Simplified {
-		group := (*node)(nil).child(groups[i])
+		group := (*node)(nil).at(groups[i])
 		policies := labels(g.Policies, simplifiedPolicyLabel)
 		for j, p := range g.Policies {
-			visit(group.child(policies[j]).child("condition"), p.Condition)
+			visit(group.at(policies[j]).child("condition"), p.Condition)
 		}
 	}
 	var set func(here *node, s *PolicySet, iterating bool)
@@ -161,11 +210,11 @@ func (t *Tree) walk(cond func(where *node, c *Condition), nested func(where *nod
 		visit(here.child("target"), s.Target)
 		policies := labels(s.Policies, policyLabel)
 		for i, p := range s.Policies {
-			pp := here.child(policies[i])
+			pp := here.at(policies[i])
 			visit(pp.child("target"), p.Target)
 			rules := labels(p.Rules, ruleLabel)
 			for j, r := range p.Rules {
-				rp := pp.child(rules[j])
+				rp := pp.at(rules[j])
 				visit(rp.child("target"), r.Target)
 				visit(rp.child("condition"), r.Condition)
 				if rule != nil {
@@ -175,12 +224,12 @@ func (t *Tree) walk(cond func(where *node, c *Condition), nested func(where *nod
 		}
 		children := labels(s.Sets, setLabel)
 		for i, c := range s.Sets {
-			set(here.child(children[i]), c, iterating || s.Iterate != nil)
+			set(here.at(children[i]), c, iterating || s.Iterate != nil)
 		}
 	}
 	top := labels(t.Sets, setLabel)
 	for i, s := range t.Sets {
-		set((*node)(nil).child(top[i]), s, false)
+		set((*node)(nil).at(top[i]), s, false)
 	}
 }
 
@@ -190,45 +239,61 @@ func (t *Tree) walk(cond func(where *node, c *Condition), nested func(where *nod
 func (t *Tree) EachPredicates(f func(where string, p Predicates)) {
 	groups := labels(t.Simplified, groupLabel)
 	for i, g := range t.Simplified {
-		group := (*node)(nil).child(groups[i])
+		group := (*node)(nil).at(groups[i])
 		policies := labels(g.Policies, simplifiedPolicyLabel)
 		for j, p := range g.Policies {
-			f(group.child(policies[j]).child("predicate").String(), p.Predicates)
+			f(group.at(policies[j]).child("predicate").String(), p.Predicates)
 		}
 	}
 	var set func(here *node, s *PolicySet)
 	set = func(here *node, s *PolicySet) {
 		policies := labels(s.Policies, policyLabel)
 		for i, p := range s.Policies {
-			pp := here.child(policies[i])
+			pp := here.at(policies[i])
 			rules := labels(p.Rules, ruleLabel)
 			for j, r := range p.Rules {
-				f(pp.child(rules[j]).child("predicate").String(), r.Predicates)
+				f(pp.at(rules[j]).child("predicate").String(), r.Predicates)
 			}
 		}
 		children := labels(s.Sets, setLabel)
 		for i, c := range s.Sets {
-			set(here.child(children[i]), c)
+			set(here.at(children[i]), c)
 		}
 	}
 	top := labels(t.Sets, setLabel)
 	for i, s := range t.Sets {
-		set((*node)(nil).child(top[i]), s)
+		set((*node)(nil).at(top[i]), s)
 	}
 }
 
-// labels names each of the sibling nodes by label, and adds the position of a
-// node whose label another sibling shares, so a path names one node.
-func labels[T any](nodes []T, label func(T) string) []string {
-	out := make([]string, len(nodes))
+// sibling is a node of the tree among the nodes of its parent: its label,
+// and its position among them where another of them shares the label, or -1.
+type sibling struct {
+	label string
+	pos   int
+}
+
+// String returns the label, followed by " #" and the position where s has
+// one, such as `set "s" #0`.
+func (s sibling) String() string {
+	if s.pos < 0 {
+		return s.label
+	}
+	return fmt.Sprintf("%s #%d", s.label, s.pos)
+}
+
+// labels names each of the sibling nodes by label, and gives the position of
+// a node whose label another sibling shares, so a path names one node.
+func labels[T any](nodes []T, label func(T) string) []sibling {
+	out := make([]sibling, len(nodes))
 	seen := map[string]int{}
 	for i, n := range nodes {
-		out[i] = label(n)
-		seen[out[i]]++
+		out[i] = sibling{label: label(n), pos: -1}
+		seen[out[i].label]++
 	}
-	for i, l := range out {
-		if seen[l] > 1 {
-			out[i] = fmt.Sprintf("%s #%d", l, i)
+	for i := range out {
+		if seen[out[i].label] > 1 {
+			out[i].pos = i
 		}
 	}
 	return out

@@ -109,7 +109,11 @@ func TestTreeWarningsNameEveryComparisonWithSubjectIsM2M(t *testing.T) {
 		`simplified "d"/"c"/"uri" > policy "sp1" > condition: subject.isM2M EQ "yes"` + tail,
 		`set "s1" > policy "p1" > target: resource.a NE subject.isM2M` + tail,
 	}
-	if got := tree.Warnings(); !slices.Equal(got, want) {
+	var got []string
+	for _, w := range tree.Warnings() {
+		got = append(got, w.String())
+	}
+	if !slices.Equal(got, want) {
 		t.Errorf("Warnings() =\n%v\nwant\n%v", got, want)
 	}
 }
