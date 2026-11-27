@@ -17,6 +17,8 @@ lint: test-stand-files
 	cd test/parity/suite && golangci-lint run ./...
 	@echo "[lint] Go — test/integration/testify"
 	cd test/integration/testify && golangci-lint run --build-tags integration ./...
+	@echo "[lint] Go — test/suitecheck"
+	cd test/suitecheck && golangci-lint run ./...
 	@echo "[lint] Go — test/integration/pipstub"
 	cd test/integration/pipstub && golangci-lint run ./...
 	@echo "[lint] Go — test/integration/tenantmanager"
@@ -193,7 +195,7 @@ e2e-images:
 	docker build -t local/pip-stub:ci                  -f test/integration/pipstub/Dockerfile test/integration/pipstub
 	docker build -t local/tenant-manager:ci            -f test/integration/tenantmanager/Dockerfile test/integration/tenantmanager
 	docker build -t local/authz-runtime-suite:ci       -f test/integration/testify/Dockerfile .
-	docker build -t local/authz-parity-suite:ci        -f test/parity/suite/Dockerfile test/parity/suite
+	docker build -t local/authz-parity-suite:ci        -f test/parity/suite/Dockerfile .
 	kind load docker-image --name $(KIND_CLUSTER) $(addprefix local/,$(addsuffix :ci,$(E2E_IMAGES)))
 
 # The realm and stub files the test-stand chart reads from files/: the realms

@@ -16,7 +16,7 @@ installation with 100 tenants. This covers cost only: a correctness defect, such
 another, stays in scope. A count that a caller or a PIP controls, such as the items of a bulk request, the bytes of a
 PIP response, the tenants that requests name, or the realms in `iss` claims, needs a bound at any size.
 
-Tests: Go `testing` from the standard library, with `testing/synctest` for code that waits on goroutines or timers. testify is used only in `test/integration/testify` and `test/parity/suite`, and go-cmp only in `test/parity/suite`; new tests elsewhere use neither. Mutation: mutago, through `make mutation-diff`.
+Tests: Go `testing` from the standard library, with `testing/synctest` for code that waits on goroutines or timers. testify is used only in `test/integration/testify`, `test/parity/suite`, and `test/suitecheck`, and go-cmp only in `test/parity/suite`; new tests elsewhere use neither. Mutation: mutago, through `make mutation-diff`.
 
 For a branch that changes Go code outside `test/`, run `make mutation-diff` after `git fetch` and act on the report it prints. Do not run mutago with `--update-baseline`.
 

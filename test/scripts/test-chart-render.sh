@@ -1001,6 +1001,32 @@ for row in \
   fi
 done
 
+# ── Test-stand suite Job ─────────────────────────────────────────────────
+#
+# The suite binaries fail a run that checked nothing only when
+# SUITE_REQUIRE_CHECKS is true. The chart sets it in suite.env, and the values
+# file of each kind stand, which sets suite.env of its own, has to keep it. The
+# renders turn the identity provider off, since its template needs the realm
+# files `make test-stand-files` generates.
+suite_require_checks_of() {
+  helm template t "${TEST_STAND_CHART_DIR}" --set TAG=test --set idp.enabled=false "$@" \
+    --show-only templates/suite.yaml 2>&1 \
+    | grep -A1 -- '- name: SUITE_REQUIRE_CHECKS$' | sed -n '2s/^ *//p' || true
+}
+for row in \
+  'the chart defaults|--set suite.enabled=true' \
+  'test/k8s/test-stand-values.yaml|-f test/k8s/test-stand-values.yaml' \
+  'test/k8s/parity/test-stand-values.yaml|-f test/k8s/parity/test-stand-values.yaml'; do
+  IFS='|' read -r label args <<<"${row}"
+  # shellcheck disable=SC2086 # args holds two words: a flag and its value.
+  got="$(cd "${ROOT_DIR}" && suite_require_checks_of ${args})"
+  if [[ "${got}" == 'value: "true"' ]]; then
+    pass "the suite Job with ${label} sets SUITE_REQUIRE_CHECKS=true"
+  else
+    fail "the suite Job with ${label} renders SUITE_REQUIRE_CHECKS as '${got}', expected 'value: \"true\"'"
+  fi
+done
+
 echo
 if (( failures > 0 )); then
   echo "chart render checks: ${failures} failure(s)"

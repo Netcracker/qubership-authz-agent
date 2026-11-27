@@ -26,6 +26,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+
+	"authz-agent/test/suitecheck"
 )
 
 type stepResult struct {
@@ -37,7 +39,7 @@ type stepResult struct {
 // RuntimeSuite is the top-level Testify suite for runtime integration tests.
 // It bootstraps Keycloak tokens, uploads policies, and validates step coverage.
 type RuntimeSuite struct {
-	suite.Suite
+	suitecheck.Suite
 
 	cfg                     RuntimeConfig
 	validOrderReaderToken   string
@@ -56,6 +58,14 @@ type RuntimeSuite struct {
 
 func TestRuntimeSuite(t *testing.T) {
 	suite.Run(t, new(RuntimeSuite))
+}
+
+// TestMain fails a run in which no step of TestRuntimeSuite ran to the end when
+// SUITE_REQUIRE_CHECKS is "true"; see [suitecheck.Main]. It lives beside
+// TestRuntimeSuite, in the file the integration tag builds, so a run of the
+// package's other tests does not depend on the variable.
+func TestMain(m *testing.M) {
+	suitecheck.Main(m, suitecheck.Names{Suite: "TestRuntimeSuite", Unit: "step", Example: "^TestRuntimeSuite$/^TestCheckResource$"})
 }
 
 func (s *RuntimeSuite) SetupSuite() {

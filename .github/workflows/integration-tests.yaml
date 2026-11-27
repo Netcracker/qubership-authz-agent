@@ -8,7 +8,9 @@
 #                        Dockerfiles, kubeconform over the rendered charts, and
 #                        trivy config over the rendered product charts
 #   integration-compile  go vet with -tags integration, so a broken integration
-#                        test file fails here instead of after a cluster boot
+#                        test file fails here instead of after a cluster boot,
+#                        and a run of each suite binary that selects no test,
+#                        which has to fail with SUITE_REQUIRE_CHECKS=true
 #   jsonpath-jayway      internal/jsonpath against Jayway JsonPath on the JVM,
 #                        over the package's cases, the json-path-comparison
 #                        queries, and the calls Jayway's own tests make
@@ -144,6 +146,28 @@ jobs:
       - name: Vet the parity suite
         working-directory: test/parity/suite
         run: go vet -tags integration ./...
+
+      # The suite Job runs with SUITE_REQUIRE_CHECKS=true, which makes a suite
+      # binary fail a run in which no test of its suite ran to the end. A run
+      # that selects no test shows that each binary carries the check and
+      # names its own suite in the hint.
+      - name: Check that the suites fail a run that checks nothing
+        run: |
+          for suite in test/integration/testify:TestRuntimeSuite test/parity/suite:TestParitySuite; do
+            dir=${suite%%:*}
+            name=${suite##*:}
+            cd "$GITHUB_WORKSPACE/$dir"
+            go test -c -tags integration -o "$RUNNER_TEMP/suite.test" .
+            if SUITE_REQUIRE_CHECKS=true "$RUNNER_TEMP/suite.test" -test.run '^$' 2>"$RUNNER_TEMP/suite.stderr"; then
+              echo "::error::$dir: the suite binary exited 0 after a run that selected no test, with SUITE_REQUIRE_CHECKS=true"
+              exit 1
+            fi
+            if ! grep -q "^$name checked nothing: " "$RUNNER_TEMP/suite.stderr"; then
+              cat "$RUNNER_TEMP/suite.stderr"
+              echo "::error::$dir: the suite binary failed without printing a line that starts with '$name checked nothing:'"
+              exit 1
+            fi
+          done
 
       # The pull route of the parity stand compiles only with this tag, which
       # the CI workflow's go test does not pass.
