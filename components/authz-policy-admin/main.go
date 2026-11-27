@@ -82,8 +82,34 @@ func init() {
 	// The environment is the only property source, as in authz-agent: the
 	// image ships no application.yaml, and the chart configures the stub
 	// through AUTHZ_POLICY_ADMIN_* variables and LOGGING_LEVEL_ROOT.
-	configloader.Init(configloader.EnvPropertySource())
+	loadConfig(configloader.EnvPropertySource())
 	logger = logging.GetLogger("authz-policy-admin")
+}
+
+// loadConfig initializes configloader from sources and returns once
+// configloader has delivered its init event to the handler that loadConfig
+// subscribes for it. Call it before the first [logging.GetLogger] of the
+// process. The platform logger subscribes to configloader when it creates its
+// first logger, and on every init event delivered to it sets every logger to
+// the configured level, which at LOGGING_LEVEL_ROOT=fatal undoes the level
+// that logStop raises.
+func loadConfig(sources ...*configloader.PropertySource) {
+	inited := make(chan struct{}, 1)
+	id, err := configloader.Subscribe(func(e configloader.Event) error {
+		if e.Type == configloader.InitedEventT {
+			select {
+			case inited <- struct{}{}:
+			default:
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+	configloader.Init(sources...)
+	<-inited
+	_ = configloader.Unsubscribe(id)
 }
 
 func main() {
