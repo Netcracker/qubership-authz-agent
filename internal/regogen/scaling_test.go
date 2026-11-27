@@ -275,6 +275,20 @@ func TestTheNegationOfAMongoDBOrGrowsLinearly(t *testing.T) {
 	})
 }
 
+// The negation of an RSQL text writes its tree in one pass, and allocates in
+// proportion to the text rather than to the text times the depth of its
+// groups.
+func TestTheNegationOfNestedRSQLGroupsGrowsLinearly(t *testing.T) {
+	checkGrowth(t, 8192, 3, requestBudget, false, func(n int) func() {
+		s := alternatingRSQL(n)
+		return func() {
+			if _, ok := negateRSQL(s); !ok {
+				t.Fatalf("negateRSQL(a==1 in %d alternating groups) refused the text", n)
+			}
+		}
+	})
+}
+
 // moduleSettings are the modules a tenant's policies compile to: the module
 // the agent generates, with subject groups and the decision module
 // (agentOptions); the same without groups, for the code only that setting

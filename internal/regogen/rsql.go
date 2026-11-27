@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"authz-agent/internal/jsonvalue"
+	"authz-agent/internal/policyir"
 )
 
 // The RSQL text of a DENY predicate is negated on its parse tree: the
@@ -292,25 +293,42 @@ func (n *rsqlNode) negate() (*rsqlNode, error) {
 	return out, nil
 }
 
-func (n *rsqlNode) write() string {
+// write writes n to w, each group whose join differs from the one around it
+// in parentheses.
+func (n *rsqlNode) write(w *dialectText) {
 	if n.kind == "cmp" {
+		w.syntax(n.sel + n.op)
 		if len(n.args) > 1 || n.op == "=in=" || n.op == "=out=" {
-			return n.sel + n.op + "(" + strings.Join(n.args, ",") + ")"
+			w.syntax("(")
+			for i, a := range n.args {
+				if i > 0 {
+					w.syntax(",")
+				}
+				w.text(a)
+			}
+			w.syntax(")")
+			return
 		}
-		return n.sel + n.op + n.args[0]
+		w.text(n.args[0])
+		return
 	}
 	sep := ","
 	if n.kind == "and" {
 		sep = ";"
 	}
-	parts := make([]string, len(n.parts))
 	for i, x := range n.parts {
-		parts[i] = x.write()
-		if x.kind != "cmp" && x.kind != n.kind {
-			parts[i] = "(" + parts[i] + ")"
+		if i > 0 {
+			w.syntax(sep)
+		}
+		group := x.kind != "cmp" && x.kind != n.kind
+		if group {
+			w.syntax("(")
+		}
+		x.write(w)
+		if group {
+			w.syntax(")")
 		}
 	}
-	return strings.Join(parts, sep)
 }
 
 // negateRSQL returns the negation of the RSQL text s: its parse tree with
@@ -327,5 +345,7 @@ func negateRSQL(s string) (string, bool) {
 	if err != nil {
 		return "", false
 	}
-	return neg.write(), true
+	w := newDialectText(policyir.DialectRSQL)
+	neg.write(w)
+	return w.String(), true
 }

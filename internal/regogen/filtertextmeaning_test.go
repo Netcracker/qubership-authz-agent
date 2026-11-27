@@ -61,6 +61,11 @@ var textTemplates = []textTemplate{
 		`{"$or": [{"a": "y", "b": "y"}, {"c": "x"}]}`, `a.eq("y").and(b.eq("y")).or(c.eq("x"))`},
 	{"list-placeholder", `c=in=(${subject.roles})`, `c IN (${subject.roles})`, `{"c": {"$in": ${subject.roles}}}`,
 		`c.in(${subject.roles})`},
+	{"line-comment", `a=="y"`, "a = 'y' -- the author's note", `"a": {"$eq": "y"}`, `a.eq("y")`},
+	{"or-then-line-comment", `a=="y",b=="y"`, "a = 'y' OR b = 'y' -- note", `{"$or": [{"a": "y"}, {"b": "y"}]}`,
+		`a.eq("y").or(b.eq("y"))`},
+	{"line-comment-then-and", `a=="y";b=="y"`, "a = 'y' -- note\nAND b = 'y'", `"a": "y", "b": "y"`,
+		`a.eq("y").and(b.eq("y"))`},
 }
 
 // textRows are the rows every text is evaluated on. Column a holds the

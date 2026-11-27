@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"authz-agent/internal/jsonvalue"
+	"authz-agent/internal/policyir"
 )
 
 func TestRSQLMayBeOr(t *testing.T) {
@@ -121,6 +122,49 @@ func TestAMongoDBTextNestedTooDeeplyIsWrappedInNorWhole(t *testing.T) {
 			if got, want := negateMongoText(s), tc.want(s); got != want {
 				t.Errorf("negateMongoText(%d nested objects) has $nor at %d of %d bytes, want at %d of %d",
 					tc.depth, strings.Index(got, "$nor"), len(got), strings.Index(want, "$nor"), len(want))
+			}
+		})
+	}
+}
+
+func sqlLeaf(text string) *fexpr {
+	return &fexpr{kind: "leaf", term: &fterm{key: text, text: map[policyir.Dialect]string{policyir.DialectSQL: text}}}
+}
+
+// An SQL line comment, -- or the # of MySQL, runs to the end of its line, so
+// a text whose last line holds an opener is followed by a line feed before the
+// syntax the filter writes after it, a quoted -- included.
+func TestTheSQLSyntaxAfterALineCommentStaysOutOfIt(t *testing.T) {
+	plain := sqlLeaf("b = 2")
+	for _, tc := range []struct {
+		name string
+		x    *fexpr
+		want string
+	}{
+		{"the negation of a text ending in --", negate(sqlLeaf("a = 1 -- note")), "NOT (a = 1 -- note\n)"},
+		{"the negation of a text ending in #", negate(sqlLeaf("a = 1 # note")), "NOT (a = 1 # note\n)"},
+		{"an AND after a text ending in --", &fexpr{kind: "and", parts: []*fexpr{sqlLeaf("a = 1 -- it's"), plain}},
+			"(a = 1 -- it's\n) AND b = 2"},
+		{"an OR after a text ending in --", &fexpr{kind: "or", parts: []*fexpr{sqlLeaf("a = 1 -- note"), plain}},
+			"a = 1 -- note\n OR b = 2"},
+		{"groups after a text ending in --", &fexpr{kind: "grp", parts: []*fexpr{sqlLeaf("a = 1 -- note"), plain}},
+			"(a = 1 -- note\n) or (b = 2)"},
+		{"a text that ends in -- last", &fexpr{kind: "or", parts: []*fexpr{plain, sqlLeaf("a = 1 -- note")}},
+			"b = 2 OR a = 1 -- note"},
+		{"the negation of a text ending in -- and a carriage return", negate(sqlLeaf("a = 1 -- note\r")),
+			"NOT (a = 1 -- note\r\n)"},
+		{"the negation of a dollar-quoted string with a quote, then --", negate(sqlLeaf("a = $$x'$$ -- note")),
+			"NOT (a = $$x'$$ -- note\n)"},
+		{"the negation of a dollar-quoted string with a quote, then -- with a quote",
+			negate(sqlLeaf("a = $$'$$ -- it's")), "NOT (a = $$'$$ -- it's\n)"},
+		{"a -- inside a quoted string", negate(sqlLeaf("a = '--'")), "NOT (a = '--'\n)"},
+		{"a block comment", negate(sqlLeaf("a = 1 /* note */")), "NOT (a = 1 /* note */)"},
+		{"a comment ended by a line break", negate(sqlLeaf("a = 1 -- note\nAND b = 2")),
+			"NOT (a = 1 -- note\nAND b = 2)"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got, _ := render(tc.x, policyir.DialectSQL); got != tc.want {
+				t.Errorf("render(%s) = %q, want %q", tc.x.key(), got, tc.want)
 			}
 		})
 	}

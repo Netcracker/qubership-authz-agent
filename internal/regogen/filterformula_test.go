@@ -152,7 +152,7 @@ func parseFilterText(d policyir.Dialect, text string) (*formula, error) {
 		p := &infixReader{s: text, and: []string{";"}, or: []string{","}}
 		return p.read()
 	case policyir.DialectSQL:
-		p := &infixReader{s: text, and: []string{"AND"}, or: []string{"OR"}, not: "NOT", words: true}
+		p := &infixReader{s: sqlWhitespace(text), and: []string{"AND"}, or: []string{"OR"}, not: "NOT", words: true}
 		return p.read()
 	case policyir.DialectMongoDB:
 		return readMongoFormula(text)
@@ -161,6 +161,33 @@ func parseFilterText(d policyir.Dialect, text string) (*formula, error) {
 		return p.read()
 	}
 	return &formula{op: "atom", atom: strings.TrimSpace(text)}, nil
+}
+
+// sqlWhitespace is the SQL text s with each -- comment, line breaks, and tabs
+// outside quotes replaced by a space, as an SQL server reads them.
+func sqlWhitespace(s string) string {
+	var b strings.Builder
+	var quote byte
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case quote != 0:
+			if c == quote {
+				quote = 0
+			}
+		case c == '\'' || c == '"':
+			quote = c
+		case strings.HasPrefix(s[i:], "--"):
+			for i < len(s) && s[i] != '\n' {
+				i++
+			}
+			c = ' '
+		case c == '\n' || c == '\r' || c == '\t':
+			c = ' '
+		}
+		b.WriteByte(c)
+	}
+	return b.String()
 }
 
 // queryDSLReader reads a QueryDSL text: a chain of calls on a parenthesized

@@ -220,9 +220,9 @@ func render(x *fexpr, d policyir.Dialect) (string, bool) {
 		case policyir.DialectRSQL:
 			return negateRSQLTerm(leaf.term)
 		case policyir.DialectSQL:
-			return "NOT (" + inner + ")", true
+			return newDialectText(d).group("NOT (", inner, ")").String(), true
 		case policyir.DialectQueryDSL:
-			return "(" + inner + ").not()", true
+			return newDialectText(d).group("(", inner, ").not()").String(), true
 		}
 		return negateMongoLeaf(leaf.term)
 	}
@@ -247,10 +247,7 @@ func render(x *fexpr, d policyir.Dialect) (string, bool) {
 	case 1:
 		return parts[0].text, true
 	}
-	texts := make([]string, len(parts))
-	for i, p := range parts {
-		texts[i] = p.text
-	}
+	w := newDialectText(d)
 	switch d {
 	case policyir.DialectRSQL, policyir.DialectSQL:
 		sep := map[bool]string{true: ",", false: ";"}[x.kind == "or"]
@@ -258,21 +255,33 @@ func render(x *fexpr, d policyir.Dialect) (string, bool) {
 			sep = map[bool]string{true: " OR ", false: " AND "}[x.kind == "or"]
 		}
 		for i, p := range parts {
+			if i > 0 {
+				w.syntax(sep)
+			}
 			if (p.x.kind == "or" || p.x.kind == "and" || p.x.kind == "grp") && p.x.kind != x.kind ||
 				x.kind == "and" && mayBeOr(d, p.text) {
-				texts[i] = "(" + texts[i] + ")"
+				w.group("(", p.text, ")")
+			} else {
+				w.text(p.text)
 			}
 		}
-		return strings.Join(texts, sep), true
 	case policyir.DialectQueryDSL:
 		m := map[bool]string{true: ".or(", false: ".and("}[x.kind == "or"]
-		acc := "(" + texts[0] + ")"
-		for _, t := range texts[1:] {
-			acc += m + t + ")"
+		w.group("(", parts[0].text, ")")
+		for _, p := range parts[1:] {
+			w.group(m, p.text, ")")
 		}
-		return acc, true
+	default:
+		w.syntax(`{ "$` + x.kind + `": [ `)
+		for i, p := range parts {
+			if i > 0 {
+				w.syntax(", ")
+			}
+			w.text(p.text)
+		}
+		w.syntax(" ] }")
 	}
-	return `{ "$` + x.kind + `": [ ` + strings.Join(texts, ", ") + " ] }", true
+	return w.String(), true
 }
 
 // mayBeOr reports whether the text s of dialect d may be an OR at its top
@@ -401,19 +410,24 @@ func joinGroups(texts []string, d policyir.Dialect) (string, bool) {
 	case 1:
 		return texts[0], true
 	}
-	switch d {
-	case policyir.DialectRSQL:
-		return "(" + strings.Join(texts, "),(") + ")", true
-	case policyir.DialectSQL:
-		return "(" + strings.Join(texts, ") or (") + ")", true
-	case policyir.DialectQueryDSL:
-		acc := "(" + texts[0] + ")"
-		for _, t := range texts[1:] {
-			acc += ".or(" + t + ")"
+	w := newDialectText(d)
+	if d == policyir.DialectMongoDB {
+		w.syntax(`{ "$or": [ `)
+		for i, t := range texts {
+			if i > 0 {
+				w.syntax(",")
+			}
+			w.text(t)
 		}
-		return acc, true
+		return w.syntax(" ] }").String(), true
 	}
-	return `{ "$or": [ ` + strings.Join(texts, ",") + " ] }", true
+	open := map[policyir.Dialect]string{policyir.DialectRSQL: ",(", policyir.DialectSQL: " or (",
+		policyir.DialectQueryDSL: ".or("}[d]
+	w.group("(", texts[0], ")")
+	for _, t := range texts[1:] {
+		w.group(open, t, ")")
+	}
+	return w.String(), true
 }
 
 // negateRSQLTerm is the RSQL text of the negation of t: its template
@@ -461,10 +475,11 @@ var mongoTokenRE = regexp.MustCompile(`"(?:[^"\\]|\\.)*"|\$\{[^}]*\}|[{}\[\],:]|
 // negation, in the braces legacy puts around a predicate: "{ " and " }" where
 // the template of the predicate substitutes a value, "{" and "}" otherwise.
 func braceMongo(term *fterm, t string) string {
+	w := newDialectText(policyir.DialectMongoDB)
 	if strings.Contains(term.template[policyir.DialectMongoDB], "${") {
-		return "{ " + t + " }"
+		return w.group("{ ", t, " }").String()
 	}
-	return "{" + t + "}"
+	return w.group("{", t, "}").String()
 }
 
 // negateMongoLeaf is the MongoDB text of the negation of the predicate of
