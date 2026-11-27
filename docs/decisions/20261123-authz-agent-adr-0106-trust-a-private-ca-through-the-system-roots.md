@@ -61,8 +61,9 @@ the cluster CA and the certificates of the Secret that `SSL_SECRET` names.
   trusts for its HTTPS requests.
 - **Cluster CA**: the CA that signs the certificate of the Kubernetes API server. The key `ca.crt` of the ConfigMap
   `kube-root-ca.crt` in the agent's namespace holds it.
-- **Provider file**, **provider `kubernetes`**, **Kubernetes token**, **required source**: as ADR-0104 defines them.
-- **Token for the API server**, **in-cluster address**: as ADR-0094 defines them.
+- **Provider file**, **provider `kubernetes`**, **Kubernetes token**, **required source**, **in-cluster address**: as
+  ADR-0104 defines them.
+- **Token for the API server**: as ADR-0094 defines it.
 - **Policy source**: as ADR-0093 defines it.
 
 ### Rules
