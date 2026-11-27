@@ -48,10 +48,15 @@ an operand and three different equalities behind those operators:
   `on67-number-text-eq`).
 - `==` between a list or an object and a string compares the string with the printed text of the structure, `[v, w]` or
   `{k=v}`, ignoring case (`x17-eq-structure-as-text-*`, `q19-list-equals-its-printed-text`). Its JSON text does not
-  match (`x17-eq-structure-as-json-*`). The executable specification reads the goldens of rounds 69, 72, and 75
-  (`ol69-text-double-eq`, `f72-num-object-1e7-double`, `f72-num-list-1e3-double`, `g75-list-text-eq`) as printing a
-  number of the structure in the form R8 states, not always as `Double.toString`. A member that is a list or an object
-  prints as JSON (`ol69-text-member-json-eq`); no golden shows how a number inside such a member prints.
+  match (`x17-eq-structure-as-json-*`). The goldens show how a number of the structure prints at four points:
+  `1.2345678912345679E8` as `123456789.12345679` (`ol69-text-double-eq`), `1e3` as `1000.0` (`f72-num-list-1e3-double`),
+  `1e7` as `1.0E7` (`f72-num-object-1e7-double`), and `1.0` as `1.0` (`g75-list-text-eq`). The first, second, and fourth
+  are `BigDecimal.toString` of `new BigDecimal(Double.toString(d))`, whose scale is positive, and the third is
+  `Double.toString(d)` itself, because `BigDecimal.toString` of its negative scale prints `1.0E+7`. No golden shows a
+  number below `1e-3`, and R8 prints it by `BigDecimal.toString`: `1e-7` as `1.0E-7`. No golden shows a number whose
+  `BigDecimal` has scale `0` either, and R8 prints it by `Double.toString`: `1.2345678e7` as `1.2345678E7`, where
+  `BigDecimal.toString` would print `12345678`. A member that is a list or an object prints as JSON
+  (`ol69-text-member-json-eq`); no golden shows how a number inside such a member prints.
 - `<`, `<=`, `>`, and `>=` read a string as `new BigDecimal(String)` does (`x16-number-string-*`), and `1e400 > 5` is
   false (`r28reach-num-greater`). So `"5.0" <= 5` and `"5.0" >= 5` hold while `"5.0" == 5` does not.
 - `MATCH` tests a string against a pattern with case, and over a number ends the rule (`vm-match-*`).
@@ -122,18 +127,18 @@ operand stays as legacy reads it.
 
 #### Comparisons that are not equality
 
-- **R8** (`translate`). A list or an object and a string are equal under a comparing operator when the string equals
-  the text of the list or the object, such as `[v, w]` or `{k=v}`, ignoring case. The text lists the elements of a
-  list in the order and with the repeats of the document. A number that is an element of the list or a member of the
-  object and is written without a point or an exponent prints as the digits of its integer value, so `-0` prints as
-  `0`. Any other number that is an element or a member prints as `Double.toString` of its `Double`. Where that text
-  has an exponent and more digits after the point than the value of the exponent, the number prints instead as the
-  same digits with the point moved by the exponent and no exponent. So `1.0` prints as `1.0`, `1e-5` as `0.000010`,
-  and `1.2345678912345679E8` as `123456789.12345679`, while `1e7` prints as `1.0E7`. This rule does not decide the
-  text of a number whose `Double` is negative zero and that is written with a point or an exponent, such as `-0.0` or
-  `-1e-400`. A list or an object that is an element of the list or a member of the object prints as compact JSON,
-  with its elements or members in the order of the document and each number as the document writes it, so
-  `[1e-5, [1e-5]]` prints as `[0.000010, [1e-5]]` and `{"k": ["a"]}` as `{k=["a"]}`.
+- **R8** (`translate`). A list or an object and a string are equal under a comparing operator when the string equals the
+  text of the list or the object, such as `[v, w]` or `{k=v}`, ignoring case. The text lists the elements of a list in
+  the order and with the repeats of the document. A number that is an element of the list or a member of the object and
+  is written without a point or an exponent prints as the digits of its integer value, so `-0` prints as `0`. Any other
+  number that is an element or a member prints as `BigDecimal.toString` of `new BigDecimal(Double.toString(d))`, where
+  `d` is its `Double`, when that `BigDecimal` has a positive scale, and as `Double.toString(d)` otherwise. So `1.0`
+  prints as `1.0`, `1e3` as `1000.0`, `1e-6` as `0.0000010`, `1e-7` as `1.0E-7`, and `1.2345678912345679E8` as
+  `123456789.12345679`, while `1e7` prints as `1.0E7`. This rule does not decide the text of a number whose `Double` is
+  negative zero and that is written with a point or an exponent, such as `-0.0` or `-1e-400`. A list or an object that
+  is an element of the list or a member of the object prints as compact JSON, with its elements or members in the order
+  of the document and each number as the document writes it, so `[1e-5, [1e-5]]` prints as `[0.000010, [1e-5]]` and
+  `{"k": ["a"]}` as `{k=["a"]}`.
 - **R9** (`translate`). `<`, `<=`, `>`, and `>=` compare the values of a number or a numeric string on each side, and
   are false where either side is neither, or is a number beyond the range of a `Double`.
 - **R10** (`translate`). `MATCH` and `NOT MATCH` test the text of a string against the pattern with case, and end the
@@ -208,7 +213,7 @@ Negative:
   numbers alike stay far below the limit.
 - These pairs are equal: `5.50` and `5.5`; `5`, `5.0`, and `5e0`; `05` and `5` in a list literal; `"5.0"` and `5`;
   `"+5"`, `"٥"`, and `5`; `0.0` and `-0.0`; `{"a": 1}` and `{"a": 1.0}`; `{"a": 1}` and `{"a": "1"}`; `["X"]` and
-  `["x"]`; `[1, 2]` and `[2, 1]`; `[1, 1]` and `[1]`; `[1e-5]` and `"[0.000010]"`.
+  `["x"]`; `[1, 2]` and `[2, 1]`; `[1, 1]` and `[1]`; `[1e-5]` and `"[0.000010]"`; `[1e-7]` and `"[1.0E-7]"`.
 - These pairs differ: `"5.0"` and `"5"`; `{"a": [1, 2]}` and `{"a": [2, 1]}`, because a list inside a member compares
   in order; `[1.0]` and `"[1]"`; `[1e-5]` and `"[1.0E-5]"`; `1e400` and `"Infinity"`; `"0.300000000000000010"` and
   the number `0.300000000000000010`, which is the `Double` `0.3`.

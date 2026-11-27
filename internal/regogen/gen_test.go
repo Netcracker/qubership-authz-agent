@@ -528,6 +528,8 @@ func TestAStructureComparesWithAStringByItsText(t *testing.T) {
 		{"a nested list is a subset element by its text", "'[1.0]' IS SUBSET resource.a", `[[1.0]]`, "", true},
 		{"a nested list is in a list by its text", "'[0.000010]' IN resource.a", `[[1e-5]]`, "", true},
 		{"a nested list is not in a list by its Double.toString text", "'[1.0E-5]' IN resource.a", `[[1e-5]]`, "", false},
+		{"an element below 1e-6 prints in scientific notation", "resource.a == '[1.0E-7]'", `[1e-7]`, "", true},
+		{"an element below 1e-6 does not print plain", "resource.a == '[0.00000010]'", `[1e-7]`, "", false},
 		{"a nested object is in a list by its text", "'{k=[\"v\"]}' IN resource.a", `[{"k": ["v"]}]`, "", true},
 		{"a nested list does not match the integer text", "'[1]' IS SUBSET resource.a", `[[1.0]]`, "", false},
 		{"a list does not equal another text", "resource.a == '[y]'", `["x"]`, "", false},

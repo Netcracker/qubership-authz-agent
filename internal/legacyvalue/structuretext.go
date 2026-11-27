@@ -62,32 +62,30 @@ func StructureText(v jsonvalue.Value) string {
 
 // structureNumberText is the text of a number that is a member of a list or
 // an object in [StructureText]. An integer without a point or an exponent is
-// its digits; any other number is Double.toString of the double it reads,
-// written in plain notation where its digits reach past the point: 1.0 is
-// 1.0, 5.50 is 5.5, 1e3 is 1000.0, 1e-5 is 0.000010, and
-// 1.2345678912345679E8 is 123456789.12345679, while 1e7 stays 1.0E7; -0.0
-// keeps its sign. These are the texts the specification's agent profile
-// prints.
+// its digits. Any other number with the double d is Java's BigDecimal.toString
+// of new BigDecimal(Double.toString(d)) when that BigDecimal has a positive
+// scale, and Double.toString(d) otherwise: 1.0 is 1.0, 5.50 is 5.5, 1e3 is
+// 1000.0, 1e-6 is 0.0000010, 1e-7 is 1.0E-7, and 1.2345678912345679E8 is
+// 123456789.12345679, while 1e7 stays 1.0E7. -0.0 is 0.0, a choice no golden
+// confirms.
 func structureNumberText(n jsonvalue.Number) string {
 	text := NumberText(n)
-	mantissa, exp, ok := strings.Cut(text, "E")
+	mantissa, exp, _ := strings.Cut(text, "E")
+	_, frac, ok := strings.Cut(mantissa, ".")
 	if !ok {
+		// The digits of an integer, or Infinity.
 		return text
 	}
-	// Double.toString writes the exponent of a finite double, which lies
-	// between -324 and 308, so the plain text stays under 350 bytes.
-	e, _ := strconv.Atoi(exp)
-	sign := ""
-	if m, neg := strings.CutPrefix(mantissa, "-"); neg {
-		sign, mantissa = "-", m
+	// Double.toString writes the exponent as a decimal integer, so Atoi
+	// reads it without an error.
+	e := 0
+	if exp != "" {
+		e, _ = strconv.Atoi(exp)
 	}
-	lead, frac, _ := strings.Cut(mantissa, ".")
 	if len(frac) <= e {
+		// The scale is not positive.
 		return text
 	}
-	digits, point := lead+frac, len(lead)+e
-	if point <= 0 {
-		return sign + "0." + strings.Repeat("0", -point) + digits
-	}
-	return sign + digits[:point] + "." + digits[point:]
+	decimal, _ := jsonvalue.BigDecimalText(text)
+	return decimal
 }
