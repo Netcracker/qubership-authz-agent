@@ -47,7 +47,7 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
 | `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
 | `AUTHZ_DEFAULT_TENANT` | `default` | Display name of the tenant a check request is decided in when it names none in the `tenant_id` parameter or the `Tenant` header ([The tenant of a request](#the-tenant-of-a-request)); resolved to the tenant ID through `AUTHZ_TENANT_MANAGER_URL`. It may not be empty |
-| `AUTHZ_PIP_TIMEOUT` | `2` | Seconds a policy waits for one call of a PIP, 1 or more; a call that takes longer is a failed PIP, as is a response whose status is other than 200 and 204 (the agent follows no redirect), whose body exceeds 8 MiB, or whose body is not empty and is not one JSON value, such as an HTML page or truncated JSON |
+| `AUTHZ_PIP_TIMEOUT` | `2` | Seconds a policy waits for one call of a PIP, 1 or more; a call that takes longer is a failed PIP, as is a response whose status is other than 200 and 204 (the agent follows no redirect), whose body exceeds 8 MiB, or whose body is not empty and is not one JSON value, such as an HTML page or truncated JSON. A request may wait for several calls in turn: [How long a request waits for a PIP](#how-long-a-request-waits-for-a-pip) |
 | `AUTHZ_ENTITLEMENTS_URL` | empty | Base URL of the entitlements service, which a condition on `subject.entitledResources` calls at `/api/v3/user-entitlements/user/<subject id>`, once per decision request, within `AUTHZ_PIP_TIMEOUT` and without retries. Empty makes such a condition's operand fail, and the item is denied with the reason `PIP resolution failed` |
 | `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; empty reads the token from `AUTHZ_PAP_CLIENT_TOKEN_FILE` instead |
 | `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials; neither file name may be empty |
@@ -106,6 +106,29 @@ providers meet the bootstrap rules and the default tenant is resolved, with no p
 `GET /health` on the public port gives the same status, 200 `healthy` or 503 `unhealthy`, and counts the tenants
 instead of naming them: `tenants`, `served` (with a published snapshot), `rejected` (whose latest candidate was
 refused), and `failing` (whose snapshot has a part listed under `failures`). It names no tenant and no reason.
+
+### How long a request waits for a PIP
+
+A decision request has no deadline of its own: `AUTHZ_PIP_TIMEOUT` bounds each call of a PIP, the entitlements
+service, or the permission scope separately, from the connection attempt to the end of the response. When the called
+service does not answer, such as one that accepts the connection and never responds or one whose host drops the
+packets, a request waits up to about
+
+```text
+(ceil(items / 4) × per-item calls + shared calls) × AUTHZ_PIP_TIMEOUT
+```
+
+- `items` is the number of items in a bulk request, with each operation of a bulk/operations item counted as one item,
+  and 1 for `check/resource` and `check/filter`. The agent evaluates up to 4 items of one request at a time.
+- `per-item calls` is the largest number of PIP calls one item makes whose request differs from item to item, such as
+  a FILTERED PIP or `requestAttributes` that carry resource values. An item makes these calls one after another.
+- `shared calls` counts the calls made once per request: the entitlements service, the permission scope, and each PIP
+  whose request is the same for every item. A failed call is not repeated within the request.
+
+A bulk request of 50 items, each reading one FILTERED PIP with a request of its own that is never answered, waits about
+13 × 2 = 26 seconds with the default timeout. The agent does not cancel these calls when the caller disconnects, so a
+caller that gives up and retries adds the calls of its new request to those still waiting. A deadline for the whole
+request is tracked in [issue #372](https://github.com/Netcracker/qubership-authz-agent/issues/372).
 
 ## The tenant of a request
 
