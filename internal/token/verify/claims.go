@@ -43,7 +43,7 @@ const m2mRole = "ROLE_M2M"
 // with leeway either way. An exp before iat is refused, with no leeway. An iat
 // later than now by more than leeway is refused only for a Kubernetes token,
 // a token whose source is the provider [keys.KubernetesID].
-func checkTimes(claims map[string]json.RawMessage, from keys.Source, now time.Time, leeway time.Duration) (time.Time, error) {
+func checkTimes(claims map[string]json.RawMessage, from keys.Source, now time.Time, leeway time.Duration) (time.Time, *Error) {
 	exp, present, err := numericDate(claims, "exp")
 	if err != nil {
 		return time.Time{}, err
@@ -79,7 +79,7 @@ func checkTimes(claims map[string]json.RawMessage, from keys.Source, now time.Ti
 
 // numericDate reads the claim name as a number of seconds since the epoch;
 // present is false when the payload has no such claim.
-func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, present bool, err error) {
+func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, present bool, refused *Error) {
 	raw, ok := claims[name]
 	if !ok {
 		return time.Time{}, false, nil
@@ -88,8 +88,8 @@ func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, p
 	if !ok {
 		return time.Time{}, true, fail(CodeFormatInvalid, "claim %s is not a number", name)
 	}
-	seconds, err := n.Float64()
-	if err != nil || math.Abs(seconds) > maxNumericDate {
+	seconds, parseErr := n.Float64()
+	if parseErr != nil || math.Abs(seconds) > maxNumericDate {
 		return time.Time{}, true, fail(CodeFormatInvalid, "claim %s is %s, outside ±%d seconds", name, short(n.String()), int64(maxNumericDate))
 	}
 	whole, fraction := math.Modf(seconds)
@@ -100,7 +100,7 @@ func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, p
 // serviceAccountPrefix, where a Kubernetes token is one whose source is the
 // provider [keys.KubernetesID]. The rest of sub is not parsed, because the
 // namespace of the token comes from its kubernetes.io claim.
-func checkSubject(claims map[string]json.RawMessage, from keys.Source) error {
+func checkSubject(claims map[string]json.RawMessage, from keys.Source) *Error {
 	if !from.Kubernetes() {
 		return nil
 	}
@@ -158,7 +158,7 @@ const kubernetesAudience = "netcracker"
 // lets every token pass. Any other mode, [keys.MatchAny] or an unset one,
 // requires aud, a string or an array of strings, to name one of the audience
 // values exactly.
-func checkAudience(claims map[string]json.RawMessage, from keys.Source) error {
+func checkAudience(claims map[string]json.RawMessage, from keys.Source) *Error {
 	p := from.Provider
 	values := p.Audience.Values
 	switch {

@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -1261,6 +1262,119 @@ func TestVerify_RunsNoAdmitForARefusedToken(t *testing.T) {
 	}
 	if calls != 0 {
 		t.Errorf("Admit calls = %d, want 0", calls)
+	}
+}
+
+// A token whose signature has not verified only claims to come from a source,
+// so its refusal names none. The verifier has no Admit, so a token that passes
+// every check reaches the refusal of a Kubernetes token.
+func TestError_NamesTheProviderOnceTheSignatureVerifies(t *testing.T) {
+	provider := &keys.Provider{ID: keys.KubernetesID, Audience: keys.Audience{Mode: keys.MatchAny, Values: []string{"netcracker"}}}
+	s := newSigner(t, "k1", provider)
+	attacker := newSigner(t, "k1", provider)
+	realm := newSignerFrom(t, "r1", keys.Source{Provider: providerOf(keys.IdentityProviderID), Realm: "r"})
+	realmAttacker := newSignerFrom(t, "r1", realm.key.Source)
+	valid := func(fields map[string]any) map[string]any {
+		claims := claimsAt(start, map[string]any{"sub": serviceAccountSub, "aud": "netcracker"})
+		for name, value := range fields {
+			claims[name] = value
+		}
+		return claims
+	}
+	tests := []struct {
+		name         string
+		raw          string
+		wantCode     Code
+		wantProvider string
+		wantRealm    string
+	}{
+		{"format of the token", "not-a-token", CodeFormatInvalid, "", ""},
+		{"alg nothing accepts", unsigned(t, map[string]any{"alg": "HS256", "kid": "k1"}, valid(nil)), CodeAlgNotAllowed, "", ""},
+		{"issuer", s.sign(t, valid(map[string]any{"iss": "https://other.example"})), CodeIssuerUnknown, "", ""},
+		{"kid", unsigned(t, map[string]any{"alg": "ES256", "kid": "k2"}, valid(nil)), CodeKIDUnknown, "", ""},
+		{"alg the found key does not accept", unsigned(t, map[string]any{"alg": "RS256", "kid": "k1"}, valid(nil)), CodeAlgNotAllowed, "", ""},
+		{"signature", attacker.sign(t, valid(nil)), CodeSignatureInvalid, "", ""},
+		{"signature, key of a realm", realmAttacker.sign(t, claimsAt(start, nil)), CodeSignatureInvalid, "", ""},
+		{"aud", s.sign(t, valid(map[string]any{"aud": "other"})), CodeAudienceInvalid, "kubernetes", ""},
+		{"exp that is not a number", s.sign(t, valid(map[string]any{"exp": "soon"})), CodeFormatInvalid, "kubernetes", ""},
+		{"exp in the past", s.sign(t, valid(map[string]any{"iat": start.Add(-2 * time.Hour).Unix(), "exp": start.Add(-time.Hour).Unix()})), CodeExpired, "kubernetes", ""},
+		{"nbf in the future", s.sign(t, valid(map[string]any{"nbf": start.Add(time.Minute).Unix()})), CodeNotYetValid, "kubernetes", ""},
+		{"iat in the future", s.sign(t, valid(map[string]any{"iat": start.Add(time.Minute).Unix()})), CodeIATInvalid, "kubernetes", ""},
+		{"sub", s.sign(t, valid(map[string]any{"sub": "user-1"})), CodeSubjectInvalid, "kubernetes", ""},
+		{"no namespace check", s.sign(t, valid(nil)), CodeNamespaceNotAllowed, "kubernetes", ""},
+		{"exp in the past, key of a realm", realm.sign(t, claimsAt(start, map[string]any{"iat": start.Add(-2 * time.Hour).Unix(), "exp": start.Add(-time.Hour).Unix()})), CodeExpired, "identity-provider", "r"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(newFakeKeys(s, realm))
+			_, err := v.Verify(t.Context(), tt.raw)
+			var refused *Error
+			if !errors.As(err, &refused) {
+				t.Fatalf("Verify() error = %v, want an *Error", err)
+			}
+			if refused.Code != tt.wantCode {
+				t.Errorf("Verify() code = %s, want %s", refused.Code, tt.wantCode)
+			}
+			if refused.ProviderID != tt.wantProvider {
+				t.Errorf("Verify() ProviderID = %q, want %q", refused.ProviderID, tt.wantProvider)
+			}
+			if refused.Realm != tt.wantRealm {
+				t.Errorf("Verify() Realm = %q, want %q", refused.Realm, tt.wantRealm)
+			}
+		})
+	}
+}
+
+// The detail reaches a log line, so it quotes the iss, which is text from the
+// token, and, like Error.ProviderID, names no provider.
+func TestError_DetailOfARefusalByTheSelectedKeyQuotesTheIssNotTheProvider(t *testing.T) {
+	provider := providerOf(keys.IdentityProviderID)
+	s := newSigner(t, "k1", provider)
+	attacker := newSigner(t, "k1", provider)
+	tests := []struct {
+		name string
+		raw  string
+		want Code
+	}{
+		{"alg the found key does not accept", unsigned(t, map[string]any{"alg": "RS256", "kid": "k1"}, claimsAt(start, nil)), CodeAlgNotAllowed},
+		{"signature", attacker.sign(t, claimsAt(start, nil)), CodeSignatureInvalid},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), tt.raw)
+			if codeOf(err) != tt.want {
+				t.Fatalf("Verify() error = %v, want code %s", err, tt.want)
+			}
+			if strings.Contains(err.Error(), provider.ID) {
+				t.Errorf("Verify() error = %q, want it to name no provider", err)
+			}
+			if !strings.Contains(err.Error(), strconv.Quote(testIssuer)) {
+				t.Errorf("Verify() error = %q, want it to quote the iss %q", err, testIssuer)
+			}
+		})
+	}
+}
+
+// Admit may return one *Error for many tokens, and the tokens may come from
+// different providers, so Verify leaves that value as it is.
+func TestVerify_NamesTheProviderOnACopyOfTheRefusalOfAdmit(t *testing.T) {
+	s := newSigner(t, "k1", providerOf(keys.IdentityProviderID))
+	refusal := &Error{Code: CodeNamespaceNotAllowed, Detail: "refused"}
+	v := New(newFakeKeys(s), Options{now: func() time.Time { return start }, Admit: func(*Token) *Error { return refusal }})
+	raw := s.sign(t, claimsAt(start, nil))
+	for _, call := range []string{"first", "second, from the cache"} {
+		_, err := v.Verify(t.Context(), raw)
+		var refused *Error
+		if !errors.As(err, &refused) {
+			t.Fatalf("Verify(), %s call: error = %v, want an *Error", call, err)
+		}
+		if refused.ProviderID != keys.IdentityProviderID {
+			t.Errorf("Verify(), %s call: ProviderID = %q, want %q", call, refused.ProviderID, keys.IdentityProviderID)
+		}
+	}
+	if refusal.ProviderID != "" {
+		t.Errorf("the value Admit returned has ProviderID %q, want it unchanged", refusal.ProviderID)
 	}
 }
 
