@@ -90,6 +90,14 @@ func schemaError(format string, args ...any) error {
 	return fmt.Errorf(format+" (schema %s)", append(args, schemaID)...)
 }
 
+// clusterHosts are the two hosts of an in-cluster address, as ADR-0104 defines
+// the term. Other names reach the Kubernetes API server too, such as
+// kubernetes.default, the ClusterIP of the Service kubernetes, or a host in
+// another cluster domain, and [inCluster] does not know them. inCluster decides
+// where the token of jwksBearerTokenFile may go and ignores only letter case,
+// so a host with a trailing dot counts as outside the cluster.
+var clusterHosts = []string{"kubernetes.default.svc", "kubernetes.default.svc.cluster.local"}
+
 // Config is the list of providers that the provider files hold together.
 type Config struct {
 	Providers []Provider
@@ -109,6 +117,9 @@ type Config struct {
 // the server that is asked.
 //
 // The provider [KubernetesID] reads its keys over https and has no audience.
+// Where it sets JWKSBearerTokenFile, the host of its JWKSURI is
+// kubernetes.default.svc or kubernetes.default.svc.cluster.local, compared
+// without regard to letter case.
 type Provider struct {
 	// ID is the key of the provider in the providers object of its file,
 	// [IdentityProviderID] or [KubernetesID].
@@ -142,7 +153,8 @@ type Provider struct {
 	// the surrounding white space removed, goes as a bearer token with every
 	// JWKS request of this provider, and with no other request. The file is
 	// read on every request, so a rotated token takes effect without a
-	// restart. Only the provider [KubernetesID] may set it.
+	// restart. Only the provider [KubernetesID] may set it, and [New] fails
+	// when the file cannot be read or holds only white space.
 	JWKSBearerTokenFile string
 	// ReadinessRealms lists the realms whose keys [Set.Ready] requires, by the
 	// realm names that tokens carry, percent-decoded as [Source.Realm] holds
@@ -720,6 +732,9 @@ func (p Provider) validate() error {
 		if err := checkTokenFile(p.JWKSBearerTokenFile); err != nil {
 			return err
 		}
+		if !inCluster(hostOf(p.JWKSURI)) {
+			return fmt.Errorf("jwksUri %q is outside the cluster, and jwksBearerTokenFile would send it the token in %s, which grants access to the API server; set jwksUri to an https address on %s, or remove jwksBearerTokenFile to read the keys without a token", p.JWKSURI, p.JWKSBearerTokenFile, strings.Join(clusterHosts, " or "))
+		}
 	}
 	for _, name := range p.ReadinessRealms {
 		if err := checkRealmName(name); err != nil {
@@ -794,6 +809,22 @@ func checkJWKSURI(s string, template bool) error {
 		return schemaError("is not an http or https URL")
 	}
 	return checkURL(s, template)
+}
+
+// hostOf returns the host of the URL raw, without a port, and "" when raw is
+// not a URL that holds one.
+func hostOf(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return ""
+	}
+	return u.Hostname()
+}
+
+// inCluster reports whether host is one of clusterHosts, compared without
+// regard to case.
+func inCluster(host string) bool {
+	return slices.ContainsFunc(clusterHosts, func(h string) bool { return strings.EqualFold(host, h) })
 }
 
 // checkTokenFile accepts an absolute path.

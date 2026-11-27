@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -224,25 +223,31 @@ func TestRefresh_TrustsTheRootsOfTheSystemAlone(t *testing.T) {
 	}
 }
 
+// The token file holds a token when New reads it, and loses it before the
+// request reads it again.
 func TestRefresh_FailsWithoutAUsableTokenFile(t *testing.T) {
 	tests := []struct {
-		name, tokenFile string
+		name string
+		lose func(path string) error
 	}{
-		{"empty file", writeFile(t, "token", "\n")},
-		{"missing file", filepath.Join(t.TempDir(), "absent")},
+		{"emptied file", func(path string) error { return os.WriteFile(path, []byte("\n"), 0o600) }},
+		{"removed file", os.Remove},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			idp := newIdP(t, ecJWK(t, "k1", nil))
 			provider := kubernetesOf(idp)
-			provider.JWKSBearerTokenFile = tt.tokenFile
+			provider.JWKSBearerTokenFile = writeFile(t, "token", "sa-token")
 			set := mustNew(t, Config{Providers: []Provider{provider}}, testOptions())
 			serveKubernetes(set, idp.srv)
+			if err := tt.lose(provider.JWKSBearerTokenFile); err != nil {
+				t.Fatal(err)
+			}
 			if err := set.Refresh(t.Context()); err == nil || !strings.Contains(err.Error(), "jwksBearerTokenFile") {
-				t.Errorf("Refresh() with jwksBearerTokenFile %s error = %v, want an error naming jwksBearerTokenFile", tt.tokenFile, err)
+				t.Errorf("Refresh() error = %v, want an error naming jwksBearerTokenFile", err)
 			}
 			if got := idp.requestCount(); got != 0 {
-				t.Errorf("Refresh() with jwksBearerTokenFile %s sent %d requests for the keys, want none", tt.tokenFile, got)
+				t.Errorf("Refresh() sent %d requests for the keys, want none", got)
 			}
 		})
 	}
@@ -274,6 +279,23 @@ func TestRefresh_TokenFileIsReadOnEveryRequest(t *testing.T) {
 	}
 	if got := idp.authorization(); got != "Bearer second" {
 		t.Errorf("Authorization at the second reload = %q, want %q", got, "Bearer second")
+	}
+}
+
+func TestRefresh_ReadsTheKeysOfTheProviderKubernetesWithoutATokenOutsideTheCluster(t *testing.T) {
+	idp := newIdP(t, ecJWK(t, "k1", nil))
+	provider := kubernetesOf(idp)
+	provider.JWKSURI = "https://oidc.example/jwks"
+	set := mustNew(t, Config{Providers: []Provider{provider}}, testOptions())
+	serveKubernetes(set, idp.srv)
+	if err := set.Refresh(t.Context()); err != nil {
+		t.Fatalf("Refresh() error = %v", err)
+	}
+	if !loaded(set, provider, "k1") {
+		t.Errorf("Lookup(%q) found nothing, want the key of %s", "k1", provider.JWKSURI)
+	}
+	if got := idp.authorization(); got != "" {
+		t.Errorf("Authorization at %s = %q, want none", provider.JWKSURI, got)
 	}
 }
 

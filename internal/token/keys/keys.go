@@ -283,10 +283,20 @@ func (t *trusted) loadLimitReason() string {
 }
 
 // New returns a [Set] for cfg, with no keys loaded yet. It fails when cfg
-// breaks [Config.Validate].
+// breaks [Config.Validate], and when the file that the
+// [Provider.JWKSBearerTokenFile] of a provider names cannot be read or holds
+// only white space.
 func New(cfg Config, opts Options) (*Set, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
+	}
+	for _, p := range cfg.Providers {
+		if p.JWKSBearerTokenFile == "" {
+			continue
+		}
+		if _, err := readToken(p.JWKSBearerTokenFile); err != nil {
+			return nil, fmt.Errorf("%s: jwksBearerTokenFile: %w; mount the token for the API server at that path, or remove jwksBearerTokenFile where the API server serves its keys without a token", p.name(), err)
+		}
 	}
 	opts = opts.withDefaults()
 	s := &Set{
