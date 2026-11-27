@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"maps"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"slices"
@@ -129,121 +130,94 @@ func strs(t *testing.T, v any) []string {
 	return out
 }
 
-// branches returns the subschemas that def, the definition of the provider
-// under key, adds through allOf for the type typ: the then of each if that
-// sets type to typ. It fails the test on a member of allOf that is not one if
-// and one then, on an if that tests anything but the type, and on a then that
-// holds anything but required and properties, since schemaMembers evaluates
-// nothing else.
-func branches(t *testing.T, key string, def map[string]any, typ ProviderType) []map[string]any {
+// typeSchemas returns, for each type that def, the definition of the provider
+// under key, allows, the subschema that holds the members of a provider of
+// that type. A definition without allOf holds them itself and allows the one
+// type that the const of its property type names. A definition with allOf
+// allows the types of an enum, holds no member but type, and refers, in the
+// then of one if for each type, to the subschema of that type. typeSchemas
+// fails the test on any other shape, since the tests that read the members
+// through it evaluate nothing else.
+func typeSchemas(t *testing.T, schema map[string]any, key string, def map[string]any) map[ProviderType]map[string]any {
 	t.Helper()
-	all, _ := def["allOf"].([]any)
-	var out []map[string]any
+	all, ok := def["allOf"].([]any)
+	if !ok {
+		typ, _ := at(t, def, "properties", "type", "const").(string)
+		return map[ProviderType]map[string]any{ProviderType(typ): def}
+	}
+	checkKeywords(t, key, def, "allOf")
+	if got := names(at(t, def, "properties")); !reflect.DeepEqual(got, []string{"type"}) {
+		t.Fatalf("schema: the provider %q with allOf holds the members %q itself; this test reads only type there", key, got)
+	}
+	if got := strs(t, at(t, def, "required")); !reflect.DeepEqual(got, []string{"type"}) {
+		t.Fatalf("schema: the provider %q with allOf requires %q itself; this test reads only type there", key, got)
+	}
+	out := make(map[ProviderType]map[string]any)
 	for _, branch := range all {
 		if got := names(branch); !reflect.DeepEqual(got, []string{"if", "then"}) {
 			t.Fatalf("schema: a member of allOf of the provider %q holds %q; this test reads one if and one then", key, got)
 		}
 		cond := at(t, branch, "if")
-		branchType := at(t, cond, "properties", "type", "const")
+		branchType, _ := at(t, cond, "properties", "type", "const").(string)
 		want := map[string]any{"properties": map[string]any{"type": map[string]any{"const": branchType}}, "required": []any{"type"}}
 		if !reflect.DeepEqual(cond, want) {
 			t.Fatalf("schema: an if of the provider %q is %v; this test reads only an if that sets the type, %v", key, cond, want)
 		}
-		then, ok := at(t, branch, "then").(map[string]any)
-		if !ok {
-			t.Fatalf("schema: a then of the provider %q is not an object", key)
+		sub := deref(t, schema, at(t, branch, "then"))
+		if got := at(t, sub, "properties", "type", "const"); got != branchType {
+			t.Fatalf("schema: the then of the type %q of the provider %q refers to a subschema of the type %v", branchType, key, got)
 		}
-		for keyword := range then {
-			if keyword != "required" && keyword != "properties" {
-				t.Fatalf("schema: a then of the provider %q holds %q, which this test does not evaluate", key, keyword)
-			}
-		}
-		if branchType == string(typ) {
-			out = append(out, then)
-		}
+		out[ProviderType(branchType)] = sub
+	}
+	var got []string
+	for typ := range out {
+		got = append(got, string(typ))
+	}
+	slices.Sort(got)
+	if want := slices.Sorted(slices.Values(strs(t, at(t, def, "properties", "type", "enum")))); !reflect.DeepEqual(got, want) {
+		t.Fatalf("schema: the provider %q has the types %q and a then for the types %q", key, want, got)
 	}
 	return out
+}
+
+// checkKeywords fails the test on a keyword of def, the definition of the
+// provider under key or a subschema of it, that is neither one that every such
+// subschema may hold nor one of extra, and on a type other than object.
+func checkKeywords(t *testing.T, key string, def map[string]any, extra ...string) {
+	t.Helper()
+	for keyword, value := range def {
+		switch {
+		case keyword == "type" && value != "object":
+			t.Fatalf("schema: a subschema of the provider %q has the type %v, want object", key, value)
+		case slices.Contains([]string{"description", "type", "properties", "required"}, keyword), slices.Contains(extra, keyword):
+		default:
+			t.Fatalf("schema: a subschema of the provider %q uses the keyword %q, which this test does not evaluate", key, keyword)
+		}
+	}
 }
 
 // schemaMembers returns, as [members] holds them for key, the members that
-// def allows for each type, and whether it requires each, where def is the
-// definition of the provider under key. It fails the test on a keyword of def
-// that it does not evaluate, and reports a def that allows members it does not
-// name.
-func schemaMembers(t *testing.T, key string, def map[string]any) map[ProviderType]map[string]bool {
+// def, the definition of the provider under key, allows for each type, and
+// whether it requires each. It fails the test on a keyword that it does not
+// evaluate, and reports a subschema that allows members it does not name.
+func schemaMembers(t *testing.T, schema map[string]any, key string, def map[string]any) map[ProviderType]map[string]bool {
 	t.Helper()
-	checkProviderKeywords(t, key, def)
 	out := make(map[ProviderType]map[string]bool)
-	for _, typ := range schemaTypes(t, def) {
-		out[ProviderType(typ)] = typeMembers(t, key, def, ProviderType(typ))
-	}
-	return out
-}
-
-// checkProviderKeywords fails the test on a keyword of def, the definition of
-// the provider under key, that schemaMembers does not evaluate, and reports an
-// additionalProperties other than false.
-func checkProviderKeywords(t *testing.T, key string, def map[string]any) {
-	t.Helper()
-	for keyword, value := range def {
-		switch keyword {
-		case "description", "properties", "required", "allOf", "additionalProperties":
-		case "type":
-			if value != "object" {
-				t.Fatalf("schema: the provider %q has the type %v, want object", key, value)
-			}
-		default:
-			t.Fatalf("schema: the provider %q uses the keyword %q, which this test does not evaluate", key, keyword)
+	for typ, sub := range typeSchemas(t, schema, key, def) {
+		checkKeywords(t, key, sub, "additionalProperties")
+		if got := sub["additionalProperties"]; got != false {
+			t.Errorf("schema: additionalProperties of the provider %q of the type %q = %v, want false, since ReadDir refuses every member that the provider does not allow", key, typ, got)
 		}
-	}
-	if got := def["additionalProperties"]; got != false {
-		t.Errorf("schema: additionalProperties of the provider %q = %v, want false, since ReadDir refuses every member that the provider does not allow", key, got)
-	}
-}
-
-// schemaTypes returns the values that the property type of def allows: its
-// const, or else its enum.
-func schemaTypes(t *testing.T, def map[string]any) []string {
-	t.Helper()
-	property := at(t, def, "properties", "type").(map[string]any)
-	if typ, ok := property["const"].(string); ok {
-		return []string{typ}
-	}
-	return strs(t, at(t, property, "enum"))
-}
-
-// typeMembers returns the members that def, the definition of the provider
-// under key, allows for the type typ, and whether it requires each.
-func typeMembers(t *testing.T, key string, def map[string]any, typ ProviderType) map[string]bool {
-	t.Helper()
-	allowed := make(map[string]bool)
-	for _, name := range names(at(t, def, "properties")) {
-		allowed[name] = false
-	}
-	for _, name := range strs(t, at(t, def, "required")) {
-		allowed[name] = true
-	}
-	for _, then := range branches(t, key, def, typ) {
-		applyThen(t, allowed, then)
-	}
-	return allowed
-}
-
-// applyThen marks in allowed the members that then requires, and removes the
-// members that it forbids with false.
-func applyThen(t *testing.T, allowed map[string]bool, then map[string]any) {
-	t.Helper()
-	if required, ok := then["required"]; ok {
-		for _, name := range strs(t, required) {
+		allowed := make(map[string]bool)
+		for _, name := range names(at(t, sub, "properties")) {
+			allowed[name] = false
+		}
+		for _, name := range strs(t, at(t, sub, "required")) {
 			allowed[name] = true
 		}
+		out[typ] = allowed
 	}
-	properties, _ := then["properties"].(map[string]any)
-	for name, sub := range properties {
-		if sub == false {
-			delete(allowed, name)
-		}
-	}
+	return out
 }
 
 func TestSchema_HoldsTheMembersOfAFileThatReadDirReads(t *testing.T) {
@@ -276,7 +250,7 @@ func TestSchema_AllowsTheKeysTypesAndMembersThatReadDirAllows(t *testing.T) {
 	}
 	for key, want := range members {
 		def := deref(t, schema, at(t, providers, "properties", key))
-		if got := schemaMembers(t, key, def); !reflect.DeepEqual(got, want) {
+		if got := schemaMembers(t, schema, key, def); !reflect.DeepEqual(got, want) {
 			t.Errorf("schema: the provider %q allows and requires the members %v by type, and ReadDir %v", key, got, want)
 		}
 	}
@@ -324,33 +298,11 @@ const formatSchema = `{
             "realms",
             "single"
           ]
-        },
-        "issuer": {
-          "$ref": "#/$defs/issuer"
-        },
-        "issuerTemplate": {
-          "$ref": "#/$defs/realmTemplateUrl"
-        },
-        "jwksUri": {
-          "$ref": "#/$defs/jwksUri"
-        },
-        "readinessRealms": {
-          "type": "array",
-          "items": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "audience": {
-          "$ref": "#/$defs/audience"
         }
       },
       "required": [
-        "type",
-        "jwksUri",
-        "audience"
+        "type"
       ],
-      "additionalProperties": false,
       "allOf": [
         {
           "if": {
@@ -364,15 +316,7 @@ const formatSchema = `{
             ]
           },
           "then": {
-            "required": [
-              "issuerTemplate"
-            ],
-            "properties": {
-              "issuer": false,
-              "jwksUri": {
-                "$ref": "#/$defs/realmTemplateUrl"
-              }
-            }
+            "$ref": "#/$defs/identityProviderRealms"
           }
         },
         {
@@ -387,19 +331,79 @@ const formatSchema = `{
             ]
           },
           "then": {
-            "required": [
-              "issuer"
-            ],
-            "properties": {
-              "issuerTemplate": false,
-              "readinessRealms": false,
-              "jwksUri": {
-                "$ref": "#/$defs/url"
-              }
-            }
+            "$ref": "#/$defs/identityProviderSingle"
           }
         }
       ]
+    },
+    "identityProviderRealms": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "realms"
+        },
+        "issuerTemplate": {
+          "$ref": "#/$defs/realmTemplateUrl"
+        },
+        "jwksUri": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/httpUrl"
+            },
+            {
+              "$ref": "#/$defs/realmTemplateUrl"
+            }
+          ]
+        },
+        "readinessRealms": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "audience": {
+          "$ref": "#/$defs/audience"
+        }
+      },
+      "required": [
+        "type",
+        "issuerTemplate",
+        "jwksUri",
+        "audience"
+      ],
+      "additionalProperties": false
+    },
+    "identityProviderSingle": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "single"
+        },
+        "issuer": {
+          "$ref": "#/$defs/issuer"
+        },
+        "jwksUri": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/httpUrl"
+            },
+            {
+              "$ref": "#/$defs/url"
+            }
+          ]
+        },
+        "audience": {
+          "$ref": "#/$defs/audience"
+        }
+      },
+      "required": [
+        "type",
+        "issuer",
+        "jwksUri",
+        "audience"
+      ],
+      "additionalProperties": false
     },
     "kubernetes": {
       "type": "object",
@@ -423,21 +427,12 @@ const formatSchema = `{
         "jwksBearerTokenFile": {
           "type": "string",
           "pattern": "^/"
-        },
-        "audience": {
-          "$ref": "#/$defs/audience",
-          "properties": {
-            "mode": {
-              "const": "matchAny"
-            }
-          }
         }
       },
       "required": [
         "type",
         "issuer",
-        "jwksUri",
-        "audience"
+        "jwksUri"
       ],
       "additionalProperties": false
     },
@@ -466,28 +461,45 @@ const formatSchema = `{
         "mode"
       ],
       "additionalProperties": false,
-      "if": {
-        "properties": {
-          "mode": {
-            "const": "matchAny"
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "matchAny"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "values"
+            ]
           }
         },
-        "required": [
-          "mode"
-        ]
-      },
-      "then": {
-        "required": [
-          "values"
-        ]
-      },
-      "else": {
-        "properties": {
-          "values": false
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "ignore"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "properties": {
+              "mode": true
+            },
+            "additionalProperties": false
+          }
         }
-      }
+      ]
     },
-    "jwksUri": {
+    "httpUrl": {
       "type": "string",
       "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://"
     },
@@ -636,6 +648,136 @@ func TestSchema_NamesTheAudienceModesThatValidateAccepts(t *testing.T) {
 	}
 }
 
+// audienceValid reports whether an audience whose members are present, by
+// name, is valid under the members that def, the subschema audience, allows
+// and requires, and under the then of each if whose mode it holds. It reads
+// only which members are present, and fails the test on a keyword that it
+// does not evaluate.
+func audienceValid(t *testing.T, def map[string]any, mode string, present []string) bool {
+	t.Helper()
+	valid := membersValid(t, def, present)
+	for _, branch := range at(t, def, "allOf").([]any) {
+		cond := at(t, branch, "if")
+		want := map[string]any{"properties": map[string]any{"mode": map[string]any{"const": at(t, cond, "properties", "mode", "const")}}, "required": []any{"mode"}}
+		if !reflect.DeepEqual(cond, want) {
+			t.Fatalf("schema: an if of audience is %v; this test reads only an if that sets the mode, %v", cond, want)
+		}
+		if at(t, cond, "properties", "mode", "const") == mode {
+			valid = valid && membersValid(t, at(t, branch, "then").(map[string]any), present)
+		}
+	}
+	return valid
+}
+
+// membersValid reports whether an object whose members are present, by name,
+// is valid under the required, properties, and additionalProperties of sub,
+// reading of properties only the names. It fails the test on any other keyword
+// beside allOf, which audienceValid reads, and the annotations.
+func membersValid(t *testing.T, sub map[string]any, present []string) bool {
+	t.Helper()
+	for keyword := range sub {
+		if !slices.Contains([]string{"description", "type", "properties", "required", "additionalProperties", "allOf"}, keyword) {
+			t.Fatalf("schema: a subschema of audience uses the keyword %q, which this test does not evaluate", keyword)
+		}
+	}
+	if required, ok := sub["required"]; ok {
+		for _, name := range strs(t, required) {
+			if !slices.Contains(present, name) {
+				return false
+			}
+		}
+	}
+	if sub["additionalProperties"] == false {
+		properties, _ := sub["properties"].(map[string]any)
+		for _, name := range present {
+			if _, ok := properties[name]; !ok {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// Each row holds the mode with values or without them, so the two conditions
+// of the schema on the mode meet both.
+func TestSchema_DecidesWhetherAnAudienceHoldsValuesAsValidateDoes(t *testing.T) {
+	schema := readSchema(t)
+	def := at(t, schema, "$defs", "audience").(map[string]any)
+	tests := []struct {
+		name  string
+		mode  AudienceMode
+		value bool
+		valid bool
+	}{
+		{"matchAny with values", MatchAny, true, true},
+		{"matchAny without values", MatchAny, false, false},
+		{"ignore without values", Ignore, false, true},
+		{"ignore with values", Ignore, true, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			present := []string{"mode"}
+			audience := Audience{Mode: tt.mode}
+			if tt.value {
+				present = append(present, "values")
+				audience.Values = []string{"netcracker"}
+			}
+			if got := audienceValid(t, def, string(tt.mode), present); got != tt.valid {
+				t.Errorf("schema: an audience with the members %q and the mode %q valid = %t, want %t", present, tt.mode, got, tt.valid)
+			}
+			p := Provider{ID: IdentityProviderID, Type: Single, Issuer: "https://kc/a", JWKSURI: "https://kc/certs", Audience: audience}
+			if err := (Config{Providers: []Provider{p}}).Validate(); (err == nil) != tt.valid {
+				t.Errorf("Validate() with the audience %+v error = %v, want accepted %t", audience, err, tt.valid)
+			}
+		})
+	}
+}
+
+func TestSchema_HasTheIDThatAnErrorNames(t *testing.T) {
+	if got := at(t, readSchema(t), "$id"); got != schemaID {
+		t.Errorf("schema: $id = %v, and an error names the schema %s", got, schemaID)
+	}
+}
+
+// examplesPath holds the example provider files of ADR-0104, relative to this
+// package: the schema accepts every file in its directory valid and refuses
+// every file in invalid.
+const examplesPath = "../../../api/examples/provider-file"
+
+// Each example stands alone in a provider directory, so ReadDir checks it
+// apart from the others. A refused example breaks the schema, so its error
+// names the schema.
+func TestReadDir_AcceptsEveryValidExampleAndRefusesEveryInvalidOne(t *testing.T) {
+	for _, set := range []struct {
+		dir   string
+		valid bool
+	}{{"valid", true}, {"invalid", false}} {
+		entries, err := os.ReadDir(filepath.Join(examplesPath, set.dir))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(entries) == 0 {
+			t.Fatalf("%s holds no example", filepath.Join(examplesPath, set.dir))
+		}
+		for _, entry := range entries {
+			t.Run(set.dir+"/"+entry.Name(), func(t *testing.T) {
+				data, err := os.ReadFile(filepath.Join(examplesPath, set.dir, entry.Name()))
+				if err != nil {
+					t.Fatal(err)
+				}
+				dir := providerDir(t, map[string]string{entry.Name(): string(data)})
+				_, err = ReadDir(dir)
+				switch {
+				case set.valid && err != nil:
+					t.Errorf("ReadDir() of the valid example %s error = %v, want none", entry.Name(), err)
+				case !set.valid && (err == nil || !strings.HasSuffix(err.Error(), " (schema "+schemaID+")")):
+					t.Errorf("ReadDir() of the invalid example %s error = %v, want an error that names the schema", entry.Name(), err)
+				}
+			})
+		}
+	}
+}
+
 // accepts reports whether the string s is valid under the subschema v. It
 // evaluates the keywords the schema applies to the address members and fails
 // the test on any other keyword, which it would otherwise ignore.
@@ -685,47 +827,43 @@ func keywordAccepts(t *testing.T, schema map[string]any, keyword string, value a
 	return false
 }
 
-// memberValid reports whether value is valid under every subschema that def,
-// the definition of the provider under key, applies to its member name for
-// the type typ: the property and the property of each then of that type.
+// memberValid reports whether value is valid under the subschema that def, the
+// definition of the provider under key, applies to its member name for the
+// type typ.
 func memberValid(t *testing.T, schema map[string]any, key string, def map[string]any, typ ProviderType, name, value string) bool {
 	t.Helper()
-	schemas := []any{at(t, def, "properties", name)}
-	for _, then := range branches(t, key, def, typ) {
-		if sub, ok := at(t, then, "properties").(map[string]any)[name]; ok {
-			schemas = append(schemas, sub)
-		}
-	}
-	for _, sub := range schemas {
-		if !accepts(t, schema, sub, value) {
-			return false
-		}
-	}
-	return true
+	return accepts(t, schema, at(t, typeSchemas(t, schema, key, def)[typ], "properties", name), value)
 }
 
 // The schema accepts some addresses that net/url cannot parse or reads with no
-// host name, and the agent refuses them. The agent accepts no address of the
-// provider identity-provider that the schema refuses.
+// host name, and the agent refuses them with an error that names no schema.
+// The agent accepts no address that the schema refuses, and its error for such
+// an address names the schema.
 func TestSchema_AcceptsTheAddressesThatValidateAccepts(t *testing.T) {
 	schema := readSchema(t)
-	idp := deref(t, schema, at(t, schema, "properties", "providers", "properties", IdentityProviderID))
 	type member struct {
+		key      string
 		typ      ProviderType
 		name     string
 		provider func(value string) Provider
 	}
-	issuer := member{Single, "issuer", func(v string) Provider {
+	issuer := member{IdentityProviderID, Single, "issuer", func(v string) Provider {
 		return Provider{ID: IdentityProviderID, Type: Single, Issuer: v, JWKSURI: "https://kc/certs", Audience: ignoreAudience}
 	}}
-	issuerTemplate := member{Realms, "issuerTemplate", func(v string) Provider {
+	issuerTemplate := member{IdentityProviderID, Realms, "issuerTemplate", func(v string) Provider {
 		return Provider{ID: IdentityProviderID, Type: Realms, IssuerTemplate: v, JWKSURI: "https://kc/{realm}/certs", Audience: ignoreAudience}
 	}}
-	singleJWKS := member{Single, "jwksUri", func(v string) Provider {
+	singleJWKS := member{IdentityProviderID, Single, "jwksUri", func(v string) Provider {
 		return Provider{ID: IdentityProviderID, Type: Single, Issuer: "https://kc/a", JWKSURI: v, Audience: ignoreAudience}
 	}}
-	realmsJWKS := member{Realms, "jwksUri", func(v string) Provider {
+	realmsJWKS := member{IdentityProviderID, Realms, "jwksUri", func(v string) Provider {
 		return Provider{ID: IdentityProviderID, Type: Realms, IssuerTemplate: "https://kc/{realm}", JWKSURI: v, Audience: ignoreAudience}
+	}}
+	kubernetesIssuer := member{KubernetesID, Single, "issuer", func(v string) Provider {
+		return Provider{ID: KubernetesID, Type: Single, Issuer: v, JWKSURI: "https://k8s/jwks"}
+	}}
+	kubernetesJWKS := member{KubernetesID, Single, "jwksUri", func(v string) Provider {
+		return Provider{ID: KubernetesID, Type: Single, Issuer: "https://k8s", JWKSURI: v}
 	}}
 	tests := []struct {
 		name          string
@@ -783,16 +921,26 @@ func TestSchema_AcceptsTheAddressesThatValidateAccepts(t *testing.T) {
 		{"realms jwksUri", realmsJWKS, "http://kc/auth/realms/{realm}/protocol/openid-connect/certs", true, true},
 		{"realms jwksUri without {realm}", realmsJWKS, "http://kc/certs", false, false},
 		{"realms jwksUri over ftp", realmsJWKS, "ftp://kc/{realm}", false, false},
+		{"issuer of kubernetes", kubernetesIssuer, "https://kubernetes.default.svc.cluster.local", true, true},
+		{"issuer of kubernetes with a fragment", kubernetesIssuer, "https://k8s#x", false, false},
+		{"jwksUri of kubernetes over https", kubernetesJWKS, "https://kubernetes.default.svc/openid/v1/jwks", true, true},
+		{"jwksUri of kubernetes over https in upper case", kubernetesJWKS, "HTTPS://oidc.example/jwks", true, true},
+		{"jwksUri of kubernetes over http", kubernetesJWKS, "http://kubernetes.default.svc/openid/v1/jwks", false, false},
+		{"jwksUri of kubernetes with a port that net/url cannot parse", kubernetesJWKS, "https://k8s:x/jwks", true, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			valid := memberValid(t, schema, IdentityProviderID, idp, tt.member.typ, tt.member.name, tt.value)
+			def := deref(t, schema, at(t, schema, "properties", "providers", "properties", tt.member.key))
+			valid := memberValid(t, schema, tt.member.key, def, tt.member.typ, tt.member.name, tt.value)
 			if valid != tt.schema {
-				t.Errorf("schema: %s %q of a %s provider valid = %t, want %t", tt.member.name, tt.value, tt.member.typ, valid, tt.schema)
+				t.Errorf("schema: %s %q of the %s provider %q valid = %t, want %t", tt.member.name, tt.value, tt.member.typ, tt.member.key, valid, tt.schema)
 			}
 			err := Config{Providers: []Provider{tt.member.provider(tt.value)}}.Validate()
 			if (err == nil) != tt.agent {
-				t.Errorf("Validate() with the %s %q of a %s provider error = %v, want accepted %t", tt.member.name, tt.value, tt.member.typ, err, tt.agent)
+				t.Errorf("Validate() with the %s %q of the %s provider %q error = %v, want accepted %t", tt.member.name, tt.value, tt.member.typ, tt.member.key, err, tt.agent)
+			}
+			if named := err != nil && strings.Contains(err.Error(), schemaID); err != nil && named == tt.schema {
+				t.Errorf("Validate() with the %s %q of the %s provider %q error = %v, which names the schema %t, want %t", tt.member.name, tt.value, tt.member.typ, tt.member.key, err, named, !tt.schema)
 			}
 		})
 	}

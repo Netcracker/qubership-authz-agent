@@ -20,9 +20,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
+	"maps"
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -76,6 +79,17 @@ const realmPlaceholder = "{realm}"
 // fileShape describes a provider file for an error about its shape.
 const fileShape = `a provider file holds {"providers": {"<key>": {...}}}`
 
+// schemaID is the $id of the JSON Schema of a provider file. An error about a
+// value that the schema refuses names it, so the reader can look up what the
+// schema accepts there.
+const schemaID = "https://raw.githubusercontent.com/Netcracker/qubership-authz-agent/main/api/provider-file.v1.schema.json"
+
+// schemaError returns an error with the text of format and args, for a value
+// that the schema of a provider file refuses. The text ends with schemaID.
+func schemaError(format string, args ...any) error {
+	return fmt.Errorf(format+" (schema %s)", append(args, schemaID)...)
+}
+
 // Config is the list of providers that the provider files hold together.
 type Config struct {
 	Providers []Provider
@@ -93,6 +107,8 @@ type Config struct {
 // character. The keys of a realm are read from JWKSURI with the name, escaped
 // as one path segment, in place of {realm}, so a token picks a realm but never
 // the server that is asked.
+//
+// The provider [KubernetesID] reads its keys over https and has no audience.
 type Provider struct {
 	// ID is the key of the provider in the providers object of its file,
 	// [IdentityProviderID] or [KubernetesID].
@@ -115,8 +131,9 @@ type Provider struct {
 	// normalized.
 	IssuerTemplate string
 	// JWKSURI is the absolute URL of the JWKS. Its scheme is http or https,
-	// matched case-insensitively. It is written in the printable ASCII
-	// characters other than the space, and has no fragment. In a realms
+	// matched case-insensitively, and https in the provider [KubernetesID].
+	// It is written in the printable ASCII characters other than the space,
+	// and has no fragment. In a realms
 	// provider it holds {realm} once, as a whole segment of its path, and no
 	// other '{' or '}'; in a single provider it holds no '{' or '}'. No request
 	// follows a redirect.
@@ -132,7 +149,9 @@ type Provider struct {
 	// them. Only a realms provider may set it, and no realm is required
 	// without it.
 	ReadinessRealms []string
-	// Audience says how the aud of the provider's tokens is checked.
+	// Audience says how the aud of the provider's tokens is checked. It is
+	// zero in the provider [KubernetesID], since the aud that a Kubernetes
+	// token needs is the same in every installation.
 	Audience Audience
 
 	// file is the provider file that holds the provider, and "" for a
@@ -159,8 +178,19 @@ var members = map[string]map[ProviderType]map[string]bool{
 		Single: {"type": true, "issuer": true, "jwksUri": true, "audience": true},
 	},
 	KubernetesID: {
-		Single: {"type": true, "issuer": true, "jwksUri": true, "audience": true, "jwksBearerTokenFile": false},
+		Single: {"type": true, "issuer": true, "jwksUri": true, "jwksBearerTokenFile": false},
 	},
+}
+
+// memberKinds names the JSON value that each member of a provider holds, for
+// an error about a member that holds null.
+var memberKinds = map[string]string{
+	"issuer":              "a string",
+	"issuerTemplate":      "a string",
+	"jwksUri":             "a string",
+	"jwksBearerTokenFile": "a string",
+	"readinessRealms":     "an array of strings",
+	"audience":            "an object",
 }
 
 // memberOrder lists the members of a provider in the order an error names
@@ -172,35 +202,44 @@ var typeOrder = []ProviderType{Realms, Single}
 
 // ReadDir reads the provider files in dir and returns the providers they
 // hold together, in the order of the file names and then of the keys in each
-// providers object. A provider file is an entry directly in dir whose name
-// ends in .json and does not start with '.', unless it is a directory or a
-// symbolic link to one; the file is read through a symbolic link, and every
-// other entry is skipped.
+// providers object. ReadDir skips every entry directly in dir whose name
+// starts with '.'. Every other entry has to be a provider file: its name ends
+// in .json, and it is a regular file or a symbolic link that resolves to one,
+// which ReadDir reads through the link.
 //
-// ReadDir fails when dir or a provider file cannot be read, when no file holds
-// a provider, when a file is not UTF-8, and when the JSON of a file breaks the
-// format: a file holds one object with the member providers and may hold the
-// member $schema, a string. providers is an object of providers keyed by
-// [IdentityProviderID] or [KubernetesID], and each provider and its audience
-// hold the members that its key and its type allow and require, each once,
-// by its exact name, with a value of its JSON type and not null.
-// It also fails on every condition [Config.Validate] refuses. The error names
-// dir or the file at fault, and the provider by its key.
+// ReadDir fails when dir cannot be read, on an entry that is not a provider
+// file, when a provider file cannot be read, when no file holds a provider,
+// when a file is not UTF-8 or not a JSON text, when an object of a file names
+// a member twice, and when the JSON of a file breaks the format: a file holds
+// one object with the member providers and may hold the member $schema, a
+// string. providers is an object of providers keyed by [IdentityProviderID]
+// or [KubernetesID], and each provider and its audience hold the members that
+// its key and its type allow and require, by their exact names, with a value
+// of its JSON type and not null. It also fails on every condition
+// [Config.Validate] refuses. The error names dir, the entry, or the file at
+// fault, and the provider by its key. An error about a value that the schema
+// of a provider file refuses names the schema by its $id.
 func ReadDir(dir string) (Config, error) {
 	entries, err := os.ReadDir(dir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return Config{}, fmt.Errorf("provider directory %s: %w; no setting changes this path, so mount the provider files there", dir, err)
+	}
 	if err != nil {
 		return Config{}, fmt.Errorf("provider directory %s: %w", dir, err)
 	}
 	var cfg Config
 	for _, entry := range entries {
 		name := entry.Name()
-		if strings.HasPrefix(name, ".") || !strings.HasSuffix(name, ".json") {
+		if strings.HasPrefix(name, ".") {
 			continue
 		}
 		path := filepath.Join(dir, name)
+		if !strings.HasSuffix(name, ".json") {
+			return Config{}, errNotProviderFile(path, "its name does not end in .json")
+		}
 		providers, err := readFile(path)
 		if err != nil {
-			return Config{}, fmt.Errorf("provider file %s: %w", path, err)
+			return Config{}, err
 		}
 		cfg.Providers = append(cfg.Providers, providers...)
 	}
@@ -213,31 +252,38 @@ func ReadDir(dir string) (Config, error) {
 	return cfg, nil
 }
 
-// readFile returns the providers of the provider file at path, each with its
-// file set, and nil for a directory, which is no provider file.
+// readFile returns the providers of the entry at path, whose name ends in
+// .json, each with its file set. It fails when the entry does not resolve to
+// a regular file.
 func readFile(path string) ([]Provider, error) {
 	info, err := os.Stat(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("provider file %s: %w", path, err)
 	}
-	if info.IsDir() {
-		return nil, nil
-	}
-	if !info.Mode().IsRegular() {
-		return nil, fmt.Errorf("is not a regular file but %s", info.Mode().Type())
+	switch {
+	case info.IsDir():
+		return nil, errNotProviderFile(path, "it is a directory")
+	case !info.Mode().IsRegular():
+		return nil, errNotProviderFile(path, fmt.Sprintf("it is not a regular file but %s", info.Mode().Type()))
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("provider file %s: %w", path, err)
 	}
 	providers, err := parseFile(data)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("provider file %s: %w", path, err)
 	}
 	for i := range providers {
 		providers[i].file = path
 	}
 	return providers, nil
+}
+
+// errNotProviderFile reports the entry at path of the provider directory,
+// which is not a provider file for reason.
+func errNotProviderFile(path, reason string) error {
+	return fmt.Errorf(`provider directory %s: entry %s is not a provider file, because %s; a provider file is a regular file, or a symbolic link to one, whose name ends in .json, and only an entry whose name starts with "." is skipped; rename the entry or remove it from the directory`, filepath.Dir(path), filepath.Base(path), reason)
 }
 
 // parseFile returns the providers of the content of a provider file.
@@ -253,7 +299,7 @@ func parseFile(data []byte) ([]Provider, error) {
 	}
 	fileMembers, err := object(data)
 	if err != nil {
-		return nil, fmt.Errorf("%w; %s", err, fileShape)
+		return nil, shapeError("", err, fileShape)
 	}
 	var raw json.RawMessage
 	var others []string
@@ -264,21 +310,21 @@ func parseFile(data []byte) ([]Provider, error) {
 		case "$schema":
 			var schema string
 			if isNull(m.value) || json.Unmarshal(m.value, &schema) != nil {
-				return nil, errors.New(`member "$schema" is not a string; it names the JSON Schema of the file`)
+				return nil, schemaError(`member "$schema" is not a string; it names the JSON Schema of the file`)
 			}
 		default:
 			others = append(others, strconv.Quote(m.name))
 		}
 	}
 	if len(others) > 0 {
-		return nil, fmt.Errorf(`holds %s beside "providers"; a provider file holds no member but "providers" and "$schema"`, strings.Join(others, ", "))
+		return nil, schemaError(`holds %s beside "providers"; a provider file holds no member but "providers" and "$schema"`, strings.Join(others, ", "))
 	}
 	if raw == nil {
-		return nil, fmt.Errorf(`has no member "providers"; %s`, fileShape)
+		return nil, schemaError(`has no member "providers"; %s`, fileShape)
 	}
 	entries, err := object(raw)
 	if err != nil {
-		return nil, fmt.Errorf(`member "providers": %w; %s`, err, fileShape)
+		return nil, shapeError(`member "providers"`, err, fileShape)
 	}
 	providers := make([]Provider, 0, len(entries))
 	for _, entry := range entries {
@@ -303,7 +349,7 @@ func parseProvider(key string, raw json.RawMessage) (Provider, error) {
 	}
 	fields, err := object(raw)
 	if err != nil {
-		return Provider{}, err
+		return Provider{}, shapeError("", err, typesOf(key))
 	}
 	values := make(map[string]json.RawMessage, len(fields))
 	for _, m := range fields {
@@ -311,7 +357,7 @@ func parseProvider(key string, raw json.RawMessage) (Provider, error) {
 	}
 	p := Provider{ID: key}
 	if _, ok := values["type"]; !ok || decodeString(values, "type", (*string)(&p.Type)) != nil {
-		return Provider{}, fmt.Errorf(`has no member "type" that is a string; %s`, typesOf(key))
+		return Provider{}, schemaError(`has no member "type" that is a string; %s`, typesOf(key))
 	}
 	allowed, ok := types[p.Type]
 	if !ok {
@@ -336,12 +382,12 @@ func checkMembers(key string, typ ProviderType, allowed map[string]bool, fields 
 			return errNotAllowed(key, typ, m.name)
 		}
 		if isNull(m.value) {
-			return fmt.Errorf("member %q is null", m.name)
+			return schemaError("member %q is null; it holds %s", m.name, memberKinds[m.name])
 		}
 	}
 	for _, name := range memberOrder {
 		if _, present := values[name]; allowed[name] && !present {
-			return fmt.Errorf("has no member %q; %s", name, holds(key, typ))
+			return schemaError("has no member %q; %s", name, holds(key, typ))
 		}
 	}
 	return nil
@@ -365,11 +411,15 @@ func (p *Provider) decodeMembers(values map[string]json.RawMessage) error {
 	}
 	if raw, ok := values["readinessRealms"]; ok {
 		if p.ReadinessRealms, ok = stringArray(raw); !ok {
-			return fmt.Errorf("member %q is not an array of strings", "readinessRealms")
+			return schemaError("member %q is not an array of strings", "readinessRealms")
 		}
 	}
+	raw, ok := values["audience"]
+	if !ok {
+		return nil
+	}
 	var err error
-	p.Audience, err = parseAudience(values["audience"])
+	p.Audience, err = parseAudience(raw)
 	return err
 }
 
@@ -379,22 +429,22 @@ func parseAudience(raw json.RawMessage) (Audience, error) {
 	const shape = `an audience is {"mode": "matchAny", "values": ["<aud>", ...]} or {"mode": "ignore"}`
 	fields, err := object(raw)
 	if err != nil {
-		return Audience{}, fmt.Errorf("member %q: %w; %s", "audience", err, shape)
+		return Audience{}, shapeError(`member "audience"`, err, shape)
 	}
 	values := make(map[string]json.RawMessage, len(fields))
 	for _, m := range fields {
 		if m.name != "mode" && m.name != "values" {
-			return Audience{}, fmt.Errorf("member %q holds %q; %s", "audience", m.name, shape)
+			return Audience{}, schemaError("member %q holds %q; %s", "audience", m.name, shape)
 		}
 		values[m.name] = m.value
 	}
 	var audience Audience
 	if _, ok := values["mode"]; !ok || decodeString(values, "mode", (*string)(&audience.Mode)) != nil {
-		return Audience{}, fmt.Errorf("member %q of %q is not a string; %s", "mode", "audience", shape)
+		return Audience{}, schemaError("member %q of %q is not a string; %s", "mode", "audience", shape)
 	}
 	if raw, ok := values["values"]; ok {
 		if audience.Values, ok = stringArray(raw); !ok {
-			return Audience{}, fmt.Errorf("member %q of %q is not an array of strings; %s", "values", "audience", shape)
+			return Audience{}, schemaError("member %q of %q is not an array of strings; %s", "values", "audience", shape)
 		}
 	}
 	return audience, nil
@@ -408,7 +458,7 @@ func decodeString(values map[string]json.RawMessage, name string, s *string) err
 		return nil
 	}
 	if isNull(raw) || json.Unmarshal(raw, s) != nil {
-		return fmt.Errorf("member %q is not a string", name)
+		return schemaError("member %q is not a string", name)
 	}
 	return nil
 }
@@ -435,17 +485,27 @@ type member struct {
 	value json.RawMessage
 }
 
+// errNotObject reports a JSON value that is not an object.
+var errNotObject = errors.New("is not a JSON object")
+
 // object returns the members of raw, one JSON object, in their order, by
 // their names as written, so a caller compares a name exactly, case included,
-// which a Go struct does not do. It fails when
-// raw is not one JSON object or holds data after it, and then returns no
-// member. It also fails when raw names a member twice, and then returns every
-// member, the repeated ones each time. Its time is linear in the number of
-// members, which the providers object of a file does not bound.
+// which a Go struct does not do. It fails with errNotObject when raw starts
+// with a JSON value other than an object, and with another error when raw is
+// not a JSON text or holds data after the object; it then returns no member.
+// It also fails when raw names a member twice, and then returns every member,
+// the repeated ones each time. Its time is linear in the number of members,
+// which the providers object of a file does not bound.
 func object(raw []byte) ([]member, error) {
 	dec := json.NewDecoder(bytes.NewReader(raw))
-	if token, err := dec.Token(); err != nil || token != json.Delim('{') {
-		return nil, errors.New("not a JSON object")
+	// A first token that is no { or that does not read, as in [ or 5 x, leaves
+	// the input either no JSON text or a value other than an object, and
+	// json.Unmarshal tells the two apart.
+	if token, _ := dec.Token(); token != json.Delim('{') {
+		if err := json.Unmarshal(raw, new(json.RawMessage)); err != nil {
+			return nil, fmt.Errorf("is not a JSON text: %w", err)
+		}
+		return nil, errNotObject
 	}
 	var out []member
 	seen := make(map[string]struct{})
@@ -453,7 +513,7 @@ func object(raw []byte) ([]member, error) {
 	for dec.More() {
 		token, err := dec.Token()
 		if err != nil {
-			return nil, fmt.Errorf("not a JSON object: %w", err)
+			return nil, fmt.Errorf("is not a JSON text: %w", err)
 		}
 		name, _ := token.(string)
 		if _, twice := seen[name]; twice && repeated == nil {
@@ -462,17 +522,33 @@ func object(raw []byte) ([]member, error) {
 		seen[name] = struct{}{}
 		var value json.RawMessage
 		if err := dec.Decode(&value); err != nil {
-			return nil, fmt.Errorf("not a JSON object: %w", err)
+			return nil, fmt.Errorf("is not a JSON text: %w", err)
 		}
 		out = append(out, member{name, value})
 	}
 	if _, err := dec.Token(); err != nil {
-		return nil, fmt.Errorf("not a JSON object: %w", err)
+		return nil, fmt.Errorf("is not a JSON text: %w", err)
 	}
 	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
-		return nil, errors.New("data after the JSON object")
+		return nil, errors.New("holds data after the JSON object")
 	}
 	return out, repeated
+}
+
+// shapeError returns the error for err, which [object] returned for the
+// member subject, or for the whole value where subject is "". An err of
+// errNotObject is a value that the schema refuses, and shape says what the
+// schema accepts in its place.
+func shapeError(subject string, err error, shape string) error {
+	switch {
+	case !errors.Is(err, errNotObject) && subject == "":
+		return err
+	case !errors.Is(err, errNotObject):
+		return fmt.Errorf("%s: %w", subject, err)
+	case subject == "":
+		return schemaError("%s; %s", err, shape)
+	}
+	return schemaError("%s %s; %s", subject, err, shape)
 }
 
 func isNull(raw json.RawMessage) bool {
@@ -480,28 +556,55 @@ func isNull(raw json.RawMessage) bool {
 }
 
 func errUnknownKey(key string) error {
-	return fmt.Errorf("the key %q is neither %q nor %q", key, IdentityProviderID, KubernetesID)
+	return schemaError("the key %q is neither %q nor %q", key, IdentityProviderID, KubernetesID)
 }
 
 // errUnknownType reports the type typ in a provider with key, which [members]
 // knows and which does not allow typ.
 func errUnknownType(key string, typ ProviderType) error {
-	return fmt.Errorf("the type %q is not allowed; %s", typ, typesOf(key))
+	return schemaError("the type %q is not allowed; %s", typ, typesOf(key))
 }
 
 // errNotAllowed reports the member name in a provider with key and typ, which
-// do not allow it.
+// do not allow it. Where a provider with another key holds the member and no
+// type of key does, the error names that key.
 func errNotAllowed(key string, typ ProviderType, name string) error {
-	err := fmt.Errorf("member %q is not allowed; %s", name, holds(key, typ))
-	// Only identity-provider refuses jwksBearerTokenFile, and only a single
+	text := fmt.Sprintf("member %q is not allowed; %s", name, holds(key, typ))
+	if other := onlyOtherKey(key, name); other != "" {
+		text += fmt.Sprintf("; only the provider %q holds %s", other, name)
+	}
+	// Only the provider kubernetes refuses audience, and only a single
 	// provider refuses readinessRealms.
 	switch name {
-	case "jwksBearerTokenFile":
-		err = fmt.Errorf("%w; the provider of Kubernetes tokens has the key %q", err, KubernetesID)
+	case "audience":
+		text += ", and a Kubernetes token passes only with netcracker in aud"
 	case "readinessRealms":
-		err = fmt.Errorf("%w; the agent waits for the keys of a provider of the type %q at start in any case", err, Single)
+		text += fmt.Sprintf("; the agent waits for the keys of a provider of the type %q at start in any case", Single)
 	}
-	return err
+	return schemaError("%s", text)
+}
+
+// onlyOtherKey returns the first key of [members], in sorted order, that is
+// not key and holds the member name in one of its types, and "" when key holds
+// name in one of its own types or no other key holds it.
+func onlyOtherKey(key, name string) string {
+	holdsName := func(k string) bool {
+		for _, allowed := range members[k] {
+			if _, ok := allowed[name]; ok {
+				return true
+			}
+		}
+		return false
+	}
+	if holdsName(key) {
+		return ""
+	}
+	for _, other := range slices.Sorted(maps.Keys(members)) {
+		if holdsName(other) {
+			return other
+		}
+	}
+	return ""
 }
 
 // typesOf lists the types of a provider with key, which [members] knows.
@@ -538,12 +641,11 @@ func holds(key string, typ ProviderType) string {
 // Validate returns an error for a Config without a provider, for the first
 // provider whose values break a rule of [Provider] or [Audience], for two
 // providers with one key, and for two providers whose issuers overlap: two
-// single providers whose issuers are equal, a single provider whose issuer the
-// issuerTemplate of a realms provider matches, or two realms providers whose
-// issuerTemplates have the same scheme, host, and port, compared as written,
-// and the same number of path segments that are equal in every segment where
-// neither holds {realm}. The error names each provider by its key, with the
-// provider file that holds it.
+// single providers whose issuers are equal, or a single provider whose issuer
+// the issuerTemplate of a realms provider matches. The error names each
+// provider by its key, with the provider file that holds it, and an error
+// about a value that the schema of a provider file refuses names the schema by
+// its $id.
 func (c Config) Validate() error {
 	if len(c.Providers) == 0 {
 		return errors.New("no provider is configured")
@@ -605,6 +707,7 @@ func (p Provider) validate() error {
 		{"issuerTemplate", p.IssuerTemplate != ""},
 		{"jwksBearerTokenFile", p.JWKSBearerTokenFile != ""},
 		{"readinessRealms", p.ReadinessRealms != nil},
+		{"audience", p.Audience.Mode != "" || p.Audience.Values != nil},
 	} {
 		if _, ok := allowed[field.name]; field.set && !ok {
 			return errNotAllowed(p.ID, p.Type, field.name)
@@ -623,16 +726,20 @@ func (p Provider) validate() error {
 			return fmt.Errorf("readinessRealms: %q %w", name, err)
 		}
 	}
+	if _, ok := allowed["audience"]; !ok {
+		return nil
+	}
 	return p.Audience.validate()
 }
 
 // validateAddresses checks the URL that names the issuers of p and its
-// JWKSURI.
+// JWKSURI, and the scheme that the key of p allows in its JWKSURI: the provider
+// [KubernetesID] reads its keys only over https.
 func (p Provider) validateAddresses() error {
 	if p.Type == Single {
 		for _, field := range []struct{ name, value string }{{"issuer", p.Issuer}, {"jwksUri", p.JWKSURI}} {
 			if strings.Contains(field.value, realmPlaceholder) {
-				return fmt.Errorf("%s %q holds {realm}, which a provider of the type %q does not; %s", field.name, field.value, Single, realmRemedy(p.ID))
+				return schemaError("%s %q holds {realm}, which a provider of the type %q does not; %s", field.name, field.value, Single, realmRemedy(p.ID))
 			}
 		}
 	}
@@ -642,6 +749,9 @@ func (p Provider) validateAddresses() error {
 	}
 	if err := checkJWKSURI(p.JWKSURI, p.Type == Realms); err != nil {
 		return fmt.Errorf("jwksUri %q %w", p.JWKSURI, err)
+	}
+	if scheme, _, _ := strings.Cut(p.JWKSURI, "://"); p.ID == KubernetesID && !strings.EqualFold(scheme, "https") {
+		return schemaError("jwksUri %q is not an https URL; the provider %q reads its keys only over https, because whoever changes them on the way can sign a Kubernetes token from any namespace", p.JWKSURI, KubernetesID)
 	}
 	return nil
 }
@@ -658,17 +768,17 @@ func (a Audience) validate() error {
 	switch a.Mode {
 	case MatchAny:
 		if len(a.Values) == 0 {
-			return fmt.Errorf("audience.values is empty; the mode %q needs at least one value", MatchAny)
+			return schemaError("audience.values is empty; the mode %q needs at least one value", MatchAny)
 		}
 		if slices.Contains(a.Values, "") {
-			return errors.New("audience.values holds an empty string")
+			return schemaError("audience.values holds an empty string; each value holds at least one character")
 		}
 	case Ignore:
 		if a.Values != nil {
-			return fmt.Errorf("audience.values is set with the mode %q, which checks no value; remove it, or set the mode to %q", Ignore, MatchAny)
+			return schemaError("audience.values is set with the mode %q, which checks no value; remove it, or set the mode to %q", Ignore, MatchAny)
 		}
 	default:
-		return fmt.Errorf("audience.mode is %q; it is %q or %q", a.Mode, MatchAny, Ignore)
+		return schemaError("audience.mode is %q; it is %q or %q", a.Mode, MatchAny, Ignore)
 	}
 	return nil
 }
@@ -681,7 +791,7 @@ func checkJWKSURI(s string, template bool) error {
 	}
 	scheme, _, found := strings.Cut(s, "://")
 	if !found || !strings.EqualFold(scheme, "http") && !strings.EqualFold(scheme, "https") {
-		return errors.New("is not an http or https URL")
+		return schemaError("is not an http or https URL")
 	}
 	return checkURL(s, template)
 }
@@ -689,7 +799,7 @@ func checkJWKSURI(s string, template bool) error {
 // checkTokenFile accepts an absolute path.
 func checkTokenFile(path string) error {
 	if !filepath.IsAbs(path) {
-		return fmt.Errorf("jwksBearerTokenFile %q is not an absolute path", path)
+		return schemaError(`jwksBearerTokenFile %q is not an absolute path, one that starts with "/"`, path)
 	}
 	return nil
 }
@@ -727,48 +837,55 @@ func (t template) with(name string) string {
 	return t.prefix + url.PathEscape(name) + t.suffix
 }
 
+// schemePrefix matches the scheme and the "://" that start an absolute URL, as
+// the patterns of the schema write them.
+var schemePrefix = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9+.-]*://`)
+
 // checkURL accepts an absolute URL with a host, written in the printable ASCII
 // characters other than the space, with no fragment and no '{' or '}'. With
 // template, the URL holds {realm} once, as a whole segment of its path, and
-// '{' and '}' only there.
+// '{' and '}' only there. The schema of a provider file refuses every URL that
+// checkURL refuses, except one that [url.Parse] cannot parse or reads with no
+// host name.
 func checkURL(s string, template bool) error {
 	if err := checkPrintableASCII(s); err != nil {
 		return err
 	}
+	prefix := schemePrefix.FindString(s)
+	if prefix == "" {
+		return schemaError("is not an absolute URL; it starts with a scheme of letters, digits, '+', '.', or '-', such as https, and then ://")
+	}
+	if rest := s[len(prefix):]; rest == "" || strings.ContainsRune("/?#", rune(rest[0])) {
+		return schemaError("has no host")
+	}
 	outsideRealm := s
 	if template {
-		start, end, ok := pathBounds(s)
-		if !ok {
-			return errors.New("is not an absolute URL")
-		}
+		start, end := pathBounds(s, len(prefix))
 		if n := strings.Count(s, realmPlaceholder); n != 1 {
-			return fmt.Errorf("holds {realm} %d times; a realms provider holds it once, as a whole segment of the path", n)
+			return schemaError("holds {realm} %d times; a realms provider holds it once, as a whole segment of the path", n)
 		}
 		i := strings.Index(s, realmPlaceholder)
 		after := i + len(realmPlaceholder)
 		if i < start || after > end || s[i-1] != '/' || (after < end && s[after] != '/') {
-			return errors.New("holds {realm} outside a whole segment of its path; write it as /{realm}/ or as the last segment, as in https://keycloak:8080/auth/realms/{realm}")
+			return schemaError("holds {realm} outside a whole segment of its path; write it as /{realm}/ or as the last segment, as in https://keycloak:8080/auth/realms/{realm}")
 		}
 		outsideRealm = s[:i] + s[after:]
 	}
 	if strings.Contains(s, "#") {
-		return errors.New("holds a fragment; remove the '#' and the text after it, or percent-encode a '#' of the path or the query as %23")
+		return schemaError("holds a fragment; remove the '#' and the text after it, or percent-encode a '#' of the path or the query as %%23")
 	}
 	if strings.ContainsAny(outsideRealm, "{}") {
 		if template {
-			return errors.New("holds '{' or '}' outside its {realm}; percent-encode them as %7B and %7D")
+			return schemaError("holds '{' or '}' outside its {realm}; percent-encode them as %%7B and %%7D")
 		}
-		return errors.New("holds '{' or '}'; percent-encode them as %7B and %7D")
+		return schemaError("holds '{' or '}'; percent-encode them as %%7B and %%7D")
 	}
 	u, err := url.Parse(s)
 	if err != nil {
 		return fmt.Errorf("is not a URL: %w", err)
 	}
-	if u.Scheme == "" {
-		return errors.New("is not an absolute URL")
-	}
 	if u.Hostname() == "" {
-		return errors.New("has no host")
+		return errors.New("has no host name")
 	}
 	return nil
 }
@@ -778,31 +895,24 @@ func checkURL(s string, template bool) error {
 func checkPrintableASCII(s string) error {
 	if i := strings.IndexFunc(s, func(r rune) bool { return r < '!' || r > '~' }); i >= 0 {
 		_, size := utf8.DecodeRuneInString(s[i:])
-		return fmt.Errorf("holds %+q at byte %d; a URL here holds only printable ASCII characters other than the space, so remove the character or percent-encode it as %s", s[i:i+size], i, url.PathEscape(s[i:i+size]))
+		return schemaError("holds %+q at byte %d; a URL here holds only printable ASCII characters other than the space, so remove the character or percent-encode it as %s", s[i:i+size], i, url.PathEscape(s[i:i+size]))
 	}
 	return nil
 }
 
 // pathBounds returns where the path of the absolute URL s starts and ends:
-// after the authority, and before a query or a fragment. It takes the text
-// before the first "://" as the scheme, and reports false when s holds no
-// "://" or nothing before it.
-func pathBounds(s string) (start, end int, ok bool) {
-	scheme, rest, found := strings.Cut(s, "://")
-	if !found || scheme == "" {
-		return 0, 0, false
-	}
-	start = len(scheme) + len("://")
-	if i := strings.IndexAny(rest, "/?#"); i >= 0 {
-		start += i
-	} else {
-		start = len(s)
+// after the authority, and before a query or a fragment. The authority starts
+// at authority, after the scheme and "://".
+func pathBounds(s string, authority int) (start, end int) {
+	start = len(s)
+	if i := strings.IndexAny(s[authority:], "/?#"); i >= 0 {
+		start = authority + i
 	}
 	end = len(s)
 	if i := strings.IndexAny(s[start:], "?#"); i >= 0 {
 		end = start + i
 	}
-	return start, end, true
+	return start, end
 }
 
 // maxRealmNameBytes bounds a realm name, in bytes.
@@ -815,7 +925,7 @@ const maxRealmNameBytes = 255
 func checkRealmName(name string) error {
 	switch {
 	case name == "":
-		return errors.New("is empty")
+		return schemaError("is empty; a realm name holds at least one character")
 	case len(name) > maxRealmNameBytes:
 		return fmt.Errorf("is %d bytes long, longer than %d", len(name), maxRealmNameBytes)
 	case name == "." || name == "..":
@@ -831,39 +941,16 @@ func checkRealmName(name string) error {
 }
 
 // overlap reports whether one iss can match both a and b, as [Config.Validate]
-// defines it.
+// defines it. Two realms providers never overlap here: only the key
+// [IdentityProviderID] has the type realms, and Validate refuses two providers
+// with one key before it compares their issuers.
 func overlap(a, b Provider) bool {
-	switch {
-	case a.Type == Single && b.Type == Single:
-		return a.Issuer == b.Issuer
-	case a.Type == Single:
+	if a.Type == Realms {
+		a, b = b, a
+	}
+	if b.Type == Realms {
 		_, ok := splitTemplate(b.IssuerTemplate).realm(a.Issuer)
 		return ok
-	case b.Type == Single:
-		_, ok := splitTemplate(a.IssuerTemplate).realm(b.Issuer)
-		return ok
 	}
-	return templatesOverlap(a.IssuerTemplate, b.IssuerTemplate)
-}
-
-// templatesOverlap reports whether the issuerTemplates a and b have the same
-// scheme, host, and port, compared as written, and the same number of path
-// segments, equal in every segment where neither holds {realm}.
-func templatesOverlap(a, b string) bool {
-	aStart, aEnd, _ := pathBounds(a)
-	bStart, bEnd, _ := pathBounds(b)
-	if a[:aStart] != b[:bStart] {
-		return false
-	}
-	aSegments := strings.Split(a[aStart:aEnd], "/")
-	bSegments := strings.Split(b[bStart:bEnd], "/")
-	if len(aSegments) != len(bSegments) {
-		return false
-	}
-	for i := range aSegments {
-		if aSegments[i] != realmPlaceholder && bSegments[i] != realmPlaceholder && aSegments[i] != bSegments[i] {
-			return false
-		}
-	}
-	return true
+	return a.Issuer == b.Issuer
 }

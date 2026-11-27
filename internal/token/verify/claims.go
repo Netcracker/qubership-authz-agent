@@ -83,17 +83,27 @@ func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, p
 	return time.Unix(int64(whole), int64(fraction*float64(time.Second))), true, nil
 }
 
+// kubernetesAudience is the aud that a token of the provider
+// [keys.KubernetesID] needs, in every installation and whatever its provider
+// file holds.
+const kubernetesAudience = "netcracker"
+
 // checkAudience applies the audience of the provider of from, the same for a
-// single provider and for each realm of a realms provider. The mode
-// [keys.Ignore] lets every token pass. Any other mode, [keys.MatchAny] or an
-// unset one, requires aud, a string or an array of strings, to name one of
-// the audience values exactly.
+// single provider and for each realm of a realms provider. A token of the
+// provider [keys.KubernetesID] needs kubernetesAudience, and the
+// [keys.Provider.Audience] of that provider is not read. The mode [keys.Ignore]
+// lets every token pass. Any other mode, [keys.MatchAny] or an unset one,
+// requires aud, a string or an array of strings, to name one of the audience
+// values exactly.
 func checkAudience(claims map[string]json.RawMessage, from keys.Source) error {
 	p := from.Provider
-	if p.Audience.Mode == keys.Ignore {
+	values := p.Audience.Values
+	switch {
+	case p.ID == keys.KubernetesID:
+		values = []string{kubernetesAudience}
+	case p.Audience.Mode == keys.Ignore:
 		return nil
 	}
-	values := p.Audience.Values
 	raw, present := claims["aud"]
 	if !present {
 		return fail(CodeAudienceMissing, "token has no aud claim, and provider %q requires one of %q", p.ID, values)

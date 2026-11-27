@@ -246,12 +246,13 @@ func segment(t *testing.T, v any) string {
 	return base64.RawURLEncoding.EncodeToString(raw)
 }
 
-// claimsAt returns claims of a token that testIssuer issued at now and that
-// expires an hour later, with each entry of fields set, or removed when its
-// value is nil.
+// claimsAt returns claims of a token that testIssuer issued at now for the
+// aud netcracker, which a Kubernetes token needs, and that expires an hour
+// later, with each entry of fields set, or removed when its value is nil.
 func claimsAt(now time.Time, fields map[string]any) map[string]any {
 	claims := map[string]any{
 		"iss": testIssuer,
+		"aud": "netcracker",
 		"sub": "user-1",
 		"iat": now.Unix(),
 		"exp": now.Add(time.Hour).Unix(),

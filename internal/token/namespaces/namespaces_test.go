@@ -258,8 +258,9 @@ func (o oneKey) LookupOrReload(_ context.Context, q keys.Query) (keys.Key, error
 }
 
 // verifierFor returns a Verifier that trusts one EC key of provider and runs
-// admit, and a function that signs a token with that key whose claims are an
-// unexpired iat and exp plus fields.
+// admit, and a function that signs a token with that key whose claims are the
+// aud netcracker, which a Kubernetes token needs, an unexpired iat and exp, and
+// fields.
 func verifierFor(t *testing.T, provider string, admit func(*verify.Token) *verify.Error) (*verify.Verifier, func(fields map[string]any) string) {
 	t.Helper()
 	private, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
@@ -274,7 +275,7 @@ func verifierFor(t *testing.T, provider string, admit func(*verify.Token) *verif
 	v := verify.New(oneKey{key}, verify.Options{Admit: admit})
 	sign := func(fields map[string]any) string {
 		now := time.Now()
-		claims := map[string]any{"iss": "https://issuer.example", "iat": now.Unix(), "exp": now.Add(time.Hour).Unix()}
+		claims := map[string]any{"iss": "https://issuer.example", "aud": "netcracker", "iat": now.Unix(), "exp": now.Add(time.Hour).Unix()}
 		maps.Copy(claims, fields)
 		payload, err := json.Marshal(claims)
 		if err != nil {

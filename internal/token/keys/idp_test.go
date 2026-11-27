@@ -55,6 +55,8 @@ type fakeIdP struct {
 	// token, when set, is the bearer token a request has to carry.
 	token    string
 	lastAuth string
+	// requests counts the requests served.
+	requests int
 }
 
 func newIdP(t *testing.T, keys ...json.RawMessage) *fakeIdP {
@@ -75,6 +77,7 @@ func newTLSIdP(t *testing.T, keys ...json.RawMessage) *fakeIdP {
 
 func (idp *fakeIdP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	idp.mu.Lock()
+	idp.requests++
 	idp.lastAuth = r.Header.Get("Authorization")
 	switch {
 	case idp.status != 0:
@@ -130,8 +133,49 @@ func (idp *fakeIdP) authorization() string {
 	return idp.lastAuth
 }
 
+// requestCount returns how many requests idp has served.
+func (idp *fakeIdP) requestCount() int {
+	idp.mu.Lock()
+	defer idp.mu.Unlock()
+	return idp.requests
+}
+
 // ignoreAudience is the audience of a provider whose aud is not checked.
 var ignoreAudience = Audience{Mode: Ignore}
+
+// kubernetesOf is the provider kubernetes whose issuer is the address of idp
+// and whose jwksUri is an https address in the cluster, which
+// [serveKubernetes] directs to idp.
+func kubernetesOf(idp *fakeIdP) Provider {
+	return Provider{ID: KubernetesID, Type: Single, Issuer: idp.srv.URL, JWKSURI: "https://kubernetes.default.svc/jwks"}
+}
+
+// serveKubernetes has set send each request of its provider kubernetes to srv,
+// with its path, query, and headers, so the jwksUri of that provider may be an
+// https address that srv does not serve.
+func serveKubernetes(set *Set, srv *httptest.Server) {
+	routeKubernetes(set, toServer{srv})
+}
+
+// routeKubernetes has set send each request of its provider kubernetes through
+// transport.
+func routeKubernetes(set *Set, transport http.RoundTripper) {
+	for _, src := range set.single {
+		if src.fetcher.source.Provider.ID == KubernetesID {
+			src.fetcher.client.Transport = transport
+		}
+	}
+}
+
+// toServer is an http.RoundTripper that sends every request to srv over plain
+// http.
+type toServer struct{ srv *httptest.Server }
+
+func (s toServer) RoundTrip(r *http.Request) (*http.Response, error) {
+	r = r.Clone(r.Context())
+	r.URL.Scheme, r.URL.Host = "http", s.srv.Listener.Addr().String()
+	return s.srv.Client().Transport.RoundTrip(r)
+}
 
 // singleOf is a single provider with key id whose issuer is the address of
 // idp and whose JWKS idp serves.

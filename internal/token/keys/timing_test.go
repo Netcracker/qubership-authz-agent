@@ -267,9 +267,15 @@ func bubbleSetOf(t *testing.T, cfg Config, opts Options, transport http.RoundTri
 	return set
 }
 
-// providerOf is a single provider with key id of the fake host idp.test.
+// providerOf is a single provider with key id of the fake host idp.test. It
+// reads its keys over https, as the provider kubernetes has to, and has an
+// audience where the key takes one.
 func providerOf(id string) Provider {
-	return Provider{ID: id, Type: Single, Issuer: "http://idp.test", JWKSURI: "http://idp.test/jwks", Audience: ignoreAudience}
+	p := Provider{ID: id, Type: Single, Issuer: "http://idp.test", JWKSURI: "https://idp.test/jwks"}
+	if id == IdentityProviderID {
+		p.Audience = ignoreAudience
+	}
+	return p
 }
 
 // runSet starts Run with a context of its own and returns the function that

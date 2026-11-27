@@ -586,7 +586,7 @@ func TestVerify_RefusesOnTheAudienceBeforeTheLifetime(t *testing.T) {
 		fields map[string]any
 		want   Code
 	}{
-		{"no aud, expired", map[string]any{"exp": start.Add(-beyond).Unix()}, CodeAudienceMissing},
+		{"no aud, expired", map[string]any{"aud": nil, "exp": start.Add(-beyond).Unix()}, CodeAudienceMissing},
 		{"aud of another client, expired", map[string]any{"aud": "other", "exp": start.Add(-beyond).Unix()}, CodeAudienceInvalid},
 		{"aud of another client, no exp", map[string]any{"aud": "other", "exp": nil}, CodeAudienceInvalid},
 		{"aud of another client, nbf ahead", map[string]any{"aud": "other", "nbf": start.Add(beyond).Unix()}, CodeAudienceInvalid},
@@ -647,6 +647,39 @@ func TestVerify_ChecksTheAudienceOfARealmTokenAsItsProviderSays(t *testing.T) {
 			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"aud": tt.aud})))
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
+	}
+}
+
+// Each provider kubernetes is built with an audience, which no provider file
+// gives it: the mode ignore would pass a token whatever its aud, and the value
+// other would pass a token with the aud other.
+func TestVerify_AcceptsAKubernetesTokenOnlyWithNetcrackerInAud(t *testing.T) {
+	ignore := &keys.Provider{ID: keys.KubernetesID, Audience: keys.Audience{Mode: keys.Ignore}}
+	other := &keys.Provider{ID: keys.KubernetesID, Audience: keys.Audience{Mode: keys.MatchAny, Values: []string{"other"}}}
+	tests := []struct {
+		name     string
+		provider *keys.Provider
+		aud      any
+		want     Code
+	}{
+		{"netcracker", ignore, "netcracker", ""},
+		{"array that holds netcracker", ignore, []any{"https://kubernetes.default.svc.cluster.local", "netcracker"}, ""},
+		{"no aud", ignore, nil, CodeAudienceMissing},
+		{"aud of the API server", ignore, "https://kubernetes.default.svc.cluster.local", CodeAudienceInvalid},
+		{"netcracker in another case", ignore, "Netcracker", CodeAudienceInvalid},
+		{"array that holds netcracker and a number", ignore, []any{"netcracker", 1}, CodeAudienceInvalid},
+		{"aud that the audience of the provider lists", other, "other", CodeAudienceInvalid},
+		{"netcracker beside the audience of the provider", other, "netcracker", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", tt.provider)
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"aud": tt.aud})))
+			if codeOf(err) != tt.want {
+				t.Errorf("Verify() of a Kubernetes token with aud %v error = %v, want code %q", tt.aud, err, tt.want)
 			}
 		})
 	}

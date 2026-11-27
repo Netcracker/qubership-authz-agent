@@ -86,11 +86,14 @@ const (
 	// CodeIATInvalid marks a token whose iat is in the future.
 	CodeIATInvalid Code = "TOKEN_IAT_INVALID"
 	// CodeAudienceMissing marks a token without an aud claim from a provider
-	// whose audience mode is [keys.MatchAny].
+	// whose audience mode is [keys.MatchAny], or from the provider
+	// [keys.KubernetesID].
 	CodeAudienceMissing Code = "TOKEN_AUDIENCE_MISSING"
 	// CodeAudienceInvalid marks a token from a provider whose audience mode is
 	// [keys.MatchAny] and whose aud names none of the audience values, or is
-	// neither a string nor an array of strings.
+	// neither a string nor an array of strings. The provider
+	// [keys.KubernetesID] counts as a provider with that mode and the one
+	// value netcracker.
 	CodeAudienceInvalid Code = "TOKEN_AUDIENCE_INVALID"
 	// CodeNamespaceNotAllowed marks a Kubernetes token from a namespace the
 	// service does not accept, or one that names no namespace.

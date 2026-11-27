@@ -58,7 +58,6 @@ func kubernetesProvider() map[string]any {
 		"issuer":              "https://kubernetes.default.svc.cluster.local",
 		"jwksUri":             "https://kubernetes.default.svc/openid/v1/jwks",
 		"jwksBearerTokenFile": "/var/run/secrets/tokens/kubernetes/token",
-		"audience":            map[string]any{"mode": "matchAny", "values": []any{"netcracker"}},
 	}
 }
 
@@ -85,11 +84,12 @@ func providerFile(t *testing.T, key string, provider map[string]any) string {
 	return string(data)
 }
 
-// kubernetesFileWithAudience returns the content of a provider file that holds
-// a provider kubernetes whose one audience value is value, written into the
-// file as it is, so value may hold bytes that are not UTF-8.
-func kubernetesFileWithAudience(value string) string {
-	return `{"providers": {"kubernetes": {"type": "single", "issuer": "https://k8s", "jwksUri": "https://k8s/jwks", "audience": {"mode": "matchAny", "values": ["` + value + `"]}}}}`
+// identityProviderFileWithAudience returns the content of a provider file
+// that holds a single provider identity-provider whose one audience value is
+// value, written into the file as it is, so value may hold bytes that are not
+// UTF-8.
+func identityProviderFileWithAudience(value string) string {
+	return `{"providers": {"identity-provider": {"type": "single", "issuer": "https://kc/a", "jwksUri": "https://kc/certs", "audience": {"mode": "matchAny", "values": ["` + value + `"]}}}}`
 }
 
 // providerDir returns a new directory that holds a file of each name in files
@@ -128,8 +128,7 @@ func TestReadDir_ReadsTheProvidersOfEveryFileInTheOrderOfTheirNames(t *testing.T
       "type": "single",
       "issuer": "https://kubernetes.default.svc.cluster.local",
       "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks",
-      "jwksBearerTokenFile": "/var/run/secrets/tokens/kubernetes/token",
-      "audience": {"mode": "matchAny", "values": ["netcracker"]}
+      "jwksBearerTokenFile": "/var/run/secrets/tokens/kubernetes/token"
     }
   }
 }`,
@@ -141,7 +140,6 @@ func TestReadDir_ReadsTheProvidersOfEveryFileInTheOrderOfTheirNames(t *testing.T
 			Issuer:              "https://kubernetes.default.svc.cluster.local",
 			JWKSURI:             "https://kubernetes.default.svc/openid/v1/jwks",
 			JWKSBearerTokenFile: "/var/run/secrets/tokens/kubernetes/token",
-			Audience:            Audience{Mode: MatchAny, Values: []string{"netcracker"}},
 			file:                filepath.Join(dir, "a-kubernetes.json"),
 		},
 		{
@@ -166,7 +164,7 @@ func TestReadDir_ReadsTheProvidersOfEveryFileInTheOrderOfTheirNames(t *testing.T
 // The key kubernetes comes first in the file and sorts last.
 func TestReadDir_ReadsTheProvidersOfOneFileInTheOrderOfTheirKeys(t *testing.T) {
 	dir := providerDir(t, map[string]string{"providers.json": `{"providers": {
-  "kubernetes": {"type": "single", "issuer": "https://k8s", "jwksUri": "https://k8s/jwks", "audience": {"mode": "matchAny", "values": ["netcracker"]}},
+  "kubernetes": {"type": "single", "issuer": "https://k8s", "jwksUri": "https://k8s/jwks"},
   "identity-provider": {"type": "single", "issuer": "http://kc/auth/realms/a", "jwksUri": "http://kc/auth/realms/a/certs", "audience": {"mode": "ignore"}}
 }}`})
 	got, err := ReadDir(dir)
@@ -182,19 +180,15 @@ func TestReadDir_ReadsTheProvidersOfOneFileInTheOrderOfTheirKeys(t *testing.T) {
 	}
 }
 
-// Every skipped entry holds text that is not a provider file, so reading it
-// fails the call.
-func TestReadDir_SkipsEveryEntryThatIsNotAProviderFile(t *testing.T) {
+// Each skipped entry holds text that is not a provider file, so reading it
+// would fail the call.
+func TestReadDir_SkipsEveryEntryWhoseNameStartsWithADot(t *testing.T) {
 	dir := providerDir(t, map[string]string{
 		"idp.json":     providerFile(t, IdentityProviderID, identityProvider()),
 		".hidden.json": "not JSON",
-		"notes.txt":    "not JSON",
-		"json":         "not JSON",
+		".notes.txt":   "not JSON",
 	})
-	if err := os.Mkdir(filepath.Join(dir, "nested.json"), 0o700); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Symlink(filepath.Join(dir, "nested.json"), filepath.Join(dir, "link-to-a-directory.json")); err != nil {
+	if err := os.Mkdir(filepath.Join(dir, ".nested"), 0o700); err != nil {
 		t.Fatal(err)
 	}
 	got, err := ReadDir(dir)
@@ -203,6 +197,50 @@ func TestReadDir_SkipsEveryEntryThatIsNotAProviderFile(t *testing.T) {
 	}
 	if len(got.Providers) != 1 || got.Providers[0].ID != IdentityProviderID {
 		t.Errorf("ReadDir() = %+v, want the provider of idp.json alone", got)
+	}
+}
+
+// Each entry stands beside a provider file that ReadDir accepts alone, so the
+// error comes from the entry.
+func TestReadDir_RefusesAnEntryThatIsNotAProviderFile(t *testing.T) {
+	tests := []struct {
+		name, entry string
+		create      func(t *testing.T, path string)
+		reason      string
+	}{
+		{"file of another extension", "kubernetes.yaml", writeEntry("providers: {}"), "its name does not end in .json"},
+		{"file without an extension", "json", writeEntry("{}"), "its name does not end in .json"},
+		{"file whose extension differs in case", "kubernetes.JSON", writeEntry("{}"), "its name does not end in .json"},
+		{"directory", "nested.json", func(t *testing.T, path string) {
+			if err := os.Mkdir(path, 0o700); err != nil {
+				t.Fatal(err)
+			}
+		}, "it is a directory"},
+		{"link to a directory", "link.json", func(t *testing.T, path string) {
+			if err := os.Symlink(t.TempDir(), path); err != nil {
+				t.Fatal(err)
+			}
+		}, "it is a directory"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := providerDir(t, map[string]string{"idp.json": providerFile(t, IdentityProviderID, identityProvider())})
+			tt.create(t, filepath.Join(dir, tt.entry))
+			want := "provider directory " + dir + ": entry " + tt.entry + " is not a provider file, because " + tt.reason +
+				`; a provider file is a regular file, or a symbolic link to one, whose name ends in .json, and only an entry whose name starts with "." is skipped; rename the entry or remove it from the directory`
+			if _, err := ReadDir(dir); err == nil || err.Error() != want {
+				t.Errorf("ReadDir() error = %v, want %s", err, want)
+			}
+		})
+	}
+}
+
+// writeEntry returns a function that writes content to the file at path.
+func writeEntry(content string) func(t *testing.T, path string) {
+	return func(t *testing.T, path string) {
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 
@@ -253,37 +291,52 @@ func TestReadDir_RefusesADirectoryWithoutAProvider(t *testing.T) {
 	}
 }
 
+// The path names a regular file, which os.ReadDir cannot read as a
+// directory, so the error names the path and no remedy for a missing one.
+func TestReadDir_RefusesAPathThatIsNotADirectory(t *testing.T) {
+	path := writeFile(t, "providers", "{}")
+	_, err := ReadDir(path)
+	if err == nil || !strings.HasPrefix(err.Error(), "provider directory "+path+": ") || strings.Contains(err.Error(), "no setting changes") {
+		t.Errorf("ReadDir(%s) error = %v, want an error that names the path and not a missing directory", path, err)
+	}
+}
+
 func TestReadDir_RefusesADirectoryThatDoesNotExist(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "providers")
-	if _, err := ReadDir(dir); !errors.Is(err, fs.ErrNotExist) || !strings.Contains(err.Error(), "provider directory "+dir) {
-		t.Errorf("ReadDir(%s) error = %v, want an fs.ErrNotExist error naming the directory", dir, err)
+	if _, err := ReadDir(dir); !errors.Is(err, fs.ErrNotExist) || !containsAll(err.Error(), "provider directory "+dir, "; no setting changes this path, so mount the provider files there") {
+		t.Errorf("ReadDir(%s) error = %v, want an fs.ErrNotExist error naming the directory and saying that no setting changes its path", dir, err)
 	}
 }
 
 // Each file is the only one in its directory, so an error that names it blames
-// the file at fault.
+// the file at fault. The error of a value that the schema refuses names the
+// schema; a file that is not UTF-8 or not a JSON text, or that names a member
+// twice, breaks no rule of the schema, and its error names none.
 func TestReadDir_RefusesAFileThatIsNotAProviderFile(t *testing.T) {
 	tests := []struct {
 		name, content string
 		want          []string
+		schema        bool
 	}{
-		{"text that is not JSON", "providers: {}", []string{"not a JSON object"}},
-		{"JSON array", `[]`, []string{"not a JSON object"}},
-		{"second JSON value", `{"providers": {}} {}`, []string{"data after the JSON object"}},
-		{"object without its closing brace", `{"providers": {}`, []string{"not a JSON object: unexpected end of JSON input"}},
-		{"member providers twice", `{"providers": {}, "providers": {}}`, []string{`member "providers" appears twice`}},
-		{"no member providers", `{}`, []string{`has no member "providers"`}},
-		{"no member providers beside $schema", `{"$schema": "provider-file.v1.schema.json"}`, []string{`has no member "providers"`}},
-		{"providers that is null", `{"providers": null}`, []string{`member "providers": not a JSON object`}},
-		{"providers that is an array, as in the former format", `{"providers": []}`, []string{`member "providers": not a JSON object`}},
-		{"section keycloak and a member mode beside providers", `{"keycloak": {"url": "http://kc"}, "providers": {}, "mode": "strict"}`, []string{`holds "keycloak", "mode" beside "providers"`}},
-		{"$schema that is a number", `{"$schema": 1, "providers": {}}`, []string{`member "$schema" is not a string`}},
-		{"$schema that is null", `{"$schema": null, "providers": {}}`, []string{`member "$schema" is not a string`}},
-		{"provider that is not an object", `{"providers": {"identity-provider": "http://kc"}}`, []string{`provider "identity-provider": not a JSON object`}},
-		{"provider that is null", `{"providers": {"identity-provider": null}}`, []string{`provider "identity-provider": not a JSON object`}},
-		{"provider twice", `{"providers": {"kubernetes": {}, "kubernetes": {}}}`, []string{`member "providers": member "kubernetes" appears twice`}},
-		{"provider with a member twice", `{"providers": {"kubernetes": {"type": "single", "jwksUri": "https://k8s/a", "jwksUri": "https://k8s/b"}}}`, []string{`provider "kubernetes": member "jwksUri" appears twice`}},
-		{"byte that is not UTF-8", kubernetesFileWithAudience("caf\xe9"), []string{"holds 0xE9 at byte 152, which is not UTF-8; save the file in UTF-8"}},
+		{"text that is not JSON", "providers: {}", []string{"is not a JSON text: invalid character 'p'"}, false},
+		{"JSON array", `[]`, []string{`is not a JSON object; a provider file holds {"providers": {"<key>": {...}}}`}, true},
+		{"array that does not close", `[`, []string{"is not a JSON text: unexpected end of JSON input"}, false},
+		{"number followed by text", `5 x`, []string{"is not a JSON text: invalid character 'x' after top-level value"}, false},
+		{"second JSON value", `{"providers": {}} {}`, []string{"holds data after the JSON object"}, false},
+		{"object without its closing brace", `{"providers": {}`, []string{"is not a JSON text: unexpected end of JSON input"}, false},
+		{"member providers twice", `{"providers": {}, "providers": {}}`, []string{`member "providers" appears twice`}, false},
+		{"no member providers", `{}`, []string{`has no member "providers"`}, true},
+		{"no member providers beside $schema", `{"$schema": "provider-file.v1.schema.json"}`, []string{`has no member "providers"`}, true},
+		{"providers that is null", `{"providers": null}`, []string{`member "providers" is not a JSON object`}, true},
+		{"providers that is an array, as in the former format", `{"providers": []}`, []string{`member "providers" is not a JSON object`}, true},
+		{"section keycloak and a member mode beside providers", `{"keycloak": {"url": "http://kc"}, "providers": {}, "mode": "strict"}`, []string{`holds "keycloak", "mode" beside "providers"`}, true},
+		{"$schema that is a number", `{"$schema": 1, "providers": {}}`, []string{`member "$schema" is not a string`}, true},
+		{"$schema that is null", `{"$schema": null, "providers": {}}`, []string{`member "$schema" is not a string`}, true},
+		{"provider that is not an object", `{"providers": {"identity-provider": "http://kc"}}`, []string{`provider "identity-provider": is not a JSON object; a provider "identity-provider" has the type "realms" or "single"`}, true},
+		{"provider that is null", `{"providers": {"identity-provider": null}}`, []string{`provider "identity-provider": is not a JSON object`}, true},
+		{"provider twice", `{"providers": {"kubernetes": {}, "kubernetes": {}}}`, []string{`member "providers": member "kubernetes" appears twice`}, false},
+		{"provider with a member twice", `{"providers": {"kubernetes": {"type": "single", "jwksUri": "https://k8s/a", "jwksUri": "https://k8s/b"}}}`, []string{`provider "kubernetes": member "jwksUri" appears twice`}, false},
+		{"byte that is not UTF-8", identityProviderFileWithAudience("caf\xe9"), []string{"holds 0xE9 at byte 160, which is not UTF-8; save the file in UTF-8"}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -291,7 +344,10 @@ func TestReadDir_RefusesAFileThatIsNotAProviderFile(t *testing.T) {
 			_, err := ReadDir(dir)
 			want := append([]string{"provider file " + filepath.Join(dir, "providers.json") + ": "}, tt.want...)
 			if err == nil || !containsAll(err.Error(), want...) {
-				t.Errorf("ReadDir() of %s error = %v, want an error that contains %q", tt.content, err, want)
+				t.Fatalf("ReadDir() of %s error = %v, want an error that contains %q", tt.content, err, want)
+			}
+			if named := strings.HasSuffix(err.Error(), " (schema "+schemaID+")"); named != tt.schema {
+				t.Errorf("ReadDir() of %s error = %v, which names the schema %t, want %t", tt.content, err, named, tt.schema)
 			}
 		})
 	}
@@ -301,7 +357,7 @@ func TestReadDir_RefusesAFileThatIsNotAProviderFile(t *testing.T) {
 // string that is not UTF-8.
 func TestReadDir_ReadsAValueOutsideASCIIAsTheFileHoldsIt(t *testing.T) {
 	for _, value := range []string{"caf\u00e9", "\ufffd"} {
-		dir := providerDir(t, map[string]string{"k8s.json": kubernetesFileWithAudience(value)})
+		dir := providerDir(t, map[string]string{"k8s.json": identityProviderFileWithAudience(value)})
 		got, err := ReadDir(dir)
 		if err != nil {
 			t.Errorf("ReadDir() with the audience value %q error = %v, want none", value, err)
@@ -342,7 +398,7 @@ func TestReadDir_RefusesAProviderFileItCannotRead(t *testing.T) {
 // A socket named like a provider file is neither a directory nor a file to
 // read. The directory is short, because a socket path is limited to about 100
 // bytes.
-func TestReadDir_RefusesAProviderFileThatIsNotARegularFile(t *testing.T) {
+func TestReadDir_RefusesAnEntryNamedLikeAProviderFileThatIsNotARegularFile(t *testing.T) {
 	dir, err := os.MkdirTemp("", "p")
 	if err != nil {
 		t.Fatal(err)
@@ -354,8 +410,8 @@ func TestReadDir_RefusesAProviderFileThatIsNotARegularFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = listener.Close() })
-	if _, err := ReadDir(dir); err == nil || !strings.Contains(err.Error(), "provider file "+path+": is not a regular file") {
-		t.Errorf("ReadDir() with a socket error = %v, want an error saying %s is not a regular file", err, path)
+	if _, err := ReadDir(dir); err == nil || !strings.Contains(err.Error(), "provider directory "+dir+": entry s.json is not a provider file, because it is not a regular file") {
+		t.Errorf("ReadDir() with a socket error = %v, want an error saying that the entry s.json of %s is not a regular file", err, dir)
 	}
 }
 
@@ -371,80 +427,90 @@ func TestReadDir_RefusesAProviderThatBreaksAMemberRule(t *testing.T) {
 		key      string
 		provider map[string]any
 		want     []string
+		schema   bool
 	}{
-		{"key of another provider", "keycloak", idp, []string{`provider "keycloak": the key "keycloak" is neither "identity-provider" nor "kubernetes"`}},
-		{"key in another case", "Kubernetes", k8s, []string{`provider "Kubernetes": the key "Kubernetes" is neither`}},
-		{"no type", idpKey, with(idp, "type", nil), []string{`provider "identity-provider": has no member "type" that is a string; a provider "identity-provider" has the type "realms" or "single"`}},
-		{"type that is a number", k8sKey, with(k8s, "type", 1), []string{`provider "kubernetes": has no member "type" that is a string; a provider "kubernetes" has the type "single"`}},
-		{"type that is null", k8sKey, with(k8s, "type", json.RawMessage("null")), []string{`has no member "type" that is a string`}},
-		{"type of another kind", idpKey, with(idp, "type", "exact"), []string{`provider "identity-provider": the type "exact" is not allowed; a provider "identity-provider" has the type "realms" or "single"`}},
-		{"type realms in kubernetes", k8sKey, with(k8s, "type", "realms"), []string{`provider "kubernetes": the type "realms" is not allowed; a provider "kubernetes" has the type "single"`}},
-		{"unknown member", idpKey, with(idp, "issuerPattern", "http://kc/{realm}"), []string{`provider "identity-provider": member "issuerPattern" is not allowed`}},
-		{"member jwksUri in another case", k8sKey, with(with(k8s, "jwksUri", nil), "jwksURI", "https://k8s/jwks"), []string{`provider "kubernetes": member "jwksURI" is not allowed`}},
-		{"removed member id", k8sKey, with(k8s, "id", "kubernetes"), []string{`member "id" is not allowed`}},
-		{"removed member audiences", k8sKey, with(k8s, "audiences", []any{"netcracker"}), []string{`member "audiences" is not allowed`}},
-		{"removed member allowMissingAud", k8sKey, with(k8s, "allowMissingAud", true), []string{`member "allowMissingAud" is not allowed`}},
-		{"removed member caFile", k8sKey, with(k8s, "caFile", "/var/run/ca.crt"), []string{`member "caFile" is not allowed`}},
-		{"removed member tokenFile", k8sKey, with(k8s, "tokenFile", "/var/run/token"), []string{`member "tokenFile" is not allowed`}},
-		{"removed member kubernetes", k8sKey, with(k8s, "kubernetes", true), []string{`member "kubernetes" is not allowed`}},
-		{"removed member required", idpKey, with(idp, "required", true), []string{`member "required" is not allowed`}},
-		{"member that is null", idpKey, with(idp, "readinessRealms", json.RawMessage("null")), []string{`member "readinessRealms" is null`}},
-		{"no issuerTemplate in a realms provider", idpKey, with(idp, "issuerTemplate", nil), []string{`has no member "issuerTemplate"`}},
-		{"no issuer in a single provider", k8sKey, with(k8s, "issuer", nil), []string{`has no member "issuer"`}},
-		{"no jwksUri", k8sKey, with(k8s, "jwksUri", nil), []string{`has no member "jwksUri"`}},
-		{"no audience", idpKey, with(idp, "audience", nil), []string{`has no member "audience"`}},
-		{"issuer in a realms provider", idpKey, with(idp, "issuer", "http://identity-provider:8080/auth/realms/a"), []string{`member "issuer" is not allowed; a provider "identity-provider" of the type "realms" holds`}},
-		{"issuerTemplate in a single provider", idpKey, with(single, "issuerTemplate", "http://kc/auth/realms/{realm}"), []string{`member "issuerTemplate" is not allowed; a provider "identity-provider" of the type "single" holds`}},
-		{"jwksBearerTokenFile in identity-provider", idpKey, with(idp, "jwksBearerTokenFile", "/var/run/token"), []string{`member "jwksBearerTokenFile" is not allowed`, `the provider of Kubernetes tokens has the key "kubernetes"`}},
-		{"readinessRealms in kubernetes", k8sKey, with(k8s, "readinessRealms", []any{"cloud-common"}), []string{`provider "kubernetes": member "readinessRealms" is not allowed`, `the agent waits for the keys of a provider of the type "single" at start in any case`}},
-		{"readinessRealms in a single identity-provider", idpKey, with(single, "readinessRealms", []any{"a"}), []string{`member "readinessRealms" is not allowed`, `the agent waits for the keys of a provider of the type "single" at start in any case`}},
-		{"issuer in the former format", k8sKey, with(k8s, "issuer", map[string]any{"type": "exact", "value": "https://k8s"}), []string{`member "issuer" is not a string`}},
-		{"issuer that is not a URL", k8sKey, with(k8s, "issuer", "kubernetes"), []string{`issuer "kubernetes" is not an absolute URL`}},
-		{"empty issuer", k8sKey, with(k8s, "issuer", ""), []string{`issuer "" is not an absolute URL`}},
-		{"issuer with a space", idpKey, with(single, "issuer", "http://kc/auth/realms/a b"), []string{`issuer "http://kc/auth/realms/a b" holds " " at byte 23`, "percent-encode it as %20"}},
-		{"issuer with a fragment", k8sKey, with(k8s, "issuer", "https://k8s#x"), []string{`issuer "https://k8s#x" holds a fragment`}},
-		{"issuer with a brace", k8sKey, with(k8s, "issuer", "https://k8s/{x}"), []string{`issuer "https://k8s/{x}" holds '{' or '}'; percent-encode them as %7B and %7D`}},
-		{"jwksUri that is not http", k8sKey, with(k8s, "jwksUri", "file:///etc/jwks.json"), []string{`jwksUri "file:///etc/jwks.json" is not an http or https URL`}},
-		{"jwksUri without a host", k8sKey, with(k8s, "jwksUri", "https:///openid/v1/jwks"), []string{`jwksUri "https:///openid/v1/jwks" has no host`}},
-		{"jwksUri with a user and no host", k8sKey, with(k8s, "jwksUri", "https://user@/jwks"), []string{`jwksUri "https://user@/jwks" has no host`}},
-		{"jwksUri with a port and no host", k8sKey, with(k8s, "jwksUri", "https://:8443/jwks"), []string{`jwksUri "https://:8443/jwks" has no host`}},
-		{"jwksUri with a port that is not a number", k8sKey, with(k8s, "jwksUri", "https://k8s:x/jwks"), []string{`jwksUri "https://k8s:x/jwks" is not a URL`}},
-		{"jwksUri with a space", k8sKey, with(k8s, "jwksUri", "https://k8s/open id/jwks"), []string{`jwksUri "https://k8s/open id/jwks" holds " " at byte 16`, "percent-encode it as %20"}},
-		{"jwksUri with a leading no-break space", k8sKey, with(k8s, "jwksUri", "\u00a0https://k8s/jwks"), []string{`jwksUri "\u00a0https://k8s/jwks" holds "\u00a0" at byte 0`, "percent-encode it as %C2%A0"}},
-		{"jwksUri with DEL", k8sKey, with(k8s, "jwksUri", "https://k8s/\x7fjwks"), []string{`jwksUri "https://k8s/\x7fjwks" holds "\x7f" at byte 12`, "percent-encode it as %7F"}},
-		{"realms jwksUri with a no-break space", idpKey, with(idp, "jwksUri", "http://kc/\u00a0/{realm}/certs"), []string{`jwksUri "http://kc/\u00a0/{realm}/certs" holds "\u00a0" at byte 10`, "percent-encode it as %C2%A0"}},
-		{"issuerTemplate with a leading space", idpKey, with(idp, "issuerTemplate", " http://kc/auth/realms/{realm}"), []string{`issuerTemplate " http://kc/auth/realms/{realm}" holds " " at byte 0`, "percent-encode it as %20"}},
-		{"issuerTemplate with a trailing line feed", idpKey, with(idp, "issuerTemplate", "http://kc/auth/realms/{realm}\n"), []string{`issuerTemplate "http://kc/auth/realms/{realm}\n" holds "\n" at byte 29`, "percent-encode it as %0A"}},
-		{"issuerTemplate with a letter outside ASCII", idpKey, with(idp, "issuerTemplate", "http://kc/äuth/realms/{realm}"), []string{`issuerTemplate "http://kc/äuth/realms/{realm}" holds "\u00e4" at byte 10`, "percent-encode it as %C3%A4"}},
-		{"jwksUri with a fragment", k8sKey, with(k8s, "jwksUri", "https://k8s/jwks#keys"), []string{`jwksUri "https://k8s/jwks#keys" holds a fragment`}},
-		{"realms jwksUri with a fragment", idpKey, with(idp, "jwksUri", "http://kc/auth/realms/{realm}/certs#keys"), []string{`jwksUri "http://kc/auth/realms/{realm}/certs#keys" holds a fragment`}},
-		{"issuerTemplate with an empty fragment", idpKey, with(idp, "issuerTemplate", "http://kc/auth/realms/{realm}#"), []string{`issuerTemplate "http://kc/auth/realms/{realm}#" holds a fragment`}},
-		{"jwksUri with a placeholder", k8sKey, with(k8s, "jwksUri", "https://k8s/{namespace}/jwks"), []string{`jwksUri "https://k8s/{namespace}/jwks" holds '{' or '}'; percent-encode them as %7B and %7D`}},
-		{"realms jwksUri with a second placeholder", idpKey, with(idp, "jwksUri", "http://kc/{tenant}/{realm}/certs"), []string{`jwksUri "http://kc/{tenant}/{realm}/certs" holds '{' or '}' outside its {realm}`}},
-		{"issuerTemplate with a closing brace", idpKey, with(idp, "issuerTemplate", "http://kc/auth/realms/{realm}/}"), []string{`issuerTemplate "http://kc/auth/realms/{realm}/}" holds '{' or '}' outside its {realm}`}},
-		{"jwksUri that is a number", k8sKey, with(k8s, "jwksUri", 1), []string{`member "jwksUri" is not a string`}},
-		{"issuerTemplate that is a number", idpKey, with(idp, "issuerTemplate", 1), []string{`member "issuerTemplate" is not a string`}},
-		{"jwksBearerTokenFile that is a number", k8sKey, with(k8s, "jwksBearerTokenFile", 1), []string{`member "jwksBearerTokenFile" is not a string`}},
-		{"relative jwksBearerTokenFile", k8sKey, with(k8s, "jwksBearerTokenFile", "token"), []string{`jwksBearerTokenFile "token" is not an absolute path`}},
-		{"empty jwksBearerTokenFile", k8sKey, with(k8s, "jwksBearerTokenFile", ""), []string{`jwksBearerTokenFile "" is not an absolute path`}},
-		{"audience that is a string", k8sKey, with(k8s, "audience", "netcracker"), []string{`member "audience": not a JSON object`}},
-		{"audience with a member twice", k8sKey, with(k8s, "audience", json.RawMessage(`{"mode": "matchAny", "mode": "ignore"}`)), []string{`member "audience": member "mode" appears twice`}},
-		{"audience mode of another kind", k8sKey, with(k8s, "audience", map[string]any{"mode": "exact", "values": []any{"netcracker"}}), []string{`audience.mode is "exact"; it is "matchAny" or "ignore"`}},
-		{"audience mode of the former format", idpKey, with(idp, "audience", map[string]any{"mode": "skipValidation"}), []string{`audience.mode is "skipValidation"; it is "matchAny" or "ignore"`}},
-		{"audience without a mode", k8sKey, with(k8s, "audience", map[string]any{"values": []any{"netcracker"}}), []string{`member "mode" of "audience" is not a string`}},
-		{"audience mode that is a number", k8sKey, with(k8s, "audience", map[string]any{"mode": 1, "values": []any{"netcracker"}}), []string{`member "mode" of "audience" is not a string`}},
-		{"audience mode that is null", k8sKey, with(k8s, "audience", map[string]any{"mode": json.RawMessage("null"), "values": []any{"netcracker"}}), []string{`member "mode" of "audience" is not a string`}},
-		{"audience with a member allowMissing", k8sKey, with(k8s, "audience", map[string]any{"mode": "matchAny", "values": []any{"a"}, "allowMissing": true}), []string{`member "audience" holds "allowMissing"`}},
-		{"matchAny without values", k8sKey, with(k8s, "audience", map[string]any{"mode": "matchAny"}), []string{"audience.values is empty"}},
-		{"matchAny with an empty array", k8sKey, with(k8s, "audience", map[string]any{"mode": "matchAny", "values": []any{}}), []string{"audience.values is empty"}},
-		{"matchAny with an empty value", k8sKey, with(k8s, "audience", map[string]any{"mode": "matchAny", "values": []any{"netcracker", ""}}), []string{"audience.values holds an empty string"}},
-		{"matchAny with a value that is a number", k8sKey, with(k8s, "audience", map[string]any{"mode": "matchAny", "values": []any{1}}), []string{`member "values" of "audience" is not an array of strings`}},
-		{"matchAny with a value that is null", k8sKey, with(k8s, "audience", map[string]any{"mode": "matchAny", "values": []any{"netcracker", nil}}), []string{`member "values" of "audience" is not an array of strings`}},
-		{"ignore with values", idpKey, with(idp, "audience", map[string]any{"mode": "ignore", "values": []any{"account"}}), []string{`audience.values is set with the mode "ignore", which checks no value; remove it, or set the mode to "matchAny"`}},
-		{"ignore with an empty array", idpKey, with(idp, "audience", map[string]any{"mode": "ignore", "values": []any{}}), []string{`audience.values is set with the mode "ignore"`}},
-		{"ignore with values that are null", idpKey, with(idp, "audience", map[string]any{"mode": "ignore", "values": json.RawMessage("null")}), []string{`member "values" of "audience" is not an array of strings`}},
-		{"readinessRealms that is a string", idpKey, with(idp, "readinessRealms", "cloud-common"), []string{`member "readinessRealms" is not an array of strings`}},
-		{"readinessRealms with a name that is null", idpKey, with(idp, "readinessRealms", []any{"cloud-common", nil}), []string{`member "readinessRealms" is not an array of strings`}},
+		{"key of another provider", "keycloak", idp, []string{`provider "keycloak": the key "keycloak" is neither "identity-provider" nor "kubernetes"`}, true},
+		{"key in another case", "Kubernetes", k8s, []string{`provider "Kubernetes": the key "Kubernetes" is neither`}, true},
+		{"no type", idpKey, with(idp, "type", nil), []string{`provider "identity-provider": has no member "type" that is a string; a provider "identity-provider" has the type "realms" or "single"`}, true},
+		{"type that is a number", k8sKey, with(k8s, "type", 1), []string{`provider "kubernetes": has no member "type" that is a string; a provider "kubernetes" has the type "single"`}, true},
+		{"type that is null", k8sKey, with(k8s, "type", json.RawMessage("null")), []string{`has no member "type" that is a string`}, true},
+		{"type of another kind", idpKey, with(idp, "type", "exact"), []string{`provider "identity-provider": the type "exact" is not allowed; a provider "identity-provider" has the type "realms" or "single"`}, true},
+		{"type realms in kubernetes", k8sKey, with(k8s, "type", "realms"), []string{`provider "kubernetes": the type "realms" is not allowed; a provider "kubernetes" has the type "single"`}, true},
+		{"unknown member", idpKey, with(idp, "issuerPattern", "http://kc/{realm}"), []string{`provider "identity-provider": member "issuerPattern" is not allowed`}, true},
+		{"member jwksUri in another case", k8sKey, with(with(k8s, "jwksUri", nil), "jwksURI", "https://k8s/jwks"), []string{`provider "kubernetes": member "jwksURI" is not allowed`}, true},
+		{"removed member id", k8sKey, with(k8s, "id", "kubernetes"), []string{`member "id" is not allowed`}, true},
+		{"removed member audiences", k8sKey, with(k8s, "audiences", []any{"netcracker"}), []string{`member "audiences" is not allowed`}, true},
+		{"removed member allowMissingAud", k8sKey, with(k8s, "allowMissingAud", true), []string{`member "allowMissingAud" is not allowed`}, true},
+		{"removed member caFile", k8sKey, with(k8s, "caFile", "/var/run/ca.crt"), []string{`member "caFile" is not allowed`}, true},
+		{"removed member tokenFile", k8sKey, with(k8s, "tokenFile", "/var/run/token"), []string{`member "tokenFile" is not allowed`}, true},
+		{"removed member kubernetes", k8sKey, with(k8s, "kubernetes", true), []string{`member "kubernetes" is not allowed`}, true},
+		{"removed member required", idpKey, with(idp, "required", true), []string{`member "required" is not allowed`}, true},
+		{"readinessRealms that is null", idpKey, with(idp, "readinessRealms", json.RawMessage("null")), []string{`member "readinessRealms" is null; it holds an array of strings`}, true},
+		{"issuer that is null", k8sKey, with(k8s, "issuer", json.RawMessage("null")), []string{`member "issuer" is null; it holds a string`}, true},
+		{"issuerTemplate that is null", idpKey, with(idp, "issuerTemplate", json.RawMessage("null")), []string{`member "issuerTemplate" is null; it holds a string`}, true},
+		{"jwksUri that is null", idpKey, with(single, "jwksUri", json.RawMessage("null")), []string{`member "jwksUri" is null; it holds a string`}, true},
+		{"jwksBearerTokenFile that is null", k8sKey, with(k8s, "jwksBearerTokenFile", json.RawMessage("null")), []string{`member "jwksBearerTokenFile" is null; it holds a string`}, true},
+		{"audience that is null", idpKey, with(single, "audience", json.RawMessage("null")), []string{`member "audience" is null; it holds an object`}, true},
+		{"no issuerTemplate in a realms provider", idpKey, with(idp, "issuerTemplate", nil), []string{`has no member "issuerTemplate"`}, true},
+		{"no issuer in a single provider", k8sKey, with(k8s, "issuer", nil), []string{`has no member "issuer"`}, true},
+		{"no jwksUri", k8sKey, with(k8s, "jwksUri", nil), []string{`has no member "jwksUri"`}, true},
+		{"no audience", idpKey, with(idp, "audience", nil), []string{`has no member "audience"`}, true},
+		{"issuer in a realms provider", idpKey, with(idp, "issuer", "http://identity-provider:8080/auth/realms/a"), []string{`member "issuer" is not allowed; a provider "identity-provider" of the type "realms" holds`}, true},
+		{"issuerTemplate in a single provider", idpKey, with(single, "issuerTemplate", "http://kc/auth/realms/{realm}"), []string{`member "issuerTemplate" is not allowed; a provider "identity-provider" of the type "single" holds`}, true},
+		{"jwksBearerTokenFile in identity-provider", idpKey, with(idp, "jwksBearerTokenFile", "/var/run/token"), []string{`member "jwksBearerTokenFile" is not allowed`, `only the provider "kubernetes" holds jwksBearerTokenFile`}, true},
+		{"readinessRealms in kubernetes", k8sKey, with(k8s, "readinessRealms", []any{"cloud-common"}), []string{`provider "kubernetes": member "readinessRealms" is not allowed`, `only the provider "identity-provider" holds readinessRealms; the agent waits for the keys of a provider of the type "single" at start in any case`}, true},
+		{"issuerTemplate in kubernetes", k8sKey, with(k8s, "issuerTemplate", "https://k8s/{realm}"), []string{`provider "kubernetes": member "issuerTemplate" is not allowed`, `only the provider "identity-provider" holds issuerTemplate`}, true},
+		{"audience in kubernetes", k8sKey, with(k8s, "audience", map[string]any{"mode": "matchAny", "values": []any{"netcracker"}}), []string{`provider "kubernetes": member "audience" is not allowed; a provider "kubernetes" of the type "single" holds type, issuer, jwksUri, and may hold jwksBearerTokenFile; only the provider "identity-provider" holds audience, and a Kubernetes token passes only with netcracker in aud`}, true},
+		{"jwksUri of kubernetes over http", k8sKey, with(k8s, "jwksUri", "http://kubernetes.default.svc/openid/v1/jwks"), []string{`jwksUri "http://kubernetes.default.svc/openid/v1/jwks" is not an https URL; the provider "kubernetes" reads its keys only over https`}, true},
+		{"readinessRealms in a single identity-provider", idpKey, with(single, "readinessRealms", []any{"a"}), []string{`member "readinessRealms" is not allowed`, `the agent waits for the keys of a provider of the type "single" at start in any case`}, true},
+		{"issuer in the former format", k8sKey, with(k8s, "issuer", map[string]any{"type": "exact", "value": "https://k8s"}), []string{`member "issuer" is not a string`}, true},
+		{"issuer that is not a URL", k8sKey, with(k8s, "issuer", "kubernetes"), []string{`issuer "kubernetes" is not an absolute URL`}, true},
+		{"empty issuer", k8sKey, with(k8s, "issuer", ""), []string{`issuer "" is not an absolute URL`}, true},
+		{"issuer that is a scheme alone", k8sKey, with(k8s, "issuer", "https://"), []string{`issuer "https://" has no host (schema `}, true},
+		{"issuer with a space", idpKey, with(single, "issuer", "http://kc/auth/realms/a b"), []string{`issuer "http://kc/auth/realms/a b" holds " " at byte 23`, "percent-encode it as %20"}, true},
+		{"issuer with a fragment", k8sKey, with(k8s, "issuer", "https://k8s#x"), []string{`issuer "https://k8s#x" holds a fragment`}, true},
+		{"issuer with a brace", k8sKey, with(k8s, "issuer", "https://k8s/{x}"), []string{`issuer "https://k8s/{x}" holds '{' or '}'; percent-encode them as %7B and %7D`}, true},
+		{"jwksUri that is not http", k8sKey, with(k8s, "jwksUri", "file:///etc/jwks.json"), []string{`jwksUri "file:///etc/jwks.json" is not an http or https URL`}, true},
+		{"jwksUri without a host", k8sKey, with(k8s, "jwksUri", "https:///openid/v1/jwks"), []string{`jwksUri "https:///openid/v1/jwks" has no host`}, true},
+		{"jwksUri with a user and no host", k8sKey, with(k8s, "jwksUri", "https://user@/jwks"), []string{`jwksUri "https://user@/jwks" has no host`}, false},
+		{"jwksUri with a port and no host", k8sKey, with(k8s, "jwksUri", "https://:8443/jwks"), []string{`jwksUri "https://:8443/jwks" has no host`}, false},
+		{"jwksUri with a port that is not a number", k8sKey, with(k8s, "jwksUri", "https://k8s:x/jwks"), []string{`jwksUri "https://k8s:x/jwks" is not a URL`}, false},
+		{"jwksUri with a space", k8sKey, with(k8s, "jwksUri", "https://k8s/open id/jwks"), []string{`jwksUri "https://k8s/open id/jwks" holds " " at byte 16`, "percent-encode it as %20"}, true},
+		{"jwksUri with a leading no-break space", k8sKey, with(k8s, "jwksUri", "\u00a0https://k8s/jwks"), []string{`jwksUri "\u00a0https://k8s/jwks" holds "\u00a0" at byte 0`, "percent-encode it as %C2%A0"}, true},
+		{"jwksUri with DEL", k8sKey, with(k8s, "jwksUri", "https://k8s/\x7fjwks"), []string{`jwksUri "https://k8s/\x7fjwks" holds "\x7f" at byte 12`, "percent-encode it as %7F"}, true},
+		{"realms jwksUri with a no-break space", idpKey, with(idp, "jwksUri", "http://kc/\u00a0/{realm}/certs"), []string{`jwksUri "http://kc/\u00a0/{realm}/certs" holds "\u00a0" at byte 10`, "percent-encode it as %C2%A0"}, true},
+		{"issuerTemplate with a leading space", idpKey, with(idp, "issuerTemplate", " http://kc/auth/realms/{realm}"), []string{`issuerTemplate " http://kc/auth/realms/{realm}" holds " " at byte 0`, "percent-encode it as %20"}, true},
+		{"issuerTemplate with a trailing line feed", idpKey, with(idp, "issuerTemplate", "http://kc/auth/realms/{realm}\n"), []string{`issuerTemplate "http://kc/auth/realms/{realm}\n" holds "\n" at byte 29`, "percent-encode it as %0A"}, true},
+		{"issuerTemplate with a letter outside ASCII", idpKey, with(idp, "issuerTemplate", "http://kc/äuth/realms/{realm}"), []string{`issuerTemplate "http://kc/äuth/realms/{realm}" holds "\u00e4" at byte 10`, "percent-encode it as %C3%A4"}, true},
+		{"jwksUri with a fragment", k8sKey, with(k8s, "jwksUri", "https://k8s/jwks#keys"), []string{`jwksUri "https://k8s/jwks#keys" holds a fragment`}, true},
+		{"realms jwksUri with a fragment", idpKey, with(idp, "jwksUri", "http://kc/auth/realms/{realm}/certs#keys"), []string{`jwksUri "http://kc/auth/realms/{realm}/certs#keys" holds a fragment`}, true},
+		{"issuerTemplate with an empty fragment", idpKey, with(idp, "issuerTemplate", "http://kc/auth/realms/{realm}#"), []string{`issuerTemplate "http://kc/auth/realms/{realm}#" holds a fragment`}, true},
+		{"jwksUri with a placeholder", k8sKey, with(k8s, "jwksUri", "https://k8s/{namespace}/jwks"), []string{`jwksUri "https://k8s/{namespace}/jwks" holds '{' or '}'; percent-encode them as %7B and %7D`}, true},
+		{"realms jwksUri with a second placeholder", idpKey, with(idp, "jwksUri", "http://kc/{tenant}/{realm}/certs"), []string{`jwksUri "http://kc/{tenant}/{realm}/certs" holds '{' or '}' outside its {realm}`}, true},
+		{"issuerTemplate with a closing brace", idpKey, with(idp, "issuerTemplate", "http://kc/auth/realms/{realm}/}"), []string{`issuerTemplate "http://kc/auth/realms/{realm}/}" holds '{' or '}' outside its {realm}`}, true},
+		{"jwksUri that is a number", k8sKey, with(k8s, "jwksUri", 1), []string{`member "jwksUri" is not a string`}, true},
+		{"issuerTemplate that is a number", idpKey, with(idp, "issuerTemplate", 1), []string{`member "issuerTemplate" is not a string`}, true},
+		{"jwksBearerTokenFile that is a number", k8sKey, with(k8s, "jwksBearerTokenFile", 1), []string{`member "jwksBearerTokenFile" is not a string`}, true},
+		{"relative jwksBearerTokenFile", k8sKey, with(k8s, "jwksBearerTokenFile", "token"), []string{`jwksBearerTokenFile "token" is not an absolute path`}, true},
+		{"empty jwksBearerTokenFile", k8sKey, with(k8s, "jwksBearerTokenFile", ""), []string{`jwksBearerTokenFile "" is not an absolute path`}, true},
+		{"audience that is a string", idpKey, with(single, "audience", "netcracker"), []string{`member "audience" is not a JSON object`}, true},
+		{"audience with a member twice", idpKey, with(single, "audience", json.RawMessage(`{"mode": "matchAny", "mode": "ignore"}`)), []string{`member "audience": member "mode" appears twice`}, false},
+		{"audience mode of another kind", idpKey, with(single, "audience", map[string]any{"mode": "exact", "values": []any{"netcracker"}}), []string{`audience.mode is "exact"; it is "matchAny" or "ignore"`}, true},
+		{"audience mode of the former format", idpKey, with(idp, "audience", map[string]any{"mode": "skipValidation"}), []string{`audience.mode is "skipValidation"; it is "matchAny" or "ignore"`}, true},
+		{"audience without a mode", idpKey, with(single, "audience", map[string]any{"values": []any{"netcracker"}}), []string{`member "mode" of "audience" is not a string`}, true},
+		{"audience mode that is a number", idpKey, with(single, "audience", map[string]any{"mode": 1, "values": []any{"netcracker"}}), []string{`member "mode" of "audience" is not a string`}, true},
+		{"audience mode that is null", idpKey, with(single, "audience", map[string]any{"mode": json.RawMessage("null"), "values": []any{"netcracker"}}), []string{`member "mode" of "audience" is not a string`}, true},
+		{"audience with a member allowMissing", idpKey, with(single, "audience", map[string]any{"mode": "matchAny", "values": []any{"a"}, "allowMissing": true}), []string{`member "audience" holds "allowMissing"`}, true},
+		{"matchAny without values", idpKey, with(single, "audience", map[string]any{"mode": "matchAny"}), []string{"audience.values is empty"}, true},
+		{"matchAny with an empty array", idpKey, with(single, "audience", map[string]any{"mode": "matchAny", "values": []any{}}), []string{"audience.values is empty"}, true},
+		{"matchAny with an empty value", idpKey, with(single, "audience", map[string]any{"mode": "matchAny", "values": []any{"netcracker", ""}}), []string{"audience.values holds an empty string"}, true},
+		{"matchAny with a value that is a number", idpKey, with(single, "audience", map[string]any{"mode": "matchAny", "values": []any{1}}), []string{`member "values" of "audience" is not an array of strings`}, true},
+		{"matchAny with a value that is null", idpKey, with(single, "audience", map[string]any{"mode": "matchAny", "values": []any{"netcracker", nil}}), []string{`member "values" of "audience" is not an array of strings`}, true},
+		{"ignore with values", idpKey, with(idp, "audience", map[string]any{"mode": "ignore", "values": []any{"account"}}), []string{`audience.values is set with the mode "ignore", which checks no value; remove it, or set the mode to "matchAny"`}, true},
+		{"ignore with an empty array", idpKey, with(idp, "audience", map[string]any{"mode": "ignore", "values": []any{}}), []string{`audience.values is set with the mode "ignore"`}, true},
+		{"ignore with values that are null", idpKey, with(idp, "audience", map[string]any{"mode": "ignore", "values": json.RawMessage("null")}), []string{`member "values" of "audience" is not an array of strings`}, true},
+		{"readinessRealms that is a string", idpKey, with(idp, "readinessRealms", "cloud-common"), []string{`member "readinessRealms" is not an array of strings`}, true},
+		{"readinessRealms with a name that is null", idpKey, with(idp, "readinessRealms", []any{"cloud-common", nil}), []string{`member "readinessRealms" is not an array of strings`}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -452,7 +518,10 @@ func TestReadDir_RefusesAProviderThatBreaksAMemberRule(t *testing.T) {
 			_, err := ReadDir(dir)
 			want := append([]string{filepath.Join(dir, "provider.json")}, tt.want...)
 			if err == nil || !containsAll(err.Error(), want...) {
-				t.Errorf("ReadDir() error = %v, want an error that contains %q", err, want)
+				t.Fatalf("ReadDir() error = %v, want an error that contains %q", err, want)
+			}
+			if named := strings.HasSuffix(err.Error(), " (schema "+schemaID+")"); named != tt.schema {
+				t.Errorf("ReadDir() error = %v, which names the schema %t, want %t", err, named, tt.schema)
 			}
 		})
 	}
@@ -466,7 +535,7 @@ func TestReadDir_ListsTheMembersOfTheProviderBesideAMemberItDoesNotAllow(t *test
 		want      string
 	}{
 		{"kubernetes", KubernetesID, kubernetesProvider(), `provider "kubernetes": member "caFile" is not allowed; ` +
-			`a provider "kubernetes" of the type "single" holds type, issuer, jwksUri, audience, and may hold jwksBearerTokenFile`},
+			`a provider "kubernetes" of the type "single" holds type, issuer, jwksUri, and may hold jwksBearerTokenFile`},
 		{"realms identity-provider", IdentityProviderID, identityProvider(), `provider "identity-provider": member "caFile" is not allowed; ` +
 			`a provider "identity-provider" of the type "realms" holds type, issuerTemplate, jwksUri, audience, and may hold readinessRealms`},
 		{"single identity-provider", IdentityProviderID, singleIdentityProvider(), `provider "identity-provider": member "caFile" is not allowed; ` +
@@ -475,7 +544,7 @@ func TestReadDir_ListsTheMembersOfTheProviderBesideAMemberItDoesNotAllow(t *test
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := providerDir(t, map[string]string{"p.json": providerFile(t, tt.key, with(tt.provider, "caFile", "/var/run/ca.crt"))})
-			want := "provider file " + filepath.Join(dir, "p.json") + ": " + tt.want
+			want := "provider file " + filepath.Join(dir, "p.json") + ": " + tt.want + " (schema " + schemaID + ")"
 			if _, err := ReadDir(dir); err == nil || err.Error() != want {
 				t.Errorf("ReadDir() error = %v, want %s", err, want)
 			}
@@ -483,26 +552,45 @@ func TestReadDir_ListsTheMembersOfTheProviderBesideAMemberItDoesNotAllow(t *test
 	}
 }
 
-// The names are those that a realm name in iss may not decode to.
+// The type single of identity-provider holds issuer, so the error about issuer
+// in a realms identity-provider names no other provider, though kubernetes
+// holds issuer too.
+func TestReadDir_NamesNoOtherProviderForAMemberThatAnotherTypeOfTheKeyHolds(t *testing.T) {
+	dir := providerDir(t, map[string]string{"p.json": providerFile(t, IdentityProviderID, with(identityProvider(), "issuer", "http://kc/auth/realms/a"))})
+	want := "provider file " + filepath.Join(dir, "p.json") + `: provider "identity-provider": member "issuer" is not allowed; ` +
+		`a provider "identity-provider" of the type "realms" holds type, issuerTemplate, jwksUri, audience, and may hold readinessRealms (schema ` + schemaID + ")"
+	if _, err := ReadDir(dir); err == nil || err.Error() != want {
+		t.Errorf("ReadDir() error = %v, want %s", err, want)
+	}
+}
+
+// The names are those that a realm name in iss may not decode to. The schema
+// refuses only the empty name, by the length of an item of readinessRealms,
+// so only its error names the schema.
 func TestReadDir_RefusesAReadinessRealmThatIsNotARealmName(t *testing.T) {
 	tests := []struct {
 		name, realm, want string
+		schema            bool
 	}{
-		{"empty name", "", "is empty"},
-		{"dot", ".", "is a dot segment"},
-		{"dot dot", "..", "is a dot segment"},
-		{"slash", "a/b", "holds '/', '?', or '#'"},
-		{"question mark", "a?b", "holds '/', '?', or '#'"},
-		{"hash", "a#b", "holds '/', '?', or '#'"},
-		{"control character", "a\x01b", "holds a control character"},
-		{"C1 control character", "a\u0085b", "holds a control character"},
-		{"name of 256 bytes", strings.Repeat("x", 256), "is 256 bytes long"},
+		{"empty name", "", "is empty", true},
+		{"dot", ".", "is a dot segment", false},
+		{"dot dot", "..", "is a dot segment", false},
+		{"slash", "a/b", "holds '/', '?', or '#'", false},
+		{"question mark", "a?b", "holds '/', '?', or '#'", false},
+		{"hash", "a#b", "holds '/', '?', or '#'", false},
+		{"control character", "a\x01b", "holds a control character", false},
+		{"C1 control character", "a\u0085b", "holds a control character", false},
+		{"name of 256 bytes", strings.Repeat("x", 256), "is 256 bytes long", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := providerDir(t, map[string]string{"idp.json": providerFile(t, IdentityProviderID, with(identityProvider(), "readinessRealms", []any{"cloud-common", tt.realm}))})
-			if _, err := ReadDir(dir); err == nil || !containsAll(err.Error(), "readinessRealms: ", tt.want) {
-				t.Errorf("ReadDir() with the readiness realm %q error = %v, want an error that contains %q", tt.realm, err, tt.want)
+			_, err := ReadDir(dir)
+			if err == nil || !containsAll(err.Error(), "readinessRealms: ", tt.want) {
+				t.Fatalf("ReadDir() with the readiness realm %q error = %v, want an error that contains %q", tt.realm, err, tt.want)
+			}
+			if named := strings.HasSuffix(err.Error(), " (schema "+schemaID+")"); named != tt.schema {
+				t.Errorf("ReadDir() with the readiness realm %q error = %v, which names the schema %t, want %t", tt.realm, err, named, tt.schema)
 			}
 		})
 	}
@@ -572,8 +660,9 @@ func TestReadDir_RefusesARealmPlaceholderInASingleProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := providerDir(t, map[string]string{"p.json": providerFile(t, tt.key, tt.provider)})
-			if _, err := ReadDir(dir); err == nil || !strings.HasSuffix(err.Error(), tt.want) {
-				t.Errorf("ReadDir() error = %v, want an error that ends with %q", err, tt.want)
+			want := tt.want + " (schema " + schemaID + ")"
+			if _, err := ReadDir(dir); err == nil || !strings.HasSuffix(err.Error(), want) {
+				t.Errorf("ReadDir() error = %v, want an error that ends with %q", err, want)
 			}
 		})
 	}
@@ -705,44 +794,15 @@ func TestReadDir_RefusesTwoSingleProvidersWithOneIssuer(t *testing.T) {
 	}
 }
 
-// Only the key identity-provider takes the type realms, so no provider file
-// holds two realms providers, and overlap compares two issuerTemplates for a
-// key that takes the type realms in a later format.
-func TestOverlap_ComparesTwoIssuerTemplatesByTheirFixedSegments(t *testing.T) {
-	const base = "http://kc/auth/realms/{realm}"
-	tests := []struct {
-		name, template string
-		overlaps       bool
-	}{
-		{"{realm} in another segment", "http://kc/auth/{realm}/k8s", true},
-		{"another fixed segment", "http://kc/auth/tenants/{realm}", false},
-		{"another port", "http://kc:8080/auth/realms/{realm}", false},
-		{"one more segment", "http://kc/auth/realms/{realm}/k8s", false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			a := Provider{Type: Realms, IssuerTemplate: base}
-			b := Provider{Type: Realms, IssuerTemplate: tt.template}
-			if got := overlap(a, b); got != tt.overlaps {
-				t.Errorf("overlap(%q, %q) = %t, want %t", base, tt.template, got, tt.overlaps)
-			}
-			if got := overlap(b, a); got != tt.overlaps {
-				t.Errorf("overlap(%q, %q) = %t, want %t", tt.template, base, got, tt.overlaps)
-			}
-		})
-	}
-}
-
 // Each provider is built in code with one value that breaks a rule, so New
 // refuses it and the error names no file. Most of these values are ones that
 // the parser of a provider file refuses before Validate sees them.
 func TestNew_RefusesAProviderBuiltWithAValueThatBreaksARule(t *testing.T) {
 	k8s := Provider{
-		ID:       KubernetesID,
-		Type:     Single,
-		Issuer:   "https://k8s",
-		JWKSURI:  "https://k8s/jwks",
-		Audience: Audience{Mode: MatchAny, Values: []string{"netcracker"}},
+		ID:      KubernetesID,
+		Type:    Single,
+		Issuer:  "https://k8s",
+		JWKSURI: "https://k8s/jwks",
 	}
 	idp := keycloakProvider()
 	tests := []struct {
@@ -764,6 +824,12 @@ func TestNew_RefusesAProviderBuiltWithAValueThatBreaksARule(t *testing.T) {
 			`provider "kubernetes": jwksBearerTokenFile "token" is not an absolute path`},
 		{"readinessRealms in kubernetes", func() Provider { p := k8s; p.ReadinessRealms = []string{"cloud-common"}; return p },
 			`provider "kubernetes": member "readinessRealms" is not allowed; a provider "kubernetes" of the type "single" holds`},
+		{"audience in kubernetes", func() Provider { p := k8s; p.Audience = Audience{Mode: Ignore}; return p },
+			`provider "kubernetes": member "audience" is not allowed; a provider "kubernetes" of the type "single" holds`},
+		{"audience values in kubernetes", func() Provider { p := k8s; p.Audience = Audience{Values: []string{"netcracker"}}; return p },
+			`provider "kubernetes": member "audience" is not allowed`},
+		{"jwksUri of kubernetes over http", func() Provider { p := k8s; p.JWKSURI = "http://k8s/jwks"; return p },
+			`provider "kubernetes": jwksUri "http://k8s/jwks" is not an https URL`},
 		{"readiness realm that is not a realm name", func() Provider { return keycloakProvider("a/b") },
 			`provider "identity-provider": readinessRealms: "a/b" holds '/', '?', or '#'`},
 	}

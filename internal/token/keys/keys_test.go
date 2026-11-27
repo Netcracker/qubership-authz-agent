@@ -36,8 +36,12 @@ import (
 func TestLookup_FindsTheKeyOfTheIssuerThatTheQueryNames(t *testing.T) {
 	a := newIdP(t, ecJWK(t, "shared", nil))
 	b := newIdP(t, ecJWK(t, "shared", nil))
-	providerA, providerB := singleOf(IdentityProviderID, a), singleOf(KubernetesID, b)
-	set := mustLoad(t, testOptions(), providerA, providerB)
+	providerA, providerB := singleOf(IdentityProviderID, a), kubernetesOf(b)
+	set := mustNew(t, Config{Providers: []Provider{providerA, providerB}}, testOptions())
+	serveKubernetes(set, b.srv)
+	if err := set.Refresh(t.Context()); err != nil {
+		t.Fatalf("Refresh() error = %v", err)
+	}
 	for _, p := range []Provider{providerA, providerB} {
 		key, err := set.Lookup(Query{Issuer: p.Issuer, KID: "shared"})
 		if err != nil {
@@ -202,8 +206,9 @@ func TestRefresh_NamesEveryProviderThatStaysDown(t *testing.T) {
 	down1.setStatus(http.StatusServiceUnavailable)
 	down2 := newIdP(t)
 	down2.setStatus(http.StatusServiceUnavailable)
-	providers := []Provider{singleOf(IdentityProviderID, down1), singleOf(KubernetesID, down2)}
-	err := mustNew(t, Config{Providers: providers}, testOptions()).Refresh(t.Context())
+	set := mustNew(t, Config{Providers: []Provider{singleOf(IdentityProviderID, down1), kubernetesOf(down2)}}, testOptions())
+	serveKubernetes(set, down2.srv)
+	err := set.Refresh(t.Context())
 	if err == nil || !containsAll(err.Error(), `provider "identity-provider"`, `provider "kubernetes"`, "HTTP 503") {
 		t.Errorf("Refresh() error = %v, want an error naming providers %q and %q with HTTP 503", err, IdentityProviderID, KubernetesID)
 	}
@@ -228,11 +233,16 @@ func TestRefresh_FailsWithoutAUsableTokenFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			provider := singleOf(KubernetesID, newIdP(t, ecJWK(t, "k1", nil)))
+			idp := newIdP(t, ecJWK(t, "k1", nil))
+			provider := kubernetesOf(idp)
 			provider.JWKSBearerTokenFile = tt.tokenFile
 			set := mustNew(t, Config{Providers: []Provider{provider}}, testOptions())
+			serveKubernetes(set, idp.srv)
 			if err := set.Refresh(t.Context()); err == nil || !strings.Contains(err.Error(), "jwksBearerTokenFile") {
 				t.Errorf("Refresh() with jwksBearerTokenFile %s error = %v, want an error naming jwksBearerTokenFile", tt.tokenFile, err)
+			}
+			if got := idp.requestCount(); got != 0 {
+				t.Errorf("Refresh() with jwksBearerTokenFile %s sent %d requests for the keys, want none", tt.tokenFile, got)
 			}
 		})
 	}
@@ -243,9 +253,13 @@ func TestRefresh_FailsWithoutAUsableTokenFile(t *testing.T) {
 func TestRefresh_TokenFileIsReadOnEveryRequest(t *testing.T) {
 	idp := newIdP(t, ecJWK(t, "k1", nil))
 	idp.token = "first"
-	provider := singleOf(KubernetesID, idp)
+	provider := kubernetesOf(idp)
 	provider.JWKSBearerTokenFile = writeFile(t, "token", "first\n")
-	set := mustLoad(t, testOptions(), provider)
+	set := mustNew(t, Config{Providers: []Provider{provider}}, testOptions())
+	serveKubernetes(set, idp.srv)
+	if err := set.Refresh(t.Context()); err != nil {
+		t.Fatalf("Refresh() error = %v", err)
+	}
 	if got := idp.authorization(); got != "Bearer first" {
 		t.Errorf("Authorization at the first reload = %q, want %q", got, "Bearer first")
 	}
@@ -263,23 +277,29 @@ func TestRefresh_TokenFileIsReadOnEveryRequest(t *testing.T) {
 	}
 }
 
-// The redirect target listens on the same host at another port, where an
-// HTTP client still forwards an Authorization header.
+// The redirect target has the host of the jwksUri at another port, where an
+// HTTP client still forwards an Authorization header. The transport of the
+// test sends the requests to that port to the target server.
 func TestRefresh_DoesNotFollowARedirect(t *testing.T) {
 	target := newIdP(t, ecJWK(t, "k1", nil))
 	redirecting := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, target.srv.URL+r.URL.Path, http.StatusFound)
+		http.Redirect(w, r, "https://kubernetes.default.svc:8443/jwks", http.StatusFound)
 	}))
 	t.Cleanup(redirecting.Close)
 	provider := Provider{
 		ID:                  KubernetesID,
 		Type:                Single,
 		Issuer:              redirecting.URL,
-		JWKSURI:             redirecting.URL + "/jwks",
+		JWKSURI:             "https://kubernetes.default.svc/jwks",
 		JWKSBearerTokenFile: writeFile(t, "token", "sa-token"),
-		Audience:            ignoreAudience,
 	}
 	set := mustNew(t, Config{Providers: []Provider{provider}}, testOptions())
+	routeKubernetes(set, roundTripper(func(r *http.Request) (*http.Response, error) {
+		if r.URL.Port() == "8443" {
+			return toServer{target.srv}.RoundTrip(r)
+		}
+		return toServer{redirecting}.RoundTrip(r)
+	}))
 	if err := set.Refresh(t.Context()); err == nil || !strings.Contains(err.Error(), "HTTP 302") {
 		t.Errorf("Refresh() error = %v, want the HTTP 302 of the redirect", err)
 	}
@@ -300,7 +320,7 @@ func TestRefresh_ReportsABodyItCannotRead(t *testing.T) {
 		return &http.Response{StatusCode: http.StatusOK, Body: errorBody{}}, nil
 	})
 	set := bubbleSetOf(t, Config{Providers: []Provider{provider}}, testOptions(), transport)
-	if err := set.Refresh(t.Context()); err == nil || !strings.Contains(err.Error(), "GET http://idp.test/jwks: read body: connection reset by peer") {
+	if err := set.Refresh(t.Context()); err == nil || !strings.Contains(err.Error(), "GET https://idp.test/jwks: read body: connection reset by peer") {
 		t.Errorf("Refresh() error = %v, want an error saying that the body of the JWKS could not be read", err)
 	}
 }
@@ -402,8 +422,12 @@ func TestKey_Allows(t *testing.T) {
 func TestRefresh_AProviderThatFailsKeepsItsKeys(t *testing.T) {
 	a := newIdP(t, ecJWK(t, "a-old", nil))
 	b := newIdP(t, ecJWK(t, "b-old", nil))
-	providerA, providerB := singleOf(IdentityProviderID, a), singleOf(KubernetesID, b)
-	set := mustLoad(t, testOptions(), providerA, providerB)
+	providerA, providerB := singleOf(IdentityProviderID, a), kubernetesOf(b)
+	set := mustNew(t, Config{Providers: []Provider{providerA, providerB}}, testOptions())
+	serveKubernetes(set, b.srv)
+	if err := set.Refresh(t.Context()); err != nil {
+		t.Fatalf("Refresh() error = %v", err)
+	}
 	a.publish(ecJWK(t, "a-new", nil))
 	b.setStatus(http.StatusServiceUnavailable)
 
@@ -437,8 +461,12 @@ func TestRefresh_AProviderBesideAFailingOneTakesItsNewKeys(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			a := newIdP(t, ecJWK(t, "a-old", nil))
 			b := newIdP(t, ecJWK(t, "b-old", nil))
-			providerB := singleOf(KubernetesID, b)
-			set := mustLoad(t, testOptions(), singleOf(IdentityProviderID, a), providerB)
+			providerB := kubernetesOf(b)
+			set := mustNew(t, Config{Providers: []Provider{singleOf(IdentityProviderID, a), providerB}}, testOptions())
+			serveKubernetes(set, b.srv)
+			if err := set.Refresh(t.Context()); err != nil {
+				t.Fatalf("Refresh() error = %v", err)
+			}
 			tt.fail(t, a)
 			b.publish(ecJWK(t, "b-new", nil))
 
