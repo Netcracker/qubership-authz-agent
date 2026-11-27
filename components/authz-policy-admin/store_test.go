@@ -23,7 +23,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 )
 
@@ -35,6 +34,10 @@ const (
 const bssPolicies = `[
   {"component":"BSS","resourceType":"Invoice","operation":"READ","roles":["ROLE_ADMIN"]}
 ]`
+
+// tenantPIP declares the TOKEN PIP subject.tenant, which the PIP upload
+// accepts.
+const tenantPIP = `[{"name":"subject.tenant","pipType":"TOKEN","claim":"tenant_id"}]`
 
 const ossPolicies = `[
   {"component":"OSS","resourceType":"Ticket","operation":"UPDATE","roles":["ROLE_ENGINEER"]}
@@ -66,70 +69,14 @@ func do(t *testing.T, mux *http.ServeMux, method, path, body string, want int) *
 }
 
 // doWithTenantHeader is do with the Tenant header set to tenant, or with no
-// Tenant header when tenant is empty. A test listed in [knownSetupFailures]
-// is skipped instead of failed when the request and the status are the ones
-// its entry names, and fails when no request it sends gets them.
+// Tenant header when tenant is empty.
 func doWithTenantHeader(t *testing.T, mux *http.ServeMux, method, path, body, tenant string, want int) *bytes.Buffer {
 	t.Helper()
-	known, listed := knownSetupFailures[t.Name()]
-	if listed {
-		failRemovableEntry(t, known)
-	}
 	rec := serve(mux, method, path, body, tenant)
 	if rec.Code != want {
-		if listed && known.request == method+" "+path && known.status == rec.Code {
-			t.Skipf("known violation, %s: %s %s = %d %s, want %d", known, method, path, rec.Code, rec.Body, want)
-		}
 		t.Fatalf("%s %s = %d %s, want %d", method, path, rec.Code, rec.Body, want)
 	}
 	return rec.Body
-}
-
-// knownSetupFailure is a request of a test's setup that a known defect
-// makes get another status than the test wants.
-type knownSetupFailure struct {
-	// request is the method and the path, separated by a space.
-	request string
-	// status is the status the request gets.
-	status int
-	// defect is the finding ID and the defect in one phrase.
-	defect string
-}
-
-func (k knownSetupFailure) String() string { return k.defect }
-
-// knownSetupFailures maps the name of a test to its known setup failure. A
-// fix of the defect removes the entry.
-var knownSetupFailures = map[string]knownSetupFailure{
-	"TestStoreReloadsPersistedDomainsWithSameHash": knownF30,
-	"TestPolicyAndPIPHashesAreIndependent":         knownF30,
-	"TestFailedPIPPersistKeepsPreviousContent":     knownF30,
-}
-
-var knownF30 = knownSetupFailure{
-	request: http.MethodPut + " " + pipsPath + "BSS",
-	status:  http.StatusBadRequest,
-	defect: "F30: the test uploads a PIP named tenant, which is not subject.<attribute>, " +
-		"so the upload is refused and the test runs with no PIP stored",
-}
-
-// removableEntries holds the tests that already have the cleanup of
-// failRemovableEntry.
-var removableEntries sync.Map
-
-// failRemovableEntry makes t fail at its end unless it was skipped, that is,
-// unless the known setup failure of its entry still happens.
-func failRemovableEntry(t *testing.T, known knownSetupFailure) {
-	t.Helper()
-	if _, seen := removableEntries.LoadOrStore(t, struct{}{}); seen {
-		return
-	}
-	t.Cleanup(func() {
-		if !t.Skipped() {
-			t.Errorf("every request of %s gets the status it wants; remove its entry from knownSetupFailures (%s)",
-				t.Name(), known)
-		}
-	})
 }
 
 // serve sends the request to mux with the Tenant header set to tenant, or
@@ -251,7 +198,7 @@ func TestStoreReloadsPersistedDomainsWithSameHash(t *testing.T) {
 	first := newTestServer(t, dir)
 	do(t, first, http.MethodPut, policiesPath+"BSS", bssPolicies, http.StatusOK)
 	do(t, first, http.MethodPut, policiesPath+"OSS", ossPolicies, http.StatusOK)
-	do(t, first, http.MethodPut, pipsPath+"BSS", `[{"name":"tenant","pipType":"TOKEN","claim":"tenant_id"}]`, http.StatusOK)
+	do(t, first, http.MethodPut, pipsPath+"BSS", tenantPIP, http.StatusOK)
 	before := hashOf(t, first)
 
 	second := newTestServer(t, dir)
@@ -302,7 +249,7 @@ func TestPolicyAndPIPHashesAreIndependent(t *testing.T) {
 	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies, http.StatusOK)
 	policiesHash := hashOf(t, mux)
 
-	do(t, mux, http.MethodPut, pipsPath+"BSS", `[{"name":"tenant","pipType":"TOKEN","claim":"tenant_id"}]`, http.StatusOK)
+	do(t, mux, http.MethodPut, pipsPath+"BSS", tenantPIP, http.StatusOK)
 	if got := hashOf(t, mux); got != policiesHash {
 		t.Errorf("policy hash moved on a PIP upload: %q → %q", policiesHash, got)
 	}
@@ -353,7 +300,7 @@ func TestFailedPIPPersistKeepsPreviousContent(t *testing.T) {
 	}
 	dir := t.TempDir()
 	mux := newTestServer(t, dir)
-	do(t, mux, http.MethodPut, pipsPath+"BSS", `[{"name":"tenant","pipType":"TOKEN","claim":"tenant_id"}]`, http.StatusOK)
+	do(t, mux, http.MethodPut, pipsPath+"BSS", tenantPIP, http.StatusOK)
 	before := hashOf(t, mux)
 
 	if err := os.Chmod(dir, 0o500); err != nil {
