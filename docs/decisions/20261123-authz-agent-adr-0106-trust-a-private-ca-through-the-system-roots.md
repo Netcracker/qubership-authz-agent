@@ -32,7 +32,7 @@ kichasov
   provider file with the member `caFile` stops the start and which makes the provider `kubernetes` a `single` provider,
   ADR-0104 R25, under which every `single` provider is a required source, and ADR-0104 R28, under which that provider
   loads its keys from the API server while the Pod holds the token for the API server.
-- [authz-agent-ADR-0105: Configure the two providers through the chart values](20261123-authz-agent-adr-0105-providers-through-chart-values.md):
+- [authz-agent-ADR-0105: Let an operator override parts of the trusted providers through the Helm chart values](20261123-authz-agent-adr-0105-providers-through-chart-values.md):
   ADR-0105 R2, the provider `kubernetes` in every installation, and ADR-0105 R5, which by default loads the keys of
   that provider from the API server at an in-cluster address.
 - [authz-agent-ADR-0101: Run the agent in Docker without Kubernetes](https://github.com/Netcracker/qubership-authz-agent/pull/235),
