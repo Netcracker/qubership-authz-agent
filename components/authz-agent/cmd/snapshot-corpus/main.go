@@ -25,7 +25,7 @@
 // are answered with the status and the body the bundle recorded for their
 // path, and any other call with 200 and a null body. A request in a tenant
 // the export does not name is compared too: the service denies it. Disagreements are counted in mismatch, requests
-// not compared in skipped; regogen-corpus -resolve -service checks those.
+// not compared in skipped.
 // A tenant whose candidate the registry rejects is counted in rejected.
 //
 // It prints the time of a load per tenant, the live heap of the largest
