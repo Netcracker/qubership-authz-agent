@@ -26,7 +26,7 @@ It mutates the lines changed since the merge base with `MUTATION_BASE`, `origin/
 
 The preferences below apply by default to a design, to code, to an ADR you write or update, and to a review. A
 requirement, an ADR, another rule of this file, or compatibility with legacy access-control as
-[ADR-0097](docs/decisions/20261107-authz-agent-adr-0097-departures-from-legacy.md) defines it outranks them, and a shape
+ADR-0097 in [#226](https://github.com/Netcracker/qubership-authz-agent/pull/226) defines it outranks them, and a shape
 that one of these prescribes is not a defect under this section. Where a rule you write or change in an ADR departs from
 them, the record says why. A choice that no rule of [the decision records](docs/decisions/README.md) states is left to
 the implementer, and these preferences guide it.
