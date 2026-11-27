@@ -93,7 +93,7 @@ var Catalog = []StepEntry{
 	{"check_filter.missing_operation", userOrderReader, epCheckFilter, "ATTACHMENT", "-", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"check_filter.unknown_tenant_id.403", "admin", epCheckFilter, "NONEXISTENT", "READ", "ROLE_ADMINISTRATOR"},
 	{"check_filter.no_token.401", "n/a", epCheckFilter, "ORDER", "READ", "none"},
-	{"check_filter.missing_resource_type.400", "admin", epCheckFilter, "-", "READ", "ROLE_ADMINISTRATOR"},
+	{"check_filter.missing_resource_type.deny", "admin", epCheckFilter, "-", "READ", "ROLE_ADMINISTRATOR"},
 	{"check_filter.wrong_address.404", "admin", "POST /access/v1/check/filte", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 	{"check_filter.predicate_subject_attr_substituted", "admin", epCheckFilter, "PUBLIC_DOC", "READ", "ROLE_ADMINISTRATOR"},
 

@@ -47,8 +47,21 @@ var (
 	errDuplicateID = &RequestError{Message: "Duplicate resource id in bulk request: resource ids must be unique"}
 )
 
-func errMissing(parameter string) *RequestError {
-	return &RequestError{Message: "Missing required parameter: " + parameter}
+// errEmpty is the refusal of a required field that carries no value, in the
+// words legacy uses for it.
+func errEmpty(field string) *RequestError {
+	return &RequestError{Message: "The request '" + field + "' cannot be empty"}
+}
+
+// required refuses a required field of a request body that carries no
+// value: absent, null, and "" alike. A value of any other kind, a blank
+// string included, is present.
+func required(field string, raw json.RawMessage) *RequestError {
+	switch string(bytes.TrimSpace(raw)) {
+	case "", "null", `""`:
+		return errEmpty(field)
+	}
+	return nil
 }
 
 // Resource is one item a request asks about, or one operation of a
@@ -119,8 +132,9 @@ type v2Entry struct {
 // CheckResource parses the body of the check/resource routes: an object
 // with type and operation, and an optional resource. A body that is
 // empty, or JSON that is neither an object nor null, is refused as "bad
-// request"; a missing, null, or empty type or operation names the
-// parameter, so a null body is missing its type. Only the top-level fields
+// request"; a type or operation that is absent, null, or "" is refused by
+// [required] with the name of the field, so a null body is refused for its
+// type. Only the top-level fields
 // count: a type inside the resource is not the type.
 func CheckResource(body []byte) ([]Resource, *RequestError) {
 	if len(bytes.TrimSpace(body)) == 0 {
@@ -152,7 +166,7 @@ func CheckResourceBulk(body []byte) ([]Resource, []string, *RequestError) {
 	for _, raw := range items {
 		var it checkItem
 		if json.Unmarshal(raw, &it) != nil {
-			return nil, nil, errMissing("type")
+			return nil, nil, errBadRequest
 		}
 		r, err := it.resource()
 		if err != nil {
@@ -185,12 +199,15 @@ func CheckResourceBulkOperations(body []byte) ([]Resource, []Entry, *RequestErro
 	rawIDs := make([]json.RawMessage, 0, len(items))
 	for _, raw := range items {
 		var it operationsItem
-		if json.Unmarshal(raw, &it) != nil || !present(it.Type) {
-			return nil, nil, errMissing("type")
+		if json.Unmarshal(raw, &it) != nil {
+			return nil, nil, errBadRequest
 		}
-		ops, ok := operations(it.Operations)
-		if !ok {
-			return nil, nil, errMissing("operations")
+		if err := required("type", it.Type); err != nil {
+			return nil, nil, err
+		}
+		ops, err := operations(it.Operations)
+		if err != nil {
+			return nil, nil, err
 		}
 		resources, entries, err = expand(resources, entries, it.Type, ops, it.Resource, text(it.ID))
 		if err != nil {
@@ -217,11 +234,11 @@ func CheckResourceBulkOperationsV2(body []byte) ([]Resource, []Entry, *RequestEr
 	if json.Unmarshal(body, &b) != nil {
 		return nil, nil, errBadRequest
 	}
-	if !present(b.Type) {
-		return nil, nil, errMissing("type")
+	if err := required("type", b.Type); err != nil {
+		return nil, nil, err
 	}
-	if len(b.Entries) == 0 {
-		return nil, nil, errMissing("entries")
+	if err := required("entries", b.Entries); err != nil {
+		return nil, nil, err
 	}
 	items, err := array(b.Entries)
 	if err != nil {
@@ -233,11 +250,11 @@ func CheckResourceBulkOperationsV2(body []byte) ([]Resource, []Entry, *RequestEr
 	for _, raw := range items {
 		var e v2Entry
 		if json.Unmarshal(raw, &e) != nil {
-			return nil, nil, errMissing("operations")
+			return nil, nil, errBadRequest
 		}
-		ops, ok := operations(e.Operations)
-		if !ok {
-			return nil, nil, errMissing("operations")
+		ops, err := operations(e.Operations)
+		if err != nil {
+			return nil, nil, err
 		}
 		resources, entries, err = expand(resources, entries, b.Type, ops, e.Resource, text(e.ID))
 		if err != nil {
@@ -252,22 +269,21 @@ func CheckResourceBulkOperationsV2(body []byte) ([]Resource, []Entry, *RequestEr
 }
 
 // CheckFilter builds the resource of the check/filter routes from the query
-// parameters. resourceType must not be blank. Both values are kept as sent,
-// spaces included; an operation the request left out is empty.
-func CheckFilter(resourceType, operation string) ([]Resource, *RequestError) {
-	if strings.TrimSpace(resourceType) == "" {
-		return nil, errBadRequest
-	}
-	return []Resource{{ResourceType: resourceType, Operation: operation}}, nil
+// parameters. Neither parameter is required: both values are kept as sent,
+// spaces included, and a parameter the request left out is empty, so the
+// policies decide a request without resourceType for the empty type, as the
+// specification's model of legacy does.
+func CheckFilter(resourceType, operation string) Resource {
+	return Resource{ResourceType: resourceType, Operation: operation}
 }
 
 // resource validates the item and converts it.
 func (it checkItem) resource() (Resource, *RequestError) {
-	if !present(it.Type) {
-		return Resource{}, errMissing("type")
+	if err := required("type", it.Type); err != nil {
+		return Resource{}, err
 	}
-	if !present(it.Operation) {
-		return Resource{}, errMissing("operation")
+	if err := required("operation", it.Operation); err != nil {
+		return Resource{}, err
 	}
 	return newResource(it.Type, it.Operation, it.Resource)
 }
@@ -364,27 +380,21 @@ func array(body []byte) ([]json.RawMessage, *RequestError) {
 	return items, nil
 }
 
-// operations splits the operations field of a bulk/operations item; ok is
-// false when the field is absent, not an array, or empty.
-func operations(raw json.RawMessage) (ops []json.RawMessage, ok bool) {
-	trimmed := bytes.TrimSpace(raw)
-	if len(trimmed) == 0 || trimmed[0] != '[' {
-		return nil, false
+// operations splits the operations field of a bulk/operations item. The
+// field is required, and an empty array counts as no value; a value that is
+// not an array is a bad request.
+func operations(raw json.RawMessage) ([]json.RawMessage, *RequestError) {
+	if err := required("operations", raw); err != nil {
+		return nil, err
 	}
-	if json.Unmarshal(trimmed, &ops) != nil || len(ops) == 0 {
-		return nil, false
+	ops, err := array(raw)
+	if err != nil {
+		return nil, err
 	}
-	return ops, true
-}
-
-// present reports whether a required field carries a value: absent, null,
-// and "" all count as missing.
-func present(raw json.RawMessage) bool {
-	switch string(bytes.TrimSpace(raw)) {
-	case "", "null", `""`:
-		return false
+	if len(ops) == 0 {
+		return nil, errEmpty("operations")
 	}
-	return true
+	return ops, nil
 }
 
 // text is a scalar field as the response names it: a JSON string decoded,

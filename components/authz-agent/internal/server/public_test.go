@@ -297,7 +297,8 @@ func TestPublic_CheckResource_Refusals(t *testing.T) {
 		want               string
 	}{
 		{"an empty body", http.MethodPost, ``, admin, 400, `{"message":"bad request"}`},
-		{"a missing type", http.MethodPost, `{"resource":{"id":"1"}}`, admin, 400, `{"message":"Missing required parameter: type"}`},
+		{"a missing type", http.MethodPost, `{"resource":{"id":"1"}}`, admin, 400, `{"message":"The request 'type' cannot be empty"}`},
+		{"an empty operation", http.MethodPost, `{"type":"ORDER","operation":""}`, admin, 400, `{"message":"The request 'operation' cannot be empty"}`},
 		{"no subject", http.MethodPost, `{"type":"ORDER","operation":"READ"}`, nil, 403, `{"message":"no subject"}`},
 		{"a GET without a body", http.MethodGet, ``, admin, 400, `{"message":"bad request"}`},
 	}
@@ -346,6 +347,11 @@ func TestPublic_Bulk(t *testing.T) {
 			`[{"id":"a","type":"ORDER","operations":[""]}]`, admin, 200, `{"":[]}`},
 		{"v2 lists an empty operation that allows nothing", "/access/v2/check/resource/bulk/operations",
 			`{"type":"ORDER","entries":[{"id":"a","operations":[""]}]}`, admin, 200, `{"decision":{"":[]}}`},
+		{"bulk refuses an item with an empty type", "/access/v1/check/resource/bulk",
+			`[{"id":"a","type":"","operation":"READ"},{"id":"b","type":"ORDER","operation":"READ"}]`,
+			admin, 400, `{"message":"The request 'type' cannot be empty"}`},
+		{"v1 bulk/operations refuses an item without operations", "/access/v1/check/resource/bulk/operations",
+			`[{"id":"a","type":"ORDER","operations":[]}]`, admin, 400, `{"message":"The request 'operations' cannot be empty"}`},
 		{"a body the v1 route cannot parse", "/access/v1/check/resource/bulk/operations",
 			`{"type":"ORDER"}`, admin, 400, `{"message":"bad request"}`},
 		{"a body the v2 route cannot parse", "/access/v2/check/resource/bulk/operations",
@@ -378,7 +384,8 @@ func TestPublic_Filter(t *testing.T) {
 		{"a denied operation", "/access/v1/check/filter?resourceType=ORDER&operation=DELETE", "", 200, denied},
 		{"the last resourceType wins", "/access/v1/check/filter?resourceType=DOC&resourceType=ORDER&operation=READ", "", 200, useFilter},
 		{"a body is ignored", "/access/v1/check/filter?resourceType=ORDER&operation=READ", `{"type":"DOC","operation":"DELETE"}`, 200, useFilter},
-		{"no resourceType", "/access/v1/check/filter?operation=READ", "", 400, `{"message":"bad request"}`},
+		{"no resourceType is denied", "/access/v1/check/filter?operation=READ", "", 200, denied},
+		{"an empty resourceType is denied", "/access/v2/check/filter?resourceType=&operation=READ", "", 200, denied},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

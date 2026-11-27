@@ -102,9 +102,6 @@ func (s *RuntimeSuite) TestCheckResourceBulk() {
 		s.Require().Equal(200, code)
 	})
 
-	// Parity catalogue row 10: field-specific message
-	// "Missing required parameter: <field>" per the legacy
-	// CheckRequestValidator.
 	s.Step("check_resource_bulk.missing_type_op.400", func() {
 		h := incomingTokenHeader(s.validAdminToken)
 		body := []map[string]interface{}{
@@ -112,9 +109,7 @@ func (s *RuntimeSuite) TestCheckResourceBulk() {
 		}
 		code, b := s.postRaw("/access/v1/check/resource/bulk", h, body)
 		s.Require().Equal(400, code)
-		msg, _ := jsonObj(b)["message"].(string)
-		s.Assert().Contains(msg, "Missing required parameter",
-			"expected field-specific validation message, got: %s", msg)
+		s.Assert().Equal("The request 'type' cannot be empty", jsonObj(b)["message"])
 	})
 
 	// Parity catalogue row 11: CheckRequestValidator raises

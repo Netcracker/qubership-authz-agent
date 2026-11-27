@@ -272,11 +272,7 @@ func toRequest(q request, tenant string) (snapshot.FilterRequest, error) {
 	}
 	resourceType, _ := q.Query["resourceType"].(string)
 	operation, _ := q.Query["operation"].(string)
-	rs, rerr := legacy.CheckFilter(resourceType, operation)
-	if rerr != nil {
-		return snapshot.FilterRequest{}, rerr
-	}
-	return snapshot.NewFilterRequest(sub, rs[0]), nil
+	return snapshot.NewFilterRequest(sub, legacy.CheckFilter(resourceType, operation)), nil
 }
 
 // knownPaths returns the first answer the bundles in file recorded for each

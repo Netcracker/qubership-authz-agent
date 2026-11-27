@@ -60,7 +60,7 @@ Predecoded object-form `subject` is not part of the contract and must not be use
 | --- | --- |
 | Legacy check/resource | `Incoming-Token` precedence, `401` mapping, `tenant_id` and `Tenant` selecting the tenant, `403` for a caller outside its tenant, null body => `400`, missing required fields => `400`, wrong address => `404` |
 | Legacy check/resource/bulk | denied IDs, empty array, malformed entries, null body => `400`, missing required fields => `400`, the tenant selected and `403` as for check/resource, large payload of 3000 allowed IDs with non-restrictive RLS, wrong address => `404` |
-| Legacy check/filter | `calculationResult`, deny/allow paths, the tenant selected and `403` as for check/resource, missing `resourceType` => `400`, wrong address => `404` |
+| Legacy check/filter | `calculationResult`, deny/allow paths, the tenant selected and `403` as for check/resource, missing `resourceType` => `DENY`, wrong address => `404` |
 | Public boundary | `/authorize` not exposed; not-yet-implemented legacy routes return `404` |
 | Runner behavior | Suite runs as a Job inside the cluster, step-level PASS/FAIL reporting, catalog-validated coverage |
 

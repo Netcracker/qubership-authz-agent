@@ -83,11 +83,11 @@ func (s *RuntimeSuite) TestCheckFilter() {
 		s.Assert().NotEmpty(jsonObj(b)["message"], "legacy 401 must include message")
 	})
 
-	s.Step("check_filter.missing_resource_type.400", func() {
+	s.Step("check_filter.missing_resource_type.deny", func() {
 		h := incomingTokenHeader(s.validAdminToken)
 		code, b := s.postRaw("/access/v1/check/filter?operation=READ", h, map[string]interface{}{})
-		s.Require().Equal(400, code)
-		s.Assert().Equal("bad request", jsonObj(b)["message"])
+		s.Require().Equal(200, code)
+		s.Assert().Equal("DENY", jsonObj(b)["calculationResult"])
 	})
 
 	// `filterCondition` is null on the simplified-policy path (legacy's

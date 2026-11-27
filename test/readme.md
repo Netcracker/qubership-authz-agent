@@ -70,7 +70,7 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `check_filter.missing_operation` | order-reader | `POST /access/v1/check/filter` | ATTACHMENT | - | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_filter.unknown_tenant_id.403` | admin | `POST /access/v1/check/filter` | NONEXISTENT | READ | ROLE_ADMINISTRATOR |
 | `check_filter.no_token.401` | n/a | `POST /access/v1/check/filter` | ORDER | READ | none |
-| `check_filter.missing_resource_type.400` | admin | `POST /access/v1/check/filter` | - | READ | ROLE_ADMINISTRATOR |
+| `check_filter.missing_resource_type.deny` | admin | `POST /access/v1/check/filter` | - | READ | ROLE_ADMINISTRATOR |
 | `check_filter.wrong_address.404` | admin | `POST /access/v1/check/filte` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `check_filter.predicate_subject_attr_substituted` | admin | `POST /access/v1/check/filter` | PUBLIC_DOC | READ | ROLE_ADMINISTRATOR |
 | `pip_general.stub_reset` | n/a | `POST (pip-stub reset)` | - | - | none |
@@ -159,9 +159,11 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 - `/access/v1/check/resource` maps to one resource of the decision input and returns JSON boolean.
 - `/access/v1/check/resource/bulk` returns only allowed IDs and preserves input-to-output ID association.
 - `/access/v1/check/filter` uses `calculationResult` and correct `filterCondition` behavior.
-- `/access/v1/check/resource` returns `400` for null body and for missing required `type`/`operation` fields.
-- `/access/v1/check/resource/bulk` returns `400` for null body and for entries without required `type`/`operation`.
-- `/access/v1/check/filter` returns `400` when required query parameter `resourceType` is missing.
+- `/access/v1/check/resource` returns `400` for null body and for a `type` or `operation` that is absent, null, or
+  empty, with the message `The request '<field>' cannot be empty`.
+- `/access/v1/check/resource/bulk` returns `400` for null body and for entries whose `type` or `operation` is absent,
+  null, or empty, with the same message.
+- `/access/v1/check/filter` requires no query parameter: without `resourceType` the policies decide an empty type.
 - Wrong-address variants of implemented compatibility endpoints return `404`.
 - `tenant_id`, else the `Tenant` header, selects the tenant whose policies decide; without either, the default tenant
   decides.

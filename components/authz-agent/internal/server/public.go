@@ -183,11 +183,7 @@ func (s *Server) checkResourceBulkOperations(v2 bool) fiber.Handler {
 }
 
 func (s *Server) checkFilter(c *fiber.Ctx) error {
-	resources, err := legacy.CheckFilter(lastQuery(c, "resourceType"), lastQuery(c, "operation"))
-	if err != nil {
-		return s.refuse(c, err)
-	}
-	return s.filter(c, resources[0])
+	return s.filter(c, legacy.CheckFilter(lastQuery(c, "resourceType"), lastQuery(c, "operation")))
 }
 
 // lastQuery is the value of the last query parameter named key, "" when

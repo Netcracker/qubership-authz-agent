@@ -65,15 +65,15 @@ func TestCheckResource(t *testing.T) {
 		{"a blank body is a bad request", " \n\t", nil, "bad request"},
 		{"an array body is a bad request", `[{"type":"ORDER","operation":"READ"}]`, nil, "bad request"},
 		{"a truncated body is a bad request", `{"type":"ORDER","operation":"READ"`, nil, "bad request"},
-		{"a null body has no type", `null`, nil, "Missing required parameter: type"},
-		{"an absent type is missing", `{"operation":"READ"}`, nil, "Missing required parameter: type"},
-		{"an empty type is missing", `{"type":"","operation":"READ"}`, nil, "Missing required parameter: type"},
-		{"a null type is missing", `{"type":null,"operation":"READ"}`, nil, "Missing required parameter: type"},
-		{"type is checked before operation", `{"type":"","operation":""}`, nil, "Missing required parameter: type"},
-		{"an absent operation is missing", `{"type":"ORDER"}`, nil, "Missing required parameter: operation"},
-		{"a null operation is missing", `{"type":"ORDER","operation":null}`, nil, "Missing required parameter: operation"},
-		{"a type inside the resource is not the type", `{"resource":{"type":"X"},"operation":"READ"}`, nil, "Missing required parameter: type"},
-		{"an empty operation is missing", `{"type":"ORDER","operation":""}`, nil, "Missing required parameter: operation"},
+		{"a null body has no type", `null`, nil, "The request 'type' cannot be empty"},
+		{"an absent type is missing", `{"operation":"READ"}`, nil, "The request 'type' cannot be empty"},
+		{"an empty type is missing", `{"type":"","operation":"READ"}`, nil, "The request 'type' cannot be empty"},
+		{"a null type is missing", `{"type":null,"operation":"READ"}`, nil, "The request 'type' cannot be empty"},
+		{"type is checked before operation", `{"type":"","operation":""}`, nil, "The request 'type' cannot be empty"},
+		{"an absent operation is missing", `{"type":"ORDER"}`, nil, "The request 'operation' cannot be empty"},
+		{"a null operation is missing", `{"type":"ORDER","operation":null}`, nil, "The request 'operation' cannot be empty"},
+		{"a type inside the resource is not the type", `{"resource":{"type":"X"},"operation":"READ"}`, nil, "The request 'type' cannot be empty"},
+		{"an empty operation is missing", `{"type":"ORDER","operation":""}`, nil, "The request 'operation' cannot be empty"},
 		{"a blank type is present", `{"type":" ","operation":"READ"}`,
 			[]Resource{{ResourceType: " ", Operation: "READ"}}, ""},
 	}
@@ -111,9 +111,11 @@ func TestCheckResourceBulk(t *testing.T) {
 		{"null ids are not compared", `[{"id":null,"type":"ORDER","operation":"READ"},{"id":null,"type":"ORDER","operation":"READ"}]`,
 			[]string{"", ""}, 2, ""},
 		{"a missing type is reported before a duplicate id",
-			`[{"id":"a","type":"ORDER","operation":"READ"},{"id":"a","operation":"READ"}]`, nil, 0, "Missing required parameter: type"},
-		{"a missing operation names the parameter", `[{"type":"ORDER"}]`, nil, 0, "Missing required parameter: operation"},
-		{"an element that is not an object has no type", `["ORDER"]`, nil, 0, "Missing required parameter: type"},
+			`[{"id":"a","type":"ORDER","operation":"READ"},{"id":"a","operation":"READ"}]`, nil, 0, "The request 'type' cannot be empty"},
+		{"a missing operation names the parameter", `[{"type":"ORDER"}]`, nil, 0, "The request 'operation' cannot be empty"},
+		{"an element that is not an object is a bad request", `["ORDER"]`, nil, 0, "bad request"},
+		{"a null element has no type", `[null]`, nil, 0, "The request 'type' cannot be empty"},
+		{"an empty type names the parameter", `[{"type":"","operation":"READ"}]`, nil, 0, "The request 'type' cannot be empty"},
 		{"an object body is a bad request", `{"type":"ORDER","operation":"READ"}`, nil, 0, "bad request"},
 		{"a null body is a bad request", `null`, nil, 0, "bad request"},
 		{"an empty body is a bad request", ``, nil, 0, "bad request"},
@@ -172,11 +174,13 @@ func TestCheckResourceBulkOperations_Refusals(t *testing.T) {
 		{"an empty operation is checked", `[{"type":"ORDER","operations":[""]}]`, 1, ""},
 		{"only null operations leave nothing to check", `[{"type":"ORDER","operations":[null]}]`, 0, ""},
 		{"an empty array has nothing to check", `[]`, 0, ""},
-		{"absent operations are missing", `[{"type":"ORDER"}]`, 0, "Missing required parameter: operations"},
-		{"operations that are not an array are missing", `[{"type":"ORDER","operations":"READ"}]`, 0, "Missing required parameter: operations"},
-		{"empty operations are missing", `[{"type":"ORDER","operations":[]}]`, 0, "Missing required parameter: operations"},
-		{"null operations are missing", `[{"type":"ORDER","operations":null}]`, 0, "Missing required parameter: operations"},
-		{"a missing type names the parameter", `[{"operations":["READ"]}]`, 0, "Missing required parameter: type"},
+		{"absent operations are missing", `[{"type":"ORDER"}]`, 0, "The request 'operations' cannot be empty"},
+		{"operations that are not an array are a bad request", `[{"type":"ORDER","operations":"READ"}]`, 0, "bad request"},
+		{"empty operations are missing", `[{"type":"ORDER","operations":[]}]`, 0, "The request 'operations' cannot be empty"},
+		{"null operations are missing", `[{"type":"ORDER","operations":null}]`, 0, "The request 'operations' cannot be empty"},
+		{"a missing type names the parameter", `[{"operations":["READ"]}]`, 0, "The request 'type' cannot be empty"},
+		{"an empty type names the parameter", `[{"type":"","operations":["READ"]}]`, 0, "The request 'type' cannot be empty"},
+		{"an element that is not an object is a bad request", `["ORDER"]`, 0, "bad request"},
 		{"the same id twice is refused", `[{"id":"a","type":"ORDER","operations":["READ"]},{"id":"a","type":"DOC","operations":["READ"]}]`,
 			0, "Duplicate resource id in bulk request: resource ids must be unique"},
 		{"an operation that is a list is a bad request", `[{"type":"ORDER","operations":[["DELETE"]]}]`, 0, "bad request"},
@@ -235,13 +239,14 @@ func TestCheckResourceBulkOperationsV2_Refusals(t *testing.T) {
 	}{
 		{"an empty body is a bad request", ``, "bad request"},
 		{"an array body is a bad request", `[]`, "bad request"},
-		{"a null body has no type", `null`, "Missing required parameter: type"},
-		{"a missing type names the parameter", `{"entries":[]}`, "Missing required parameter: type"},
-		{"absent entries are missing", `{"type":"ORDER"}`, "Missing required parameter: entries"},
+		{"a null body has no type", `null`, "The request 'type' cannot be empty"},
+		{"a missing type names the parameter", `{"entries":[]}`, "The request 'type' cannot be empty"},
+		{"absent entries are missing", `{"type":"ORDER"}`, "The request 'entries' cannot be empty"},
 		{"entries that are not an array are a bad request", `{"type":"ORDER","entries":{}}`, "bad request"},
-		{"null entries are a bad request", `{"type":"ORDER","entries":null}`, "bad request"},
-		{"an entry without operations names the parameter", `{"type":"ORDER","entries":[{"id":"a"}]}`, "Missing required parameter: operations"},
-		{"an entry that is not an object has no operations", `{"type":"ORDER","entries":["a"]}`, "Missing required parameter: operations"},
+		{"null entries are missing", `{"type":"ORDER","entries":null}`, "The request 'entries' cannot be empty"},
+		{"an entry without operations names the parameter", `{"type":"ORDER","entries":[{"id":"a"}]}`, "The request 'operations' cannot be empty"},
+		{"an entry that is not an object is a bad request", `{"type":"ORDER","entries":["a"]}`, "bad request"},
+		{"operations of an entry that are not an array are a bad request", `{"type":"ORDER","entries":[{"operations":"READ"}]}`, "bad request"},
 		{"an operation that is a list is a bad request", `{"type":"ORDER","entries":[{"operations":[["DELETE"]]}]}`, "bad request"},
 		{"an operation that is an object is a bad request", `{"type":"ORDER","entries":[{"operations":[{"a":1}]}]}`, "bad request"},
 		{"the same id twice is refused", `{"type":"ORDER","entries":[{"id":"a","operations":["READ"]},{"id":"a","operations":["READ"]}]}`,
@@ -261,21 +266,16 @@ func TestCheckFilter(t *testing.T) {
 	cases := []struct {
 		name                    string
 		resourceType, operation string
-		want                    []Resource
-		err                     string
+		want                    Resource
 	}{
-		{"an absent operation stays empty", "ORDER", "", []Resource{{ResourceType: "ORDER", Operation: ""}}, ""},
-		{"values keep their spaces", " ORDER ", " READ", []Resource{{ResourceType: " ORDER ", Operation: " READ"}}, ""},
-		{"a blank resource type is a bad request", " ", "READ", nil, "bad request"},
-		{"an absent resource type is a bad request", "", "", nil, "bad request"},
+		{"an absent operation stays empty", "ORDER", "", Resource{ResourceType: "ORDER", Operation: ""}},
+		{"values keep their spaces", " ORDER ", " READ", Resource{ResourceType: " ORDER ", Operation: " READ"}},
+		{"a blank resource type is kept", " ", "READ", Resource{ResourceType: " ", Operation: "READ"}},
+		{"an absent resource type stays empty", "", "LIST", Resource{ResourceType: "", Operation: "LIST"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := CheckFilter(tc.resourceType, tc.operation)
-			if message(err) != tc.err {
-				t.Fatalf("CheckFilter(%q, %q) error = %q, want %q", tc.resourceType, tc.operation, message(err), tc.err)
-			}
-			if !reflect.DeepEqual(got, tc.want) {
+			if got := CheckFilter(tc.resourceType, tc.operation); !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("CheckFilter(%q, %q) = %#v, want %#v", tc.resourceType, tc.operation, got, tc.want)
 			}
 		})

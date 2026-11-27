@@ -89,6 +89,9 @@ paths:
               examples:
                 bad_request:
                   value: { "message": "bad request" }
+                empty_field:
+                  summary: A required field is absent, null, or empty.
+                  value: { "message": "The request 'type' cannot be empty" }
         '401':
           description: Authentication failure.
           content:
@@ -219,6 +222,9 @@ paths:
               examples:
                 bad_request:
                   value: { "message": "bad request" }
+                empty_field:
+                  summary: A required field is absent, null, or empty.
+                  value: { "message": "The request 'type' cannot be empty" }
         '401':
           description: Authentication failure.
           content:
@@ -279,6 +285,9 @@ paths:
               examples:
                 bad_request:
                   value: { "message": "bad request" }
+                empty_field:
+                  summary: A required field is absent, null, or empty.
+                  value: { "message": "The request 'type' cannot be empty" }
         '401':
           description: Authentication failure.
           content:
@@ -308,7 +317,11 @@ paths:
         - $ref: '#/components/parameters/TenantHeader'
         - name: resourceType
           in: query
-          required: true
+          required: false
+          description: >-
+            Optional. Without it, or with an empty value, the policies decide
+            the request for an empty resource type: the answer is `DENY`
+            unless a policy set applies to every resource type.
           schema:
             type: string
         - name: operation
@@ -344,7 +357,7 @@ paths:
                   summary: ALLOW conditioned on a row-level RSQL predicate.
                   value: { "calculationResult": "USE_FILTER_CONDITION", "filterCondition": "", "mongodbFilterCondition": "", "rsqlFilterCondition": "dept==engineering,dept==management", "sqlFilterCondition": "", "customFilterCondition": null }
         '400':
-          description: Missing required parameter (`resourceType`).
+          description: The token payload the admission policies verified cannot be read as claims.
           content:
             application/json:
               schema:
@@ -415,6 +428,9 @@ paths:
               examples:
                 bad_request:
                   value: { "message": "bad request" }
+                empty_field:
+                  summary: A required field is absent, null, or empty.
+                  value: { "message": "The request 'type' cannot be empty" }
         '401':
           description: Authentication failure.
           content:
@@ -474,6 +490,9 @@ paths:
               examples:
                 bad_request:
                   value: { "message": "bad request" }
+                empty_field:
+                  summary: A required field is absent, null, or empty.
+                  value: { "message": "The request 'type' cannot be empty" }
         '401':
           description: Authentication failure.
           content:
@@ -530,6 +549,9 @@ paths:
               examples:
                 bad_request:
                   value: { "message": "bad request" }
+                empty_field:
+                  summary: A required field is absent, null, or empty.
+                  value: { "message": "The request 'type' cannot be empty" }
         '401':
           description: Authentication failure.
           content:
@@ -555,7 +577,11 @@ paths:
         - $ref: '#/components/parameters/ObligationsQuery'
         - name: resourceType
           in: query
-          required: true
+          required: false
+          description: >-
+            Optional. Without it, or with an empty value, the policies decide
+            the request for an empty resource type: the answer is `DENY`
+            unless a policy set applies to every resource type.
           schema:
             type: string
         - name: operation
@@ -591,7 +617,7 @@ paths:
                   summary: ALLOW conditioned on a row-level RSQL predicate.
                   value: { "calculationResult": "USE_FILTER_CONDITION", "filterCondition": "", "mongodbFilterCondition": "", "rsqlFilterCondition": "dept==engineering,dept==management", "sqlFilterCondition": "", "customFilterCondition": null }
         '400':
-          description: Missing required parameter (`resourceType`).
+          description: The token payload the admission policies verified cannot be read as claims.
           content:
             application/json:
               schema:
