@@ -29,7 +29,7 @@ and emits, deterministically:
 Layout mirrors `tests/svt/load-tests/full/mixed/100rps/` and
 `tests/svt/load-tests/mixed-flow/100rps/`. Each JMX is a single-thread
 group plan with a `${MODE}` switch wired into a `JSR223PreProcessor`
-that builds the request body verbatim from the profiler scenario shape
+that builds the request body from the scenario shape in build-per-scenario-seeds.py
 (canonical → `/access/v1/authorize`, legacy → the scenario's
 compatibility endpoint).
 
@@ -174,7 +174,7 @@ if (mode == "canonical") {{
 
 def _groovy_ols_bulk(spec: dict, mod, scenario_token_var: str) -> str:
     """Bulk-OLS body: bulk_rt_count × bulk_op_count resources, every
-    cell uses an empty resource:{} (the profiler does the same)."""
+    cell uses an empty resource:{}."""
     n_rt = int(spec["bulk_rt_count"])
     n_op = int(spec["bulk_op_count"])
     tag = mod.scenario_tag(spec["scenario"])

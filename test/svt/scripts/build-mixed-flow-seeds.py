@@ -17,9 +17,9 @@
 """Generate the additive mixed-flow simplified-policy and PIP seed files.
 
 The mixed-flow load-test report (handover 20260518) measures CPU/memory/IO
-under the 8 profiler scenarios that back tests/svt/scripts/bench-report.
-Profiler `data.json` files use the low-level OPA data document shape;
-this generator converts each scenario into the simplified-policy shape
+under 8 scenarios named in docs/reports/bench-report-latest.md. Those
+scenarios were written in the low-level OPA data document shape;
+this generator writes each scenario into the simplified-policy shape
 (`component`/`resourceType`/`operation`/`roles`/`condition`/`rsqlPredicate`)
 that the policy-admin endpoint accepts, and emits two committed seed
 files alongside the hand-authored base seed.
@@ -175,7 +175,7 @@ def build_policies() -> list[dict]:
     # conditionAst rules per (RT,OP): ownerId == email AND department ==
     # departmentFromToken. Emit as two simplified-policy entries per
     # (RT,OP) — the policy-admin compiler treats them as two RLS rules
-    # to evaluate, mirroring the profiler.
+    # to evaluate.
     rt_10 = rt_list("SVT_RT", 10)
     op_10 = op_list("OP", 10)
     emit_rls_condition(

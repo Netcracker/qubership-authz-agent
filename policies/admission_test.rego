@@ -22,7 +22,7 @@ valid_token := sprintf("Bearer %v", [fixtures.tokens.valid])
 
 admission(req) := got if {
   got := data.authorize_internals.admission
-    with input as object.union({"resources": []}, req)
+    with input as req
     with data.authn as fixtures.authn
 }
 

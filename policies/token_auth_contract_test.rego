@@ -22,17 +22,7 @@ idp_provider_fixture := fixtures.authn.trustedProviders.byId["test-idp"]
 test_token_auth_valid_user_allows_authorize if {
   token := sprintf("Bearer %v", [fixtures.tokens.valid])
   input_req := {
-    "resources": [
-      {
-        "resourceType": "Customer",
-        "operation": "READ",
-        "resource": {
-          "id": "cust-1"
-        }
-      }
-    ],
-    "subject": token,
-    "ignoreRls": true
+    "subject": token
   }
 
   actual := data.authorize_internals.admission
@@ -74,9 +64,7 @@ test_token_auth_runtime_data_layout_allows_legacy_check_resource if {
   runtime_authn := fixtures.authn
 
   input_req := {
-    "resources": [{"resourceType": "ORDER", "operation": "READ", "resource": {"id": "order-1", "ownerId": "order-reader-1"}}],
     "subject": token,
-    "ignoreRls": true,
   }
 
   actual := data.authorize_internals.admission
@@ -150,15 +138,7 @@ test_token_auth_verified_tokens_cache_can_fall_back_to_payload_subject if {
 
 test_token_auth_missing_token_canonical_deny if {
   input_req := {
-    "resources": [
-      {
-        "resourceType": "Customer",
-        "operation": "READ",
-        "resource": {}
-      }
-    ],
-    "subject": "",
-    "ignoreRls": true
+    "subject": ""
   }
 
   actual := data.authorize_internals.admission
@@ -173,15 +153,7 @@ test_token_auth_missing_token_canonical_deny if {
 test_token_auth_expired_canonical_deny if {
   token := sprintf("Bearer %v", [fixtures.tokens.expired])
   input_req := {
-    "resources": [
-      {
-        "resourceType": "Customer",
-        "operation": "READ",
-        "resource": {}
-      }
-    ],
-    "subject": token,
-    "ignoreRls": true
+    "subject": token
   }
 
   actual := data.authorize_internals.admission
@@ -199,15 +171,7 @@ test_token_auth_expired_canonical_deny if {
 test_token_auth_foreign_issuer_canonical_allow if {
   token := sprintf("Bearer %v", [fixtures.tokens.wrongIssuer])
   input_req := {
-    "resources": [
-      {
-        "resourceType": "Customer",
-        "operation": "READ",
-        "resource": {}
-      }
-    ],
-    "subject": token,
-    "ignoreRls": true
+    "subject": token
   }
 
   actual := data.authorize_internals.admission
@@ -221,15 +185,7 @@ test_token_auth_foreign_issuer_canonical_allow if {
 test_token_auth_unknown_kid_canonical_deny if {
   token := sprintf("Bearer %v", [fixtures.tokens.unknownKid])
   input_req := {
-    "resources": [
-      {
-        "resourceType": "Customer",
-        "operation": "READ",
-        "resource": {}
-      }
-    ],
-    "subject": token,
-    "ignoreRls": true
+    "subject": token
   }
 
   actual := data.authorize_internals.admission
@@ -245,9 +201,7 @@ test_token_auth_unknown_kid_canonical_deny if {
 
 test_token_auth_missing_token_legacy_auth_error if {
   input_req := {
-    "resources": [{"resourceType": "Customer", "operation": "READ", "resource": {}}],
     "subject": "",
-    "ignoreRls": true,
   }
 
   actual := data.authorize_internals.admission
@@ -262,9 +216,7 @@ test_token_auth_expired_legacy_auth_error if {
   token := sprintf("Bearer %v", [fixtures.tokens.expired])
   input_req := {
     "authorizationToken": token,
-    "resources": [{"resourceType": "Customer", "operation": "READ", "resource": {}}],
     "subject": token,
-    "ignoreRls": true,
   }
 
   actual := data.authorize_internals.admission
@@ -279,15 +231,7 @@ test_token_auth_expired_legacy_auth_error if {
 test_token_auth_no_roles_is_admitted if {
   token := sprintf("Bearer %v", [fixtures.tokens.noRoles])
   input_req := {
-    "resources": [
-      {
-        "resourceType": "Customer",
-        "operation": "READ",
-        "resource": {}
-      }
-    ],
-    "subject": token,
-    "ignoreRls": true
+    "subject": token
   }
 
   actual := data.authorize_internals.admission
@@ -300,19 +244,11 @@ test_token_auth_no_roles_is_admitted if {
 
 test_token_auth_object_subject_without_internal_flag_is_rejected if {
   input_req := {
-    "resources": [
-      {
-        "resourceType": "Customer",
-        "operation": "READ",
-        "resource": {}
-      }
-    ],
     "subject": {
       "id": "manual",
       "type": "USER",
       "roles": ["ROLE_VIEWER"]
-    },
-    "ignoreRls": true
+    }
   }
 
   actual := data.authorize_internals.admission
@@ -325,20 +261,12 @@ test_token_auth_object_subject_without_internal_flag_is_rejected if {
 
 test_token_auth_object_subject_with_internal_flag_is_still_rejected if {
   input_req := {
-    "resources": [
-      {
-        "resourceType": "Customer",
-        "operation": "READ",
-        "resource": {}
-      }
-    ],
     "subject": {
       "id": "manual",
       "type": "USER",
       "roles": ["ROLE_VIEWER"]
     },
-    "internalSubject": true,
-    "ignoreRls": true
+    "internalSubject": true
   }
 
   actual := data.authorize_internals.admission
@@ -466,9 +394,7 @@ test_token_auth_non_realm_claims_ignored_even_when_realm_access_present if {
 test_token_auth_groups_only_token_is_admitted if {
   token := sprintf("Bearer %v", [fixtures.tokens.groupsOnlyOrderReader])
   input_req := {
-    "resources": [{"resourceType": "Customer", "operation": "READ", "resource": {}}],
     "subject": token,
-    "ignoreRls": true,
   }
 
   actual := data.authorize_internals.admission
@@ -484,10 +410,8 @@ test_token_auth_groups_only_token_is_admitted if {
 
 test_token_auth_anonymous_mode_is_admitted if {
   input_req := {
-    "resources": [{"resourceType": "Customer", "operation": "READ", "resource": {}}],
     "subject": "",
     "authorizationType": "anonymous",
-    "ignoreRls": true,
   }
 
   actual := data.authorize_internals.admission

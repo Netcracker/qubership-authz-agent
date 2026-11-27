@@ -11,9 +11,9 @@ Two modes, independent baselines:
     tests/svt/scripts/mixed-load-report --mode canonical
     tests/svt/scripts/mixed-load-report --mode legacy
 
-Mirrors the structure of ``tests/svt/scripts/bench-report`` (timestamped
-staging under ``tests/svt/load-tests/mixed-flow/artifacts/<ts>``,
-±5%% peak gate on CPU + memory, IO rendered for visibility but not gated).
+Stages each run under ``tests/svt/load-tests/mixed-flow/artifacts/<ts>``
+and gates the peak CPU and memory at ±5%%; IO is rendered for visibility
+but not gated.
 
 Python 3 standard library only — no pip install.
 """
@@ -275,8 +275,8 @@ def render_methodology(mode: str, host_baseline_text: str) -> list[str]:
         "5% `rls-predicate`, 5% `rls-condition`, 5% `ols-bulk-100`, "
         "25% `rls-condition-2-expression`, 25% `rls-predicate-summary-2-predicates`, "
         "10% `rls-predicate-pips-2-token-pip`, 5% `wildcard-all-single`. "
-        "Request shapes copied from "
-        "`tests/svt/profiler/<scenario>/input-real-token.json`; tokens are "
+        "Request shapes are those `test/svt/scripts/build-mixed-flow-seeds.py` "
+        "seeds for the scenarios of the same names; tokens are "
         "live Keycloak tokens issued for `svt-mixed-001..008` (see "
         "[handover 20260518](../handovers/20260518-mixed-load-report-task.md)).",
         f"- **RPS levels**: {', '.join(str(r) for r in RPS_LEVELS)}. "
