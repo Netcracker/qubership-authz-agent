@@ -209,10 +209,9 @@ Negative:
   numbers when the elements write one number in several ways, since a number matches every string of its value. The
   agent refuses a request with 400, as it refuses a body nested too deep, when a value the request carries, in its body
   or in the subject's token, would need a lookup of more than 16 groups of such elements and elements it must scan for
-  a comparison that reads it. A GENERAL or FILTERED PIP, the entitlements service, or the permission scope whose answer
-  is over the limit reads as a source that failed. A permission over the limit that the tenant's MAPPING tables grant
-  is a defect of the tenant's configuration, not of the request: the request fails with 500. Lists whose elements
-  write their numbers alike stay far below the limit.
+  a comparison that reads it. The tenant's MAPPING tables, a GENERAL or FILTERED PIP, the entitlements service, and the
+  permission scope are sources, and a value over the limit from one of them reads as a source that failed. Lists whose
+  elements write their numbers alike stay far below the limit.
 - These pairs are equal: `5.50` and `5.5`; `5`, `5.0`, and `5e0`; `05` and `5` in a list literal; `"5.0"` and `5`;
   `"+5"`, `"٥"`, and `5`; `0.0` and `-0.0`; `{"a": 1}` and `{"a": 1.0}`; `{"a": 1}` and `{"a": "1"}`; `["X"]` and
   `["x"]`; `[1, 2]` and `[2, 1]`; `[1, 1]` and `[1]`; `[1e-5]` and `"[0.000010]"`; `[1e-7]` and `"[1.0E-7]"`.

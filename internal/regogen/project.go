@@ -143,16 +143,14 @@ type Record struct {
 	SubsetIndex deepIndex
 	// TooBig is set where an index of the value the module reads is too big
 	// to look up in linear time ([deepIndex.tooBig]); the record holds its
-	// state alone, and the request fails ([Record.err]) unless the value is
-	// the answer of a source, which then reads as failed ([sourceRecord], and
-	// [Input.ScopeFailed] for a pass of the permission scope).
+	// state alone, and the request fails ([Record.err]) where the request
+	// carries the value. Any other value comes from a source, which then
+	// reads as failed ([sourceRecord], and [Input.ScopeFailed] for a pass of
+	// the permission scope).
 	TooBig bool
 	// outsideKind is the kind of an operand whose state its domain does not
 	// hold ([record]); the record holds the state alone.
 	outsideKind spectables.Kind
-	// callerSent is set on a TooBig record of an operand whose value the
-	// request carries ([fromRequest]).
-	callerSent bool
 }
 
 // Input is the projection of a request into the input of a module.
@@ -221,11 +219,11 @@ var errIndexTooBig = fmt.Errorf("a list holds elements of one shape that write t
 
 // fromRequest reports whether the request carries the value of an operand
 // of kind k: its body, or the subject's token or headers. Such a value over
-// a limit is the caller's error, a [badrequest.Error]. The tenant's mapping
-// tables give subject.permissions, and a value over a limit there is not the
-// caller's; a source the module calls gives the rest, and its answer over
-// the limit reads as the source's failure ([sourceRecord]). The policy
-// gives a literal, which has no record.
+// a limit is the caller's error, a [badrequest.Error]. A source gives the
+// value of any other operand with a record: the tenant's mapping tables, or
+// a service the module calls. Its value over the limit reads as the
+// source's failure ([sourceRecord]). The policy gives a literal, which has
+// no record.
 func fromRequest(k spectables.Kind) bool {
 	switch k {
 	case spectables.KindOperation, spectables.KindResourceType, spectables.KindResource, spectables.KindResPath,
@@ -278,15 +276,15 @@ func record(r *Ref, v Resolved) Record {
 	rec := buildRecord(r, v)
 	if r.reads(fieldEqIndex) && rec.EqIndex.tooBig() || r.reads(fieldElementIndex) && rec.ElementIndex.tooBig() ||
 		r.reads(fieldSubsetIndex) && rec.SubsetIndex.tooBig() {
-		return Record{State: rec.State, TooBig: true, callerSent: fromRequest(r.Kind)}
+		return Record{State: rec.State, TooBig: true}
 	}
 	return rec
 }
 
 // err is the error of a request that holds rec, read as name. It is nil for
-// a valid rec. For a TooBig rec it wraps errIndexTooBig, and it is a
-// [badrequest.Error] where the request carries the value ([fromRequest]).
-// For a state outside the domain of its kind it wraps errOutsideDomain.
+// a valid rec. For a TooBig rec, a value the request carries, it is a
+// [badrequest.Error] that wraps errIndexTooBig. For a state outside the
+// domain of its kind it wraps errOutsideDomain.
 func (rec Record) err(name string) error {
 	if rec.outsideKind != "" {
 		return fmt.Errorf("the value of %s is in state %s, outside the domain of kind %s: %w",
@@ -294,10 +292,7 @@ func (rec Record) err(name string) error {
 	}
 	if rec.TooBig {
 		err := fmt.Errorf("the value of %s: %w", name, errIndexTooBig)
-		if rec.callerSent {
-			return &badrequest.Error{Message: err.Error(), Err: err}
-		}
-		return err
+		return &badrequest.Error{Message: err.Error(), Err: err}
 	}
 	return nil
 }
@@ -335,10 +330,12 @@ func (in *Input) checkPaths() error {
 	return nil
 }
 
-// sourceRecord is the record of a value a GENERAL or FILTERED PIP or the
-// entitlements service answered. Such a value too big to compare reads as the
-// source's failure, the ERROR state of a call that failed, so the answer does
-// not depend on whether evaluation reaches the call.
+// sourceRecord is the record of a value a source gave: the tenant's mapping
+// tables, a GENERAL or FILTERED PIP, or the entitlements service. Such a
+// value too big to compare reads as the source's failure, the ERROR state of
+// a call that failed, so the answer of a source the module calls does not
+// depend on whether evaluation reaches the call, and the items of a bulk
+// request that do not read the value are decided as usual.
 func sourceRecord(r *Ref, v Resolved) Record {
 	rec := record(r, v)
 	if rec.TooBig {
@@ -352,7 +349,7 @@ func sourceRecord(r *Ref, v Resolved) Record {
 // outside the domain of r's kind.
 func projectRecord(r *Ref, v Resolved) (Record, error) {
 	var rec Record
-	if r.pip != nil || r.ent != nil {
+	if !fromRequest(r.Kind) {
 		rec = sourceRecord(r, v)
 	} else {
 		rec = record(r, v)

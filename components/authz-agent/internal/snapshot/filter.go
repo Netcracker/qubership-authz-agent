@@ -37,9 +37,7 @@ type FilterRequest struct {
 // give DENY. The error is not a denial. An error that wraps a
 // badrequest.Error fails the request because a value of the subject that
 // the request carries is too big to compare. Any other error is a failure
-// of the agent: a defect of the projection or the evaluation, or of the
-// tenant's configuration, such as a permission too big to compare that its
-// mapping tables grant.
+// of the agent: a defect of the projection or the evaluation.
 func (r *Registry) Filter(ctx context.Context, req FilterRequest) (regogen.FilterAnswer, error) {
 	deny := regogen.FilterAnswer{Result: regogen.FilterDeny}
 	op := "READ"

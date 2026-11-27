@@ -62,9 +62,7 @@ const (
 // error is not a denial. An error that wraps a badrequest.Error fails the
 // whole request because a value the request carries, of the subject or of
 // one item, is too big to compare. Any other error is a failure of the
-// agent: a defect of the projection or the evaluation, or of the tenant's
-// configuration, such as a permission too big to compare that its mapping
-// tables grant.
+// agent: a defect of the projection or the evaluation.
 func (r *Registry) Decide(ctx context.Context, req Request) ([]Result, error) {
 	out := make([]Result, len(req.Items))
 	s, ok := r.Snapshot(req.Tenant)

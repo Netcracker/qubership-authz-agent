@@ -464,14 +464,14 @@ admission := {"tokenPayload": {"sub": "u1", "a": [["z"]], "b": ` + b + `}}
 }
 
 // A permission too big to compare that the tenant's mapping tables grant is
-// not the caller's error: the request sent only a role. The route answers
-// 500 internal_error and logs an error, so that an operator fixes the
-// mapping.
-func TestDecide_AMappedPermissionTooBigToLookUpFailsTheAgent(t *testing.T) {
-	const path = "/access/v1/check/resource?tenant_id=a"
-	const body = `{"type":"doc","operation":"read","resource":{"a":[["z"]]}}`
+// not the caller's error: the request sent only a role. It reads as the
+// failure of its source, as an answer of a GENERAL PIP over the limit does:
+// the items of a bulk request that depend on it are denied, the others are
+// decided as usual, and nothing is logged at error.
+func TestDecide_AMappedPermissionTooBigToLookUpFailsItsSource(t *testing.T) {
 	// app is the public surface over tenant a, whose mapping table grants
-	// the role r of every subject the permissions perms.
+	// the role r of every subject the permissions perms, and which allows a
+	// read of a doc whose b is "y" or whose a holds one of the permissions.
 	app := func(perms string) (*fiber.App, *levels) {
 		reported := &levels{}
 		const stub = `package authorize_internals
@@ -482,27 +482,31 @@ admission := {"tokenPayload": {"sub": "u1", "realm_access": {"roles": ["r"]}}}
 `
 		pips := `{"pips": [{"tenantId": "a", "name": "subject.permissions", "pipType": "MAPPING",
 			"customMapping": {"subject.roles": {"r": ` + perms + `}}}]}`
-		reg := registryWithPIPs(t, `{"policySets": [`+tenantSet("a", "resource.a CONTAINS ANY subject.permissions")+`]}`,
-			pips)
+		reg := registryWithPIPs(t, `{"policySets": [`+
+			tenantSet("a", "resource.b == 'y' OR resource.a CONTAINS ANY subject.permissions")+`]}`, pips)
 		return newPublicAppOver(t, map[string]string{"internals.rego": stub},
 			Options{Log: reported, Snapshots: reg, DefaultTenant: func() string { return "a" }}), reported
 	}
-	t.Run("16 lists", func(t *testing.T) {
-		a, reported := app(fourTexts(16))
-		code, got, _ := call(t, a, http.MethodPost, path, body, admin)
-		const limit = "a lookup among them would read more than 16 groups and scanned elements"
-		if code != http.StatusInternalServerError || !strings.Contains(got, `"code":"internal_error"`) ||
-			!strings.Contains(got, limit) {
-			t.Errorf("POST %s = %d %s, want 500 internal_error with a message that holds %q", path, code, got, limit)
-		}
-		if lines := reported.at("error"); len(lines) != 1 {
-			t.Errorf("POST %s logged at error: %q, want one line", path, lines)
-		}
-	})
-	t.Run("15 lists", func(t *testing.T) {
-		a, _ := app(fourTexts(15))
-		if code, got, _ := call(t, a, http.MethodPost, path, body, admin); code != http.StatusOK {
-			t.Errorf("POST %s = %d %s, want 200", path, code, got)
-		}
-	})
+	// x is allowed by the permission p alone, y by its b alone
+	const (
+		path  = "/access/v1/check/resource/bulk?tenant_id=a"
+		items = `[{"id":"x","type":"doc","operation":"read","resource":{"a":["p"],"b":"n"}},
+			{"id":"y","type":"doc","operation":"read","resource":{"a":[],"b":"y"}}]`
+	)
+	for _, tc := range []struct {
+		name, perms, want string
+	}{
+		{"16 lists", fourTexts(16), `["y"]`},
+		{"the permission p", `["p"]`, `["x","y"]`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			a, reported := app(tc.perms)
+			if code, got, _ := call(t, a, http.MethodPost, path, items, admin); code != http.StatusOK || got != tc.want {
+				t.Errorf("POST %s = %d %s, want 200 %s", path, code, got, tc.want)
+			}
+			if lines := reported.at("error"); len(lines) != 0 {
+				t.Errorf("POST %s logged at error: %q, want no line", path, lines)
+			}
+		})
+	}
 }

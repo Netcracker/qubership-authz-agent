@@ -1489,6 +1489,43 @@ func TestTheMappingTablesGrantPermissions(t *testing.T) {
 	}
 }
 
+// A permission the mapping tables grant that is too big to compare reads as
+// the failure of its source: an item that depends on it is denied as one
+// that depends on a failed PIP, and an item that does not is decided as
+// usual. With a permission it can compare, the first item is allowed.
+func TestAMappedPermissionTooBigToCompareFailsItsSource(t *testing.T) {
+	// sixteen lists of four strings of numbers, of one shape, each spelling
+	// 0 its own way: a lookup among them is over the limit
+	elems := make([]string, 16)
+	for i := range elems {
+		elems[i] = fmt.Sprintf(`["1", "2", "3", "0e%d"]`, i)
+	}
+	tooBig := "[" + strings.Join(elems, ",") + "]"
+	for _, tc := range []struct {
+		name, perms string
+		want        []Result
+	}{
+		{"16 lists", tooBig, []Result{{Reason: ReasonUnknown}, {Allowed: true}}},
+		{"the permission p", `["p"]`, []Result{{Allowed: true}, {Allowed: true}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, `{"tenantId": "a", "name": "subject.permissions", "pipType": "MAPPING",
+				"customMapping": {"subject.roles": {"R": `+tc.perms+`}}}`,
+				set("a", "resource.b == 'y' OR resource.a CONTAINS ANY subject.permissions"))
+			req := readDoc(t, "a", "", 0)
+			// the first is allowed by the permission p alone, the second by its b alone
+			for _, res := range []string{`{"a": ["p"], "b": "n"}`, `{"a": [], "b": "y"}`} {
+				req.Items = append(req.Items, regogen.Body{Operation: "read", ResourceType: "doc",
+					Resource: mustObject(t, res), HasResource: true})
+			}
+			if got := decide(t, r, req); !slices.Equal(got, tc.want) {
+				t.Errorf("Decide = %+v, want %+v", got, tc.want)
+			}
+		})
+	}
+}
+
 // countingServer answers a GET of path with body, another method on path
 // with 405, and any other path with 404. It records each request as its
 // method, path, Tenant, Content-Type, and body.

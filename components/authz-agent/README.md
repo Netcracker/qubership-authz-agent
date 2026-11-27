@@ -208,11 +208,11 @@ a list holds elements of one shape that write their numbers in too many ways: a 
 
 A list whose elements write their numbers alike stays far below the limit.
 
-An answer over the limit from a GENERAL or FILTERED PIP, the entitlements service, or the permission scope does not
-fail the request: the condition reads that source as failed, as it reads a call that failed.
-
-A value over the limit that the tenant's MAPPING tables grant as `subject.permissions` is not the caller's error: the
-agent answers 500 `internal_error` and logs an error, and the mapping table has to change.
+The other values a condition reads come from a source: the permissions the tenant's MAPPING tables grant, or the
+answer of a GENERAL or FILTERED PIP, of the entitlements service, or of the permission scope. Such a value over the
+limit does not fail the request. The condition reads its source as failed, as it reads a call that failed: a resource
+whose decision depends on it is denied with a reason that starts with `PIP resolution failed`, and the other
+resources of a bulk request are decided as usual.
 
 ## Running it
 
