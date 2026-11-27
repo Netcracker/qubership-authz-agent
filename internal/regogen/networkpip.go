@@ -55,9 +55,9 @@ func pipFunction() func(*rego.Rego) {
 		})
 }
 
-// Context returns ctx with what nc.jsonpath needs to read input.resource as
-// the document it was built from, and what nc.pip returns; evaluate the
-// module's query with it.
+// Context returns ctx with what nc.resource_path needs to read
+// input.resource as the document it was built from, and what nc.pip returns;
+// evaluate the module's query with it.
 func (in *Input) Context(ctx context.Context) context.Context {
 	return context.WithValue(in.docs.Context(ctx), inputKey{}, in)
 }

@@ -1630,8 +1630,8 @@ func TestASubjectGroupComparesTheNumbers(t *testing.T) {
 // IS SUBSET holds when the left value, read as a list, is not empty and each
 // of its elements equals an element on the right as the other operators
 // compare them: ignoring case, a number equal to its text, a list equal to a
-// string by its Java text, and a null element equal to nothing. An object on
-// the right equals nothing. A resource attribute on the right offers its
+// string by its structure text, and a null element equal to nothing. An
+// object on the right equals nothing. A resource attribute on the right offers its
 // elements as a list literal does (ADR-0083 R7).
 func TestIsSubsetComparesElementsAsTheOtherOperators(t *testing.T) {
 	const perms, b, id, g = `["subj","permissions"]`, `["res",".b"]`, `["subj","id"]`, `["subj","g"]`
@@ -1984,7 +1984,7 @@ func TestContainsAnyWithLiteralsTakesAClausePerLiteralAndOneForStructures(t *tes
 
 // Two CONTAINS ANY of literals in one clause each look the shapes of their
 // literals up in an element index of structures, where a nested list equals
-// a literal of its Java text (ADR-0083 R8), and the module compiles and
+// a literal of its structure text (ADR-0083 R8), and the module compiles and
 // answers with both: the variable of one lookup is not the other's. AND puts
 // two true rows in a clause, and OR two false rows, which a DENY rule under
 // PERMIT_UNLESS_DENY reads.
@@ -3885,7 +3885,7 @@ func TestANarrowConditionKeepsTheTextOfAnInOrderProduct(t *testing.T) {
 // a string of that value, any other scalar by its text ignoring case, and null
 // equal to null (ADR-0083 R1, R2, R5, R6). A list nested in another keeps its
 // order, a member name its case, and a list or an object equals a string of
-// its Java text ignoring case (R8). A condition on the subject alone moves
+// its structure text ignoring case (R8). A condition on the subject alone moves
 // into a group, which every form must answer alike.
 func TestStructuresCompareTheirLeavesAsScalars(t *testing.T) {
 	noflat := DefaultOptions()
@@ -3957,7 +3957,7 @@ func TestStructuresCompareTheirLeavesAsScalars(t *testing.T) {
 // IS SUBSET compares an element of the left with the elements of the right as
 // the other operators compare two elements, whatever operand the right is:
 // ignoring case, a number equal to a string of its value, a structure equal
-// to a string of its Java text, and a nested list leaf by leaf; IS NOT SUBSET
+// to a string of its structure text, and a nested list leaf by leaf; IS NOT SUBSET
 // negates it. Its left is not empty, a null element equals nothing, and an
 // object on the right equals nothing (ADR-0083 R5, R7). A condition on the
 // subject alone moves into a group, which every form must answer alike.
@@ -4267,7 +4267,7 @@ func TestARequestWithAnIndexTooBigToLookUpFails(t *testing.T) {
 			leafSets(16), false, true},
 		{"17 groups of one text", "resource.a CONTAINS ANY resource.b", `[["z"]]`, leafSets(17), true, false},
 		// CONTAINS ANY reads the index of its right operand only, and the
-		// Java text of the first list of a is the string in b
+		// structure text of the first list of a is the string in b
 		{"16 lists of four texts on the left", "resource.a CONTAINS ANY resource.b", fourTexts(16),
 			`["[1, 2, 3, 0e0]"]`, false, true},
 		{"15 lists of four texts at a path", "resource.a[0] CONTAINS ANY resource.b[0]",

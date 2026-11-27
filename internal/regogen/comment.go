@@ -274,10 +274,11 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # whether a list holds null, text_key the key of the text a string equals a
 # list or an object by, eq_alts and eq_index the deeps of the elements ==
 # reads and their index, length, element_alts and element_index the same for
-# the collection operators with the Java text of a list or an object element,
-# number the key < and > compare a number by, a list that sorts as the
-# numbers do, subset_index the index of element_index without objects that
-# IS SUBSET reads on the right, beyond_double the text
+# the collection operators with the structure text of a list or an object
+# element (its members in document order, as [v, w] or {k=v}), number the key
+# < and > compare a number by, a list that sorts as the numbers do,
+# subset_index the index of element_index without objects that IS SUBSET
+# reads on the right, beyond_double the text
 # Infinity or -Infinity of a number beyond the range of a double, which MATCH
 # reads.
 # Two scalars are equal when the own tokens of one meet the match tokens of
@@ -292,7 +293,8 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # Two deeps are equal when their shapes are and their texts agree wherever
 # both have one. An index maps a shape to groups [leaves, by]: the leaves that
 # have texts in its deeps, and by mapping a subset of them to the texts of the
-# deeps there. x: is the Java text of a structure that a string equals.
+# deeps there. x: is the folded structure text that a string equals a list or
+# an object by.
 # A class is string, scalar (a number or a boolean), list, pip_list (a list
 # of several values a HEADER, GENERAL, or FILTERED PIP builds),
 # list_with_null, nested_list (a list with a list or an object element),

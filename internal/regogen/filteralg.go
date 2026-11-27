@@ -127,8 +127,8 @@ type filterEval struct {
 	st  *Statuses
 	// vetoAll is set where a failed condition denies some row.
 	vetoAll bool
-	// approx is the first approximation of the plan: a node's A loses every
-	// row once any of its children denies a row it can name.
+	// approx is [Options.FirstApproximation]: a node's A loses every row once
+	// any of its children denies a row it can name.
 	approx bool
 	sub    *substituter
 }

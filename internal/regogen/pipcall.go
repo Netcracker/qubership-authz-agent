@@ -112,12 +112,12 @@ var (
 //	general_single_list_is_odd=true, pip_set_dedupe=true, idiom_pip_set_key=value,
 //	pip_single_as_scalar=true, pip_one_call_per_request=false
 //
-// The functions depart from the profile three times. By the owner's
-// decision, a body that is not empty and is not one JSON value fails the
-// PIP, where the profile and the recorded answers read it as a JSON string
-// body, and so a null source. By the owner's decision too, a value that
-// cannot stand as a segment of the path of the url ([pathSegment]) fails
-// the PIP, where the profile calls the url it gives. A declaration that
+// The functions depart from the profile three times. A body that is not
+// empty and is not one JSON value, such as an HTML page or truncated JSON,
+// fails the PIP, where the profile and the recorded answers read it as a JSON
+// string body, and so a null source. A value that cannot stand as a segment
+// of the path of the url ([pathSegment]) fails the PIP, where the profile
+// calls the url it gives. A declaration that
 // names Accept-Encoding or TE does not forward the caller's: the agent
 // reads the answer, so it asks for the codings it decodes.
 //

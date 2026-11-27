@@ -52,10 +52,6 @@ func newEngine(t *testing.T) *engine.Engine {
 	return eng
 }
 
-// TestReport: the report is healthy but not loaded while the policies have
-// not loaded, unhealthy with the trusted providers' reason when their
-// bootstrap failed, and healthy and loaded once both are in order; a
-// disabled pull counts as loaded.
 // refusingLoader refuses tenant a, which has no previous snapshot, on every
 // load.
 type refusingLoader struct{}
@@ -81,6 +77,10 @@ func TestReportNamesTheTenantsWithoutASnapshot(t *testing.T) {
 	}
 }
 
+// The report is healthy but not loaded while the policies have not loaded,
+// unhealthy with the trusted providers' reason when their bootstrap failed,
+// and healthy and loaded once both are in order; a disabled pull counts as
+// loaded.
 func TestReport(t *testing.T) {
 	eng := newEngine(t)
 	idle := pull.New(pull.Config{}, nil, quiet{})

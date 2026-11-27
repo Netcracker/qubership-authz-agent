@@ -470,8 +470,8 @@ func (r *Registry) build(ctx context.Context, t string, exp *policyir.Export, pr
 	return b
 }
 
-// compile prepares the queries allow and maybe of m and the statuses of
-// the filter f.
+// compile prepares the queries of the rules allow and maybe of m and the
+// statuses of the filter f.
 func (r *Registry) compile(ctx context.Context, m, f *regogen.Module) (*queries, error) {
 	start := time.Now()
 	var q queries

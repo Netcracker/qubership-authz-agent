@@ -48,8 +48,9 @@ const ScopePIP = "subject.permissionScope"
 // scope_blank_body=json_null, scope_empty_list=empty,
 // scope_scalar_values=http500, scope_value_trim=false, scope_cache=request,
 // scope_missing_key=ABSENT, scope_empty_key=EMPTY_COLL. The profile still
-// reads a 404 as an empty scope (scope_404_is_empty=true); the agent fails
-// it, by the owner's decision, ahead of the profile.
+// reads a 404 as an empty scope (scope_404_is_empty=true), and the agent
+// fails it: the scope service answers a subject without assignments with 200
+// and an empty list, so a 404 comes from a url that does not reach it.
 func (m *Module) ReadScope(ctx context.Context, req *Request) *Scope {
 	failed := &Scope{Failed: true}
 	id := req.Values[keySubjID]

@@ -29,8 +29,8 @@ import (
 	"authz-agent/internal/regogen/spectables"
 )
 
-// Options switch the parts of the generator that the plan measures separately.
-// The zero value is not the default; use [DefaultOptions].
+// Options select how the generator writes a module and which modules and
+// records it adds beside it. The zero value is not the default; use [DefaultOptions].
 type Options struct {
 	// Package is the Rego package of the module; data.<Package>.allow is
 	// whether the request is allowed. [Options.Decision] adds a second module
@@ -72,9 +72,10 @@ type Options struct {
 	Decision bool
 }
 
-// DefaultOptions returns the settings the measurements of the prototype chose:
-// flat clauses, a product limit of 16, at most 8 clauses per rule reference
-// or rule, and access copies to depth 5. Subject groups are off.
+// DefaultOptions returns flat clauses, a product limit of 16, at most 8
+// clauses per rule reference or rule, and access copies to depth 5. Subject
+// groups, the first approximation of the filter, the report, and the decision
+// module are off.
 func DefaultOptions() Options {
 	return Options{Package: "gen", Flat: true, ProductLimit: 16, RefFanout: 8, AliasClauses: 8, AccessDepth: 5}
 }
@@ -232,9 +233,10 @@ type gen struct {
 // answers check/resource as the profile agent of the specification does. The
 // leaves come from the agent profile of tab. A tree with a form the agent
 // cannot execute gives a [*RejectedError]; any other error is a defect of the
-// export or the generator. With an error, the module carries only the
-// statistics gathered up to it. A part of the tree that fails as a source does
-// generates, and [Module.Failures] lists it.
+// export or the generator. With a [*RejectedError] the module carries only
+// the statistics gathered up to it; with any other error it may be nil. A part
+// of the tree that fails as a source still generates, and [Module.Failures]
+// lists it.
 func Generate(tree *policyir.Tree, tab *spectables.Table, opt Options) (*Module, error) {
 	g, err := newGen(tree, tab, opt)
 	if err != nil {

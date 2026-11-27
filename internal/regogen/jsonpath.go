@@ -33,9 +33,7 @@ import (
 // clauses reach is not evaluated for every request. The projection still
 // builds the record of such a path that reads an index before the query, so a
 // value too big to look up fails the request whichever clauses run. Any other
-// resource path is in the input before the query. The function has a name of its own because
-// the record differs from the {sel, rec} of [regobuiltins]' nc.jsonpath: a
-// module evaluated with that one in its place fails to compile.
+// resource path is in the input before the query.
 
 // JSONPathDecl declares nc.resource_path as generated modules call it.
 var JSONPathDecl = &ast.Builtin{

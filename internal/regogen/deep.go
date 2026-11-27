@@ -111,8 +111,9 @@ func writeDeep(b *strings.Builder, v jsonvalue.Value, num numberValue, d *deep, 
 // textShape is the shape of a text that BigDecimal does not read.
 func textShape(s string) string { return "t:" + strconv.Quote(legacyvalue.Fold(s)) }
 
-// structureAlias is the deep a list or an object e has as its Java text,
-// which a string equals it by (ADR-0083 R8), on the left of a comparison;
+// structureAlias is the deep a list or an object e has as its
+// [legacyvalue.StructureText], which a string equals it by (ADR-0083 R8), on
+// the left of a comparison;
 // stringAlias is the deep a string s on the right offers it. The two share
 // the prefix x:, which no shape has, so the texts of two structures never
 // meet.
@@ -284,8 +285,8 @@ func deepAll(alts [][]deep, ix deepIndex) bool {
 
 // elementAlts returns the deeps each element of v, read as a list, can equal
 // another element by under IN, CONTAINS, CONTAINS ANY, and IS SUBSET: a scalar
-// its deep, a list or an object also its Java text (structureAlias), and null
-// none, since null equals nothing there.
+// its deep, a list or an object also its structure text (structureAlias),
+// and null none, since null equals nothing there.
 func elementAlts(v jsonvalue.Value, num numberValue) [][]deep {
 	out := [][]deep{}
 	for _, e := range asList(v) {
@@ -303,7 +304,7 @@ func elementAlts(v jsonvalue.Value, num numberValue) [][]deep {
 
 // elementIndex returns the index the elements of v, read as a list, offer to
 // the elementAlts of the other side: each element's deep, a string's
-// stringAlias, and the Java text of a list or an object as the shape of a
+// stringAlias, and the structure text of a list or an object as the shape of a
 // string. Null equals nothing and is left out, and so is an object unless
 // objects is set.
 func elementIndex(v jsonvalue.Value, num numberValue, objects bool) deepIndex {

@@ -172,8 +172,9 @@ func CheckResourceBulk(body []byte) ([]Resource, []string, *RequestError) {
 // routes: an array of objects with type, a non-empty operations array, and
 // an optional id and resource. Every operation of an item becomes one
 // Resource, paired with an Entry for [CheckResourceBulkOperationsResponse];
-// an operation that is an empty string or null contributes none, and an id
-// that is null counts as absent. Two items with the same id are refused.
+// an operation that is null contributes none, an empty string is decided like
+// any other operation, and an id that is null counts as absent. Two items with
+// the same id are refused.
 func CheckResourceBulkOperations(body []byte) ([]Resource, []Entry, *RequestError) {
 	items, err := array(body)
 	if err != nil {

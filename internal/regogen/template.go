@@ -266,7 +266,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 	net := lref && L.ref.Network || rref && R.ref.Network
 	if op == spectables.OpEQ && (isStructureOrList(cl) && cr == spectables.ClassString && lref ||
 		cl == spectables.ClassString && isStructureOrList(cr) && rref) {
-		// a list or an object equals a string by its Java text under
+		// a list or an object equals a string by its structure text under
 		// equalsIgnoreCase: value_op reaches it for a list on the left
 		// (structure_text_left), eq for every other order (eq)
 		structure, text := L, R
@@ -286,7 +286,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		return tp, true
 	}
 	if op == spectables.OpContains && cl == spectables.ClassObject && cr == spectables.ClassString && lref {
-		// an object on the left of CONTAINS equals a string by its Java text
+		// an object on the left of CONTAINS equals a string by its structure text
 		b.use(L, fieldTextKey)
 		bind := conj(L.bind(), R.bind())
 		c := L.cls(clsCheck)
@@ -305,7 +305,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 	}
 	if op == spectables.OpIn && lref && !rref && (isListClass(cl) || cl == spectables.ClassObject) {
 		// a list or an object on the left of IN is in a literal list holding
-		// its Java text
+		// its structure text
 		b.use(L, fieldTextKey)
 		keys := R.lit.keys
 		t := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field(fieldTextKey) + " in " + setLit(keys), fact: vfact(L)}})
@@ -372,7 +372,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		if (cl == spectables.ClassScalar || cl == spectables.ClassObject || cl == spectables.ClassNull) &&
 			isListClass(cr) && rref {
 			// a number, a boolean, an object, or a null equals no list: only a
-			// string is compared with a list's Java text
+			// string is compared with a list's structure text
 			return out(spectables.RuleEq, dnfFalse, dnf{conj(L.bind(), R.bind())})
 		}
 		if !isScalar(cl) || !isScalar(cr) || !lref && !rref {
@@ -400,7 +400,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		}
 		if (cl == spectables.ClassList || isStructure(cl)) && lref && rref {
 			// a list or an object on the left is in the right when a string
-			// there equals its Java text
+			// there equals its structure text
 			b.use(L, fieldTextKey)
 			c := clsCheck
 			if net {

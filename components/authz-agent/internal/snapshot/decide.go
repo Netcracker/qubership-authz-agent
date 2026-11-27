@@ -146,8 +146,9 @@ func (r *Registry) Decide(ctx context.Context, req Request) ([]Result, error) {
 	return out, nil
 }
 
-// evalItem evaluates allow for one input and, for a denial, maybe, which
-// tells a denial that rests on an unread value from a plain one.
+// evalItem evaluates the rule allow for one input and, for a denial, the rule
+// maybe, which tells a denial that rests on an unread value from a plain one.
+// maybe is a rule of the decision module.
 func (r *Registry) evalItem(ctx context.Context, s *Snapshot, in *regogen.Input, unread []string) (Result, error) {
 	ictx := in.Context(ctx)
 	v := in.Value()

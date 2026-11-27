@@ -207,7 +207,7 @@ const (
 	// RuleListEq compares two lists under ==.
 	RuleListEq ValueRule = "list_eq"
 	// RuleStructureTextLeft compares a list or an object on the left with a
-	// string on the right by the Java text of the structure.
+	// string on the right by the structure text of the list or the object.
 	RuleStructureTextLeft ValueRule = "structure_text_left"
 	// RuleArrayEq is == with a list on the left that the structure text does
 	// not decide.
