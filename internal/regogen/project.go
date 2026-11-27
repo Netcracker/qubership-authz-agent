@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/open-policy-agent/opa/v1/ast"
@@ -984,50 +983,4 @@ func (in *Input) PIPRecord(id string) (*ast.Term, bool) {
 		return nil, false
 	}
 	return r.term(), true
-}
-
-var numberRE = regexp.MustCompile(`^(-?)(\d*)(?:\.(\d*))?(?:[eE]([-+]?\d+))?$`)
-
-// plainZeroLimit is the most zeros plainStripped adds to the digits of a
-// number to write it in plain notation: 1e999999999 would take a gigabyte.
-const plainZeroLimit = 64
-
-// plainStripped is BigDecimal.stripTrailingZeros().toPlainString() of a
-// number's text: 5.50 is 5.5, 5.0 is 5, 1e3 is 1000. A number that needs
-// more than plainZeroLimit zeros, such as 1e65 or 1e-66, keeps its text as
-// written, where legacy prints every zero.
-func plainStripped(text string) string {
-	m := numberRE.FindStringSubmatch(text)
-	if m == nil {
-		return text
-	}
-	coef := strings.TrimLeft(m[2]+m[3], "0")
-	exp := -len(m[3])
-	if m[4] != "" {
-		e, err := strconv.Atoi(m[4])
-		if err != nil {
-			return text
-		}
-		exp += e
-	}
-	for strings.HasSuffix(coef, "0") {
-		coef = coef[:len(coef)-1]
-		exp++
-	}
-	if coef == "" {
-		return "0"
-	}
-	if exp > plainZeroLimit || -(len(coef)+exp) > plainZeroLimit {
-		return text
-	}
-	var out string
-	switch point := len(coef) + exp; {
-	case exp >= 0:
-		out = coef + strings.Repeat("0", exp)
-	case point > 0:
-		out = coef[:point] + "." + coef[point:]
-	default:
-		out = "0." + strings.Repeat("0", -point) + coef
-	}
-	return m[1] + out
 }

@@ -516,6 +516,40 @@ func TestAPlaceholderValueIsWrittenAsTheSourceReturnedIt(t *testing.T) {
 	}
 }
 
+func TestAListItemIsWrittenAsItsJavaText(t *testing.T) {
+	// a body of one number or boolean reads as SINGLE_ODD
+	general := func(body string) placeholderSetup {
+		answer := resolved(t, "SINGLE_ODD", body)
+		return placeholderSetup{name: "subject.g", answer: &answer,
+			pips: `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g", "requestAttributes": {}}`}
+	}
+	scope := func(v jsonvalue.Value) placeholderSetup {
+		return placeholderSetup{name: "subject.permissionScope.k", iterate: true, req: Request{Scope: &Scope{
+			Passes: []map[string]Resolved{{}}, grants: []map[string][]jsonvalue.Value{{"k": {v}}}}}}
+	}
+	for _, tc := range []struct {
+		name  string
+		setup placeholderSetup
+		want  string
+	}{
+		{"an exponent of a GENERAL PIP answer", general(`[1e3]`), `c=in=("1000.0")`},
+		{"a fraction of a GENERAL PIP answer that ends in zero", general(`[5.0]`), `c=in=("5.0")`},
+		{"a fraction of a GENERAL PIP answer with a trailing zero after a digit", general(`[5.50]`), `c=in=("5.5")`},
+		{"a small exponent of a GENERAL PIP answer", general(`[1e-5]`), `c=in=("1.0E-5")`},
+		{"an integer of a GENERAL PIP answer", general(`[5]`), `c=in=("5")`},
+		{"a boolean of a GENERAL PIP answer", general(`[true]`), `c=in=("true")`},
+		{"a fraction of a permission scope grant", scope(jsonvalue.Number("2.0")), `c=in=("2.0")`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fa := predicateAnswer(t, "ALLOW", map[string]string{"rsqlPredicate": "c=in=(${" + tc.setup.name + "})"},
+				tc.setup)
+			if got := fa.Text[policyir.DialectRSQL]; fa.Result != FilterCondition || got != tc.want {
+				t.Errorf("rsql text = %s %q, want %s %q", fa.Result, got, FilterCondition, tc.want)
+			}
+		})
+	}
+}
+
 // $${x} in a template is the text ${x} in every dialect, ${resourceType} of
 // QueryDSL included, and in the negation a DENY rule writes.
 func TestAnEscapedPlaceholderIsItsTextInThePredicateAndItsNegation(t *testing.T) {

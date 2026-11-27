@@ -42,7 +42,7 @@ import (
 // the whole filter with DENY.
 //
 // The knobs of the agent profile this follows, the template idiom aside:
-// idiom_render_number_text=plain_stripped, idiom_render_quote=none,
+// idiom_render_number_text=java, idiom_render_quote=none,
 // list_order=sorted, dedupe_lists=true, permissions_order=hashset, permissions_capacity=GROWTH,
 // mongo_uuid_for_mapping=true, mongo_uuid_for_untyped=true,
 // mongo_uuid_for_regular=false, object_placeholder=EMPTY,
@@ -156,20 +156,10 @@ func fillTemplate(tmpl string, value func(name string) (string, error)) (string,
 	return b.String(), nil
 }
 
-func (s *substituter) resourceType() string {
-	switch v := s.req.Body.ResourceType.(type) {
-	case string:
-		return v
-	case nil:
-		return "None"
-	}
-	return legacyvalue.Text(s.req.Body.ResourceType)
-}
-
 // source returns the value of the placeholder expr.
 func (s *substituter) source(expr string, pass int) (sourceValue, error) {
 	if expr == "resourceType" {
-		return sourceValue{kind: valScalar, text: s.resourceType()}, nil
+		return sourceValue{kind: valScalar, text: legacyvalue.FilterText(s.req.Body.ResourceType)}, nil
 	}
 	name, ok := strings.CutPrefix(expr, "subject.")
 	if !ok {
@@ -228,7 +218,7 @@ func fromResolved(v Resolved, kind valueKind) (sourceValue, error) {
 	switch v.State {
 	case spectables.StateValue:
 		if kind == valScalar {
-			return sourceValue{kind: valScalar, text: filterScalarText(v.Value)}, nil
+			return sourceValue{kind: valScalar, text: legacyvalue.FilterText(v.Value)}, nil
 		}
 		l, ok := v.Value.([]jsonvalue.Value)
 		if !ok {
@@ -238,7 +228,7 @@ func fromResolved(v Resolved, kind valueKind) (sourceValue, error) {
 	case spectables.StateNull, spectables.StateAbsent, spectables.StateEmptyColl, spectables.StatePIPEmpty,
 		spectables.StatePIPNull:
 		if kind == valScalar {
-			return sourceValue{kind: valScalar, text: "None"}, nil
+			return sourceValue{kind: valScalar, text: legacyvalue.FilterText(nil)}, nil
 		}
 		return sourceValue{kind: valEmpty}, nil
 	}
@@ -382,7 +372,7 @@ func renderValue(v sourceValue, d policyir.Dialect) string {
 	}
 	items := make([]string, len(v.items))
 	for i, x := range v.items {
-		items[i] = itemText(x)
+		items[i] = legacyvalue.FilterText(x)
 	}
 	switch d {
 	case policyir.DialectSQL:
@@ -396,37 +386,13 @@ func renderValue(v sourceValue, d policyir.Dialect) string {
 	return `"` + strings.Join(items, `", "`) + `"`
 }
 
-// itemText is the text of an item of a list: a number with its trailing
-// zeros stripped and in plain notation, a boolean as true or false.
-func itemText(v jsonvalue.Value) string {
-	if n, ok := v.(jsonvalue.Number); ok {
-		return plainStripped(string(n))
-	}
-	return filterScalarText(v)
-}
-
-func filterScalarText(v jsonvalue.Value) string {
-	switch x := v.(type) {
-	case string:
-		return x
-	case nil:
-		return "None"
-	}
-	return legacyvalue.Text(v)
-}
-
 // sortedItems returns vals without repeats, ordered by their text.
 func sortedItems(vals []jsonvalue.Value) []jsonvalue.Value {
 	out := dedupe(vals)
-	slices.SortStableFunc(out, func(a, b jsonvalue.Value) int { return strings.Compare(canonText(a), canonText(b)) })
+	slices.SortStableFunc(out, func(a, b jsonvalue.Value) int {
+		return strings.Compare(legacyvalue.FilterText(a), legacyvalue.FilterText(b))
+	})
 	return out
-}
-
-func canonText(v jsonvalue.Value) string {
-	if n, ok := v.(jsonvalue.Number); ok {
-		return legacyvalue.Text(n)
-	}
-	return filterScalarText(v)
 }
 
 // hashSetOrder returns the names without repeats in the order a
@@ -437,7 +403,7 @@ func hashSetOrder(vals []jsonvalue.Value) []jsonvalue.Value {
 	var out []jsonvalue.Value
 	seen := map[string]bool{}
 	for _, v := range vals {
-		t := canonText(v)
+		t := legacyvalue.FilterText(v)
 		if !seen[t] {
 			seen[t] = true
 			out = append(out, v)
@@ -449,7 +415,7 @@ func hashSetOrder(vals []jsonvalue.Value) []jsonvalue.Value {
 	}
 	bucket := func(v jsonvalue.Value) uint32 {
 		var h uint32
-		for _, c := range utf16.Encode([]rune(canonText(v))) {
+		for _, c := range utf16.Encode([]rune(legacyvalue.FilterText(v))) {
 			h = 31*h + uint32(c)
 		}
 		return (h ^ h>>16) & (n - 1)

@@ -90,6 +90,16 @@ func Text(v jsonvalue.Value) string {
 	return b.String()
 }
 
+// FilterText returns the text v takes in the text of a filter predicate: its
+// [Text], so 1e3 is 1000.0 and 5.0 is 5.0, and None for null. For a scalar or
+// null item of a list it is the text the specification's agent profile prints.
+func FilterText(v jsonvalue.Value) string {
+	if v == nil {
+		return "None"
+	}
+	return Text(v)
+}
+
 func writeText(b *strings.Builder, v jsonvalue.Value) {
 	switch x := v.(type) {
 	case nil:
