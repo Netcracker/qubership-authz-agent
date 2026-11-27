@@ -40,11 +40,9 @@ kichasov
   the source of a token (ADR-0104 R19 to R21), the address of its keys (ADR-0104 R23), the required sources (ADR-0104
   R25), the check of the `aud` of an identity-provider token (ADR-0104 R26), and the `iss` in the log line of a refusal
   (ADR-0104 R30).
-- [authz-agent-ADR-0105: Configure the two providers through the chart values](20261123-authz-agent-adr-0105-providers-through-chart-values.md):
-  the provider files that the chart writes, with both providers in every installation (ADR-0105 R2) and the provider
-  `identity-provider` derived from `IDENTITY_PROVIDER_URL` (ADR-0105 R3); the token that the chart mounts for the
-  `jwksBearerTokenFile` of the provider `kubernetes` (ADR-0105 R6); and the restart of the Pods when an upgrade changes
-  a provider file (ADR-0105 R13).
+- [authz-agent-ADR-0105: Let an operator override parts of the trusted providers through the Helm chart values](20261123-authz-agent-adr-0105-providers-through-chart-values.md):
+  the overrides of the providers through the chart values (ADR-0105 R3, R5), which take the place of
+  `AUTHZ_TRUSTED_PROVIDERS`.
 
 ## Context
 
@@ -238,8 +236,8 @@ The word Keycloak names the server.
 - **R64** (`chart`). The settings of the current key loading go away: `AUTHZ_IDP_REALMS`,
   `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, `AUTHZ_JWKS_HTTP_RETRIES`, `AUTHZ_JWKS_HTTP_TIMEOUT`, `AUTHZ_TRUSTED_PROVIDERS`,
   `AUTHZ_TRUSTED_PROVIDERS_FILE`, and `AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL`.
-- **R65** (`chart`). The values schema refuses those settings, so an installation that still sets `AUTHZ_IDP_REALMS`
-  learns that its trust widens.
+- **R65** (`chart`). The values schema refuses those settings, so an installation that still sets one learns at render
+  that the chart no longer applies it.
 
 ### Justification
 
@@ -400,7 +398,12 @@ Negative:
   `TOKEN_ALG_NOT_ALLOWED` when no held key under its `kid` fits its `alg`, and `TOKEN_SIGNATURE_INVALID` when one fits
   and none verifies it (R32, R43, R79). A source that has no keys loaded yet stays without keys, and a required source
   then keeps the agent not ready (R14, R19).
-- An edit of a provider file outside Helm takes effect only at the next restart of the Pods (ADR-0104 R5; ADR-0105 R13).
+- An edit of a provider file outside Helm takes effect only at the next restart of the Pods (ADR-0104 R5).
+- An installation that sets a setting of R64 fails to render until the setting is removed (R65).
+  `AUTHZ_TRUSTED_PROVIDERS` gives way to the overrides of ADR-0105 R3 and R5, and an issuer outside the providers of
+  ADR-0104 can no longer be trusted through the chart. `AUTHZ_TRUSTED_PROVIDERS_FILE` gives way to the fixed directory
+  of ADR-0104 R1. `AUTHZ_JWKS_HTTP_TIMEOUT` gives way to a time limit of the implementation for a request for keys, and
+  R71 bounds how long a check request waits for a load.
 - A provider that signs tokens without `kid` cannot be used, because all its tokens are refused.
 - A token without `iat` passes the current policies, and an `iat` up to 300 seconds in the future passes for every
   token. This record refuses a token without `iat`, so a provider that does not set it cannot be used, and it checks a

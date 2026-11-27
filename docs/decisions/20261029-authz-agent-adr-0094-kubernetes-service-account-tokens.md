@@ -13,7 +13,7 @@ kichasov
 
 - The project architect (`mr-joom`) approves this record, and with it the answers it takes from the owner of the policy
   decision code on the checks. On 2026-11-23 the architect and the owner of the policy decision code agreed to drop the
-  M2M modes, so every installation that the chart deploys accepts Kubernetes tokens (ADR-0105 R2).
+  M2M modes ([#345](https://github.com/Netcracker/qubership-authz-agent/pull/345)).
 - The owner of the policy decision code (`vlsi`) returned the questionnaire of 2026-11-03.
 - The Netcracker/qubership-authz-agent maintainers (kichasov).
 
@@ -30,7 +30,7 @@ kichasov
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](20261123-authz-agent-adr-0104-trusted-provider-files.md):
   the provider `kubernetes` and the Kubernetes token (ADR-0104 R22), the address of the keys of that provider (ADR-0104
   R23, R28), and the requests that carry the token for the API server (ADR-0104 R24).
-- [authz-agent-ADR-0105: Configure the two providers through the chart values](20261123-authz-agent-adr-0105-providers-through-chart-values.md):
+- [authz-agent-ADR-0105: Let an operator override parts of the trusted providers through the Helm chart values](20261123-authz-agent-adr-0105-providers-through-chart-values.md):
   the provider `kubernetes` that the chart writes in every installation (ADR-0105 R2) and the token for the API server
   that the chart mounts (ADR-0105 R6).
 
@@ -173,8 +173,6 @@ Negative:
 - Where the provider files hold no provider `kubernetes`, as outside Kubernetes, no token is a Kubernetes token, and a
   token that an API server signed is refused under ADR-0104 R21, unless a provider `identity-provider` names its issuer,
   which makes it an identity-provider token (ADR-0104 R22).
-- The chart writes the provider `kubernetes` in every installation, so every Pod that the chart deploys waits for the
-  keys of the API server before it becomes ready (ADR-0105 R2; ADR-0104 R25; ADR-0091 R14), and a token for the API
-  server that the agent cannot read stops it at the start (ADR-0105 R6; ADR-0104 R14).
-- On a cluster whose issuer is not an https URL the API server serves no keys (Context), so with the default address of
-  the keys of ADR-0105 R5 every Pod that the chart deploys stays not ready (ADR-0105 R2, R5; ADR-0091 R19).
+- The chart writes the provider `kubernetes` in every installation (ADR-0105 R2), and the Negative consequences of
+  ADR-0105 name what that costs, among them a cluster whose issuer is not an https URL. A token for the API server
+  that the agent cannot read stops the start (ADR-0105 R6; ADR-0104 R14).

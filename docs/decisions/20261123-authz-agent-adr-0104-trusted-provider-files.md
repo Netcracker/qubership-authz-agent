@@ -69,10 +69,10 @@ kichasov
   the token that the agent obtains from the realm `cloud-common`, which is an identity-provider token under R22. This
   request makes ADR-0096 call that token an identity-provider token, and cite R14 of this record where it cited
   ADR-0094 R5.
-- [authz-agent-ADR-0105: Configure the two providers through the chart values](20261123-authz-agent-adr-0105-providers-through-chart-values.md):
-  the provider files that the chart writes from its values (ADR-0105 R2, R3, R5, R16), the token for the API server that
-  the chart gives the Pod (ADR-0105 R6), and the restart of the Pods when an upgrade changes a provider file (ADR-0105
-  R13).
+- [authz-agent-ADR-0105: Let an operator override parts of the trusted providers through the Helm chart values](20261123-authz-agent-adr-0105-providers-through-chart-values.md):
+  the provider files that the chart writes from its values (ADR-0105 R2, R3, R5, R16, R17), the token for the API server
+  that the chart gives the Pod (ADR-0105 R6), and the restart of the Pods when an upgrade changes a provider file
+  (ADR-0105 R13).
 
 ## Context
 

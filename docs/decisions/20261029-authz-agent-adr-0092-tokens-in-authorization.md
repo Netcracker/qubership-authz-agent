@@ -32,7 +32,7 @@ kichasov
   ADR-0095 R2, the 503 for keys that cannot be loaded.
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](20261123-authz-agent-adr-0104-trusted-provider-files.md):
   ADR-0104 R22, which defines the identity-provider token and the Kubernetes token that R6, R7, R11, and R21 name.
-- [authz-agent-ADR-0105: Configure the two providers through the chart values](20261123-authz-agent-adr-0105-providers-through-chart-values.md):
+- [authz-agent-ADR-0105: Let an operator override parts of the trusted providers through the Helm chart values](20261123-authz-agent-adr-0105-providers-through-chart-values.md):
   ADR-0105 R2, under which the chart writes the provider `kubernetes` in every installation.
 
 ## Context
