@@ -15,6 +15,7 @@
 package regogen
 
 import (
+	"slices"
 	"strings"
 
 	"authz-agent/internal/jsonvalue"
@@ -79,7 +80,9 @@ func (m *Module) permissions(req *Request) Resolved {
 					continue
 				}
 				for _, val := range table.Keys() {
-					if !anyEqualsText(vals, val) {
+					if !slices.ContainsFunc(vals, func(v jsonvalue.Value) bool {
+						return legacyvalue.EqualsString(v, val)
+					}) {
 						continue
 					}
 					granted, _ := table.Get(val)
@@ -190,27 +193,4 @@ func (m *Module) mappingKeyValues(key string, req *Request) ([]jsonvalue.Value, 
 		return nil, false
 	}
 	return nil, mappingErrorStates[v.State]
-}
-
-// anyEqualsText reports whether one of vals equals the table key text,
-// ignoring case as Java's equalsIgnoreCase does: a scalar by its Java text, a
-// list or an object by [legacyvalue.StructureText], the text == compares it
-// with a string by, and null never.
-func anyEqualsText(vals []jsonvalue.Value, text string) bool {
-	folded := legacyvalue.Fold(text)
-	for _, v := range vals {
-		var vt string
-		switch v.(type) {
-		case nil:
-			continue
-		case []jsonvalue.Value, *jsonvalue.Object:
-			vt = legacyvalue.StructureText(v)
-		default:
-			vt = legacyvalue.Text(v)
-		}
-		if legacyvalue.Fold(vt) == folded {
-			return true
-		}
-	}
-	return false
 }

@@ -115,6 +115,30 @@ func TestResolveSubject_ComputesPermissionsFromTheMappingTables(t *testing.T) {
 			`{"name": "subject.dept", "pipType": "TOKEN", "claim": "dept"}, ` +
 				mapping(`{"subject.dept": {"[1.0E-5]": ["p-n"], "{k=[v]}": ["p-o"]}}`, `null`),
 			`{"dept": [[1e-5], {"k": ["v"]}]}`, nil, Resolved{State: "EMPTY_COLL"}},
+		{"a fraction matches a key of an equal integer",
+			`{"name": "subject.dept", "pipType": "TOKEN", "claim": "dept"}, ` +
+				mapping(`{"subject.dept": {"5": ["p5"]}}`, `null`),
+			`{"dept": [5.0]}`, nil, resolved(t, "VALUE", `["p5"]`)},
+		{"an integer matches a key of an equal fraction",
+			`{"name": "subject.dept", "pipType": "TOKEN", "claim": "dept"}, ` +
+				mapping(`{"subject.dept": {"5.0": ["p5"]}}`, `null`),
+			`{"dept": [5]}`, nil, resolved(t, "VALUE", `["p5"]`)},
+		{"a fraction matches a key with more trailing zeros",
+			`{"name": "subject.dept", "pipType": "TOKEN", "claim": "dept"}, ` +
+				mapping(`{"subject.dept": {"5.50": ["p5"]}}`, `null`),
+			`{"dept": [5.5]}`, nil, resolved(t, "VALUE", `["p5"]`)},
+		{"a number beyond the range of a double matches no key",
+			`{"name": "subject.dept", "pipType": "TOKEN", "claim": "dept"}, ` +
+				mapping(`{"subject.dept": {"Infinity": ["p-inf"]}}`, `null`),
+			`{"dept": [1e400]}`, nil, Resolved{State: "EMPTY_COLL"}},
+		{"a numeric string matches a key of another text only by its text",
+			`{"name": "subject.dept", "pipType": "TOKEN", "claim": "dept"}, ` +
+				mapping(`{"subject.dept": {"5": ["p5"], "5.0": ["p50"]}}`, `null`),
+			`{"dept": ["5.0"]}`, nil, resolved(t, "VALUE", `["p50"]`)},
+		{"a boolean matches a key of its text ignoring case",
+			`{"name": "subject.dept", "pipType": "TOKEN", "claim": "dept"}, ` +
+				mapping(`{"subject.dept": {"TRUE": ["p-t"], "1": ["p1"]}}`, `null`),
+			`{"dept": [true]}`, nil, resolved(t, "VALUE", `["p-t"]`)},
 		{"a key naming an undeclared PIP grants nothing and fails nothing",
 			mapping(`{"subject.nope": {"x": ["p-nope"]}, "subject.roles": {"r": ["p1"]}}`, `null`), roles(`["r"]`), nil,
 			resolved(t, "VALUE", `["p1"]`)},

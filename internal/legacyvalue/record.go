@@ -196,6 +196,23 @@ func listRecord(list []jsonvalue.Value, p Parts) Record {
 	return r
 }
 
+// EqualsString reports whether v equals the string s under every comparing
+// operator (ADR-0083 R2 to R4 and R8). A number equals s when s is a numeric
+// string of the same value, so 5.0 equals "5" and a number beyond the range of
+// a double equals no string; null equals no string; any other value equals s
+// when its text equals s ignoring case, a list or an object by its
+// [StructureText].
+func EqualsString(v jsonvalue.Value, s string) bool {
+	switch x := v.(type) {
+	case nil:
+		return false
+	case jsonvalue.Number:
+		a, b := of(x).Number, of(s).Number
+		return a != nil && b != nil && a.Compare(*b) == 0
+	}
+	return Fold(elementText(v)) == Fold(s)
+}
+
 // elementText is the text an element of a list compares with a string by: a
 // list or an object by its [StructureText], a scalar by its Java [Text].
 func elementText(e jsonvalue.Value) string {

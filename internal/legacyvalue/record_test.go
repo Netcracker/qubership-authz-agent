@@ -227,3 +227,30 @@ func TestOfPartsLeavesOutTheOtherParts(t *testing.T) {
 		}
 	}
 }
+
+func TestEqualsString(t *testing.T) {
+	for _, tc := range []struct {
+		name, doc, s string
+		want         bool
+	}{
+		{"a fraction equals a numeric string of an equal integer", `5.0`, "5", true},
+		{"an integer equals a numeric string with an exponent", `500`, "5e2", true},
+		{"a number differs from a numeric string of another value", `5.1`, "5", false},
+		{"a number differs from its text when that text is not a numeric string", `1e400`, "Infinity", false},
+		{"a number differs from a string that is not numeric", `5`, "five", false},
+		{"two strings are equal ignoring case", `"Admin"`, "ADMIN", true},
+		{"two numeric strings compare by text", `"5.0"`, "5", false},
+		{"a boolean equals its text ignoring case", `true`, "TRUE", true},
+		{"a boolean differs from a numeric string", `true`, "1", false},
+		{"null equals no string", `null`, "null", false},
+		{"a list equals its structure text", `[1.0, "a"]`, "[1.0, A]", true},
+		{"an empty list equals its structure text", `[]`, "[]", true},
+		{"an object equals its structure text", `{"k": ["v"]}`, `{k=["v"]}`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := EqualsString(mustDecode(t, tc.doc), tc.s); got != tc.want {
+				t.Errorf("EqualsString(%s, %q) = %t, want %t", tc.doc, tc.s, got, tc.want)
+			}
+		})
+	}
+}
