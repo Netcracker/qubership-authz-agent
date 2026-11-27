@@ -46,9 +46,12 @@ an operand and three different equalities behind those operators:
   resource attribute in any order and without repeats, a list inside an element or a member in order, each string
   with its case, and a number never equal to a string (`p15-eq-resource-resource`, `v16-eq-049`, `ol69-case-eq`,
   `on67-number-text-eq`).
-- `==` between a list or an object and a string compares the string with the Java text of the structure, `[v, w]` or
+- `==` between a list or an object and a string compares the string with the printed text of the structure, `[v, w]` or
   `{k=v}`, ignoring case (`x17-eq-structure-as-text-*`, `q19-list-equals-its-printed-text`). Its JSON text does not
-  match (`x17-eq-structure-as-json-*`).
+  match (`x17-eq-structure-as-json-*`). The executable specification reads the goldens of rounds 69, 72, and 75
+  (`ol69-text-double-eq`, `f72-num-object-1e7-double`, `f72-num-list-1e3-double`, `g75-list-text-eq`) as printing a
+  number of the structure in the form R8 states, not always as `Double.toString`. A member that is a list or an object
+  prints as JSON (`ol69-text-member-json-eq`); no golden shows how a number inside such a member prints.
 - `<`, `<=`, `>`, and `>=` read a string as `new BigDecimal(String)` does (`x16-number-string-*`), and `1e400 > 5` is
   false (`r28reach-num-greater`). So `"5.0" <= 5` and `"5.0" >= 5` hold while `"5.0" == 5` does not.
 - `MATCH` tests a string against a pattern with case, and over a number ends the rule (`vm-match-*`).
@@ -120,8 +123,17 @@ operand stays as legacy reads it.
 #### Comparisons that are not equality
 
 - **R8** (`translate`). A list or an object and a string are equal under a comparing operator when the string equals
-  the Java text of the list or the object, such as `[v, w]` or `{k=v}`, ignoring case. The text lists the elements of
-  a list in the order and with the repeats of the document.
+  the text of the list or the object, such as `[v, w]` or `{k=v}`, ignoring case. The text lists the elements of a
+  list in the order and with the repeats of the document. A number that is an element of the list or a member of the
+  object and is written without a point or an exponent prints as the digits of its integer value, so `-0` prints as
+  `0`. Any other number that is an element or a member prints as `Double.toString` of its `Double`. Where that text
+  has an exponent and more digits after the point than the value of the exponent, the number prints instead as the
+  same digits with the point moved by the exponent and no exponent. So `1.0` prints as `1.0`, `1e-5` as `0.000010`,
+  and `1.2345678912345679E8` as `123456789.12345679`, while `1e7` prints as `1.0E7`. This rule does not decide the
+  text of a number whose `Double` is negative zero and that is written with a point or an exponent, such as `-0.0` or
+  `-1e-400`. A list or an object that is an element of the list or a member of the object prints as compact JSON,
+  with its elements or members in the order of the document and each number as the document writes it, so
+  `[1e-5, [1e-5]]` prints as `[0.000010, [1e-5]]` and `{"k": ["a"]}` as `{k=["a"]}`.
 - **R9** (`translate`). `<`, `<=`, `>`, and `>=` compare the values of a number or a numeric string on each side, and
   are false where either side is neither, or is a number beyond the range of a `Double`.
 - **R10** (`translate`). `MATCH` and `NOT MATCH` test the text of a string against the pattern with case, and end the
@@ -184,7 +196,7 @@ Negative:
   of `[`, `]`, `{`, `}`, `+`, `^`, `$`, `|`, and `\`, which keep their meaning in a regular expression.
 - Equality is not transitive. `"5.0"` equals `5` and `5` equals `"5.00"`, but `"5.0"` does not equal `"5.00"`.
   `"5.0" <= "5"` and `"5.0" >= "5"` hold while `"5.0" == "5"` does not. `[5]` equals `[5.0]` and `[5.0]` equals the
-  string `"[5.0]"`, but `[5]` does not, because a list compares with a string by its Java text. Likewise `[1, 1]`
+  string `"[5.0]"`, but `[5]` does not, because a list compares with a string by its text (R8). Likewise `[1, 1]`
   equals `[1]` and `[1]` equals `"[1]"`, but `[1, 1]` does not equal `"[1]"`. Code that groups operands by equality,
   such as a rule index, cannot treat it as an equivalence, and two lists or two objects cannot be reduced to one key:
   the generated code compares them member by member.
@@ -196,13 +208,13 @@ Negative:
   numbers alike stay far below the limit.
 - These pairs are equal: `5.50` and `5.5`; `5`, `5.0`, and `5e0`; `05` and `5` in a list literal; `"5.0"` and `5`;
   `"+5"`, `"٥"`, and `5`; `0.0` and `-0.0`; `{"a": 1}` and `{"a": 1.0}`; `{"a": 1}` and `{"a": "1"}`; `["X"]` and
-  `["x"]`; `[1, 2]` and `[2, 1]`; `[1, 1]` and `[1]`.
+  `["x"]`; `[1, 2]` and `[2, 1]`; `[1, 1]` and `[1]`; `[1e-5]` and `"[0.000010]"`.
 - These pairs differ: `"5.0"` and `"5"`; `{"a": [1, 2]}` and `{"a": [2, 1]}`, because a list inside a member compares
-  in order; `1e400` and `"Infinity"`; `"0.300000000000000010"` and the number `0.300000000000000010`, which is the
-  `Double` `0.3`.
+  in order; `[1.0]` and `"[1]"`; `[1e-5]` and `"[1.0E-5]"`; `1e400` and `"Infinity"`; `"0.300000000000000010"` and
+  the number `0.300000000000000010`, which is the `Double` `0.3`.
 - A number with more digits than a `Double` holds is the `Double` under every operator: `0.300000000000000010` equals
   `0.3` and is not greater than it, and `1e-400` is `0`. A number beyond the range orders against nothing.
-- The Java text of a list that R8 compares with a string keeps the order and repeats of the document, where legacy
+- The text of a list that R8 compares with a string keeps the order and repeats of the document, where legacy
   prints a `HashSet` in hash order and without repeats: `[2, 1]` equals `"[2, 1]"` and `[1, 1]` equals `"[1, 1]"`,
   where legacy prints `[1, 2]` and `[1]`.
 - The agent answers unlike legacy wherever a golden compares a number with a number or a string of another spelling.
