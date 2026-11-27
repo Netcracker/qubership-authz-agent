@@ -91,7 +91,7 @@ func main() {
 	}
 	var tokens *m2m.Source
 	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != "" {
-		tokens = m2m.New(cfg.M2M, eng, logger)
+		tokens = m2m.New(cfg.M2M, logger)
 	}
 	var source pull.Tokens
 	ownToken := func() (string, error) { return "", m2m.ErrNoToken }

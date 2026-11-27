@@ -16,11 +16,10 @@
 
 package runtimetest
 
-// TestLockdown checks on the deployed agent that the store, and the M2M token
-// it holds under data.m2m, stay out of reach over HTTP: the internal port
-// serves no route that reads or writes a store document, and a check route
-// reads no query parameter beyond its own, so ?explain=full gets the plain
-// decision and no evaluation trace.
+// TestLockdown checks on the deployed agent that the store stays out of
+// reach over HTTP: the internal port serves no route that reads or writes a
+// store document, and a check route reads no query parameter beyond its own,
+// so ?explain=full gets the plain decision and no evaluation trace.
 func (s *RuntimeSuite) TestLockdown() {
 	s.Step("lockdown.m2m_read_absent.404", func() {
 		url := s.cfg.OPADirectURL + "/v1/data/m2m"
