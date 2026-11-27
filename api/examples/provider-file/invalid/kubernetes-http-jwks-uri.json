@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Netcracker/qubership-authz-agent/main/api/provider-file.v1.schema.json",
+  "providers": {
+    "kubernetes": {
+      "type": "single",
+      "issuer": "https://kubernetes.default.svc.cluster.local",
+      "jwksUri": "http://kubernetes.default.svc/openid/v1/jwks"
+    }
+  }
+}

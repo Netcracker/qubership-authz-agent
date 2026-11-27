@@ -28,9 +28,10 @@ kichasov
   ADR-0093 R1, the tenant that the steps of this record compare with, and ADR-0093 R22, the 503 in steps 4 and 5
   before the default tenant is translated.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
-  ADR-0094 R16 to R18 and R25, the refusals of a Kubernetes token.
+  ADR-0094 R14, R16 to R18, and R25, the refusals of a Kubernetes token.
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](20261123-authz-agent-adr-0104-trusted-provider-files.md):
-  ADR-0104 R21 and R26, the refusals of a token by its issuer and its audience.
+  ADR-0104 R21 and R26, the refusals of a token by its issuer and of an identity-provider token by its audience, and
+  ADR-0104 R30, the `iss` that the log line of a refusal with `TOKEN_ISSUER_UNKNOWN` names.
 
 ## Context
 
@@ -101,7 +102,7 @@ and the reason code in the audit and a metric.
   | 401 | `TOKEN_KID_MISSING` | ADR-0091 R22 |
   | 401 | `TOKEN_KID_UNKNOWN` | ADR-0091 R23, R39 |
   | 401 | `TOKEN_SIGNATURE_INVALID` | ADR-0091 R43 |
-  | 401 | `TOKEN_AUDIENCE_MISSING`, `TOKEN_AUDIENCE_INVALID` | ADR-0104 R26 |
+  | 401 | `TOKEN_AUDIENCE_MISSING`, `TOKEN_AUDIENCE_INVALID` | ADR-0094 R14; ADR-0104 R26 |
   | 401 | `TOKEN_EXP_MISSING`, `TOKEN_EXPIRED`, `TOKEN_NOT_YET_VALID` | ADR-0091 R44, R45 |
   | 401 | `TOKEN_IAT_MISSING`, `TOKEN_IAT_INVALID` | ADR-0091 R46, R47, R48 |
   | 401 | `TOKEN_NAMESPACE_NOT_ALLOWED` | ADR-0094 R25 |

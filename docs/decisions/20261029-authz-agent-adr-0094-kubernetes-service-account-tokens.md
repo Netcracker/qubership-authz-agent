@@ -72,7 +72,6 @@ when it passes the checks of this record and its namespace belongs to the instal
 - **Cluster CA**: the CA at `/var/run/secrets/tokens/kubernetes/ca.crt`.
 - **Token for `netcracker`**: the projected token at `/var/run/secrets/tokens/netcracker/token`, unless ADR-0096 R6
   names another file.
-- **In-cluster address**: an address whose host is `kubernetes.default.svc` or `kubernetes.default.svc.cluster.local`.
 - **Topology file**: `/etc/topology/data`, the `data` key of the ConfigMap `topology`.
 - **Namespace of the installation**: the namespace the agent runs in, and the origin and the peer of the baseline and of
   every satellite in the topology file.
@@ -82,7 +81,7 @@ when it passes the checks of this record and its namespace belongs to the instal
 #### The provider
 
 - **R2** (`chart`). The chart mounts the token for the API server and the cluster CA.
-- **R30** (`chart`). The chart writes the provider `kubernetes`.
+- **R30** (`chart`). The chart writes the marked provider.
 - **R31** (`chart`). The agent's Pod sets `automountServiceAccountToken: false`.
 - **R3** (`chart`). The chart mounts the token for `netcracker` when ADR-0096 R2 chooses it.
 - **R32** (`keys`). The provider `kubernetes` reads its keys only over https. A provider `kubernetes` whose `jwksUri`
@@ -93,6 +92,10 @@ when it passes the checks of this record and its namespace belongs to the instal
 
 #### The checks
 
+- **R14** (`verify`). A Kubernetes token passes the check of `aud` only when its `aud` is the string `netcracker` or an
+  array of strings that holds it, compared byte for byte. A Kubernetes token without `aud` is refused with
+  `TOKEN_AUDIENCE_MISSING`, and one with any other `aud` with `TOKEN_AUDIENCE_INVALID`. No provider file changes this
+  check.
 - **R16** (`verify`). The `sub` of a Kubernetes token starts with `system:serviceaccount:`, or the token gets
   `TOKEN_SUBJECT_INVALID`. Its parts are not parsed: the namespace comes from R18.
 
@@ -115,7 +118,9 @@ when it passes the checks of this record and its namespace belongs to the instal
 The namespace check is what limits who gets in (R17). The audience keeps out the tokens that the API server issues for
 other purposes, the default token of every Pod among them, but it does not limit who holds an accepted token: anyone who
 can create a Pod can request a projected token for any audience, `netcracker` included. For the same reason, the
-namespace check runs on every Kubernetes token, a cached one included (R17, R22).
+namespace check runs on every Kubernetes token, a cached one included (R17, R22). Every Kubernetes token is an M2M
+token (ADR-0092 R7). A provider file that chose the audience of the API server would make the default token of every
+Pod in the namespaces of the installation an M2M token, so the audience is the same in every installation (R14).
 
 The signature cannot tell the services of one installation from those of another, because the API server signs both
 with the same keys. The topology file is the platform's own description of the installation, kept in every namespace,
@@ -166,8 +171,8 @@ Negative:
 - Where the provider files hold no provider `kubernetes`, as outside Kubernetes, no token is a Kubernetes token, and a
   token that an API server signed is refused under ADR-0104 R21, unless a provider `identity-provider` names its issuer,
   which makes it an identity-provider token (ADR-0104 R22).
-- The chart writes the provider `kubernetes` in every installation, so every Pod that the chart deploys waits for the
-  keys of the API server before it becomes ready (R30; ADR-0104 R25; ADR-0091 R14), and a token for the API server that
-  the agent cannot read stops it at the start (R2; ADR-0104 R14).
+- The chart writes the provider of Kubernetes tokens in every installation, so every Pod that the chart deploys waits
+  for the keys of the API server before it becomes ready (R30; ADR-0104 R25; ADR-0091 R14), and a token for the API
+  server that the agent cannot read stops it at the start (R2; ADR-0104 R14).
 - On a cluster whose issuer is not an https URL the API server serves no keys (Context), so every Pod that the chart
   deploys stays not ready (R30; ADR-0091 R19).

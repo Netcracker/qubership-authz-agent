@@ -30,7 +30,7 @@ kichasov
   ADR-0093 R10 to R14, the default tenant, and ADR-0093 R17, the policy snapshots that readiness waits for.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
   ADR-0094 R2, R3, R26, R28, and R30 to R32, the provider `kubernetes` and the tokens that the chart mounts, and
-  ADR-0094 R16 to R25, the extra checks of a Kubernetes token.
+  ADR-0094 R14 to R25, the extra checks of a Kubernetes token.
 - [authz-agent-ADR-0095: Refuse a check request before policy evaluation](20261029-authz-agent-adr-0095-refuse-before-policy-evaluation.md):
     ADR-0095 R16, the index of the reason codes.
 - [authz-agent-ADR-0096: Choose the token the agent sends with a setting of its own](20261105-authz-agent-adr-0096-token-the-agent-sends.md):
@@ -38,7 +38,8 @@ kichasov
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](20261123-authz-agent-adr-0104-trusted-provider-files.md):
   the provider files and the words for providers, realms, sources, issuers, and the two kinds of token (ADR-0104 R22);
   the source of a token (ADR-0104 R19 to R21), the address of its keys (ADR-0104 R23), the required sources (ADR-0104
-  R25), and the check of `aud` (ADR-0104 R26).
+  R25), the check of the `aud` of an identity-provider token (ADR-0104 R26), and the `iss` in the log line of a refusal
+  (ADR-0104 R30).
 
 ## Context
 
@@ -84,10 +85,11 @@ The word Keycloak names the server.
 
 #### Trusted issuers
 
-- **R72** (`chart`). The chart derives the provider `identity-provider` from `IDENTITY_PROVIDER_URL`.
+- **R72** (`chart`). The chart sets `keycloak.url` from `IDENTITY_PROVIDER_URL`, and, with `INTERNAL_TLS_ENABLED`,
+  `keycloak.caFile` from `CERTIFICATE_FILE_PATH`.
 - **R78** (`keys`). The agent does not read `IDENTITY_PROVIDER_URL`.
-- **R13** (`chart`). The chart adds a checksum of the provider files to the Pod template, so a change of a provider file
-  restarts the Pods.
+- **R13** (`chart`). The chart adds a checksum of the trusted providers file to the Pod template, so a change of the
+  file restarts the Pods.
 
 #### Readiness
 
@@ -195,8 +197,8 @@ The word Keycloak names the server.
 
 #### What the verification returns
 
-- **R52** (`handler`). `Incoming-Token` is verified as fully as `Authorization`, the check of `aud` under ADR-0104 R26
-  included. The calling service is not trusted to have checked it.
+- **R52** (`handler`). `Incoming-Token` is verified as fully as `Authorization`, the checks of `aud` under ADR-0104 R26
+  and ADR-0094 R14 included. The calling service is not trusted to have checked it.
 - **R53** (`handler`). An empty `Incoming-Token` counts as no header, and nothing is verified.
 - **R54** (`verify`). For a token that passes, the verification returns its verified claims whole, as the token carries
   them, its kind, and the result of the M2M test of ADR-0092 R6, R7, and R21. The kinds are the two of ADR-0104 R22: an
@@ -207,8 +209,8 @@ The word Keycloak names the server.
   checks is the implementer's choice, within R51 and R69.
 - **R74** (`verify`). The verification result of a failed token names its source only when the signature of the token
   verified.
-- **R75** (`keys`). A line in the application log may name the realm in the `iss` of an unverified token, in quotes and
-  as text taken from the token.
+- **R75** (`keys`, `handler`). A line in the application log may name the `iss` of an unverified token, or the realm in
+  it, in quotes and as text taken from the token.
 - **R56** (`verify`). The verification result holds no token in its compact form.
 - **R76** (`handler`). The input of policy evaluation holds no token in its compact form.
 - **R57** (`verify`). The verification selects no claims by what a policy declares.
@@ -223,8 +225,8 @@ The word Keycloak names the server.
 #### The verified-token cache
 
 - **R59** (`verify`). A verified token is cached under the SHA-256 of its compact form until `exp`.
-- **R60** (`verify`). A token that a check of this record, of ADR-0094 R16, or of ADR-0104 R21 or R26 refuses is not
-  cached. A token refused for its namespace stays in the cache, because ADR-0094 R22 checks it again.
+- **R60** (`verify`). A token that a check of this record, of ADR-0094 R14 or R16, or of ADR-0104 R21 or R26 refuses is
+  not cached. A token refused for its namespace stays in the cache, because ADR-0094 R22 checks it again.
 - **R61** (`verify`). A cached token is returned only while the key that verified it is still loaded for its source, so
   a withdrawn key stops a cached token at once.
 - **R62** (`verify`). The cache holds the result of the verification and the claims, and nothing computed for a request.
@@ -233,8 +235,8 @@ The word Keycloak names the server.
 #### Settings that go away
 
 - **R64** (`chart`). The settings of the current key loading go away: `AUTHZ_IDP_REALMS`,
-  `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, `AUTHZ_JWKS_HTTP_RETRIES`, `AUTHZ_TRUSTED_PROVIDERS_FILE`, and
-  `AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL`.
+  `AUTHZ_JWKS_BOOTSTRAP_REQUIRED`, `AUTHZ_JWKS_HTTP_RETRIES`, `AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL`, and the
+  `required` field of a provider.
 - **R65** (`chart`). The values schema refuses those settings, so an installation that still sets `AUTHZ_IDP_REALMS`
   learns that its trust widens.
 
@@ -397,7 +399,7 @@ Negative:
   `TOKEN_ALG_NOT_ALLOWED` when no held key under its `kid` fits its `alg`, and `TOKEN_SIGNATURE_INVALID` when one fits
   and none verifies it (R32, R43, R79). A source that has no keys loaded yet stays without keys, and a required source
   then keeps the agent not ready (R14, R19).
-- An edit of a provider file outside Helm takes effect only at the next restart of the Pods (R13; ADR-0104 R5).
+- An edit of a provider file outside Helm takes effect only at the next restart of the Pods (ADR-0104 R5).
 - A provider that signs tokens without `kid` cannot be used, because all its tokens are refused.
 - A token without `iat` passes the current policies, and an `iat` up to 300 seconds in the future passes for every
   token. This record refuses a token without `iat`, so a provider that does not set it cannot be used, and it checks a

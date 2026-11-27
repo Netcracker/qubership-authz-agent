@@ -19,7 +19,7 @@ A rule names the layer where its check runs, or two layers, in parentheses:
 
 | Layer | Holds | Code |
 | --- | --- | --- |
-| `keys` | The provider files, reading and holding signing keys | `internal/token/keys`, `api/provider-file.v1.schema.json` |
+| `keys` | The provider files, reading and holding signing keys | `internal/token/keys`, `api/provider-file.v1.schema.json`, `api/examples/provider-file` |
 | `verify` | The check of one token and its result | `internal/token/verify` |
 | `namespaces` | The topology file and the allowed namespaces | `internal/token/namespaces` |
 | `handler` | Each request before policy evaluation, and the responses of the check routes | `components/authz-agent/internal/server`, `api/openapi.yaml` |
