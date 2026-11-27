@@ -157,7 +157,7 @@ if [[ ${#WF_FILES[@]} -gt 0 ]]; then
     fi
 
     if command -v actionlint > /dev/null 2>&1; then
-        if actionlint "${WF_FILES[@]}" 2>&1; then
+        if actionlint -config-file "$REPO_ROOT/.github/linters/actionlint.yml" "${WF_FILES[@]}" 2>&1; then
             ok "actionlint"
         else
             fail "actionlint"
