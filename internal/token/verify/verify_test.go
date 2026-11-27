@@ -17,6 +17,7 @@ package verify
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -159,6 +160,39 @@ func TestVerify_RefusesATokenWhoseIssNamesNoTrustedIssuer(t *testing.T) {
 			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"iss": tt.iss})))
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
+	}
+}
+
+// The iss of 201 bytes loses its last byte, which differs from the bytes before
+// it.
+func TestVerify_NamesTheIssThatMatchesNoTrustedProvider(t *testing.T) {
+	s := newSigner(t, "k1", providerOf("realm"))
+	head := "https://other.example/" + strings.Repeat("a", 178)
+	tests := []struct {
+		name   string
+		iss    any
+		detail string
+	}{
+		{"iss of 200 bytes", head, `iss "` + head + `" matches no trusted provider`},
+		{"iss of 201 bytes", head + "b", `iss "` + head + `"... matches no trusted provider`},
+		{"empty iss", "", `iss "" matches no trusted provider`},
+		{"iss with a line feed", "https://other.example/\n", `iss "https://other.example/\n" matches no trusted provider`},
+		{"no iss", nil, "token has no iss that is a string, so it matches no trusted provider"},
+		{"iss that is null", json.RawMessage("null"), "token has no iss that is a string, so it matches no trusted provider"},
+		{"iss that is a number", 5, "token has no iss that is a string, so it matches no trusted provider"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"iss": tt.iss})))
+			var refused *Error
+			if !errors.As(err, &refused) || refused.Code != CodeIssuerUnknown {
+				t.Fatalf("Verify() with iss %v error = %v, want code %s", tt.iss, err, CodeIssuerUnknown)
+			}
+			if refused.Detail != tt.detail {
+				t.Errorf("Verify() with iss %v detail = %q, want %q", tt.iss, refused.Detail, tt.detail)
 			}
 		})
 	}
@@ -398,6 +432,22 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 				t.Errorf("Verify() error is %d bytes, want at most 400: %.120s...", size, err)
 			}
 		})
+	}
+}
+
+// The kid is 65 bytes long, so the detail loses its last byte, which differs
+// from the bytes before it.
+func TestVerify_QuotesTheKIDOfAnUnknownKeyCutTo64Bytes(t *testing.T) {
+	s := newSigner(t, "k1", providerOf("realm"))
+	head := strings.Repeat("k", 64)
+	v, _ := newVerifier(newFakeKeys(s))
+	_, err := v.Verify(t.Context(), unsigned(t, map[string]any{"alg": "ES256", "kid": head + "x"}, claimsAt(start, nil)))
+	var refused *Error
+	if !errors.As(err, &refused) || refused.Code != CodeKIDUnknown {
+		t.Fatalf("Verify() error = %v, want code %s", err, CodeKIDUnknown)
+	}
+	if want := `has kid "` + head + `"...`; !strings.HasSuffix(refused.Detail, want) {
+		t.Errorf("Verify() detail = %q, want one that ends with %q", refused.Detail, want)
 	}
 }
 

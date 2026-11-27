@@ -313,7 +313,7 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	}
 	key, err := v.keys.LookupOrReload(ctx, query)
 	if err != nil {
-		return nil, lookupFailure(query, err)
+		return nil, lookupFailure(query, claims, err)
 	}
 	if !key.Allows(alg) {
 		return nil, fail(CodeAlgNotAllowed, "key %s of provider %q does not accept %s", short(key.ID), key.Source.ID(), alg)
@@ -348,11 +348,17 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 }
 
 // lookupFailure returns the [*Error] for err, the error a [KeyFinder] returned
-// for q. Each [Error.Detail] quotes the sender's text through [short].
-func lookupFailure(q keys.Query, err error) *Error {
-	switch {
-	case errors.Is(err, keys.ErrIssuerUnknown):
-		return fail(CodeIssuerUnknown, "iss %s matches no trusted provider", short(q.Issuer))
+// for q, the query of a token with claims. Each [Error.Detail] quotes the
+// sender's text through [cut] or [short]. The detail of [CodeIssuerUnknown]
+// quotes the first maxIssuerBytes bytes of iss, so a reader can find the byte
+// where the iss departs from a configured issuer. For a token without an iss
+// that is a string, the detail says so.
+func lookupFailure(q keys.Query, claims map[string]json.RawMessage, err error) *Error {
+	if errors.Is(err, keys.ErrIssuerUnknown) {
+		if !isString(claims["iss"]) {
+			return fail(CodeIssuerUnknown, "token has no iss that is a string, so it matches no trusted provider")
+		}
+		return fail(CodeIssuerUnknown, "iss %s matches no trusted provider", cut(q.Issuer, maxIssuerBytes))
 	}
 	return fail(CodeKIDUnknown, "no key of iss %s has kid %s", short(q.Issuer), short(q.KID))
 }
@@ -493,11 +499,26 @@ func stringClaim(claims map[string]json.RawMessage, name string) string {
 // short quotes s for a detail, cut to 64 bytes: s is the sender's text,
 // and a detail goes into a log line.
 func short(s string) string {
-	const limit = 64
+	return cut(s, 64)
+}
+
+// maxIssuerBytes bounds the iss that the detail of [CodeIssuerUnknown] quotes,
+// in bytes.
+const maxIssuerBytes = 200
+
+// cut quotes s, cut to its first limit bytes with "..." after the cut.
+func cut(s string, limit int) string {
 	if len(s) > limit {
 		return fmt.Sprintf("%q...", s[:limit])
 	}
 	return fmt.Sprintf("%q", s)
+}
+
+// isString reports whether raw is the JSON text of a string, which null is
+// not.
+func isString(raw json.RawMessage) bool {
+	_, ok := decode(raw).(string)
+	return ok
 }
 
 // shortList quotes the first three of values as [short] does and counts the
