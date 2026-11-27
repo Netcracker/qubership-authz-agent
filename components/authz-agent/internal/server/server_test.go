@@ -22,9 +22,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 
 	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/engine"
@@ -301,8 +303,8 @@ func TestDecide_ReportsAnAdmissionThatCouldNotBeEvaluated(t *testing.T) {
 }
 
 // TestRegister_APanicAnswers500: a handler that panics answers its request
-// with 500 and an error line that names the panic, on the internal and the
-// public surface, and the next request is answered.
+// with 500, on the internal and the public surface, each counted under its
+// surface, and the next request is answered.
 func TestRegister_APanicAnswers500(t *testing.T) {
 	eng, err := engine.New(engine.Options{Modules: map[string]string{"internals.rego": admissionStub}})
 	if err != nil {
@@ -319,17 +321,61 @@ func TestRegister_APanicAnswers500(t *testing.T) {
 		app  *fiber.App
 	}{{"internal", internal}, {"public", public}} {
 		t.Run(app.name, func(t *testing.T) {
-			reported.lines = nil
 			for i := range 2 {
 				code, body, _ := call(t, app.app, http.MethodGet, "/health", "", nil)
 				if code != http.StatusInternalServerError || body != `{"code":"internal_error","message":"internal error"}` {
 					t.Errorf("GET /health %d = %d %s, want 500 internal_error", i+1, code, body)
 				}
 			}
-			errs := reported.at("error")
-			if len(errs) != 2 || !strings.Contains(errs[0], "GET /health panicked, answered 500: health exploded") {
-				t.Errorf("error lines %q, want one per request naming the panic", errs)
+			if got := testutil.ToFloat64(srv.panics.WithLabelValues(app.name, "/health")); got != 2 {
+				t.Errorf(`%s{surface=%q,route="/health"} = %v after 2 panics there, want 2`, panicsName, app.name, got)
 			}
 		})
+	}
+}
+
+// Each panic is counted, while its stack is logged once for each place in
+// the code that panics.
+func TestRegister_APanicIsCountedAndItsStackLoggedOncePerSite(t *testing.T) {
+	eng, err := engine.New(engine.Options{Modules: map[string]string{"internals.rego": admissionStub}})
+	if err != nil {
+		t.Fatalf("engine: %v", err)
+	}
+	var elsewhere atomic.Bool
+	reported := &levels{}
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	srv := Register(app, eng, Options{Log: reported, Health: func() Report {
+		if elsewhere.Load() {
+			panic("health exploded elsewhere")
+		}
+		panic("health exploded")
+	}})
+
+	for range 100 {
+		if code, _, _ := call(t, app, http.MethodGet, "/health", "", nil); code != http.StatusInternalServerError {
+			t.Fatalf("GET /health = %d, want 500", code)
+		}
+	}
+	elsewhere.Store(true)
+	call(t, app, http.MethodGet, "/health", "", nil)
+
+	if got := testutil.ToFloat64(srv.panics.WithLabelValues("internal", "/health")); got != 101 {
+		t.Errorf(`%s{surface="internal",route="/health"} = %v after 101 panics, want 101`, panicsName, got)
+	}
+	errs := reported.at("error")
+	if len(errs) != 2 || !strings.Contains(errs[0], ": health exploded; ") || !strings.Contains(errs[1], ": health exploded elsewhere; ") {
+		t.Fatalf("error lines %q, want one for each of the two panics", errs)
+	}
+	for _, e := range errs {
+		if strings.Count(e, " [running]:") != 1 || !strings.Contains(e, "TestRegister_APanicIsCountedAndItsStackLoggedOncePerSite") {
+			t.Errorf("error line %q, want the stack of the panic once, through the function that panicked", e)
+		}
+	}
+	debugs := reported.at("debug")
+	if len(debugs) != 99 {
+		t.Fatalf("%d debug lines, want 99, one for each repeated panic", len(debugs))
+	}
+	if strings.Contains(debugs[0], " [running]:") {
+		t.Errorf("debug line %q, want no stack", debugs[0])
 	}
 }

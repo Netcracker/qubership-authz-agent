@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	"maps"
-	"runtime/debug"
 	"slices"
 	"strings"
 	"sync"
@@ -26,6 +25,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/rego"
 
+	"authz-agent/components/authz-agent/internal/panics"
 	"authz-agent/internal/regobuiltins"
 	"authz-agent/internal/regogen"
 )
@@ -100,24 +100,24 @@ func (r *Registry) Decide(ctx context.Context, req Request) ([]Result, error) {
 			out[i], errs[i] = r.evalItem(ctx, s, inputs[i], unread)
 		}
 	} else {
-		// A panic on a worker would end the process, so the worker keeps it
-		// and Decide raises it again on the caller's goroutine, which the
-		// server recovers. The worker also cancels the items still being
+		// A panic on a worker would end the process, so the worker keeps it,
+		// with the worker's stack, and Decide raises the [panics.Recovered]
+		// again on the caller's goroutine, which the server recovers and
+		// reports by the worker's stack alone. The worker also cancels the items still being
 		// evaluated: a call of a PIP it made is never answered, and the
 		// workers waiting for it stop at the cancellation.
 		wctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		next := make(chan int)
 		var wg sync.WaitGroup
-		var panicked atomic.Pointer[string]
+		var panicked atomic.Pointer[panics.Recovered]
 		for range min(r.cfg.BulkWorkers, len(inputs)) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
 				defer func() {
 					if p := recover(); p != nil {
-						text := fmt.Sprintf("%v\n%s", p, debug.Stack())
-						panicked.CompareAndSwap(nil, &text)
+						panicked.CompareAndSwap(nil, panics.Catch(p))
 						cancel()
 						for range next {
 							// drained, so that the feeding loop is not blocked
@@ -135,7 +135,7 @@ func (r *Registry) Decide(ctx context.Context, req Request) ([]Result, error) {
 		close(next)
 		wg.Wait()
 		if p := panicked.Load(); p != nil {
-			panic("a bulk item panicked on a worker: " + *p)
+			panic(p)
 		}
 	}
 	for _, err := range errs {

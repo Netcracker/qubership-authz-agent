@@ -111,7 +111,7 @@ func main() {
 	// /prometheus serves the default registry
 	prometheus.MustRegister(snapshot.NewCollector(snapshots))
 	cfg.Pull.Snapshots = snapshots
-	tenant := newDefaultTenant(cfg.DefaultTenant, cfg.Authn.TenantManagerURL)
+	tenant := newDefaultTenant(cfg.DefaultTenant, cfg.Authn.TenantManagerURL, logger)
 	puller := pull.New(cfg.Pull, source, logger)
 	opts := server.Options{
 		Log:                   logger,
@@ -147,6 +147,7 @@ func main() {
 		os.Exit(1)
 	}
 	srv := server.Register(internal, eng, opts)
+	prometheus.MustRegister(srv.Collector())
 	srv.RegisterPublic(public)
 
 	if tokens != nil {

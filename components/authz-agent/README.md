@@ -64,7 +64,10 @@ The policy source is the only way policies reach the agent.
 
 At the default level the service reports what it could not do: a policy that failed to evaluate or a document it
 could not store. `debug` adds a line per decision, per rejected legacy request, per unmatched route and per policy
-load. A decision that denies its caller is not reported at either level: it is the answer the policy gave.
+load. A decision that denies its caller is not reported at either level: it is the answer the policy gave. A request
+whose handler panics is answered 500 and counted in `authz_agent_handler_panics_total` on `/prometheus`, labeled with
+the port it came to (`surface`: `internal` or `public`) and the matched route pattern. The first panic raised at a
+place in the code is logged at error with its stack; later panics there are logged at `debug`, without a stack.
 Every line carries the request id under `request_id`, the same id the response carries in `X-Request-Id`. Each call
 of a PIP, the entitlements service, or the permission scope carries it in `X-Request-Id` too.
 
@@ -85,7 +88,9 @@ names a snapshot, then 200 `{"status":"ready"}`. The 503 reason is `no snapshot 
 while a tenant rejected on its first load holds readiness back, and `policies not loaded yet` before any load. With
 `AUTHZ_TENANT_MANAGER_URL` set, `/ready` also waits until tenant-manager resolves `AUTHZ_DEFAULT_TENANT` to its tenant
 ID, with the reason `default tenant "<name>" not resolved via tenant-manager yet`; the agent retries the lookup after 1,
-2, 4, 8, and then every 10 seconds, and logs a warning for each failed attempt. The reason names each unmet condition,
+2, 4, 8, and then every 10 seconds. It logs one warning for each way the lookup fails, such as a refused connection
+or an HTTP 404. When the lookup fails again in a way it has already warned of, it logs that at `debug`. Once the name
+resolves, it logs at info how many attempts failed and how long they took. The reason names each unmet condition,
 separated by semicolons. `GET /health` does not wait for tenant-manager. Until tenant-manager resolves the name, a check
 request that names no tenant is denied with the reason `no policies are published for tenant <name>`, whatever the
 policy data holds under the name: `check/resource` answers `false`, a bulk route allows no id, and `check/filter`

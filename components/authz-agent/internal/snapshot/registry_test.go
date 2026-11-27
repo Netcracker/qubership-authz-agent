@@ -30,6 +30,7 @@ import (
 
 	"github.com/open-policy-agent/opa/v1/rego"
 
+	"authz-agent/components/authz-agent/internal/panics"
 	"authz-agent/internal/jsonvalue"
 	"authz-agent/internal/policyir"
 	"authz-agent/internal/regobuiltins"
@@ -929,8 +930,17 @@ func TestAPanicInABulkItemReachesTheCaller(t *testing.T) {
 	load(t, r, generalPIP(srv.URL, ``), set("a", "subject.g == 'x'"))
 
 	defer func() {
-		if p := recover(); p == nil || !strings.Contains(fmt.Sprint(p), "token exploded") {
-			t.Errorf("Decide of a bulk of 5 panicked with %v, want the worker's panic, token exploded", p)
+		raised := recover()
+		p, ok := raised.(*panics.Recovered)
+		if !ok {
+			t.Fatalf("Decide of a bulk of 5 panicked with %T %v, want *panics.Recovered", raised, raised)
+		}
+		if p.Value != "token exploded" || !strings.Contains(p.Site, "TestAPanicInABulkItemReachesTheCaller") {
+			t.Errorf("Decide of a bulk of 5 panicked with %v at %s, want the worker's panic, token exploded, at the token function", p.Value, p.Site)
+		}
+		if n := strings.Count(string(p.Stack), " [running]:"); n != 1 || strings.Contains(string(p.Stack), "snapshot.(*Registry).Decide(") {
+			t.Errorf("stack of the panic holds %d goroutines and the Decide frame %t, want the worker's goroutine alone:\n%s",
+				n, strings.Contains(string(p.Stack), "snapshot.(*Registry).Decide("), p.Stack)
 		}
 	}()
 	_, _ = r.Decide(context.Background(), readDoc(t, "a", "y", 5))

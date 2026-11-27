@@ -74,7 +74,7 @@ func TestReportNamesTheTenantsWithoutASnapshot(t *testing.T) {
 		t.Fatalf("PullNow() = %v", err)
 	}
 
-	r := report(nil, p, snapshot.New(snapshot.Config{}, nil, quiet{}), newDefaultTenant("default", ""))
+	r := report(nil, p, snapshot.New(snapshot.Config{}, nil, quiet{}), newDefaultTenant("default", "", quiet{}))
 
 	if r.Loaded || !reflect.DeepEqual(r.Waiting, []string{"a"}) {
 		t.Errorf("report = %+v, want not loaded and waiting for [a]", r)
@@ -85,7 +85,7 @@ func TestReport(t *testing.T) {
 	eng := newEngine(t)
 	idle := pull.New(pull.Config{}, nil, quiet{})
 	snaps := snapshot.New(snapshot.Config{}, nil, quiet{})
-	noLookup := newDefaultTenant("default", "")
+	noLookup := newDefaultTenant("default", "", quiet{})
 	if r := report(nil, idle, snaps, noLookup); !r.Healthy || r.Loaded {
 		t.Errorf("report before any pull = %+v, want healthy and not loaded", r)
 	}
@@ -108,7 +108,7 @@ func TestReport(t *testing.T) {
 	if r := report(providers, idle, snaps, noLookup); !r.Healthy || !r.Loaded {
 		t.Errorf("report with no providers and the pull disabled = %+v, want healthy and loaded", r)
 	}
-	if r := report(nil, idle, snaps, newDefaultTenant("acme", "http://tenant-manager.invalid")); r.UnresolvedTenant != "acme" {
+	if r := report(nil, idle, snaps, newDefaultTenant("acme", "http://tenant-manager.invalid", quiet{})); r.UnresolvedTenant != "acme" {
 		t.Errorf("report before tenant-manager resolves the default tenant = %+v, want UnresolvedTenant acme", r)
 	}
 }

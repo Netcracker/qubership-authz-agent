@@ -21,13 +21,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"runtime/debug"
 	"strings"
+	"sync"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/engine"
+	"authz-agent/components/authz-agent/internal/panics"
 	"authz-agent/components/authz-agent/internal/snapshot"
 )
 
@@ -87,7 +89,18 @@ type Options struct {
 type Server struct {
 	engine *engine.Engine
 	opts   Options
+	// panics counts the panics recoverPanic answered, by surface and route.
+	panics *prometheus.CounterVec
+	// panicSites holds the [panics.Recovered.Site] of every panic whose
+	// stack recoverPanic has logged.
+	panicSites sync.Map
 }
+
+// panicsName is the counter of the panics a handler raised and the server
+// answered with 500. It answers whether a defect fails requests, and on
+// which route: the log holds one stack per place in the code that panics,
+// so the alert reads this counter rather than the log lines.
+const panicsName = "authz_agent_handler_panics_total"
 
 // Register adds the routes of the internal surface to app: /health,
 // /ready, and /api-version, and in a build with the paritytest tag
@@ -96,8 +109,12 @@ func Register(app *fiber.App, eng *engine.Engine, opts Options) *Server {
 	if opts.Log == nil {
 		opts.Log = discardLogger{}
 	}
-	s := &Server{engine: eng, opts: opts}
-	app.Use(s.recoverPanic)
+	s := &Server{engine: eng, opts: opts, panics: prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: panicsName,
+		Help: "Panics of a request handler, which the server answered with 500, by surface (internal or public) " +
+			"and the route pattern the request matched.",
+	}, []string{"surface", "route"})}
+	app.Use(s.recoverPanic("internal"))
 	app.Get("/health", s.health)
 	app.Get("/ready", s.ready)
 	app.Get("/api-version", apiVersion)
@@ -223,17 +240,36 @@ func apiVersion(c *fiber.Ctx) error {
 	return c.SendString(LegacyAPIVersion)
 }
 
-// recoverPanic answers 500 to a request whose handler panicked and reports
-// the panic with its stack, so that one request cannot stop the process and
-// the checks of every tenant with it.
-func (s *Server) recoverPanic(c *fiber.Ctx) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			s.opts.Log.ErrorC(c.UserContext(), "%s %s panicked, answered 500: %v\n%s", c.Method(), c.Path(), r, debug.Stack())
-			err = opaError(c, http.StatusInternalServerError, "internal_error", "internal error")
-		}
-	}()
-	return c.Next()
+// Collector exports the counter authz_agent_handler_panics_total, for a
+// Prometheus registry.
+func (s *Server) Collector() prometheus.Collector { return s.panics }
+
+// recoverPanic returns the middleware of the surface named surface that
+// answers 500 to a request whose handler panicked, so that one request
+// cannot stop the process and the checks of every tenant with it. It counts
+// the panic by surface and route, logs the stack at error on the first panic
+// raised at its place in the code, and the later ones at debug without a
+// stack, since a policy that panics does so on every request of its tenant.
+func (s *Server) recoverPanic(surface string) fiber.Handler {
+	return func(c *fiber.Ctx) (err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				p := panics.Catch(r)
+				route := c.Route().Path
+				s.panics.WithLabelValues(surface, route).Inc()
+				if _, seen := s.panicSites.LoadOrStore(p.Site, true); seen && p.Site != "" {
+					s.opts.Log.DebugC(c.UserContext(), "%s %s panicked again at %s, answered 500: %v",
+						c.Method(), c.Path(), p.Site, p.Value)
+				} else {
+					s.opts.Log.ErrorC(c.UserContext(), "%s %s panicked at %s, answered 500: %v; later panics there "+
+						"are counted in %s{surface=%q,route=%q} and logged at debug without a stack\n%s",
+						c.Method(), c.Path(), p.Site, p.Value, panicsName, surface, route, p.Stack)
+				}
+				err = opaError(c, http.StatusInternalServerError, "internal_error", "internal error")
+			}
+		}()
+		return c.Next()
+	}
 }
 
 // opaError writes an error body in the shape of OPA's REST API.
