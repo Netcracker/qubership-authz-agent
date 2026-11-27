@@ -15,8 +15,10 @@
 package main
 
 import (
+	"encoding/json"
 	"maps"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"slices"
@@ -30,30 +32,7 @@ import (
 // the test logs it instead of failing, and fails once the entry no longer
 // matches anything, so that the change that fixes the defect also removes the
 // entry.
-var knownSettingsDrift = map[string]string{
-	"unrendered AUTHZ_PIP_TIMEOUT": "F57: the chart renders no AUTHZ_PIP_TIMEOUT, " +
-		"so a Helm install cannot raise the 2 s limit on a PIP call",
-	"unrendered AUTHZ_DEFAULT_TENANT": "N-E1: the chart renders no AUTHZ_DEFAULT_TENANT, " +
-		"so a Helm install cannot choose the tenant of a request that names none",
-	"undocumented AUTHZ_PIP_TIMEOUT=0": "F54: a PIP timeout of 0 is accepted and means the 2 s default, " +
-		"which the README row does not say",
-	`undocumented AUTHZ_DEFAULT_TENANT=""`: "F55: an empty default tenant is accepted, /ready answers 200, " +
-		"and every request that names no tenant is denied; the README row does not say so",
-	"undocumented AUTHZ_JWKS_HTTP_TIMEOUT=0": "N-E2: a JWKS timeout of 0 is accepted and means the 5 s default, " +
-		"which the README row does not say",
-	"undocumented AUTHZ_M2M_RENEW_BEFORE_SECONDS=0": "N-E3: 0 is accepted and refreshes the M2M token " +
-		"only at its expiry, which the README row does not say",
-	`undocumented AUTHZ_HTTP_ADDR=""`: "N-E4: an empty listen address is accepted and listens on " +
-		"a random port, which the README row does not say",
-	`undocumented AUTHZ_PUBLIC_ADDR=""`: "N-E4: an empty listen address is accepted and listens on " +
-		"a random port, which the README row does not say",
-	`undocumented AUTHZ_M2M_CLIENT_ID_FILE=""`: "N-E5: an empty file name is accepted, " +
-		"and the README row does not say what it means",
-	`undocumented AUTHZ_M2M_CLIENT_SECRET_FILE=""`: "N-E5: an empty file name is accepted, " +
-		"and the README row does not say what it means",
-	`undocumented AUTHZ_PAP_CLIENT_TOKEN_FILE=""`: "N-E5: an empty file name is accepted, " +
-		"and the README row does not say what it means",
-}
+var knownSettingsDrift = map[string]string{}
 
 // reportSettingsDrift fails the test for every case in found that
 // knownSettingsDrift does not list, and logs the listed ones. It also fails
@@ -77,16 +56,10 @@ func reportSettingsDrift(t *testing.T, found map[string]string, prefixes ...stri
 	}
 }
 
-// envName is the environment variable configloader reads for a key:
-// authz.http.addr is AUTHZ_HTTP_ADDR.
-func envName(key string) string {
-	return strings.ToUpper(strings.ReplaceAll(key, ".", "_"))
-}
-
 // readEnvNames returns the variable of every key loadConfig reads.
 func readEnvNames() map[string]bool {
 	read := map[string]bool{}
-	loadConfig(func(key, fallback string) string {
+	_, _ = loadConfig(func(key, fallback string) string {
 		read[envName(key)] = true
 		return fallback
 	})
@@ -95,7 +68,7 @@ func readEnvNames() map[string]bool {
 
 // withOne is loadConfig with the variable name set to value and every other
 // key unset.
-func withOne(name, value string) config {
+func withOne(name, value string) (config, error) {
 	return loadConfig(func(key, fallback string) string {
 		if envName(key) == name {
 			return value
@@ -112,8 +85,8 @@ type readmeSetting struct {
 }
 
 // readmeRow matches a row of the configuration table whose first cell names
-// one or more AUTHZ_ variables.
-var readmeRow = regexp.MustCompile("(?m)^\\| (`AUTHZ_[A-Z0-9_]+`(?:, `AUTHZ_[A-Z0-9_]+`)*) \\| ([^|]*) \\| (.*) \\|$")
+// one or more environment variables.
+var readmeRow = regexp.MustCompile("(?m)^\\| (`[A-Z][A-Z0-9_]+`(?:, `[A-Z][A-Z0-9_]+`)*) \\| ([^|]*) \\| (.*) \\|$")
 
 var backticked = regexp.MustCompile("`([^`]*)`")
 
@@ -146,10 +119,10 @@ func readmeSettings(t *testing.T) map[string]readmeSetting {
 	return settings
 }
 
-var chartEnvEntry = regexp.MustCompile(`(?m)^\s*- name: (AUTHZ_[A-Z0-9_]+)\s*$`)
+var chartEnvEntry = regexp.MustCompile(`(?m)^\s*- name: ([A-Z][A-Z0-9_]+)\s*$`)
 
-// chartEnvNames returns the AUTHZ_ variables the chart sets on the container,
-// under any condition of the template.
+// chartEnvNames returns the environment variables the chart sets on the
+// container, under any condition of the template.
 func chartEnvNames(t *testing.T) map[string]bool {
 	t.Helper()
 	const path = "../../helm-templates/authz-agent/templates/deployment.yaml"
@@ -168,7 +141,7 @@ func chartEnvNames(t *testing.T) map[string]bool {
 }
 
 // The variables loadConfig reads, the rows of the README configuration
-// table, and the env entries of the chart name the same AUTHZ_ variables.
+// table, and the env entries of the chart name the same environment variables.
 // A variable missing from the chart cannot be set by a Helm install.
 func TestSettingsDrift_EveryVariableIsReadDocumentedAndRendered(t *testing.T) {
 	read, doc, chart := readEnvNames(), readmeSettings(t), chartEnvNames(t)
@@ -197,33 +170,40 @@ func TestSettingsDrift_EveryVariableIsReadDocumentedAndRendered(t *testing.T) {
 // Setting a variable to the default its README row gives leaves the
 // configuration as it is with nothing set.
 func TestSettingsDrift_TheDocumentedDefaultIsTheDefault(t *testing.T) {
-	want := loadConfig(fromMap(nil))
+	want := mustLoad(t, nil)
 	for name, s := range readmeSettings(t) {
-		if got := withOne(name, s.def); !reflect.DeepEqual(got, want) {
-			t.Errorf("loadConfig with %s=%q = %+v, want the configuration with nothing set, %+v", name, s.def, got, want)
+		got, err := withOne(name, s.def)
+		if err != nil || !reflect.DeepEqual(got, want) {
+			t.Errorf("loadConfig with %s=%q = %+v, %v; want the configuration with nothing set, %+v", name, s.def, got, err, want)
 		}
 	}
 }
 
+// emptyMeaning matches a Meaning cell that states what the empty value
+// does, in a clause that opens with "empty": "empty disables the pull".
+// "It may not be empty" states no meaning.
+var emptyMeaning = regexp.MustCompile(`(?i)(^|[;.] )empty\b`)
+
 // A boundary value that loadConfig accepts, so that the configuration
 // differs from the one with nothing set, has a meaning only where the
-// README row names it: "empty" for "", `0` for 0. A value loadConfig
-// replaces by the default has none to document.
+// README row names it: a clause opening with "empty" for "", `0` for 0. A
+// value loadConfig refuses has none to document.
 func TestSettingsDrift_EveryAcceptedBoundaryValueIsDocumented(t *testing.T) {
 	doc := readmeSettings(t)
-	unset := loadConfig(fromMap(nil))
+	unset := mustLoad(t, nil)
 	found := map[string]string{}
 	for name := range readEnvNames() {
 		row, ok := doc[name]
 		if !ok {
 			continue // reported by TestSettingsDrift_EveryVariableIsReadDocumentedAndRendered
 		}
-		probes := map[string]bool{"": strings.Contains(strings.ToLower(row.meaning), "empty")}
+		probes := map[string]bool{"": emptyMeaning.MatchString(row.meaning)}
 		if _, err := strconv.Atoi(row.def); err == nil {
 			probes["0"] = strings.Contains(row.meaning, "`0`")
 		}
 		for value, named := range probes {
-			if named || reflect.DeepEqual(withOne(name, value), unset) {
+			got, err := withOne(name, value)
+			if named || err != nil || reflect.DeepEqual(got, unset) {
 				continue
 			}
 			found["undocumented "+name+"="+printable(value)] = "loadConfig accepts it, and the README row does not say what it means"
@@ -238,4 +218,113 @@ func printable(value string) string {
 		return `""`
 	}
 	return value
+}
+
+// Every variable loadConfig reads goes through one rule: a value it does
+// not accept fails the start with an error that quotes the variable and the
+// value, and names no other variable. The probes are values one of the
+// kinds of setting refuses.
+func TestSettingsDrift_EveryRefusalNamesItsVariable(t *testing.T) {
+	read := readEnvNames()
+	for name := range read {
+		for _, value := range []string{"", "0", "-1", "soon", "1.5"} {
+			_, err := withOne(name, value)
+			if err == nil {
+				continue
+			}
+			if want := name + " is " + strconv.Quote(value) + "; expected "; !strings.Contains(err.Error(), want) {
+				t.Errorf("loadConfig with %s=%q: error %q, want one containing %q", name, value, err, want)
+			}
+			for other := range read {
+				if other != name && strings.Contains(err.Error(), other+" ") {
+					t.Errorf("loadConfig with %s=%q: error %q also names %s, which is unset", name, value, err, other)
+				}
+			}
+		}
+	}
+}
+
+const chartDir = "../../helm-templates/authz-agent"
+
+var (
+	valuesKey     = regexp.MustCompile(`(?m)^(AUTHZ_[A-Z0-9_]+):`)
+	authzName     = regexp.MustCompile(`\bAUTHZ_[A-Z0-9_]+\b`)
+	valuesUsedKey = regexp.MustCompile(`\.Values\.(AUTHZ_[A-Z0-9_]+)\b`)
+)
+
+// readFile returns the text of path, failing the test when it cannot.
+func readFile(t *testing.T, path string) string {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(raw)
+}
+
+// The settings values.yaml offers reach the container: every variable of
+// the agent that values.yaml names is an env entry of the chart, every
+// AUTHZ_ key that values.yaml declares is declared in values.schema.json
+// and read by a template, and every AUTHZ_ key a template reads is
+// declared in values.yaml, so that no env entry renders empty.
+func TestSettingsDrift_EveryValueTheChartOffersReachesTheContainer(t *testing.T) {
+	values := readFile(t, chartDir+"/values.yaml")
+	var schema struct {
+		Properties map[string]json.RawMessage `json:"properties"`
+	}
+	if err := json.Unmarshal([]byte(readFile(t, chartDir+"/values.schema.json")), &schema); err != nil {
+		t.Fatal(err)
+	}
+	paths, err := filepath.Glob(chartDir + "/templates/*")
+	if err != nil || len(paths) == 0 {
+		t.Fatalf("templates of %s: %v, %d files", chartDir, err, len(paths))
+	}
+	used := map[string]bool{}
+	for _, path := range paths {
+		for _, m := range valuesUsedKey.FindAllStringSubmatch(readFile(t, path), -1) {
+			used[m[1]] = true
+		}
+	}
+	declared := map[string]bool{}
+	for _, m := range valuesKey.FindAllStringSubmatch(values, -1) {
+		declared[m[1]] = true
+	}
+	read, chart := readEnvNames(), chartEnvNames(t)
+	found := map[string]string{}
+	for _, name := range authzName.FindAllString(values, -1) {
+		if read[name] && !chart[name] {
+			found["unrendered "+name] = "values.yaml names it, and deployment.yaml sets no env entry for it"
+		}
+	}
+	for name := range declared {
+		if _, ok := schema.Properties[name]; !ok {
+			found["unschematized "+name] = "values.yaml declares it, and values.schema.json has no property for it"
+		}
+		if !used[name] {
+			found["unused "+name] = "values.yaml declares it, and no template reads it"
+		}
+	}
+	for name := range used {
+		if !declared[name] {
+			found["undeclared "+name] = "a template reads it, and values.yaml declares no default for it"
+		}
+	}
+	reportSettingsDrift(t, found, "unschematized ", "unused ", "undeclared ")
+}
+
+// The startup error README.md quotes is the one loadConfig returns for the
+// value it quotes.
+func TestSettingsDrift_TheQuotedStartupErrorIsTheOneReturned(t *testing.T) {
+	raw, err := os.ReadFile("README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := regexp.MustCompile("(?m)^```text\n(invalid configuration: (AUTHZ_[A-Z0-9_]+) is \"([^\"]*)\";.*)\n```$").FindSubmatch(raw)
+	if m == nil {
+		t.Fatal("README.md has no text block quoting an invalid configuration error")
+	}
+	_, got := withOne(string(m[2]), string(m[3]))
+	if got == nil || got.Error() != string(m[1]) {
+		t.Errorf("loadConfig with %s=%q: error %v, want the README text %q", m[2], m[3], got, m[1])
+	}
 }

@@ -273,6 +273,17 @@ AUTHZ_PAP_CLIENT_PULL_INTERVAL: 30
 #   default is where the platform's charts mount the netcracker-audience token.
 AUTHZ_PAP_CLIENT_TOKEN_FILE: /var/run/secrets/tokens/netcracker/token
 
+# Display name of the tenant a check request is decided in when it names none
+# in the tenant_id parameter or the Tenant header; tenant-manager at
+# AUTHZ_TENANT_MANAGER_URL resolves it to the tenant ID. The agent does not
+# start with it empty.
+AUTHZ_DEFAULT_TENANT: default
+
+# Seconds a policy waits for one call of a PIP or of the entitlements service,
+# 1 or more. A call that takes longer fails like a PIP that answered with an
+# error.
+AUTHZ_PIP_TIMEOUT: 2
+
 # Entitlements service.
 #
 # A condition on `subject.entitledResources` calls

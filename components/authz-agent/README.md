@@ -32,27 +32,33 @@ The chart assembles the agent Pod as this one container.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger; the chart sets it from its `LOG_LEVEL` value |
-| `AUTHZ_PUBLIC_ADDR` | `0.0.0.0:8080` | Listen address of the public surface |
-| `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the internal surface: the probes, the metrics, and `/api-version` |
+| `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger, one of `debug`, `info`, `warn`, `error`, and `fatal`; the chart sets it from its `LOG_LEVEL` value |
+| `AUTHZ_PUBLIC_ADDR` | `0.0.0.0:8080` | Listen address of the public surface, `host:port` with a port from 1 to 65535 |
+| `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the internal surface, which serves the probes, the metrics, and `/api-version`; written as `AUTHZ_PUBLIC_ADDR` is |
 | `AUTHZ_TRUSTED_PROVIDERS_FILE` | `/etc/authz/trusted-providers.json` | The trusted providers; empty runs without them |
-| `AUTHZ_JWKS_BOOTSTRAP_REQUIRED` | `true` | Strict mode: every provider has to bootstrap; `false` wants one |
-| `AUTHZ_JWKS_HTTP_TIMEOUT` | `5` | Seconds per discovery or JWKS request |
-| `AUTHZ_JWKS_HTTP_RETRIES` | `3` | Attempts per request |
+| `AUTHZ_JWKS_BOOTSTRAP_REQUIRED` | `true` | Strict mode: every provider has to bootstrap; `false` wants one. `yes`, `no`, `on`, `off`, `1`, and `0` are accepted too |
+| `AUTHZ_JWKS_HTTP_TIMEOUT` | `5` | Seconds per discovery or JWKS request, 1 or more |
+| `AUTHZ_JWKS_HTTP_RETRIES` | `3` | Attempts per request, 1 or more |
 | `AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL` | `30` | Seconds between checks of the file for a change; `0` never reloads |
 | `AUTHZ_TENANT_MANAGER_URL` | `http://tenant-manager:8080` | Resolves to a tenant ID a realm written by its tenant display name, and `AUTHZ_DEFAULT_TENANT`; `/ready` answers 503 until `AUTHZ_DEFAULT_TENANT` is resolved. Empty disables the lookup, and the display name is then used as the ID |
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
 | `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
-| `AUTHZ_DEFAULT_TENANT` | `default` | Display name of the tenant a check request is decided in when it names none in the `tenant_id` parameter or the `Tenant` header; resolved to the tenant ID through `AUTHZ_TENANT_MANAGER_URL` |
-| `AUTHZ_PIP_TIMEOUT` | `2` | Seconds a policy waits for one call of a PIP; a call that takes longer is a failed PIP, as is a response whose status is other than 200 and 204 (the agent follows no redirect), whose body exceeds 8 MiB, or whose body is not empty and is not one JSON value, such as an HTML page or truncated JSON |
+| `AUTHZ_DEFAULT_TENANT` | `default` | Display name of the tenant a check request is decided in when it names none in the `tenant_id` parameter or the `Tenant` header; resolved to the tenant ID through `AUTHZ_TENANT_MANAGER_URL`. It may not be empty |
+| `AUTHZ_PIP_TIMEOUT` | `2` | Seconds a policy waits for one call of a PIP, 1 or more; a call that takes longer is a failed PIP, as is a response whose status is other than 200 and 204 (the agent follows no redirect), whose body exceeds 8 MiB, or whose body is not empty and is not one JSON value, such as an HTML page or truncated JSON |
 | `AUTHZ_ENTITLEMENTS_URL` | empty | Base URL of the entitlements service, which a condition on `subject.entitledResources` calls at `/api/v3/user-entitlements/user/<subject id>`, once per decision request, within `AUTHZ_PIP_TIMEOUT` and without retries. Empty makes such a condition's operand fail, and the item is denied with the reason `PIP resolution failed` |
 | `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; empty reads the token from `AUTHZ_PAP_CLIENT_TOKEN_FILE` instead |
-| `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials |
-| `AUTHZ_M2M_RENEW_BEFORE_SECONDS` | `60` | How long before its expiry the token is refreshed |
-| `AUTHZ_PAP_CLIENT_TOKEN_FILE` | `/var/run/secrets/tokens/netcracker/token` | The token file, read every 15 seconds, when there is no token endpoint; the default is where the platform's charts mount the netcracker-audience projected token |
+| `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials; neither file name may be empty |
+| `AUTHZ_M2M_RENEW_BEFORE_SECONDS` | `60` | Seconds before its expiry that the token is refreshed, at half its lifetime at the earliest; `0` refreshes it at its expiry |
+| `AUTHZ_PAP_CLIENT_TOKEN_FILE` | `/var/run/secrets/tokens/netcracker/token` | The token file, read every 15 seconds, when there is no token endpoint; the default is where the platform's charts mount the netcracker-audience projected token. Empty, with no token endpoint either, sends the policy source no token and fails every PIP call |
 
-A variable set to the empty string switches its feature off where the table says so; an unset variable takes the
-default.
+An unset variable takes its default, and white space around the value of an `AUTHZ_` variable is ignored. A variable set to the empty string
+switches its feature off where the table says so. A URL is an `http` or `https` URL with a host, and seconds and
+counts are whole numbers. Any other value, such as an empty one where the row gives empty no meaning, stops the service
+at start, and the error names every variable at fault:
+
+```text
+invalid configuration: AUTHZ_PIP_TIMEOUT is "0"; expected a whole number of seconds from 1 to 9223372036
+```
 
 The policy source is the only way policies reach the agent.
 

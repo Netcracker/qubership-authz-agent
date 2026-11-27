@@ -24,7 +24,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -64,7 +63,11 @@ func init() {
 }
 
 func main() {
-	cfg := loadConfig(get)
+	cfg, err := loadConfig(get)
+	if err != nil {
+		logger.Errorf("%v", err)
+		os.Exit(1)
+	}
 	modules, err := policies.Modules()
 	if err != nil {
 		logger.Errorf("policies: %v", err)
@@ -239,7 +242,7 @@ func serveUntilShutdown(ctx context.Context, stop func(), surfaces []surface) bo
 // configloader falls back to the default there, and the chart sets a URL to
 // "" to switch it off.
 func get(key, fallback string) string {
-	if value, ok := os.LookupEnv(strings.ToUpper(strings.ReplaceAll(key, ".", "_"))); ok && value == "" {
+	if value, ok := os.LookupEnv(envName(key)); ok && value == "" {
 		return ""
 	}
 	return configloader.GetOrDefaultString(key, fallback)
