@@ -35,8 +35,6 @@ const maxBodyBytes = 10 << 20
 // namespaces.
 type server struct {
 	st *store
-	// defaultTenantID is the tenantId of the default tenant in the export.
-	defaultTenantID string
 	// requireDeclaredPIPs refuses a policy whose condition reads a PIP that
 	// the tenant has not declared yet, as access-control does.
 	requireDeclaredPIPs bool
@@ -72,7 +70,7 @@ func (s *server) routes(mux *http.ServeMux) {
 // ── Simplified-policy API ─────────────────────────────────────────────────────
 
 func (s *server) handleGetDomainPolicies(w http.ResponseWriter, r *http.Request) {
-	tenant, domain, ok := requestScope(w, r)
+	tenant, domain, ok := s.requestScope(w, r)
 	if !ok {
 		return
 	}
@@ -80,7 +78,7 @@ func (s *server) handleGetDomainPolicies(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *server) handlePutDomainPolicies(w http.ResponseWriter, r *http.Request) {
-	tenant, domain, ok := requestScope(w, r)
+	tenant, domain, ok := s.requestScope(w, r)
 	if !ok {
 		return
 	}
@@ -126,7 +124,7 @@ func (s *server) handlePutDomainPolicies(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *server) handleGetDomainPIPs(w http.ResponseWriter, r *http.Request) {
-	tenant, domain, ok := requestScope(w, r)
+	tenant, domain, ok := s.requestScope(w, r)
 	if !ok {
 		return
 	}
@@ -134,7 +132,7 @@ func (s *server) handleGetDomainPIPs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handlePutDomainPIPs(w http.ResponseWriter, r *http.Request) {
-	tenant, domain, ok := requestScope(w, r)
+	tenant, domain, ok := s.requestScope(w, r)
 	if !ok {
 		return
 	}
@@ -184,7 +182,7 @@ func (s *server) handleV3PolicySets(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, v3PolicySetsResponse{
 		Hash:                      hash,
 		LastModificationTimestamp: timestamp(),
-		PolicySets:                toV3PolicySets(policies, s.defaultTenantID),
+		PolicySets:                toV3PolicySets(policies),
 	})
 }
 
@@ -197,7 +195,7 @@ func (s *server) handleV3PIPs(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, v3PIPsResponse{
 		Hash:                      hash,
 		LastModificationTimestamp: timestamp(),
-		PIPs:                      toV3PIPs(pips, s.defaultTenantID),
+		PIPs:                      toV3PIPs(pips),
 	})
 }
 
@@ -243,8 +241,10 @@ func pathDomain(w http.ResponseWriter, r *http.Request) (string, bool) {
 
 // requestScope returns the tenant and the domain of a simplified-API request.
 // The tenant is the tenant_id query parameter, else the Tenant header, else
-// the default tenant, the order access-control reads them in.
-func requestScope(w http.ResponseWriter, r *http.Request) (tenant, domain string, ok bool) {
+// the default tenant, the order access-control reads them in. A tenant the
+// request names is used as given, "default" included: the agent reads
+// tenant_id=default as the tenant ID "default".
+func (s *server) requestScope(w http.ResponseWriter, r *http.Request) (tenant, domain string, ok bool) {
 	domain, ok = pathDomain(w, r)
 	if !ok {
 		return "", "", false
@@ -254,7 +254,7 @@ func requestScope(w http.ResponseWriter, r *http.Request) (tenant, domain string
 		tenant = r.Header.Get("Tenant")
 	}
 	if tenant == "" {
-		tenant = defaultTenant
+		tenant = s.st.defaultTenant
 	}
 	if !validDomain(tenant) {
 		http.Error(w, `{"error":"invalid tenant: allowed characters are letters, digits, dot, underscore and dash"}`, http.StatusBadRequest)

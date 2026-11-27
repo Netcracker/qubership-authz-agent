@@ -17,7 +17,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -49,15 +51,15 @@ func newTestServer(t *testing.T, dataDir string) *http.ServeMux {
 }
 
 // newTestServerWithDefaultTenantID is newTestServer whose export gives the
-// default tenant the tenantId defaultTenantID.
+// default tenant the ID defaultTenantID.
 func newTestServerWithDefaultTenantID(t *testing.T, dataDir, defaultTenantID string) *http.ServeMux {
 	t.Helper()
-	st, err := newStore(dataDir)
+	st, err := newStore(dataDir, defaultTenantID)
 	if err != nil {
 		t.Fatalf("newStore: %v", err)
 	}
 	mux := http.NewServeMux()
-	(&server{st: st, defaultTenantID: defaultTenantID}).routes(mux)
+	(&server{st: st}).routes(mux)
 	return mux
 }
 
@@ -324,7 +326,7 @@ func TestNewStoreRejectsUnwritableDir(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
 
-	if _, err := newStore(dir); err == nil {
+	if _, err := newStore(dir, defaultTenant); err == nil {
 		t.Fatal("newStore accepted a read-only data dir; the Pod must fail fast instead")
 	}
 }
@@ -337,7 +339,7 @@ func TestNewStoreSweepsStaleTempFiles(t *testing.T) {
 	if err := os.WriteFile(stale, []byte("{}"), 0o644); err != nil {
 		t.Fatalf("seed stale file: %v", err)
 	}
-	if _, err := newStore(dir); err != nil {
+	if _, err := newStore(dir, defaultTenant); err != nil {
 		t.Fatalf("newStore: %v", err)
 	}
 	if _, err := os.Stat(stale); !os.IsNotExist(err) {
@@ -668,6 +670,151 @@ func TestTheDefaultTenantIsExportedUnderItsConfiguredID(t *testing.T) {
 	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "", http.StatusOK).Bytes(), &pips)
 	if len(pips.PIPs) != 1 || pips.PIPs[0].TenantID != "6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b" {
 		t.Errorf("PIPs = %+v, want one PIP of tenantId 6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b", pips.PIPs)
+	}
+}
+
+// A tenant an upload names is that tenant ID, as the agent reads it, and an
+// upload that names none goes to the default tenant. So with the default
+// tenant ID T1, tenant_id=default is the tenant "default", and an upload naming
+// T1 replaces what an upload without a tenant left for the domain.
+func TestATenantAnUploadNamesIsThatTenantID(t *testing.T) {
+	mux := newTestServerWithDefaultTenantID(t, t.TempDir(), "T1")
+	policy := func(resourceType string) string {
+		return `[{"component":"billing","resourceType":"` + resourceType + `","operation":"READ","roles":["ROLE_ADMIN"]}]`
+	}
+	do(t, mux, http.MethodPut, policiesPath+"billing", policy("Invoice"), http.StatusOK)
+	doWithTenantHeader(t, mux, http.MethodPut, policiesPath+"billing", policy("Ticket"), "T1", http.StatusOK)
+	do(t, mux, http.MethodPut, policiesPath+"billing?tenant_id=default", policy("Order"), http.StatusOK)
+
+	var sets v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &sets)
+	got := map[string][]string{}
+	for _, ps := range sets.PolicySets {
+		got[ps.TenantID] = append(got[ps.TenantID], ps.Target)
+	}
+	want := map[string][]string{"T1": {"resourceType == 'Ticket'"}, "default": {"resourceType == 'Order'"}}
+	if fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("policy set targets by tenantId = %v, want %v", got, want)
+	}
+}
+
+// writePolicyFile writes a data file of one policy of resourceType
+// resourceType, or the text malformed for an empty resourceType.
+func writePolicyFile(t *testing.T, dir, name, resourceType string) {
+	t.Helper()
+	body := "{not json"
+	if resourceType != "" {
+		body = `[{"component":"billing","resourceType":"` + resourceType + `","operation":"READ","roles":["ROLE_ADMIN"]}]`
+	}
+	if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o600); err != nil {
+		t.Fatalf("write %s: %v", name, err)
+	}
+}
+
+// exportedTargets returns the targets of the exported policy sets.
+func exportedTargets(t *testing.T, mux *http.ServeMux) []string {
+	t.Helper()
+	var sets v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &sets)
+	targets := []string{}
+	for _, ps := range sets.PolicySets {
+		targets = append(targets, ps.TenantID+": "+ps.Target)
+	}
+	return targets
+}
+
+// The default tenant's collection for a domain is read from the file the
+// store writes for it, <domain>.json, whenever that file exists, and from a
+// file named <default ID>@<domain>.json, written while the default tenant had
+// another ID, only where it does not.
+func TestTheDefaultTenantReadsTheFileTheStoreWrites(t *testing.T) {
+	for _, tc := range []struct {
+		name, defaultID, canonical, alias string
+		want                              []string
+	}{
+		{"both files, the old name sorting first", "T1", "New", "Old", []string{"T1: resourceType == 'New'"}},
+		{"both files, the old name sorting last", "zz", "New", "Old", []string{"zz: resourceType == 'New'"}},
+		{"the old name alone", "T1", "-", "Old", []string{"T1: resourceType == 'Old'"}},
+		{"a malformed file beside the old name", "T1", "", "Old", []string{}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			if tc.canonical != "-" {
+				writePolicyFile(t, dir, policiesFilePrefix+"billing.json", tc.canonical)
+			}
+			writePolicyFile(t, dir, policiesFilePrefix+tc.defaultID+"@billing.json", tc.alias)
+			got := exportedTargets(t, newTestServerWithDefaultTenantID(t, dir, tc.defaultID))
+			if fmt.Sprint(got) != fmt.Sprint(tc.want) {
+				t.Errorf("exported sets = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// An upload of the default tenant removes the file of its collection named
+// <default ID>@<domain>.json, so that a restart serves the upload.
+func TestAnUploadOfTheDefaultTenantRemovesItsOldFile(t *testing.T) {
+	dir := t.TempDir()
+	writePolicyFile(t, dir, policiesFilePrefix+"T1@billing.json", "Old")
+	do(t, newTestServerWithDefaultTenantID(t, dir, "T1"), http.MethodPut, policiesPath+"billing",
+		`[{"component":"billing","resourceType":"New","operation":"READ","roles":["ROLE_ADMIN"]}]`, http.StatusOK)
+
+	if _, err := os.Stat(filepath.Join(dir, policiesFilePrefix+"T1@billing.json")); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("stat of the old file after the upload: %v, want it removed", err)
+	}
+	got := exportedTargets(t, newTestServerWithDefaultTenantID(t, dir, "T1"))
+	if want := []string{"T1: resourceType == 'New'"}; fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("exported sets after a restart = %q, want %q", got, want)
+	}
+}
+
+// exportedPIPClaims returns the tenantId and the claim of each exported PIP.
+func exportedPIPClaims(t *testing.T, mux *http.ServeMux) []string {
+	t.Helper()
+	var pips v3PIPsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "", http.StatusOK).Bytes(), &pips)
+	claims := []string{}
+	for _, p := range pips.PIPs {
+		claims = append(claims, p.TenantID+": "+p.Claim)
+	}
+	return claims
+}
+
+// pipFile is the body of a PIP data file of one TOKEN PIP reading claim.
+func pipFile(claim string) []byte {
+	return []byte(`[{"name":"subject.org","pipType":"TOKEN","claim":"` + claim + `"}]`)
+}
+
+// The PIP collection of the default tenant follows the rule of its policies:
+// <domain>.json is read whenever it exists, and an upload removes the file
+// named <default ID>@<domain>.json.
+func TestTheDefaultTenantReadsThePIPFileTheStoreWrites(t *testing.T) {
+	dir := t.TempDir()
+	for name, claim := range map[string]string{"billing.json": "New", "T1@billing.json": "Old"} {
+		if err := os.WriteFile(filepath.Join(dir, pipsFilePrefix+name), pipFile(claim), 0o600); err != nil {
+			t.Fatalf("write %s: %v", name, err)
+		}
+	}
+	got := exportedPIPClaims(t, newTestServerWithDefaultTenantID(t, dir, "T1"))
+	if want := []string{"T1: New"}; fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("exported PIPs = %q, want %q", got, want)
+	}
+}
+
+func TestAnUploadOfTheDefaultTenantRemovesItsOldPIPFile(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, pipsFilePrefix+"T1@billing.json"), pipFile("Old"), 0o600); err != nil {
+		t.Fatalf("write the old file: %v", err)
+	}
+	do(t, newTestServerWithDefaultTenantID(t, dir, "T1"), http.MethodPut, pipsPath+"billing", string(pipFile("New")),
+		http.StatusOK)
+
+	if _, err := os.Stat(filepath.Join(dir, pipsFilePrefix+"T1@billing.json")); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("stat of the old file after the upload: %v, want it removed", err)
+	}
+	got := exportedPIPClaims(t, newTestServerWithDefaultTenantID(t, dir, "T1"))
+	if want := []string{"T1: New"}; fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("exported PIPs after a restart = %q, want %q", got, want)
 	}
 }
 

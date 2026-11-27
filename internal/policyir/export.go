@@ -971,6 +971,33 @@ func simplifiedGroup(s *exportSet) (*SimplifiedGroup, bool) {
 	return g, true
 }
 
+// GlobalResourceType reports whether the PAP reads a simplified policy
+// uploaded with resource type rt as a global policy, one of every resource
+// type: rt is exactly ALL.
+func GlobalResourceType(rt string) bool {
+	return rt == "ALL"
+}
+
+// SimplifiedSetTarget is the set target the PAP writes for a simplified
+// policy uploaded with resource type rt: true for exactly ALL, the global
+// policy, and resourceType == '<rt>' for any other value, with the characters
+// up to U+0020 around rt cut as Java's String.trim does. The PAP compares rt
+// with ALL case-sensitively, before the cut, so all, All, *, and " ALL " each
+// name one resource type.
+func SimplifiedSetTarget(rt string) string {
+	if GlobalResourceType(rt) {
+		return "true"
+	}
+	return resourceTypeTarget(strings.TrimFunc(rt, func(r rune) bool { return r <= ' ' }))
+}
+
+// SimplifiedPolicyTarget is the policy target the PAP writes for a simplified
+// policy uploaded with operation op: true for exactly ALL, and
+// operation == '<op>' for any other value.
+func SimplifiedPolicyTarget(op string) string {
+	return operationTarget(op)
+}
+
 // resourceTypeTarget is the set target the PAP writes for the simplified
 // policies of resource type rt. For a global simplified policy the PAP writes
 // true instead.

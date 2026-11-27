@@ -35,7 +35,7 @@ func TestV3RoundTripThroughTheServiceReader(t *testing.T) {
 		{Tenant: "tenant-a", Component: "billing", ResourceType: "Invoice", Operation: "UPDATE", Roles: []any{"ROLE_ADMIN"}, Condition: "subject.tenantId == resource.tenantId"},
 		{Tenant: "tenant-a", Component: "billing", ResourceType: "Invoice", Operation: "READ", Roles: []any{"ROLE_USER"}, RSQLPredicate: "ownerId==${subject.id}"},
 	}
-	raw, err := json.Marshal(v3PolicySetsResponse{Hash: "deadbeef", PolicySets: toV3PolicySets(input, defaultTenant)})
+	raw, err := json.Marshal(v3PolicySetsResponse{Hash: "deadbeef", PolicySets: toV3PolicySets(input)})
 	if err != nil {
 		t.Fatalf("marshal v3 envelope: %v", err)
 	}
@@ -67,7 +67,7 @@ func TestAGlobalPolicyRoundTripsThroughTheServiceReader(t *testing.T) {
 	input := []simplifiedPolicy{
 		{Tenant: "tenant-a", Component: "ALL", ResourceType: "ALL", Operation: "ALL", Roles: []any{"ROLE_ADMIN"}},
 	}
-	raw, err := json.Marshal(v3PolicySetsResponse{Hash: "deadbeef", PolicySets: toV3PolicySets(input, defaultTenant)})
+	raw, err := json.Marshal(v3PolicySetsResponse{Hash: "deadbeef", PolicySets: toV3PolicySets(input)})
 	if err != nil {
 		t.Fatalf("marshal v3 envelope: %v", err)
 	}
@@ -75,6 +75,52 @@ func TestAGlobalPolicyRoundTripsThroughTheServiceReader(t *testing.T) {
 	tree := readTree(t, raw, []byte(`{"pips": []}`), "tenant-a")
 	if len(tree.Sets) != 1 {
 		t.Errorf("sets read back = %d, want 1; dump:\n%s", len(tree.Sets), tree.Dump())
+	}
+}
+
+// The PAP reads only the resource type ALL, exactly, as every resource type.
+// Any other value names one resource type, with the spaces around it cut, and
+// the reader loads the tenant whatever the component.
+func TestASimplifiedSetTargetsTheResourceTypeThePAPWrites(t *testing.T) {
+	for _, tc := range []struct{ resourceType, want string }{
+		{"Invoice", "resourceType == 'Invoice'"},
+		{"all", "resourceType == 'all'"},
+		{"All", "resourceType == 'All'"},
+		{"*", "resourceType == '*'"},
+		{" ALL ", "resourceType == 'ALL'"},
+	} {
+		t.Run(tc.resourceType, func(t *testing.T) {
+			sets := toV3PolicySets([]simplifiedPolicy{
+				{Tenant: "tenant-a", Component: "billing", ResourceType: tc.resourceType, Operation: "READ", Roles: []any{"R"}},
+			})
+			if got := sets[0].Target; got != tc.want {
+				t.Errorf("set target of resourceType %q = %q, want %q", tc.resourceType, got, tc.want)
+			}
+			raw, err := json.Marshal(v3PolicySetsResponse{Hash: "deadbeef", PolicySets: sets})
+			if err != nil {
+				t.Fatalf("marshal v3 envelope: %v", err)
+			}
+			readTree(t, raw, []byte(`{"pips": []}`), "tenant-a")
+		})
+	}
+}
+
+// The PAP reads only the operation ALL, exactly, as every operation.
+func TestASimplifiedPolicyTargetsTheOperationThePAPWrites(t *testing.T) {
+	for _, tc := range []struct{ operation, want string }{
+		{"ALL", "true"},
+		{"READ", "operation == 'READ'"},
+		{"all", "operation == 'all'"},
+		{"*", "operation == '*'"},
+	} {
+		t.Run(tc.operation, func(t *testing.T) {
+			sets := toV3PolicySets([]simplifiedPolicy{
+				{Tenant: "tenant-a", Component: "billing", ResourceType: "Invoice", Operation: tc.operation, Roles: []any{"R"}},
+			})
+			if got := sets[0].Policies[0].Rules[0].Target; got != tc.want {
+				t.Errorf("rule target of operation %q = %q, want %q", tc.operation, got, tc.want)
+			}
+		})
 	}
 }
 
@@ -91,7 +137,7 @@ func TestPIPRoundTripThroughTheServiceReader(t *testing.T) {
 		{Tenant: "tenant-a", Name: "subject.tenant", PipType: "TOKEN", Claim: "tenant_id", Domain: "billing"},
 		{Tenant: "tenant-a", Name: "subject.org", PipType: "HEADER", Header: "X-Org-Id", Domain: "billing"},
 	}
-	raw, err := json.Marshal(v3PIPsResponse{Hash: "deadbeef", PIPs: toV3PIPs(input, defaultTenant)})
+	raw, err := json.Marshal(v3PIPsResponse{Hash: "deadbeef", PIPs: toV3PIPs(input)})
 	if err != nil {
 		t.Fatalf("marshal v3 envelope: %v", err)
 	}
@@ -115,6 +161,8 @@ func TestTheRuleTakesThePredicatesAccessControlReads(t *testing.T) {
 	tests := []struct{ name, fields, rsql, mongodb string }{
 		{"a predicates object", `"predicates": {"mongodbPredicate": "nested", "sqlPredicate": "s"}`, "", "nested"},
 		{"a predicates text", `"predicates": "as text"`, "", "as text"},
+		{"a number mongodbPredicate", `"predicates": {"mongodbPredicate": 5}`, "", "5"},
+		{"a boolean mongodbPredicate", `"predicates": {"mongodbPredicate": true}`, "", "true"},
 		{"nested beside top-level", `"predicates": {"mongodbPredicate": "nested"}, "mongodbPredicate": "top"`, "", "nested"},
 		{"a top-level mongodbPredicate", `"mongodbPredicate": "top"`, "", ""},
 		{"every top-level key", `"rsqlPredicate": "a==1", "sqlPredicate": "a = 1", "mongodbPredicate": "{}",
@@ -127,7 +175,7 @@ func TestTheRuleTakesThePredicatesAccessControlReads(t *testing.T) {
 				"operation": "READ", "roles": ["ROLE_A"], `+tt.fields+`}`), &p); err != nil {
 				t.Fatalf("unmarshal the policy: %v", err)
 			}
-			r := toV3PolicySets([]simplifiedPolicy{p}, defaultTenant)[0].Policies[0].Rules[0]
+			r := toV3PolicySets([]simplifiedPolicy{p})[0].Policies[0].Rules[0]
 			got := fmt.Sprintf("rsql=%q mongodb=%q sql=%q querydsl=%q", r.RSQLPredicate, r.MongoDBPredicate,
 				r.SQLPredicate, r.Predicate)
 			want := fmt.Sprintf("rsql=%q mongodb=%q sql=%q querydsl=%q", tt.rsql, tt.mongodb, "", "")
@@ -155,7 +203,7 @@ func TestPIPExportKeepsTheMappingAndCacheFields(t *testing.T) {
 	for i := range input {
 		input[i].Tenant = "tenant-a"
 	}
-	raw, err := json.Marshal(v3PIPsResponse{Hash: "deadbeef", PIPs: toV3PIPs(input, defaultTenant)})
+	raw, err := json.Marshal(v3PIPsResponse{Hash: "deadbeef", PIPs: toV3PIPs(input)})
 	if err != nil {
 		t.Fatalf("marshal v3 envelope: %v", err)
 	}

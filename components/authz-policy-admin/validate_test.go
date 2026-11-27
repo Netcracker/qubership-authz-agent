@@ -358,6 +358,10 @@ func TestPolicyIsRefusedUnlessItsFieldsAreComplete(t *testing.T) {
 		{"predicates without mongodbPredicate", policy(`,"predicates":{"sqlPredicate":"a = 1"}`),
 			"predicates has no mongodbPredicate"},
 		{"predicates a blank text", policy(`,"predicates":" "`), "predicates is a blank text"},
+		{"a mongodbPredicate list", policy(`,"predicates":{"mongodbPredicate":[1]}`),
+			"predicates: field mongodbPredicate is a JSON array or object, want a text"},
+		{"a mongodbPredicate object", policy(`,"predicates":{"mongodbPredicate":{"a":1}}`),
+			"predicates: field mongodbPredicate is a JSON array or object, want a text"},
 		{"an id that is no UUID", policy(`,"id":"42"`), `id "42" is not a UUID`},
 		{"resourceType ALL in one component",
 			`[{"component":"BILLING","resourceType":"ALL","operation":"ALL","roles":["R"]}]`,
@@ -369,8 +373,12 @@ func TestPolicyIsRefusedUnlessItsFieldsAreComplete(t *testing.T) {
 	for _, tc := range []uploadCase{
 		{"predicates a text", policy(`,"predicates":"{\"a\": 1}"`), ""},
 		{"predicates with mongodbPredicate", policy(`,"predicates":{"mongodbPredicate":"{}"}`), ""},
+		{"a number mongodbPredicate", policy(`,"predicates":{"mongodbPredicate":5}`), ""},
+		{"a top-level mongodbPredicate", policy(`,"mongodbPredicate":5`), ""},
 		{"a UUID id", policy(`,"id":"0b5e6f3a-1c2d-4e5f-8a9b-0c1d2e3f4a5b"`), ""},
 		{"the global policy", `[{"component":"ALL","resourceType":"ALL","operation":"ALL","roles":["R"]}]`, ""},
+		{"resourceType all in one component", `[{"component":"BILLING","resourceType":"all","operation":"READ","roles":["R"]}]`, ""},
+		{"resourceType * in one component", `[{"component":"BILLING","resourceType":"*","operation":"READ","roles":["R"]}]`, ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) { assertAccepted(t, policiesPath+"billing", tc) })
 	}
@@ -422,12 +430,12 @@ func TestPolicyConditionIsRefusedForAFormAccessControlDoesNotStore(t *testing.T)
 func TestPolicyConditionReadingAnUndeclaredPIPIsRefusedWhenRequired(t *testing.T) {
 	requiring := func(t *testing.T) *http.ServeMux {
 		t.Helper()
-		st, err := newStore("")
+		st, err := newStore("", defaultTenant)
 		if err != nil {
 			t.Fatalf("newStore: %v", err)
 		}
 		mux := http.NewServeMux()
-		(&server{st: st, defaultTenantID: defaultTenant, requireDeclaredPIPs: true}).routes(mux)
+		(&server{st: st, requireDeclaredPIPs: true}).routes(mux)
 		return mux
 	}
 	const pips = `[{"name":"subject.dept","pipType":"TOKEN","claim":"dept"},` +

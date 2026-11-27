@@ -18,10 +18,14 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -38,6 +42,10 @@ import (
 // unreadableFile reports a file the store found and could not read, which
 // leaves the domain it holds out of what the stub serves.
 const unreadableFile = "cannot read %s: %v"
+
+// shadowedFile is the warning for a data file named <tenant>@<domain> of the
+// default tenant beside the file the store writes for the same collection.
+const shadowedFile = "ignoring %s: the collection of the default tenant %q for domain %q is read from %s"
 
 const (
 	policiesFilePrefix = "policies-"
@@ -56,26 +64,22 @@ func validDomain(domain string) bool {
 	return domainPattern.MatchString(domain) && domain != "." && domain != ".."
 }
 
-// defaultTenant is the tenant of an upload that names none, and of a data file
-// written before uploads were kept per tenant.
+// defaultTenant is the ID of the default tenant when
+// AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID is not set.
 const defaultTenant = "default"
 
 // scopeKey is the key of the collection that one tenant uploaded for one
-// domain: the domain for the default tenant, tenant/domain for another.
-// access-control keeps the collections of two tenants apart, so a PUT for a
-// domain replaces only what the same tenant uploaded for it. Neither a tenant
-// nor a domain may contain the slash.
+// domain, tenant/domain. access-control keeps the collections of two tenants
+// apart, so a PUT for a domain replaces only what the same tenant uploaded
+// for it. Neither a tenant nor a domain may contain the slash.
 func scopeKey(tenant, domain string) string {
-	if tenant == defaultTenant {
-		return domain
-	}
 	return tenant + "/" + domain
 }
 
 // scopeFileName is the data file of a collection: <prefix><domain>.json for
 // the default tenant, <prefix><tenant>@<domain>.json for another.
-func scopeFileName(prefix, tenant, domain string) string {
-	if tenant == defaultTenant {
+func (s *store) scopeFileName(prefix, tenant, domain string) string {
+	if tenant == s.defaultTenant {
 		return prefix + domain + ".json"
 	}
 	return prefix + tenant + "@" + domain + ".json"
@@ -93,7 +97,7 @@ type persistedState struct {
 	UpdatedAt     string `json:"updatedAt"`
 }
 
-// store holds the simplified policies and PIPs the stub serves, keyed by domain,
+// store holds the simplified policies and PIPs the stub serves, keyed by tenant and domain,
 // and — when a data directory is configured — mirrors them to local disk so they
 // survive a container restart.
 //
@@ -106,6 +110,10 @@ type persistedState struct {
 // volume and could collide with a hash a running agent has already applied.
 type store struct {
 	dataDir string // empty = in-memory only
+	// defaultTenant is the ID of the tenant of an upload that names none and
+	// of a data file whose name names none. The tenant of every item is the
+	// tenantId the export gives it.
+	defaultTenant string
 
 	mu           sync.RWMutex
 	policies     map[string][]simplifiedPolicy
@@ -115,18 +123,20 @@ type store struct {
 	revision     int
 }
 
-// newStore builds a store and, when dataDir is non-empty, prepares the
-// directory and loads any previously persisted content.
+// newStore builds a store whose default tenant is defaultTenantID and, when
+// dataDir is non-empty, prepares the directory and loads any previously
+// persisted content.
 //
 // A configured but unusable directory is fatal to the caller (an error is
 // returned): a stub that answers 200 to every upload and then loses the data on
 // the next reschedule is worse than a Pod that fails to start with the
 // directory and uid named in its logs.
-func newStore(dataDir string) (*store, error) {
+func newStore(dataDir, defaultTenantID string) (*store, error) {
 	s := &store{
-		dataDir:  dataDir,
-		policies: map[string][]simplifiedPolicy{},
-		pips:     map[string][]simplifiedPIP{},
+		dataDir:       dataDir,
+		defaultTenant: defaultTenantID,
+		policies:      map[string][]simplifiedPolicy{},
+		pips:          map[string][]simplifiedPIP{},
 	}
 
 	if dataDir == "" {
@@ -152,7 +162,7 @@ func newStore(dataDir string) (*store, error) {
 // file is logged and skipped — it is deliberately left in place as evidence, and
 // the next successful upload for that domain overwrites it.
 func (s *store) loadFromDisk() {
-	for _, f := range globDomainFiles(s.dataDir, policiesFilePrefix) {
+	for _, f := range globDomainFiles(s.dataDir, policiesFilePrefix, s.defaultTenant) {
 		raw, err := os.ReadFile(f.path)
 		if err != nil {
 			logger.Errorf(unreadableFile, f.path, err)
@@ -166,7 +176,7 @@ func (s *store) loadFromDisk() {
 		s.policies[scopeKey(f.tenant, f.domain)] = withPolicyScope(normalizePolicies(items), f.tenant, f.domain)
 		logger.Infof("loaded %d policies of tenant %q for domain %q from %s", len(items), f.tenant, f.domain, f.path)
 	}
-	for _, f := range globDomainFiles(s.dataDir, pipsFilePrefix) {
+	for _, f := range globDomainFiles(s.dataDir, pipsFilePrefix, s.defaultTenant) {
 		raw, err := os.ReadFile(f.path)
 		if err != nil {
 			logger.Errorf(unreadableFile, f.path, err)
@@ -200,7 +210,7 @@ func (s *store) SetDomainPolicies(tenant, domain string, items []simplifiedPolic
 	key := scopeKey(tenant, domain)
 	previous, existed := s.policies[key]
 	s.policies[key] = withPolicyScope(normalizePolicies(items), tenant, domain)
-	if err := s.commitLocked(scopeFileName(policiesFilePrefix, tenant, domain), raw); err != nil {
+	if err := s.commitLocked(s.scopeFileName(policiesFilePrefix, tenant, domain), raw); err != nil {
 		if existed {
 			s.policies[key] = previous
 		} else {
@@ -209,6 +219,7 @@ func (s *store) SetDomainPolicies(tenant, domain string, items []simplifiedPolic
 		s.rehashLocked()
 		return err
 	}
+	s.removeShadowedLocked(policiesFilePrefix, tenant, domain)
 	return nil
 }
 
@@ -220,7 +231,7 @@ func (s *store) SetDomainPIPs(tenant, domain string, items []simplifiedPIP, raw 
 	key := scopeKey(tenant, domain)
 	previous, existed := s.pips[key]
 	s.pips[key] = withPIPTenant(normalizePIPs(items), tenant)
-	if err := s.commitLocked(scopeFileName(pipsFilePrefix, tenant, domain), raw); err != nil {
+	if err := s.commitLocked(s.scopeFileName(pipsFilePrefix, tenant, domain), raw); err != nil {
 		if existed {
 			s.pips[key] = previous
 		} else {
@@ -229,7 +240,22 @@ func (s *store) SetDomainPIPs(tenant, domain string, items []simplifiedPIP, raw 
 		s.rehashLocked()
 		return err
 	}
+	s.removeShadowedLocked(pipsFilePrefix, tenant, domain)
 	return nil
+}
+
+// removeShadowedLocked removes the data file named <tenant>@<domain> of the
+// default tenant's collection for domain once the store has written that
+// collection under its own name, so that the old file cannot come back if the
+// new one is later lost. A file it cannot remove stays shadowed by the new one.
+func (s *store) removeShadowedLocked(prefix, tenant, domain string) {
+	if s.dataDir == "" || tenant != s.defaultTenant {
+		return
+	}
+	path := filepath.Join(s.dataDir, prefix+tenant+"@"+domain+".json")
+	if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		logger.Warnf("cannot remove %s, which %s now shadows: %v", path, s.scopeFileName(prefix, tenant, domain), err)
+	}
 }
 
 // commitLocked persists one domain file plus the state file and recomputes the
@@ -295,9 +321,6 @@ func (s *store) TenantPIPNames(tenant string) map[string]bool {
 // keyDomain returns the domain of the collection key when tenant uploaded
 // it, the inverse of [scopeKey].
 func keyDomain(key, tenant string) (string, bool) {
-	if tenant == defaultTenant {
-		return key, !strings.Contains(key, "/")
-	}
 	return strings.CutPrefix(key, tenant+"/")
 }
 
@@ -344,11 +367,11 @@ func (s *store) Domains() []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	seen := map[string]bool{}
-	for d := range s.policies {
-		seen[d] = true
-	}
-	for d := range s.pips {
-		seen[d] = true
+	for _, key := range slices.Concat(slices.Collect(maps.Keys(s.policies)), slices.Collect(maps.Keys(s.pips))) {
+		if domain, ok := keyDomain(key, s.defaultTenant); ok {
+			key = domain
+		}
+		seen[key] = true
 	}
 	return sortedKeys(seen)
 }
@@ -440,7 +463,14 @@ type domainFile struct {
 // tenant and the domain from the name; a name without @ is a file of the
 // default tenant. Files whose recovered tenant or domain is not legal are
 // ignored and logged: they cannot have been written by this stub.
-func globDomainFiles(dir, prefix string) []domainFile {
+//
+// The default tenant's collection for a domain has two names on disk:
+// `<prefix><domain>.json`, which the store writes, and
+// `<prefix><defaultTenantID>@<domain>.json`, written while the default tenant
+// had another ID, or by an earlier version of the stub for an upload that
+// named the default tenant ID. The first is returned whenever it exists,
+// readable or not, and the second only where the first is absent.
+func globDomainFiles(dir, prefix, defaultTenantID string) []domainFile {
 	matches, err := filepath.Glob(filepath.Join(dir, prefix+"*.json"))
 	if err != nil {
 		return nil
@@ -451,11 +481,17 @@ func globDomainFiles(dir, prefix string) []domainFile {
 		name := filepath.Base(m)
 		tenant, domain, found := strings.Cut(strings.TrimSuffix(strings.TrimPrefix(name, prefix), ".json"), "@")
 		if !found {
-			tenant, domain = defaultTenant, tenant
+			tenant, domain = defaultTenantID, tenant
 		}
 		if !validDomain(tenant) || !validDomain(domain) {
 			logger.Warnf("ignoring %s: %q@%q is not a valid tenant and domain", m, tenant, domain)
 			continue
+		}
+		if found && tenant == defaultTenantID {
+			if _, err := os.Lstat(filepath.Join(dir, prefix+domain+".json")); err == nil {
+				logger.Warnf(shadowedFile, m, tenant, domain, prefix+domain+".json")
+				continue
+			}
 		}
 		out = append(out, domainFile{tenant: tenant, domain: domain, path: m})
 	}

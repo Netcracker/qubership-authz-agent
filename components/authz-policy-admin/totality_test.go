@@ -36,23 +36,7 @@ import (
 // TestEveryUploadTheAdminAcceptsLoadsInTheAgent, written as the outcome and
 // the spellings that cause it, to the finding ID and the defect in one
 // phrase. A fix of the defect removes the entry.
-var knownTotalityViolations = map[string]string{
-	"the export reader refuses the tenant: resourceType=all":            knownF31,
-	"the export reader refuses the tenant: resourceType=All":            knownF31,
-	"the export reader refuses the tenant: resourceType=*":              knownF31,
-	"the tree loses the predicate: predicates=mongodbPredicate number":  knownF29,
-	"the tree loses the predicate: predicates=mongodbPredicate object":  knownF29,
-	"the tree loses the predicate: predicates=mongodbPredicate list":    knownF29,
-	"the tree loses the predicate: predicates=mongodbPredicate boolean": knownF29,
-	"the tree loses the predicate: a top-level mongodbPredicate":        knownF29,
-}
-
-const (
-	knownF31 = "F31: the admin checks that a policy is global only for the resourceType ALL, so it accepts " +
-		"all, All, or * on a policy that is not global, and the agent refuses the whole tenant on the next export"
-	knownF29 = "F29: the admin accepts a mongodbPredicate that is not a text, or one written beside " +
-		"predicates, and the export leaves the predicate out"
-)
+var knownTotalityViolations = map[string]string{}
 
 // carried is what an upload carries that the tree of the agent must keep.
 type carried int
@@ -217,15 +201,17 @@ var (
 	// a spelling lands here only where the admin refuses it on purpose.
 	refusedSpellings = []string{
 		"condition=a no-break space", "condition=a tab", "condition=empty", "condition=reads an index of the roles",
-		"condition=spaces", "id=a text that is not a UUID",
+		"condition=spaces", "id=a text that is not a UUID", "predicates=mongodbPredicate list",
+		"predicates=mongodbPredicate object",
 	}
 	// crossedPolicyFields are the policy fields whose spellings the corpus
 	// takes in every combination, because whether a policy is global turns
 	// on several of them at once. Every other field varies alone.
 	crossedPolicyFields = []string{"resourceType", "component", "operation", "predicates", "condition"}
 	// topLevelMongoDB spells a mongodbPredicate written beside predicates
-	// instead of inside it, which no field of policyFieldKinds names.
-	topLevelMongoDB = spelling{class: "a top-level mongodbPredicate", value: `"{\"a\": 1}"`, carries: carriesPredicate}
+	// instead of inside it, which no field of policyFieldKinds names. The PAP
+	// accepts it and keeps no predicate from it.
+	topLevelMongoDB = spelling{class: "a top-level mongodbPredicate", value: `"{\"a\": 1}"`}
 )
 
 // upload is one PIP declaration and one simplified policy, each as the
@@ -304,7 +290,7 @@ func (u upload) carries(c carried) bool {
 			return true
 		}
 	}
-	return c == carriesPredicate && u.topLevel
+	return false
 }
 
 // objectFields returns the fields of one JSON object, as raw JSON values,
@@ -415,12 +401,12 @@ type outcome struct {
 
 // loadInAgent uploads u to a fresh admin and reads its export as the agent does.
 func loadInAgent(u upload, tab *spectables.Table) outcome {
-	st, err := newStore("")
+	st, err := newStore("", defaultTenant)
 	if err != nil {
 		panic(err)
 	}
 	mux := http.NewServeMux()
-	(&server{st: st, defaultTenantID: defaultTenant}).routes(mux)
+	(&server{st: st}).routes(mux)
 	pips, policies := u.bodies()
 	if serve(mux, http.MethodPut, pipsPath+"D", pips, "").Code/100 != 2 ||
 		serve(mux, http.MethodPut, policiesPath+"D", policies, "").Code/100 != 2 {
@@ -534,8 +520,8 @@ func fieldText(raw string) string {
 // not hold, each as field=value. A resourceType, component, or operation is
 // looked for as a quoted operand of a set, policy, or rule target, and in the
 // slots of a simplified policy; a role as an operand of a policy target or in
-// the roles of a simplified policy. A value the admin reads as ALL (any case
-// of ALL, or *) is skipped, since a global policy holds no such operand. The
+// the roles of a simplified policy. A value of exactly ALL is skipped, since
+// the target true it gets holds no such operand. The
 // id is not looked for: the converter merges the policies of one set and one
 // role list into one policy with an ID of its own.
 func lostPolicyFields(u upload, tree *policyir.Tree) []string {
@@ -582,7 +568,7 @@ func lostPolicyFields(u upload, tree *policyir.Tree) []string {
 	var lost []string
 	for _, f := range []string{"resourceType", "component", "operation"} {
 		if raw, ok := fields[f]; ok {
-			if v := fieldText(raw); !strings.EqualFold(v, "ALL") && v != "*" && !found(v) {
+			if v := fieldText(raw); raw != `"ALL"` && !found(v) {
 				lost = append(lost, f+"="+v)
 			}
 		}

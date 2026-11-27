@@ -48,7 +48,12 @@ The stub checks a subset of access-control's rules:
   only `${subject.id}` in a `url`, and a built-in subject attribute or a
   `TOKEN` or `HEADER` PIP in a request attribute or a mapping key;
 - a policy has `component`, `resourceType`, `operation`, and non-empty
-  `roles`, an `id` that is a UUID, and `predicates` with a `mongodbPredicate`;
+  `roles`, an `id` that is a UUID, and `predicates` with a `mongodbPredicate`
+  that is a text, a number, or a boolean;
+- a policy of `resourceType` exactly `ALL`, upper case with no spaces, is a
+  global policy, with `component` and `operation` `ALL` and no condition or
+  predicate; `all`, `All`, `*`, and ` ALL ` each name one resource type, the
+  last one `ALL`;
 - a policy `condition` is absent, `null`, a boolean, or a non-empty text that
   the agent's condition parser accepts, and each operator in it takes the
   operands access-control pairs with it, so `subject.x MATCH 5` and
@@ -61,8 +66,12 @@ tenant, is answered with 409. An upload these checks accept may still be one
 access-control refuses.
 
 Each tenant keeps its own collections. The tenant of a request is the
-`tenant_id` query parameter, else the `Tenant` header, else `default`, so a
-PUT replaces only what the same tenant uploaded for that domain. A tenant
+`tenant_id` query parameter, else the `Tenant` header, else the default
+tenant, whose ID is `AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID`, so a PUT replaces
+only what the same tenant uploaded for that domain. A tenant the request names
+is that tenant ID, as the agent reads it: with the default tenant ID `T1`,
+`tenant_id=T1` names the default tenant, and `tenant_id=default` names the
+tenant `default`. A tenant
 other than letters, digits, dot, underscore, and dash is refused with 400.
 
 The API is **unauthenticated**.  Deploy `authz-policy-admin` only in
@@ -82,8 +91,7 @@ GET  /access/v3/config/pips
 Both require an `Authorization` header (the bearer token that the agent holds;
 the value is not validated, only presence-checked).  They return the union of
 all tenants and domains, and each policy set and PIP carries the tenant that
-uploaded it in `tenantId`; the `default` tenant is exported as
-`AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID`.  An empty store exports `"policySets": []` and
+uploaded it in `tenantId`.  An empty store exports `"policySets": []` and
 `"pips": []`.
 
 A rule of a simplified policy carries the two filter predicates access-control reads:
@@ -109,7 +117,7 @@ Returns a JSON object with:
 }
 ```
 
-A domain of a tenant other than `default` is listed as `<tenant>/<domain>`.
+A domain of a tenant other than the default one is listed as `<tenant>/<domain>`.
 `hash` and `policiesHash` are the same value; `hash` is kept for callers
 written against an earlier version of the stub.  This endpoint is also used
 by the Helm chart probes and the Docker Compose health checks.
@@ -120,7 +128,7 @@ by the Helm chart probes and the Docker Compose health checks.
 | --- | --- | --- |
 | `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger; the chart sets it from its `LOG_LEVEL` value. Whatever the level, `fatal` included, the service logs one line at the level `error` that says why it exits with status 1 |
 | `AUTHZ_POLICY_ADMIN_PORT` | `18090` | TCP port to listen on |
-| `AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID` | `default` | `tenantId` of the `default` tenant in the v3 export. Set it to the ID the agent resolves its default tenant to |
+| `AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID` | `default` | ID of the tenant of an upload that names none, and its `tenantId` in the v3 export. Set it to the ID the agent resolves its default tenant to. An ID other than letters, digits, dot, underscore, and dash stops the start |
 | `AUTHZ_POLICY_ADMIN_REQUIRE_DECLARED_PIPS` | `false` | `true` refuses a policy whose condition reads a PIP the tenant has not declared in any domain, as access-control does. The test suites upload policies before their PIPs and leave it off |
 | `AUTHZ_POLICY_ADMIN_DATA_DIR` | `` (empty) | Directory for persistence. Empty means in-memory only (data lost on restart). The Helm chart always sets this to the PVC mount path. |
 
@@ -129,9 +137,14 @@ by the Helm chart probes and the Docker Compose health checks.
 When `AUTHZ_POLICY_ADMIN_DATA_DIR` is set, policies and PIPs are persisted to
 disk so that a restart reloads the last uploaded state.  Data is stored as
 JSON files under that directory, one file per tenant, domain, and collection:
-`policies-<domain>.json` for the `default` tenant and
+`policies-<domain>.json` for the default tenant and
 `policies-<tenant>@<domain>.json` for another tenant, and the same with the
-`pips-` prefix.
+`pips-` prefix.  A file without a tenant belongs to whichever tenant
+`AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID` names at start.  A file
+`policies-<default tenant ID>@<domain>.json`, written while the default tenant
+had another ID, or by an earlier version for an upload that named the default
+tenant ID, is read only where `policies-<domain>.json` is absent, and the next
+upload of that collection removes it.
 
 In the Helm chart:
 

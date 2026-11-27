@@ -26,6 +26,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+
+	"authz-agent/internal/policyir"
 )
 
 // The checks in this file and in condition.go refuse the uploads that
@@ -125,7 +127,10 @@ var (
 		"claim": text, "defaultValue": text, "cachePeriod": integer, "productMapping": object,
 		"customMapping": object, "resourceType": text, "deprecated": flag, "headers": text,
 	}
-	policyFieldKinds = map[string]fieldKind{
+	// predicatesFieldKinds are the fields of a predicates object the PAP
+	// binds; it accepts any other key.
+	predicatesFieldKinds = map[string]fieldKind{"mongodbPredicate": text}
+	policyFieldKinds     = map[string]fieldKind{
 		"component": text, "reason": text, "resourceType": text, "operation": text, "condition": text,
 		"rsqlPredicate": text, "predicates": object, "roles": list, "applicableForFrontend": flag, "id": text,
 	}
@@ -538,7 +543,7 @@ func policyRefusal(p map[string]any, declared map[string]bool) string {
 		p = cloneItem(p)
 		p["predicates"] = predicates
 	}
-	if p["resourceType"] == "ALL" && (p["component"] != "ALL" || p["operation"] != "ALL" ||
+	if rt, _ := p["resourceType"].(string); policyir.GlobalResourceType(rt) && (p["component"] != "ALL" || p["operation"] != "ALL" ||
 		!falsy(p["condition"]) || !falsy(p["rsqlPredicate"]) || predicates != nil) {
 		return "a policy of resourceType ALL has component and operation ALL, " +
 			"and no condition, rsqlPredicate, or predicates"
@@ -555,6 +560,9 @@ func policyRefusal(p map[string]any, declared map[string]bool) string {
 		mongo := m["mongodbPredicate"]
 		if s, isText := mongo.(string); mongo == nil || isText && javaBlank(s) {
 			return "predicates has no mongodbPredicate"
+		}
+		if why := fieldRefusal(m, predicatesFieldKinds); why != "" {
+			return "predicates: " + why
 		}
 	}
 	if id := p["id"]; id != nil && !uuidPattern.MatchString(jsonText(id)) {

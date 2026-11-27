@@ -15,11 +15,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/url"
 	"sort"
 	"strings"
+
+	"authz-agent/internal/policyir"
 )
 
 // ── Simplified input types ────────────────────────────────────────────────────
@@ -46,17 +49,18 @@ type simplifiedPolicy struct {
 }
 
 // mongodbPredicate is the mongodb predicate of p: the mongodbPredicate of its
-// predicates object, or its predicates text; "" for none.
+// predicates object as the text the upload binds it to, or its predicates
+// text; "" for none.
 func (p simplifiedPolicy) mongodbPredicate() string {
 	var text string
 	if json.Unmarshal(p.Predicates, &text) == nil && text != "" {
 		return text
 	}
-	var nested struct {
-		MongoDBPredicate string `json:"mongodbPredicate"`
-	}
-	if json.Unmarshal(p.Predicates, &nested) == nil {
-		return nested.MongoDBPredicate
+	var nested map[string]any
+	d := json.NewDecoder(bytes.NewReader(p.Predicates))
+	d.UseNumber()
+	if d.Decode(&nested) == nil {
+		return jsonText(nested["mongodbPredicate"])
 	}
 	return ""
 }
@@ -189,7 +193,7 @@ type v3PIP struct {
 // then by (roles) → Policy, then each (operation, condition, rsqlPredicate)
 // becomes one Rule.  This mirrors what access-control creates when a SIMPLIFIED
 // policy is uploaded via the simplified API.
-func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3PolicySet {
+func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 	// Group by (upload domain, component, resourceType): legacy keeps the
 	// policies of two domains in two sets, and so in two filter groups.
 	type psKey struct{ tenant, upload, domain, resourceType string }
@@ -206,7 +210,7 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 	psMap := make(map[psKey]map[pKey][]ruleVal)
 
 	for _, p := range items {
-		pk := psKey{tenant: exportTenant(p.Tenant, defaultTenantID), upload: p.Domain, domain: p.Component,
+		pk := psKey{tenant: p.Tenant, upload: p.Domain, domain: p.Component,
 			resourceType: p.ResourceType}
 		if _, seen := psMap[pk]; !seen {
 			psOrder = append(psOrder, pk)
@@ -237,7 +241,7 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 			rules := policyMap[prk]
 			var v3Rules []v3Rule
 			for ri, rule := range rules {
-				target := operationTarget(rule.operation)
+				target := policyir.SimplifiedPolicyTarget(rule.operation)
 				var condPtr *string
 				if rule.condition != "" {
 					c := rule.condition
@@ -273,7 +277,7 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 			Domain:             pk.domain,
 			Component:          pk.domain,
 			Status:             "ACTIVE",
-			Target:             resourceTypeTarget(pk.resourceType),
+			Target:             policyir.SimplifiedSetTarget(pk.resourceType),
 			CombiningAlgorithm: "DENY_UNLESS_PERMIT",
 			TenantID:           pk.tenant,
 			Policies:           v3Policies,
@@ -283,7 +287,7 @@ func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3Policy
 }
 
 // toV3PIPs converts simplified PIPs to v3 export shape.
-func toV3PIPs(items []simplifiedPIP, defaultTenantID string) []v3PIP {
+func toV3PIPs(items []simplifiedPIP) []v3PIP {
 	result := make([]v3PIP, 0, len(items))
 	for _, p := range items {
 		domain := p.Domain
@@ -300,7 +304,7 @@ func toV3PIPs(items []simplifiedPIP, defaultTenantID string) []v3PIP {
 			BeanName:          p.BeanName,
 			DefaultValue:      p.DefaultValue,
 			Domain:            domain,
-			TenantID:          exportTenant(p.Tenant, defaultTenantID),
+			TenantID:          p.Tenant,
 			Type:              p.Type,
 			JsonPath:          p.JsonPath,
 			RequestAttributes: p.RequestAttributes,
@@ -317,31 +321,6 @@ func toV3PIPs(items []simplifiedPIP, defaultTenantID string) []v3PIP {
 		})
 	}
 	return result
-}
-
-// exportTenant is the tenantId the export gives an item of tenant: the
-// default tenant, and an item no upload stamped, take defaultTenantID.
-func exportTenant(tenant, defaultTenantID string) string {
-	if tenant == "" || tenant == defaultTenant {
-		return defaultTenantID
-	}
-	return tenant
-}
-
-// resourceTypeTarget converts a simplified resourceType to a v3 target expression.
-func resourceTypeTarget(rt string) string {
-	if strings.EqualFold(rt, "ALL") || rt == "*" {
-		return "true"
-	}
-	return fmt.Sprintf("resourceType == '%s'", rt)
-}
-
-// operationTarget converts a simplified operation to a v3 target expression.
-func operationTarget(op string) string {
-	if strings.EqualFold(op, "ALL") || op == "*" {
-		return "true"
-	}
-	return fmt.Sprintf("operation == '%s'", op)
 }
 
 // rolesTarget converts a serialised roles key back to a v3 policy target.

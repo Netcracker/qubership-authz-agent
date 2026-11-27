@@ -290,3 +290,13 @@ func TestBuild_RequiresDeclaredPIPsWhenAsked(t *testing.T) {
 		t.Errorf(`build with "sometimes" = %v, want an error naming AUTHZ_POLICY_ADMIN_REQUIRE_DECLARED_PIPS`, err)
 	}
 }
+
+// A default tenant ID names data files, so an ID that is not a legal tenant
+// stops the start.
+func TestBuild_RefusesADefaultTenantIDThatIsNotATenant(t *testing.T) {
+	records(t)
+	if _, _, err := build("", "18090", "a/b", "false"); err == nil ||
+		!strings.Contains(err.Error(), "AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID") {
+		t.Errorf(`build with the default tenant ID "a/b" = %v, want an error naming AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID`, err)
+	}
+}

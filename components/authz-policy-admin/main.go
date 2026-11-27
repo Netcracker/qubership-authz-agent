@@ -107,8 +107,8 @@ func main() {
 }
 
 // build opens the store under dataDir, assembles the routes over it, and
-// returns them with the address port makes. The export gives the default
-// tenant the tenantId defaultTenantID. requireDeclaredPIPs is a boolean text:
+// returns them with the address port makes. defaultTenantID is the tenant of
+// an upload that names none. requireDeclaredPIPs is a boolean text:
 // true refuses a policy upload whose condition reads a PIP the tenant has not
 // declared, and a text other than a boolean is an error. An empty dataDir
 // keeps the policies in memory, which the run reports, as it reports that the
@@ -118,7 +118,11 @@ func build(dataDir, port, defaultTenantID, requireDeclaredPIPs string) (*http.Se
 	if err != nil {
 		return nil, "", fmt.Errorf("AUTHZ_POLICY_ADMIN_REQUIRE_DECLARED_PIPS: %w", err)
 	}
-	st, err := newStore(dataDir)
+	if !validDomain(defaultTenantID) {
+		return nil, "", fmt.Errorf("AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID %q: "+
+			"allowed characters are letters, digits, dot, underscore and dash", defaultTenantID)
+	}
+	st, err := newStore(dataDir, defaultTenantID)
 	if err != nil {
 		return nil, "", fmt.Errorf("store: %w", err)
 	}
@@ -135,7 +139,7 @@ func build(dataDir, port, defaultTenantID, requireDeclaredPIPs string) (*http.Se
 	}
 
 	mux := http.NewServeMux()
-	(&server{st: st, defaultTenantID: defaultTenantID, requireDeclaredPIPs: requireDeclared}).routes(mux)
+	(&server{st: st, requireDeclaredPIPs: requireDeclared}).routes(mux)
 	return mux, "0.0.0.0:" + port, nil
 }
 
