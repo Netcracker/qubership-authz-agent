@@ -31,9 +31,8 @@ kichasov
   the provider `kubernetes` and the Kubernetes token (ADR-0104 R22), the address of the keys of that provider (ADR-0104
   R23, R28), and the requests that carry the token for the API server (ADR-0104 R24).
 - [authz-agent-ADR-0105: Configure the two providers through the chart values](20261123-authz-agent-adr-0105-providers-through-chart-values.md):
-  the provider `kubernetes` that the chart writes in every installation (ADR-0105 R2), the token for the API server
-  that the chart mounts (ADR-0105 R6), and ADR-0105 R15, under which an operator cannot set the audience of the
-  provider `kubernetes`.
+  the provider `kubernetes` that the chart writes in every installation (ADR-0105 R2) and the token for the API server
+  that the chart mounts (ADR-0105 R6).
 
 ## Context
 

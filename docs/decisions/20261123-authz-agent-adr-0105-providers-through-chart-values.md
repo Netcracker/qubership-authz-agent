@@ -22,24 +22,26 @@ kichasov
 - [authz-agent-ADR-0091: Verify tokens before policy evaluation against the keys of trusted issuers](20261029-authz-agent-adr-0091-verify-tokens-before-policy-evaluation.md):
   the Pod that stays not ready while keys do not arrive (ADR-0091 R19), and `IDENTITY_PROVIDER_URL`, which the agent
   does not read (ADR-0091 R78). This request deletes ADR-0091 R72 (now R3 of this record) and ADR-0091 R13 (now R13 of
-  this record). It adds `AUTHZ_TRUSTED_PROVIDERS`, the list that A2 rejects, and `AUTHZ_JWKS_HTTP_TIMEOUT` to the
-  settings that go away under ADR-0091 R64.
+  this record). It adds `AUTHZ_TRUSTED_PROVIDERS`, the list that A2 rejects, `AUTHZ_JWKS_HTTP_TIMEOUT`, and
+  `AUTHZ_TRUSTED_PROVIDERS_FILE`, which ADR-0104 R1 leaves without a use, to the settings that go away under ADR-0091
+  R64, and drops from that rule the `required` field of a provider, which ADR-0104 R6 refuses.
 - [authz-agent-ADR-0092: Accept any verified token in Authorization and limit a caller that is not M2M to its tenant](20261029-authz-agent-adr-0092-tokens-in-authorization.md):
   the tokens of both kinds that `Authorization` accepts (ADR-0092 R11), and the M2M modes, which are dropped (ADR-0092
   R15). This request makes ADR-0092 cite R2 of this record where it cited ADR-0094 R30.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
-  the terms Token for the API server and In-cluster address, the access to the keys of the API server (ADR-0094
-  Context), the token for the API server, which never goes to a PIP (ADR-0094 R28), and the Pod without the default
-  token of its service account (ADR-0094 R31). This request deletes ADR-0094 R30 (now R2 of this record) and the token
-  part of ADR-0094 R2 (now R6 of this record), and makes ADR-0094 cite R2 of this record where it cited R30, and R6 of
-  this record where it cited R2.
+  the term Token for the API server, the access to the keys of the API server (ADR-0094 Context), the check of the `aud`
+  of a Kubernetes token (ADR-0094 R14), the token for the API server, which never goes to a PIP (ADR-0094 R28), and the
+  Pod without the default token of its service account (ADR-0094 R31). This request deletes ADR-0094 R30 (now R2 of this
+  record) and the token part of ADR-0094 R2 (now R6 of this record), and makes ADR-0094 cite R2 of this record where it
+  cited R30, and R6 of this record where it cited R2.
 - [authz-agent-ADR-0104: Describe the two trusted providers in a fixed directory of provider files](20261123-authz-agent-adr-0104-trusted-provider-files.md):
   the provider files that the chart writes and their format (ADR-0104 R6), the providers and the two kinds of token
   (ADR-0104 R22), the source of a token and the tokens whose `iss` matches no provider (ADR-0104 R19, R21), the reading
   of the provider files only at start (ADR-0104 R5), the agent without a realm of its own (ADR-0104 R13), the required
-  sources (ADR-0104 R25), the check of `aud` (ADR-0104 R26), the addresses that the token for the API server may go to
-  (ADR-0104 R24, R28), and the warning on the issuer of the provider `kubernetes` (ADR-0104 R29). This request makes
-  ADR-0104 cite R13 of this record where it cited ADR-0091 R13.
+  sources (ADR-0104 R25), the check of the `aud` of an identity-provider token (ADR-0104 R26), the term In-cluster
+  address and the addresses that the token for the API server may go to (ADR-0104 R24, R28), and the warning on the
+  issuer of the provider `kubernetes` (ADR-0104 R29). This request makes ADR-0104 cite R13 of this record where it cited
+  ADR-0091 R13, and drops the Follow-up of ADR-0104 that names this record.
 
 ## Context
 
@@ -59,8 +61,8 @@ in the values only the part that differs in an installation, without repeating t
 ### Terms
 
 - **Provider file**, **provider `identity-provider`**, **provider `kubernetes`**, **identity-provider token**,
-  **Kubernetes token**: as ADR-0104 defines them.
-- **Token for the API server**, **in-cluster address**: as ADR-0094 defines them.
+  **Kubernetes token**, **in-cluster address**: as ADR-0104 defines them.
+- **Token for the API server**: as ADR-0094 defines it.
 - **Values**: the values of the chart in `helm-templates/authz-agent`: its `values.yaml` and what an installation sets
   over it.
 
@@ -82,9 +84,8 @@ in the values only the part that differs in an installation, without repeating t
   token off, and the Pod then holds no token for the API server.
 - **R13** (`chart`). An upgrade that changes a provider file restarts the agent's Pods, so a changed value takes effect
   without a manual restart.
-- **R15** (`chart`). The chart writes the same check of `aud` in every installation, and no value changes it: the agent
-  ignores the `aud` of an identity-provider token, and accepts a Kubernetes token only when its `aud` holds `netcracker`
-  (ADR-0104 R26).
+- **R15** (`chart`). The chart writes the `audience` mode `ignore` for the provider `identity-provider` in every
+  installation, and no value changes it. ADR-0094 R14 decides the `aud` of a Kubernetes token.
 - **R16** (`chart`). By default the list of realms whose keys a Pod waits for before it becomes ready holds only
   `cloud-common`. The values can replace that list.
 
@@ -112,9 +113,8 @@ for a cluster that serves its keys to an anonymous request: there no request nee
 it (R6).
 
 The platform's Keycloak has no audience mapper that names the services of an installation, so no `aud` of its tokens
-marks a token for those services. Those services request their Kubernetes tokens with the audience `netcracker`
-(ADR-0094 Context). Without the check of `aud` for Kubernetes tokens, the agent would also accept a token that the API
-server issued for another audience, such as the default token of a Pod (R15).
+marks a token for those services, and the chart writes `ignore` for it (R15). The `aud` of a Kubernetes token is not a
+value of the chart: ADR-0094 R14 checks `netcracker` in every installation, whatever the provider files hold.
 
 The agent reads the provider files only at start (ADR-0104 R5), so a changed value takes effect only in a new container.
 Without a restart, an upgrade that changes a value would succeed while every Pod keeps the providers it started with
@@ -129,8 +129,9 @@ the tokens of those clients. The agent holds no realm name of its own (ADR-0104 
 - **A2. Let the values hold a whole list of providers, as `AUTHZ_TRUSTED_PROVIDERS` does, that replaces the providers
   the chart writes.** Rejected by R2: an operator who changes one address would repeat every other part of both
   providers, and a mistake in the copy shows only when the agent starts (ADR-0104 R6).
-- **A3. Let the values set the check of `aud`.** Rejected by R15: each provider has one check of `aud` that works in
-  this stage. A later stage that checks the `aud` of identity-provider tokens adds the value.
+- **A3. Let the values set the check of `aud`.** Rejected by R15: no `aud` of the platform's Keycloak names the services
+  of an installation, and ADR-0094 R14 fixes the check of a Kubernetes token. A later stage that checks the `aud` of
+  identity-provider tokens adds the value.
 - **A4. Let the values limit the provider `identity-provider` to one realm.** Rejected by R3: the platform's Keycloak
   holds one realm per tenant, and such a provider would refuse the tokens of every other tenant.
 - **A10. Give the Pod a token for the API server whatever the cluster allows.** Rejected by R6: on a cluster that serves
