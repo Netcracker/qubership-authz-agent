@@ -39,9 +39,9 @@ var tenantID = regexp.MustCompile(`^[A-Za-z0-9._-]{1,128}$`)
 
 // defaultTenant is the tenant a check request that names none is decided
 // in. It starts as the configured display name and becomes the tenant's ID
-// once tenant-manager resolves the name; until then a request without a
-// tenant is denied whatever the policy data holds under the display name,
-// and /ready answers 503.
+// once tenant-manager resolves the name; until then a check request that
+// needs the default tenant is refused with 503, whatever the policy data
+// holds under the display name, and /ready answers 503.
 type defaultTenant struct {
 	name     string
 	baseURL  string
@@ -123,7 +123,7 @@ func (d *defaultTenant) Run(ctx context.Context, maxPause time.Duration) {
 			d.log.Warnf("default tenant: AUTHZ_DEFAULT_TENANT %q is not resolved via tenant-manager at "+
 				"AUTHZ_TENANT_MANAGER_URL %s: %v; retrying with a pause that doubles from a second up to %s, "+
 				"and warning again only when it fails in a way not reported yet; until it resolves, the service is "+
-				"not ready, and a check request without tenant_id or Tenant is denied",
+				"not ready, and a check request that needs the default tenant is refused with 503",
 				d.name, redacted(d.baseURL), err, maxPause)
 		case state != previous:
 			d.log.Debugf("default tenant: AUTHZ_DEFAULT_TENANT %q is not resolved via tenant-manager, "+

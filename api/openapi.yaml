@@ -103,6 +103,8 @@ paths:
                   value: { "message": "Authorization token is missing" }
         '403':
           $ref: '#/components/responses/CallerTenantMismatch'
+        '503':
+          $ref: '#/components/responses/DefaultTenantNotTranslated'
   /access/v1/check/resource/bulk:
     post:
       operationId: access_v1_check_resource_bulk
@@ -168,6 +170,8 @@ paths:
                   value: { "message": "Authorization token is missing" }
         '403':
           $ref: '#/components/responses/CallerTenantMismatch'
+        '503':
+          $ref: '#/components/responses/DefaultTenantNotTranslated'
   /access/v1/check/resource/bulk/operations:
     post:
       operationId: access_v1_check_resource_bulk_operations
@@ -236,6 +240,8 @@ paths:
                   value: { "message": "Authorization token is missing" }
         '403':
           $ref: '#/components/responses/CallerTenantMismatch'
+        '503':
+          $ref: '#/components/responses/DefaultTenantNotTranslated'
   /preview/v1/check/resource/bulk/operations:
     post:
       operationId: preview_v1_check_resource_bulk_operations
@@ -299,6 +305,8 @@ paths:
                   value: { "message": "Authorization token is missing" }
         '403':
           $ref: '#/components/responses/CallerTenantMismatch'
+        '503':
+          $ref: '#/components/responses/DefaultTenantNotTranslated'
   /access/v1/check/filter:
     post:
       operationId: access_v1_check_filter
@@ -376,6 +384,8 @@ paths:
                   value: { "message": "Authorization token is missing" }
         '403':
           $ref: '#/components/responses/CallerTenantMismatch'
+        '503':
+          $ref: '#/components/responses/DefaultTenantNotTranslated'
   /access/v2/check/resource:
     post:
       operationId: access_v2_check_resource
@@ -442,6 +452,8 @@ paths:
                   value: { "message": "Authorization token is missing" }
         '403':
           $ref: '#/components/responses/CallerTenantMismatch'
+        '503':
+          $ref: '#/components/responses/DefaultTenantNotTranslated'
   /access/v2/check/resource/bulk/operations:
     post:
       operationId: access_v2_check_resource_bulk_operations
@@ -504,6 +516,8 @@ paths:
                   value: { "message": "Authorization token is missing" }
         '403':
           $ref: '#/components/responses/CallerTenantMismatch'
+        '503':
+          $ref: '#/components/responses/DefaultTenantNotTranslated'
   /preview/v2/check/resource/bulk/operations:
     post:
       operationId: preview_v2_check_resource_bulk_operations
@@ -563,6 +577,8 @@ paths:
                   value: { "message": "Authorization token is missing" }
         '403':
           $ref: '#/components/responses/CallerTenantMismatch'
+        '503':
+          $ref: '#/components/responses/DefaultTenantNotTranslated'
   /access/v2/check/filter:
     post:
       operationId: access_v2_check_filter
@@ -636,6 +652,8 @@ paths:
                   value: { "message": "Authorization token is missing" }
         '403':
           $ref: '#/components/responses/CallerTenantMismatch'
+        '503':
+          $ref: '#/components/responses/DefaultTenantNotTranslated'
   /api-version:
     get:
       operationId: api_version_get
@@ -699,6 +717,21 @@ components:
         has no such claim or an empty one. An M2M token, one whose
         `realm_access.roles` holds `ROLE_M2M` or whose `level` is `m2m` or
         `key-manager`, may name any tenant. The response has no body.
+    DefaultTenantNotTranslated:
+      description: |
+        `AUTHZ_TENANT_MANAGER_URL` is set, and tenant-manager has not yet
+        resolved the name of the default tenant to its ID, while the request
+        needs that ID: it names no tenant by `tenant_id` or `Tenant`, or the
+        token in `Authorization` is not an M2M token and has no non-empty
+        `tenant-id` claim. `GET /ready` answers 503 in this state too. The
+        response has no body; repeat the request after `Retry-After`.
+      headers:
+        Retry-After:
+          description: Seconds to wait before repeating the request.
+          required: true
+          schema:
+            type: integer
+            enum: [60]
   parameters:
     IncomingTokenHeader:
       name: Incoming-Token

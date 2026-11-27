@@ -94,11 +94,12 @@ ID, with the reason `default tenant "<name>" not resolved via tenant-manager yet
 2, 4, 8, and then every 10 seconds. It logs one warning for each way the lookup fails, such as a refused connection
 or an HTTP 404. When the lookup fails again in a way it has already warned of, it logs that at `debug`. Once the name
 resolves, it logs at info how many attempts failed and how long they took. The reason names each unmet condition,
-separated by semicolons. `GET /health` does not wait for tenant-manager. Until tenant-manager resolves the name, a check
-request that names no tenant is denied with the reason `no policies are published for tenant <name>`, whatever the
-policy data holds under the name: `check/resource` answers `false`, a bulk route allows no id, and `check/filter`
-answers `DENY`. A caller whose token is not an M2M token gets that answer only when the `tenant-id` claim of its token
-equals the name, and 403 otherwise. Once ready, the service stays ready: a pull that fails later, or a later load that
+separated by semicolons. `GET /health` does not wait for tenant-manager. Until tenant-manager resolves the name, every
+check route answers 503 with an empty body and `Retry-After: 60` to a request that needs the ID of the default tenant:
+one that names no tenant by `tenant_id` or `Tenant`, and one whose token in `Authorization` is not an M2M token and has
+no non-empty `tenant-id` claim, whichever tenant the request names. The policy data held under the name is never used
+for such a request. A request that names its tenant, from an M2M caller or from a caller whose `tenant-id` claim names
+that tenant, is decided as usual. Once ready, the service stays ready: a pull that fails later, or a later load that
 rejects a tenant, keeps the published snapshots and both verdicts. An empty `AUTHZ_PAP_CLIENT_SOURCE_URL` or an
 `AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and `/ready` then answers 200 as soon as the trusted
 providers meet the bootstrap rules and the default tenant is resolved, with no policies loaded.
@@ -144,9 +145,9 @@ answered 403 with an empty body. A request admitted without a token in `Authoriz
 
 A tenant with no published policies, such as an ID the policy source does not know, denies every item with the reason
 `no policies are published for tenant <id>`: `check/resource` answers `false`, a bulk route allows no id, and
-`check/filter` answers `DENY`. Until tenant-manager resolves the name of the default tenant, as described under
-`/ready` above, a request decided in the default tenant is denied the same way, and a token without a `tenant-id`
-claim may name no tenant: its request is answered 403.
+`check/filter` answers `DENY`. Until tenant-manager resolves the name of the default tenant, a request that names no
+tenant, and a request whose token in `Authorization` is not an M2M token and has no non-empty `tenant-id` claim, are
+answered 503, as described under `/ready` above.
 
 ## Comparisons in conditions
 

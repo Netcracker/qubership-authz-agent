@@ -120,6 +120,19 @@ func callUndeclared(t *testing.T, app *fiber.App, method, path, body string, hea
 
 func send(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string, conform bool) (int, string, string) {
 	t.Helper()
+	code, got, header := sendFor(t, app, method, path, body, headers, conform)
+	return code, got, header.Get(fiber.HeaderContentType)
+}
+
+// callForHeaders is call that returns every header of the response in place
+// of its Content-Type.
+func callForHeaders(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string) (int, string, http.Header) {
+	t.Helper()
+	return sendFor(t, app, method, path, body, headers, true)
+}
+
+func sendFor(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string, conform bool) (int, string, http.Header) {
+	t.Helper()
 	var reader io.Reader
 	if body != "" {
 		reader = strings.NewReader(body)
@@ -137,7 +150,7 @@ func send(t *testing.T, app *fiber.App, method, path, body string, headers map[s
 	if conform {
 		checkAgainstSpec(t, app, req, resp.StatusCode)
 	}
-	return resp.StatusCode, string(raw), resp.Header.Get(fiber.HeaderContentType)
+	return resp.StatusCode, string(raw), resp.Header
 }
 
 var admin = map[string]string{"Authorization": "Bearer m2m", "Incoming-Token": "Bearer admin"}

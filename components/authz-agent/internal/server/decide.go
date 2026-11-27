@@ -39,10 +39,9 @@ const tenantHeader = "Tenant"
 // shape of the route. The embedded policies check the caller and the
 // subject's token first: a refused admission token is answered with its
 // authError, and a refused subject token denies every item with its reason.
-// Without a registry, and for a request of the default tenant while its name
-// is not resolved, every item is denied as in a tenant without policies.
+// Without a registry, every item is denied as in a tenant without policies.
 func (s *Server) decide(c *fiber.Ctx, resources []legacy.Resource, shape func(result any) []byte) error {
-	input, admission, unresolved, answered := s.admit(c)
+	input, admission, answered := s.admit(c)
 	if answered != nil {
 		return answered()
 	}
@@ -55,7 +54,7 @@ func (s *Server) decide(c *fiber.Ctx, resources []legacy.Resource, shape func(re
 		for i := range results {
 			results[i].Reason = fmt.Sprint(reason)
 		}
-	case s.opts.Snapshots == nil || unresolved:
+	case s.opts.Snapshots == nil:
 		results = make([]snapshot.Result, len(resources))
 		for i := range results {
 			results[i].Reason = fmt.Sprintf(snapshot.ReasonNoTenant, tenant)
@@ -81,18 +80,17 @@ func (s *Server) decide(c *fiber.Ctx, resources []legacy.Resource, shape func(re
 
 // filter answers a check/filter request with the generated filter of the
 // request's tenant, after the same checks of the caller and the subject's
-// token as decide: a refused subject token, a service without a registry,
-// and a request of the default tenant while its name is not resolved get
-// DENY.
+// token as decide: a refused subject token and a service without a registry
+// get DENY.
 func (s *Server) filter(c *fiber.Ctx, r legacy.Resource) error {
-	input, admission, unresolved, answered := s.admit(c)
+	input, admission, answered := s.admit(c)
 	if answered != nil {
 		return answered()
 	}
 	ctx := c.UserContext()
 	tenant := input["tenant"].(string)
 	answer := regogen.FilterAnswer{Result: regogen.FilterDeny}
-	if _, refused := admission["subjectError"]; !refused && s.opts.Snapshots != nil && !unresolved {
+	if _, refused := admission["subjectError"]; !refused && s.opts.Snapshots != nil {
 		sub, err := subject(c, tenant, admission)
 		if err != nil {
 			s.opts.Log.DebugC(ctx, "legacy request rejected path=%s: %v", c.Path(), err)
@@ -124,36 +122,82 @@ func (s *Server) failed(c *fiber.Ctx, what, tenant string, err error) error {
 }
 
 // admit builds the input of the embedded policies, with the tenant of the
-// request, and evaluates their checks of the caller and the
-// subject's token. unresolved reports what [Server.tenant] reports.
+// request, and evaluates their checks of the caller and the subject's token.
 // answered is non-nil when the request is answered already: a refused
-// admission token, with its authError; a caller outside its tenant
-// ([callerMayReach]), with 403 and an empty body; or a failed evaluation,
-// with 500.
-func (s *Server) admit(c *fiber.Ctx) (input, admission map[string]any,
-	unresolved bool, answered func() error) {
+// admission token, with its authError; a failed evaluation, with 500; or a
+// [refusal].
+//
+// While tenant-manager has not resolved the name of the default tenant, a
+// request that names no tenant, and a caller that is not M2M and has no
+// non-empty tenant-id claim ([hasTenantClaim]), need the ID of the default
+// tenant, so
+// they get [defaultTenantNotTranslated] before [callerMayReach] is asked.
+// Such a caller gets it even when the request names another tenant, which
+// [callerMayReach] would compare with the ID.
+func (s *Server) admit(c *fiber.Ctx) (input, admission map[string]any, answered func() error) {
 	ctx := c.UserContext()
 	input = legacy.Input(c.GetReqHeaders())
 	admission, err := s.admission(ctx, input)
 	if err != nil {
 		s.opts.Log.ErrorC(ctx, "admission failed: %v", err)
-		return nil, nil, false, func() error { return opaError(c, http.StatusInternalServerError, "internal_error", err.Error()) }
+		return nil, nil, func() error { return opaError(c, http.StatusInternalServerError, "internal_error", err.Error()) }
 	}
-	tenant, unresolved := s.tenant(c)
+	// The flag is read before the tenant: a name resolved in between then
+	// refuses the request rather than deciding it under the display name.
+	unresolved := s.opts.DefaultTenantResolved != nil && !s.opts.DefaultTenantResolved()
+	tenant, named := s.tenant(c)
 	input["tenant"] = tenant
 	if raw, refused := admission["authError"]; refused {
 		s.log(c, input)
 		status, body, _ := legacy.AuthError(map[string]any{"authError": raw})
-		return nil, nil, false, func() error { return sendJSON(c, status, body) }
+		return nil, nil, func() error { return sendJSON(c, status, body) }
 	}
-	if claims, ok := admission["callerClaims"].(map[string]any); ok && !callerMayReach(claims, tenant, s.resolvedDefaultTenant()) {
-		s.opts.Log.DebugC(ctx, "caller refused path=%s tenant=%s reason=CALLER_TENANT_MISMATCH", c.Path(), tenant)
-		return nil, nil, false, func() error {
-			c.Status(http.StatusForbidden)
-			return nil
-		}
+	claims, hasCaller := admission["callerClaims"].(map[string]any)
+	if unresolved && (!named || hasCaller && !m2mToken(claims) && !hasTenantClaim(claims)) {
+		return nil, nil, func() error { return s.reject(c, defaultTenantNotTranslated, tenant) }
 	}
-	return input, admission, unresolved, nil
+	if hasCaller && !callerMayReach(claims, tenant, s.defaultTenant()) {
+		return nil, nil, func() error { return s.reject(c, callerTenantMismatch, tenant) }
+	}
+	return input, admission, nil
+}
+
+// refusal is a reason code of ADR-0095 R16 that refuses a request before
+// policy evaluation, with the status it answers.
+type refusal struct {
+	code   string
+	status int
+}
+
+var (
+	// callerTenantMismatch refuses a caller outside its tenant
+	// ([callerMayReach]).
+	callerTenantMismatch = refusal{"CALLER_TENANT_MISMATCH", http.StatusForbidden}
+	// defaultTenantNotTranslated refuses a request that needs the ID of
+	// the default tenant before tenant-manager resolved its name.
+	defaultTenantNotTranslated = refusal{"DEFAULT_TENANT_NOT_TRANSLATED", http.StatusServiceUnavailable}
+)
+
+// retryAfterSeconds is the Retry-After of every 503 refusal (ADR-0095 R7).
+const retryAfterSeconds = "60"
+
+// reject answers c with r: its status, an empty body, and Retry-After on a
+// 503. The debug line names the reason code.
+func (s *Server) reject(c *fiber.Ctx, r refusal, tenant string) error {
+	s.opts.Log.DebugC(c.UserContext(), "request refused path=%s tenant=%s reason=%s", c.Path(), tenant, r.code)
+	if r.status == http.StatusServiceUnavailable {
+		c.Set(fiber.HeaderRetryAfter, retryAfterSeconds)
+	}
+	c.Status(r.status)
+	return nil
+}
+
+// hasTenantClaim reports whether claims carry a tenant-id claim other than
+// null or the empty string. [callerMayReach] compares such a claim with the
+// tenant and never reads the default tenant for it.
+func hasTenantClaim(claims map[string]any) bool {
+	claim, present := claims["tenant-id"]
+	return present && claim != nil && claim != ""
 }
 
 // callerMayReach reports whether the caller whose verified token carries
@@ -203,16 +247,6 @@ func (s *Server) defaultTenant() string {
 	return ""
 }
 
-// resolvedDefaultTenant is the ID of the default tenant, or "" while it is
-// not resolved or without one, so that a request is never compared with the
-// display name.
-func (s *Server) resolvedDefaultTenant() string {
-	if s.opts.DefaultTenantResolved != nil && !s.opts.DefaultTenantResolved() {
-		return ""
-	}
-	return s.defaultTenant()
-}
-
 // log reports a decision at debug. The line carries the tenant and no part
 // of the input, which holds the caller's token and claims.
 func (s *Server) log(c *fiber.Ctx, input map[string]any) {
@@ -237,21 +271,17 @@ func (s *Server) admission(ctx context.Context, input map[string]any) (map[strin
 // tenant_id, else the header Tenant, else the default tenant. An empty
 // source is skipped; any other value is the tenant as received, so a query
 // parameter with a space around the name is another tenant than the name.
-// HTTP strips the spaces around a header value before it gets here.
-//
-// unresolved reports that the tenant is the default tenant and tenant-manager
-// had not resolved its name to an ID when the request arrived, so the tenant
-// is a name whose policy data, if any, is another tenant's. The flag is read
-// before the tenant, so a resolution in between leaves it set.
-func (s *Server) tenant(c *fiber.Ctx) (tenant string, unresolved bool) {
+// HTTP strips the spaces around a header value before it gets here. named
+// reports that the request named the tenant rather than leaving it to the
+// default.
+func (s *Server) tenant(c *fiber.Ctx) (tenant string, named bool) {
 	if t := lastQuery(c, "tenant_id"); t != "" {
-		return t, false
+		return t, true
 	}
 	if t := c.Get(tenantHeader); t != "" {
-		return t, false
+		return t, true
 	}
-	unresolved = s.opts.DefaultTenantResolved != nil && !s.opts.DefaultTenantResolved()
-	return s.defaultTenant(), unresolved
+	return s.defaultTenant(), false
 }
 
 // subject is the [snapshot.Subject] of the admitted request c in tenant,

@@ -18,14 +18,10 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
-	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-
-	"authz-agent/components/authz-agent/internal/engine"
-	"authz-agent/components/authz-agent/internal/legacy"
 )
 
 // admissionStub stands in for the caller and token checks of the embedded
@@ -165,31 +161,47 @@ func TestDecide_ACallerThatIsNotM2MReachesOnlyItsOwnTenant(t *testing.T) {
 	}
 }
 
-// Until the default tenant is resolved, a caller is matched with no default
-// tenant, so a token without a tenant-id claim is refused, and a token with
-// one is matched as before.
-func TestDecide_ACallerIsNotMatchedWithAnUnresolvedDefaultTenant(t *testing.T) {
-	reg := registry(t, `{"policySets": [`+tenantSet("a", "true")+`]}`)
+// A caller whose token is not M2M and has no tenant-id claim may ask only
+// about the default tenant, so until tenant-manager resolves its name such a
+// caller cannot be compared with any tenant, whichever the request names. A
+// caller with a claim gets the 503 only for a request that names no tenant.
+func TestDecide_ACallerWithoutATenantClaimGets503UntilTheDefaultTenantIsResolved(t *testing.T) {
+	reg := registry(t, `{"policySets": [`+tenantSet("a", "true")+`,`+tenantSet("b", "true")+`]}`)
 	resolved := false
 	app := newPublicAppOver(t, map[string]string{"internals.rego": callerStub}, Options{Snapshots: reg,
 		DefaultTenant: func() string { return "a" }, DefaultTenantResolved: func() bool { return resolved }})
 	const body = `{"type":"doc","operation":"read","resource":{}}`
 	for _, tc := range []struct {
-		name, token string
-		resolved    bool
-		status      int
-		want        string
+		name, token, tenant string
+		resolved            bool
+		status              int
+		want, retryAfter    string
 	}{
-		{"no claim, unresolved", "PARITY_NONE", false, 403, ""},
-		{"no claim, resolved", "PARITY_NONE", true, 200, "true"},
-		{"a claim, unresolved", "PARITY_A", false, 200, "true"},
+		{"no claim, unresolved, another tenant", "PARITY_NONE", "b", false, 503, "", "60"},
+		{"no claim, unresolved, the default tenant by name", "PARITY_NONE", "a", false, 503, "", "60"},
+		{"an empty claim, unresolved", "PARITY_EMPTY", "b", false, 503, "", "60"},
+		{"a null claim, unresolved", "PARITY_NULL", "b", false, 503, "", "60"},
+		{"a claim of another tenant, unresolved, no tenant named", "PARITY_UNKNOWN", "", false, 503, "", "60"},
+		{"a claim, unresolved, its tenant", "PARITY_A", "a", false, 200, "true", ""},
+		{"a claim, unresolved, another tenant", "PARITY_A", "b", false, 403, "", ""},
+		{"a claim that is not a string, unresolved", "PARITY_NUMBER", "a", false, 403, "", ""},
+		{"M2M without a claim, unresolved, another tenant", "PARITY_LEVEL_M2M", "b", false, 200, "true", ""},
+		{"no claim, resolved, the default tenant", "PARITY_NONE", "a", true, 200, "true", ""},
+		{"no claim, resolved, another tenant", "PARITY_NONE", "b", true, 403, "", ""},
 	} {
-		resolved = tc.resolved
-		code, got, _ := call(t, app, http.MethodPost, "/access/v1/check/resource?tenant_id=a", body,
-			map[string]string{"Authorization": "Bearer " + tc.token})
-		if code != tc.status || got != tc.want {
-			t.Errorf("%s: POST = %d %q, want %d %q", tc.name, code, got, tc.status, tc.want)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			resolved = tc.resolved
+			path := "/access/v1/check/resource"
+			if tc.tenant != "" {
+				path += "?tenant_id=" + tc.tenant
+			}
+			code, got, header := callForHeaders(t, app, http.MethodPost, path, body,
+				map[string]string{"Authorization": "Bearer " + tc.token})
+			if code != tc.status || got != tc.want || header.Get("Retry-After") != tc.retryAfter {
+				t.Errorf("POST %s as %s = %d %q Retry-After %q, want %d %q Retry-After %q",
+					path, tc.token, code, got, header.Get("Retry-After"), tc.status, tc.want, tc.retryAfter)
+			}
+		})
 	}
 }
 
@@ -274,87 +286,80 @@ func TestDecide_ARefusedSubjectTokenDeniesEveryItem(t *testing.T) {
 }
 
 // While the name of the default tenant is not resolved, the policy data
-// held under that name may be another tenant's: a request that names no
-// tenant is denied on every route as in a tenant without policies, although
-// tenant default allows the read. Only an M2M caller reaches that denial; a
-// caller whose token has no tenant-id is refused before it, as it was. A
-// request that names the tenant, and a request after the resolution, are
-// decided by its policies.
-func TestDecide_TheDefaultTenantIsDeniedUntilItsNameIsResolved(t *testing.T) {
+// held under that name may be another tenant's, so a request that names no
+// tenant is refused on every decision route, even from an M2M caller and
+// although tenant default allows the read.
+func TestDecide_TheDefaultTenantIsRefusedUntilItsNameIsResolved(t *testing.T) {
 	reg := registry(t, `{"policySets": [`+tenantSet("default", "true")+`]}`)
 	resolved := false
-	eng, err := engine.New(engine.Options{Modules: map[string]string{"internals.rego": callerStub}})
-	if err != nil {
-		t.Fatalf("engine: %v", err)
-	}
-	srv := Register(fiber.New(fiber.Config{DisableStartupMessage: true}), eng, Options{Snapshots: reg,
+	app := newPublicAppOver(t, map[string]string{"internals.rego": callerStub}, Options{Snapshots: reg,
 		DefaultTenant: func() string { return "default" }, DefaultTenantResolved: func() bool { return resolved }})
-	app := fiber.New(fiber.Config{Immutable: true, StrictRouting: true, CaseSensitive: true, DisableStartupMessage: true})
-	app.Use(platformContext)
-	// The reason of a denial reaches no response, so this route keeps the
-	// result decide hands to the response builder. It goes ahead of the
-	// public routes, which answer every other path.
-	var result any
-	app.Post("/test/result", func(c *fiber.Ctx) error {
-		return srv.decide(c, []legacy.Resource{{ResourceType: "doc", Operation: "read"}}, func(r any) []byte {
-			result = r
-			return nil
-		})
-	})
-	srv.RegisterPublic(app)
 	m2m := map[string]string{"Authorization": "Bearer PARITY_ROLE_M2M"}
 	const (
-		check  = "/access/v1/check/resource"
-		read   = `{"type":"doc","operation":"read"}`
-		filter = "/access/v1/check/filter?resourceType=doc&operation=read"
-		deny   = `{"calculationResult":"DENY","filterCondition":null,"mongodbFilterCondition":null,` +
-			`"rsqlFilterCondition":null,"sqlFilterCondition":null,"customFilterCondition":null}`
+		read       = `{"type":"doc","operation":"read"}`
+		bulk       = `[{"id":"x","type":"doc","operation":"read"}]`
+		operations = `[{"id":"x","type":"doc","operations":["read"]}]`
+		entries    = `{"type":"doc","entries":[{"id":"x","operations":["read"]}]}`
+		filter     = "?resourceType=doc&operation=read"
 	)
-	for _, r := range []struct{ path, body, denied string }{
-		{check, read, "false"},
-		{"/access/v1/check/resource/bulk", `[{"id":"x","type":"doc","operation":"read"}]`, "[]"},
-		{"/access/v1/check/resource/bulk/operations", `[{"id":"x","type":"doc","operations":["read"]}]`, `{"read":[]}`},
-		{filter, "", deny},
+	for _, r := range []struct{ path, body string }{
+		{"/access/v1/check/resource", read},
+		{"/access/v1/check/resource/bulk", bulk},
+		{"/access/v1/check/resource/bulk/operations", operations},
+		{"/preview/v1/check/resource/bulk/operations", operations},
+		{"/access/v1/check/filter" + filter, ""},
+		{"/access/v2/check/resource", read},
+		{"/access/v2/check/resource/bulk/operations", entries},
+		{"/preview/v2/check/resource/bulk/operations", entries},
+		{"/access/v2/check/filter" + filter, ""},
 	} {
-		code, got, _ := call(t, app, http.MethodPost, r.path, r.body, m2m)
-		if code != 200 || got != r.denied {
-			t.Errorf("unresolved: POST %s = %d %s, want 200 %s", r.path, code, got, r.denied)
-		}
+		t.Run(r.path, func(t *testing.T) {
+			code, got, header := callForHeaders(t, app, http.MethodPost, r.path, r.body, m2m)
+			if code != 503 || got != "" || header.Get("Retry-After") != "60" {
+				t.Errorf("unresolved: POST %s = %d %q Retry-After %q, want 503 \"\" Retry-After \"60\"",
+					r.path, code, got, header.Get("Retry-After"))
+			}
+		})
 	}
-	if code, _, _ := call(t, app, http.MethodPost, "/test/result", "", m2m); code != 200 {
-		t.Fatalf("POST /test/result = %d, want 200", code)
-	}
-	want := map[string]any{"rlsIgnored": false, "results": []any{map[string]any{"resourceType": "doc",
-		"operation": "read", "isAllowed": false, "reason": "no policies are published for tenant default"}}}
-	if !reflect.DeepEqual(result, want) {
-		t.Errorf("unresolved: the result of a request without a tenant = %v, want %v", result, want)
-	}
-
 	for _, tc := range []struct {
-		name, token string
-		resolved    bool
-		query       string
+		name, query string
 		header      map[string]string
-		status      int
-		want        string
+		resolved    bool
 	}{
-		{"unresolved, a token without tenant-id", "PARITY_NONE", false, "", nil, 403, ""},
-		{"unresolved, the query parameter names it", "PARITY_ROLE_M2M", false, "?tenant_id=default", nil, 200, "true"},
-		{"unresolved, the header names it", "PARITY_ROLE_M2M", false, "", map[string]string{"Tenant": "default"}, 200, "true"},
-		{"resolved", "PARITY_ROLE_M2M", true, "", nil, 200, "true"},
-		{"resolved, a token without tenant-id", "PARITY_NONE", true, "", nil, 200, "true"},
+		{"unresolved, the query parameter names the tenant", "?tenant_id=default", nil, false},
+		{"unresolved, the header names the tenant", "", map[string]string{"Tenant": "default"}, false},
+		{"resolved, no tenant named", "", nil, true},
 	} {
-		resolved = tc.resolved
-		headers := map[string]string{"Authorization": "Bearer " + tc.token}
-		maps.Copy(headers, tc.header)
-		path := check + tc.query
-		if code, got, _ := call(t, app, http.MethodPost, path, read, headers); code != tc.status || got != tc.want {
-			t.Errorf("%s: POST %s = %d %q, want %d %q", tc.name, path, code, got, tc.status, tc.want)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			resolved = tc.resolved
+			headers := maps.Clone(m2m)
+			maps.Copy(headers, tc.header)
+			path := "/access/v1/check/resource" + tc.query
+			if code, got, _ := call(t, app, http.MethodPost, path, read, headers); code != 200 || got != "true" {
+				t.Errorf("POST %s with %v = %d %q, want 200 \"true\"", path, tc.header, code, got)
+			}
+		})
 	}
-	resolved = true
-	if code, got, _ := call(t, app, http.MethodPost, filter, "", m2m); code != 200 || got == deny {
-		t.Errorf("resolved: POST %s = %d %s, want 200 and not DENY", filter, code, got)
+}
+
+// tenant-manager resolves the name while the request reads the default
+// tenant: the request was admitted as unresolved, so it is refused rather
+// than decided in the policy data held under the display name.
+func TestDecide_ARequestThatSawTheNameUnresolvedIsRefusedWhenItResolvesMidway(t *testing.T) {
+	reg := registry(t, `{"policySets": [`+tenantSet("default", "true")+`]}`)
+	resolved := false
+	app := newPublicAppOver(t, map[string]string{"internals.rego": callerStub}, Options{Snapshots: reg,
+		DefaultTenant: func() string {
+			resolved = true
+			return "default"
+		},
+		DefaultTenantResolved: func() bool { return resolved }})
+	const path = "/access/v1/check/resource"
+	code, got, header := callForHeaders(t, app, http.MethodPost, path, `{"type":"doc","operation":"read"}`,
+		map[string]string{"Authorization": "Bearer PARITY_ROLE_M2M"})
+	if code != 503 || got != "" || header.Get("Retry-After") != "60" {
+		t.Errorf("POST %s = %d %q Retry-After %q, want 503 \"\" Retry-After \"60\"",
+			path, code, got, header.Get("Retry-After"))
 	}
 }
 
