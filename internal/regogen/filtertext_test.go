@@ -169,3 +169,25 @@ func TestTheSQLSyntaxAfterALineCommentStaysOutOfIt(t *testing.T) {
 		})
 	}
 }
+
+// The braces around a MongoDB predicate follow its template as the
+// specification reads it (filters.py, PH): "{ " and " }" where the template
+// holds ${ and a name before the next }, "{" and "}" otherwise.
+func TestTheBracesOfAMongoDBPredicateFollowThePlaceholdersOfItsTemplate(t *testing.T) {
+	for _, tc := range []struct {
+		name, template, want string
+	}{
+		{"a placeholder", `"a": "${subject.id}"`, `{ "a": "q" }`},
+		{"an escaped placeholder", `"a": "$${subject.id}"`, `{ "a": "q" }`},
+		{"no placeholder", `"a": "y"`, `{"a": "q"}`},
+		{"a placeholder with no name", `"a": "${}"`, `{"a": "q"}`},
+		{"an unclosed placeholder", `"a": "${subject.id"`, `{"a": "q"}`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			term := &fterm{template: map[policyir.Dialect]string{policyir.DialectMongoDB: tc.template}}
+			if got := braceMongo(term, `"a": "q"`); got != tc.want {
+				t.Errorf("braceMongo(template %s, %s) = %s, want %s", tc.template, `"a": "q"`, got, tc.want)
+			}
+		})
+	}
+}

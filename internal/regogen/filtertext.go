@@ -473,10 +473,12 @@ var mongoTokenRE = regexp.MustCompile(`"(?:[^"\\]|\\.)*"|\$\{[^}]*\}|[{}\[\],:]|
 
 // braceMongo wraps the MongoDB text t of a predicate of term, or of its
 // negation, in the braces legacy puts around a predicate: "{ " and " }" where
-// the template of the predicate substitutes a value, "{" and "}" otherwise.
+// the template of the predicate holds ${ and a name before the next }, the
+// ${x} of an escaped $${x} included, and "{" and "}" otherwise. The
+// specification reads the template so, and no golden shows another rule.
 func braceMongo(term *fterm, t string) string {
 	w := newDialectText(policyir.DialectMongoDB)
-	if strings.Contains(term.template[policyir.DialectMongoDB], "${") {
+	if placeholderRE.MatchString(term.template[policyir.DialectMongoDB]) {
 		return w.group("{ ", t, " }").String()
 	}
 	return w.group("{", t, "}").String()
