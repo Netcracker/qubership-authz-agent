@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"net/http"
 	"net/http/httptest"
@@ -1488,21 +1489,34 @@ func TestTheMappingTablesGrantPermissions(t *testing.T) {
 	}
 }
 
-// countingServer answers every POST of path with body, any other request
-// with 404, and counts the requests.
-func countingServer(t *testing.T, path, body string) (*httptest.Server, *atomic.Int32) {
+// countingServer answers a GET of path with body, another method on path
+// with 405, and any other path with 404. It records each request as its
+// method, path, Tenant, Content-Type, and body.
+func countingServer(t *testing.T, path, body string) (*httptest.Server, func() []string) {
 	t.Helper()
-	var calls atomic.Int32
+	var mu sync.Mutex
+	var requests []string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		calls.Add(1)
-		if r.Method != http.MethodPost || r.URL.Path != path {
+		sent, _ := io.ReadAll(r.Body)
+		mu.Lock()
+		requests = append(requests, fmt.Sprintf("%s %s Tenant=%q Content-Type=%q body=%q", r.Method, r.URL.RequestURI(),
+			r.Header.Get("Tenant"), r.Header.Get("Content-Type"), sent))
+		mu.Unlock()
+		switch {
+		case r.URL.Path != path:
 			w.WriteHeader(http.StatusNotFound)
-			return
+		case r.Method != http.MethodGet:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		default:
+			_, _ = w.Write([]byte(body))
 		}
-		_, _ = w.Write([]byte(body))
 	}))
 	t.Cleanup(srv.Close)
-	return srv, &calls
+	return srv, func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		return slices.Clone(requests)
+	}
 }
 
 // The items of a bulk request share one call of the entitlements service.
@@ -1518,8 +1532,9 @@ func TestTheEntitlementsServiceIsCalledOncePerRequest(t *testing.T) {
 	if !got[0].Allowed || !got[2].Allowed {
 		t.Errorf("Decide of the entitled doc y = %+v, want every item allowed", got)
 	}
-	if n := calls.Load(); n != 1 {
-		t.Errorf("calls of the entitlements service = %d, want 1", n)
+	want := []string{`GET /api/v3/user-entitlements/user/u1 Tenant="a" Content-Type="" body=""`}
+	if got := calls(); !slices.Equal(got, want) {
+		t.Errorf("requests to the entitlements service = %q, want %q", got, want)
 	}
 	if got := decide(t, r, readDoc(t, "a", "z", 1)); got[0].Allowed {
 		t.Errorf("Decide of the doc z the service does not grant = %+v, want denied", got[0])
@@ -1544,8 +1559,8 @@ func TestAPermissionScopeOf404Fails(t *testing.T) {
 	if got := decide(t, r, readDoc(t, "a", "y", 1)); got[0].Allowed {
 		t.Errorf("Decide of the doc y with the scope service answering 404 = %+v, want denied", got[0])
 	}
-	if n := calls.Load(); n != 1 {
-		t.Errorf("reads of the permission scope = %d, want 1", n)
+	if got := calls(); len(got) != 1 {
+		t.Errorf("requests to the permission scope service = %q, want 1", got)
 	}
 }
 
@@ -1564,8 +1579,9 @@ func TestThePermissionScopeIsReadOncePerRequest(t *testing.T) {
 	if !got[0].Allowed || !got[1].Allowed {
 		t.Errorf("Decide of the doc y in the scope = %+v, want every item allowed", got)
 	}
-	if n := calls.Load(); n != 1 {
-		t.Errorf("reads of the permission scope = %d, want 1", n)
+	want := []string{`GET /api/v1/permission-scope/user/u1/policies Tenant="a" Content-Type="" body=""`}
+	if got := calls(); !slices.Equal(got, want) {
+		t.Errorf("requests to the permission scope service = %q, want %q", got, want)
 	}
 	if got := decide(t, r, readDoc(t, "a", "z", 1)); got[0].Allowed {
 		t.Errorf("Decide of the doc z outside the scope = %+v, want denied", got[0])

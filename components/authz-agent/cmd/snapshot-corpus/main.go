@@ -76,7 +76,7 @@ type request struct {
 	Headers   map[string]string `json:"headers"`
 	Agent     bool              `json:"agent"`
 	// HTTP is the status and the body, or null for none, the specification's
-	// services answered a POST of each path with.
+	// services answered a call of each path with.
 	HTTP map[string][2]json.RawMessage `json:"http"`
 }
 
@@ -94,8 +94,9 @@ func (nullPIP) RoundTrip(r *http.Request) (*http.Response, error) {
 		Body: io.NopCloser(strings.NewReader("null")), Request: r}, nil
 }
 
-// replay answers a POST of a path the current request recorded with the
-// recorded status and body, and any other call as nullPIP does.
+// replay answers a call of a path the current request recorded, whatever its
+// method, with the recorded status and body, and any other call as nullPIP
+// does.
 type replay struct {
 	paths atomic.Pointer[map[string][2]json.RawMessage]
 }
@@ -106,7 +107,7 @@ func (t *replay) RoundTrip(r *http.Request) (*http.Response, error) {
 	if paths := t.paths.Load(); paths != nil {
 		a, ok = (*paths)[r.URL.Path]
 	}
-	if !ok || r.Method != http.MethodPost {
+	if !ok {
 		return nullPIP{}.RoundTrip(r)
 	}
 	var status int

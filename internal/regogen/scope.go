@@ -32,7 +32,7 @@ import (
 const ScopePIP = "subject.permissionScope"
 
 // ReadScope reads the permission scope the iterates of m run over for the
-// subject of req: a POST with the body {} to the url of the tenant's first
+// subject of req: the [subjectCall] of the url of the tenant's first
 // PERMISSION_SCOPE PIP followed by /api/v1/permission-scope/user/<id>/policies,
 // sent by nc.http.send under the calls and the HTTP of ctx, so with the
 // agent's token and once per decision request. Each policy of the answer
@@ -53,22 +53,13 @@ const ScopePIP = "subject.permissionScope"
 // and an empty list, so a 404 comes from a url that does not reach it.
 func (m *Module) ReadScope(ctx context.Context, req *Request) *Scope {
 	failed := &Scope{Failed: true}
-	id := req.Values[keySubjID]
-	if m.scopePIP == nil || id.State != spectables.StateValue {
+	if m.scopePIP == nil {
 		return failed
 	}
-	seg, ok := pathSegment(id.Value)
-	if !ok {
+	q := subjectCall(req, ScopePIP, m.scopePIP.URL, "/api/v1/permission-scope/user/", "/policies")
+	if _, noCall, _ := callState(q); noCall {
 		return failed
 	}
-	u := strings.TrimRight(m.scopePIP.URL, "/") + "/api/v1/permission-scope/user/" + seg + "/policies"
-	q := ast.ObjectTerm(
-		ast.Item(ast.StringTerm("method"), ast.StringTerm("POST")),
-		ast.Item(ast.StringTerm("url"), ast.StringTerm(u)),
-		ast.Item(ast.StringTerm("headers"), ast.ObjectTerm()),
-		ast.Item(ast.StringTerm("body"), ast.ObjectTerm()),
-		ast.Item(ast.StringTerm("raise_error"), ast.BooleanTerm(false)),
-		ast.Item(ast.StringTerm("pip"), ast.StringTerm(ScopePIP)))
 	resp, err := regobuiltins.Send(ctx, q)
 	if err != nil {
 		return failed

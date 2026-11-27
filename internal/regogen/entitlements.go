@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
@@ -36,7 +35,7 @@ import (
 //
 //	ent_<Var> := nc.ent.record(q, pip_send(q), {...}) if q := input.pip_requests[<ID>]
 //
-// Go builds q before the query ([entCall]): the POST of the entitlements
+// Go builds q before the query ([entCall]): the GET of the entitlements
 // service for the subject, or {"state": "ERROR"} where the agent makes no call.
 // Every operand of one subject sends the same request, which nc.http.send
 // makes once per decision request. nc.ent.record reads the response as the
@@ -54,28 +53,10 @@ func entText(r *Ref) string {
 // goes by in the reason of a denial.
 const entitlementsPIP = "subject.entitledResources"
 
-// entCall returns the q of an entitlements operand on req: a POST with the
-// body {} to <req.Entitlements>/api/v3/user-entitlements/user/<subject.id>,
-// or a call the agent does not make, of state ERROR ([stateCall]), without
-// the service's URL or without a subject.id value that can stand as a
-// segment of the path ([pathSegment]).
+// entCall returns the q of an entitlements operand on req: the
+// [subjectCall] of <req.Entitlements>/api/v3/user-entitlements/user/<subject.id>.
 func entCall(req *Request) *ast.Term {
-	id := req.Values[keySubjID]
-	if req.Entitlements == "" || id.State != spectables.StateValue {
-		return stateCall(entitlementsPIP, spectables.StateError)
-	}
-	seg, ok := pathSegment(id.Value)
-	if !ok {
-		return stateCall(entitlementsPIP, spectables.StateError)
-	}
-	u := strings.TrimRight(req.Entitlements, "/") + "/api/v3/user-entitlements/user/" + seg
-	return ast.ObjectTerm(
-		ast.Item(ast.StringTerm("method"), ast.StringTerm("POST")),
-		ast.Item(ast.StringTerm("url"), ast.StringTerm(u)),
-		ast.Item(ast.StringTerm("headers"), ast.ObjectTerm()),
-		ast.Item(ast.StringTerm("body"), ast.ObjectTerm()),
-		ast.Item(ast.StringTerm("raise_error"), ast.BooleanTerm(false)),
-		ast.Item(ast.StringTerm("pip"), ast.StringTerm(entitlementsPIP)))
+	return subjectCall(req, entitlementsPIP, req.Entitlements, "/api/v3/user-entitlements/user/", "")
 }
 
 // EntRecordDecl declares nc.ent.record as generated modules call it.

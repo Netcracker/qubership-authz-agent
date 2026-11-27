@@ -103,18 +103,23 @@ func readScope(t *testing.T, m *Module, token func() (string, error)) *Scope {
 func readScopeOf(t *testing.T, m *Module, token func() (string, error), id string) *Scope {
 	t.Helper()
 	h := &regobuiltins.HTTP{Client: &http.Client{}, Token: token}
-	req := Request{Values: map[string]Resolved{keySubjID: resolved(t, "VALUE", id)}}
+	req := Request{Tenant: "t1", Values: map[string]Resolved{keySubjID: resolved(t, "VALUE", id)}}
 	return m.ReadScope(regobuiltins.WithCalls(h.Context(context.Background())), &req)
 }
 
-// The scope service is called with a POST under the url of the
-// PERMISSION_SCOPE PIP and the agent's token, and each pass reads its
-// grant's values of the key the condition names.
+// The scope service is called with a GET under the url of the
+// PERMISSION_SCOPE PIP, the agent's token, and the tenant of the request,
+// and each pass reads its grant's values of the key the condition names.
 func TestReadScope_CallsTheServiceAndReadsAPassPerGrant(t *testing.T) {
 	var got string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
-		got = fmt.Sprintf("%s %s %s %s", r.Method, r.URL.Path, body, r.Header.Get("Authorization"))
+		got = fmt.Sprintf("%s %s Tenant=%q Content-Type=%q body=%q %s", r.Method, r.URL.RequestURI(),
+			r.Header.Get("Tenant"), r.Header.Get("Content-Type"), body, r.Header.Get("Authorization"))
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
 		_, _ = w.Write([]byte(`{"permissionScope": [{"policies": [{"scopeItems": [{"key": "domain", "values": [{"id": "d1"}]}]},
 			{"scopeItems": [{"key": "other", "values": [{"id": "x"}]}]}]}]}`))
 	}))
@@ -122,7 +127,7 @@ func TestReadScope_CallsTheServiceAndReadsAPassPerGrant(t *testing.T) {
 
 	s := readScope(t, scopeModule(t, srv.URL+"/scope/"), own)
 
-	if want := `POST /scope/api/v1/permission-scope/user/u1/policies {} Bearer own`; got != want {
+	if want := `GET /scope/api/v1/permission-scope/user/u1/policies Tenant="t1" Content-Type="" body="" Bearer own`; got != want {
 		t.Errorf("request = %q, want %q", got, want)
 	}
 	const domain = `["subj","permissionScope.domain"]`

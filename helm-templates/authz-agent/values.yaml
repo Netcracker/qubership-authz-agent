@@ -286,9 +286,10 @@ AUTHZ_PIP_TIMEOUT: 2
 
 # Entitlements service.
 #
-# A condition on `subject.entitledResources` calls
-# `<AUTHZ_ENTITLEMENTS_URL>/api/v3/user-entitlements/user/<subject id>` once per
-# decision request, within AUTHZ_PIP_TIMEOUT and without retries. With the URL
+# A condition on `subject.entitledResources` sends a GET of
+# `<AUTHZ_ENTITLEMENTS_URL>/api/v3/user-entitlements/user/<subject id>`, with
+# the tenant of the decision in the Tenant header, once per decision request,
+# within AUTHZ_PIP_TIMEOUT and without retries. With the URL
 # empty (default) such a condition's operand fails, and check/resource and bulk
 # deny the item with the reason `PIP resolution failed`: set the URL wherever
 # entitlements-based policies are in use. check/filter reads it the same way.

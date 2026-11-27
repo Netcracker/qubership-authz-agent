@@ -62,15 +62,17 @@ func (s *RuntimeSuite) adminSubjectID() string {
 }
 
 // pinEntitlements pins a single /api/v3/user-entitlements/user/{userId}
-// response on the entitlements-mock stub at its control URL. The agent
-// reaches the same stub through AUTHZ_ENTITLEMENTS_URL.
+// response for GET on the entitlements-mock stub at its control URL, so the
+// stub answers any other method 405. The agent reaches the same stub through
+// AUTHZ_ENTITLEMENTS_URL.
 func (s *RuntimeSuite) pinEntitlements(userID string, refs map[string]map[string][]string) {
 	s.T().Helper()
 	path := fmt.Sprintf("/api/v3/user-entitlements/user/%s", userID)
 
 	body := entitlementsResponse(refs)
 	payload := []map[string]interface{}{{
-		"path": path,
+		"path":   path,
+		"method": http.MethodGet,
 		"responses": []map[string]interface{}{{
 			"statusCode": 200,
 			"body":       body,
@@ -88,6 +90,34 @@ func (s *RuntimeSuite) pinEntitlements(userID string, refs map[string]map[string
 	s.Require().NoError(err)
 	defer func() { _ = resp.Body.Close() }()
 	s.Require().Equalf(http.StatusOK, resp.StatusCode, "pip-stub configure failed: %d", resp.StatusCode)
+}
+
+// assertEntitlementsCalledOnce asserts that the entitlements-mock journal
+// holds one request since its reset: a GET of the entitlements of userID
+// with no query and no body, carrying a Tenant header. Failures print only
+// the method, the request target, and the Tenant of each call, since the
+// journal also holds the agent's token.
+func (s *RuntimeSuite) assertEntitlementsCalledOnce(userID string) {
+	s.T().Helper()
+	code, b := s.doHTTPDirect("GET", s.cfg.EntitlementsMockURL+"/pip-stub/calls", nil, nil)
+	s.Require().Equal(http.StatusOK, code, "read the entitlements-mock call journal")
+	var calls []struct {
+		Method     string            `json:"method"`
+		RequestURI string            `json:"requestUri"`
+		Headers    map[string]string `json:"headers"`
+		BodyRaw    string            `json:"bodyRaw"`
+	}
+	s.Require().NoError(json.Unmarshal(b, &calls), "decode the entitlements-mock call journal")
+	seen := make([]string, 0, len(calls))
+	for _, c := range calls {
+		seen = append(seen, fmt.Sprintf("%s %s Tenant=%q", c.Method, c.RequestURI, c.Headers["tenant"]))
+	}
+	s.Require().Equal(1, len(calls), "requests to the entitlements service: %q", seen)
+	got := calls[0]
+	s.Assert().Equal("GET /api/v3/user-entitlements/user/"+userID, got.Method+" "+got.RequestURI, "request line")
+	s.Assert().NotEmpty(got.Headers["tenant"], "Tenant header of %q", seen)
+	s.Assert().Empty(got.BodyRaw, "request body")
+	s.Assert().Empty(got.Headers["content-type"], "Content-Type header")
 }
 
 func entitlementsResponse(refs map[string]map[string][]string) map[string]interface{} {
@@ -187,8 +217,11 @@ func (s *RuntimeSuite) TestEntitlementsRuntime() {
 			"condition": "subject.entitledResources.of('ENT_CONTRACT').as('Owner') CONTAINS resource.id",
 			"roles": ["ROLE_ADMINISTRATOR"]
 		}]`)
+		code, _ := s.doHTTPDirect("GET", s.cfg.EntitlementsMockURL+"/pip-stub/reset", nil, nil)
+		s.Require().Equal(http.StatusOK, code, "reset the entitlements-mock call journal")
 		allow := s.checkResourceDecision("ENT_CONTRACT", "READ", map[string]interface{}{"id": "id-1"})
 		s.Assert().True(allow, "entitlements CONTAINS should allow when resource.id is in the Owner bucket")
+		s.assertEntitlementsCalledOnce(userID)
 	})
 
 	s.Step("entitlements.contains.deny_miss", func() {

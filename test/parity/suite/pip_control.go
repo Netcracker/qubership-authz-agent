@@ -67,6 +67,7 @@ type PipStubResponse struct {
 // pipStubRoute mirrors pipstub's pipRoute struct.
 type pipStubRoute struct {
 	Path      string            `json:"path"`
+	Method    string            `json:"method,omitempty"`
 	Responses []PipStubResponse `json:"responses"`
 }
 
@@ -110,10 +111,16 @@ func NewPipController(baseURL string) *PipController {
 // the path was already pinned in this suite run, the previous response list
 // is overwritten (pipstub map-upsert semantics, pipstub/main.go:175-179).
 func (pc *PipController) PinRoute(ctx context.Context, path string, resp PipStubResponse) error {
+	return pc.pinRoute(ctx, "", path, resp)
+}
+
+// pinRoute is [PipController.PinRoute] for a route that answers only method,
+// and any other method 405; an empty method answers every method.
+func (pc *PipController) pinRoute(ctx context.Context, method, path string, resp PipStubResponse) error {
 	if path == "" {
 		return fmt.Errorf("paritysuite: PinRoute requires non-empty path")
 	}
-	payload := []pipStubRoute{{Path: path, Responses: []PipStubResponse{resp}}}
+	payload := []pipStubRoute{{Path: path, Method: method, Responses: []PipStubResponse{resp}}}
 	if err := pc.configure(ctx, payload); err != nil {
 		return err
 	}
@@ -124,15 +131,15 @@ func (pc *PipController) PinRoute(ctx context.Context, path string, resp PipStub
 }
 
 // PinEntitlementsV3ForUser resolves the V3 per-user EA path template once
-// against the literal user id and pins it via PinRoute. This is how the
-// ENT block works around pipstub's lack of
-// path templating.
+// against the literal user id and pins it for GET, the one method the
+// entitlements service answers there. This is how the ENT block works around
+// pipstub's lack of path templating.
 func (pc *PipController) PinEntitlementsV3ForUser(ctx context.Context, userID string, resp PipStubResponse) error {
 	if userID == "" {
 		return fmt.Errorf("paritysuite: PinEntitlementsV3ForUser requires non-empty userID")
 	}
 	path := fmt.Sprintf("/api/v3/user-entitlements/user/%s", userID)
-	return pc.PinRoute(ctx, path, resp)
+	return pc.pinRoute(ctx, http.MethodGet, path, resp)
 }
 
 // PinEntitlementsV3PerDefinition pins the per-(resourceType,name) lookup path
@@ -143,7 +150,7 @@ func (pc *PipController) PinEntitlementsV3PerDefinition(ctx context.Context, use
 		return fmt.Errorf("paritysuite: PinEntitlementsV3PerDefinition requires all of userID/resourceType/name")
 	}
 	path := fmt.Sprintf("/api/v3/user-entitlements/user/%s/resource-type/%s/name/%s", userID, resourceType, name)
-	return pc.PinRoute(ctx, path, resp)
+	return pc.pinRoute(ctx, http.MethodGet, path, resp)
 }
 
 // ResetCalls clears pipstub's observed-call list + counters without

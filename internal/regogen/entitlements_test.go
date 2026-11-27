@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -128,13 +129,24 @@ func TestEntResolve_TimeGrowsLinearlyWithTheIDsOfTheAnswer(t *testing.T) {
 	}
 }
 
-func TestEntCall_PostsForTheSubjectOrMakesNoCall(t *testing.T) {
+func TestEntCall_GetsForTheSubjectOrMakesNoCall(t *testing.T) {
 	id := map[string]Resolved{keySubjID: resolved(t, "VALUE", `"u 1"`)}
-	got := entCall(&Request{Entitlements: "http://ent/", Values: id})
-	want := ast.MustParseTerm(`{"method": "POST", "url": "http://ent/api/v3/user-entitlements/user/u%201", "headers": {},
-		"body": {}, "raise_error": false, "pip": "subject.entitledResources"}`)
-	if !got.Equal(want) {
-		t.Errorf("entCall = %v, want %v", got, want)
+	for _, tc := range []struct {
+		name   string
+		tenant string
+		want   string
+	}{
+		{"with the tenant of the request", "t1", `{"method": "GET", "url": "http://ent/api/v3/user-entitlements/user/u%201",
+			"headers": {"Tenant": "t1"}, "raise_error": false, "pip": "subject.entitledResources"}`},
+		{"without a tenant", "", `{"method": "GET", "url": "http://ent/api/v3/user-entitlements/user/u%201",
+			"headers": {}, "raise_error": false, "pip": "subject.entitledResources"}`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := entCall(&Request{Entitlements: "http://ent/", Tenant: tc.tenant, Values: id})
+			if want := ast.MustParseTerm(tc.want); !got.Equal(want) {
+				t.Errorf("entCall = %v, want %v", got, want)
+			}
+		})
 	}
 	noCall := []Request{{Values: id}, {Entitlements: "http://ent", Values: map[string]Resolved{keySubjID: {State: "NULL"}}}}
 	for _, v := range []string{`""`, `".."`, `"."`, `[]`} {
@@ -148,19 +160,24 @@ func TestEntCall_PostsForTheSubjectOrMakesNoCall(t *testing.T) {
 }
 
 // entServer is an entitlements service that grants the user u1 the order
-// o1 and counts the calls and the tokens it was sent.
-func entServer(t *testing.T) (*httptest.Server, func() (int, []string)) {
+// o1 on a GET and answers any other method 405. It records each request it
+// was sent as its method, request target, Tenant, Content-Type, body, and
+// Authorization.
+func entServer(t *testing.T) (*httptest.Server, func() []string) {
 	t.Helper()
 	var mu sync.Mutex
-	var calls int
-	var tokens []string
+	var calls []string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = io.Copy(io.Discard, r.Body)
+		body, _ := io.ReadAll(r.Body)
 		mu.Lock()
-		calls++
-		tokens = append(tokens, r.Header.Get("Authorization"))
+		calls = append(calls, fmt.Sprintf("%s %s Tenant=%q Content-Type=%q body=%q %s", r.Method, r.URL.RequestURI(),
+			r.Header.Get("Tenant"), r.Header.Get("Content-Type"), body, r.Header.Get("Authorization")))
 		mu.Unlock()
-		if r.Method != http.MethodPost || r.URL.Path != "/api/v3/user-entitlements/user/u1" {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if r.URL.Path != "/api/v3/user-entitlements/user/u1" {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -168,10 +185,10 @@ func entServer(t *testing.T) (*httptest.Server, func() (int, []string)) {
 			"references": [{"name": "owner", "resources": [{"resourceId": "o1"}]}]}]}`))
 	}))
 	t.Cleanup(srv.Close)
-	return srv, func() (int, []string) {
+	return srv, func() []string {
 		mu.Lock()
 		defer mu.Unlock()
-		return calls, tokens
+		return slices.Clone(calls)
 	}
 }
 
@@ -187,7 +204,7 @@ func evalEntitled(t *testing.T, url, id string, token func() (string, error)) bo
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
-	req := Request{Entitlements: url, Body: Body{Operation: "read", ResourceType: "doc", HasResource: true,
+	req := Request{Entitlements: url, Tenant: "t1", Body: Body{Operation: "read", ResourceType: "doc", HasResource: true,
 		Resource: mustDecode(t, `{"id": "`+id+`"}`)}, Values: map[string]Resolved{keySubjID: resolved(t, "VALUE", `"u1"`)}}
 	m.Resolve(req.Body, req.Values)
 	m.ResolveSubject(&req)
@@ -218,8 +235,9 @@ func TestTheModuleCallsTheEntitlementsService(t *testing.T) {
 	if !evalEntitled(t, srv.URL, "o1", own) {
 		t.Errorf("allow for the granted order o1 = false, want true")
 	}
-	if n, tokens := calls(); n != 1 || tokens[0] != "Bearer own" {
-		t.Errorf("calls = %d with tokens %q, want 1 with Bearer own", n, tokens)
+	want := []string{`GET /api/v3/user-entitlements/user/u1 Tenant="t1" Content-Type="" body="" Bearer own`}
+	if got := calls(); !slices.Equal(got, want) {
+		t.Errorf("requests = %q, want %q", got, want)
 	}
 	if evalEntitled(t, srv.URL, "o2", own) {
 		t.Errorf("allow for the order o2 the service does not grant = true, want false")
@@ -232,8 +250,8 @@ func TestTheEntitlementsServiceIsNotCalledWithoutAToken(t *testing.T) {
 	if evalEntitled(t, srv.URL, "o1", func() (string, error) { return "", errors.New("no token") }) {
 		t.Errorf("allow without the agent's token = true, want false")
 	}
-	if n, _ := calls(); n != 0 {
-		t.Errorf("calls without the agent's token = %d, want 0", n)
+	if got := calls(); len(got) != 0 {
+		t.Errorf("requests without the agent's token = %q, want none", got)
 	}
 }
 

@@ -230,10 +230,7 @@ func pipCall(r *Ref, req *Request, pips func(string) (*policyir.PIP, bool)) *ast
 	if failed || strings.ContainsAny(url, refused) {
 		return stateCall(decl.Name, spectables.StateError)
 	}
-	headers := ast.NewObject()
-	if req.Tenant != "" {
-		headers.Insert(ast.StringTerm("Tenant"), ast.StringTerm(req.Tenant))
-	}
+	headers := tenantHeaders(req)
 	for _, name := range strings.Split(decl.Headers, ",") {
 		name = strings.TrimFunc(name, func(r rune) bool { return r <= ' ' })
 		low := strings.ToLower(name)
@@ -313,6 +310,40 @@ func mapsKeys(m map[string]string) func(func(string) bool) {
 			}
 		}
 	}
+}
+
+// tenantHeaders returns the headers every call the agent makes for req
+// starts from: the tenant of req in Tenant, or none where req has no tenant.
+func tenantHeaders(req *Request) ast.Object {
+	headers := ast.NewObject()
+	if req.Tenant != "" {
+		headers.Insert(ast.StringTerm("Tenant"), ast.StringTerm(req.Tenant))
+	}
+	return headers
+}
+
+// subjectCall returns the q of the call the agent makes to the service at
+// base for the subject of req, for the source pip: a GET with no body and
+// with [tenantHeaders], of the url that joins base, before, the subject.id
+// of req as one path segment, and after. Without base, or without a
+// subject.id value that can stand as a segment of the path ([pathSegment]),
+// it returns the q of a call the agent does not make, of state ERROR
+// ([stateCall]).
+func subjectCall(req *Request, pip, base, before, after string) *ast.Term {
+	id := req.Values[keySubjID]
+	if base == "" || id.State != spectables.StateValue {
+		return stateCall(pip, spectables.StateError)
+	}
+	seg, ok := pathSegment(id.Value)
+	if !ok {
+		return stateCall(pip, spectables.StateError)
+	}
+	return ast.ObjectTerm(
+		ast.Item(ast.StringTerm("method"), ast.StringTerm("GET")),
+		ast.Item(ast.StringTerm("url"), ast.StringTerm(strings.TrimRight(base, "/")+before+seg+after)),
+		ast.Item(ast.StringTerm("headers"), ast.NewTerm(tenantHeaders(req))),
+		ast.Item(ast.StringTerm("raise_error"), ast.BooleanTerm(false)),
+		ast.Item(ast.StringTerm("pip"), ast.StringTerm(pip)))
 }
 
 // queryState names the member of the q of a call the agent does not make that

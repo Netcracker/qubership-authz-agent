@@ -17,8 +17,9 @@
 //
 //   - Legacy path-routing: register {path -> [responses]} via a JSON
 //     PUT/POST /pip-stub/configure, or the hardcoded defaults. Responses are
-//     served sequentially per path (clamped to the last). This layer keeps
-//     every existing test working unchanged.
+//     served sequentially per path (clamped to the last). A route that names
+//     a method answers any other method 405. This layer keeps every existing
+//     test working unchanged.
 //   - Static rule engine (opt-in via PIP_STUB_CONFIG, a YAML file, usually
 //     bind-mounted read-only): an ordered `rules` list matched against the full
 //     request content (method/path/query/headers/body). The first fully-matching
@@ -75,7 +76,13 @@ type pipResponse struct {
 }
 
 type pipRoute struct {
-	Path      string        `json:"path"`
+	Path string `json:"path"`
+	// Method is the one method the route answers. /pip-stub/configure
+	// upper-cases it, and a request method is compared with it exactly, as
+	// HTTP method names are case-sensitive. A request with another method
+	// gets 405, which takes no response from the route's sequence. Empty
+	// answers every method.
+	Method    string        `json:"method,omitempty"`
 	Responses []pipResponse `json:"responses"`
 }
 
@@ -317,6 +324,13 @@ func handlePIP(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusNotFound, "no rule or route for "+r.URL.Path)
 		return
 	}
+	if route.Method != "" && route.Method != r.Method {
+		unlock()
+		w.Header().Set("Allow", route.Method)
+		writeJSONError(w, http.StatusMethodNotAllowed, fmt.Sprintf("route %s answers %s, not %s",
+			route.Path, route.Method, r.Method))
+		return
+	}
 	idx := counters[key]
 	if idx >= len(route.Responses) {
 		idx = len(route.Responses) - 1
@@ -496,6 +510,7 @@ func handleConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 	mu.Lock()
 	for i := range cfg {
+		cfg[i].Method = strings.ToUpper(cfg[i].Method)
 		routes[cfg[i].Path] = &cfg[i]
 	}
 	mu.Unlock()
