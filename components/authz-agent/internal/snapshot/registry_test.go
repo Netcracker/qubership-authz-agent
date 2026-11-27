@@ -957,6 +957,12 @@ func TestADenialOnAnUnreadSourceNamesIt(t *testing.T) {
 			set("a", "subject.entitledResources.of('doc').as('owner') CONTAINS resource.a"),
 			ReasonUnknown + ": subject.entitledResources"},
 		{"a permission scope without a PERMISSION_SCOPE PIP", ``, scopeSet("a"), ReasonUnknown + ": subject.permissionScope"},
+		{"a PERMISSION_SCOPE PIP read by its name",
+			`{"tenantId": "a", "name": "subject.permissionScope", "pipType": "PERMISSION_SCOPE", "url": "http://scope"}`,
+			set("a", "subject.permissionScope IS EMPTY"), ReasonUnknown + ": subject.permissionScope"},
+		{"a PERMISSION_SCOPE PIP read by another name",
+			`{"tenantId": "a", "name": "subject.grants", "pipType": "PERMISSION_SCOPE", "url": "http://scope"}`,
+			set("a", "subject.grants IS EMPTY"), ReasonUnknown + ": subject.grants"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			r := New(Config{}, tab(t), quiet{})

@@ -35,10 +35,9 @@ import (
 // comparison, whose domain holds that state alone.
 // subject.entitledResources is left to
 // the module, which calls the entitlements service, unless req names no
-// such service: then it is ERROR. It returns what the reason of a denial
-// names for the operands set to ERROR for want of a source: the key of the
-// operand, or [entitlementsPIP] for entitlements. A
-// placeholder a PIP's request reads and nothing gives is ABSENT. An operand
+// such service: then it is ERROR, and the result holds [entitlementsPIP],
+// the name the reason of a denial gives that source. A placeholder a PIP's
+// request reads and nothing gives is ABSENT. An operand
 // req.Values already holds is left as it is.
 //
 // The knobs of the agent profile these follow, which the export of the
