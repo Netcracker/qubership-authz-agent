@@ -2,12 +2,12 @@
 
 Create an issue with a type (`gh issue create --type Bug|Feature|Task`), not a `bug` or `enhancement` label.
 
-The Rego in `policies/` interprets simplified policies at run time and is maintenance-only until a translator from policies to Rego replaces it. Do not review it or report defects in it, and change it only to keep the existing tests passing.
+The Rego in `policies/` holds the checks of the caller and of the subject's token that admit every check request.
 
 For a fixed policy set, time and memory per request stay linear, up to a sort's log factor, in untrusted bytes from the
 caller and PIPs. Reading a byte once per nesting level or per item of another array or object breaks that unless a limit
 keeps it linear. Cost should stay polynomial in policy size. Input too big or too deep fails its request or load, not
-the process. The Rego in `policies/` stays exempt.
+the process.
 
 A test that measures how that cost grows with the size of the input builds only under `//go:build unix && complexity`.
 `make complexity-tests` runs it, and `go test ./...` leaves it out.

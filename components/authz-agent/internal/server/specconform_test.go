@@ -40,10 +40,6 @@ const specPath = "../../../../api/openapi.yaml"
 // any request, so that the change that fixes the defect also removes the
 // entry.
 var knownSpecDrift = map[string]string{
-	"POST /access/v1/check/resource/bulk/operations: query tenant_id": "F41: the bulk/operations routes " +
-		"read tenant_id, and the spec does not declare it on them",
-	"POST /access/v1/check/resource: header Tenant": "F41: the check routes read the Tenant header, " +
-		"and the spec declares it on none of them",
 	"POST /access/v1/check/resource: status 500": "N-E6: a check route answers 500 when the admission " +
 		"policy cannot be evaluated, and the spec declares 500 on no route",
 	"POST /access/v1/check/resource: header X-Request-Id": "N-E8: the public routes read X-Request-Id " +
@@ -246,4 +242,48 @@ func TestSpecConformance_ThePublicRoutesAreThePathsOfTheSpec(t *testing.T) {
 			t.Errorf("the public app registers %s, and %s does not declare it", path, specPath)
 		}
 	}
+}
+
+// An operation that can answer 403 CallerTenantMismatch takes the tenant
+// from the query parameter tenant_id and from the header Tenant, so the spec
+// declares both on it.
+func TestSpecConformance_AnOperationThatRefusesACallerOutsideItsTenantDeclaresTheTenantInputs(t *testing.T) {
+	d := loadSpec(t)
+	operations := 0
+	for _, path := range slices.Sorted(maps.Keys(d.Paths)) {
+		for method := range d.Paths[path] {
+			if method == "parameters" {
+				continue
+			}
+			op, declared, ok := d.operation(t, method, path)
+			if !ok {
+				continue
+			}
+			response, ok := op.Responses["403"]
+			if !ok || !strings.HasSuffix(refOf(t, response), "/CallerTenantMismatch") {
+				continue
+			}
+			operations++
+			for _, want := range []string{"query:tenant_id", "header:tenant"} {
+				if !declared[want] {
+					t.Errorf("%s %s answers 403 CallerTenantMismatch and does not declare %s", strings.ToUpper(method), path, want)
+				}
+			}
+		}
+	}
+	if operations != 9 {
+		t.Errorf("operations that answer 403 CallerTenantMismatch = %d, want the 9 check routes", operations)
+	}
+}
+
+// refOf returns the $ref of a response node, "" when it has none.
+func refOf(t *testing.T, n yaml.Node) string {
+	t.Helper()
+	var r struct {
+		Ref string `yaml:"$ref"`
+	}
+	if err := n.Decode(&r); err != nil {
+		t.Fatalf("a response in %s: %v", specPath, err)
+	}
+	return r.Ref
 }

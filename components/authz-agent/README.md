@@ -6,18 +6,21 @@ in ADR 0080 under `docs/decisions`.
 
 ## What the service contains
 
-- `internal/engine`: compiles the embedded policies (`policies/`), keeps the data documents in an in-memory store,
-  and evaluates decisions.
+- `internal/engine`: compiles the embedded policies (`policies/`) and evaluates them over an in-memory store. They hold
+  the checks of the caller and of the subject's token that admit every check request.
 - `internal/authn`: the trusted providers. At start it fetches every provider's signing keys, through OIDC discovery
   or from a `jwksUri`, and publishes them as `data.authn`, indexed by key id and by provider; it reloads the file
   when it changes, and its outcome drives `/health` under the bootstrap rules: strict mode wants every provider,
   permissive mode wants one, and a provider marked `required` has to be there in either.
 - `internal/pull`: the policies and PIPs. Every interval it fetches the v3 configuration of the policy source with
   the agent's token and builds each tenant's policies from it. The first successful load makes the service ready.
+- `internal/snapshot`: the decisions of the check routes. It generates one Rego module for each tenant from that
+  tenant's part of the configuration, compiles it, and publishes it for that tenant alone, so a tenant whose module
+  fails keeps its previous snapshot while the others are published.
 - `internal/m2m`: the agent's own token, obtained from the identity provider with client credentials and refreshed
-  before it expires, or read from a file another party keeps current. It is sent to the policy source and published
-  as `data.m2m.bearerToken`, with its expiry as `data.m2m.expiresAtNs`, for the PIP calls. Without a current token,
-  before the first one or once it expired after failed refreshes, neither the pull nor a PIP call is made.
+  before it expires, or read from a file another party keeps current. The pull and the PIP calls send it. Without a
+  current token, before the first one or once it expired after failed refreshes, neither the pull nor a PIP call is
+  made.
 - `internal/legacy`: the check routes of the legacy access-control API: the request body and headers each route
   accepts, and the response shape it answers with.
 - `internal/server`: the routes, on two listeners. The public surface carries the nine check routes,
@@ -43,7 +46,7 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_TENANT_MANAGER_URL` | `http://tenant-manager:8080` | Resolves to a tenant ID a realm written by its tenant display name, and `AUTHZ_DEFAULT_TENANT`; `/ready` answers 503 until `AUTHZ_DEFAULT_TENANT` is resolved. Empty disables the lookup, and the display name is then used as the ID |
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
 | `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
-| `AUTHZ_DEFAULT_TENANT` | `default` | Display name of the tenant a check request is decided in when it names none in the `tenant_id` parameter or the `Tenant` header; resolved to the tenant ID through `AUTHZ_TENANT_MANAGER_URL`. It may not be empty |
+| `AUTHZ_DEFAULT_TENANT` | `default` | Display name of the tenant a check request is decided in when it names none in the `tenant_id` parameter or the `Tenant` header ([The tenant of a request](#the-tenant-of-a-request)); resolved to the tenant ID through `AUTHZ_TENANT_MANAGER_URL`. It may not be empty |
 | `AUTHZ_PIP_TIMEOUT` | `2` | Seconds a policy waits for one call of a PIP, 1 or more; a call that takes longer is a failed PIP, as is a response whose status is other than 200 and 204 (the agent follows no redirect), whose body exceeds 8 MiB, or whose body is not empty and is not one JSON value, such as an HTML page or truncated JSON |
 | `AUTHZ_ENTITLEMENTS_URL` | empty | Base URL of the entitlements service, which a condition on `subject.entitledResources` calls at `/api/v3/user-entitlements/user/<subject id>`, once per decision request, within `AUTHZ_PIP_TIMEOUT` and without retries. Empty makes such a condition's operand fail, and the item is denied with the reason `PIP resolution failed` |
 | `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; empty reads the token from `AUTHZ_PAP_CLIENT_TOKEN_FILE` instead |
@@ -103,6 +106,24 @@ providers meet the bootstrap rules and the default tenant is resolved, with no p
 `GET /health` on the public port gives the same status, 200 `healthy` or 503 `unhealthy`, and counts the tenants
 instead of naming them: `tenants`, `served` (with a published snapshot), `rejected` (whose latest candidate was
 refused), and `failing` (whose snapshot has a part listed under `failures`). It names no tenant and no reason.
+
+## The tenant of a request
+
+A check request is decided by the policies of one tenant: the tenant whose ID the `tenant_id` query parameter names,
+else the one the `Tenant` header names, else the default tenant, `AUTHZ_DEFAULT_TENANT` resolved to its ID. An empty
+parameter or header counts as absent.
+
+The token in `Authorization` limits the tenants a caller may name. An M2M token, as
+[ADR-0092](../../docs/decisions/20261029-authz-agent-adr-0092-tokens-in-authorization.md) defines it, may name any
+tenant. Any other token may name only the tenant of its `tenant-id` claim, or the default tenant when the token has no
+such claim or an empty one; a claim that is not a string matches no tenant. A request that names another tenant is
+answered 403 with an empty body. A request admitted without a token in `Authorization` may name any tenant.
+
+A tenant with no published policies, such as an ID the policy source does not know, denies every item with the reason
+`no policies are published for tenant <id>`: `check/resource` answers `false`, a bulk route allows no id, and
+`check/filter` answers `DENY`. Until tenant-manager resolves the name of the default tenant, as described under
+`/ready` above, a request decided in the default tenant is denied the same way, and a token without a `tenant-id`
+claim may name no tenant: its request is answered 403.
 
 ## Comparisons in conditions
 

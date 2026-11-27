@@ -190,7 +190,8 @@ func (s *RuntimeSuite) TestCheckResource() {
 	// covers the negative path: sending an incoming-token header with a
 	// well-known literal and then asserting the subsequent decision is
 	// unchanged from the no-header baseline. (Direct header-leak inspection
-	// is in policies/pip_resolution_test.rego.)
+	// is TestNewSubject_ThePIPsGetNoTokenOfTheCaller in
+	// components/authz-agent/internal/snapshot.)
 	s.Step("check_resource.incoming_token_stripped_from_header_pip", func() {
 		baseline := map[string]string{
 			"Content-Type":  "application/json",

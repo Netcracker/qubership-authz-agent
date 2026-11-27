@@ -47,11 +47,12 @@ paths:
       description: |
         Returns a JSON boolean literal (`true` or `false`) reflecting the
         OLS decision for a single `(type, operation, resource)` in the
-        tenant that `tenant_id` names.
+        tenant the request names (see the `tenant_id` parameter).
       parameters:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
         - $ref: '#/components/parameters/TenantIdQuery'
+        - $ref: '#/components/parameters/TenantHeader'
       requestBody:
         required: true
         content:
@@ -112,6 +113,7 @@ paths:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
         - $ref: '#/components/parameters/TenantIdQuery'
+        - $ref: '#/components/parameters/TenantHeader'
       requestBody:
         required: true
         content:
@@ -177,6 +179,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
+        - $ref: '#/components/parameters/TenantIdQuery'
+        - $ref: '#/components/parameters/TenantHeader'
       requestBody:
         required: true
         content:
@@ -235,6 +239,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
+        - $ref: '#/components/parameters/TenantIdQuery'
+        - $ref: '#/components/parameters/TenantHeader'
       requestBody:
         required: true
         content:
@@ -299,6 +305,7 @@ paths:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
         - $ref: '#/components/parameters/TenantIdQuery'
+        - $ref: '#/components/parameters/TenantHeader'
         - name: resourceType
           in: query
           required: true
@@ -370,6 +377,7 @@ paths:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
         - $ref: '#/components/parameters/TenantIdQuery'
+        - $ref: '#/components/parameters/TenantHeader'
         - $ref: '#/components/parameters/ObligationsQuery'
       requestBody:
         required: true
@@ -430,6 +438,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
+        - $ref: '#/components/parameters/TenantIdQuery'
+        - $ref: '#/components/parameters/TenantHeader'
         - $ref: '#/components/parameters/ObligationsQuery'
       requestBody:
         required: true
@@ -484,6 +494,8 @@ paths:
       parameters:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
+        - $ref: '#/components/parameters/TenantIdQuery'
+        - $ref: '#/components/parameters/TenantHeader'
         - $ref: '#/components/parameters/ObligationsQuery'
       requestBody:
         required: true
@@ -539,6 +551,7 @@ paths:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
         - $ref: '#/components/parameters/TenantIdQuery'
+        - $ref: '#/components/parameters/TenantHeader'
         - $ref: '#/components/parameters/ObligationsQuery'
         - name: resourceType
           in: query
@@ -687,9 +700,19 @@ components:
       required: false
       description: |
         ID of the tenant whose policies decide the request. Without it the
-        `Tenant` header names the tenant, and without both the agent's
+        `Tenant` header names the tenant, and without either the agent's
         default tenant decides. A tenant with no published policies denies
         the request.
+      schema:
+        type: string
+    TenantHeader:
+      name: Tenant
+      in: header
+      required: false
+      description: |
+        ID of the tenant whose policies decide the request when it has no
+        `tenant_id` query parameter, which takes precedence. Without either
+        the agent's default tenant decides.
       schema:
         type: string
     ObligationsQuery:
