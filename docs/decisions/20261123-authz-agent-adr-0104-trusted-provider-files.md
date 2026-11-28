@@ -73,6 +73,8 @@ kichasov
   the provider files that the chart writes from its values (ADR-0105 R2, R3, R5, R16, R17), the token for the API server
   that the chart gives the Pod (ADR-0105 R6), and the restart of the Pods when an upgrade changes a provider file
   (ADR-0105 R13).
+- [authz-agent-ADR-0106: Trust a private CA only through the system roots of the base image](20261123-authz-agent-adr-0106-trust-a-private-ca-through-the-system-roots.md):
+  the CA that the requests of R23 trust (ADR-0106 R1).
 
 ## Context
 
@@ -482,8 +484,8 @@ Negative:
   being M2M tokens (A13).
 - No rule of this record names the CA that the requests of R23 trust, and the rules of ADR-0091 and ADR-0094 that
   named one went with the requests that this record replaces. A `caFile` now stops the start under R6. An https
-  `jwksUri` whose certificate a private CA or the cluster CA signs therefore works only once the agent trusts that CA in
-  another way.
+  `jwksUri` whose certificate a private CA or the cluster CA signs therefore works only once the agent trusts that CA
+  under ADR-0106 R1.
 - A provider `identity-provider` whose `issuer` or `issuerTemplate` names an API server makes every token of that API
   server an identity-provider token (R22). Where the provider `kubernetes` names the same issuer, R17 stops the start.
   Otherwise, where the keys load without a token, as the public keys of a managed cluster do, the token of a Pod of that
@@ -504,8 +506,3 @@ Negative:
   can also use, and R29 has no token to compare the issuer with.
 - An `Incoming-Token` that fails the check of `aud` under R26 or ADR-0094 R14 does not end the request: policy
   evaluation gets the reason code of the failure rather than the claims of that token (ADR-0095 R3).
-
-Follow-ups:
-
-- ADR-0106 ([#330](https://github.com/Netcracker/qubership-authz-agent/pull/330)) decides the CA that the requests of
-  R23 trust, in place of the term Cluster CA and the CA half of ADR-0094 R2.
