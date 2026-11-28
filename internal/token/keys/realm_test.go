@@ -54,6 +54,25 @@ func TestSource_IDNamesARealmByItsNameAndASingleProviderByItsID(t *testing.T) {
 	}
 }
 
+func TestSource_KubernetesHoldsOnlyForTheProviderKubernetes(t *testing.T) {
+	tests := []struct {
+		name   string
+		source Source
+		want   bool
+	}{
+		{"provider kubernetes", Source{Provider: &Provider{ID: KubernetesID}}, true},
+		{"single provider identity-provider", Source{Provider: &Provider{ID: IdentityProviderID}}, false},
+		{"realm of provider identity-provider", Source{Provider: &Provider{ID: IdentityProviderID}, Realm: "tenant-1"}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.source.Kubernetes(); got != tt.want {
+				t.Errorf("Kubernetes() of %s = %t, want %t", tt.source.label(), got, tt.want)
+			}
+		})
+	}
+}
+
 // The provider trusts https://kc.example:8443/auth/realms/{realm}. Lookup sends
 // no request, so a matched iss gets ErrKeyUnknown for a realm the Set does not
 // hold yet, and any other iss ErrIssuerUnknown.

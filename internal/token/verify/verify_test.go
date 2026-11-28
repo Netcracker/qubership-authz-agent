@@ -368,7 +368,7 @@ func TestVerify_ChecksExpAtTheTimeTheReloadEnds(t *testing.T) {
 			source.onReload = []keys.Key{s.key}
 			v, c := newVerifier(source)
 			source.reloading = func() { c.advance(tt.reload) }
-			raw := s.sign(t, claimsAt(start, map[string]any{"exp": start.Add(-29 * time.Second).Unix()}))
+			raw := s.sign(t, claimsAt(start.Add(-time.Hour), map[string]any{"exp": start.Add(-29 * time.Second).Unix()}))
 			_, err := v.Verify(t.Context(), raw)
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
@@ -553,11 +553,10 @@ func TestVerify_RefusesATokenOutsideItsLifetime(t *testing.T) {
 		want   Code
 	}{
 		{"no exp", map[string]any{"exp": nil}, CodeExpMissing},
-		{"exp passed exactly the leeway ago", map[string]any{"exp": start.Add(-DefaultLeeway).Unix()}, CodeExpired},
-		{"exp passed more than the leeway ago", map[string]any{"exp": start.Add(-beyond).Unix()}, CodeExpired},
+		{"exp passed exactly the leeway ago", map[string]any{"iat": start.Add(-time.Hour).Unix(), "exp": start.Add(-DefaultLeeway).Unix()}, CodeExpired},
+		{"exp passed more than the leeway ago", map[string]any{"iat": start.Add(-time.Hour).Unix(), "exp": start.Add(-beyond).Unix()}, CodeExpired},
 		{"nbf more than the leeway ahead", map[string]any{"nbf": start.Add(beyond).Unix()}, CodeNotYetValid},
 		{"no iat", map[string]any{"iat": nil}, CodeIATMissing},
-		{"iat more than the leeway ahead", map[string]any{"iat": start.Add(beyond).Unix()}, CodeIATInvalid},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -570,6 +569,73 @@ func TestVerify_RefusesATokenOutsideItsLifetime(t *testing.T) {
 	}
 }
 
+// Every iat here comes before the exp of the token, so only the rule for an
+// iat in the future can refuse it. The single identity-provider differs from
+// kubernetes in its id alone, so a rule that tells the two apart by anything
+// but the id fails one of their rows, and a rule that also reads the claims
+// fails the row with the claims of a service account.
+func TestVerify_RefusesAnIATInTheFutureOnlyForAKubernetesToken(t *testing.T) {
+	ahead := start.Add(DefaultLeeway + time.Second).Unix()
+	tests := []struct {
+		name   string
+		id     string
+		realm  string
+		fields map[string]any
+		want   Code
+	}{
+		{"realm of identity-provider, iat past the leeway", keys.IdentityProviderID, "tenant-1", map[string]any{"iat": ahead}, ""},
+		{"single identity-provider, iat past the leeway", keys.IdentityProviderID, "", map[string]any{"iat": ahead}, ""},
+		{"single identity-provider with the claims of a service account, iat past the leeway", keys.IdentityProviderID, "",
+			map[string]any{"iat": ahead, "sub": "system:serviceaccount:ns-1:sa-1", "kubernetes.io": map[string]any{"namespace": "ns-1"}}, ""},
+		{"kubernetes, iat past the leeway", keys.KubernetesID, "", map[string]any{"iat": ahead}, CodeIATInvalid},
+		{"kubernetes, iat exactly the leeway ahead", keys.KubernetesID, "", map[string]any{"iat": start.Add(DefaultLeeway).Unix()}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", providerOf(tt.id))
+			s.key.Source.Realm = tt.realm
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, tt.fields)))
+			if codeOf(err) != tt.want {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
+	}
+}
+
+// The rule compares exp with iat and leaves the clock out, so it holds for a
+// token of either provider, also for an exp that the leeway keeps from
+// expiring. The iat of the kubernetes row is not ahead of the clock, so the
+// rule for an iat in the future, which returns the same code, cannot be what
+// refuses it.
+func TestVerify_RefusesATokenThatExpiresBeforeItIsIssued(t *testing.T) {
+	identityProvider := providerOf(keys.IdentityProviderID)
+	kubernetes := providerOf(keys.KubernetesID)
+	later := start.Add(2 * time.Hour)
+	tests := []struct {
+		name     string
+		provider *keys.Provider
+		exp, iat time.Time
+		want     Code
+	}{
+		{"exp a second before iat, both ahead of the clock", identityProvider, later, later.Add(time.Second), CodeIATInvalid},
+		{"exp a second before iat, within the leeway", identityProvider, start.Add(-time.Second), start, CodeIATInvalid},
+		{"exp a second before iat, kubernetes", kubernetes, start.Add(-time.Second), start, CodeIATInvalid},
+		{"exp at iat", identityProvider, start, start, ""},
+		{"exp a second after iat", identityProvider, start.Add(time.Second), start, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", tt.provider)
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"exp": tt.exp.Unix(), "iat": tt.iat.Unix()})))
+			if codeOf(err) != tt.want {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
+	}
+}
+
 func TestVerify_ToleratesTheLeewayAroundItsLifetime(t *testing.T) {
 	s := newSigner(t, "k1", providerOf("realm"))
 	within := DefaultLeeway - time.Second
@@ -577,9 +643,8 @@ func TestVerify_ToleratesTheLeewayAroundItsLifetime(t *testing.T) {
 		name   string
 		fields map[string]any
 	}{
-		{"exp passed less than the leeway ago", map[string]any{"exp": start.Add(-within).Unix()}},
+		{"exp passed less than the leeway ago", map[string]any{"iat": start.Add(-time.Hour).Unix(), "exp": start.Add(-within).Unix()}},
 		{"nbf exactly the leeway ahead", map[string]any{"nbf": start.Add(DefaultLeeway).Unix()}},
-		{"iat exactly the leeway ahead", map[string]any{"iat": start.Add(DefaultLeeway).Unix()}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -641,7 +706,7 @@ func TestVerify_RefusesOnTheAudienceBeforeTheLifetime(t *testing.T) {
 		{"aud of another client, no exp", map[string]any{"aud": "other", "exp": nil}, CodeAudienceInvalid},
 		{"aud of another client, nbf ahead", map[string]any{"aud": "other", "nbf": start.Add(beyond).Unix()}, CodeAudienceInvalid},
 		{"aud of another client, no iat", map[string]any{"aud": "other", "iat": nil}, CodeAudienceInvalid},
-		{"aud of another client, iat ahead", map[string]any{"aud": "other", "iat": start.Add(beyond).Unix()}, CodeAudienceInvalid},
+		{"aud of another client, iat after exp", map[string]any{"aud": "other", "iat": start.Add(2 * time.Hour).Unix()}, CodeAudienceInvalid},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
