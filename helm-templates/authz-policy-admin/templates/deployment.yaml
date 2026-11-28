@@ -86,7 +86,7 @@ spec:
             - name: LOGGING_LEVEL_ROOT
               value: '{{ .Values.LOG_LEVEL }}'
             - name: AUTHZ_POLICY_ADMIN_PORT
-              value: '{{ .Values.AUTHZ_POLICY_ADMIN_PORT }}'
+              value: {{ .Values.AUTHZ_POLICY_ADMIN_PORT | int64 | quote }}
             # Uploaded policies and PIPs are written here as policies.json /
             # pips.json and reloaded at startup.
             - name: AUTHZ_POLICY_ADMIN_DATA_DIR

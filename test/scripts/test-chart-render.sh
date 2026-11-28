@@ -33,7 +33,8 @@ STUB_CHART_DIR="${ROOT_DIR}/helm-templates/authz-policy-admin"
 # the renders that go without it.
 SIZING="$(mktemp)"
 sentinel="$(mktemp)"
-trap 'rm -f "${SIZING}" "${sentinel}"' EXIT
+large="$(mktemp)"
+trap 'rm -f "${SIZING}" "${sentinel}" "${large}"' EXIT
 printf 'CPU_REQUEST: 350m\nCPU_LIMIT: 400m\nMEMORY_REQUEST: 364Mi\nMEMORY_LIMIT: 700Mi\n' >"${SIZING}"
 
 require_cmd() {
@@ -242,16 +243,30 @@ done
 # whole block is compared, so a rollingUpdate left under Recreate would show.
 strategy_of() { deployment_of "$@" | sed -n '/^  strategy:/,/^  selector:/p' | sed '$d'; }
 
-# Renders a chart and returns the value of one environment variable, "" when
-# the chart renders none. The empty string is what the absent case has to
-# produce: an unguarded grep ends the whole run under `set -e`, and a suite
-# that stops says less than one that names the check that failed.
+# Renders a chart and returns the value of one environment variable without
+# the single or double quotes around it, "" when the chart renders none. The
+# empty string is what the absent case has to produce: an unguarded grep ends
+# the whole run under `set -e`, and a suite that stops says less than one that
+# names the check that failed. A render that fails returns the first lines of
+# Helm's error instead, so the check that compares the value reports why.
 env_value_of() {
-  local chart="$1" name="$2"
+  local chart="$1" name="$2" render
   shift 2
-  helm template t "${chart}" -f "${SIZING}" "$@" 2>&1 \
-    | grep -A1 "name: ${name}$" \
-    | awk -F"'" '/value:/ && !seen {print $2; seen=1}' || true
+  if ! render="$(helm template t "${chart}" -f "${SIZING}" "$@" 2>&1)"; then
+    echo "helm template failed: $(head -3 <<<"${render}" | paste -sd ' ' -)"
+    return
+  fi
+  grep -A1 "name: ${name}$" <<<"${render}" \
+    | awk -v q="'" '/value:/ && !seen {
+        v = $0
+        sub(/^[[:space:]]*value:[[:space:]]*/, "", v)
+        first = substr(v, 1, 1)
+        if ((first == q || first == "\"") && substr(v, length(v), 1) == first) {
+          v = substr(v, 2, length(v) - 2)
+        }
+        print v
+        seen = 1
+      }' || true
 }
 
 env_value() {
@@ -976,6 +991,61 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
       pass "${name} refuses LOG_LEVEL '${bad_level}'"
     fi
   done
+done
+
+# ── Integers reach the agent in decimal digits ───────────────────────────
+
+# Helm reads 1000000 in a values file as a float and prints it as 1e+06; it
+# reads the same number from --set as an integer. The retry counts use 100, the
+# maximum that PR #279 sets for them in the schema; Helm prints a number that
+# small in decimal digits from either source. Each values file sets one key, so
+# a line that reads another setting renders that setting's default instead.
+integer_settings=(
+  AUTHZ_JWKS_HTTP_TIMEOUT=1000000
+  AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL=1000000
+  AUTHZ_PAP_CLIENT_PULL_INTERVAL=1000000
+  AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT=1000000
+  AUTHZ_JWKS_HTTP_RETRIES=100
+  AUTHZ_ENTITLEMENTS_HTTP_RETRIES=100
+)
+for setting in "${integer_settings[@]}"; do
+  name="${setting%%=*}" value="${setting#*=}"
+  printf '%s: %s\n' "${name}" "${value}" >"${large}"
+  rendered="$(env_value "${name}" -f "${large}")"
+  if [[ "${rendered}" == "${value}" ]]; then
+    pass "${name}: ${value} from a values file renders as ${value}"
+  else
+    fail "${name}: ${value} from a values file rendered as '${rendered}', expected ${value}"
+  fi
+  rendered="$(env_value "${name}" --set "${setting}")"
+  if [[ "${rendered}" == "${value}" ]]; then
+    pass "${name}: ${value} from --set renders as ${value}"
+  else
+    fail "${name}: ${value} from --set rendered as '${rendered}', expected ${value}"
+  fi
+done
+
+# null removes a key from the chart's defaults. The schema requires each
+# integer setting, so Helm refuses such an install instead of rendering 0; for
+# AUTHZ_PAP_CLIENT_PULL_INTERVAL, 0 turns the pull off. The check matches the
+# name alone, so that it does not depend on how the schema validator words the
+# error.
+expect_null_refused() {
+  local name="$1" source="$2" render
+  shift 2
+  if render="$(helm template t "${CHART_DIR}" -f "${SIZING}" "$@" 2>&1)"; then
+    fail "${name}: null ${source} must be refused, and it rendered as '$(env_value "${name}" "$@")'"
+  elif [[ "${render}" == *"${name}"* ]]; then
+    pass "${name}: null ${source} is refused, and the error names the setting"
+  else
+    fail "${name}: null ${source} is refused, but the error does not name the setting: $(head -3 <<<"${render}")"
+  fi
+}
+for setting in "${integer_settings[@]}"; do
+  name="${setting%%=*}"
+  printf '%s: null\n' "${name}" >"${large}"
+  expect_null_refused "${name}" "from a values file" -f "${large}"
+  expect_null_refused "${name}" "from --set" --set "${name}=null"
 done
 
 # ── Test-stand pip-stub resources ────────────────────────────────────────
