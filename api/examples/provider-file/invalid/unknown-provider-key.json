@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Netcracker/qubership-authz-agent/main/api/provider-file.v1.schema.json",
+  "providers": {
+    "keycloak": {
+      "type": "realms",
+      "issuerTemplate": "http://identity-provider:8080/auth/realms/{realm}",
+      "jwksUri": "http://identity-provider:8080/auth/realms/{realm}/protocol/openid-connect/certs",
+      "audience": {"mode": "ignore"}
+    }
+  }
+}
