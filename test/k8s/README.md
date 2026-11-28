@@ -2,7 +2,8 @@
 
 Chart values for running the runtime suite against the Helm chart on a kind
 cluster. The Makefile targets below install the charts with them; you do not
-install them by hand. CI runs the same targets one step at a time.
+install them by hand. CI runs the same targets one step at a time, and
+`test/scripts/test-image-ca.sh` after `make e2e-images`.
 
 | File | What it is |
 | --- | --- |

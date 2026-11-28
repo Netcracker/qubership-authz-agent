@@ -10,6 +10,5 @@ FROM ghcr.io/netcracker/qubership-core-base:alpine-2.6.1@sha256:7be670fc57c24319
 COPY --chmod=555 --from=builder /tenant-manager /usr/local/bin/tenant-manager
 USER 10001:10001
 EXPOSE 8080
-# The binary is the entrypoint, as in the product images: the base image's
-# entrypoint script loads certificates the emulator does not use.
-ENTRYPOINT ["tenant-manager"]
+# The binary is the command of the base image's entrypoint, as in pip-stub.
+CMD ["tenant-manager"]

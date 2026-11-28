@@ -210,6 +210,15 @@ opa test policies/
 bash test/scripts/test-chart-render.sh
 ```
 
+### Private CA in the agent image
+
+Runs the agent image the way the chart runs it and checks that a CA under `/tmp/cert` is trusted. Needs Docker,
+`openssl`, `python3`, HTTPS access to `www.googleapis.com`, and the image `make e2e-images` builds.
+
+```sh
+bash test/scripts/test-image-ca.sh local/authz-agent:ci
+```
+
 ### Integration test suite
 
 Runs the Testify suite as a Job inside a kind cluster, against the Helm chart.

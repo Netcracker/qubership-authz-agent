@@ -501,6 +501,24 @@ for volume in "authz-agent-trusted-providers" "authz-agent-client-credentials"; 
   fi
 done
 
+# SSL_SECRET names the Secret that the agent Pod mounts read-only at /tmp/cert.
+# The volume is not optional, so a missing Secret keeps the Pod from starting.
+# The Pod template carries CERTIFICATE_BUNDLE_MD5SUM in the variable
+# CERTIFICATE_BUNDLE_<SSL_SECRET>_MD5SUM, so an upgrade that passes a new MD5
+# recreates the Pods. The default leaves /tmp/cert unmounted and sets no such
+# variable.
+ca_deployment="$(deployment_of --set SSL_SECRET=corporate-ca --set CERTIFICATE_BUNDLE_MD5SUM=0123456789abcdef0123456789abcdef)"
+ca_default="$(deployment_of)"
+ca_volume="$(grep -B1 -E '^ +mountPath: /tmp/cert$' <<<"${ca_deployment}" | awk '$1 == "-" && $2 == "name:" {print $3}' || true)"
+ca_entries="$(grep -A4 -E "^ +- name: ${ca_volume:-none}\$" <<<"${ca_deployment}" || true)"
+ca_md5="$(grep -A1 -E "^ +- name: 'CERTIFICATE_BUNDLE_corporate-ca_MD5SUM'\$" <<<"${ca_deployment}" | awk '$1 == "value:" {print $2}' || true)"
+ca_summary="secret=$(awk '$1 == "secretName:" {print $2}' <<<"${ca_entries}") readOnly=$(awk '$1 == "readOnly:" {print $2}' <<<"${ca_entries}") optional=$(awk '$1 == "optional:" {print $2}' <<<"${ca_entries}" | grep . || echo none) md5=${ca_md5:-none} default=$(grep -c -E 'mountPath: /tmp/cert|CERTIFICATE_BUNDLE_' <<<"${ca_default}" || true)"
+if [[ "${ca_summary}" == "secret='corporate-ca' readOnly=true optional=none md5='0123456789abcdef0123456789abcdef' default=0" ]]; then
+  pass "SSL_SECRET mounts the named Secret read-only and required at /tmp/cert and sets CERTIFICATE_BUNDLE_<SSL_SECRET>_MD5SUM, and the default does neither"
+else
+  fail "SSL_SECRET renders ${ca_summary}, expected secret='corporate-ca' readOnly=true optional=none md5='0123456789abcdef0123456789abcdef' default=0"
+fi
+
 # Every gateway route ends on the public port and reaches it under the path the
 # caller sent: a gateway publishes nothing on the internal port.
 mesh="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set MESH_ROUTES_ENABLED=true --show-only templates/mesh-routes.yaml 2>&1 || true)"
@@ -822,6 +840,35 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
   else
     fail "${name}: readOnlyRootFilesystem renders ${ro_summary}, expected k8s=true openshift=false off=false"
   fi
+
+  # The base image's entrypoint can write to each of these paths when the
+  # container starts, whether the root file system is read-only or not: a
+  # writable root does not make the image's directories writable to a uid
+  # other than 10001 outside the root group. Each path is summarized as the
+  # type of the volume mounted there, or none.
+  for root in read-only-on-kubernetes writable-when-turned-off writable-on-openshift; do
+    case "${root}" in
+      read-only-on-kubernetes) root_args=(--set PAAS_PLATFORM=KUBERNETES --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=true) ;;
+      writable-when-turned-off) root_args=(--set PAAS_PLATFORM=KUBERNETES --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=false) ;;
+      writable-on-openshift) root_args=(--set PAAS_PLATFORM=OPENSHIFT) ;;
+      *)
+        fail "${name}: the root file system ${root} has no render arguments in this case statement"
+        continue
+        ;;
+    esac
+    root_deployment="$(helm template t "${chart}" -f "${SIZING}" "${root_args[@]}" --show-only templates/deployment.yaml 2>&1 || true)"
+    entrypoint_mounts=""
+    for mount_path in /usr/local/share/ca-certificates /etc/ssl/certs /app/nss; do
+      volume_name="$(grep -B1 -E "^ +mountPath: '?${mount_path}'?\$" <<<"${root_deployment}" | awk '$1 == "-" && $2 == "name:" {print $3}' || true)"
+      volume_type="$(grep -A1 -E "^ +- name: ${volume_name:-none}\$" <<<"${root_deployment}" | grep -oE 'emptyDir|configMap|secret|projected|persistentVolumeClaim' | head -1 || true)"
+      entrypoint_mounts+="${mount_path}=${volume_type:-none} "
+    done
+    if [[ "${entrypoint_mounts}" == "/usr/local/share/ca-certificates=emptyDir /etc/ssl/certs=emptyDir /app/nss=emptyDir " ]]; then
+      pass "${name}: with the root file system ${root}, the paths the base entrypoint writes are emptyDir volumes"
+    else
+      fail "${name}: with the root file system ${root}, the paths the base entrypoint writes are mounted as ${entrypoint_mounts}, expected emptyDir at each"
+    fi
+  done
 done
 
 # A DEPLOYMENT_RESOURCE_NAME the deployer still passes renames no object of

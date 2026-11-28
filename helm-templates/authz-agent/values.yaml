@@ -46,8 +46,33 @@ APPLICATION_NAME: 'Platform-Core-Security'
 MONITORING_ENABLED: true
 # Read-only root file system for the container, on Kubernetes; on OpenShift the
 # template leaves it writable, as the platform's charts do. The agent writes
-# nothing to its file system.
+# nothing to its file system, and the template mounts emptyDir volumes at the
+# paths the base image's entrypoint writes to, whatever this value is.
 READONLY_CONTAINER_FILE_SYSTEM_ENABLED: true
+# Name of the Secret with the CA certificates of the environment. The platform's
+# deployer creates `defaultsslcertificate` in every application namespace and
+# sets this value to it by default, unless the environment names another Secret.
+# The agent trusts the certificates in the Secret's keys that end in .crt, .cer,
+# or .pem, in addition to the public CAs of its image, for every HTTPS server it
+# calls, such as the identity provider, the policy source, and the PIPs. The
+# chart's default, empty, mounts nothing; a Helm install without the deployer
+# names a Secret of its own when one of those servers presents a certificate
+# that a private CA signed.
+#
+# The Pod mounts the Secret read-only at /tmp/cert, and the certificates are read
+# when the container starts. A name with no Secret behind it keeps the new Pod in
+# ContainerCreating with the event:
+#   MountVolume.SetUp failed for volume "ssl-secret" : secret "<name>" not found
+SSL_SECRET: ''
+# MD5 of the bundle in the Secret that SSL_SECRET names, which the deployer
+# passes; the default is the MD5 of empty input. With SSL_SECRET set, the Pod
+# template carries it as CERTIFICATE_BUNDLE_<SSL_SECRET>_MD5SUM, so an upgrade
+# that passes a new CERTIFICATE_BUNDLE_MD5SUM recreates the Pods and they trust
+# the new certificates. After you change the Secret by hand, recreate the Pod,
+# as by `kubectl rollout restart`: a restart of the container can leave a
+# removed certificate trusted, because the base image's entrypoint never deletes
+# the copies it writes to an emptyDir volume, and a restart keeps that volume.
+CERTIFICATE_BUNDLE_MD5SUM: "d41d8cd98f00b204e9800998ecf8427e"
 # The app.kubernetes.io/managed-by label of every object but the Pod template.
 # Cloud-Deployer overrides it (argocd installs set `argocd`).
 MANAGED_BY: "saasDeployer"

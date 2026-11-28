@@ -3,10 +3,11 @@
 Step-by-step guide: bring up a kind cluster on a clean machine, build the images, install the Helm chart with the test
 harness around it, and run the **runtime integration tests**: the Testify suite under `test/integration/testify/`,
 executed as a Job inside that cluster. CI runs the same Makefile targets
-(`.github/workflows/integration-tests.yaml`).
+(`.github/workflows/integration-tests.yaml`), and the image CA check of [Related checks](#7-related-checks) after it
+builds the images.
 
-> Scope: runtime integration only. OPA contract tests, the chart render check, and the parity replay are in
-> [Related checks](#7-related-checks) at the end.
+> Scope: runtime integration only. OPA contract tests, the chart render check, the image CA check, and the parity replay
+> are in [Related checks](#7-related-checks) at the end.
 
 ---
 
@@ -181,6 +182,13 @@ Chart render check and parity replay:
 ```bash
 test/scripts/test-chart-render.sh
 make parity                    # see test/parity/README.md
+```
+
+Image CA check: runs the agent image the way the chart runs it and checks that a CA under `/tmp/cert` is trusted. It
+needs the image that `make e2e-images` builds, `openssl`, `python3`, and HTTPS access to `www.googleapis.com`:
+
+```bash
+test/scripts/test-image-ca.sh local/authz-agent:ci
 ```
 
 The minimum CI gate for compatibility-sensitive changes is listed in [test/readme.md](../test/readme.md).
