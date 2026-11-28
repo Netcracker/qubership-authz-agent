@@ -82,16 +82,8 @@ func main() {
 		providers = authn.New(cfg.Authn, eng, logger)
 		providers.Bootstrap(ctx)
 	}
-	var tokens *m2m.Source
-	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != "" {
-		tokens = m2m.New(cfg.M2M, eng, logger)
-	}
 	cfg.Pull.Entitlements = pips.LoadEntitlementsConfigFromEnv()
-	var source pull.Tokens
-	if tokens != nil {
-		source = tokens
-	}
-	puller := pull.New(cfg.Pull, eng, source, logger)
+	puller := newPuller(ctx, cfg, eng)
 	opts := server.Options{
 		Log:     logger,
 		Health:  func() server.Report { return report(providers, puller) },
@@ -125,18 +117,22 @@ func main() {
 	srv := server.Register(internal, eng, opts)
 	srv.RegisterPublic(public)
 
-	if tokens != nil {
-		go tokens.Run(ctx)
-	}
-	if puller != nil {
-		go puller.Run(ctx)
-	}
+	go puller.Run(ctx)
 	if providers != nil {
 		go providers.Run(ctx)
 	}
 	if serve(ctx, stop, cfg, len(modules), public, internal) {
 		os.Exit(1)
 	}
+}
+
+// newPuller starts a goroutine that keeps the agent's own token current until
+// ctx ends, from the source that cfg.M2M selects. It returns the policy puller
+// for cfg.Pull, which fetches with that token; the caller starts the puller.
+func newPuller(ctx context.Context, cfg config, eng *engine.Engine) *pull.Puller {
+	tokens := m2m.New(cfg.M2M, eng, logger)
+	go tokens.Run(ctx)
+	return pull.New(cfg.Pull, eng, tokens, logger)
 }
 
 // serve binds the sockets of the public and the internal surface, logs the

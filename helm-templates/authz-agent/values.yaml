@@ -203,7 +203,8 @@ AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL: 30
 #     ExpirationSeconds=600) is mounted at
 #     /var/run/secrets/tokens/netcracker/token, the platform's layout for
 #     projected tokens, by the kubelet and rotated automatically. The agent
-#     re-reads it every fifteen seconds. No Secret dependency.
+#     re-reads it every fifteen seconds, always at this path: no value changes
+#     it. No Secret dependency.
 #
 #   KUBERNETES_M2M_ENABLED=false (DEFAULT):
 #     The agent obtains a Keycloak client_credentials token from the
@@ -252,9 +253,7 @@ KUBERNETES_M2M_ENABLED: false
 #
 # The agent fetches policies and PIPs from access-control's v3 config API on a
 # configurable interval and publishes them into OPA without a Pod restart.  The
-# Bearer token comes from AUTHZ_PAP_CLIENT_TOKEN_FILE (written by the kubelet in
-# KUBERNETES_M2M_ENABLED=true mode, or by the agent itself in
-# KUBERNETES_M2M_ENABLED=false mode).
+# Bearer token it sends is the one KUBERNETES_M2M_ENABLED selects.
 #
 # PAP is the Policy Administration Point, the service the policies come from;
 # the AUTHZ_PAP_CLIENT_* settings configure the agent as its client.
@@ -268,10 +267,6 @@ AUTHZ_PAP_CLIENT_SOURCE_URL: ''
 # AUTHZ_PAP_CLIENT_PULL_INTERVAL: seconds between polls.  0 disables the pull.
 #   Same semantic as AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL.
 AUTHZ_PAP_CLIENT_PULL_INTERVAL: 30
-# AUTHZ_PAP_CLIENT_TOKEN_FILE: path to the Bearer token written by the kubelet
-#   (KUBERNETES_M2M_ENABLED=true) or the agent's own token loop (false). The
-#   default is where the platform's charts mount the netcracker-audience token.
-AUTHZ_PAP_CLIENT_TOKEN_FILE: /var/run/secrets/tokens/netcracker/token
 
 # Entitlements resolver.
 #

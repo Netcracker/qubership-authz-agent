@@ -44,13 +44,18 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
 | `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
 | `AUTHZ_ENTITLEMENTS_URL`, `AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT`, `AUTHZ_ENTITLEMENTS_HTTP_RETRIES` | empty, `5`, `3` | The entitlements PIP pinned by the deployment; an empty URL adds none |
-| `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; empty reads the token from `AUTHZ_PAP_CLIENT_TOKEN_FILE` instead |
+| `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; empty reads the token for `netcracker` instead |
 | `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials |
 | `AUTHZ_M2M_RENEW_BEFORE_SECONDS` | `60` | How long before its expiry the token is refreshed |
-| `AUTHZ_PAP_CLIENT_TOKEN_FILE` | `/var/run/secrets/tokens/netcracker/token` | The token file, read every 15 seconds, when there is no token endpoint; the default is where the platform's charts mount the netcracker-audience projected token |
 
 A variable set to the empty string switches its feature off where the table says so; an unset variable takes the
 default.
+
+The agent reads these files at fixed paths, and the deployment puts them there:
+
+| Path | What |
+| --- | --- |
+| `/var/run/secrets/tokens/netcracker/token` | The token for `netcracker`, the projected token that the platform's charts mount here, read every 15 seconds when `AUTHZ_M2M_TOKEN_URL` is empty |
 
 The policy source is the only way policies reach the agent.
 

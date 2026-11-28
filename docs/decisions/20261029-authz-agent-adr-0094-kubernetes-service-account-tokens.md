@@ -63,8 +63,7 @@ namespace belongs to the installation.
 
 - **Token for the API server**: the projected token at `/var/run/secrets/tokens/kubernetes/token`.
 - **Cluster CA**: the CA at `/var/run/secrets/tokens/kubernetes/ca.crt`.
-- **Token for `netcracker`**: the projected token at `/var/run/secrets/tokens/netcracker/token`, unless ADR-0096 R6
-  names another file.
+- **Token for `netcracker`**: the projected token at `/var/run/secrets/tokens/netcracker/token`.
 - **In-cluster address**: an address whose host is `kubernetes.default.svc` or `kubernetes.default.svc.cluster.local`.
 - **Address outside the cluster**: an address with any other host.
 - **Topology file**: `/etc/topology/data`, the `data` key of the ConfigMap `topology`.

@@ -69,14 +69,14 @@ services:
       AUTHZ_TENANT_MANAGER_URL: ""
       # Pull loop: the cadence comes from SVT_PAP_PULL_INTERVAL so the
       # host-side wait after a re-seed and the puller's own interval cannot
-      # drift apart. The token file is a static dummy so the stub's
-      # Authorization check passes.
+      # drift apart.
       AUTHZ_PAP_CLIENT_SOURCE_URL: http://authz-policy-admin:18090
       AUTHZ_PAP_CLIENT_PULL_INTERVAL: "${SVT_PAP_PULL_INTERVAL:-2}"
-      AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-pull-token
     volumes:
       - ./keycloak/trusted-providers.json:/etc/authz/trusted-providers.json:ro
-      - ./keycloak/ac-pull-token:/etc/authz/ac-pull-token:ro
+      # The agent reads its own token at this path, and a static dummy there
+      # passes the stub's Authorization check.
+      - ./keycloak/ac-pull-token:/var/run/secrets/tokens/netcracker/token:ro
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.49.1@sha256:3cde6faf0791ebf7b41d6f8ae7145466fed712ea6f252c935294d2608b1af388
