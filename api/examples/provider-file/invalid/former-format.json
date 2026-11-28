@@ -1,0 +1,6 @@
+{
+  "keycloak": {"url": "http://identity-provider:8080", "requiredRealms": ["cloud-common"]},
+  "providers": [
+    {"id": "kubernetes", "kubernetes": true, "audiences": ["netcracker"]}
+  ]
+}

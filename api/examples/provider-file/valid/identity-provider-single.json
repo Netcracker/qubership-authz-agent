@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Netcracker/qubership-authz-agent/main/api/provider-file.v1.schema.json",
+  "providers": {
+    "identity-provider": {
+      "type": "single",
+      "issuer": "https://idp.example.com/auth/realms/services",
+      "jwksUri": "https://idp.example.com/auth/realms/services/protocol/openid-connect/certs",
+      "audience": {"mode": "matchAny", "values": ["netcracker"]}
+    }
+  }
+}

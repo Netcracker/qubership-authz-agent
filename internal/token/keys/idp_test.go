@@ -15,7 +15,6 @@
 package keys
 
 import (
-	"context"
 	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/ed25519"
@@ -24,12 +23,13 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
-	"encoding/pem"
+	"fmt"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -38,28 +38,25 @@ import (
 	"github.com/lestrrat-go/jwx/v3/jwk"
 )
 
-// fakeIdP serves an OIDC discovery document at /.well-known/openid-configuration
-// that points at /jwks, and the JWKS there. Every field set through its
-// methods takes effect on the next request.
+// fakeIdP serves a JWKS at /jwks. Every field set through its methods takes
+// effect on the next request.
 type fakeIdP struct {
 	srv *httptest.Server
 
 	mu sync.Mutex
 	// keys is the JWKS the provider publishes.
 	keys []json.RawMessage
-	// discovery and jwks replace the documents served, when non-nil.
-	discovery []byte
-	jwks      []byte
+	// jwks replaces the document served, when non-nil.
+	jwks []byte
 	// status, when non-zero, answers every request.
 	status int
 	// failures is how many of the next requests get 503.
 	failures int
 	// token, when set, is the bearer token a request has to carry.
-	token     string
-	lastAuth  string
-	discovers int
-	// gate, when non-nil, holds every JWKS response until it is closed.
-	gate chan struct{}
+	token    string
+	lastAuth string
+	// requests counts the requests served.
+	requests int
 }
 
 func newIdP(t *testing.T, keys ...json.RawMessage) *fakeIdP {
@@ -80,11 +77,13 @@ func newTLSIdP(t *testing.T, keys ...json.RawMessage) *fakeIdP {
 
 func (idp *fakeIdP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	idp.mu.Lock()
+	idp.requests++
 	idp.lastAuth = r.Header.Get("Authorization")
 	switch {
 	case idp.status != 0:
+		status := idp.status
 		idp.mu.Unlock()
-		w.WriteHeader(idp.status)
+		w.WriteHeader(status)
 		return
 	case idp.failures > 0:
 		idp.failures--
@@ -96,30 +95,16 @@ func (idp *fakeIdP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	var body []byte
-	var gate chan struct{}
-	switch r.URL.Path {
-	case "/.well-known/openid-configuration":
-		idp.discovers++
-		body = idp.discovery
-		if body == nil {
-			body, _ = json.Marshal(map[string]string{"jwks_uri": idp.srv.URL + "/jwks"})
-		}
-	case "/jwks":
-		gate = idp.gate
-		body = idp.jwks
-		if body == nil {
-			body, _ = json.Marshal(map[string]any{"keys": idp.keys})
-		}
-	default:
+	if r.URL.Path != "/jwks" {
 		idp.mu.Unlock()
 		http.NotFound(w, r)
 		return
 	}
-	idp.mu.Unlock()
-	if gate != nil {
-		<-gate
+	body := idp.jwks
+	if body == nil {
+		body, _ = json.Marshal(map[string]any{"keys": idp.keys})
 	}
+	idp.mu.Unlock()
 	_, _ = w.Write(body)
 }
 
@@ -142,39 +127,60 @@ func (idp *fakeIdP) setStatus(status int) {
 	idp.status = status
 }
 
-func (idp *fakeIdP) setGate(gate chan struct{}) {
-	idp.mu.Lock()
-	defer idp.mu.Unlock()
-	idp.gate = gate
-}
-
-func (idp *fakeIdP) discoveries() int {
-	idp.mu.Lock()
-	defer idp.mu.Unlock()
-	return idp.discovers
-}
-
 func (idp *fakeIdP) authorization() string {
 	idp.mu.Lock()
 	defer idp.mu.Unlock()
 	return idp.lastAuth
 }
 
-// caFile writes the server certificate of a TLS fakeIdP as a PEM file.
-func (idp *fakeIdP) caFile(t *testing.T) string {
-	t.Helper()
-	block := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: idp.srv.Certificate().Raw})
-	return writeFile(t, "ca.pem", string(block))
+// requestCount returns how many requests idp has served.
+func (idp *fakeIdP) requestCount() int {
+	idp.mu.Lock()
+	defer idp.mu.Unlock()
+	return idp.requests
 }
 
-// issuer is a provider found through the discovery document of idp.
-func issuer(id string, idp *fakeIdP) Provider {
-	return Provider{ID: id, Issuer: idp.srv.URL}
+// ignoreAudience is the audience of a provider whose aud is not checked.
+var ignoreAudience = Audience{Mode: Ignore}
+
+// kubernetesOf is the provider kubernetes whose issuer is the address of idp
+// and whose jwksUri is an https address in the cluster, which
+// [serveKubernetes] directs to idp.
+func kubernetesOf(idp *fakeIdP) Provider {
+	return Provider{ID: KubernetesID, Type: Single, Issuer: idp.srv.URL, JWKSURI: "https://kubernetes.default.svc/jwks"}
 }
 
-// direct is a provider whose JWKS is fetched from idp without discovery.
-func direct(id string, idp *fakeIdP) Provider {
-	return Provider{ID: id, JWKSURI: idp.srv.URL + "/jwks"}
+// serveKubernetes has set send each request of its provider kubernetes to srv,
+// with its path, query, and headers, so the jwksUri of that provider may be an
+// https address that srv does not serve.
+func serveKubernetes(set *Set, srv *httptest.Server) {
+	routeKubernetes(set, toServer{srv})
+}
+
+// routeKubernetes has set send each request of its provider kubernetes through
+// transport.
+func routeKubernetes(set *Set, transport http.RoundTripper) {
+	for _, src := range set.single {
+		if src.fetcher.source.Provider.ID == KubernetesID {
+			src.fetcher.client.Transport = transport
+		}
+	}
+}
+
+// toServer is an http.RoundTripper that sends every request to srv over plain
+// http.
+type toServer struct{ srv *httptest.Server }
+
+func (s toServer) RoundTrip(r *http.Request) (*http.Response, error) {
+	r = r.Clone(r.Context())
+	r.URL.Scheme, r.URL.Host = "http", s.srv.Listener.Addr().String()
+	return s.srv.Client().Transport.RoundTrip(r)
+}
+
+// singleOf is a single provider with key id whose issuer is the address of
+// idp and whose JWKS idp serves.
+func singleOf(id string, idp *fakeIdP) Provider {
+	return Provider{ID: id, Type: Single, Issuer: idp.srv.URL, JWKSURI: idp.srv.URL + "/jwks", Audience: ignoreAudience}
 }
 
 // ecJWK returns the public JWK of a new P-256 key with kid, alg ES256, and
@@ -288,33 +294,78 @@ func writeFile(t *testing.T, name, content string) string {
 	return path
 }
 
-// testOptions has Load retry a failed fetch after 10 ms, doubling the pause
-// each time, for up to two seconds.
+// testOptions has Run retry a failed fetch after 10 ms, doubling the pause
+// each time.
 func testOptions() Options {
-	return Options{StartupTimeout: 2 * time.Second, firstRetryDelay: 10 * time.Millisecond}
+	return Options{firstRetryDelay: 10 * time.Millisecond}
 }
 
-// mustLoad loads providers with opts and stops the test when Load fails.
+// mustLoad returns a Set of providers with opts, after one Refresh, and stops
+// the test when Refresh fails.
 func mustLoad(t *testing.T, opts Options, providers ...Provider) *Set {
 	t.Helper()
-	set, err := Load(context.Background(), Config{Providers: providers}, opts)
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+	set := mustNew(t, Config{Providers: providers}, opts)
+	if err := set.Refresh(t.Context()); err != nil {
+		t.Fatalf("Refresh() error = %v", err)
 	}
 	return set
 }
 
-// waitFor polls cond every 5 ms for up to five seconds and fails the test
-// with what when it never holds.
-func waitFor(t *testing.T, what string, cond func() bool) {
+// mustNew returns a Set of cfg with opts and stops the test when New fails.
+func mustNew(t *testing.T, cfg Config, opts Options) *Set {
 	t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
-	for !cond() {
-		if time.Now().After(deadline) {
-			t.Fatalf("timed out after 5s waiting for %s", what)
-		}
-		time.Sleep(5 * time.Millisecond)
+	set, err := New(cfg, opts)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
 	}
+	return set
+}
+
+// loaded reports whether set holds a key under kid for the issuer of p, a
+// single provider.
+func loaded(set *Set, p Provider, kid string) bool {
+	_, err := set.Lookup(Query{Issuer: p.Issuer, KID: kid})
+	return err == nil
+}
+
+// warnRecorder is a Logger that keeps the warnings and the informational
+// messages.
+type warnRecorder struct {
+	mu       sync.Mutex
+	warnings []string
+	infos    []string
+}
+
+func (r *warnRecorder) Infof(format string, args ...any) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.infos = append(r.infos, fmt.Sprintf(format, args...))
+}
+
+func (r *warnRecorder) Warnf(format string, args ...any) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.warnings = append(r.warnings, fmt.Sprintf(format, args...))
+}
+
+// matches reports whether one warning contains every one of parts.
+func (r *warnRecorder) matches(parts ...string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return slices.ContainsFunc(r.warnings, func(w string) bool { return containsAll(w, parts...) })
+}
+
+// count returns how many warnings contain part.
+func (r *warnRecorder) count(part string) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	matched := 0
+	for _, w := range r.warnings {
+		if strings.Contains(w, part) {
+			matched++
+		}
+	}
+	return matched
 }
 
 // containsAll reports whether s contains every one of parts.
