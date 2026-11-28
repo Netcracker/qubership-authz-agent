@@ -59,7 +59,7 @@ const (
 	// ±(2^53 - 1) seconds.
 	CodeFormatInvalid Code = "TOKEN_FORMAT_INVALID"
 	// CodeAlgNotAllowed marks a token whose header names no algorithm, one
-	// that no key accepts, or one that the key its header selects does not
+	// that no key accepts, or one that the key its iss and kid select does not
 	// accept.
 	CodeAlgNotAllowed Code = "TOKEN_ALG_NOT_ALLOWED"
 	// CodeIssuerUnknown marks a token whose iss is missing, is not a string,
@@ -73,7 +73,7 @@ const (
 	// CodeKIDUnknown marks a token whose kid no loaded key of its source has.
 	CodeKIDUnknown Code = "TOKEN_KID_UNKNOWN"
 	// CodeSignatureInvalid marks a token whose signature does not verify
-	// with the key its header selects.
+	// with the key its iss and kid select.
 	CodeSignatureInvalid Code = "TOKEN_SIGNATURE_INVALID"
 	// CodeExpMissing marks a token without an exp claim.
 	CodeExpMissing Code = "TOKEN_EXP_MISSING"
@@ -112,6 +112,20 @@ type Error struct {
 	// Detail describes the fault for a log line. It never contains the
 	// token itself.
 	Detail string
+	// ProviderID is the [keys.Provider.ID] of the provider whose key verified
+	// the signature of the token, as [Token.ProviderID] returns it. It is ""
+	// when Verify refused the token before the signature verified.
+	// [CodeFormatInvalid] is the one code that Verify returns both before and
+	// after the signature verifies: for an exp, nbf, or iat that is not a
+	// number in range it comes after the signature and carries the id, and
+	// for every other fault it comes before. Verify sets the id on a copy of
+	// an error of [Options.Admit], replacing any value Admit set, so Admit
+	// need not set it.
+	ProviderID string
+	// Realm is the name of the realm whose key verified the signature of the
+	// token, as [Token.Realm] returns it. Verify sets it wherever it sets
+	// ProviderID, and it is "" for a token of a single provider.
+	Realm string
 }
 
 func (e *Error) Error() string { return string(e.Code) + ": " + e.Detail }
@@ -120,17 +134,44 @@ func fail(code Code, format string, args ...any) *Error {
 	return &Error{Code: code, Detail: fmt.Sprintf(format, args...)}
 }
 
+// withSource returns a copy of e whose ProviderID is providerID and whose Realm
+// is realm. It copies because [Options.Admit] may return one *Error for many
+// tokens.
+func (e *Error) withSource(providerID, realm string) *Error {
+	named := *e
+	named.ProviderID, named.Realm = providerID, realm
+	return &named
+}
+
+// Kind is the kind of a verified token. The name of a provider is its key in
+// the providers object of a provider file, and the name of the provider whose
+// signing key verified the token decides the kind: no member of the provider,
+// its type included, and no claim of the token changes it.
+type Kind string
+
+// Kinds of a verified token.
+const (
+	// KindIdentityProvider marks a token that a key of the provider
+	// [keys.IdentityProviderID] verified, whether the provider is single or the
+	// key belongs to one of its realms.
+	KindIdentityProvider Kind = "identity-provider"
+	// KindKubernetes marks a token that a key of the provider
+	// [keys.KubernetesID] verified.
+	KindKubernetes Kind = "kubernetes"
+)
+
 // Token is a verified token. Nothing changes a Token after Verify returns
 // it, and every method that returns JSON text returns a copy, so one Token is
 // safe to read from many goroutines, and the cache shares it between the
 // callers that present the same token.
 type Token struct {
-	raw        string
 	payload    []byte
 	claims     map[string]json.RawMessage
 	standard   Standard
 	providerID string
-	kubernetes bool
+	realm      string
+	kind       Kind
+	m2m        bool
 	keyID      string
 	issuer     string
 	expiry     time.Time
@@ -160,9 +201,6 @@ type Standard struct {
 	TenantID json.RawMessage
 }
 
-// Raw returns the token in the compact form Verify received it in.
-func (t *Token) Raw() string { return t.raw }
-
 // Payload returns the JSON text of the payload exactly as the provider
 // signed it, with the text of every number and the order of every key.
 func (t *Token) Payload() json.RawMessage { return bytes.Clone(t.payload) }
@@ -186,15 +224,31 @@ func (t *Token) Standard() Standard {
 	}
 }
 
-// ProviderID returns the [keys.Source.ID] of the source whose key verified the
-// token: the [keys.Provider.ID] of a single provider, or realm/<name> for a
-// realm of a realms provider. A realm name is the token's text, so a
-// caller that logs the id quotes it.
+// ProviderID returns the [keys.Provider.ID] of the provider whose key verified
+// the token, for a token of a realm too.
 func (t *Token) ProviderID() string { return t.providerID }
+
+// Realm returns the name of the realm whose key verified the token, the part of
+// its iss in place of {realm}, percent-decoded, and "" for a token of a single
+// provider. A realm name is the token's text, so a caller that logs it quotes
+// it.
+func (t *Token) Realm() string { return t.realm }
+
+// Kind returns the kind of the token.
+func (t *Token) Kind() Kind { return t.kind }
 
 // Kubernetes reports whether the token is a Kubernetes token: whether the key
 // that verified it is a key of the provider [keys.KubernetesID].
-func (t *Token) Kubernetes() bool { return t.kubernetes }
+func (t *Token) Kubernetes() bool { return t.kind == KindKubernetes }
+
+// IsM2M reports whether the token is a machine-to-machine token. Every token of
+// [KindKubernetes] is one, because [Verifier.Verify] refuses such a token unless
+// its sub starts with system:serviceaccount:, the prefix of the sub that the API
+// server issues for a service account. A token of [KindIdentityProvider] is one
+// when its level claim is m2m or key-manager, compared without regard to case,
+// or when its realm_access.roles array holds the string ROLE_M2M, compared
+// exactly. A level or a role that is not a string does not make a token M2M.
+func (t *Token) IsM2M() bool { return t.m2m }
 
 // KeyID returns the kid of the key that verified the token.
 func (t *Token) KeyID() string { return t.keyID }
@@ -237,11 +291,12 @@ type Options struct {
 	CacheSize int
 	// Admit, when set, runs on every token Verify is about to return,
 	// verified now or taken from the cache, and the *Error it returns
-	// refuses the token. It holds the checks whose answer can change while
-	// a token stays cached, such as the namespaces a Kubernetes token may
-	// come from. Without Admit, Verify refuses every token for which
-	// [Token.Kubernetes] reports true, since nothing then checks its
-	// namespace.
+	// refuses the token: Verify returns a copy of that *Error with
+	// [Error.ProviderID] and [Error.Realm] set. It holds the checks whose
+	// answer can change while a token stays cached, such as the namespaces a
+	// Kubernetes token may come from. Without Admit, Verify refuses every
+	// token for which [Token.Kubernetes] reports true, since nothing then
+	// checks its namespace.
 	Admit func(*Token) *Error
 
 	// now is the clock the claims are checked against.
@@ -313,19 +368,18 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	}
 	if v.opts.Admit == nil {
 		if tok.Kubernetes() {
-			return nil, fail(CodeNamespaceNotAllowed, "a Kubernetes token of provider %q needs a namespace check, and the verifier has none", tok.ProviderID())
+			return nil, fail(CodeNamespaceNotAllowed, "a Kubernetes token of provider %q needs a namespace check, and the verifier has none", tok.ProviderID()).withSource(tok.providerID, tok.realm)
 		}
 		return tok, nil
 	}
 	if err := v.opts.Admit(tok); err != nil {
-		return nil, err
+		return nil, err.withSource(tok.providerID, tok.realm)
 	}
 	return tok, nil
 }
 
 // check verifies raw, whose SHA-256 digest is digest, and caches the token
-// it returns. It reads the clock for exp, nbf, and iat after the key is
-// found, because finding the key can wait for a reload.
+// it returns.
 func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]byte) (*Token, error) {
 	alg, query, claims, err := parse(raw)
 	if err != nil {
@@ -335,35 +389,13 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	if err != nil {
 		return nil, lookupFailure(query, claims, err)
 	}
-	if !key.Allows(alg) {
-		return nil, fail(CodeAlgNotAllowed, "key %s of provider %q does not accept %s", short(key.ID), key.Source.ID(), alg)
+	payload, refused := checkSignature(raw, alg, query.Issuer, key)
+	if refused != nil {
+		return nil, refused
 	}
-	algorithm, _ := jwa.LookupSignatureAlgorithm(alg)
-	payload, err := jws.Verify([]byte(raw), jws.WithKey(algorithm, key.JWK), jws.WithCompact(), jws.WithCritValidation(true))
-	if err != nil {
-		return nil, fail(CodeSignatureInvalid, "signature does not verify with key %s of provider %q", short(key.ID), key.Source.ID())
-	}
-	if err := checkAudience(claims, key.Source); err != nil {
-		return nil, err
-	}
-	expiry, err := checkTimes(claims, key.Source, v.opts.now(), v.opts.Leeway)
-	if err != nil {
-		return nil, err
-	}
-	if err := checkSubject(claims, key.Source); err != nil {
-		return nil, err
-	}
-	tok := &Token{
-		raw:        raw,
-		payload:    payload,
-		claims:     claims,
-		standard:   standardOf(claims),
-		providerID: key.Source.ID(),
-		kubernetes: key.Source.Kubernetes(),
-		keyID:      key.ID,
-		issuer:     query.Issuer,
-		expiry:     expiry,
-		key:        key.JWK,
+	tok, refused := v.checkClaims(payload, query, claims, key)
+	if refused != nil {
+		return nil, refused.withSource(key.Source.Provider.ID, key.Source.Realm)
 	}
 	if v.cache != nil {
 		v.cache.put(digest, tok)
@@ -371,12 +403,61 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	return tok, nil
 }
 
+// checkSignature returns the signed payload of raw when key, the one that the
+// iss and the kid of raw selected, accepts alg and verifies its signature. A
+// refusal quotes iss, the issuer that raw claims, and names no source, because
+// such a token only claims to come from the source of key.
+func checkSignature(raw, alg, iss string, key keys.Key) ([]byte, *Error) {
+	if !key.Allows(alg) {
+		return nil, fail(CodeAlgNotAllowed, "key %s of iss %s does not accept %s", short(key.ID), shortIssuer(iss), alg)
+	}
+	algorithm, _ := jwa.LookupSignatureAlgorithm(alg)
+	payload, err := jws.Verify([]byte(raw), jws.WithKey(algorithm, key.JWK), jws.WithCompact(), jws.WithCritValidation(true))
+	if err != nil {
+		return nil, fail(CodeSignatureInvalid, "signature does not verify with key %s of iss %s", short(key.ID), shortIssuer(iss))
+	}
+	return payload, nil
+}
+
+// checkClaims runs the checks that follow the signature and returns the verified
+// token, or the refusal of the first check that fails; [Verifier.check] sets
+// [Error.ProviderID] and [Error.Realm] on that refusal. It reads the clock for
+// exp, nbf, and iat after the key is found, because finding the key can wait
+// for a reload.
+func (v *Verifier) checkClaims(payload []byte, query keys.Query, claims map[string]json.RawMessage, key keys.Key) (*Token, *Error) {
+	if err := checkAudience(claims, key.Source); err != nil {
+		return nil, err
+	}
+	expiry, refused := checkTimes(claims, key.Source, v.opts.now(), v.opts.Leeway)
+	if refused != nil {
+		return nil, refused
+	}
+	if err := checkSubject(claims, key.Source); err != nil {
+		return nil, err
+	}
+	standard := standardOf(claims)
+	kind := kindOf(key.Source)
+	return &Token{
+		payload:    payload,
+		claims:     claims,
+		standard:   standard,
+		providerID: key.Source.Provider.ID,
+		realm:      key.Source.Realm,
+		kind:       kind,
+		m2m:        isM2M(kind, standard),
+		keyID:      key.ID,
+		issuer:     query.Issuer,
+		expiry:     expiry,
+		key:        key.JWK,
+	}, nil
+}
+
 // lookupFailure returns the [*Error] for err, the error a [KeyFinder] returned
 // for q, the query of a token with claims. Each [Error.Detail] quotes the
-// sender's text through [cut] or [short]. The detail of [CodeIssuerUnknown]
-// quotes the first maxIssuerBytes bytes of iss, so a reader can find the byte
-// where the iss departs from a configured issuer. For a token without an iss
-// that is a string, the detail says so.
+// sender's text through [cut], [short], or [shortIssuer]. The detail of
+// [CodeIssuerUnknown] quotes the first maxIssuerBytes bytes of iss, so a
+// reader can find the byte where the iss departs from a configured issuer.
+// For a token without an iss that is a string, the detail says so.
 func lookupFailure(q keys.Query, claims map[string]json.RawMessage, err error) *Error {
 	if errors.Is(err, keys.ErrIssuerUnknown) {
 		if !isString(claims["iss"]) {
@@ -384,7 +465,7 @@ func lookupFailure(q keys.Query, claims map[string]json.RawMessage, err error) *
 		}
 		return fail(CodeIssuerUnknown, "iss %s matches no trusted provider", cut(q.Issuer, maxIssuerBytes))
 	}
-	return fail(CodeKIDUnknown, "no key of iss %s has kid %s", short(q.Issuer), short(q.KID))
+	return fail(CodeKIDUnknown, "no key of iss %s has kid %s", shortIssuer(q.Issuer), short(q.KID))
 }
 
 // cached returns the cached token for digest when it has not expired and its
@@ -543,6 +624,20 @@ func cut(s string, limit int) string {
 func isString(raw json.RawMessage) bool {
 	_, ok := decode(raw).(string)
 	return ok
+}
+
+// shortIssuer quotes iss for a detail, because iss is the sender's text. An iss
+// of at most 96 bytes is quoted whole, and a longer one keeps its first 32
+// bytes and its last 64, each quoted, with ... between them. Where {realm} is
+// the last segment of the issuerTemplate of a provider, as for a Keycloak, the
+// last 64 bytes hold the whole name of a realm that the iss spells in at most
+// 64 bytes.
+func shortIssuer(iss string) string {
+	const head, tail = 32, 64
+	if len(iss) <= head+tail {
+		return fmt.Sprintf("%q", iss)
+	}
+	return fmt.Sprintf("%q...%q", iss[:head], iss[len(iss)-tail:])
 }
 
 // shortList quotes the first three of values as [short] does and counts the

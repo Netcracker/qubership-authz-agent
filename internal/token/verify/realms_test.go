@@ -66,6 +66,44 @@ func keycloakOf(t *testing.T, realms map[string][]*signer, thumbprints map[strin
 	}
 }
 
+// The provider identity-provider is either a realms or a single provider,
+// never both in one configuration, so each row builds a Set of its own on one
+// server.
+func TestVerify_AppliesTheM2MTestToEveryIdentityProviderToken(t *testing.T) {
+	realmB := newSigner(t, "k1", providerOf("unused"))
+	realms := keycloakOf(t, map[string][]*signer{"b": {realmB}}, map[string]string{"k1": "dGh1bWI"})
+	const iss = "https://public.example" + realmsPath + "b"
+	single := realms
+	single.Type, single.Issuer, single.IssuerTemplate = keys.Single, iss, ""
+	single.JWKSURI = strings.Replace(realms.JWKSURI, "{realm}", "b", 1)
+	tests := []struct {
+		name     string
+		provider keys.Provider
+	}{
+		{"realm b of the realms provider", realms},
+		{"single provider with the iss of realm b", single},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			set, err := keys.New(keys.Config{Providers: []keys.Provider{tt.provider}}, keys.Options{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			v, _ := newVerifier(set)
+			tok, err := v.Verify(t.Context(), realmB.sign(t, claimsAt(start, map[string]any{"iss": iss, "level": "m2m"})))
+			if err != nil {
+				t.Fatalf("Verify() error = %v", err)
+			}
+			if got := tok.Kind(); got != KindIdentityProvider {
+				t.Errorf("Kind() = %q, want %q", got, KindIdentityProvider)
+			}
+			if !tok.IsM2M() {
+				t.Error("IsM2M() = false, want true")
+			}
+		})
+	}
+}
+
 // These tokens go through a real [keys.Set], because the choice of the key is
 // the behavior: which issuer a token names, and which key of that issuer its
 // header selects. Realms a and b publish the same kid and have one key each, so
@@ -134,6 +172,66 @@ func TestVerify_ChecksATokenAgainstTheKeyOfTheRealmItNames(t *testing.T) {
 			}
 			if tok != nil && tok.KeyID() != tt.wantKID {
 				t.Errorf("KeyID() = %q, want %q", tok.KeyID(), tt.wantKID)
+			}
+		})
+	}
+}
+
+// The issuerTemplate of the provider ends with {realm}, after 61 bytes of the
+// address of a Keycloak inside the cluster, so the name of the realm ends the
+// iss. The iss of a token that matches no provider is the sender's text
+// throughout, and its detail keeps the first 200 bytes.
+func TestVerify_CutsALongIssInTheDetail(t *testing.T) {
+	realm := newSigner(t, "k1", providerOf("unused"))
+	attacker := newSigner(t, "k1", providerOf("unused"))
+	unknownKID := newSigner(t, "k9", providerOf("unused"))
+	provider := keycloakOf(t, map[string][]*signer{
+		"tenant-a":                             {realm},
+		"tenant-0123456789abcdefghijklmnopqr":  {realm},
+		"tenant-0123456789abcdefghijklmnopqrs": {realm},
+	}, map[string]string{"k1": "dGh1bWI"})
+	const keycloakInCluster = "https://keycloak.security.svc.cluster.local:8443" + realmsPath
+	provider.IssuerTemplate = keycloakInCluster + "{realm}"
+	set, err := keys.New(keys.Config{Providers: []keys.Provider{provider}}, keys.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	const long = keycloakInCluster + "tenant-0123456789abcdefghijklmnopqrs"
+	const longQuoted = `"https://keycloak.security.svc.cl"..."ster.local:8443/auth/realms/tenant-0123456789abcdefghijklmnopqrs"`
+	tests := []struct {
+		name    string
+		raw     string
+		want    Code
+		wantIss string
+	}{
+		{
+			"signature, iss of a short realm name",
+			attacker.sign(t, claimsAt(start, map[string]any{"iss": keycloakInCluster + "tenant-a"})),
+			CodeSignatureInvalid, `"https://keycloak.security.svc.cluster.local:8443/auth/realms/tenant-a"`,
+		},
+		{
+			"signature, iss of 96 bytes",
+			attacker.sign(t, claimsAt(start, map[string]any{"iss": keycloakInCluster + "tenant-0123456789abcdefghijklmnopqr"})),
+			CodeSignatureInvalid, `"https://keycloak.security.svc.cluster.local:8443/auth/realms/tenant-0123456789abcdefghijklmnopqr"`,
+		},
+		{"signature, iss of 97 bytes", attacker.sign(t, claimsAt(start, map[string]any{"iss": long})), CodeSignatureInvalid, longQuoted},
+		{"alg, iss of 97 bytes", unsigned(t, map[string]any{"alg": "RS256", "kid": "k1"}, claimsAt(start, map[string]any{"iss": long})), CodeAlgNotAllowed, longQuoted},
+		{"kid, iss of 97 bytes", unknownKID.sign(t, claimsAt(start, map[string]any{"iss": long})), CodeKIDUnknown, longQuoted},
+		{
+			"iss at a long forged host, cut to its first 200 bytes",
+			realm.sign(t, claimsAt(start, map[string]any{"iss": "https://" + strings.Repeat("forged.", 40) + "example" + realmsPath + "tenant-a"})),
+			CodeIssuerUnknown, `"https://` + strings.Repeat("forged.", 27) + `for"...`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(set)
+			_, err := v.Verify(t.Context(), tt.raw)
+			if codeOf(err) != tt.want {
+				t.Fatalf("Verify() error = %v, want code %q", err, tt.want)
+			}
+			if !strings.Contains(err.Error(), "iss "+tt.wantIss) {
+				t.Errorf("Verify() error = %q, want it to quote the iss as %s", err, tt.wantIss)
 			}
 		})
 	}
