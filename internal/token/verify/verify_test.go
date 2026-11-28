@@ -60,6 +60,29 @@ func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
 	}
 }
 
+func TestToken_KubernetesHoldsOnlyForAKeyOfTheProviderKubernetes(t *testing.T) {
+	tests := []struct {
+		name  string
+		id    string
+		realm string
+		want  bool
+	}{
+		{"kubernetes", keys.KubernetesID, "", true},
+		{"single identity-provider", keys.IdentityProviderID, "", false},
+		{"realm of identity-provider", keys.IdentityProviderID, "tenant-1", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", providerOf(tt.id))
+			s.key.Source.Realm = tt.realm
+			tok := mustVerify(t, newAdmittingVerifier(newFakeKeys(s)), s.sign(t, claimsAt(start, map[string]any{"sub": serviceAccountSub})))
+			if got := tok.Kubernetes(); got != tt.want {
+				t.Errorf("Kubernetes() = %t, want %t", got, tt.want)
+			}
+		})
+	}
+}
+
 // verifyPayload verifies a token of testIssuer whose payload is the members of
 // the JSON object members plus an iat and an exp, signed by a key of a
 // provider that skips the aud check, at start.
@@ -410,11 +433,13 @@ func TestVerify_AcceptsATokenWhoseKeyAReloadBringsWhileItsContextLasts(t *testin
 func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 	long := strings.Repeat("x", 1000)
 	s := newSigner(t, "k1", matchAny("account"))
+	kubernetes := newSigner(t, "k2", providerOf(keys.KubernetesID))
 	tests := []struct {
 		name string
 		raw  string
 		want Code
 	}{
+		{"sub", kubernetes.sign(t, claimsAt(start, map[string]any{"sub": long})), CodeSubjectInvalid},
 		{"kid", unsigned(t, map[string]any{"alg": "ES256", "kid": long}, claimsAt(start, nil)), CodeKIDUnknown},
 		{"iss", unsigned(t, map[string]any{"alg": "ES256", "kid": "k1"}, claimsAt(start, map[string]any{"iss": long})), CodeIssuerUnknown},
 		{"alg", unsigned(t, map[string]any{"alg": long, "kid": "k1"}, claimsAt(start, nil)), CodeAlgNotAllowed},
@@ -423,7 +448,7 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v, _ := newVerifier(newFakeKeys(s))
+			v := newAdmittingVerifier(newFakeKeys(s, kubernetes))
 			_, err := v.Verify(t.Context(), tt.raw)
 			if codeOf(err) != tt.want {
 				t.Fatalf("Verify() error = %v, want code %s", err, tt.want)
@@ -587,14 +612,14 @@ func TestVerify_RefusesAnIATInTheFutureOnlyForAKubernetesToken(t *testing.T) {
 		{"single identity-provider, iat past the leeway", keys.IdentityProviderID, "", map[string]any{"iat": ahead}, ""},
 		{"single identity-provider with the claims of a service account, iat past the leeway", keys.IdentityProviderID, "",
 			map[string]any{"iat": ahead, "sub": "system:serviceaccount:ns-1:sa-1", "kubernetes.io": map[string]any{"namespace": "ns-1"}}, ""},
-		{"kubernetes, iat past the leeway", keys.KubernetesID, "", map[string]any{"iat": ahead}, CodeIATInvalid},
-		{"kubernetes, iat exactly the leeway ahead", keys.KubernetesID, "", map[string]any{"iat": start.Add(DefaultLeeway).Unix()}, ""},
+		{"kubernetes, iat past the leeway", keys.KubernetesID, "", map[string]any{"iat": ahead, "sub": serviceAccountSub}, CodeIATInvalid},
+		{"kubernetes, iat exactly the leeway ahead", keys.KubernetesID, "", map[string]any{"iat": start.Add(DefaultLeeway).Unix(), "sub": serviceAccountSub}, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newSigner(t, "k1", providerOf(tt.id))
 			s.key.Source.Realm = tt.realm
-			v, _ := newVerifier(newFakeKeys(s))
+			v := newAdmittingVerifier(newFakeKeys(s))
 			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, tt.fields)))
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
@@ -628,8 +653,116 @@ func TestVerify_RefusesATokenThatExpiresBeforeItIsIssued(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newSigner(t, "k1", tt.provider)
 			v, _ := newVerifier(newFakeKeys(s))
-			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"exp": tt.exp.Unix(), "iat": tt.iat.Unix()})))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"exp": tt.exp.Unix(), "iat": tt.iat.Unix(), "sub": serviceAccountSub})))
 			if codeOf(err) != tt.want {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
+	}
+}
+
+func TestVerify_RefusesAKubernetesTokenWhoseSubLacksTheServiceAccountPrefix(t *testing.T) {
+	kubernetes := providerOf(keys.KubernetesID)
+	tests := []struct {
+		name     string
+		provider *keys.Provider
+		sub      any
+		want     Code
+	}{
+		{"service account", kubernetes, serviceAccountSub, ""},
+		{"the prefix alone", kubernetes, "system:serviceaccount:", ""},
+		{"the prefix without its colon", kubernetes, "system:serviceaccount", CodeSubjectInvalid},
+		{"the group of the service accounts of a namespace", kubernetes, "system:serviceaccounts:ns", CodeSubjectInvalid},
+		{"another name", kubernetes, "user-1", CodeSubjectInvalid},
+		{"the prefix after other text", kubernetes, "user:system:serviceaccount:ns:app", CodeSubjectInvalid},
+		{"the prefix in another case", kubernetes, "System:ServiceAccount:ns:app", CodeSubjectInvalid},
+		{"the prefix cut short", kubernetes, "system:serviceaccoun", CodeSubjectInvalid},
+		{"sub that is a number", kubernetes, 5, CodeSubjectInvalid},
+		{"no sub", kubernetes, nil, CodeSubjectInvalid},
+		{"another name in a token of identity-provider", providerOf(keys.IdentityProviderID), "user-1", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", tt.provider)
+			v := newAdmittingVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"sub": tt.sub})))
+			if codeOf(err) != tt.want {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
+	}
+}
+
+func TestVerify_NamesWhyItRefusesTheSubOfAKubernetesToken(t *testing.T) {
+	s := newSigner(t, "k1", providerOf(keys.KubernetesID))
+	tests := []struct {
+		name string
+		sub  any
+		want string
+	}{
+		{"no sub", nil, `token has no sub claim, and provider "kubernetes" issues only service account tokens, whose sub starts with system:serviceaccount:`},
+		{"sub that is a number", 5, `claim sub is not a string, and provider "kubernetes" issues only service account tokens, whose sub starts with system:serviceaccount:`},
+		{"sub that is null", json.RawMessage("null"), `claim sub is not a string, and provider "kubernetes" issues only service account tokens, whose sub starts with system:serviceaccount:`},
+		{"sub without the prefix", "user-1", `sub "user-1" does not start with system:serviceaccount:, and provider "kubernetes" issues only service account tokens`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := newAdmittingVerifier(newFakeKeys(s)).Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"sub": tt.sub})))
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Errorf("Verify() error = %v, want one that contains %q", err, tt.want)
+			}
+		})
+	}
+}
+
+// A token refused for its sub stays out of the cache, so the second
+// presentation is checked again rather than served as a verified token.
+func TestVerify_RefusesTheSameKubernetesTokenForItsSubEachTime(t *testing.T) {
+	s := newSigner(t, "k1", providerOf(keys.KubernetesID))
+	v := newAdmittingVerifier(newFakeKeys(s))
+	raw := s.sign(t, claimsAt(start, map[string]any{"sub": "user-1"}))
+	for _, call := range []string{"first", "second"} {
+		if _, err := v.Verify(t.Context(), raw); codeOf(err) != CodeSubjectInvalid {
+			t.Errorf("Verify(), %s call: error = %v, want code %s", call, err, CodeSubjectInvalid)
+		}
+	}
+}
+
+// The sub is checked after the lifetime, so a token that also lacks exp gets
+// the code of exp.
+func TestVerify_RefusesOnTheLifetimeBeforeTheSub(t *testing.T) {
+	s := newSigner(t, "k1", providerOf(keys.KubernetesID))
+	v := newAdmittingVerifier(newFakeKeys(s))
+	_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"sub": "user-1", "exp": nil})))
+	if codeOf(err) != CodeExpMissing {
+		t.Errorf("Verify() error = %v, want code %s", err, CodeExpMissing)
+	}
+}
+
+// Every token holds the claim kubernetes.io. The verifier has no Admit, so a
+// token of the provider kubernetes whose sub passes is refused by the
+// namespace check.
+func TestVerify_RunsTheKubernetesChecksOnlyOnATokenOfTheProviderKubernetes(t *testing.T) {
+	tests := []struct {
+		name  string
+		id    string
+		realm string
+		sub   string
+		want  Code
+	}{
+		{"single identity-provider", keys.IdentityProviderID, "", "user-1", ""},
+		{"realm of identity-provider", keys.IdentityProviderID, "tenant-1", "user-1", ""},
+		{"kubernetes, sub of a user", keys.KubernetesID, "", "user-1", CodeSubjectInvalid},
+		{"kubernetes, sub of a service account", keys.KubernetesID, "", serviceAccountSub, CodeNamespaceNotAllowed},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", providerOf(tt.id))
+			s.key.Source.Realm = tt.realm
+			v, _ := newVerifier(newFakeKeys(s))
+			claims := claimsAt(start, map[string]any{"sub": tt.sub, "kubernetes.io": map[string]any{"namespace": "ns"}})
+			_, err := v.Verify(t.Context(), s.sign(t, claims))
+			if got := codeOf(err); got != tt.want || (tt.want == "" && err != nil) {
 				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
 			}
 		})
@@ -791,8 +924,8 @@ func TestVerify_AcceptsAKubernetesTokenOnlyWithNetcrackerInAud(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newSigner(t, "k1", tt.provider)
-			v, _ := newVerifier(newFakeKeys(s))
-			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"aud": tt.aud})))
+			v := newAdmittingVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"aud": tt.aud, "sub": serviceAccountSub})))
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() of a Kubernetes token with aud %v error = %v, want code %q", tt.aud, err, tt.want)
 			}
@@ -1017,5 +1150,36 @@ func TestVerify_RunsNoAdmitForARefusedToken(t *testing.T) {
 	}
 	if calls != 0 {
 		t.Errorf("Admit calls = %d, want 0", calls)
+	}
+}
+
+// Each token is presented twice, so the second call takes it from the cache.
+func TestVerify_RefusesAKubernetesTokenWithoutAdmit(t *testing.T) {
+	tests := []struct {
+		name   string
+		id     string
+		want   Code
+		detail string
+	}{
+		{"kubernetes", keys.KubernetesID, CodeNamespaceNotAllowed, `a Kubernetes token of provider "kubernetes" needs a namespace check, and the verifier has none`},
+		{"identity-provider", keys.IdentityProviderID, "", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", providerOf(tt.id))
+			v, _ := newVerifier(newFakeKeys(s))
+			raw := s.sign(t, claimsAt(start, map[string]any{"sub": serviceAccountSub}))
+			for _, call := range []string{"first", "second, from the cache"} {
+				_, err := v.Verify(t.Context(), raw)
+				var detail string
+				var refused *Error
+				if errors.As(err, &refused) {
+					detail = refused.Detail
+				}
+				if got := codeOf(err); got != tt.want || detail != tt.detail || (tt.want == "" && err != nil) {
+					t.Errorf("Verify(), %s call: error = %v, want code %q with the Detail %q", call, err, tt.want, tt.detail)
+				}
+			}
+		})
 	}
 }

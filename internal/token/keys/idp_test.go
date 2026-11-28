@@ -368,6 +368,14 @@ func (r *warnRecorder) count(part string) int {
 	return matched
 }
 
+// errorText returns the text of err, and "" for nil.
+func errorText(err error) string {
+	if err == nil {
+		return ""
+	}
+	return err.Error()
+}
+
 // containsAll reports whether s contains every one of parts.
 func containsAll(s string, parts ...string) bool {
 	for _, part := range parts {

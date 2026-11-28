@@ -700,17 +700,37 @@ func TestReadDir_AcceptsAURLOfPrintableASCIIWithTheSchemeInUpperOrLowerCase(t *t
 	}{
 		{"jwksUri with the scheme in upper case", KubernetesID, with(k8s, "jwksUri", "HTTPS://kubernetes.default.svc/openid/v1/jwks")},
 		{"realms jwksUri with the scheme in mixed case", IdentityProviderID, with(idp, "jwksUri", "Http://identity-provider:8080/auth/realms/{realm}/protocol/openid-connect/certs")},
-		{"jwksUri with ! and ~", KubernetesID, with(k8s, "jwksUri", "https://k8s/!openid~/jwks")},
+		{"jwksUri with ! and ~", KubernetesID, with(k8s, "jwksUri", "https://kubernetes.default.svc/!openid~/jwks")},
 		{"issuerTemplate with ! and ~", IdentityProviderID, with(idp, "issuerTemplate", "http://kc/!auth~/realms/{realm}")},
 		{"issuer with ! and ~ and a scheme other than http", IdentityProviderID, with(single, "issuer", "urn+x://kc/!a~")},
-		{"jwksUri with a query", KubernetesID, with(k8s, "jwksUri", "https://k8s/openid/v1/jwks?format=jwks")},
-		{"jwksUri with a percent-encoded space, brace, hash, and no-break space", KubernetesID, with(k8s, "jwksUri", "https://k8s/a%20b%7Bc%7D%23d%C2%A0/jwks")},
+		{"jwksUri with a query", KubernetesID, with(k8s, "jwksUri", "https://kubernetes.default.svc/openid/v1/jwks?format=jwks")},
+		{"jwksUri with a percent-encoded space, brace, hash, and no-break space", KubernetesID, with(k8s, "jwksUri", "https://kubernetes.default.svc/a%20b%7Bc%7D%23d%C2%A0/jwks")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := providerDir(t, map[string]string{"provider.json": providerFile(t, tt.key, tt.provider)})
 			if _, err := ReadDir(dir); err != nil {
 				t.Errorf("ReadDir() of %s error = %v, want none", providerFile(t, tt.key, tt.provider), err)
+			}
+		})
+	}
+}
+
+func TestReadDir_AcceptsAnIdentityProviderAtAnAddressOfTheAPIServer(t *testing.T) {
+	idp, single := identityProvider(), singleIdentityProvider()
+	tests := []struct {
+		name     string
+		provider map[string]any
+	}{
+		{"issuerTemplate on kubernetes.default.svc", with(idp, "issuerTemplate", "https://kubernetes.default.svc/auth/realms/{realm}")},
+		{"issuer on kubernetes.default.svc.cluster.local with a port", with(single, "issuer", "https://kubernetes.default.svc.cluster.local:443")},
+		{"jwksUri on kubernetes.default.svc.cluster.local", with(idp, "jwksUri", "https://kubernetes.default.svc.cluster.local/auth/realms/{realm}/certs")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := providerDir(t, map[string]string{"idp.json": providerFile(t, IdentityProviderID, tt.provider)})
+			if _, err := ReadDir(dir); err != nil {
+				t.Errorf("ReadDir() error = %v, want none", err)
 			}
 		})
 	}
@@ -775,8 +795,8 @@ func TestReadDir_RefusesTwoSingleProvidersWithOneIssuer(t *testing.T) {
 		name, idp, k8s string
 		overlaps       bool
 	}{
-		{"one URL", "https://kubernetes.default.svc.cluster.local", "https://kubernetes.default.svc.cluster.local", true},
-		{"two URLs that differ in case", "https://Kubernetes.default.svc.cluster.local", "https://kubernetes.default.svc.cluster.local", false},
+		{"one URL", "https://issuer.example", "https://issuer.example", true},
+		{"two URLs that differ in case", "https://Issuer.example", "https://issuer.example", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -839,6 +859,81 @@ func TestNew_RefusesAProviderBuiltWithAValueThatBreaksARule(t *testing.T) {
 				t.Errorf("New() error = %v, want an error that starts with %q", err, tt.want)
 			}
 		})
+	}
+}
+
+// Every row of the table sets jwksBearerTokenFile, and the subtest after the
+// table does not. A row whose error is empty is accepted.
+func TestReadDir_RefusesAJWKSBearerTokenFileForAJWKSURIOutsideTheCluster(t *testing.T) {
+	k8s := kubernetesProvider()
+	outside := func(uri string) string {
+		return `jwksUri "` + uri + `" is outside the cluster, and jwksBearerTokenFile would send it the token in /var/run/secrets/tokens/kubernetes/token`
+	}
+	tests := []struct {
+		name    string
+		jwksURI string
+		want    string
+	}{
+		{"kubernetes.default.svc", "https://kubernetes.default.svc/openid/v1/jwks", ""},
+		{"kubernetes.default.svc.cluster.local with a port", "https://kubernetes.default.svc.cluster.local:443/openid/v1/jwks", ""},
+		{"in-cluster host in another case", "https://Kubernetes.Default.SVC/openid/v1/jwks", ""},
+		{"in-cluster host with a trailing dot", "https://kubernetes.default.svc./openid/v1/jwks", outside("https://kubernetes.default.svc./openid/v1/jwks")},
+		{"host that starts with an in-cluster host", "https://kubernetes.default.svc.example/openid/v1/jwks", outside("https://kubernetes.default.svc.example/openid/v1/jwks")},
+		{"address outside the cluster", "https://oidc.example/openid/v1/jwks", outside("https://oidc.example/openid/v1/jwks")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ReadDir(providerDir(t, map[string]string{"k8s.json": providerFile(t, KubernetesID, with(k8s, "jwksUri", tt.jwksURI))}))
+			if got := errorText(err); !strings.Contains(got, tt.want) || (tt.want == "") != (err == nil) {
+				t.Errorf("ReadDir() with jwksUri %q error = %v, want %q", tt.jwksURI, err, tt.want)
+			}
+		})
+	}
+	t.Run("address outside the cluster without jwksBearerTokenFile", func(t *testing.T) {
+		provider := with(with(k8s, "jwksBearerTokenFile", nil), "jwksUri", "https://oidc.example/openid/v1/jwks")
+		if _, err := ReadDir(providerDir(t, map[string]string{"k8s.json": providerFile(t, KubernetesID, provider)})); err != nil {
+			t.Errorf("ReadDir() error = %v, want none", err)
+		}
+	})
+}
+
+// The provider identity-provider, which sets no jwksBearerTokenFile, comes
+// first, as the file names order the two in a provider directory.
+func TestNew_RefusesAJWKSBearerTokenFileItCannotRead(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "token")
+	blank := writeFile(t, "token", " \n")
+	tests := []struct {
+		name, file string
+		want       []string
+	}{
+		{"missing file", missing, []string{`provider "kubernetes": jwksBearerTokenFile: open ` + missing, "mount the token for the API server at that path"}},
+		{"file of white space", blank, []string{`provider "kubernetes": jwksBearerTokenFile: ` + blank + " is empty"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			provider := kubernetesOf(newIdP(t))
+			provider.JWKSBearerTokenFile = tt.file
+			_, err := New(Config{Providers: []Provider{keycloakProvider(), provider}}, testOptions())
+			if err == nil || !containsAll(err.Error(), tt.want...) {
+				t.Errorf("New() error = %v, want an error that contains %q", err, tt.want)
+			}
+		})
+	}
+	t.Run("file that holds a token", func(t *testing.T) {
+		provider := kubernetesOf(newIdP(t))
+		provider.JWKSBearerTokenFile = writeFile(t, "token", "sa-token")
+		if _, err := New(Config{Providers: []Provider{keycloakProvider(), provider}}, testOptions()); err != nil {
+			t.Errorf("New() error = %v, want none", err)
+		}
+	})
+}
+
+func TestNew_WrapsTheErrorOfAJWKSBearerTokenFileItCannotOpen(t *testing.T) {
+	provider := kubernetesOf(newIdP(t))
+	provider.JWKSBearerTokenFile = filepath.Join(t.TempDir(), "token")
+	_, err := New(Config{Providers: []Provider{provider}}, testOptions())
+	if !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("New() error = %v, want one that wraps fs.ErrNotExist", err)
 	}
 }
 
