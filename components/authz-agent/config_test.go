@@ -48,13 +48,14 @@ func TestLoadConfig_EnvironmentOnly(t *testing.T) {
 	}
 }
 
-// TestLoadConfig_LoopsOnTheServicesOwn: on its own the service runs every
-// loop from its default place, and each key of the loops is read with the
-// spellings the pap-client accepted.
+// TestLoadConfig_LoopsOnTheServicesOwn: on its own the service takes its
+// files from their default paths and leaves the address of every service
+// it calls empty, which keeps the policy pull and the realm lookup off;
+// each key of the loops is read with the spellings the pap-client accepted.
 func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	cfg := loadConfig(fromMap(map[string]string{}))
 	wantAuthn := authn.Config{File: "/etc/authz/trusted-providers.json", Required: true, HTTPTimeout: 5 * time.Second, HTTPRetries: 3,
-		TenantManagerURL: "http://tenant-manager:8080", ReloadInterval: 30 * time.Second}
+		TenantManagerURL: "", ReloadInterval: 30 * time.Second}
 	if cfg.Authn != wantAuthn {
 		t.Errorf("default trusted providers = %+v, want %+v", cfg.Authn, wantAuthn)
 	}
@@ -73,7 +74,7 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		"authz.jwks.http.timeout":                 "2",
 		"authz.jwks.http.retries":                 "20",
 		"authz.trusted.providers.reload.interval": "0",
-		"authz.tenant.manager.url":                "",
+		"authz.tenant.manager.url":                "http://tm:8080",
 		"authz.pap.client.source.url":             "http://policy-admin:18090/",
 		"authz.pap.client.pull.interval":          "2",
 		"authz.pap.client.token.file":             "/t",
@@ -83,7 +84,7 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		"authz.m2m.renew.before.seconds":          "30",
 	}))
 	if cfg.Authn.File != "/p.json" || cfg.Authn.Required || cfg.Authn.HTTPTimeout != 2*time.Second || cfg.Authn.HTTPRetries != 20 ||
-		cfg.Authn.ReloadInterval != 0 || cfg.Authn.TenantManagerURL != "" {
+		cfg.Authn.ReloadInterval != 0 || cfg.Authn.TenantManagerURL != "http://tm:8080" {
 		t.Errorf("trusted providers from env = %+v", cfg.Authn)
 	}
 	if cfg.Pull.SourceURL != "http://policy-admin:18090" || cfg.Pull.Interval != 2*time.Second {
@@ -92,6 +93,16 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	if cfg.M2M.TokenURL != "http://idp/token" || cfg.M2M.ClientIDFile != "/id" || cfg.M2M.ClientSecretFile != "/secret" ||
 		cfg.M2M.RenewBefore != 30*time.Second || cfg.M2M.TokenFile != "/t" {
 		t.Errorf("m2m from env = %+v", cfg.M2M)
+	}
+}
+
+// TestLoadConfig_EmptyProvidersFileStaysEmpty: an empty
+// AUTHZ_TRUSTED_PROVIDERS_FILE runs the service without trusted providers,
+// so loadConfig keeps it empty rather than taking the default path.
+func TestLoadConfig_EmptyProvidersFileStaysEmpty(t *testing.T) {
+	cfg := loadConfig(fromMap(map[string]string{"authz.trusted.providers.file": ""}))
+	if cfg.Authn.File != "" {
+		t.Errorf("loadConfig() with authz.trusted.providers.file empty: Authn.File = %q, want empty", cfg.Authn.File)
 	}
 }
 

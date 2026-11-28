@@ -414,7 +414,11 @@ func (m *Manager) fetchProvider(p Provider, idx int) (ProviderResult, []indexedK
 			}
 		}
 		if err != nil {
-			return fail(fmt.Sprintf("unable to fetch OIDC discovery document for provider '%s' from %s", p.ID, discoveryURL))
+			reason := fmt.Sprintf("unable to fetch OIDC discovery document for provider '%s' from %s", p.ID, discoveryURL)
+			if _, segment, ok := issuerRealm(p.Issuer); ok && m.resolver == nil {
+				reason += fmt.Sprintf(", and '%s' was not looked up as a tenant display name because AUTHZ_TENANT_MANAGER_URL is empty", segment)
+			}
+			return fail(reason)
 		}
 		var discovery struct {
 			JWKSURI string `json:"jwks_uri"`
