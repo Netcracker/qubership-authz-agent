@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package engine evaluates the embedded Rego policies over an in-memory data
-// store with the OPA library. It replaces the OPA server: policies are
-// compiled once at start, data documents are written by the service itself,
-// and every decision is an in-process evaluation.
+// Package engine evaluates the embedded Rego policies, the checks of the
+// caller and of the subject's token, over an in-memory data store with the
+// OPA library. The policies are compiled once at start, the service itself
+// writes the data documents, and every evaluation runs in the process. The
+// decisions of the check routes come from package snapshot instead.
 package engine
 
 import (

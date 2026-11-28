@@ -430,7 +430,7 @@ def _rsql_predicate(field: str, claim: str) -> str:
 def emit_rls_predicate(spec: dict, rules: list[dict]) -> None:
     """Either N independent predicate entries (combine=False) or one
     compound predicate joining the N clauses via the RSQL `;` (AND)
-    operator (combine=True). Mirrors the two profiler shapes:
+    operator (combine=True), the two shapes of
     rls-predicate-summary-N-predicates (independent) vs.
     rls-predicate-pips-N-token-pip / N-header-pip (compound)."""
     comp = component_name(spec["scenario"])
@@ -485,8 +485,7 @@ def emit_rls_predicate_summary_compound(spec: dict, rules: list[dict]) -> None:
 
 def emit_wildcard_single(spec: dict, rules: list[dict]) -> None:
     """wildcard-all-single: a single role entry with a predicate of
-    literal `true`. The profiler ships this as the short-circuit
-    wildcard path."""
+    literal `true`, the short-circuit wildcard path."""
     rules.append({
         "component": component_name(spec["scenario"]),
         "resourceType": rt_name(spec["scenario"], 1),
@@ -498,7 +497,7 @@ def emit_wildcard_single(spec: dict, rules: list[dict]) -> None:
 
 def emit_wildcard_bulk(spec: dict, rules: list[dict]) -> None:
     """wildcard-mixed-bulk: 50 resources × OLS + RLS `true` predicate
-    per (RT, OP). Mirrors the profiler shape."""
+    per (RT, OP)."""
     n_rt = int(spec["bulk_rt_count"])
     n_op = int(spec["bulk_op_count"])
     expected = int(spec["bulk_count"])

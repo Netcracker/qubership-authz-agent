@@ -30,35 +30,55 @@ import (
 	"github.com/netcracker/qubership-core-lib-go/v3/context-propagation/ctxmanager"
 
 	"authz-agent/components/authz-agent/internal/engine"
+	"authz-agent/components/authz-agent/internal/snapshot"
+	"authz-agent/internal/regogen"
 )
 
-// publicPolicy stands in for the product policies on the public routes: a
-// request without a subject is refused with an authError, a READ is
-// allowed and any other operation denied, and each result carries an rsql
-// predicate naming the resource type, so a test can tell from the response
-// which resources reached the policy.
-const publicPolicy = `package authorize
+// publicSets stands in for the product policies on the public routes, in
+// the tenant default: a READ of an ORDER is allowed with the rsql predicate
+// type==ORDER, and any other operation is denied.
+const publicSets = `{"policySets": [{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "default",
+	"target": "resourceType == 'ORDER'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+	"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "default",
+		"rules": [{"ruleId": "r", "target": "operation == 'READ'", "effect": "ALLOW", "tenantId": "default",
+			"rsqlPredicate": "type==ORDER"}]}]}]}`
 
-import rego.v1
-
-authError := {"status": 403, "message": "no subject"} if input.subject == ""
-
-rlsIgnored := false
-
-results := [r |
-	some res in input.resources
-	r := {
-		"isAllowed": res.operation == "READ",
-		"predicates": [{"predicateType": "rsql", "predicate": sprintf("type==%v", [res.resourceType])}],
-	}
-]
-`
-
-// newPublicApp builds the public surface over publicPolicy, with the routing
+// newPublicApp builds the public surface over publicSets, with the routing
 // options main uses.
 func newPublicApp(t *testing.T) *fiber.App {
 	t.Helper()
-	return newPublicAppOver(t, map[string]string{"authorize.rego": publicPolicy}, Options{})
+	return newPublicAppWithLog(t, nil)
+}
+
+// newPublicAppWithLog is newPublicApp with the diagnostics of the request
+// path sent to log, and the platform's context middleware ahead of the
+// routes, as the platform's Fiber builder installs it in main.
+func newPublicAppWithLog(t *testing.T, log Logger) *fiber.App {
+	t.Helper()
+	return newPublicAppOver(t, map[string]string{"internals.rego": admissionStub},
+		Options{Log: log, Snapshots: registry(t, publicSets), DefaultTenant: func() string { return "default" }})
+}
+
+// registry is a snapshot registry loaded with the policy sets of sets and
+// no PIPs.
+func registry(t *testing.T, sets string) *snapshot.Registry {
+	t.Helper()
+	return registryWithPIPs(t, sets, `{"pips": []}`)
+}
+
+// registryWithPIPs is a snapshot registry loaded with the policy sets of
+// sets and the PIP declarations of pips.
+func registryWithPIPs(t *testing.T, sets, pips string) *snapshot.Registry {
+	t.Helper()
+	tab, err := regogen.DefaultTable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg := snapshot.New(snapshot.Config{}, tab, quietLoader{})
+	if _, err := reg.Load(context.Background(), []byte(sets), []byte(pips)); err != nil {
+		t.Fatal(err)
+	}
+	return reg
 }
 
 // newPublicAppOver builds the public surface over modules, with
@@ -81,8 +101,37 @@ func newPublicAppOver(t *testing.T, modules map[string]string, opts Options) *fi
 }
 
 // call sends one request and returns the status, the body, and the
-// Content-Type of the response.
+// Content-Type of the response. It fails the test where api/openapi.yaml
+// does not declare a query parameter or a header of the request, or the
+// status of the response, on the operation the request reaches, except in
+// the cases knownSpecDrift lists, which it logs.
 func call(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string) (int, string, string) {
+	t.Helper()
+	return send(t, app, method, path, body, headers, true)
+}
+
+// callUndeclared is call without the check against api/openapi.yaml, for a
+// request that deliberately sends a parameter the spec does not declare, to
+// show that the route ignores it.
+func callUndeclared(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string) (int, string, string) {
+	t.Helper()
+	return send(t, app, method, path, body, headers, false)
+}
+
+func send(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string, conform bool) (int, string, string) {
+	t.Helper()
+	code, got, header := sendFor(t, app, method, path, body, headers, conform)
+	return code, got, header.Get(fiber.HeaderContentType)
+}
+
+// callForHeaders is call that returns every header of the response in place
+// of its Content-Type.
+func callForHeaders(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string) (int, string, http.Header) {
+	t.Helper()
+	return sendFor(t, app, method, path, body, headers, true)
+}
+
+func sendFor(t *testing.T, app *fiber.App, method, path, body string, headers map[string]string, conform bool) (int, string, http.Header) {
 	t.Helper()
 	var reader io.Reader
 	if body != "" {
@@ -98,7 +147,10 @@ func call(t *testing.T, app *fiber.App, method, path, body string, headers map[s
 	}
 	defer func() { _ = resp.Body.Close() }()
 	raw, _ := io.ReadAll(resp.Body)
-	return resp.StatusCode, string(raw), resp.Header.Get(fiber.HeaderContentType)
+	if conform {
+		checkAgainstSpec(t, app, req, resp.StatusCode)
+	}
+	return resp.StatusCode, string(raw), resp.Header
 }
 
 var admin = map[string]string{"Authorization": "Bearer m2m", "Incoming-Token": "Bearer admin"}
@@ -134,11 +186,11 @@ func platformContext(c *fiber.Ctx) error {
 // requestIDPolicy refuses every request with the id the policy read from
 // the input as its message, so a test can read input.requestId from the
 // response.
-const requestIDPolicy = `package authorize
+const requestIDPolicy = `package authorize_internals
 
 import rego.v1
 
-authError := {"status": 403, "message": input.requestId}
+admission := {"authError": {"status": 403, "message": input.requestId}}
 `
 
 // TestPublic_TheRequestIdNamesTheRequestEverywhere: a policy reads the input
@@ -155,7 +207,7 @@ func TestPublic_TheRequestIdNamesTheRequestEverywhere(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			lines := &contextIDs{}
-			app := newPublicAppOver(t, map[string]string{"authorize.rego": requestIDPolicy}, Options{Log: lines})
+			app := newPublicAppOver(t, map[string]string{"internals.rego": requestIDPolicy}, Options{Log: lines})
 
 			resp := checkResourceWithID(t, app, tc.given)
 			defer func() { _ = resp.Body.Close() }()
@@ -183,6 +235,7 @@ func checkResourceWithID(t *testing.T, app *fiber.App, given string) *http.Respo
 	if err != nil {
 		t.Fatalf("POST /access/v1/check/resource: %v", err)
 	}
+	checkAgainstSpec(t, app, req, resp.StatusCode)
 	if resp.StatusCode != http.StatusForbidden {
 		t.Fatalf("POST /access/v1/check/resource = %d, want 403", resp.StatusCode)
 	}
@@ -257,7 +310,8 @@ func TestPublic_CheckResource_Refusals(t *testing.T) {
 		want               string
 	}{
 		{"an empty body", http.MethodPost, ``, admin, 400, `{"message":"bad request"}`},
-		{"a missing type", http.MethodPost, `{"resource":{"id":"1"}}`, admin, 400, `{"message":"Missing required parameter: type"}`},
+		{"a missing type", http.MethodPost, `{"resource":{"id":"1"}}`, admin, 400, `{"message":"The request 'type' cannot be empty"}`},
+		{"an empty operation", http.MethodPost, `{"type":"ORDER","operation":""}`, admin, 400, `{"message":"The request 'operation' cannot be empty"}`},
 		{"no subject", http.MethodPost, `{"type":"ORDER","operation":"READ"}`, nil, 403, `{"message":"no subject"}`},
 		{"a GET without a body", http.MethodGet, ``, admin, 400, `{"message":"bad request"}`},
 	}
@@ -299,9 +353,18 @@ func TestPublic_Bulk(t *testing.T) {
 		{"v2 preview is the same route", "/preview/v2/check/resource/bulk/operations",
 			`{"type":"ORDER","entries":[{"id":"a","operations":["DELETE"]}]}`, admin, 200, `{"decision":{"DELETE":[]}}`},
 		{"v1 without an operation needs no token", "/access/v1/check/resource/bulk/operations",
-			`[{"id":"a","type":"ORDER","operations":[""]}]`, nil, 200, `{}`},
+			`[{"id":"a","type":"ORDER","operations":[null]}]`, nil, 200, `{}`},
 		{"v2 without an operation needs no token", "/access/v2/check/resource/bulk/operations",
-			`{"type":"ORDER","entries":[{"id":"a","operations":[""]}]}`, nil, 200, `{"decision":{}}`},
+			`{"type":"ORDER","entries":[{"id":"a","operations":[null]}]}`, nil, 200, `{"decision":{}}`},
+		{"v1 lists an empty operation that allows nothing", "/access/v1/check/resource/bulk/operations",
+			`[{"id":"a","type":"ORDER","operations":[""]}]`, admin, 200, `{"":[]}`},
+		{"v2 lists an empty operation that allows nothing", "/access/v2/check/resource/bulk/operations",
+			`{"type":"ORDER","entries":[{"id":"a","operations":[""]}]}`, admin, 200, `{"decision":{"":[]}}`},
+		{"bulk refuses an item with an empty type", "/access/v1/check/resource/bulk",
+			`[{"id":"a","type":"","operation":"READ"},{"id":"b","type":"ORDER","operation":"READ"}]`,
+			admin, 400, `{"message":"The request 'type' cannot be empty"}`},
+		{"v1 bulk/operations refuses an item without operations", "/access/v1/check/resource/bulk/operations",
+			`[{"id":"a","type":"ORDER","operations":[]}]`, admin, 400, `{"message":"The request 'operations' cannot be empty"}`},
 		{"a body the v1 route cannot parse", "/access/v1/check/resource/bulk/operations",
 			`{"type":"ORDER"}`, admin, 400, `{"message":"bad request"}`},
 		{"a body the v2 route cannot parse", "/access/v2/check/resource/bulk/operations",
@@ -318,11 +381,12 @@ func TestPublic_Bulk(t *testing.T) {
 }
 
 // TestPublic_Filter: the filter routes read the query, not the body, and
-// answer the legacy filter shape with the policy's predicates.
+// answer the legacy filter shape with the policy's predicates, a dialect
+// the policy gives none as null.
 func TestPublic_Filter(t *testing.T) {
 	app := newPublicApp(t)
-	const useFilter = `{"calculationResult":"USE_FILTER_CONDITION","filterCondition":"","mongodbFilterCondition":"","rsqlFilterCondition":"type==ORDER","sqlFilterCondition":"","customFilterCondition":null}`
-	const denied = `{"calculationResult":"DENY","filterCondition":"","mongodbFilterCondition":"","rsqlFilterCondition":"","sqlFilterCondition":"","customFilterCondition":null}`
+	const useFilter = `{"calculationResult":"USE_FILTER_CONDITION","filterCondition":null,"mongodbFilterCondition":null,"rsqlFilterCondition":"type==ORDER","sqlFilterCondition":null,"customFilterCondition":null}`
+	const denied = `{"calculationResult":"DENY","filterCondition":null,"mongodbFilterCondition":null,"rsqlFilterCondition":null,"sqlFilterCondition":null,"customFilterCondition":null}`
 	cases := []struct {
 		name, path, body string
 		status           int
@@ -333,7 +397,8 @@ func TestPublic_Filter(t *testing.T) {
 		{"a denied operation", "/access/v1/check/filter?resourceType=ORDER&operation=DELETE", "", 200, denied},
 		{"the last resourceType wins", "/access/v1/check/filter?resourceType=DOC&resourceType=ORDER&operation=READ", "", 200, useFilter},
 		{"a body is ignored", "/access/v1/check/filter?resourceType=ORDER&operation=READ", `{"type":"DOC","operation":"DELETE"}`, 200, useFilter},
-		{"no resourceType", "/access/v1/check/filter?operation=READ", "", 400, `{"message":"bad request"}`},
+		{"no resourceType is denied", "/access/v1/check/filter?operation=READ", "", 200, denied},
+		{"an empty resourceType is denied", "/access/v2/check/filter?resourceType=&operation=READ", "", 200, denied},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -377,6 +442,40 @@ func TestPublic_Surface(t *testing.T) {
 	}
 }
 
+// TestPublic_HealthLeavesOutTheTenants: the public /health answers the
+// verdict and counts the tenants, whose IDs and refusals are not for a
+// caller of the check routes; the internal /health keeps them.
+func TestPublic_HealthLeavesOutTheTenants(t *testing.T) {
+	snapshots := &snapshot.Health{Tenants: []snapshot.TenantHealth{{Tenant: "PARITY_TENANT", Dropped: []string{"PARITY_SET"}}}}
+	cases := []struct {
+		name   string
+		report Report
+		public string
+	}{
+		{"healthy", Report{Healthy: true, Snapshots: snapshots}, `{"status":"healthy","tenants":1,"served":0,"rejected":0,"failing":0}`},
+		{"unhealthy", Report{Message: "bootstrap threshold not met", Snapshots: snapshots}, `{"status":"unhealthy","tenants":1,"served":0,"rejected":0,"failing":0}`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			eng, err := engine.New(engine.Options{Modules: map[string]string{"internals.rego": admissionStub}})
+			if err != nil {
+				t.Fatalf("engine: %v", err)
+			}
+			internal := fiber.New(fiber.Config{DisableStartupMessage: true})
+			srv := Register(internal, eng, Options{Health: func() Report { return tc.report }})
+			public := fiber.New(fiber.Config{DisableStartupMessage: true})
+			srv.RegisterPublic(public)
+
+			if _, body, _ := call(t, public, http.MethodGet, "/health", "", nil); body != tc.public {
+				t.Errorf("public GET /health = %s, want %s", body, tc.public)
+			}
+			if _, body, _ := call(t, internal, http.MethodGet, "/health", "", nil); !strings.Contains(body, "PARITY_TENANT") {
+				t.Errorf("internal GET /health = %s, want the tenant PARITY_TENANT in it", body)
+			}
+		})
+	}
+}
+
 // TestPublic_CheckRoutesIgnoreExplain: a check route reads no query
 // parameter beyond the ones its request shape names, so ?explain=full gets
 // the same answer as the plain request.
@@ -384,8 +483,43 @@ func TestPublic_CheckRoutesIgnoreExplain(t *testing.T) {
 	app := newPublicApp(t)
 	body := `{"type":"ORDER","operation":"READ"}`
 	for _, path := range []string{"/access/v1/check/resource", "/access/v1/check/resource?explain=full"} {
-		if code, got, _ := call(t, app, http.MethodPost, path, body, admin); code != 200 || got != "true" {
+		if code, got, _ := callUndeclared(t, app, http.MethodPost, path, body, admin); code != 200 || got != "true" {
 			t.Errorf("POST %s = %d %s, want 200 true", path, code, got)
 		}
+	}
+}
+
+// TestPublic_HealthCountsTheTenantsWithoutNamingThem: the public /health
+// gives the status and the tenant counts, healthy or not, and no tenant,
+// set, PIP, or reason, which the internal /health gives to the operator.
+func TestPublic_HealthCountsTheTenantsWithoutNamingThem(t *testing.T) {
+	snapshots := &snapshot.Health{Tenants: []snapshot.TenantHealth{
+		{Tenant: "PARITY_TENANT_A", Ready: true, Failures: []snapshot.Failure{{Set: "PARITY_SET", Reason: "PARITY_REASON"}}},
+		{Tenant: "PARITY_TENANT_B", Ready: true, Rejected: &snapshot.Rejection{Stage: "compile", Reason: "PARITY_REFUSAL"}},
+		{Tenant: "PARITY_TENANT_C", Rejected: &snapshot.Rejection{Stage: "export", Reason: "PARITY_REFUSAL"}},
+	}}
+	counts := `"tenants":3,"served":2,"rejected":2,"failing":1}`
+	cases := []struct {
+		name   string
+		report Report
+		status int
+		want   string
+	}{
+		{"healthy", Report{Healthy: true, Snapshots: snapshots}, 200, `{"status":"healthy",` + counts},
+		{"unhealthy", Report{Message: "PARITY_MESSAGE", ConfigError: "PARITY_CONFIG", Snapshots: snapshots}, 503, `{"status":"unhealthy",` + counts},
+		{"healthy without a registry", Report{Healthy: true}, 200, `{"status":"healthy"}`},
+		{"unhealthy without a registry", Report{Message: "PARITY_MESSAGE"}, 503, `{"status":"unhealthy"}`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := newPublicAppOver(t, map[string]string{"internals.rego": admissionStub},
+				Options{Health: func() Report { return tc.report }})
+
+			code, body, _ := call(t, app, http.MethodGet, "/health", "", nil)
+
+			if code != tc.status || body != tc.want {
+				t.Errorf("GET /health = %d %s, want %d %s", code, body, tc.status, tc.want)
+			}
+		})
 	}
 }

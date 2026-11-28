@@ -16,10 +16,12 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -253,6 +255,35 @@ func TestHandlePIP_DefaultRouteAnswersUnroutedPaths(t *testing.T) {
 				t.Errorf("GET %s = %d %s, want %d %s", tc.path, status, body, tc.wantStatus, tc.wantBody)
 			}
 		})
+	}
+}
+
+// A route that names a method answers another method 405, a method that
+// differs in case included, and keeps its first response for the method it
+// names; a route that names none answers every method.
+func TestHandlePIP_ARouteWithAMethodAnswersOnlyThatMethod(t *testing.T) {
+	resetState()
+	config := `[{"path":"/ent/u1","method":"get","responses":[{"body":"first"},{"body":"second"}]},` +
+		`{"path":"/any","responses":[{"body":"any"}]}]`
+	rr := httptest.NewRecorder()
+	handleConfigure(rr, httptest.NewRequest(http.MethodPut, "/pip-stub/configure", strings.NewReader(config)))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("PUT /pip-stub/configure %s = %d %s, want 200", config, rr.Code, strings.TrimSpace(rr.Body.String()))
+	}
+
+	var got []string
+	for _, req := range [][2]string{{http.MethodPost, "/ent/u1"}, {"get", "/ent/u1"}, {http.MethodGet, "/ent/u1"}, {http.MethodPost, "/any"}} {
+		status, body := serve(req[0], req[1])
+		got = append(got, fmt.Sprintf("%s %s = %d %s", req[0], req[1], status, body))
+	}
+	want := []string{
+		`POST /ent/u1 = 405 {"error":"route /ent/u1 answers GET, not POST"}`,
+		`get /ent/u1 = 405 {"error":"route /ent/u1 answers GET, not get"}`,
+		`GET /ent/u1 = 200 "first"`,
+		`POST /any = 200 "any"`,
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("answers =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
 }
 

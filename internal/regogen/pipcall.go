@@ -1,0 +1,686 @@
+// Copyright 2024-2026 Netcracker Technology Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package regogen
+
+import (
+	"encoding/json"
+	"fmt"
+	neturl "net/url"
+	"regexp"
+	"slices"
+	"strings"
+
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/types"
+
+	"authz-agent/internal/jsonpath"
+	"authz-agent/internal/jsonvalue"
+	"authz-agent/internal/legacyvalue"
+	"authz-agent/internal/policyir"
+	"authz-agent/internal/regobuiltins"
+	"authz-agent/internal/regogen/spectables"
+)
+
+// A GENERAL or FILTERED PIP is a function of the module, pip_<Var>, which a
+// clause binds the PIP's record from where it reads the PIP:
+//
+//	pip_<Var> := nc.pip.record(q, pip_send(q), {...}) if q := input.pip_requests[<ID>]
+//
+// Go builds q before the query: the request nc.http.send sends, or
+// {"state": <state>} where the agent makes no call, so the network is reached only from
+// a clause that needs the PIP. nc.pip.record reads the response as the
+// specification's general_value and resolve_pip do under the agent profile
+// and returns the record. The rules of the request and of the response follow
+// the specification's knobs of the agent profile, which the export of the
+// tables does not carry; pipKnobs names each.
+
+// pipSendText is the function every module with a GENERAL or FILTERED PIP
+// carries, after a blank line.
+const pipSendText = "pip_send(q) := null if q." + queryState + "\n\npip_send(q) := nc.http.send(q) if not q." + queryState + "\n"
+
+// pipText returns the function of the PIP of r.
+func pipText(r *Ref) string {
+	jp := "null"
+	if r.pipPath != "" {
+		jp = lit(r.pipPath)
+	}
+	return fmt.Sprintf("pip_%s := nc.pip.record(q, pip_send(q), {\"read\": %d, \"seg\": %t, \"jp\": %s}) "+
+		"if q := input.%s[%s]\n\n", r.Var, r.read, r.Segments, jp, memberPIPRequests, lit(r.ID))
+}
+
+// pipPath returns the path nc.pip.record selects from the body of the
+// response of decl, without the $: the jsonPath of a declaration of type JSON
+// (ECFG jsonpath_types JSON), where a path without $ starts at the root
+// (jsonpath_no_dollar ROOT) and a leading ['key'] step selects the member
+// key ([jsonpath.CompileRootKey]); "" for a declaration whose body is the
+// value. It fails for a path outside the subset [jsonpath] accepts.
+func pipPath(decl *policyir.PIP) (string, error) {
+	jp := decl.JSONPath
+	if jp == "" || decl.ReturnType != "JSON" {
+		return "", nil
+	}
+	switch {
+	case strings.HasPrefix(jp, "$"):
+		jp = jp[1:]
+	case !strings.HasPrefix(jp, "["):
+		jp = "." + jp
+	}
+	if _, err := jsonpath.CompileRootKey(jp); err != nil {
+		return "", fmt.Errorf("jsonPath %q of PIP %s: %w", decl.JSONPath, decl.Name, err)
+	}
+	return jp, nil
+}
+
+var (
+	placeholderRE     = regexp.MustCompile(`\$\{([^}]+)\}`)
+	fullPlaceholderRE = regexp.MustCompile(`^\$\{([^}]+)\}$`)
+	// a resource placeholder in a url fails the call (ECFG
+	// url_resource_placeholder ERROR), the whole resource included
+	urlResourceRE = regexp.MustCompile(`\$\{resource[.\[}]`)
+)
+
+// The knobs of the specification's agent profile that the request and the
+// response of a GENERAL or FILTERED PIP follow, with their values in this
+// file, so that a search finds what a change of the profile touches:
+//
+//	remote_pip_subjects=observed, remote_pip_anonymous=ABSENT, remote_pip_refused=ERROR,
+//	absent_request_attributes=null, request_attr_other_source=text, request_attr_in_text=as_written,
+//	request_attr_list=as_written, request_attr_is_m2m=value,
+//	request_attr_roles_empty=null, request_attr_resource_type=text,
+//	request_attr_empty_pip=null, request_attr_empty_coll=empty, request_attr_local_raw=HEADER,
+//	pip_http_method=doc, absent_url=NULL, url_null_value=as_written, url_resource_placeholder=ERROR,
+//	url_reading=JAVA_URI, idiom_url_value_text=java, pip_forward_auth=own, pip_forward_tenant=param,
+//	pip_forward_declared=present, pip_forward_trim=true, pip_forward_reserved=fixed,
+//	header_lookup=fold, idiom_general_json=strict, jsonpath_types=JSON, json_without_jsonpath=body,
+//	jsonpath_no_dollar=ROOT, jsonpath_selects_null=NULL, jsonpath_number_is_value=false,
+//	general_object_state=PIP_NULL, general_string_state=PIP_NULL, raw_json_string=BODY,
+//	general_bool_is_error=true, general_number_is_error=true, general_scalar_subset_value=true,
+//	general_single_non_string_is_error=true, general_single_number_is_odd=true,
+//	general_single_list_is_odd=true, pip_set_dedupe=true, idiom_pip_set_key=value,
+//	pip_single_as_scalar=true, pip_one_call_per_request=false
+//
+// The functions depart from the profile three times. A body that is not
+// empty and is not one JSON value, such as an HTML page or truncated JSON,
+// fails the PIP, where the profile and the recorded answers read it as a JSON
+// string body, and so a null source. A value that cannot stand as a segment
+// of the path of the url ([pathSegment]) fails the PIP, where the profile
+// calls the url it gives. A declaration that
+// names Accept-Encoding or TE does not forward the caller's: the agent
+// reads the answer, so it asks for the codings it decodes.
+//
+// The functions do not follow pip_one_call_per_request=false: nc.http.send
+// answers an equal request of one decision request from its cache, so a PIP
+// that two operands read is called once. No answer is reused across
+// decision requests, whatever the declaration's cacheable says.
+
+// pipPlaceholders returns the keys of the subject's operands that the url or
+// the requestAttributes of decl put into its request, which [Project] needs
+// in [Request.Values]: a HEADER PIP is read from [Request.Headers] instead,
+// and a TOKEN PIP from [Request.Claims]. The placeholders of requestAttributes
+// are those [substituteAttr] replaces.
+func pipPlaceholders(decl *policyir.PIP, pips func(string) (*policyir.PIP, bool)) []string {
+	var exprs []string
+	for _, m := range placeholderRE.FindAllStringSubmatch(decl.URL, -1) {
+		exprs = append(exprs, m[1])
+	}
+	for _, k := range slices.Sorted(mapsKeys(decl.RequestAttributes)) {
+		if v, err := jsonvalue.Decode([]byte(decl.RequestAttributes[k])); err == nil {
+			mapAttrPlaceholders(v, func(expr string) jsonvalue.Value {
+				exprs = append(exprs, expr)
+				return nil
+			})
+		}
+	}
+	var keys []string
+	for _, expr := range exprs {
+		attr, ok := strings.CutPrefix(expr, "subject.")
+		if !ok || attr == "isM2M" {
+			continue
+		}
+		if p, ok := pips(expr); ok && (p.Type == policyir.PIPHeader || p.Type == policyir.PIPToken) {
+			continue
+		}
+		if k := specKey("subj", attr); !slices.Contains(keys, k) {
+			keys = append(keys, k)
+		}
+	}
+	return keys
+}
+
+// pipCall returns the q of the PIP of r on req: the request object of
+// nc.http.send, or the q of [stateCall] for a call the agent does not make.
+func pipCall(r *Ref, req *Request, pips func(string) (*policyir.PIP, bool)) *ast.Term {
+	decl := r.pip
+	if st, refused := remoteRefused(req); refused {
+		return stateCall(decl.Name, st)
+	}
+	body := ast.NullTerm()
+	if decl.RequestAttributes != nil {
+		ra := ast.NewObject()
+		for _, k := range slices.Sorted(mapsKeys(decl.RequestAttributes)) {
+			v, err := jsonvalue.Decode([]byte(decl.RequestAttributes[k]))
+			if err != nil {
+				// policyir keeps a value as compacted JSON
+				return stateCall(decl.Name, spectables.StateError)
+			}
+			ra.Insert(ast.StringTerm(k), jsonTerm(substituteAttr(v, req, pips)))
+		}
+		body = ast.NewTerm(ra)
+	}
+	method := strings.ToUpper(decl.HTTPMethod)
+	if method == "" {
+		method = "POST"
+	}
+	if decl.URL == "" {
+		// no url, no call: the state of a null body
+		return stateCall(decl.Name, spectables.StatePIPNull)
+	}
+	if urlResourceRE.MatchString(decl.URL) {
+		return stateCall(decl.Name, spectables.StateError)
+	}
+	// java.net.URI refuses these in a url, and the call fails before it is made
+	const refused = " \"<>\\^`{|}"
+	failed := false
+	query := strings.IndexByte(decl.URL, '?')
+	// where the path begins; a url without a scheme of its own has none
+	path := len(decl.URL)
+	if i := strings.Index(decl.URL, "://"); i >= 0 {
+		if j := strings.IndexAny(decl.URL[i+3:], "/?#"); j >= 0 {
+			path = i + 3 + j
+		}
+	}
+	url := replaceAllIndex(placeholderRE, decl.URL, func(at int, m string) string {
+		expr := m[2 : len(m)-1]
+		if !strings.HasPrefix(expr, "subject.") && !strings.HasPrefix(expr, "resource") {
+			return m
+		}
+		v, ok := placeholderValue(expr, req, pips)
+		if !ok || v == nil {
+			return m
+		}
+		s := valueText(v)
+		if strings.ContainsAny(s, refused) {
+			failed = true
+		}
+		// the value stays one path segment or one query component: it
+		// cannot add a segment, a parameter, or a fragment to the call,
+		// and it cannot name the host the agent's token is sent to
+		if query >= 0 && at > query {
+			return neturl.QueryEscape(s)
+		}
+		seg, ok := pathSegment(v)
+		if at < path || !ok {
+			failed = true
+		}
+		return seg
+	})
+	if failed || strings.ContainsAny(url, refused) {
+		return stateCall(decl.Name, spectables.StateError)
+	}
+	headers := tenantHeaders(req)
+	for _, name := range strings.Split(decl.Headers, ",") {
+		name = strings.TrimFunc(name, func(r rune) bool { return r <= ' ' })
+		low := strings.ToLower(name)
+		if name == "" || ownHeaders[low] {
+			continue
+		}
+		if v, ok := req.Headers[low]; ok {
+			headers.Insert(ast.StringTerm(low), ast.StringTerm(v))
+		} else if low == "incoming-token" && req.IncomingToken != "" {
+			headers.Insert(ast.StringTerm(low), ast.StringTerm(req.IncomingToken))
+		}
+	}
+	items := [][2]*ast.Term{
+		ast.Item(ast.StringTerm("method"), ast.StringTerm(method)),
+		ast.Item(ast.StringTerm("url"), ast.StringTerm(url)),
+		ast.Item(ast.StringTerm("headers"), ast.NewTerm(headers)),
+		ast.Item(ast.StringTerm("raise_error"), ast.BooleanTerm(false)),
+		ast.Item(ast.StringTerm("pip"), ast.StringTerm(decl.Name)),
+	}
+	if method != "GET" {
+		items = append(items, ast.Item(ast.StringTerm("body"),
+			ast.ObjectTerm(ast.Item(ast.StringTerm("requestAttributes"), body))))
+	}
+	return ast.ObjectTerm(items...)
+}
+
+// ownHeaders are the headers of a PIP call, by lower-case name, that the
+// agent sets and a declaration does not forward from the caller: the
+// agent's token, the tenant, the request id, and the content codings the
+// agent reads the answer in. A caller's Accept-Encoding would ask the PIP
+// for a coding such as br that the agent cannot decode, and fail the PIP.
+var ownHeaders = map[string]bool{"authorization": true, "tenant": true, "x-request-id": true,
+	"accept-encoding": true, "te": true}
+
+// valueText is the text a value of a placeholder puts into a url.
+func valueText(v jsonvalue.Value) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return legacyvalue.Text(v)
+}
+
+// pathSegment returns v percent-encoded as one segment of the path of a
+// url, and false where v cannot stand as one, so the call is not made and
+// its source fails: "" and an empty list, which a source that selected
+// nothing gives, as well as . and .., which name another resource.
+func pathSegment(v jsonvalue.Value) (string, bool) {
+	if l, ok := v.([]jsonvalue.Value); ok && len(l) == 0 {
+		return "", false
+	}
+	s := valueText(v)
+	if s == "" || s == "." || s == ".." {
+		return "", false
+	}
+	return neturl.PathEscape(s), true
+}
+
+// replaceAllIndex is [regexp.Regexp.ReplaceAllStringFunc] with the offset of
+// each match in s passed to repl.
+func replaceAllIndex(re *regexp.Regexp, s string, repl func(at int, m string) string) string {
+	var b strings.Builder
+	last := 0
+	for _, loc := range re.FindAllStringIndex(s, -1) {
+		b.WriteString(s[last:loc[0]])
+		b.WriteString(repl(loc[0], s[loc[0]:loc[1]]))
+		last = loc[1]
+	}
+	b.WriteString(s[last:])
+	return b.String()
+}
+
+func mapsKeys(m map[string]string) func(func(string) bool) {
+	return func(yield func(string) bool) {
+		for k := range m {
+			if !yield(k) {
+				return
+			}
+		}
+	}
+}
+
+// tenantHeaders returns the headers every call the agent makes for req
+// starts from: the tenant of req in Tenant, or none where req has no tenant.
+func tenantHeaders(req *Request) ast.Object {
+	headers := ast.NewObject()
+	if req.Tenant != "" {
+		headers.Insert(ast.StringTerm("Tenant"), ast.StringTerm(req.Tenant))
+	}
+	return headers
+}
+
+// subjectCall returns the q of the call the agent makes to the service at
+// base for the subject of req, for the source pip: a GET with no body and
+// with [tenantHeaders], of the url that joins base, before, the subject.id
+// of req as one path segment, and after. Without base, or without a
+// subject.id value that can stand as a segment of the path ([pathSegment]),
+// it returns the q of a call the agent does not make, of state ERROR
+// ([stateCall]).
+func subjectCall(req *Request, pip, base, before, after string) *ast.Term {
+	id := req.Values[keySubjID]
+	if base == "" || id.State != spectables.StateValue {
+		return stateCall(pip, spectables.StateError)
+	}
+	seg, ok := pathSegment(id.Value)
+	if !ok {
+		return stateCall(pip, spectables.StateError)
+	}
+	return ast.ObjectTerm(
+		ast.Item(ast.StringTerm("method"), ast.StringTerm("GET")),
+		ast.Item(ast.StringTerm("url"), ast.StringTerm(strings.TrimRight(base, "/")+before+seg+after)),
+		ast.Item(ast.StringTerm("headers"), ast.NewTerm(tenantHeaders(req))),
+		ast.Item(ast.StringTerm("raise_error"), ast.BooleanTerm(false)),
+		ast.Item(ast.StringTerm("pip"), ast.StringTerm(pip)))
+}
+
+// queryState names the member of the q of a call the agent does not make that
+// holds the state of its record.
+const queryState = "state"
+
+// stateCall returns the q of a call of the source pip the agent does not
+// make, whose record has the state st.
+func stateCall(pip string, st spectables.State) *ast.Term {
+	return ast.ObjectTerm(ast.Item(ast.StringTerm(queryState), ast.StringTerm(string(st))),
+		ast.Item(ast.StringTerm("pip"), ast.StringTerm(pip)))
+}
+
+// callState returns the state of q, a call the agent does not make, and
+// true; false for a call it makes.
+func callState(q *ast.Term) (spectables.State, bool, error) {
+	s := q.Get(ast.StringTerm(queryState))
+	if s == nil {
+		return "", false, nil
+	}
+	st, ok := s.Value.(ast.String)
+	if !ok {
+		return "", false, fmt.Errorf("the state %v is not a string", s)
+	}
+	return spectables.State(st), true, nil
+}
+
+// noteFailed records the source of the call q as failed
+// ([regobuiltins.NoteFailed]) where its record has the state ERROR, whether
+// the call was not made, failed, or answered what the source cannot read, so
+// that the reason of a denial names it.
+func noteFailed(bctx rego.BuiltinContext, q *ast.Term, st spectables.State) {
+	if st != spectables.StateError {
+		return
+	}
+	if t := q.Get(ast.StringTerm("pip")); t != nil {
+		pip, _ := t.Value.(ast.String)
+		regobuiltins.NoteFailed(bctx.Context, string(pip))
+	}
+}
+
+// remoteRefused returns the state of a GENERAL or FILTERED PIP the agent
+// does not call for the subject of req: ABSENT for an anonymous request,
+// ERROR for a service account or a token whose claim level is m2m or
+// external in any case.
+func remoteRefused(req *Request) (spectables.State, bool) {
+	if req.Anonymous {
+		return spectables.StateAbsent, true
+	}
+	claims := req.Claims
+	if claims == nil {
+		claims = jsonvalue.NewObject()
+	}
+	t := token{claims: claims}
+	level, _ := claims.Get("level")
+	s, _ := level.(string)
+	if t.service() || strings.EqualFold(s, "external") {
+		return spectables.StateError, true
+	}
+	return "", false
+}
+
+// substituteAttr returns the value v of requestAttributes with a string that
+// is one placeholder of the subject or the resource replaced by its value, as
+// [mapAttrPlaceholders] finds them.
+func substituteAttr(v jsonvalue.Value, req *Request, pips func(string) (*policyir.PIP, bool)) jsonvalue.Value {
+	return mapAttrPlaceholders(v, func(expr string) jsonvalue.Value {
+		val, _ := placeholderValue(expr, req, pips)
+		return val
+	})
+}
+
+// mapAttrPlaceholders returns v with each string that is one placeholder of
+// the subject or the resource, in v or in an object v holds at any depth,
+// replaced by f of the placeholder's expression. A placeholder of another
+// source, a string with a placeholder among other text, and a list stay as
+// written.
+func mapAttrPlaceholders(v jsonvalue.Value, f func(expr string) jsonvalue.Value) jsonvalue.Value {
+	switch x := v.(type) {
+	case string:
+		m := fullPlaceholderRE.FindStringSubmatch(x)
+		if m == nil || !strings.HasPrefix(m[1], "subject.") && !strings.HasPrefix(m[1], "resource") {
+			return x
+		}
+		return f(m[1])
+	case *jsonvalue.Object:
+		o := jsonvalue.NewObject()
+		for _, k := range x.Keys() {
+			e, _ := x.Get(k)
+			o.Set(k, mapAttrPlaceholders(e, f))
+		}
+		return o
+	}
+	return v
+}
+
+// placeholderValue returns the value expr, which starts with subject. or
+// resource, puts into a request, nil for none, as the specification's
+// lookup_placeholder and substitute read it; false where req has no value of
+// the subject's operand.
+func placeholderValue(expr string, req *Request, pips func(string) (*policyir.PIP, bool)) (jsonvalue.Value, bool) {
+	var v Resolved
+	switch {
+	case expr == "subject.isM2M":
+		return req.M2M, true
+	case strings.HasPrefix(expr, "subject."):
+		if p, ok := pips(expr); ok && p.Type == policyir.PIPHeader {
+			// the header as it stands, unsplit, or the default
+			h := req.Headers[strings.ToLower(p.Header)]
+			if h != "" {
+				return h, true
+			}
+			if p.DefaultValue == "" {
+				return nil, true
+			}
+			d, err := jsonvalue.Decode([]byte(p.DefaultValue))
+			if err != nil {
+				return nil, true
+			}
+			return d, true
+		}
+		if p, ok := pips(expr); ok && p.Type == policyir.PIPToken {
+			// the claim, whether or not a condition reads the PIP; a
+			// claim path that selects no element, without a default, is []
+			// (request_attr_token_empty_selection=empty)
+			v = tokenPIP(p, req.Claims)
+			if _, applies := tokenDefault(p); v.State == spectables.StatePIPEmpty && !applies {
+				if sel, ok := tokenSelect(p, req.Claims); ok && sel.Kind == jsonpath.KindMany {
+					return []jsonvalue.Value{}, true
+				}
+			}
+			break
+		}
+		var ok bool
+		if v, ok = req.Values[specKey("subj", strings.TrimPrefix(expr, "subject."))]; !ok {
+			return nil, false
+		}
+		if expr == "subject.roles" && v.State == spectables.StateEmptyColl {
+			return nil, true
+		}
+	case expr == "resourceType":
+		return "${resourceType}", true
+	default:
+		v = resourcePlaceholder(strings.TrimPrefix(expr, "resource"), req.Body)
+		if o, ok := v.Value.(*jsonvalue.Object); ok && v.State == spectables.StateValue && o != nil {
+			return nil, true
+		}
+	}
+	switch v.State {
+	case spectables.StateValue:
+		return v.Value, true
+	case spectables.StateEmptyColl, spectables.StateEmptySel:
+		return []jsonvalue.Value{}, true
+	}
+	return nil, true
+}
+
+// resourcePlaceholder returns the value of the resource path p over the
+// resource of b, read as [readPath] reads it, ABSENT for a path outside the
+// subset [jsonpath] accepts.
+func resourcePlaceholder(p string, b Body) Resolved {
+	if !b.HasResource {
+		return Resolved{State: spectables.StateAbsent}
+	}
+	if p == "" {
+		return Resolved{State: spectables.StateValue, Value: b.Resource}
+	}
+	c, err := regobuiltins.CompilePath(readPath(p))
+	if err != nil {
+		return Resolved{State: spectables.StateAbsent}
+	}
+	return selection(b.Resource, c)
+}
+
+// jsonTerm returns the term of a JSON value.
+func jsonTerm(v jsonvalue.Value) *ast.Term {
+	switch x := v.(type) {
+	case nil:
+		return ast.NullTerm()
+	case bool:
+		return ast.BooleanTerm(x)
+	case jsonvalue.Number:
+		return ast.NumberTerm(json.Number(x))
+	case string:
+		return ast.StringTerm(x)
+	case []jsonvalue.Value:
+		terms := make([]*ast.Term, len(x))
+		for i, e := range x {
+			terms[i] = jsonTerm(e)
+		}
+		return ast.ArrayTerm(terms...)
+	case *jsonvalue.Object:
+		o := ast.NewObject()
+		for _, k := range x.Keys() {
+			e, _ := x.Get(k)
+			o.Insert(ast.StringTerm(k), jsonTerm(e))
+		}
+		return ast.NewTerm(o)
+	}
+	return ast.NullTerm()
+}
+
+// PIPRecordDecl declares nc.pip.record as generated modules call it.
+var PIPRecordDecl = &ast.Builtin{
+	Name: "nc.pip.record",
+	Decl: types.NewFunction(types.Args(
+		types.Named("q", types.A), types.Named("response", types.A), types.Named("opts", types.A)),
+		types.Named("record", types.NewObject(nil, types.NewDynamicProperty(types.S, types.A)))),
+}
+
+func pipRecordFunction() func(*rego.Rego) {
+	return rego.Function3(&rego.Function{Name: PIPRecordDecl.Name, Decl: PIPRecordDecl.Decl},
+		func(bctx rego.BuiltinContext, q, resp, opts *ast.Term) (*ast.Term, error) {
+			r, jp, err := pipOptions(opts)
+			if err != nil {
+				return nil, err
+			}
+			if st, ok, err := callState(q); err != nil {
+				return nil, fmt.Errorf("nc.pip.record: %w", err)
+			} else if ok {
+				noteFailed(bctx, q, st)
+				return record(r, Resolved{State: st}).term(), nil
+			}
+			v, err := pipResolve(bctx, resp, jp)
+			if err != nil {
+				return nil, err
+			}
+			noteFailed(bctx, q, v.State)
+			return sourceRecord(r, v).term(), nil
+		})
+}
+
+// pipOptions reads the options of nc.pip.record: the fields read and seg of
+// the reference whose record it builds, and jp, the path of [pipPath] or
+// null.
+func pipOptions(opts *ast.Term) (*Ref, string, error) {
+	o, ok := opts.Value.(ast.Object)
+	if !ok {
+		return nil, "", fmt.Errorf("nc.pip.record: the options %v are not an object", opts)
+	}
+	r := &Ref{}
+	if n, ok := o.Get(ast.StringTerm("read")).Value.(ast.Number); ok {
+		i, ok := n.Int64()
+		if !ok {
+			return nil, "", fmt.Errorf("nc.pip.record: read %v is not an integer", n)
+		}
+		r.read = fieldSet(i)
+	}
+	if b, ok := o.Get(ast.StringTerm("seg")).Value.(ast.Boolean); ok {
+		r.Segments = bool(b)
+	}
+	jp, _ := o.Get(ast.StringTerm("jp")).Value.(ast.String)
+	return r, string(jp), nil
+}
+
+// pipResolve returns the value of a GENERAL or FILTERED PIP whose call
+// answered resp, an object of nc.http.send: ERROR for an answer
+// [regobuiltins.ReadAnswer] reads as failed, a null body for an empty one,
+// and otherwise the value the body or its path jp selects, read as the
+// specification's resolve_pip reads it.
+func pipResolve(bctx rego.BuiltinContext, resp *ast.Term, jp string) (Resolved, error) {
+	ans, err := regobuiltins.ReadAnswer(bctx, resp)
+	if err != nil {
+		return Resolved{}, fmt.Errorf("nc.pip.record: %w", err)
+	}
+	if ans.Failed {
+		return Resolved{State: spectables.StateError}, nil
+	}
+	body := ans.Body
+	var v jsonvalue.Value
+	switch x := body.(type) {
+	case nil:
+		return Resolved{State: spectables.StatePIPNull}, nil
+	default:
+		if jp != "" {
+			p, err := regobuiltins.CompileRootKeyPath(jp)
+			if err != nil {
+				return Resolved{}, err
+			}
+			sel := p.Select(x)
+			if sel.Kind != jsonpath.KindOne || sel.Value == nil {
+				return Resolved{State: spectables.StatePIPNull}, nil
+			}
+			v = sel.Value
+			break
+		}
+		switch x.(type) {
+		case *jsonvalue.Object, string:
+			// an object or a string as the whole body reads as a null body
+			return Resolved{State: spectables.StatePIPNull}, nil
+		}
+		v = x
+	}
+	switch x := v.(type) {
+	case bool, jsonvalue.Number:
+		return Resolved{State: spectables.StateScalarOdd, Value: x}, nil
+	case []jsonvalue.Value:
+		if len(x) == 1 {
+			switch x[0].(type) {
+			case nil, bool, *jsonvalue.Object, jsonvalue.Number, []jsonvalue.Value:
+				// [null], [true], [{"k": "v"}], [5], [[1]]: a collection operator
+				// reads the list, any other operator a failed PIP
+				return Resolved{State: spectables.StateSingleOdd, Value: x}, nil
+			}
+		}
+		l := dedupe(x)
+		switch len(l) {
+		case 0:
+			return Resolved{State: spectables.StatePIPEmpty}, nil
+		case 1:
+			return Resolved{State: spectables.StateValue, Value: l[0]}, nil
+		}
+		return Resolved{State: spectables.StateValue, Value: l, PIPList: true}, nil
+	}
+	return Resolved{State: spectables.StateValue, Value: v}, nil
+}
+
+// dedupe returns l without the repeats of an element, the first of each
+// kept: a number is one element by its value, so 5 and 5.0 are one, and any
+// other element is one by [typedKey].
+func dedupe(l []jsonvalue.Value) []jsonvalue.Value {
+	seen := make(map[string]bool, len(l))
+	out := make([]jsonvalue.Value, 0, len(l))
+	for _, e := range l {
+		k := ""
+		if n, ok := e.(jsonvalue.Number); ok {
+			if d, ok := jsonvalue.ParseDecimal(string(n)); ok {
+				k = "n" + d.String()
+			}
+		}
+		if k == "" {
+			k = typedKey(e)
+		}
+		if !seen[k] {
+			seen[k] = true
+			out = append(out, e)
+		}
+	}
+	return out
+}

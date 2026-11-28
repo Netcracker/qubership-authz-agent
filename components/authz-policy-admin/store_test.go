@@ -15,8 +15,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -34,13 +37,24 @@ const bssPolicies = `[
   {"component":"BSS","resourceType":"Invoice","operation":"READ","roles":["ROLE_ADMIN"]}
 ]`
 
+// tenantPIP declares the TOKEN PIP subject.tenant, which the PIP upload
+// accepts.
+const tenantPIP = `[{"name":"subject.tenant","pipType":"TOKEN","claim":"tenant_id"}]`
+
 const ossPolicies = `[
   {"component":"OSS","resourceType":"Ticket","operation":"UPDATE","roles":["ROLE_ENGINEER"]}
 ]`
 
 func newTestServer(t *testing.T, dataDir string) *http.ServeMux {
 	t.Helper()
-	st, err := newStore(dataDir)
+	return newTestServerWithDefaultTenantID(t, dataDir, defaultTenant)
+}
+
+// newTestServerWithDefaultTenantID is newTestServer whose export gives the
+// default tenant the ID defaultTenantID.
+func newTestServerWithDefaultTenantID(t *testing.T, dataDir, defaultTenantID string) *http.ServeMux {
+	t.Helper()
+	st, err := newStore(dataDir, defaultTenantID)
 	if err != nil {
 		t.Fatalf("newStore: %v", err)
 	}
@@ -49,10 +63,33 @@ func newTestServer(t *testing.T, dataDir string) *http.ServeMux {
 	return mux
 }
 
-func do(t *testing.T, mux *http.ServeMux, method, path, body string) *httptest.ResponseRecorder {
+// do sends the request to mux with no Tenant header, fails the test unless
+// the answer has the status want, and returns the body of the answer.
+func do(t *testing.T, mux *http.ServeMux, method, path, body string, want int) *bytes.Buffer {
 	t.Helper()
+	return doWithTenantHeader(t, mux, method, path, body, "", want)
+}
+
+// doWithTenantHeader is do with the Tenant header set to tenant, or with no
+// Tenant header when tenant is empty.
+func doWithTenantHeader(t *testing.T, mux *http.ServeMux, method, path, body, tenant string, want int) *bytes.Buffer {
+	t.Helper()
+	rec := serve(mux, method, path, body, tenant)
+	if rec.Code != want {
+		t.Fatalf("%s %s = %d %s, want %d", method, path, rec.Code, rec.Body, want)
+	}
+	return rec.Body
+}
+
+// serve sends the request to mux with the Tenant header set to tenant, or
+// with no Tenant header when tenant is empty, and checks nothing. It is for a
+// test whose assertion is the status itself.
+func serve(mux *http.ServeMux, method, path, body, tenant string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	req.Header.Set("Authorization", "Bearer test")
+	if tenant != "" {
+		req.Header.Set("Tenant", tenant)
+	}
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
 	return rec
@@ -65,21 +102,14 @@ func do(t *testing.T, mux *http.ServeMux, method, path, body string) *httptest.R
 func TestDomainsAreIndependentAndExportIsTheUnion(t *testing.T) {
 	mux := newTestServer(t, t.TempDir())
 
-	if rec := do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies); rec.Code != http.StatusOK {
-		t.Fatalf("BSS upload: got %d, body %s", rec.Code, rec.Body.String())
-	}
-	if rec := do(t, mux, http.MethodPut, policiesPath+"OSS", ossPolicies); rec.Code != http.StatusOK {
-		t.Fatalf("OSS upload: got %d, body %s", rec.Code, rec.Body.String())
-	}
+	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies, http.StatusOK)
+	do(t, mux, http.MethodPut, policiesPath+"OSS", ossPolicies, http.StatusOK)
 
 	// Each domain still reads back its own content.
 	for domain, want := range map[string]string{"BSS": "Invoice", "OSS": "Ticket"} {
-		rec := do(t, mux, http.MethodGet, policiesPath+domain, "")
-		if rec.Code != http.StatusOK {
-			t.Fatalf("GET %s: got %d", domain, rec.Code)
-		}
+		body := do(t, mux, http.MethodGet, policiesPath+domain, "", http.StatusOK)
 		var items []simplifiedPolicy
-		decode(t, rec.Body.Bytes(), &items)
+		decode(t, body.Bytes(), &items)
 		if len(items) != 1 || items[0].ResourceType != want {
 			t.Errorf("GET %s returned %+v, want one policy on %s", domain, items, want)
 		}
@@ -87,7 +117,7 @@ func TestDomainsAreIndependentAndExportIsTheUnion(t *testing.T) {
 
 	// The v3 export carries both, so the agent applies both.
 	var resp v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	domains := map[string]bool{}
 	for _, ps := range resp.PolicySets {
 		domains[ps.Domain] = true
@@ -97,16 +127,64 @@ func TestDomainsAreIndependentAndExportIsTheUnion(t *testing.T) {
 	}
 }
 
+// TestTwoDomainsKeepTheirPoliciesInTwoSets: the same component and resource
+// type uploaded to two domains are two policy sets, as in access-control,
+// where each set is its own filter group.
+func TestTwoDomainsKeepTheirPoliciesInTwoSets(t *testing.T) {
+	mux := newTestServer(t, t.TempDir())
+	for _, domain := range []string{"domain1", "domain2"} {
+		body := `[{"component":"PARITY","resourceType":"PARITY_DOC","operation":"READ","roles":["ROLE_A"],` +
+			`"rsqlPredicate":"` + domain + `==1"}]`
+		do(t, mux, http.MethodPut, policiesPath+domain, body, http.StatusOK)
+	}
+
+	var resp v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
+	var got []string
+	for _, ps := range resp.PolicySets {
+		var preds []string
+		for _, p := range ps.Policies {
+			for _, r := range p.Rules {
+				preds = append(preds, r.RSQLPredicate)
+			}
+		}
+		got = append(got, ps.PolicySetID+" "+strings.Join(preds, ","))
+	}
+	want := []string{"ps-domain1/PARITY/PARITY_DOC domain1==1", "ps-domain2/PARITY/PARITY_DOC domain2==1"}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("policy sets =\n%s\nwant\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// TestPolicySetIDsTellTheKeysApart: keys whose parts differ only in where a
+// hyphen falls get two ids, since the agent isolates every set whose id
+// another set repeats.
+func TestPolicySetIDsTellTheKeysApart(t *testing.T) {
+	mux := newTestServer(t, t.TempDir())
+	for domain, component := range map[string]string{"a-b": "c", "a": "b-c"} {
+		body := `[{"component":"` + component + `","resourceType":"PARITY_DOC","operation":"READ","roles":["ROLE_A"]}]`
+		do(t, mux, http.MethodPut, policiesPath+domain, body, http.StatusOK)
+	}
+
+	var resp v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
+	var got []string
+	for _, ps := range resp.PolicySets {
+		got = append(got, ps.PolicySetID)
+	}
+	want := []string{"ps-a/b-c/PARITY_DOC", "ps-a-b/c/PARITY_DOC"}
+	if strings.Join(got, " ") != strings.Join(want, " ") {
+		t.Errorf("policy set ids = %q, want %q", got, want)
+	}
+}
+
 // An unknown domain reads as an empty collection, which is what access-control
 // answers for a domain nobody has uploaded yet.
 func TestUnknownDomainReadsEmpty(t *testing.T) {
 	mux := newTestServer(t, t.TempDir())
-	rec := do(t, mux, http.MethodGet, policiesPath+"NOPE", "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("got %d, want 200", rec.Code)
-	}
+	body := do(t, mux, http.MethodGet, policiesPath+"NOPE", "", http.StatusOK)
 	var items []simplifiedPolicy
-	decode(t, rec.Body.Bytes(), &items)
+	decode(t, body.Bytes(), &items)
 	if len(items) != 0 {
 		t.Errorf("got %d policies for an unused domain, want 0", len(items))
 	}
@@ -120,9 +198,9 @@ func TestStoreReloadsPersistedDomainsWithSameHash(t *testing.T) {
 	dir := t.TempDir()
 
 	first := newTestServer(t, dir)
-	do(t, first, http.MethodPut, policiesPath+"BSS", bssPolicies)
-	do(t, first, http.MethodPut, policiesPath+"OSS", ossPolicies)
-	do(t, first, http.MethodPut, pipsPath+"BSS", `[{"name":"tenant","pipType":"TOKEN","claim":"tenant_id"}]`)
+	do(t, first, http.MethodPut, policiesPath+"BSS", bssPolicies, http.StatusOK)
+	do(t, first, http.MethodPut, policiesPath+"OSS", ossPolicies, http.StatusOK)
+	do(t, first, http.MethodPut, pipsPath+"BSS", tenantPIP, http.StatusOK)
 	before := hashOf(t, first)
 
 	second := newTestServer(t, dir)
@@ -130,7 +208,7 @@ func TestStoreReloadsPersistedDomainsWithSameHash(t *testing.T) {
 		t.Errorf("hash changed across restart: %q → %q", before, got)
 	}
 	var resp v3PolicySetsResponse
-	decode(t, do(t, second, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
+	decode(t, do(t, second, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	if len(resp.PolicySets) != 2 {
 		t.Errorf("reloaded %d policy sets, want 2 (one per domain)", len(resp.PolicySets))
 	}
@@ -149,17 +227,17 @@ func TestStoreReloadsPersistedDomainsWithSameHash(t *testing.T) {
 func TestHashIsContentBased(t *testing.T) {
 	mux := newTestServer(t, t.TempDir())
 
-	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies)
+	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies, http.StatusOK)
 	original := hashOf(t, mux)
 
 	reformatted := `[{"operation":"READ","roles":["ROLE_ADMIN"],"resourceType":"Invoice","component":"BSS"}]`
-	do(t, mux, http.MethodPut, policiesPath+"BSS", reformatted)
+	do(t, mux, http.MethodPut, policiesPath+"BSS", reformatted, http.StatusOK)
 	if got := hashOf(t, mux); got != original {
 		t.Errorf("hash changed on a semantically identical upload: %q → %q", original, got)
 	}
 
 	changed := `[{"component":"BSS","resourceType":"Invoice","operation":"UPDATE","roles":["ROLE_ADMIN"]}]`
-	do(t, mux, http.MethodPut, policiesPath+"BSS", changed)
+	do(t, mux, http.MethodPut, policiesPath+"BSS", changed, http.StatusOK)
 	if got := hashOf(t, mux); got == original {
 		t.Errorf("hash unchanged after the policies changed: %q", got)
 	}
@@ -170,16 +248,16 @@ func TestHashIsContentBased(t *testing.T) {
 func TestPolicyAndPIPHashesAreIndependent(t *testing.T) {
 	mux := newTestServer(t, t.TempDir())
 
-	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies)
+	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies, http.StatusOK)
 	policiesHash := hashOf(t, mux)
 
-	do(t, mux, http.MethodPut, pipsPath+"BSS", `[{"name":"tenant","pipType":"TOKEN","claim":"tenant_id"}]`)
+	do(t, mux, http.MethodPut, pipsPath+"BSS", tenantPIP, http.StatusOK)
 	if got := hashOf(t, mux); got != policiesHash {
 		t.Errorf("policy hash moved on a PIP upload: %q → %q", policiesHash, got)
 	}
 
 	var pipsResp v3PIPsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "").Body.Bytes(), &pipsResp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "", http.StatusOK).Bytes(), &pipsResp)
 	if pipsResp.Hash == policiesHash {
 		t.Error("PIP and policy hashes are identical; they must be computed per collection")
 	}
@@ -194,7 +272,7 @@ func TestFailedPersistKeepsPreviousContent(t *testing.T) {
 	}
 	dir := t.TempDir()
 	mux := newTestServer(t, dir)
-	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies)
+	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies, http.StatusOK)
 	before := hashOf(t, mux)
 
 	if err := os.Chmod(dir, 0o500); err != nil {
@@ -202,18 +280,14 @@ func TestFailedPersistKeepsPreviousContent(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
 
-	if rec := do(t, mux, http.MethodPut, policiesPath+"BSS", `[]`); rec.Code != http.StatusInternalServerError {
-		t.Fatalf("got %d, want 500 when the data dir is read-only", rec.Code)
-	}
+	do(t, mux, http.MethodPut, policiesPath+"BSS", `[]`, http.StatusInternalServerError)
 	if got := hashOf(t, mux); got != before {
 		t.Errorf("served content changed despite the failed write: %q → %q", before, got)
 	}
 	// A brand-new domain must not linger in memory either.
-	if rec := do(t, mux, http.MethodPut, policiesPath+"FRESH", ossPolicies); rec.Code != http.StatusInternalServerError {
-		t.Fatalf("got %d for a new domain, want 500", rec.Code)
-	}
+	do(t, mux, http.MethodPut, policiesPath+"FRESH", ossPolicies, http.StatusInternalServerError)
 	var items []simplifiedPolicy
-	decode(t, do(t, mux, http.MethodGet, policiesPath+"FRESH", "").Body.Bytes(), &items)
+	decode(t, do(t, mux, http.MethodGet, policiesPath+"FRESH", "", http.StatusOK).Bytes(), &items)
 	if len(items) != 0 {
 		t.Errorf("failed upload of a new domain left %d policies behind", len(items))
 	}
@@ -228,7 +302,7 @@ func TestFailedPIPPersistKeepsPreviousContent(t *testing.T) {
 	}
 	dir := t.TempDir()
 	mux := newTestServer(t, dir)
-	do(t, mux, http.MethodPut, pipsPath+"BSS", `[{"name":"tenant","pipType":"TOKEN","claim":"tenant_id"}]`)
+	do(t, mux, http.MethodPut, pipsPath+"BSS", tenantPIP, http.StatusOK)
 	before := hashOf(t, mux)
 
 	if err := os.Chmod(dir, 0o500); err != nil {
@@ -236,9 +310,7 @@ func TestFailedPIPPersistKeepsPreviousContent(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
 
-	if rec := do(t, mux, http.MethodPut, pipsPath+"BSS", `[]`); rec.Code != http.StatusInternalServerError {
-		t.Fatalf("PUT of PIPs onto a read-only data dir = %d, want 500", rec.Code)
-	}
+	do(t, mux, http.MethodPut, pipsPath+"BSS", `[]`, http.StatusInternalServerError)
 	if got := hashOf(t, mux); got != before {
 		t.Errorf("served content changed despite the failed write: %q -> %q", before, got)
 	}
@@ -254,7 +326,7 @@ func TestNewStoreRejectsUnwritableDir(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
 
-	if _, err := newStore(dir); err == nil {
+	if _, err := newStore(dir, defaultTenant); err == nil {
 		t.Fatal("newStore accepted a read-only data dir; the Pod must fail fast instead")
 	}
 }
@@ -267,7 +339,7 @@ func TestNewStoreSweepsStaleTempFiles(t *testing.T) {
 	if err := os.WriteFile(stale, []byte("{}"), 0o644); err != nil {
 		t.Fatalf("seed stale file: %v", err)
 	}
-	if _, err := newStore(dir); err != nil {
+	if _, err := newStore(dir, defaultTenant); err != nil {
 		t.Fatalf("newStore: %v", err)
 	}
 	if _, err := os.Stat(stale); !os.IsNotExist(err) {
@@ -289,7 +361,7 @@ func TestMalformedDomainFileSkipsOnlyThatDomain(t *testing.T) {
 
 	mux := newTestServer(t, dir)
 	var resp v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	if len(resp.PolicySets) != 1 || resp.PolicySets[0].Domain != "BSS" {
 		t.Errorf("got %+v, want only the BSS policy set", resp.PolicySets)
 	}
@@ -333,7 +405,7 @@ func seedNotADomain(t *testing.T, dir string) {
 func assertOnlyBSSSurvived(t *testing.T, mux *http.ServeMux) {
 	t.Helper()
 	var resp v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	if len(resp.PolicySets) != 1 || resp.PolicySets[0].Domain != "BSS" {
 		t.Errorf("the export holds %+v, want only the BSS policy set the store could read", resp.PolicySets)
 	}
@@ -341,7 +413,7 @@ func assertOnlyBSSSurvived(t *testing.T, mux *http.ServeMux) {
 		Revision int      `json:"revision"`
 		Domains  []string `json:"domains"`
 	}
-	decode(t, do(t, mux, http.MethodGet, "/authz-policy-admin/hash", "").Body.Bytes(), &status)
+	decode(t, do(t, mux, http.MethodGet, "/authz-policy-admin/hash", "", http.StatusOK).Bytes(), &status)
 	if status.Revision != 0 {
 		t.Errorf("revision = %d, want 0: no state the store could read", status.Revision)
 	}
@@ -380,7 +452,7 @@ func TestInvalidDomainIsRejected(t *testing.T) {
 
 	// Reach the handler and fail validation.
 	for _, domain := range []string{"has%20space", "sub%2Fdir", "quote%27", strings.Repeat("x", 65)} {
-		rec := do(t, mux, http.MethodPut, policiesPath+domain, bssPolicies)
+		rec := serve(mux, http.MethodPut, policiesPath+domain, bssPolicies, "")
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("domain %q: got %d, want 400", domain, rec.Code)
 		}
@@ -389,7 +461,7 @@ func TestInvalidDomainIsRejected(t *testing.T) {
 	// `.` and `..` never reach the handler: net/http cleans the path first and
 	// answers a redirect. Either way no file is written for them.
 	for _, domain := range []string{".", ".."} {
-		rec := do(t, mux, http.MethodPut, policiesPath+domain, bssPolicies)
+		rec := serve(mux, http.MethodPut, policiesPath+domain, bssPolicies, "")
 		if rec.Code == http.StatusOK {
 			t.Errorf("domain %q was accepted (%d)", domain, rec.Code)
 		}
@@ -406,7 +478,7 @@ func TestUnsupportedMethodsAnswer405(t *testing.T) {
 		{http.MethodDelete, pipsPath + "BSS"},
 		{http.MethodPost, policiesPath + "BSS"},
 	} {
-		rec := do(t, mux, tc.method, tc.path, `[]`)
+		rec := serve(mux, tc.method, tc.path, `[]`, "")
 		if rec.Code != http.StatusMethodNotAllowed {
 			t.Errorf("%s %s: got %d, want 405", tc.method, tc.path, rec.Code)
 		}
@@ -433,11 +505,9 @@ func TestV3ExportRequiresAuthorizationHeader(t *testing.T) {
 // uploads must work with no data directory at all.
 func TestInMemoryModeServesUploads(t *testing.T) {
 	mux := newTestServer(t, "")
-	if rec := do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies); rec.Code != http.StatusOK {
-		t.Fatalf("upload: got %d, body %s", rec.Code, rec.Body.String())
-	}
+	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies, http.StatusOK)
 	var resp v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	if len(resp.PolicySets) != 1 {
 		t.Errorf("got %d policy sets, want 1", len(resp.PolicySets))
 	}
@@ -447,26 +517,330 @@ func TestInMemoryModeServesUploads(t *testing.T) {
 // debugging "my policies did not arrive" wants to see.
 func TestHashEndpointListsDomains(t *testing.T) {
 	mux := newTestServer(t, t.TempDir())
-	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies)
-	do(t, mux, http.MethodPut, pipsPath+"OSS", `[]`)
+	do(t, mux, http.MethodPut, policiesPath+"billing", `[]`, http.StatusOK)
+	do(t, mux, http.MethodPut, pipsPath+"network", `[]`, http.StatusOK)
+	do(t, mux, http.MethodPut, pipsPath+"support?tenant_id=tenant-a", `[]`, http.StatusOK)
 
 	var status struct {
 		Domains []string `json:"domains"`
 		Hash    string   `json:"hash"`
 	}
-	decode(t, do(t, mux, http.MethodGet, "/authz-policy-admin/hash", "").Body.Bytes(), &status)
-	if fmt.Sprint(status.Domains) != "[BSS OSS]" {
-		t.Errorf("domains %v, want [BSS OSS]", status.Domains)
+	decode(t, do(t, mux, http.MethodGet, "/authz-policy-admin/hash", "", http.StatusOK).Bytes(), &status)
+	if fmt.Sprint(status.Domains) != "[billing network tenant-a/support]" {
+		t.Errorf("domains %v, want [billing network tenant-a/support]", status.Domains)
 	}
 	if status.Hash == "" {
 		t.Error("hash is empty")
 	}
 }
 
+// The agent rejects an export whose policySets is null, so an empty store has
+// to export an empty array.
+func TestEmptyStoreExportsEmptyArrays(t *testing.T) {
+	mux := newTestServer(t, t.TempDir())
+	for _, tc := range []struct{ path, field string }{
+		{"/access/v3/config/policySets", "policySets"},
+		{"/access/v3/config/pips", "pips"},
+	} {
+		var resp map[string]json.RawMessage
+		decode(t, do(t, mux, http.MethodGet, tc.path, "", http.StatusOK).Bytes(), &resp)
+		if got := string(resp[tc.field]); got != "[]" {
+			t.Errorf("GET %s: %s = %s, want []", tc.path, tc.field, got)
+		}
+	}
+}
+
+// Each tenant holds its own collection for a domain, and the export stamps
+// every policy set and PIP with the tenant that uploaded it. The tenant is the
+// tenant_id query parameter, else the Tenant header, else "default".
+func TestTenantsKeepSeparateCollectionsOfOneDomain(t *testing.T) {
+	mux := newTestServer(t, t.TempDir())
+	uploads := []struct {
+		name, query, header, resourceType string
+	}{
+		{name: "default", resourceType: "Invoice"},
+		{name: "query", query: "?tenant_id=tenant-a", resourceType: "Ticket"},
+		{name: "header", header: "tenant-b", resourceType: "Order"},
+		{name: "query over header", query: "?tenant_id=tenant-c", header: "tenant-b-ignored", resourceType: "Quote"},
+	}
+	for _, u := range uploads {
+		body := `[{"component":"billing","resourceType":"` + u.resourceType + `","operation":"READ","roles":["ROLE_ADMIN"]}]`
+		doWithTenantHeader(t, mux, http.MethodPut, policiesPath+"billing"+u.query, body, u.header, http.StatusOK)
+		pip := `[{"name":"subject.org","pipType":"TOKEN","claim":"` + u.resourceType + `"}]`
+		doWithTenantHeader(t, mux, http.MethodPut, pipsPath+"billing"+u.query, pip, u.header, http.StatusOK)
+	}
+
+	for _, tc := range []struct{ query, header, want string }{
+		{"", "", "Invoice"},
+		{"?tenant_id=tenant-a", "", "Ticket"},
+		{"", "tenant-b", "Order"},
+		{"?tenant_id=tenant-c", "", "Quote"},
+		{"", "tenant-b-ignored", ""},
+	} {
+		var items []simplifiedPolicy
+		decode(t, doWithTenantHeader(t, mux, http.MethodGet, policiesPath+"billing"+tc.query, "", tc.header, http.StatusOK).Bytes(), &items)
+		var got []string
+		for _, p := range items {
+			got = append(got, p.ResourceType)
+		}
+		if want := tc.want; fmt.Sprint(got) != fmt.Sprint(strings.Fields(want)) {
+			t.Errorf("GET billing%s with Tenant %q: resource types %v, want [%s]", tc.query, tc.header, got, want)
+		}
+	}
+
+	var sets v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &sets)
+	gotSets := map[string]string{}
+	for _, ps := range sets.PolicySets {
+		gotSets[ps.TenantID] = ps.Target
+	}
+	wantSets := map[string]string{
+		"default":  "resourceType == 'Invoice'",
+		"tenant-a": "resourceType == 'Ticket'",
+		"tenant-b": "resourceType == 'Order'",
+		"tenant-c": "resourceType == 'Quote'",
+	}
+	if fmt.Sprint(gotSets) != fmt.Sprint(wantSets) {
+		t.Errorf("policy set targets by tenantId = %v, want %v", gotSets, wantSets)
+	}
+
+	var pips v3PIPsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "", http.StatusOK).Bytes(), &pips)
+	gotPIPs := map[string]string{}
+	for _, p := range pips.PIPs {
+		gotPIPs[p.TenantID] = p.Claim
+	}
+	wantPIPs := map[string]string{"default": "Invoice", "tenant-a": "Ticket", "tenant-b": "Order", "tenant-c": "Quote"}
+	if fmt.Sprint(gotPIPs) != fmt.Sprint(wantPIPs) {
+		t.Errorf("PIP claims by tenantId = %v, want %v", gotPIPs, wantPIPs)
+	}
+}
+
+// A collection of a tenant other than the default one survives a restart under
+// that tenant, and the default tenant keeps the file name it had before
+// uploads were kept per tenant.
+func TestStoreReloadsTenantCollections(t *testing.T) {
+	dir := t.TempDir()
+	first := newTestServer(t, dir)
+	do(t, first, http.MethodPut, policiesPath+"billing", `[{"component":"billing","resourceType":"Invoice","operation":"READ","roles":["ROLE_ADMIN"]}]`, http.StatusOK)
+	do(t, first, http.MethodPut, policiesPath+"support?tenant_id=tenant-a", `[{"component":"support","resourceType":"Ticket","operation":"UPDATE","roles":["ROLE_ENGINEER"]}]`, http.StatusOK)
+	before := hashOf(t, first)
+
+	for _, name := range []string{policiesFilePrefix + "billing.json", policiesFilePrefix + "tenant-a@support.json"} {
+		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+			t.Errorf("data file %s: %v", name, err)
+		}
+	}
+
+	second := newTestServer(t, dir)
+	if got := hashOf(t, second); got != before {
+		t.Errorf("hash changed across restart: %q → %q", before, got)
+	}
+	var resp v3PolicySetsResponse
+	decode(t, do(t, second, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
+	got := map[string]string{}
+	for _, ps := range resp.PolicySets {
+		got[ps.Domain] = ps.TenantID
+	}
+	if want := map[string]string{"billing": "default", "support": "tenant-a"}; fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("reloaded tenantId by domain = %v, want %v", got, want)
+	}
+}
+
+// The export gives the default tenant the configured tenantId, which a
+// stand sets to the ID tenant-manager resolves the default tenant to, and
+// leaves the tenant an upload named as it is.
+func TestTheDefaultTenantIsExportedUnderItsConfiguredID(t *testing.T) {
+	mux := newTestServerWithDefaultTenantID(t, t.TempDir(), "6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b")
+	do(t, mux, http.MethodPut, policiesPath+"billing", `[{"component":"billing","resourceType":"Invoice","operation":"READ","roles":["ROLE_ADMIN"]}]`, http.StatusOK)
+	do(t, mux, http.MethodPut, policiesPath+"billing?tenant_id=tenant-a", `[{"component":"billing","resourceType":"Ticket","operation":"READ","roles":["ROLE_ADMIN"]}]`, http.StatusOK)
+	do(t, mux, http.MethodPut, pipsPath+"billing", `[{"name":"subject.org","pipType":"TOKEN","claim":"org"}]`, http.StatusOK)
+
+	var sets v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &sets)
+	got := map[string]string{}
+	for _, ps := range sets.PolicySets {
+		got[ps.TenantID] = ps.Target
+	}
+	want := map[string]string{"6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b": "resourceType == 'Invoice'", "tenant-a": "resourceType == 'Ticket'"}
+	if fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("policy set targets by tenantId = %v, want %v", got, want)
+	}
+	var pips v3PIPsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "", http.StatusOK).Bytes(), &pips)
+	if len(pips.PIPs) != 1 || pips.PIPs[0].TenantID != "6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b" {
+		t.Errorf("PIPs = %+v, want one PIP of tenantId 6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b", pips.PIPs)
+	}
+}
+
+// A tenant an upload names is that tenant ID, as the agent reads it, and an
+// upload that names none goes to the default tenant. So with the default
+// tenant ID T1, tenant_id=default is the tenant "default", and an upload naming
+// T1 replaces what an upload without a tenant left for the domain.
+func TestATenantAnUploadNamesIsThatTenantID(t *testing.T) {
+	mux := newTestServerWithDefaultTenantID(t, t.TempDir(), "T1")
+	policy := func(resourceType string) string {
+		return `[{"component":"billing","resourceType":"` + resourceType + `","operation":"READ","roles":["ROLE_ADMIN"]}]`
+	}
+	do(t, mux, http.MethodPut, policiesPath+"billing", policy("Invoice"), http.StatusOK)
+	doWithTenantHeader(t, mux, http.MethodPut, policiesPath+"billing", policy("Ticket"), "T1", http.StatusOK)
+	do(t, mux, http.MethodPut, policiesPath+"billing?tenant_id=default", policy("Order"), http.StatusOK)
+
+	var sets v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &sets)
+	got := map[string][]string{}
+	for _, ps := range sets.PolicySets {
+		got[ps.TenantID] = append(got[ps.TenantID], ps.Target)
+	}
+	want := map[string][]string{"T1": {"resourceType == 'Ticket'"}, "default": {"resourceType == 'Order'"}}
+	if fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("policy set targets by tenantId = %v, want %v", got, want)
+	}
+}
+
+// writePolicyFile writes a data file of one policy of resourceType
+// resourceType, or the text malformed for an empty resourceType.
+func writePolicyFile(t *testing.T, dir, name, resourceType string) {
+	t.Helper()
+	body := "{not json"
+	if resourceType != "" {
+		body = `[{"component":"billing","resourceType":"` + resourceType + `","operation":"READ","roles":["ROLE_ADMIN"]}]`
+	}
+	if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o600); err != nil {
+		t.Fatalf("write %s: %v", name, err)
+	}
+}
+
+// exportedTargets returns the targets of the exported policy sets.
+func exportedTargets(t *testing.T, mux *http.ServeMux) []string {
+	t.Helper()
+	var sets v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &sets)
+	targets := []string{}
+	for _, ps := range sets.PolicySets {
+		targets = append(targets, ps.TenantID+": "+ps.Target)
+	}
+	return targets
+}
+
+// The default tenant's collection for a domain is read from the file the
+// store writes for it, <domain>.json, whenever that file exists, and from a
+// file named <default ID>@<domain>.json, written while the default tenant had
+// another ID, only where it does not.
+func TestTheDefaultTenantReadsTheFileTheStoreWrites(t *testing.T) {
+	for _, tc := range []struct {
+		name, defaultID, canonical, alias string
+		want                              []string
+	}{
+		{"both files, the old name sorting first", "T1", "New", "Old", []string{"T1: resourceType == 'New'"}},
+		{"both files, the old name sorting last", "zz", "New", "Old", []string{"zz: resourceType == 'New'"}},
+		{"the old name alone", "T1", "-", "Old", []string{"T1: resourceType == 'Old'"}},
+		{"a malformed file beside the old name", "T1", "", "Old", []string{}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			if tc.canonical != "-" {
+				writePolicyFile(t, dir, policiesFilePrefix+"billing.json", tc.canonical)
+			}
+			writePolicyFile(t, dir, policiesFilePrefix+tc.defaultID+"@billing.json", tc.alias)
+			got := exportedTargets(t, newTestServerWithDefaultTenantID(t, dir, tc.defaultID))
+			if fmt.Sprint(got) != fmt.Sprint(tc.want) {
+				t.Errorf("exported sets = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// An upload of the default tenant removes the file of its collection named
+// <default ID>@<domain>.json, so that a restart serves the upload.
+func TestAnUploadOfTheDefaultTenantRemovesItsOldFile(t *testing.T) {
+	dir := t.TempDir()
+	writePolicyFile(t, dir, policiesFilePrefix+"T1@billing.json", "Old")
+	do(t, newTestServerWithDefaultTenantID(t, dir, "T1"), http.MethodPut, policiesPath+"billing",
+		`[{"component":"billing","resourceType":"New","operation":"READ","roles":["ROLE_ADMIN"]}]`, http.StatusOK)
+
+	if _, err := os.Stat(filepath.Join(dir, policiesFilePrefix+"T1@billing.json")); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("stat of the old file after the upload: %v, want it removed", err)
+	}
+	got := exportedTargets(t, newTestServerWithDefaultTenantID(t, dir, "T1"))
+	if want := []string{"T1: resourceType == 'New'"}; fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("exported sets after a restart = %q, want %q", got, want)
+	}
+}
+
+// exportedPIPClaims returns the tenantId and the claim of each exported PIP.
+func exportedPIPClaims(t *testing.T, mux *http.ServeMux) []string {
+	t.Helper()
+	var pips v3PIPsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/pips", "", http.StatusOK).Bytes(), &pips)
+	claims := []string{}
+	for _, p := range pips.PIPs {
+		claims = append(claims, p.TenantID+": "+p.Claim)
+	}
+	return claims
+}
+
+// pipFile is the body of a PIP data file of one TOKEN PIP reading claim.
+func pipFile(claim string) []byte {
+	return []byte(`[{"name":"subject.org","pipType":"TOKEN","claim":"` + claim + `"}]`)
+}
+
+// The PIP collection of the default tenant follows the rule of its policies:
+// <domain>.json is read whenever it exists, and an upload removes the file
+// named <default ID>@<domain>.json.
+func TestTheDefaultTenantReadsThePIPFileTheStoreWrites(t *testing.T) {
+	dir := t.TempDir()
+	for name, claim := range map[string]string{"billing.json": "New", "T1@billing.json": "Old"} {
+		if err := os.WriteFile(filepath.Join(dir, pipsFilePrefix+name), pipFile(claim), 0o600); err != nil {
+			t.Fatalf("write %s: %v", name, err)
+		}
+	}
+	got := exportedPIPClaims(t, newTestServerWithDefaultTenantID(t, dir, "T1"))
+	if want := []string{"T1: New"}; fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("exported PIPs = %q, want %q", got, want)
+	}
+}
+
+func TestAnUploadOfTheDefaultTenantRemovesItsOldPIPFile(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, pipsFilePrefix+"T1@billing.json"), pipFile("Old"), 0o600); err != nil {
+		t.Fatalf("write the old file: %v", err)
+	}
+	do(t, newTestServerWithDefaultTenantID(t, dir, "T1"), http.MethodPut, pipsPath+"billing", string(pipFile("New")),
+		http.StatusOK)
+
+	if _, err := os.Stat(filepath.Join(dir, pipsFilePrefix+"T1@billing.json")); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("stat of the old file after the upload: %v, want it removed", err)
+	}
+	got := exportedPIPClaims(t, newTestServerWithDefaultTenantID(t, dir, "T1"))
+	if want := []string{"T1: New"}; fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("exported PIPs after a restart = %q, want %q", got, want)
+	}
+}
+
+// A tenant names a data file, so a tenant that is not a legal name is
+// refused with 400 and writes nothing.
+func TestInvalidTenantIsRejected(t *testing.T) {
+	dir := t.TempDir()
+	mux := newTestServer(t, dir)
+	for _, tc := range []struct{ name, query, header string }{
+		{"a path in the query", "?tenant_id=..%2Fx", ""},
+		{"an @ in the header", "", "a@b"},
+	} {
+		rec := serve(mux, http.MethodPut, policiesPath+"billing"+tc.query, `[]`, tc.header)
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("%s: got %d, want 400", tc.name, rec.Code)
+		}
+	}
+	if files, _ := filepath.Glob(filepath.Join(dir, "*.json")); len(files) != 0 {
+		t.Errorf("data files after the refused uploads = %v, want none", files)
+	}
+}
+
 func hashOf(t *testing.T, mux *http.ServeMux) string {
 	t.Helper()
 	var resp v3PolicySetsResponse
-	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "", http.StatusOK).Bytes(), &resp)
 	return resp.Hash
 }
 

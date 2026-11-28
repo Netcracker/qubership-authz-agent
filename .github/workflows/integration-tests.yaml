@@ -13,6 +13,9 @@
 #                        over the package's cases, the json-path-comparison
 #                        queries, and the calls Jayway's own tests make
 #                        (Makefile jayway-suite-calls, test-jayway)
+#   complexity           the tests that check that the cost of a request or of
+#                        compiling policies grows linearly in the size of its
+#                        input (Makefile complexity-tests)
 #   kind-e2e             the test stand and the two charts installed on a kind
 #                        cluster with Helm 4, and the runtime suite run against
 #                        them (Makefile e2e-* targets, see test/k8s/README.md)
@@ -210,6 +213,26 @@ jobs:
           make test-jayway JSONPATH_COMPARISON_DIR="$GITHUB_WORKSPACE/json-path-comparison" \
             JAYWAY_SUITE_CALLS="$RUNNER_TEMP/jayway-suite-calls"
 
+  complexity:
+    name: Complexity tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Run the complexity tests
+        run: make complexity-tests
+
   kind-e2e:
     name: Kind end-to-end
     runs-on: ubuntu-latest
@@ -313,7 +336,7 @@ jobs:
     permissions: {}
     # kind-parity is left out until #205 replaces the decision path, so a
     # parity failure on the current one does not block a merge.
-    needs: [rego, chart, integration-compile, jsonpath-jayway, kind-e2e]
+    needs: [rego, chart, integration-compile, jsonpath-jayway, complexity, kind-e2e]
     if: always()
     steps:
       - name: Check job results

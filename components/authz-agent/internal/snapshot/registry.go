@@ -1,0 +1,585 @@
+// Copyright 2024-2026 Netcracker Technology Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package snapshot holds the compiled policies of every tenant and answers
+// check requests with them. A [Registry] turns the policy source's v3 export
+// into one generated Rego module per tenant ([regogen.Generate]), compiles
+// it, and publishes it for that tenant alone; [Registry.Decide] projects a
+// request onto the tenant's module and evaluates it.
+//
+// The tenants of one export never share policies or PIP declarations: each
+// tenant's tree comes from the elements that carry its tenantId. A tenant
+// whose candidate cannot be generated or compiled keeps its previous
+// snapshot, and the others are published regardless.
+package snapshot
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"maps"
+	"runtime"
+	"slices"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/open-policy-agent/opa/v1/rego"
+
+	"authz-agent/internal/policyir"
+	"authz-agent/internal/regobuiltins"
+	"authz-agent/internal/regogen"
+	"authz-agent/internal/regogen/spectables"
+)
+
+// Logger receives the diagnostics of a load.
+type Logger interface {
+	Infof(format string, args ...any)
+	Warnf(format string, args ...any)
+}
+
+// Config tunes a Registry.
+type Config struct {
+	// HTTP is how nc.http.send reaches the PIPs; nil fails every call, so
+	// that a PIP the module calls reads as a failed source.
+	HTTP *regobuiltins.HTTP
+	// Workers bounds the tenants generated and compiled at once during a
+	// load; zero or less takes a quarter of the CPUs, at least one, so that
+	// a load leaves the rest to the decisions served meanwhile.
+	Workers int
+	// BulkWorkers bounds the items of one bulk request evaluated at once;
+	// zero or less means 4.
+	BulkWorkers int
+	// Entitlements is the base URL of the entitlements service, which
+	// subject.entitledResources calls; empty fails every such operand.
+	Entitlements string
+	// FilterFirstApproximation is [regogen.Options.FirstApproximation].
+	FilterFirstApproximation bool
+}
+
+// Snapshot is the compiled module of one tenant.
+type Snapshot struct {
+	Tenant string
+	// Hash identifies the module text, the decision text, and the filter
+	// text; tenants with equal texts share the compiled queries.
+	Hash   string
+	Module *regogen.Module
+	// Filter is the module that answers check/filter.
+	Filter      *regogen.Module
+	PublishedAt time.Time
+	// treeKey identifies the tenant's tree, so that a load whose tree is
+	// unchanged keeps the snapshot without generating it again.
+	treeKey policyir.Key
+	q       *queries
+}
+
+// queries are the prepared queries of one module text.
+type queries struct {
+	allow, maybe, filter rego.PreparedEvalQuery
+	compile              time.Duration
+}
+
+// state is what one load publishes: the snapshots and the health of every
+// tenant the export names.
+type state struct {
+	snapshots map[string]*Snapshot
+	tenants   map[string]TenantHealth
+	orphans   []policyir.Element
+	// dropped maps a tenant to the elements its tree leaves out, which
+	// [TenantHealth.Dropped] lists as text.
+	dropped map[string][]policyir.Element
+	// warnings maps a tenant to the warnings of its tree, which
+	// [TenantHealth.Warnings] lists as text.
+	warnings map[string][]policyir.Warning
+	// refused holds each tenant's refused candidate, so that an unchanged
+	// candidate is not refused and reported again.
+	refused   map[string]refusal
+	loadedAt  time.Time
+	sourceKey string
+}
+
+// Registry holds the published snapshot of each tenant. Decide is safe for
+// concurrent use with itself and with Load; loads are serialized.
+type Registry struct {
+	cfg Config
+	tab *spectables.Table
+	opt regogen.Options
+	log Logger
+	// generate, generateFilter, and prepareQuery are [regogen.Generate],
+	// [regogen.GenerateFilter], and [prepareQuery]: they generate the module
+	// and the filter, and prepare each query of the compile stage. A test
+	// replaces one to refuse a candidate there.
+	generate, generateFilter func(*policyir.Tree, *spectables.Table, regogen.Options) (*regogen.Module, error)
+	prepareQuery             func(ctx context.Context, query, file, text string) (rego.PreparedEvalQuery, error)
+
+	load sync.Mutex
+	cur  atomic.Pointer[state]
+}
+
+// New returns a registry with no tenant; tab is the specification table the
+// generator reads.
+func New(cfg Config, tab *spectables.Table, log Logger) *Registry {
+	if cfg.Workers <= 0 {
+		cfg.Workers = max(1, runtime.NumCPU()/4)
+	}
+	if cfg.BulkWorkers <= 0 {
+		cfg.BulkWorkers = 4
+	}
+	opt := regogen.DefaultOptions()
+	opt.Groups, opt.Decision = true, true
+	opt.FirstApproximation = cfg.FilterFirstApproximation
+	r := &Registry{cfg: cfg, tab: tab, opt: opt, log: log,
+		generate: regogen.Generate, generateFilter: regogen.GenerateFilter, prepareQuery: prepareQuery}
+	r.cur.Store(&state{snapshots: map[string]*Snapshot{}, tenants: map[string]TenantHealth{}})
+	return r
+}
+
+// Snapshot returns the published snapshot of tenant, and false when the
+// tenant has none.
+func (r *Registry) Snapshot(tenant string) (*Snapshot, bool) {
+	s, ok := r.cur.Load().snapshots[tenant]
+	return s, ok
+}
+
+// Loaded reports whether a load has completed.
+func (r *Registry) Loaded() bool { return !r.cur.Load().loadedAt.IsZero() }
+
+// LoadSummary counts what one load did.
+type LoadSummary struct {
+	Tenants   int
+	Generated int
+	Compiled  int
+	Kept      int
+	Rejected  int
+	Removed   int
+	Duration  time.Duration
+	// Refused lists, by tenant ID order, every tenant whose latest
+	// candidate is refused, including one refused by an earlier load whose
+	// tree has not changed since.
+	Refused []TenantRefusal
+}
+
+// TenantRefusal is a tenant whose latest candidate is refused.
+type TenantRefusal struct {
+	Tenant string
+	// Served is set when the tenant keeps a previous snapshot, and clear
+	// when the tenant has none and denies every request.
+	Served bool
+	Stage  string
+	Reason string
+}
+
+// RefusedError is the error of [Registry.LoadSnapshots] after a load that
+// published every tenant except the ones it names.
+type RefusedError struct {
+	// Tenants is [LoadSummary.Refused], never empty.
+	Tenants []TenantRefusal
+}
+
+// Error counts the refused tenants and names those that are not served. The
+// reason of each refusal is in [Registry.Health] and in the warning the load
+// writes when the refusal is new.
+func (e *RefusedError) Error() string {
+	msg := fmt.Sprintf("tenants with a refused candidate snapshot: %d", len(e.Tenants))
+	if u := e.Unserved(); len(u) > 0 {
+		msg += "; not served: " + strings.Join(u, ", ")
+	}
+	return msg
+}
+
+// Refused returns the refused tenants, in the order of e.Tenants.
+func (e *RefusedError) Refused() []string {
+	out := make([]string, len(e.Tenants))
+	for i, t := range e.Tenants {
+		out[i] = t.Tenant
+	}
+	return out
+}
+
+// Unserved returns the refused tenants that have no previous snapshot and
+// deny every request, in the order of e.Tenants.
+func (e *RefusedError) Unserved() []string {
+	var out []string
+	for _, t := range e.Tenants {
+		if !t.Served {
+			out = append(out, t.Tenant)
+		}
+	}
+	return out
+}
+
+// Load builds a candidate snapshot of every tenant in the documents of
+// GET /access/v3/config/policySets and GET /access/v3/config/pips, and
+// publishes each tenant whose candidate compiles. A tenant whose tree is
+// unchanged since the last load keeps its snapshot. A tenant whose
+// candidate is rejected or fails keeps its previous snapshot and reports
+// why in [Registry.Health] and [LoadSummary.Refused]; on the first load it
+// has none and is not served. A tenant the documents no longer name is
+// removed.
+//
+// Load returns an error, and publishes nothing, only when a document is
+// not a JSON object of the expected shape.
+func (r *Registry) Load(ctx context.Context, policySets, pips []byte) (LoadSummary, error) {
+	r.load.Lock()
+	defer r.load.Unlock()
+	start := time.Now()
+	prev := r.cur.Load()
+	h := sha256.New()
+	h.Write(policySets)
+	h.Write([]byte{0})
+	h.Write(pips)
+	sourceKey := hex.EncodeToString(h.Sum(nil))
+	if sourceKey == prev.sourceKey {
+		next := *prev
+		next.loadedAt = time.Now()
+		r.cur.Store(&next)
+		return LoadSummary{Tenants: len(prev.tenants), Kept: len(prev.snapshots), Duration: time.Since(start),
+			Refused: refusalsOf(prev.tenants)}, nil
+	}
+	exp, err := policyir.FromRegular(policySets, pips)
+	if err != nil {
+		return LoadSummary{}, err
+	}
+	next := &state{
+		snapshots: map[string]*Snapshot{},
+		tenants:   map[string]TenantHealth{},
+		refused:   map[string]refusal{},
+		dropped:   exp.Dropped,
+		warnings:  map[string][]policyir.Warning{},
+		orphans:   exp.Orphans,
+		loadedAt:  time.Now(),
+		sourceKey: sourceKey,
+	}
+	names := slices.Sorted(maps.Keys(exp.Trees))
+	for t := range exp.Failed {
+		if _, ok := exp.Trees[t]; !ok {
+			names = append(names, t)
+		}
+	}
+	slices.Sort(names)
+
+	var sum LoadSummary
+	sum.Tenants = len(names)
+	// a compiled module text is shared by every tenant whose candidate has
+	// the same text, in this load and from the previous one
+	shared := map[string]*queries{}
+	for _, s := range prev.snapshots {
+		shared[s.Hash] = s.q
+	}
+	var sharedMu sync.Mutex
+	results := make([]build, len(names))
+	jobs := make(chan int)
+	var wg sync.WaitGroup
+	for range r.cfg.Workers {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range jobs {
+				results[i] = r.build(ctx, names[i], exp, prev, shared, &sharedMu)
+			}
+		}()
+	}
+	for i := range names {
+		jobs <- i
+	}
+	close(jobs)
+	wg.Wait()
+
+	for i, t := range names {
+		b := results[i]
+		old, hadOld := prev.snapshots[t]
+		th := b.health
+		th.Tenant = t
+		for _, d := range exp.Dropped[t] {
+			th.Dropped = append(th.Dropped, d.String())
+		}
+		if tree, ok := exp.Trees[t]; ok {
+			next.warnings[t] = tree.Warnings()
+			for _, w := range next.warnings[t] {
+				th.Warnings = append(th.Warnings, w.String())
+			}
+		}
+		switch {
+		case b.snap != nil:
+			next.snapshots[t] = b.snap
+			if b.kept {
+				sum.Kept++
+			} else {
+				sum.Generated++
+				if b.compiled {
+					sum.Compiled++
+				}
+			}
+		case hadOld:
+			// the candidate is refused, and the tenant keeps what it had
+			next.snapshots[t] = old
+			if !b.repeat {
+				sum.Rejected++
+			}
+		case !b.repeat:
+			sum.Rejected++
+		}
+		if s, ok := next.snapshots[t]; ok {
+			th.Ready = true
+			th.Snapshot = s.Hash[:16]
+			th.PublishedAt = s.PublishedAt.UTC().Format(time.RFC3339)
+			th.Failures = failuresOf(s.Module)
+		}
+		if b.refused != nil {
+			next.refused[t] = *b.refused
+		}
+		next.tenants[t] = th
+	}
+	for t := range prev.snapshots {
+		if _, ok := next.tenants[t]; !ok {
+			sum.Removed++
+		}
+	}
+	r.warnNew(prev, next)
+	r.cur.Store(next)
+	sum.Duration = time.Since(start)
+	sum.Refused = refusalsOf(next.tenants)
+	return sum, nil
+}
+
+// refusalsOf returns the tenants of tenants whose latest candidate is
+// refused, by tenant ID order.
+func refusalsOf(tenants map[string]TenantHealth) []TenantRefusal {
+	var out []TenantRefusal
+	for _, t := range slices.Sorted(maps.Keys(tenants)) {
+		if th := tenants[t]; th.Rejected != nil {
+			out = append(out, TenantRefusal{Tenant: t, Served: th.Ready, Stage: th.Rejected.Stage, Reason: th.Rejected.Reason})
+		}
+	}
+	return out
+}
+
+func keepsWhat(hadOld bool) string {
+	if hadOld {
+		return "the previous snapshot stays"
+	}
+	return "the tenant is not served"
+}
+
+// build is the outcome of one tenant's candidate.
+type build struct {
+	snap     *Snapshot
+	kept     bool
+	compiled bool
+	health   TenantHealth
+	// refused is the refused candidate, nil for one that is not refused,
+	// and repeat is set when the previous load refused the same candidate.
+	refused *refusal
+	repeat  bool
+}
+
+// refusal is a refused candidate: the key of its tree, or the reason the
+// export has no tree for the tenant, without the position of the element
+// that fails it.
+type refusal struct {
+	tree   policyir.Key
+	export string
+}
+
+// exportFailure returns the text of err, naming the element that fails the
+// export by its [policyir.Element.Identity], so that moving the element in
+// the export does not make the refusal new.
+func exportFailure(err error) string {
+	var ee *policyir.ElementError
+	if errors.As(err, &ee) {
+		return ee.Element.Identity().String()
+	}
+	return err.Error()
+}
+
+// build generates and compiles the candidate of tenant t, or keeps its
+// snapshot from prev where the tree is unchanged.
+func (r *Registry) build(ctx context.Context, t string, exp *policyir.Export, prev *state,
+	shared map[string]*queries, mu *sync.Mutex) build {
+	var b build
+	tree, ok := exp.Trees[t]
+	if !ok {
+		reason := exp.Failed[t].Error()
+		b.refused = &refusal{export: exportFailure(exp.Failed[t])}
+		if p, ok := prev.refused[t]; ok && p == *b.refused {
+			// the reason names the element by its position in this export
+			rej := *prev.tenants[t].Rejected
+			rej.Reason = reason
+			b.health.Rejected, b.repeat = &rej, true
+			return b
+		}
+		b.health.Rejected = &Rejection{At: now(), Stage: "export", Reason: reason}
+		return b
+	}
+	treeKey := tree.Key()
+	if old, ok := prev.snapshots[t]; ok && old.treeKey == treeKey {
+		b.snap, b.kept = old, true
+		return b
+	}
+	b.refused = &refusal{tree: treeKey}
+	if p, ok := prev.refused[t]; ok && p == *b.refused {
+		// a refusal of the same tree stays visible until the tree changes
+		b.health.Rejected, b.repeat = prev.tenants[t].Rejected, true
+		return b
+	}
+	m, err := r.generate(tree, r.tab, r.opt)
+	if err != nil {
+		rej := &Rejection{At: now(), Stage: "generate", Reason: err.Error()}
+		var re *regogen.RejectedError
+		if errors.As(err, &re) {
+			rej.Stage = "unsupported"
+			for _, x := range re.Rejections {
+				rej.Forms = append(rej.Forms, Form{Where: x.Where, Form: string(x.Form), Text: x.Text})
+			}
+		}
+		b.health.Rejected = rej
+		return b
+	}
+	fopt := r.opt
+	fopt.Package += "_filter"
+	f, err := r.generateFilter(tree, r.tab, fopt)
+	if err != nil {
+		b.health.Rejected = &Rejection{At: now(), Stage: "generate", Reason: "the filter: " + err.Error()}
+		return b
+	}
+	hs := sha256.Sum256([]byte(m.Text + "\x00" + m.DecisionText + "\x00" + f.Text))
+	hash := hex.EncodeToString(hs[:])
+	mu.Lock()
+	q, ok := shared[hash]
+	mu.Unlock()
+	if !ok {
+		q, err = r.compile(ctx, m, f)
+		if err != nil {
+			b.health.Rejected = &Rejection{At: now(), Stage: "compile", Reason: err.Error()}
+			return b
+		}
+		b.compiled = true
+		mu.Lock()
+		shared[hash] = q
+		mu.Unlock()
+	}
+	b.refused = nil
+	b.snap = &Snapshot{Tenant: t, Hash: hash, Module: m, Filter: f, PublishedAt: time.Now(), treeKey: treeKey, q: q}
+	return b
+}
+
+// compile prepares the queries of the rules allow and maybe of m and the
+// statuses of the filter f.
+func (r *Registry) compile(ctx context.Context, m, f *regogen.Module) (*queries, error) {
+	start := time.Now()
+	var q queries
+	for _, c := range []struct {
+		dst                     *rego.PreparedEvalQuery
+		what, query, file, text string
+	}{
+		{&q.allow, "module", "data." + r.opt.Package + ".allow", "tenant.rego", m.Text},
+		{&q.maybe, "decision module", "data." + r.opt.Package + "_decision.maybe", "decision.rego", m.DecisionText},
+		{&q.filter, "filter module", regogen.FilterQuery(r.opt.Package + "_filter"), "filter.rego", f.Text},
+	} {
+		p, err := r.prepareQuery(ctx, c.query, c.file, c.text)
+		if err != nil {
+			return nil, fmt.Errorf("compile the %s: %w", c.what, err)
+		}
+		*c.dst = p
+	}
+	q.compile = time.Since(start)
+	return &q, nil
+}
+
+// prepareQuery prepares query over one module, named file, whose source is
+// text, with the built-in functions of a generated module.
+func prepareQuery(ctx context.Context, query, file, text string) (rego.PreparedEvalQuery, error) {
+	return rego.New(append([]func(*rego.Rego){rego.Query(query), rego.Module(file, text)},
+		regogen.Builtins()...)...).PrepareForEval(ctx)
+}
+
+func now() string { return time.Now().UTC().Format(time.RFC3339) }
+
+// LoadSnapshots is [Registry.Load] for package pull: it reports a load that
+// changed a tenant at info. After a load that published the other tenants,
+// it returns a [*RefusedError] naming every tenant whose latest candidate is
+// refused, so a caller that asked for this load learns that its documents
+// are not served in full.
+func (r *Registry) LoadSnapshots(ctx context.Context, policySets, pips []byte) error {
+	sum, err := r.Load(ctx, policySets, pips)
+	if err != nil {
+		return err
+	}
+	if sum.Generated+sum.Rejected+sum.Removed > 0 {
+		r.log.Infof("policies: snapshots of %d tenants: %d generated (%d compiled), %d kept, %d refused, %d removed in %s",
+			sum.Tenants, sum.Generated, sum.Compiled, sum.Kept, sum.Rejected, sum.Removed, sum.Duration.Round(time.Millisecond))
+	}
+	if len(sum.Refused) > 0 {
+		return &RefusedError{Tenants: sum.Refused}
+	}
+	return nil
+}
+
+// warnNew warns of what next has and prev did not: an element that names no
+// tenant or that a tenant's tree leaves out, each compared by
+// [policyir.Element.Identity]; a refused candidate; a part of a published
+// snapshot that fails permanently; and a warning of a tenant's tree,
+// compared by [policyir.Warning.Identity]. A rule that loses a key or a set
+// that is dropped changes the answers while every tenant stays ready, so
+// /health alone does not reach the operator.
+func (r *Registry) warnNew(prev, next *state) {
+	for _, o := range newElements(prev.orphans, next.orphans) {
+		r.log.Warnf("policies: an element names no tenant and is listed under orphans in /health: %s", o)
+	}
+	for _, t := range slices.Sorted(maps.Keys(next.tenants)) {
+		th, old := next.tenants[t], prev.tenants[t]
+		for _, d := range newElements(prev.dropped[t], next.dropped[t]) {
+			r.log.Warnf("policies: tenant %s: the tree leaves out an element, listed under dropped in /health: %s", t, d)
+		}
+		if rf, ok := next.refused[t]; ok {
+			if p, had := prev.refused[t]; !had || p != rf {
+				r.log.Warnf("policies: tenant %s: candidate snapshot refused, %s: %s: %s",
+					t, keepsWhat(th.Ready), th.Rejected.Stage, th.Rejected.Reason)
+			}
+		}
+		for _, f := range th.Failures {
+			if !slices.Contains(old.Failures, f) {
+				r.log.Warnf("policies: tenant %s: a part fails permanently and is listed under failures in /health; "+
+					"a decision that depends on it denies with a reason that starts with %q: %s", t, ReasonUnknown, f)
+			}
+		}
+		for _, w := range newElements(prev.warnings[t], next.warnings[t]) {
+			r.log.Warnf("policies: tenant %s: %s", t, w)
+		}
+	}
+}
+
+// newElements returns the elements of next whose identity next holds more
+// times than prev does, in the order of next.
+func newElements[E interface {
+	comparable
+	Identity() E
+}](prev, next []E) []E {
+	seen := map[E]int{}
+	for _, e := range prev {
+		seen[e.Identity()]++
+	}
+	var out []E
+	for _, e := range next {
+		if k := e.Identity(); seen[k] > 0 {
+			seen[k]--
+			continue
+		}
+		out = append(out, e)
+	}
+	return out
+}

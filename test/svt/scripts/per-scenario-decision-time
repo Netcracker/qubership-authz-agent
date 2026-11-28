@@ -389,8 +389,8 @@ def render_methodology(mode: str) -> list[str]:
         "- **Scenarios**: every benchmark in "
         "[docs/reports/bench-report-latest.md](bench-report-latest.md). "
         "The inventory below is re-derived at sweep time. Request shapes "
-        "are copied from the profiler `tests/svt/profiler/<scenario>/input.json` "
-        "files; tokens are issued by Keycloak for the matching "
+        "are those of `SCENARIOS` in `test/svt/scripts/build-per-scenario-seeds.py`; tokens are "
+        "issued by Keycloak for the matching "
         "`svt-bench-<scenario>` user.",
         f"- **RPS levels**: {rps_str}. OPA is restarted before every "
         "(scenario, RPS) tuple (cold-cache per run).",

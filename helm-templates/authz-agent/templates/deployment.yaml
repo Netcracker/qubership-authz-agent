@@ -144,24 +144,24 @@ spec:
             - name: AUTHZ_JWKS_BOOTSTRAP_REQUIRED
               value: '{{ include "authz-agent.jwksBootstrapRequired" . }}'
             - name: AUTHZ_JWKS_HTTP_TIMEOUT
-              value: '{{ .Values.AUTHZ_JWKS_HTTP_TIMEOUT }}'
+              value: '{{ .Values.AUTHZ_JWKS_HTTP_TIMEOUT | int64 }}'
             - name: AUTHZ_JWKS_HTTP_RETRIES
-              value: '{{ .Values.AUTHZ_JWKS_HTTP_RETRIES }}'
+              value: '{{ .Values.AUTHZ_JWKS_HTTP_RETRIES | int64 }}'
             - name: AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL
-              value: '{{ .Values.AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL }}'
+              value: '{{ .Values.AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL | int64 }}'
             - name: AUTHZ_TENANT_MANAGER_URL
               value: '{{ .Values.AUTHZ_TENANT_MANAGER_URL }}'
             - name: AUTHZ_PAP_CLIENT_SOURCE_URL
               value: '{{ include "authz-agent.papSourceURL" . }}'
             - name: AUTHZ_PAP_CLIENT_PULL_INTERVAL
-              value: '{{ .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL }}'
+              value: '{{ .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL | int64 }}'
             - name: AUTHZ_PAP_CLIENT_TOKEN_FILE
               value: '{{ .Values.AUTHZ_PAP_CLIENT_TOKEN_FILE }}'
             {{- if not .Values.KUBERNETES_M2M_ENABLED }}
             # Client credentials: the service obtains its M2M token itself
             # and refreshes it before it expires.
             - name: AUTHZ_M2M_TOKEN_URL
-              value: '{{ .Values.IDENTITY_PROVIDER_URL }}/auth/realms/cloud-common/protocol/openid-connect/token'
+              value: '{{ trimSuffix "/" (required "IDENTITY_PROVIDER_URL must not be empty when KUBERNETES_M2M_ENABLED is false: the agent fetches its M2M token from <IDENTITY_PROVIDER_URL>/auth/realms/cloud-common/protocol/openid-connect/token" .Values.IDENTITY_PROVIDER_URL) }}/auth/realms/cloud-common/protocol/openid-connect/token'
             - name: AUTHZ_M2M_CLIENT_ID_FILE
               value: /etc/secret/username
             - name: AUTHZ_M2M_CLIENT_SECRET_FILE
@@ -169,12 +169,12 @@ spec:
             - name: AUTHZ_M2M_RENEW_BEFORE_SECONDS
               value: "60"
             {{- end }}
+            - name: AUTHZ_DEFAULT_TENANT
+              value: '{{ .Values.AUTHZ_DEFAULT_TENANT }}'
+            - name: AUTHZ_PIP_TIMEOUT
+              value: '{{ .Values.AUTHZ_PIP_TIMEOUT | int64 }}'
             - name: AUTHZ_ENTITLEMENTS_URL
               value: '{{ .Values.AUTHZ_ENTITLEMENTS_URL }}'
-            - name: AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT
-              value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT }}'
-            - name: AUTHZ_ENTITLEMENTS_HTTP_RETRIES
-              value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_RETRIES }}'
           volumeMounts:
             - name: trusted-providers
               mountPath: /etc/authz
@@ -189,9 +189,11 @@ spec:
               readOnly: true
             {{- end }}
           # /health answers once the trusted providers meet the bootstrap
-          # rules, and /ready once the policies have loaded as well, so a Pod
-          # waiting for its policy source is held out of the Service instead
-          # of being restarted.
+          # rules, and /ready once every tenant has a snapshot and
+          # tenant-manager has resolved the default tenant as well, so a Pod
+          # waiting for its policy source or for tenant-manager is held out of
+          # the Service instead of being restarted. failureThreshold only
+          # marks the Pod not ready; it never restarts it.
           readinessProbe:
             httpGet:
               path: /ready

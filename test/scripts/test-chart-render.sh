@@ -326,6 +326,12 @@ if [[ "$(jq -r '.providers[0].issuer' <<<"${slashed}")" == "http://identity-prov
 else
   fail "trailing slash leaked into the issuer: ${slashed}"
 fi
+slashed_token_url="$(env_value AUTHZ_M2M_TOKEN_URL --set IDENTITY_PROVIDER_URL=http://identity-provider:8080/)"
+if [[ "${slashed_token_url}" == "http://identity-provider:8080/auth/realms/cloud-common/protocol/openid-connect/token" ]]; then
+  pass "a trailing slash on IDENTITY_PROVIDER_URL is absorbed in the token URL"
+else
+  fail "trailing slash leaked into AUTHZ_M2M_TOKEN_URL: ${slashed_token_url}"
+fi
 
 # ── An explicit list wins outright ───────────────────────────────────────
 
@@ -363,6 +369,32 @@ if [[ -z "$(env_value AUTHZ_TENANT_MANAGER_URL --set AUTHZ_TENANT_MANAGER_URL=)"
   pass "realm resolution can be disabled by emptying AUTHZ_TENANT_MANAGER_URL"
 else
   fail "expected an empty AUTHZ_TENANT_MANAGER_URL to render empty"
+fi
+
+# ── The decision settings reach the container ────────────────────────────
+
+decision_defaults="tenant=$(env_value AUTHZ_DEFAULT_TENANT) timeout=$(env_value AUTHZ_PIP_TIMEOUT)"
+if [[ "${decision_defaults}" == "tenant=default timeout=2" ]]; then
+  pass "the agent decides in the tenant default and waits 2 seconds for a PIP call unless told otherwise"
+else
+  fail "the default tenant and PIP timeout render ${decision_defaults}, expected tenant=default timeout=2"
+fi
+decision_set="tenant=$(env_value AUTHZ_DEFAULT_TENANT --set AUTHZ_DEFAULT_TENANT=acme) timeout=$(env_value AUTHZ_PIP_TIMEOUT --set AUTHZ_PIP_TIMEOUT=5)"
+if [[ "${decision_set}" == "tenant=acme timeout=5" ]]; then
+  pass "AUTHZ_DEFAULT_TENANT and AUTHZ_PIP_TIMEOUT from the values reach the agent"
+else
+  fail "AUTHZ_DEFAULT_TENANT=acme and AUTHZ_PIP_TIMEOUT=5 render ${decision_set}, expected tenant=acme timeout=5"
+fi
+# Helm reads a number in a values file as a float and prints a large one with an
+# exponent, which the agent refuses as seconds.
+large_numbers="$(for name in AUTHZ_PIP_TIMEOUT AUTHZ_JWKS_HTTP_TIMEOUT AUTHZ_JWKS_HTTP_RETRIES \
+  AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL AUTHZ_PAP_CLIENT_PULL_INTERVAL; do
+  printf '%s=%s ' "${name}" "$(env_value "${name}" --set-json "${name}=1000000")"
+done)"
+if [[ "${large_numbers}" != *e+* && "$(grep -o '=1000000 ' <<<"${large_numbers}" | wc -l | tr -d ' ')" == 5 ]]; then
+  pass "a seven-digit number of seconds or attempts renders as digits"
+else
+  fail "the value 1000000 renders as ${large_numbers}, expected each of them as 1000000"
 fi
 
 # ── Emptying the realm list means no providers, and says so ──────────────
@@ -481,6 +513,18 @@ else
   fail "the agent Pod does not take the client-credentials Secret without KUBERNETES_M2M_ENABLED"
 fi
 
+# The token endpoint is built from IDENTITY_PROVIDER_URL, so an install that
+# names its providers itself still needs that URL unless the kubelet supplies
+# the token.
+explicit_providers='AUTHZ_TRUSTED_PROVIDERS=[{"id":"p","issuer":"http://idp/auth/realms/p"}]'
+no_idp="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set-json "${explicit_providers}" --set IDENTITY_PROVIDER_URL= 2>&1 || true)"
+no_idp_k8s="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set-json "${explicit_providers}" --set IDENTITY_PROVIDER_URL= --set KUBERNETES_M2M_ENABLED=true 2>&1 || true)"
+if [[ "${no_idp}" == *"IDENTITY_PROVIDER_URL must not be empty when KUBERNETES_M2M_ENABLED is false"* && "${no_idp_k8s}" == *"kind: Deployment"* ]]; then
+  pass "an empty IDENTITY_PROVIDER_URL stops the render only where the agent fetches its own token"
+else
+  fail "with AUTHZ_TRUSTED_PROVIDERS set and IDENTITY_PROVIDER_URL empty, the render $(grep -m1 -o 'Error:.*' <<<"${no_idp}" || echo 'succeeds'), and with KUBERNETES_M2M_ENABLED=true it $(grep -m1 -o 'Error:.*' <<<"${no_idp_k8s}" || echo 'succeeds'); expected the first to fail naming IDENTITY_PROVIDER_URL and the second to succeed"
+fi
+
 # Every setting the service reads has to reach it, and the objects it reads
 # them from have to be mounted.
 for env_name in AUTHZ_PUBLIC_ADDR AUTHZ_HTTP_ADDR \
@@ -518,8 +562,8 @@ else
   fail "a gateway registers /access/v1/authorize, which the agent does not serve"
 fi
 
-# /health answers once the trusted providers are in order and /ready once the
-# policies have loaded too, so a Pod waiting for its policy source is held out
+# /health answers once the trusted providers are in order and /ready once every
+# tenant has a snapshot too, so a Pod waiting for its policy source is held out
 # of the Service instead of being restarted.
 if [[ "${all_manifests}" == *"path: /ready"* && "${all_manifests}" == *"path: /health"* ]]; then
   pass "the agent Pod probes /ready for readiness and /health for liveness"

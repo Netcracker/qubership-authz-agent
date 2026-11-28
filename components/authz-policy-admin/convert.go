@@ -15,50 +15,79 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
+
+	"authz-agent/internal/policyir"
 )
 
 // ── Simplified input types ────────────────────────────────────────────────────
 
-// simplifiedPolicy mirrors internal/simplifiedpolicies.Policy (only the
-// fields the stub uses for v3 export conversion).
-//
-// Predicate is not a field of an access-control simplified policy: it is the
-// querydsl template that access-control keeps in the predicate field of a v3
-// rule. The stub accepts it here and writes it to the v3 rule unchanged, so a
-// test can deliver a querydsl predicate without a regular policy set, which
-// the stub has no endpoint for.
+// simplifiedPolicy is an access-control simplified policy, with the fields
+// the stub uses for v3 export conversion. Its filter predicates are the two
+// access-control reads: rsqlPredicate, and the mongodbPredicate of
+// predicates. A top-level sqlPredicate, mongodbPredicate, predicate, or
+// querydslPredicate is accepted and ignored, as access-control ignores it.
 type simplifiedPolicy struct {
-	Component        string `json:"component"`
-	ResourceType     string `json:"resourceType"`
-	Operation        string `json:"operation"`
-	Condition        any    `json:"condition,omitempty"`
-	RSQLPredicate    string `json:"rsqlPredicate,omitempty"`
-	SQLPredicate     string `json:"sqlPredicate,omitempty"`
-	MongoDBPredicate string `json:"mongodbPredicate,omitempty"`
-	Predicate        string `json:"predicate,omitempty"`
-	Roles            []any  `json:"roles,omitempty"`
+	// Tenant is the tenant that uploaded the policy, from the request.
+	Tenant string `json:"-"`
+	// Domain is the domain the policy was uploaded to, from the request.
+	Domain        string `json:"-"`
+	Component     string `json:"component"`
+	ResourceType  string `json:"resourceType"`
+	Operation     string `json:"operation"`
+	Condition     any    `json:"condition,omitempty"`
+	RSQLPredicate string `json:"rsqlPredicate,omitempty"`
+	// Predicates is the predicates object, whose mongodbPredicate is the
+	// mongodb predicate of the policy, or a text read as that predicate.
+	Predicates json.RawMessage `json:"predicates,omitempty"`
+	Roles      []any           `json:"roles,omitempty"`
 }
 
-// simplifiedPIP mirrors internal/pips.SimplifiedPIP (fields used by
-// the stub for v3 export conversion).
+// mongodbPredicate is the mongodb predicate of p: the mongodbPredicate of its
+// predicates object as the text the upload binds it to, or its predicates
+// text; "" for none.
+func (p simplifiedPolicy) mongodbPredicate() string {
+	var text string
+	if json.Unmarshal(p.Predicates, &text) == nil && text != "" {
+		return text
+	}
+	var nested map[string]any
+	d := json.NewDecoder(bytes.NewReader(p.Predicates))
+	d.UseNumber()
+	if d.Decode(&nested) == nil {
+		return jsonText(nested["mongodbPredicate"])
+	}
+	return ""
+}
+
+// simplifiedPIP is an access-control simplified PIP, with the fields the
+// stub uses for v3 export conversion.
 type simplifiedPIP struct {
-	Name              string            `json:"name"`
-	PipType           string            `json:"pipType,omitempty"`
-	URL               string            `json:"url,omitempty"`
-	HTTPMethod        string            `json:"httpMethod,omitempty"`
-	Header            string            `json:"header,omitempty"`
-	Claim             string            `json:"claim,omitempty"`
-	BeanName          string            `json:"beanName,omitempty"`
-	DefaultValue      json.RawMessage   `json:"defaultValue,omitempty"`
-	Domain            string            `json:"domain,omitempty"`
-	RequestAttributes map[string]string `json:"requestAttributes,omitempty"`
-	Headers           json.RawMessage   `json:"headers,omitempty"`
-	Type              string            `json:"type,omitempty"`
-	JsonPath          string            `json:"jsonPath,omitempty"`
+	// Tenant is the tenant that uploaded the PIP, from the request.
+	Tenant            string                     `json:"-"`
+	Name              string                     `json:"name"`
+	PipType           string                     `json:"pipType,omitempty"`
+	URL               string                     `json:"url,omitempty"`
+	HTTPMethod        string                     `json:"httpMethod,omitempty"`
+	Header            string                     `json:"header,omitempty"`
+	Claim             string                     `json:"claim,omitempty"`
+	BeanName          string                     `json:"beanName,omitempty"`
+	DefaultValue      json.RawMessage            `json:"defaultValue,omitempty"`
+	Domain            string                     `json:"domain,omitempty"`
+	RequestAttributes map[string]json.RawMessage `json:"requestAttributes,omitempty"`
+	Headers           json.RawMessage            `json:"headers,omitempty"`
+	Type              string                     `json:"type,omitempty"`
+	JsonPath          string                     `json:"jsonPath,omitempty"`
+	ResourceType      string                     `json:"resourceType,omitempty"`
+	ProductMapping    json.RawMessage            `json:"productMapping,omitempty"`
+	CustomMapping     json.RawMessage            `json:"customMapping,omitempty"`
+	Cacheable         json.RawMessage            `json:"cacheable,omitempty"`
+	CachePeriod       json.RawMessage            `json:"cachePeriod,omitempty"`
 
 	// ── PDP contract extension (authz-agent-ADR-0066..0069) ──────────────
 	// These four fields do NOT exist in access-control: its authoritative
@@ -95,6 +124,7 @@ type v3PolicySet struct {
 	Name               string     `json:"name"`
 	Type               string     `json:"type"`
 	Domain             string     `json:"domain"`
+	Component          string     `json:"component"`
 	Status             string     `json:"status"`
 	Target             string     `json:"target"`
 	CombiningAlgorithm string     `json:"combiningAlgorithm"`
@@ -128,20 +158,25 @@ type v3PIPsResponse struct {
 }
 
 type v3PIP struct {
-	Name              string            `json:"name"`
-	PipType           string            `json:"pipType"`
-	URL               string            `json:"url,omitempty"`
-	HTTPMethod        string            `json:"httpMethod,omitempty"`
-	Header            string            `json:"header,omitempty"`
-	Claim             string            `json:"claim,omitempty"`
-	BeanName          string            `json:"beanName,omitempty"`
-	DefaultValue      json.RawMessage   `json:"defaultValue,omitempty"`
-	Domain            string            `json:"domain"`
-	TenantID          string            `json:"tenantId"`
-	Type              string            `json:"type,omitempty"`
-	JsonPath          string            `json:"jsonPath,omitempty"`
-	RequestAttributes map[string]string `json:"requestAttributes,omitempty"`
-	Headers           json.RawMessage   `json:"headers,omitempty"`
+	Name              string                     `json:"name"`
+	PipType           string                     `json:"pipType"`
+	URL               string                     `json:"url,omitempty"`
+	HTTPMethod        string                     `json:"httpMethod,omitempty"`
+	Header            string                     `json:"header,omitempty"`
+	Claim             string                     `json:"claim,omitempty"`
+	BeanName          string                     `json:"beanName,omitempty"`
+	DefaultValue      json.RawMessage            `json:"defaultValue,omitempty"`
+	Domain            string                     `json:"domain"`
+	TenantID          string                     `json:"tenantId"`
+	Type              string                     `json:"type,omitempty"`
+	JsonPath          string                     `json:"jsonPath,omitempty"`
+	RequestAttributes map[string]json.RawMessage `json:"requestAttributes,omitempty"`
+	Headers           json.RawMessage            `json:"headers,omitempty"`
+	ResourceType      string                     `json:"resourceType,omitempty"`
+	ProductMapping    json.RawMessage            `json:"productMapping,omitempty"`
+	CustomMapping     json.RawMessage            `json:"customMapping,omitempty"`
+	Cacheable         json.RawMessage            `json:"cacheable,omitempty"`
+	CachePeriod       json.RawMessage            `json:"cachePeriod,omitempty"`
 
 	// Extension fields, mirrored from the northbound shape — see the note on
 	// simplifiedPIP. Real access-control never emits these.
@@ -154,21 +189,20 @@ type v3PIP struct {
 // ── Conversion: simplified → v3 ──────────────────────────────────────────────
 
 // toV3PolicySets converts simplified policies into v3 policy sets.
-// Policies are grouped by (component, resourceType) → PolicySet,
+// Policies are grouped by (upload domain, component, resourceType) → PolicySet,
 // then by (roles) → Policy, then each (operation, condition, rsqlPredicate)
 // becomes one Rule.  This mirrors what access-control creates when a SIMPLIFIED
 // policy is uploaded via the simplified API.
 func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
-	// Group by (domain/component, resourceType).
-	type psKey struct{ domain, resourceType string }
+	// Group by (upload domain, component, resourceType): legacy keeps the
+	// policies of two domains in two sets, and so in two filter groups.
+	type psKey struct{ tenant, upload, domain, resourceType string }
 	type pKey struct{ roles string }
 	type ruleVal struct {
 		operation        string
 		condition        string
 		rsqlPredicate    string
-		sqlPredicate     string
 		mongodbPredicate string
-		predicate        string
 	}
 
 	// Collect in insertion order.
@@ -176,7 +210,8 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 	psMap := make(map[psKey]map[pKey][]ruleVal)
 
 	for _, p := range items {
-		pk := psKey{domain: p.Component, resourceType: p.ResourceType}
+		pk := psKey{tenant: p.Tenant, upload: p.Domain, domain: p.Component,
+			resourceType: p.ResourceType}
 		if _, seen := psMap[pk]; !seen {
 			psOrder = append(psOrder, pk)
 			psMap[pk] = make(map[pKey][]ruleVal)
@@ -186,13 +221,11 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 			operation:        p.Operation,
 			condition:        conditionString(p.Condition),
 			rsqlPredicate:    p.RSQLPredicate,
-			sqlPredicate:     p.SQLPredicate,
-			mongodbPredicate: p.MongoDBPredicate,
-			predicate:        p.Predicate,
+			mongodbPredicate: p.mongodbPredicate(),
 		})
 	}
 
-	var result []v3PolicySet
+	result := make([]v3PolicySet, 0, len(psMap))
 	for _, pk := range psOrder {
 		policyMap := psMap[pk]
 
@@ -208,7 +241,7 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 			rules := policyMap[prk]
 			var v3Rules []v3Rule
 			for ri, rule := range rules {
-				target := operationTarget(rule.operation)
+				target := policyir.SimplifiedPolicyTarget(rule.operation)
 				var condPtr *string
 				if rule.condition != "" {
 					c := rule.condition
@@ -221,9 +254,7 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 					Condition:        condPtr,
 					Effect:           "ALLOW",
 					RSQLPredicate:    rule.rsqlPredicate,
-					SQLPredicate:     rule.sqlPredicate,
 					MongoDBPredicate: rule.mongodbPredicate,
-					Predicate:        rule.predicate,
 				})
 			}
 			policyTarget := rolesTarget(prk.roles)
@@ -235,15 +266,20 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 			})
 		}
 
+		// each part escaped, so that no two keys of one tenant share an id:
+		// the agent isolates every set whose id another set of the tenant
+		// repeats
+		id := "ps-" + url.PathEscape(pk.upload) + "/" + url.PathEscape(pk.domain) + "/" + url.PathEscape(pk.resourceType)
 		result = append(result, v3PolicySet{
-			PolicySetID:        fmt.Sprintf("ps-%s-%s", pk.domain, pk.resourceType),
+			PolicySetID:        id,
 			Name:               fmt.Sprintf("%s-%s policy set", pk.domain, pk.resourceType),
 			Type:               "SIMPLIFIED",
 			Domain:             pk.domain,
+			Component:          pk.domain,
 			Status:             "ACTIVE",
-			Target:             resourceTypeTarget(pk.resourceType),
+			Target:             policyir.SimplifiedSetTarget(pk.resourceType),
 			CombiningAlgorithm: "DENY_UNLESS_PERMIT",
-			TenantID:           pk.domain,
+			TenantID:           pk.tenant,
 			Policies:           v3Policies,
 		})
 	}
@@ -268,11 +304,16 @@ func toV3PIPs(items []simplifiedPIP) []v3PIP {
 			BeanName:          p.BeanName,
 			DefaultValue:      p.DefaultValue,
 			Domain:            domain,
-			TenantID:          domain,
+			TenantID:          p.Tenant,
 			Type:              p.Type,
 			JsonPath:          p.JsonPath,
 			RequestAttributes: p.RequestAttributes,
 			Headers:           p.Headers,
+			ResourceType:      p.ResourceType,
+			ProductMapping:    p.ProductMapping,
+			CustomMapping:     p.CustomMapping,
+			Cacheable:         p.Cacheable,
+			CachePeriod:       p.CachePeriod,
 			Query:             p.Query,
 			Body:              p.Body,
 			TimeoutSeconds:    p.TimeoutSeconds,
@@ -280,22 +321,6 @@ func toV3PIPs(items []simplifiedPIP) []v3PIP {
 		})
 	}
 	return result
-}
-
-// resourceTypeTarget converts a simplified resourceType to a v3 target expression.
-func resourceTypeTarget(rt string) string {
-	if strings.EqualFold(rt, "ALL") || rt == "*" {
-		return "true"
-	}
-	return fmt.Sprintf("resourceType == '%s'", rt)
-}
-
-// operationTarget converts a simplified operation to a v3 target expression.
-func operationTarget(op string) string {
-	if strings.EqualFold(op, "ALL") || op == "*" {
-		return "true"
-	}
-	return fmt.Sprintf("operation == '%s'", op)
 }
 
 // rolesTarget converts a serialised roles key back to a v3 policy target.

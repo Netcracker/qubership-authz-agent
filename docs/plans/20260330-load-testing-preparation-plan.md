@@ -202,6 +202,11 @@ Authz Agent surface so the split local stack (`envoy` public entrypoint with bac
   `tests/scripts/test-opa.sh` (`156/156`), `tests/scripts/test-envoy-runtime.sh` (`108/108`),
   `tests/svt/profiler/ols-single/profile.sh`, `tests/svt/profiler/wildcard-all-single/profile.sh`,
   `tests/svt/profiler/wildcard-mixed-bulk/profile.sh`, and `git diff --check`.
+  ADR-0102 (proposed) replaces ADR-0040 for this path: a simplified policy with operation `ALL` is evaluated
+  with its condition and predicates on every operation, a policy with `ALL` as component, resource
+  type, and operation and no condition or predicate grants every operation on every resource type,
+  and any other policy with resource type `ALL` is rejected. The fast path and its profiler
+  scenarios are removed.
 - [x] Record a follow-up internal casing contract for profiler-driven Rego cleanup:
   repo-owned runtime/helper keys consumed by Rego must use camelCase only, with no internal
   camelCase/snake_case dual probes for the same structure (ADR-0038).

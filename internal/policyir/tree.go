@@ -152,10 +152,12 @@ type PolicySet struct {
 	// permanent source failure under its target and holds no policies, no sets,
 	// and no iterate.
 	AlwaysFails string
-	// Isolated is the reason the agent does not evaluate this set,
-	// although the legacy service does: the export shows it damaged, and which
-	// of its elements belong to it cannot be told. Empty for a set the agent
-	// evaluates. Like a set with AlwaysFails, an isolated set is a permanent
+	// Isolated is the reason the agent does not evaluate this set: the export
+	// shows it damaged, and which of its elements belong to it cannot be told,
+	// or its target, or for a set of simplified policies one of their
+	// conditions, holds a MATCH pattern or a [RefusedSubject] operand the
+	// agent refuses. Empty for a set
+	// the agent evaluates. Like a set with AlwaysFails, an isolated set is a permanent
 	// source failure under its target, holds no policies, no sets, and no
 	// iterate, and fails no other set of the tenant.
 	Isolated string
@@ -183,6 +185,13 @@ type Policy struct {
 	// Target is at [PlacePolicyTarget], or nil.
 	Target *Condition
 	Rules  []*Rule
+	// Isolated is the reason the agent does not evaluate this policy: its
+	// target or one of its rules holds a MATCH pattern or a
+	// [RefusedSubject] operand the agent refuses.
+	// Empty for a policy the agent evaluates. An isolated policy holds no
+	// rules and, like an isolated set, is a permanent source failure under its
+	// target that fails no other policy of the tenant.
+	Isolated string
 }
 
 // Rule is a rule of a policy.
@@ -244,7 +253,8 @@ type PIP struct {
 	// Domain is the domain that declares the PIP.
 	Domain string
 	// RequestAttributes maps an attribute name to its JSON value as written,
-	// compacted.
+	// compacted; nil for a declaration without requestAttributes or with null
+	// there, and empty for {}, which a call sends as written.
 	RequestAttributes map[string]string
 
 	// ProductMapping and CustomMapping are the JSON objects of a MAPPING PIP as
@@ -296,6 +306,7 @@ func (t *Tree) PIP(name string) (*PIP, bool) {
 //     [PassValue] reads there;
 //   - a set with [PolicySet.AlwaysFails] or [PolicySet.Isolated] has no
 //     policies, sets, or iterate, and no set has both;
+//   - a policy with [Policy.Isolated] has no rules;
 //   - PIP names start with "subject." and are unique, and a declaration with
 //     [PIP.Isolated] has no other field set;
 //   - every field that holds JSON as written holds one compacted JSON value.
@@ -313,23 +324,33 @@ type checker struct {
 	bound map[string]bool
 }
 
-// node is a path from the root of the tree, held as a label and a link to the
-// parent path. Its text is built only when an error or a finding names it, so
-// a check of a deep tree or of a set with a long ID does not copy the
-// ancestors' labels at every node.
+// node is a path from the root of the tree, held as the sibling the path ends
+// at and a link to the parent path. Its text is built only when an error or a
+// finding names it, so a check of a deep tree or of a set with a long ID does
+// not copy the ancestors' labels at every node.
 type node struct {
 	parent *node
-	label  string
+	sibling
 }
 
-func (n *node) child(label string) *node { return &node{parent: n, label: label} }
+func (n *node) child(label string) *node { return n.at(sibling{label: label, pos: -1}) }
 
-// String returns the labels from the root to n, joined by " > ", or empty for
-// a nil n.
-func (n *node) String() string {
+func (n *node) at(s sibling) *node { return &node{parent: n, sibling: s} }
+
+// String returns the labels from the root to n, each with its position where
+// it has one, joined by " > ", or empty for a nil n.
+func (n *node) String() string { return n.path(true) }
+
+// path returns the labels from the root to n, joined by " > ", each with its
+// position only where positions is true.
+func (n *node) path(positions bool) string {
 	var labels []string
 	for ; n != nil; n = n.parent {
-		labels = append(labels, n.label)
+		if positions {
+			labels = append(labels, n.sibling.String())
+		} else {
+			labels = append(labels, n.label)
+		}
 	}
 	slices.Reverse(labels)
 	return strings.Join(labels, " > ")
@@ -382,10 +403,10 @@ func (t *Tree) validate() error {
 		if j := slices.Index(g.Policies, nil); j >= 0 {
 			return fmt.Errorf("%s: policy %d: nil", groups[i], j)
 		}
-		group := (*node)(nil).child(groups[i])
+		group := (*node)(nil).at(groups[i])
 		for j, l := range labels(g.Policies, simplifiedPolicyLabel) {
 			p := g.Policies[j]
-			here := group.child(l)
+			here := group.at(l)
 			if err := c.condition(here.child("condition"), p.Condition, PlaceSimplified); err != nil {
 				return err
 			}
@@ -402,7 +423,7 @@ func (c *checker) sets(parent *node, sets []*PolicySet) error {
 		return fmt.Errorf("%s: set %d: nil", parent.child("sets"), i)
 	}
 	for i, l := range labels(sets, setLabel) {
-		if err := c.set(parent.child(l), sets[i]); err != nil {
+		if err := c.set(parent.at(l), sets[i]); err != nil {
 			return err
 		}
 	}
@@ -439,7 +460,7 @@ func (c *checker) set(here *node, s *PolicySet) error {
 		return fmt.Errorf("%s: policy %d: nil", here, i)
 	}
 	for i, l := range labels(s.Policies, policyLabel) {
-		if err := c.policy(here.child(l), s.Policies[i]); err != nil {
+		if err := c.policy(here.at(l), s.Policies[i]); err != nil {
 			return err
 		}
 	}
@@ -453,12 +474,15 @@ func (c *checker) policy(here *node, p *Policy) error {
 	if err := c.condition(here.child("target"), p.Target, PlacePolicyTarget); err != nil {
 		return err
 	}
+	if p.Isolated != "" && len(p.Rules) > 0 {
+		return fmt.Errorf("%s: an isolated policy has rules", here)
+	}
 	if i := slices.Index(p.Rules, nil); i >= 0 {
 		return fmt.Errorf("%s: rule %d: nil", here, i)
 	}
 	for i, l := range labels(p.Rules, ruleLabel) {
 		r := p.Rules[i]
-		rp := here.child(l)
+		rp := here.at(l)
 		if !slices.Contains(effects, r.Effect) {
 			return fmt.Errorf("%s: effect %q unknown", rp, r.Effect)
 		}

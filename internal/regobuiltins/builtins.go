@@ -15,7 +15,12 @@
 // Package regobuiltins registers the built-in functions that Rego generated
 // from legacy policies calls, and provides [Documents], [JSONOf], and
 // [CompilePath], with which such a function reads its arguments. [All] lists
-// the functions; it declares none yet.
+// the functions:
+//
+//   - nc.http.send(request) sends one HTTP request with the agent's own
+//     token and a timeout, and returns its response; the one built-in that
+//     reaches the network, through the [HTTP] of the query's context, with
+//     answers kept for one decision request by [WithCalls].
 //
 // Nothing is registered globally. A compiler takes [Capabilities], a query
 // takes [Options], and an OPA test runner takes the same functions through the
@@ -42,9 +47,12 @@ type Builtin struct {
 	Option func(*rego.Rego)
 }
 
-// All returns the built-in functions in a fixed order. It returns none yet.
+// All returns the built-in functions in a fixed order.
 func All() []Builtin {
-	return nil
+	return []Builtin{
+		{httpSendDecl, rego.Function1(&rego.Function{Name: httpSendDecl.Name, Decl: httpSendDecl.Decl,
+			Nondeterministic: true}, httpSend)},
+	}
 }
 
 // Capabilities returns the capabilities of the linked OPA version with the
@@ -189,26 +197,44 @@ const maxPaths = 4096
 
 var paths = struct {
 	sync.RWMutex
-	m map[string]*jsonpath.Path
-}{m: map[string]*jsonpath.Path{}}
+	m map[pathKey]*jsonpath.Path
+}{m: map[pathKey]*jsonpath.Path{}}
 
-// CompilePath returns the compiled path s, from the cache where it holds s.
+// pathKey identifies a compiled path: its text, and whether a leading
+// ['key'] step selects a member ([jsonpath.CompileRootKey]).
+type pathKey struct {
+	text    string
+	rootKey bool
+}
+
+// CompilePath returns the path s compiled by [jsonpath.Compile], from the
+// cache where it holds s.
 func CompilePath(s string) (*jsonpath.Path, error) {
+	return cachedPath(pathKey{s, false}, jsonpath.Compile)
+}
+
+// CompileRootKeyPath returns the path s compiled by
+// [jsonpath.CompileRootKey], from the cache where it holds s.
+func CompileRootKeyPath(s string) (*jsonpath.Path, error) {
+	return cachedPath(pathKey{s, true}, jsonpath.CompileRootKey)
+}
+
+func cachedPath(k pathKey, compile func(string) (*jsonpath.Path, error)) (*jsonpath.Path, error) {
 	paths.RLock()
-	p, ok := paths.m[s]
+	p, ok := paths.m[k]
 	paths.RUnlock()
 	if ok {
 		return p, nil
 	}
-	p, err := jsonpath.Compile(s)
+	p, err := compile(k.text)
 	if err != nil {
 		return nil, err
 	}
 	paths.Lock()
 	if len(paths.m) >= maxPaths {
-		paths.m = map[string]*jsonpath.Path{}
+		paths.m = map[pathKey]*jsonpath.Path{}
 	}
-	paths.m[s] = p
+	paths.m[k] = p
 	paths.Unlock()
 	return p, nil
 }

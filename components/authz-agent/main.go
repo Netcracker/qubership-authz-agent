@@ -21,9 +21,9 @@ package main
 import (
 	"context"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -38,13 +38,16 @@ import (
 	// its init function; importing it is the whole configuration.
 	_ "github.com/netcracker/qubership-core-lib-go/v3/memlimit"
 	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/engine"
 	"authz-agent/components/authz-agent/internal/m2m"
 	"authz-agent/components/authz-agent/internal/pull"
 	"authz-agent/components/authz-agent/internal/server"
-	"authz-agent/internal/pips"
+	"authz-agent/components/authz-agent/internal/snapshot"
+	"authz-agent/internal/regobuiltins"
+	"authz-agent/internal/regogen"
 	"authz-agent/policies"
 )
 
@@ -60,7 +63,11 @@ func init() {
 }
 
 func main() {
-	cfg := loadConfig(get)
+	cfg, err := loadConfig(get)
+	if err != nil {
+		logger.Errorf("%v", err)
+		os.Exit(1)
+	}
 	modules, err := policies.Modules()
 	if err != nil {
 		logger.Errorf("policies: %v", err)
@@ -84,18 +91,35 @@ func main() {
 	}
 	var tokens *m2m.Source
 	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != "" {
-		tokens = m2m.New(cfg.M2M, eng, logger)
+		tokens = m2m.New(cfg.M2M, logger)
 	}
-	cfg.Pull.Entitlements = pips.LoadEntitlementsConfigFromEnv()
 	var source pull.Tokens
+	ownToken := func() (string, error) { return "", m2m.ErrNoToken }
 	if tokens != nil {
 		source = tokens
+		ownToken = tokens.Bearer
 	}
-	puller := pull.New(cfg.Pull, eng, source, logger)
+	table, err := regogen.DefaultTable()
+	if err != nil {
+		logger.Errorf("specification table: %v", err)
+		os.Exit(1)
+	}
+	snapshots := snapshot.New(snapshot.Config{
+		HTTP:         &regobuiltins.HTTP{Client: &http.Client{}, Token: ownToken, Timeout: cfg.PIPTimeout},
+		Entitlements: cfg.EntitlementsURL,
+	}, table, logger)
+	// /prometheus serves the default registry
+	prometheus.MustRegister(snapshot.NewCollector(snapshots))
+	cfg.Pull.Snapshots = snapshots
+	tenant := newDefaultTenant(cfg.DefaultTenant, cfg.Authn.TenantManagerURL, logger)
+	puller := pull.New(cfg.Pull, source, logger)
 	opts := server.Options{
-		Log:     logger,
-		Health:  func() server.Report { return report(providers, puller) },
-		PullNow: puller.PullNow,
+		Log:                   logger,
+		PullNow:               puller.PullNow,
+		Health:                func() server.Report { return report(providers, puller, snapshots, tenant) },
+		Snapshots:             snapshots,
+		DefaultTenant:         tenant.Get,
+		DefaultTenantResolved: func() bool { return tenant.Unresolved() == "" },
 	}
 
 	// Immutable: strings handed out by the request context must not alias the
@@ -123,6 +147,7 @@ func main() {
 		os.Exit(1)
 	}
 	srv := server.Register(internal, eng, opts)
+	prometheus.MustRegister(srv.Collector())
 	srv.RegisterPublic(public)
 
 	if tokens != nil {
@@ -131,6 +156,7 @@ func main() {
 	if puller != nil {
 		go puller.Run(ctx)
 	}
+	go tenant.Run(ctx, 10*time.Second)
 	if providers != nil {
 		go providers.Run(ctx)
 	}
@@ -217,7 +243,7 @@ func serveUntilShutdown(ctx context.Context, stop func(), surfaces []surface) bo
 // configloader falls back to the default there, and the chart sets a URL to
 // "" to switch it off.
 func get(key, fallback string) string {
-	if value, ok := os.LookupEnv(strings.ToUpper(strings.ReplaceAll(key, ".", "_"))); ok && value == "" {
+	if value, ok := os.LookupEnv(envName(key)); ok && value == "" {
 		return ""
 	}
 	return configloader.GetOrDefaultString(key, fallback)
@@ -225,8 +251,11 @@ func get(key, fallback string) string {
 
 // report composes the state of the loops: the trusted providers' outcome
 // under the bootstrap rules decides Healthy, and the policies' first load
-// decides Loaded. providers may be nil; puller may not.
-func report(providers *authn.Manager, puller *pull.Puller) server.Report {
+// decides Loaded, and the default tenant's lookup decides UnresolvedTenant;
+// the state of every tenant's snapshot goes along. providers may be nil;
+// puller, snapshots, and tenant may not.
+func report(providers *authn.Manager, puller *pull.Puller, snapshots *snapshot.Registry,
+	tenant *defaultTenant) server.Report {
 	r := server.Report{Healthy: true}
 	if providers != nil {
 		healthy, message, configError, details := authn.Evaluate(providers.Status())
@@ -235,7 +264,9 @@ func report(providers *authn.Manager, puller *pull.Puller) server.Report {
 		}
 	}
 	status := puller.Status()
-	r.Conversion = status.Conversion
-	r.Loaded = status.PoliciesLoaded
+	r.Loaded, r.Waiting = status.PoliciesLoaded, status.Waiting
+	h := snapshots.Health()
+	r.Snapshots = &h
+	r.UnresolvedTenant = tenant.Unresolved()
 	return r
 }

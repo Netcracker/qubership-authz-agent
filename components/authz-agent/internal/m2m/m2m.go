@@ -13,11 +13,11 @@
 // limitations under the License.
 
 // Package m2m keeps the agent's own bearer token current: the token the
-// policy pull presents to the policy source, and the token the PIP calls
-// present through data.m2m.bearerToken. A [Source] either obtains the
-// token from the identity provider with client credentials and refreshes
-// it before it expires, or reads it from a file another party keeps
-// current, such as a projected service account token.
+// policy pull presents to the policy source and the PIP calls present, both
+// through [Source.Bearer]. A [Source] either obtains the token from the
+// identity provider with client credentials and refreshes it before it
+// expires, or reads it from a file another party keeps current, such as a
+// projected service account token.
 package m2m
 
 import (
@@ -68,36 +68,40 @@ type Config struct {
 	WatchInterval time.Duration
 }
 
-// Putter receives the m2m document.
-type Putter interface {
-	Put(ctx context.Context, path []string, value any) error
-}
-
 // Logger receives the diagnostics.
 type Logger interface {
 	Infof(format string, args ...any)
 	Warnf(format string, args ...any)
 }
 
-// Source holds the current token. Token is safe to call from any
+// Errors of [Source.Bearer].
+var (
+	ErrNoToken      = errors.New("m2m token: no token yet")
+	ErrTokenExpired = errors.New("m2m token: expired")
+)
+
+// Source holds the current token. Bearer is safe to call from any
 // goroutine while Run refreshes it.
 type Source struct {
 	cfg    Config
-	store  Putter
 	log    Logger
 	client *http.Client
+	now    func() time.Time
 
 	mu    sync.RWMutex
 	token string
-	hash  string
-	ready chan struct{}
-	once  sync.Once
+	// expires is when token stops being valid, zero when that is unknown:
+	// a token from the file that is not a JWT with an exp claim.
+	expires time.Time
+	hash    string
+	ready   chan struct{}
+	once    sync.Once
 }
 
 // New returns a source for cfg, with the defaults in place of the empty
 // files, a negative RenewBefore, and a WatchInterval that is zero or
 // negative; Run has to be started for it to hold a token.
-func New(cfg Config, store Putter, log Logger) *Source {
+func New(cfg Config, log Logger) *Source {
 	if cfg.ClientIDFile == "" {
 		cfg.ClientIDFile = DefaultClientIDFile
 	}
@@ -115,18 +119,28 @@ func New(cfg Config, store Putter, log Logger) *Source {
 	}
 	return &Source{
 		cfg:    cfg,
-		store:  store,
 		log:    log,
 		client: &http.Client{Timeout: 30 * time.Second},
+		now:    time.Now,
 		ready:  make(chan struct{}),
 	}
 }
 
-// Token is the current token, "" before the first one arrived.
-func (s *Source) Token() string {
+// Bearer returns the token a call presents. It returns [ErrNoToken] before
+// the first token arrived, and [ErrTokenExpired] once the current token is
+// past its expiry: the expires_in of the grant or, without it and for a token
+// from the file, the token's exp claim. A refresh that fails keeps the
+// current token until then.
+func (s *Source) Bearer() (string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.token
+	switch {
+	case s.token == "":
+		return "", ErrNoToken
+	case !s.expires.IsZero() && !s.now().Before(s.expires):
+		return "", fmt.Errorf("%w at %s", ErrTokenExpired, s.expires.UTC().Format(time.RFC3339))
+	}
+	return s.token, nil
 }
 
 // Ready is closed once the first token has been published.
@@ -197,9 +211,7 @@ func (s *Source) fetchAndPublish(ctx context.Context) (time.Duration, error) {
 	if err != nil {
 		return 0, err
 	}
-	if err := s.publish(ctx, token); err != nil {
-		return 0, err
-	}
+	s.publish(token, s.now().Add(lifetime))
 	return lifetime, nil
 }
 
@@ -209,7 +221,7 @@ func (s *Source) runFile(ctx context.Context) {
 	ticker := time.NewTicker(s.cfg.WatchInterval)
 	defer ticker.Stop()
 	for {
-		if err := s.checkFile(ctx); err != nil {
+		if err := s.checkFile(); err != nil {
 			s.log.Warnf("m2m token: %v", err)
 		}
 		select {
@@ -220,7 +232,7 @@ func (s *Source) runFile(ctx context.Context) {
 	}
 }
 
-func (s *Source) checkFile(ctx context.Context) error {
+func (s *Source) checkFile() error {
 	raw, err := os.ReadFile(s.cfg.TokenFile)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -240,9 +252,9 @@ func (s *Source) checkFile(ctx context.Context) error {
 	if unchanged {
 		return nil
 	}
-	if err := s.publish(ctx, token); err != nil {
-		return err
-	}
+	// a token that is not a JWT with exp, such as an opaque one, does not expire here
+	expires, _ := jwtExpiry(token)
+	s.publish(token, expires)
 	s.mu.Lock()
 	s.hash = hash
 	s.mu.Unlock()
@@ -250,17 +262,13 @@ func (s *Source) checkFile(ctx context.Context) error {
 	return nil
 }
 
-// publish stores the token as data.m2m.bearerToken and makes it the
-// current token.
-func (s *Source) publish(ctx context.Context, token string) error {
-	if err := s.store.Put(ctx, []string{"m2m"}, map[string]any{"bearerToken": token}); err != nil {
-		return fmt.Errorf("publish data.m2m: %w", err)
-	}
+// publish makes token the current token, valid until expires, or with no
+// known expiry when expires is zero.
+func (s *Source) publish(token string, expires time.Time) {
 	s.mu.Lock()
-	s.token = token
+	s.token, s.expires = token, expires
 	s.mu.Unlock()
 	s.once.Do(func() { close(s.ready) })
-	return nil
 }
 
 // fetchToken posts a client_credentials grant and returns the access token

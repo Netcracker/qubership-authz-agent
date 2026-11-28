@@ -135,8 +135,7 @@ func HelperPreviewCheckResourcesByOperationsV1(ctx context.Context, cfg Config, 
 
 // HelperFilterV1 drives row 6 (POST /access/v1/check/filter). Body is empty —
 // the query string carries resourceType, operation, and userId. An empty
-// resourceType reaches the server and triggers the @NotNull validation
-// (row 29 relies on this for 400 assertions).
+// resourceType leaves the query parameter out.
 func HelperFilterV1(ctx context.Context, cfg Config, resourceType, operation string, tokens TokenBundle, opts PerCallOptions) (int, model.OldFilterEvaluationResult, []byte, error) {
 	extra := url.Values{}
 	if resourceType != "" {

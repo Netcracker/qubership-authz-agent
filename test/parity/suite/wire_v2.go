@@ -98,7 +98,7 @@ func HelperPreviewCheckResourcesV2(ctx context.Context, cfg Config, body model.C
 }
 
 // HelperFilterV2 drives row 10 (POST /access/v2/check/filter). Body is
-// empty; the query string carries resourceType (required), operation,
+// empty; the query string carries resourceType, operation,
 // userId, and obligations=false.
 func HelperFilterV2(ctx context.Context, cfg Config, resourceType, operation string, tokens TokenBundle, opts PerCallOptions) (int, model.FilterResponse, []byte, error) {
 	extra := v2QueryExtra()

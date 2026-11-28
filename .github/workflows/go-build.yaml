@@ -25,6 +25,10 @@
 # the compiler leaves those files out, so this workflow covers the non-integration
 # tests only.  integration-tests.yaml compiles the tagged suites and runs the
 # runtime suite against the Helm chart on a kind cluster.
+#
+# The complexity-tagged tests, which check how cost grows with the size of the
+# input, are left out the same way; integration-tests.yaml runs them with
+# make complexity-tests.
 
 name: CI
 

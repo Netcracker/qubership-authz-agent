@@ -1,0 +1,309 @@
+// Copyright 2024-2026 Netcracker Technology Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package regogen
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"math"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
+	"slices"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
+
+	"authz-agent/internal/jsonvalue"
+	"authz-agent/internal/regobuiltins"
+)
+
+// entAnswer is a response of nc.http.send with status and the raw body.
+func entAnswer(status int, body string) *ast.Term {
+	return ast.ObjectTerm(ast.Item(ast.StringTerm("status_code"), ast.IntNumberTerm(status)),
+		ast.Item(ast.StringTerm("raw_body"), ast.StringTerm(body)))
+}
+
+func TestEntResolve_ReadsTheIDsOfTheNamedReferences(t *testing.T) {
+	const ordersAndInvoice = `{"entitlements": [
+		{"resourceType": "ORDER", "references": [
+			{"name": "owner", "resources": [{"resourceId": "o1"}, {"resourceId": "o2"}]},
+			{"name": "viewer", "resources": [{"resourceId": "v1"}]}]},
+		{"resourceType": "order", "references": [{"name": "owner", "resources": [{"resourceId": "o2"}, {"resourceId": "o3"}]}]},
+		{"resourceType": "invoice", "references": [{"name": "owner", "resources": [{"resourceId": "i1"}]}]}]}`
+	for _, tc := range []struct {
+		name string
+		resp *ast.Term
+		want Resolved
+	}{
+		{"ids of the type ignoring case, each once in order", entAnswer(200, ordersAndInvoice), resolved(t, "VALUE", `["o1", "o2", "o3"]`)},
+		{"ids that Python's == finds equal are one id, the first kept",
+			entAnswer(200, `{"entitlements": [{"resourceType": "order", "references": [{"name": "owner", "resources": [
+				{"resourceId": 1}, {"resourceId": 1.0}, {"resourceId": true}, {"resourceId": "1"},
+				{"resourceId": {"a": 1, "b": [2]}}, {"resourceId": {"b": [2.0], "a": true}}, {"resourceId": [2, 1]}]}]}]}`),
+			resolved(t, "VALUE", `[1, "1", {"a": 1, "b": [2]}, [2, 1]]`)},
+		{"no entitlement of the type", entAnswer(200, `{"entitlements": [{"resourceType": "invoice", "references": []}]}`),
+			Resolved{State: "EMPTY_COLL"}},
+		{"no entitlements", entAnswer(200, `{"entitlements": []}`), Resolved{State: "EMPTY_COLL"}},
+		{"the body null", entAnswer(200, `null`), Resolved{State: "EMPTY_COLL"}},
+		{"no body", entAnswer(200, ``), Resolved{State: "EMPTY_COLL"}},
+		{"a malformed entitlement of another type is not read",
+			entAnswer(200, `{"entitlements": [{"resourceType": "invoice", "references": "bad"}]}`), Resolved{State: "EMPTY_COLL"}},
+		{"a malformed entitlement of the type", entAnswer(200, `{"entitlements": [{"resourceType": "order", "references": "bad"}]}`),
+			Resolved{State: "ERROR"}},
+		{"a body that is a list", entAnswer(200, `[{"resourceType": "order"}]`), Resolved{State: "ERROR"}},
+		{"a body that is not JSON", entAnswer(200, `<html>`), Resolved{State: "ERROR"}},
+		{"a status of 400 or more", entAnswer(400, ordersAndInvoice), Resolved{State: "ERROR"}},
+		{"status 204 without a body", entAnswer(204, ``), Resolved{State: "EMPTY_COLL"}},
+		{"status 201", entAnswer(201, ordersAndInvoice), Resolved{State: "ERROR"}},
+		{"status 302", entAnswer(302, ordersAndInvoice), Resolved{State: "ERROR"}},
+		{"a failed call", ast.ObjectTerm(ast.Item(ast.StringTerm("status_code"), ast.IntNumberTerm(0)),
+			ast.Item(ast.StringTerm("error"), ast.ObjectTerm())), Resolved{State: "ERROR"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := entResolve(tc.resp, "order", []string{"owner"}); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("entResolve = %+v, want %+v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestEntResolve_TimeGrowsLinearlyWithTheIDsOfTheAnswer(t *testing.T) {
+	ids := func(n int, each string) string {
+		parts := make([]string, n)
+		for i := range parts {
+			parts[i] = fmt.Sprintf(each, i)
+		}
+		return strings.Join(parts, ",")
+	}
+	for _, tc := range []struct {
+		name string
+		body func(n int) string
+	}{
+		{"distinct ids under one reference", func(n int) string {
+			return `{"entitlements": [{"resourceType": "doc", "references": [{"name": "owner", "resources": [` +
+				ids(n, `{"resourceId": "r%d"}`) + `]}]}]}`
+		}},
+		{"one distinct id in each entitlement", func(n int) string {
+			return `{"entitlements": [` + ids(n, `{"resourceType": "doc", "references": [{"name": "owner", "resources": [{"resourceId": %d}]}]}`) + `]}`
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			took := func(n int) time.Duration {
+				resp := entAnswer(200, tc.body(n))
+				best := time.Duration(math.MaxInt64)
+				for range 3 {
+					start := time.Now()
+					got := entResolve(resp, "doc", []string{"owner"})
+					best = min(best, time.Since(start))
+					if l, _ := got.Value.([]jsonvalue.Value); got.State != "VALUE" || len(l) != n {
+						t.Fatalf("entResolve over %d ids = %s with %d ids, want VALUE with %d", n, got.State, len(l), n)
+					}
+				}
+				return best
+			}
+			small, large := took(10000), took(40000)
+			if large > 8*small {
+				t.Errorf("entResolve over 40000 ids took %v, %.1f times the %v of 10000; want at most 8 times, as 4 times the ids take about 4 times as long",
+					large, float64(large)/float64(small), small)
+			}
+		})
+	}
+}
+
+func TestEntCall_GetsForTheSubjectOrMakesNoCall(t *testing.T) {
+	id := map[string]Resolved{keySubjID: resolved(t, "VALUE", `"u 1"`)}
+	for _, tc := range []struct {
+		name   string
+		tenant string
+		want   string
+	}{
+		{"with the tenant of the request", "t1", `{"method": "GET", "url": "http://ent/api/v3/user-entitlements/user/u%201",
+			"headers": {"Tenant": "t1"}, "raise_error": false, "pip": "subject.entitledResources"}`},
+		{"without a tenant", "", `{"method": "GET", "url": "http://ent/api/v3/user-entitlements/user/u%201",
+			"headers": {}, "raise_error": false, "pip": "subject.entitledResources"}`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := entCall(&Request{Entitlements: "http://ent/", Tenant: tc.tenant, Values: id})
+			if want := ast.MustParseTerm(tc.want); !got.Equal(want) {
+				t.Errorf("entCall = %v, want %v", got, want)
+			}
+		})
+	}
+	noCall := []Request{{Values: id}, {Entitlements: "http://ent", Values: map[string]Resolved{keySubjID: {State: "NULL"}}}}
+	for _, v := range []string{`""`, `".."`, `"."`, `[]`} {
+		noCall = append(noCall, Request{Entitlements: "http://ent", Values: map[string]Resolved{keySubjID: resolved(t, "VALUE", v)}})
+	}
+	for _, req := range noCall {
+		if got := entCall(&req); !got.Equal(stateCall(entitlementsPIP, "ERROR")) {
+			t.Errorf("entCall(%+v) = %v, want no call, ERROR", req, got)
+		}
+	}
+}
+
+// entServer is an entitlements service that grants the user u1 the order
+// o1 on a GET and answers any other method 405. It records each request it
+// was sent as its method, request target, Tenant, Content-Type, body, and
+// Authorization.
+func entServer(t *testing.T) (*httptest.Server, func() []string) {
+	t.Helper()
+	var mu sync.Mutex
+	var calls []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		mu.Lock()
+		calls = append(calls, fmt.Sprintf("%s %s Tenant=%q Content-Type=%q body=%q %s", r.Method, r.URL.RequestURI(),
+			r.Header.Get("Tenant"), r.Header.Get("Content-Type"), body, r.Header.Get("Authorization")))
+		mu.Unlock()
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if r.URL.Path != "/api/v3/user-entitlements/user/u1" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		_, _ = w.Write([]byte(`{"entitlements": [{"resourceType": "order",
+			"references": [{"name": "owner", "resources": [{"resourceId": "o1"}]}]}]}`))
+	}))
+	t.Cleanup(srv.Close)
+	return srv, func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		return slices.Clone(calls)
+	}
+}
+
+// evalEntitled evaluates, with the agent's token given by token, whether
+// the subject u1 may read the order resource id under a rule whose
+// condition reads two operands of the entitlements service.
+func evalEntitled(t *testing.T, url, id string, token func() (string, error)) bool {
+	t.Helper()
+	m, err := Generate(tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW",
+		"subject.entitledResources.of('order').as('owner') CONTAINS resource.id AND "+
+			"subject.entitledResources.of('order').as('owner','viewer') CONTAINS resource.id", ""),
+		table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	req := Request{Entitlements: url, Tenant: "t1", Body: Body{Operation: "read", ResourceType: "doc", HasResource: true,
+		Resource: mustDecode(t, `{"id": "`+id+`"}`)}, Values: map[string]Resolved{keySubjID: resolved(t, "VALUE", `"u1"`)}}
+	m.Resolve(req.Body, req.Values)
+	m.ResolveSubject(&req)
+	in, err := Project(m, req)
+	if err != nil {
+		t.Fatalf("Project: %v", err)
+	}
+	pq, err := rego.New(append([]func(*rego.Rego){rego.Query("data." + DefaultOptions().Package + ".allow"),
+		rego.Module("gen.rego", m.Text)}, Builtins()...)...).PrepareForEval(context.Background())
+	if err != nil {
+		t.Fatalf("PrepareForEval: %v\n%s", err, m.Text)
+	}
+	h := &regobuiltins.HTTP{Client: &http.Client{}, Token: token}
+	ctx := in.Context(h.Context(regobuiltins.WithCalls(context.Background())))
+	rs, err := pq.Eval(ctx, rego.EvalParsedInput(in.Value()))
+	if err != nil {
+		t.Fatalf("Eval: %v", err)
+	}
+	return len(rs) == 1 && rs[0].Expressions[0].Value == true
+}
+
+func own() (string, error) { return "own", nil }
+
+// The module calls the entitlements service once for both operands, with
+// the agent's own token, and allows the resource the service grants.
+func TestTheModuleCallsTheEntitlementsService(t *testing.T) {
+	srv, calls := entServer(t)
+	if !evalEntitled(t, srv.URL, "o1", own) {
+		t.Errorf("allow for the granted order o1 = false, want true")
+	}
+	want := []string{`GET /api/v3/user-entitlements/user/u1 Tenant="t1" Content-Type="" body="" Bearer own`}
+	if got := calls(); !slices.Equal(got, want) {
+		t.Errorf("requests = %q, want %q", got, want)
+	}
+	if evalEntitled(t, srv.URL, "o2", own) {
+		t.Errorf("allow for the order o2 the service does not grant = true, want false")
+	}
+}
+
+// Without the agent's token the call is not made, and the operand fails.
+func TestTheEntitlementsServiceIsNotCalledWithoutAToken(t *testing.T) {
+	srv, calls := entServer(t)
+	if evalEntitled(t, srv.URL, "o1", func() (string, error) { return "", errors.New("no token") }) {
+		t.Errorf("allow without the agent's token = true, want false")
+	}
+	if got := calls(); len(got) != 0 {
+		t.Errorf("requests without the agent's token = %q, want none", got)
+	}
+}
+
+// An answer of the entitlements service too big to look up reads as a
+// failed call, in either order of an OR, rather than failing the request:
+// the true alternative allows, and alone the operand denies.
+func TestAnEntitlementsAnswerTooBigToLookUpReadsAsAFailedCall(t *testing.T) {
+	ids := make([]string, 16)
+	for i := range ids {
+		ids[i] = fmt.Sprintf(`{"resourceId": ["1", "2", "3", "0e%d"]}`, i)
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"entitlements": [{"resourceType": "order", "references": [{"name": "owner",
+			"resources": [` + strings.Join(ids, ",") + `]}]}]}`))
+	}))
+	t.Cleanup(srv.Close)
+	const ent = "resource.a CONTAINS ANY subject.entitledResources.of('order').as('owner')"
+	for _, tc := range []struct {
+		condition string
+		want      bool
+	}{
+		{"resource.x == '1' OR " + ent, true},
+		{ent + " OR resource.x == '1'", true},
+		{ent, false},
+	} {
+		m, err := Generate(tenantWithSetAndPIPs(t, "DENY_UNLESS_PERMIT", "ALLOW", tc.condition, ""), table(t),
+			DefaultOptions())
+		if err != nil {
+			t.Fatalf("Generate: %v", err)
+		}
+		req := Request{Entitlements: srv.URL, Body: Body{Operation: "read", ResourceType: "doc", HasResource: true,
+			Resource: mustDecode(t, `{"x": "1", "a": [["z"]]}`)},
+			Values: map[string]Resolved{keySubjID: resolved(t, "VALUE", `"u1"`)}}
+		m.Resolve(req.Body, req.Values)
+		m.ResolveSubject(&req)
+		in, err := Project(m, req)
+		if err != nil {
+			t.Fatalf("Project: %v", err)
+		}
+		pq, err := rego.New(append([]func(*rego.Rego){rego.Query("data." + DefaultOptions().Package + ".allow"),
+			rego.Module("gen.rego", m.Text)}, Builtins()...)...).PrepareForEval(context.Background())
+		if err != nil {
+			t.Fatalf("PrepareForEval: %v\n%s", err, m.Text)
+		}
+		h := &regobuiltins.HTTP{Client: &http.Client{}, Token: own}
+		rs, err := pq.Eval(in.Context(h.Context(regobuiltins.WithCalls(context.Background()))),
+			rego.EvalParsedInput(in.Value()))
+		if err != nil {
+			t.Fatalf("Eval(%s): %v", tc.condition, err)
+		}
+		if got := len(rs) == 1 && rs[0].Expressions[0].Value == true; got != tc.want {
+			t.Errorf("allow(%s) with an answer too big to look up = %v, want %v", tc.condition, got, tc.want)
+		}
+	}
+}

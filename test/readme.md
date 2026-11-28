@@ -5,10 +5,12 @@
 This file defines the recommended regression test set for `authz-agent`.
 It is aligned with the repository architecture and compatibility contract:
 
-1. The agent serves the access-control check API, and every check route is answered with the decision of the
-   `authorize` document.
-2. Authorization semantics are two-stage: OLS first, RLS second when `ignoreRls=false`.
-3. The check routes take bearer tokens in the `Authorization` and `Incoming-Token` headers, which OPA verifies.
+1. The agent serves the access-control check API, and every check route is answered by the Rego module the agent
+   generates for the tenant of the request.
+2. The tenant of a request is the one `tenant_id` names, else the one the `Tenant` header names, else the default
+   tenant; a caller whose token is not M2M may name only its own tenant.
+3. The check routes take bearer tokens in the `Authorization` and `Incoming-Token` headers, which the embedded Rego
+   policies verify.
 
 ## Priority Levels
 
@@ -36,7 +38,7 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `check_resource.incoming_token_used_for_subject` | order-reader | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_resource.expired_authorization.401` | order-reader | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ORDER_MANAGEMENT_RO_USER (expired) |
 | `check_resource.no_token.401` | n/a | `POST /access/v1/check/resource` | ATTACHMENT | READ | none |
-| `check_resource.tenant_id_ignored` | order-reader | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
+| `check_resource.unknown_tenant_id.403` | order-reader | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_resource.tenant_id_absent` | order-reader | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_resource.null_body.400` | admin | `POST /access/v1/check/resource` | - | - | ROLE_ADMINISTRATOR |
 | `check_resource.boolean_response` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
@@ -59,16 +61,16 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `check_resource_bulk.no_id_empty` | admin | `POST /access/v1/check/resource/bulk` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `check_resource_bulk.missing_type_op.400` | admin | `POST /access/v1/check/resource/bulk` | - | - | ROLE_ADMINISTRATOR |
 | `check_resource_bulk.duplicate_ids.400` | admin | `POST /access/v1/check/resource/bulk` | ORDER | READ,DELETE | ROLE_ADMINISTRATOR |
-| `check_resource_bulk.tenant_id_ignored` | order-reader | `POST /access/v1/check/resource/bulk` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
+| `check_resource_bulk.unknown_tenant_id.403` | order-reader | `POST /access/v1/check/resource/bulk` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_resource_bulk.wrong_address.404` | admin | `POST /access/v1/check/resource/bul` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `check_filter.calculation_result_present` | admin | `POST /access/v1/check/filter` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `check_filter.unknown_type.deny` | admin | `POST /access/v1/check/filter` | NONEXISTENT | READ | ROLE_ADMINISTRATOR |
 | `check_filter.deny_all_fields` | admin | `POST /access/v1/check/filter` | NONEXISTENT | READ | ROLE_ADMINISTRATOR |
 | `check_filter.known_resource.not_null` | order-reader | `POST /access/v1/check/filter` | ATTACHMENT | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_filter.missing_operation` | order-reader | `POST /access/v1/check/filter` | ATTACHMENT | - | ROLE_ORDER_MANAGEMENT_RO_USER |
-| `check_filter.tenant_id_ignored` | admin | `POST /access/v1/check/filter` | NONEXISTENT | READ | ROLE_ADMINISTRATOR |
+| `check_filter.unknown_tenant_id.403` | admin | `POST /access/v1/check/filter` | NONEXISTENT | READ | ROLE_ADMINISTRATOR |
 | `check_filter.no_token.401` | n/a | `POST /access/v1/check/filter` | ORDER | READ | none |
-| `check_filter.missing_resource_type.400` | admin | `POST /access/v1/check/filter` | - | READ | ROLE_ADMINISTRATOR |
+| `check_filter.missing_resource_type.deny` | admin | `POST /access/v1/check/filter` | - | READ | ROLE_ADMINISTRATOR |
 | `check_filter.wrong_address.404` | admin | `POST /access/v1/check/filte` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `check_filter.predicate_subject_attr_substituted` | admin | `POST /access/v1/check/filter` | PUBLIC_DOC | READ | ROLE_ADMINISTRATOR |
 | `pip_general.stub_reset` | n/a | `POST (pip-stub reset)` | - | - | none |
@@ -105,13 +107,11 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `wildcard_access.upload_wildcard_policies` | n/a | `PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}` | - | - | none |
 | `wildcard_access.all_all.no_predicates` | admin | `POST /access/v1/check/filter` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `wildcard_access.all_all.exact_type_allowed` | admin | `POST /access/v1/check/resource` | WC_EXACT_ONLY | READ | ROLE_ADMINISTRATOR |
-| `wildcard_access.all_op.reader_delete_denied` | order-reader | `POST /access/v1/check/resource` | UNKNOWN_TYPE | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.rt_all.reader_any_op` | order-reader | `POST /access/v1/check/filter` | WC_RT_TARGET | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.rt_all.reader_other_rt_denied` | order-reader | `POST /access/v1/check/resource` | OTHER_TYPE | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
-| `wildcard_access.mixed.partial_wildcard` | order-reader | `POST /access/v1/check/resource/bulk` | WC_RT_TARGET,INVOICE | DELETE,READ | ROLE_ORDER_MANAGEMENT_RO_USER |
+| `wildcard_access.mixed.partial_wildcard` | order-reader | `POST /access/v1/check/resource/bulk` | WC_RT_TARGET,OTHER_TYPE | DELETE,DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.legacy.check_resource_all_all` | admin | `POST /access/v1/check/resource` | UNKNOWN_TYPE | DELETE | ROLE_ADMINISTRATOR |
 | `wildcard_access.legacy.check_resource_bulk_all_all` | admin | `POST /access/v1/check/resource/bulk` | UNKNOWN_TYPE | DELETE | ROLE_ADMINISTRATOR |
-| `wildcard_access.legacy.check_filter_all_op` | order-reader | `POST /access/v1/check/filter` | UNKNOWN_TYPE | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.restore_original_policies` | n/a | `PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}` | - | - | none |
 | `m2m_keycloak.pull_succeeds_with_keycloak_token` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
 | `m2m_keycloak.agent_functional_after_token_refresh` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
@@ -133,32 +133,25 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 
 | Area | Priority | Recommended cases | Suggested location |
 | --- | --- | --- | --- |
-| Decision contract of the `authorize` document | `P0` | Request validation, `ignoreRls` omitted=`false` plus explicit `true` behavior, multi-resource order preservation, `ALLOW`/`DENY` mapping, `predicates[]` omission rules, auth failure mapping | `policies/authorize_contract_test.rego` |
-| Policy language semantics | `P0` | Operator coverage, precedence, parentheses, JSONPath behavior, `has access`, normalized `conditionAst` evaluation, predicate passthrough | `policies/policy_language_contract_test.rego` |
+| Decision of the generated policies | `P0` | `ALLOW`/`DENY` per item, multi-resource order preservation, denial reasons, the filter condition, one tenant's policies never deciding another tenant's request | Go tests of `internal/regogen` and `components/authz-agent/internal/snapshot`; `make parity` |
+| Policy language semantics | `P0` | Operator coverage, precedence, parentheses, JSONPath behavior, `has access`, PIP operands | Go tests of `internal/regogen`; `make parity` |
 | Token verification and subject normalization | `P0` | Valid token, expired token, wrong issuer, unknown `kid`, no roles, `realm_access.roles` only, non-realm claim ignored, service token, object-form `subject` rejection, anonymous compatibility mode | `policies/token_auth_contract_test.rego` |
-| Legacy v1 endpoint mapping | `P0` | `/access/v1/check/resource`, `/access/v1/check/resource/bulk`, `/access/v1/check/filter` request mapping, response remapping, stable error shape, tenant pass-through ignored in decisioning | Rego contract tests plus runtime checks |
+| Legacy v1 endpoint mapping | `P0` | `/access/v1/check/resource`, `/access/v1/check/resource/bulk`, `/access/v1/check/filter` request mapping, response remapping, stable error shape, `tenant_id` and `Tenant` selecting the tenant, `403` for a caller outside its tenant | Go tests of `components/authz-agent/internal/server` plus runtime checks |
 | Runtime auth compatibility | `P0` | Keycloak-issued token flow, OIDC discovery bootstrap, `Authorization` admission token and `Incoming-Token` subject token, admission `401` mapping, deterministic DENY reasons, policies pulled from the policy source | the kind harness under `test/k8s/` via `make e2e` |
 | Public route wiring | `P1` | Per-route request and response translation, public non-exposure of `/authorize` and `/access/v1/authorize`, malformed body handling, query/header propagation | Runtime stack checks on kind (`test/k8s/`) |
-| Simplified policy normalization | `P1` | OLS/RLS split, role-scoped RLS index, `conditionAst` usage, `condition=true` fallback, `predicate=true` fallback, explicit-role wildcard normalization for `ALL/ALL`, `ALL/<operation>`, and `<resourceType>/ALL`, unconditional-access short-circuit semantics for all wildcard buckets, unknown field preservation | New unit suite under `tests/unit/` |
+| Simplified policy compatibility | `P1` | Policies without a condition, explicit-role wildcard targets `ALL/ALL`, `ALL/<operation>`, and `<resourceType>/ALL`, malformed entries | Go tests of `internal/regogen` |
 | Deferred legacy v1 bulk operations and preview APIs | `Deferred` | Historical baseline only: `/access/v1/check/resource/bulk/operations` and `/preview/v1/check/resource/bulk/operations` are not implemented in the current repository snapshot and currently return `404`; no active implementation handover exists | Runtime `404` assertions only |
 | Deferred legacy v2 APIs and `/api-version` | `Deferred` | Historical baseline only: `/access/v2/check/resource`, `/access/v2/check/resource/bulk/operations`, `/preview/v2/check/resource/bulk/operations`, `/access/v2/check/filter`, and `/api-version` are not implemented in the current repository snapshot and currently return `404`; no active implementation handover exists | Runtime `404` assertions only |
 | Large-input and resilience checks | `P2` | Large bulk payloads, large simplified policy import, duplicate IDs, empty optional resource objects, startup failure when authn data is missing | Dedicated regression suite |
 
 ## Required Test Cases By Contract Area
 
-### 1. Decision Contract of the `authorize` Document
+### 1. Decision of the Generated Policies
 
-- Single-resource `ALLOW` with omitted `ignoreRls` and `rlsIgnored=false`.
-- Single-resource `ALLOW` with `ignoreRls=true`.
-- Single-resource `ALLOW` with `ignoreRls=false` and returned `predicates[]`.
-- OLS deny short-circuits RLS and returns `DENY`.
-- OLS allow + RLS deny returns `DENY` when `ignoreRls=false`.
-- OLS allow + RLS rule present returns RLS-aware result when `ignoreRls` is omitted.
-- OLS allow + RLS rule present still returns OLS-only result when `ignoreRls=true`.
+- Each item of a request gets `ALLOW` or `DENY` from the module of the request's tenant.
 - Multi-resource response preserves request order.
-- `rlsIgnored` reflects effective mode.
-- `predicates` is omitted for `DENY`.
-- `predicates` is omitted when `rlsIgnored=true`.
+- A tenant with no published policies denies every item with the reason `no policies are published for tenant <id>`.
+- The policies of one tenant never decide a request of another tenant.
 - Malformed payloads are rejected deterministically.
 
 ### 2. Legacy v1 Compatibility Endpoints
@@ -166,11 +159,15 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 - `/access/v1/check/resource` maps to one resource of the decision input and returns JSON boolean.
 - `/access/v1/check/resource/bulk` returns only allowed IDs and preserves input-to-output ID association.
 - `/access/v1/check/filter` uses `calculationResult` and correct `filterCondition` behavior.
-- `/access/v1/check/resource` returns `400` for null body and for missing required `type`/`operation` fields.
-- `/access/v1/check/resource/bulk` returns `400` for null body and for entries without required `type`/`operation`.
-- `/access/v1/check/filter` returns `400` when required query parameter `resourceType` is missing.
+- `/access/v1/check/resource` returns `400` for null body and for a `type` or `operation` that is absent, null, or
+  empty, with the message `The request '<field>' cannot be empty`.
+- `/access/v1/check/resource/bulk` returns `400` for null body and for entries whose `type` or `operation` is absent,
+  null, or empty, with the same message.
+- `/access/v1/check/filter` requires no query parameter: without `resourceType` the policies decide an empty type.
 - Wrong-address variants of implemented compatibility endpoints return `404`.
-- `tenant_id` is accepted but does not change the decision.
+- `tenant_id`, else the `Tenant` header, selects the tenant whose policies decide; without either, the default tenant
+  decides.
+- A caller whose token is not M2M and names a tenant other than its own gets `403` with an empty body.
 - `userId` compatibility path remains isolated and must be covered explicitly if a future handover activates it.
 - Error responses keep the legacy-compatible `{ "message": "..." }` shape where required.
 
@@ -190,14 +187,11 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 - An object-form `subject` in the decision input is rejected.
 - Authorization roles are derived only from `realm_access.roles`; non-realm claims like `groups`, `authorities`, direct `roles`, and `resource_access.*.roles` are ignored.
 
-### 5. Policy Normalization and Simplified Policy Compatibility
+### 5. Simplified Policy Compatibility
 
-- Policy with only `roles/resourceType/operation` normalizes to `condition=true` and `predicate=true`.
-- Policy with predicate but no condition normalizes to `condition=true`.
-- Policy with condition but no predicate still evaluates correctly through normalized RLS data.
-- Multiple roles produce role-scoped RLS entries.
-- Explicit-role wildcard policies `ALL/ALL`, `ALL/<operation>`, and `<resourceType>/ALL` remain supported through the dedicated wildcard access-role normalization path and produce unconditional access within their declared scope.
-- Malformed simplified policy entries produce clear validation errors.
+- A policy with only `roles/resourceType/operation` allows its target with no condition.
+- Explicit-role wildcard policies `ALL/ALL`, `ALL/<operation>`, and `<resourceType>/ALL` remain supported and produce unconditional access within their declared scope.
+- A malformed simplified policy is left out of its tenant and listed under `dropped` in the internal `/health`.
 - Real sample fixtures (from the internal source repository) stay loadable.
 
 ### 6. Runtime and Deployment Wiring
@@ -207,7 +201,7 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 - Runtime tests execute as a Job inside the cluster (Testify suite under `test/integration/testify/`).
 - The agent pulls the policies and PIPs the suite uploads to the `authz-policy-admin` stub.
 - OIDC discovery bootstrap populates runtime authn data before compatibility checks run.
-- The public surface answers every supported check route with the decision of the `authorize` document.
+- The public surface answers every supported check route with the decision of the tenant's generated policies.
 - `/access/v1/check/resource/bulk` handles large payloads such as 3000 allowed IDs without restrictive RLS predicates.
 
 ## Minimum CI Gate
@@ -233,13 +227,12 @@ If deferred legacy endpoints are explicitly brought back into active scope in a 
 
 The repository already has a solid baseline for:
 
-- the decision contract of the `authorize` document;
+- the decision of the generated policies;
 - policy language coverage;
 - token verification and subject normalization;
 - runtime auth precedence checks for `/access/v1/check/resource`.
 
 The main recommended additions are:
 
-- dedicated simplified-policy normalization tests outside the current Rego contract suites;
 - continued hardening of the already implemented surface as behavior evolves;
 - deferred legacy endpoints only if a future handover explicitly brings them back into active implementation scope.

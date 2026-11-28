@@ -22,31 +22,21 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 
 	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/engine"
-	"authz-agent/components/authz-agent/internal/pull"
 )
 
-// testPolicies mirror the shape of the product policies: a decision that
-// allows each resource when the subject token names data.users.admin.
-const testPolicies = `package authorize
-
-import rego.v1
-
-rlsIgnored := false
-
-results := [{"isAllowed": input.subject == concat(" ", ["Bearer", data.users.admin])} | some _ in input.resources]
-`
-
-// newApp builds the internal surface over testPolicies, with
+// newApp builds the internal surface over the admission stub, with
 // data.users.admin set to root.
 func newApp(t *testing.T, health func() Report) (*fiber.App, *engine.Engine) {
 	t.Helper()
-	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": testPolicies}})
+	eng, err := engine.New(engine.Options{Modules: map[string]string{"internals.rego": admissionStub}})
 	if err != nil {
 		t.Fatalf("engine: %v", err)
 	}
@@ -95,6 +85,7 @@ func do(t *testing.T, app *fiber.App, method, path, body string, headers map[str
 		t.Fatalf("%s %s: %v", method, path, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
+	checkAgainstSpec(t, app, req, resp.StatusCode)
 	raw, _ := io.ReadAll(resp.Body)
 	var parsed map[string]any
 	if len(raw) > 0 {
@@ -130,8 +121,38 @@ func TestReady_WaitsForThePolicies(t *testing.T) {
 	}
 }
 
-// TestHealth_ReportsTheLoops: /health is 200 with the conversion counts
-// when the report is healthy, 503 with the reason and its details when it
+func TestReady_NamesTheTenantsWithoutASnapshot(t *testing.T) {
+	app, _ := newApp(t, func() Report { return Report{Healthy: true, Waiting: []string{"a", "b"}} })
+
+	code, body, _ := do(t, app, http.MethodGet, "/ready", "", nil)
+
+	if want := "no snapshot accepted yet for tenants a, b"; code != 503 || body["message"] != want {
+		t.Errorf("GET /ready = %d %v, want 503 %q", code, body, want)
+	}
+}
+
+// TestReady_WaitsForTheDefaultTenant: /ready is 503 naming the default
+// tenant while tenant-manager has not resolved it, together with the
+// policies when they have not loaded either, and /health stays 200.
+func TestReady_WaitsForTheDefaultTenant(t *testing.T) {
+	report := Report{Healthy: true, Loaded: true, UnresolvedTenant: "acme"}
+	app, _ := newApp(t, func() Report { return report })
+
+	if code, body, _ := do(t, app, http.MethodGet, "/ready", "", nil); code != 503 ||
+		body["message"] != `default tenant "acme" not resolved via tenant-manager yet` {
+		t.Errorf("GET /ready unresolved = %d %v, want 503 naming the default tenant", code, body)
+	}
+	if code, _, raw := do(t, app, http.MethodGet, "/health", "", nil); code != 200 {
+		t.Errorf("GET /health unresolved = %d %s, want 200: tenant-manager is not a liveness matter", code, raw)
+	}
+	report.Loaded = false
+	if code, body, _ := do(t, app, http.MethodGet, "/ready", "", nil); code != 503 ||
+		body["message"] != `policies not loaded yet; default tenant "acme" not resolved via tenant-manager yet` {
+		t.Errorf("GET /ready unresolved and not loaded = %d %v, want 503 naming both", code, body)
+	}
+}
+
+// TestHealth_ReportsTheLoops: /health is 200 when the report is healthy, 503 with the reason and its details when it
 // is not, and 200 without details when there is no report.
 func TestHealth_ReportsTheLoops(t *testing.T) {
 	report := Report{Healthy: false, Message: "bootstrap threshold not met", Bootstrap: &authn.Details{Mode: "strict", SuccessCount: 0, RequiredCount: 1}}
@@ -144,10 +165,9 @@ func TestHealth_ReportsTheLoops(t *testing.T) {
 	if details["opaReady"] != true || details["bootstrap"].(map[string]any)["requiredCount"] != float64(1) {
 		t.Errorf("details = %v, want opaReady true and the bootstrap counts", details)
 	}
-	report = Report{Healthy: true, Conversion: &pull.Conversion{PolicySets: 2, Policies: 3}}
-	code, body, raw = do(t, app, http.MethodGet, "/health", "", nil)
-	if code != 200 || body["status"] != "healthy" || body["policyConversion"].(map[string]any)["policies"] != float64(3) {
-		t.Fatalf("GET /health healthy = %d %s, want 200 with the conversion counts", code, raw)
+	report = Report{Healthy: true}
+	if code, _, raw := do(t, app, http.MethodGet, "/health", "", nil); code != 200 || raw != `{"status":"healthy"}` {
+		t.Fatalf("GET /health healthy = %d %s, want 200 {\"status\":\"healthy\"}", code, raw)
 	}
 	plain, _ := newApp(t, nil)
 	if code, _, raw := do(t, plain, http.MethodGet, "/health", "", nil); code != 200 || raw != `{"status":"healthy"}` {
@@ -227,12 +247,12 @@ func (l *levels) at(level string) []string {
 }
 
 // TestDecide_ReportsTheDecisionAtDebug: the decision is the line a policy
-// author asks for, and it names the document and whether it was defined. It
-// is debug because every request writes one, and it carries neither the
-// input nor the result, because those hold the caller's token and claims.
+// author asks for, and it names the document and the tenant. It is debug
+// because every request writes one, and it carries neither the input nor
+// the result, because those hold the caller's token and claims.
 func TestDecide_ReportsTheDecisionAtDebug(t *testing.T) {
 	reported := &levels{}
-	app := newPublicAppOver(t, map[string]string{"authorize.rego": testPolicies}, Options{Log: reported})
+	app := newPublicAppWithLog(t, reported)
 
 	if code, _, raw := checkAs(t, app, "alice", nil); code != 200 {
 		t.Fatalf("POST /access/v1/check/resource = %d %s, want 200", code, raw)
@@ -241,57 +261,121 @@ func TestDecide_ReportsTheDecisionAtDebug(t *testing.T) {
 	if len(debug) != 1 {
 		t.Fatalf("one decision reported %v, want one debug line", reported.lines)
 	}
-	if !strings.Contains(debug[0], "path=authorize") || !strings.Contains(debug[0], "defined=true") {
-		t.Errorf("the decision reported %q, want the path authorize and defined=true", debug[0])
+	if !strings.Contains(debug[0], "path=authorize") || !strings.Contains(debug[0], "tenant=default") {
+		t.Errorf("the decision reported %q, want the path authorize and tenant=default", debug[0])
 	}
 	if strings.Contains(debug[0], "alice") {
 		t.Errorf("the decision reported %q, which carries the input", debug[0])
 	}
 }
 
-// conflictingPolicies makes the decision fail at evaluation rather than
-// deciding: two complete definitions of allowed produce different values for
-// the same request, which OPA reports as a conflict.
-const conflictingPolicies = `package authorize
+// conflictingAdmission makes the checks of the caller fail at evaluation
+// rather than deciding: two complete definitions of admission produce
+// different values for the same request, which OPA reports as a conflict.
+const conflictingAdmission = `package authorize_internals
 
 import rego.v1
 
-allowed := true if input.subject != ""
+admission := {"tokenPayload": {}} if input.subject != ""
 
-allowed := false if input.subject != ""
-
-results := [{"isAllowed": allowed} | some _ in input.resources]
+admission := {"subjectError": "x"} if input.subject != ""
 `
 
-// TestDecide_ReportsADecisionThatCouldNotBeEvaluated: a policy that fails to
-// evaluate answers 500, and the error line is the only account of it. A caller
-// that passes no logger gets no line and the same answer.
-func TestDecide_ReportsADecisionThatCouldNotBeEvaluated(t *testing.T) {
+// TestDecide_ReportsAnAdmissionThatCouldNotBeEvaluated: checks of the caller
+// that fail to evaluate answer 500, and the error line is the only account
+// of it. A caller that passes no logger gets no line and the same answer.
+func TestDecide_ReportsAnAdmissionThatCouldNotBeEvaluated(t *testing.T) {
 	reported := &levels{}
 	for name, log := range map[string]Logger{"a logger was passed": reported, "no logger was passed": nil} {
 		t.Run(name, func(t *testing.T) {
-			app := newPublicAppOver(t, map[string]string{"authorize.rego": conflictingPolicies}, Options{Log: log})
+			app := newPublicAppOver(t, map[string]string{"internals.rego": conflictingAdmission}, Options{Log: log})
 
 			code, body, _ := checkAs(t, app, "alice", nil)
 			if code != 500 || body["code"] != "internal_error" {
-				t.Fatalf("POST /access/v1/check/resource under a failing policy = %d %v, want 500 internal_error", code, body)
+				t.Fatalf("POST /access/v1/check/resource under failing checks = %d %v, want 500 internal_error", code, body)
 			}
 		})
 	}
 	errors := reported.at("error")
-	if len(errors) != 1 {
-		t.Fatalf("a decision that could not be evaluated reported %v, want one error", reported.lines)
-	}
-	if !strings.Contains(errors[0], "path=authorize") {
-		t.Errorf("the failure reported %q, want the path authorize", errors[0])
+	if len(errors) != 1 || !strings.Contains(errors[0], "admission failed") {
+		t.Fatalf("an admission that could not be evaluated reported %v, want one admission error", reported.lines)
 	}
 }
 
-// TestDecide_AnUndefinedDecisionIsAnEmptyEnvelope: a check request whose
-// decision is undefined is answered 200 with an object that holds nothing.
-func TestDecide_AnUndefinedDecisionIsAnEmptyEnvelope(t *testing.T) {
-	app := newPublicAppOver(t, map[string]string{"other.rego": "package other\n"}, Options{})
-	if code, _, raw := checkAs(t, app, "root", nil); code != 200 || raw != "{}" {
-		t.Errorf("undefined decision = %d %s, want 200 {}", code, raw)
+// TestRegister_APanicAnswers500: a handler that panics answers its request
+// with 500, on the internal and the public surface, each counted under its
+// surface, and the next request is answered.
+func TestRegister_APanicAnswers500(t *testing.T) {
+	eng, err := engine.New(engine.Options{Modules: map[string]string{"internals.rego": admissionStub}})
+	if err != nil {
+		t.Fatalf("engine: %v", err)
+	}
+	reported := &levels{}
+	internal := fiber.New(fiber.Config{DisableStartupMessage: true})
+	srv := Register(internal, eng, Options{Log: reported, Health: func() Report { panic("health exploded") }})
+	public := fiber.New(fiber.Config{DisableStartupMessage: true})
+	srv.RegisterPublic(public)
+
+	for _, app := range []struct {
+		name string
+		app  *fiber.App
+	}{{"internal", internal}, {"public", public}} {
+		t.Run(app.name, func(t *testing.T) {
+			for i := range 2 {
+				code, body, _ := call(t, app.app, http.MethodGet, "/health", "", nil)
+				if code != http.StatusInternalServerError || body != `{"code":"internal_error","message":"internal error"}` {
+					t.Errorf("GET /health %d = %d %s, want 500 internal_error", i+1, code, body)
+				}
+			}
+			if got := testutil.ToFloat64(srv.panics.WithLabelValues(app.name, "/health")); got != 2 {
+				t.Errorf(`%s{surface=%q,route="/health"} = %v after 2 panics there, want 2`, panicsName, app.name, got)
+			}
+		})
+	}
+}
+
+// Each panic is counted, while its stack is logged once for each place in
+// the code that panics.
+func TestRegister_APanicIsCountedAndItsStackLoggedOncePerSite(t *testing.T) {
+	eng, err := engine.New(engine.Options{Modules: map[string]string{"internals.rego": admissionStub}})
+	if err != nil {
+		t.Fatalf("engine: %v", err)
+	}
+	var elsewhere atomic.Bool
+	reported := &levels{}
+	app := fiber.New(fiber.Config{DisableStartupMessage: true})
+	srv := Register(app, eng, Options{Log: reported, Health: func() Report {
+		if elsewhere.Load() {
+			panic("health exploded elsewhere")
+		}
+		panic("health exploded")
+	}})
+
+	for range 100 {
+		if code, _, _ := call(t, app, http.MethodGet, "/health", "", nil); code != http.StatusInternalServerError {
+			t.Fatalf("GET /health = %d, want 500", code)
+		}
+	}
+	elsewhere.Store(true)
+	call(t, app, http.MethodGet, "/health", "", nil)
+
+	if got := testutil.ToFloat64(srv.panics.WithLabelValues("internal", "/health")); got != 101 {
+		t.Errorf(`%s{surface="internal",route="/health"} = %v after 101 panics, want 101`, panicsName, got)
+	}
+	errs := reported.at("error")
+	if len(errs) != 2 || !strings.Contains(errs[0], ": health exploded; ") || !strings.Contains(errs[1], ": health exploded elsewhere; ") {
+		t.Fatalf("error lines %q, want one for each of the two panics", errs)
+	}
+	for _, e := range errs {
+		if strings.Count(e, " [running]:") != 1 || !strings.Contains(e, "TestRegister_APanicIsCountedAndItsStackLoggedOncePerSite") {
+			t.Errorf("error line %q, want the stack of the panic once, through the function that panicked", e)
+		}
+	}
+	debugs := reported.at("debug")
+	if len(debugs) != 99 {
+		t.Fatalf("%d debug lines, want 99, one for each repeated panic", len(debugs))
+	}
+	if strings.Contains(debugs[0], " [running]:") {
+		t.Errorf("debug line %q, want no stack", debugs[0])
 	}
 }

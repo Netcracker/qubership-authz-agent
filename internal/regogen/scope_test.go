@@ -1,0 +1,204 @@
+// Copyright 2024-2026 Netcracker Technology Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package regogen
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
+	"testing"
+
+	"github.com/open-policy-agent/opa/v1/ast"
+
+	"authz-agent/internal/jsonvalue"
+	"authz-agent/internal/policyir"
+	"authz-agent/internal/regobuiltins"
+)
+
+func TestScopeAnswer_ReadsOneGrantPerPolicy(t *testing.T) {
+	ids := func(s ...string) []jsonvalue.Value {
+		out := make([]jsonvalue.Value, len(s))
+		for i, x := range s {
+			out[i] = x
+		}
+		return out
+	}
+	for _, tc := range []struct {
+		name string
+		resp *ast.Term
+		want []map[string][]jsonvalue.Value
+		ok   bool
+	}{
+		{"each policy one grant, keys by key, name, or scopeKey", entAnswer(200, `{"permissionScope": [
+			{"policies": [{"scopeItems": [{"key": "domain", "values": [{"id": "d1"}, {"id": "d2"}]}]},
+				{"scopeItems": [{"name": "region", "value": [{"id": "eu"}]}, {"scopeKey": "team", "values": []}]}]}]}`),
+			[]map[string][]jsonvalue.Value{{"domain": ids("d1", "d2")}, {"region": ids("eu"), "team": {}}}, true},
+		{"an empty list", entAnswer(200, `{"permissionScope": []}`), nil, true},
+		{"the body null", entAnswer(200, `null`), nil, true},
+		{"404", entAnswer(404, `{"error": "x"}`), nil, false},
+		{"no body", entAnswer(200, ``), nil, false},
+		{"permissionScope null", entAnswer(200, `{"permissionScope": null}`), nil, false},
+		{"no permissionScope", entAnswer(200, `{}`), nil, false},
+		{"a value that is not an object", entAnswer(200,
+			`{"permissionScope": [{"policies": [{"scopeItems": [{"key": "domain", "values": ["d1"]}]}]}]}`), nil, false},
+		{"a value without an id", entAnswer(200,
+			`{"permissionScope": [{"policies": [{"scopeItems": [{"key": "domain", "values": [{"x": 1}]}]}]}]}`), nil, false},
+		{"400", entAnswer(400, `{}`), nil, false},
+		{"403", entAnswer(403, `{"permissionScope": []}`), nil, false},
+		{"405", entAnswer(405, `{"permissionScope": []}`), nil, false},
+		{"204", entAnswer(204, `{"permissionScope": []}`), nil, true},
+		{"204 without a body", entAnswer(204, ``), nil, false},
+		{"201", entAnswer(201, `{"permissionScope": []}`), nil, false},
+		{"302", entAnswer(302, `{"permissionScope": []}`), nil, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, ok := scopeAnswer(tc.resp)
+			if ok != tc.ok || ok && !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("scopeAnswer = %v, %t; want %v, %t", got, ok, tc.want, tc.ok)
+			}
+		})
+	}
+}
+
+// scopeModule is the module of a tenant whose set iterates over the
+// permission scope, with the PERMISSION_SCOPE PIP of url, or none for "".
+func scopeModule(t *testing.T, url string) *Module {
+	t.Helper()
+	tree := iterateTree(t, "DENY_UNLESS_PERMIT", "subject.permissionScope.domain CONTAINS resource.domain")
+	if url != "" {
+		tree.PIPs = append(tree.PIPs, &policyir.PIP{Name: "subject.permissionScope", Type: policyir.PIPPermissionScope, URL: url})
+	}
+	m, err := Generate(tree, table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	return m
+}
+
+// readScope reads the permission scope of the user u1 with the agent's
+// token given by token.
+func readScope(t *testing.T, m *Module, token func() (string, error)) *Scope {
+	t.Helper()
+	return readScopeOf(t, m, token, `"u1"`)
+}
+
+// readScopeOf reads the permission scope of the user whose subject.id is
+// the JSON id.
+func readScopeOf(t *testing.T, m *Module, token func() (string, error), id string) *Scope {
+	t.Helper()
+	h := &regobuiltins.HTTP{Client: &http.Client{}, Token: token}
+	req := Request{Tenant: "t1", Values: map[string]Resolved{keySubjID: resolved(t, "VALUE", id)}}
+	return m.ReadScope(regobuiltins.WithCalls(h.Context(context.Background())), &req)
+}
+
+// The scope service is called with a GET under the url of the
+// PERMISSION_SCOPE PIP, the agent's token, and the tenant of the request,
+// and each pass reads its grant's values of the key the condition names.
+func TestReadScope_CallsTheServiceAndReadsAPassPerGrant(t *testing.T) {
+	var got string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		got = fmt.Sprintf("%s %s Tenant=%q Content-Type=%q body=%q %s", r.Method, r.URL.RequestURI(),
+			r.Header.Get("Tenant"), r.Header.Get("Content-Type"), body, r.Header.Get("Authorization"))
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		_, _ = w.Write([]byte(`{"permissionScope": [{"policies": [{"scopeItems": [{"key": "domain", "values": [{"id": "d1"}]}]},
+			{"scopeItems": [{"key": "other", "values": [{"id": "x"}]}]}]}]}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	s := readScope(t, scopeModule(t, srv.URL+"/scope/"), own)
+
+	if want := `GET /scope/api/v1/permission-scope/user/u1/policies Tenant="t1" Content-Type="" body="" Bearer own`; got != want {
+		t.Errorf("request = %q, want %q", got, want)
+	}
+	const domain = `["subj","permissionScope.domain"]`
+	want := &Scope{Passes: []map[string]Resolved{{domain: resolved(t, "VALUE", `["d1"]`)},
+		{domain: {State: "ABSENT"}}}}
+	if s.Failed || !reflect.DeepEqual(s.Passes, want.Passes) {
+		t.Errorf("ReadScope = %+v, want %+v", s, want)
+	}
+}
+
+// Without a PERMISSION_SCOPE PIP, the agent's token, or a subject.id that
+// can stand as a segment of the path, the scope is not read, and fails.
+func TestReadScope_FailsWithoutAPIPOrAToken(t *testing.T) {
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls++
+		_, _ = w.Write([]byte(`{"permissionScope": []}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	if s := readScope(t, scopeModule(t, ""), own); !s.Failed {
+		t.Errorf("without a PERMISSION_SCOPE PIP: %+v, want failed", s)
+	}
+	noToken := func() (string, error) { return "", errors.New("no token") }
+	if s := readScope(t, scopeModule(t, srv.URL), noToken); !s.Failed {
+		t.Errorf("without the agent's token: %+v, want failed", s)
+	}
+	for _, id := range []string{`""`, `".."`, `[]`} {
+		if s := readScopeOf(t, scopeModule(t, srv.URL), own, id); !s.Failed {
+			t.Errorf("for subject.id %s, which cannot stand as a segment of the path: %+v, want failed", id, s)
+		}
+	}
+	if calls != 0 {
+		t.Errorf("calls = %d, want 0", calls)
+	}
+	if s := readScope(t, scopeModule(t, srv.URL), own); s.Failed || len(s.Passes) != 0 || calls != 1 {
+		t.Errorf("with the PIP and a token: %+v after %d calls, want no passes after 1", s, calls)
+	}
+}
+
+// A condition that reads a PERMISSION_SCOPE PIP by its name, whatever the
+// name, fails its leaf as a failed PIP does, and so does one that reads
+// subject.permissionScope where no PIP of that name is declared. An ALLOW rule
+// under PERMIT_UNLESS_DENY permits where its leaf is true or false, so only a
+// failed leaf makes allow false.
+func TestAConditionOverAPermissionScopePIPByItsNameFailsItsLeaf(t *testing.T) {
+	const scope = `{"name": "subject.permissionScope", "pipType": "PERMISSION_SCOPE", "url": "http://scope"}`
+	for _, tc := range []struct {
+		name, condition, pips string
+		want                  bool
+	}{
+		{"IS EMPTY", "subject.permissionScope IS EMPTY", scope, false},
+		{"IS NOT EMPTY", "subject.permissionScope IS NOT EMPTY", scope, false},
+		{"a comparison with a string", "subject.permissionScope == 'x'", scope, false},
+		{"under another name", "subject.grants IS EMPTY",
+			`{"name": "subject.grants", "pipType": "PERMISSION_SCOPE", "url": "http://scope"}`, false},
+		{"with no PIP declared", "subject.permissionScope IS EMPTY", ``, false},
+		{"a TOKEN PIP, which answers", "subject.tok IS EMPTY",
+			`{"name": "subject.tok", "pipType": "TOKEN", "claim": "c"}`, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			m, err := Generate(tenantWithSetAndPIPs(t, "PERMIT_UNLESS_DENY", "ALLOW", tc.condition, tc.pips),
+				table(t), DefaultOptions())
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			req := Request{Body: Body{Operation: "read", ResourceType: "doc"}}
+			m.ResolveSubject(&req)
+			if got := evalModule(t, m, req); got != tc.want {
+				t.Errorf("allow for %q = %t, want %t", tc.condition, got, tc.want)
+			}
+		})
+	}
+}

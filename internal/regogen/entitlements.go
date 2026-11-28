@@ -1,0 +1,219 @@
+// Copyright 2024-2026 Netcracker Technology Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package regogen
+
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/types"
+
+	"authz-agent/internal/jsonvalue"
+	"authz-agent/internal/legacyvalue"
+	"authz-agent/internal/regobuiltins"
+	"authz-agent/internal/regogen/spectables"
+)
+
+// subject.entitledResources.of(<type>).as(<names>) is a function of the
+// module, ent_<Var>, which a clause binds the operand's record from where it
+// reads it, the way a GENERAL PIP's function is bound:
+//
+//	ent_<Var> := nc.ent.record(q, pip_send(q), {...}) if q := input.pip_requests[<ID>]
+//
+// Go builds q before the query ([entCall]): the GET of the entitlements
+// service for the subject, or {"state": "ERROR"} where the agent makes no call.
+// Every operand of one subject sends the same request, which nc.http.send
+// makes once per decision request. nc.ent.record reads the response as the
+// specification's entitled does.
+
+// entText returns the function of the entitlements operand of r.
+func entText(r *Ref) string {
+	as, _ := json.Marshal(r.ent.As)
+	return fmt.Sprintf("ent_%s := nc.ent.record(q, pip_send(q), {\"read\": %d, \"seg\": %t, "+
+		"\"jp\": null, \"type\": %s, \"as\": %s}) if q := input.%s[%s]\n\n", r.Var, r.read, r.Segments,
+		lit(r.ent.ResourceType), as, memberPIPRequests, lit(r.ID))
+}
+
+// entitlementsPIP is the name a failed call of the entitlements service
+// goes by in the reason of a denial.
+const entitlementsPIP = "subject.entitledResources"
+
+// entCall returns the q of an entitlements operand on req: the
+// [subjectCall] of <req.Entitlements>/api/v3/user-entitlements/user/<subject.id>.
+func entCall(req *Request) *ast.Term {
+	return subjectCall(req, entitlementsPIP, req.Entitlements, "/api/v3/user-entitlements/user/", "")
+}
+
+// EntRecordDecl declares nc.ent.record as generated modules call it.
+var EntRecordDecl = &ast.Builtin{
+	Name: "nc.ent.record",
+	Decl: types.NewFunction(types.Args(
+		types.Named("q", types.A), types.Named("response", types.A), types.Named("opts", types.A)),
+		types.Named("record", types.NewObject(nil, types.NewDynamicProperty(types.S, types.A)))),
+}
+
+func entRecordFunction() func(*rego.Rego) {
+	return rego.Function3(&rego.Function{Name: EntRecordDecl.Name, Decl: EntRecordDecl.Decl},
+		func(bctx rego.BuiltinContext, q, resp, opts *ast.Term) (*ast.Term, error) {
+			r, _, err := pipOptions(opts)
+			if err != nil {
+				return nil, err
+			}
+			o := opts.Value.(ast.Object)
+			typ, ok := o.Get(ast.StringTerm("type")).Value.(ast.String)
+			if !ok {
+				return nil, fmt.Errorf("nc.ent.record: the type in %v is not a string", opts)
+			}
+			var as []string
+			if err := ast.As(o.Get(ast.StringTerm("as")).Value, &as); err != nil {
+				return nil, fmt.Errorf("nc.ent.record: the names in %v: %w", opts, err)
+			}
+			if st, ok, err := callState(q); err != nil {
+				return nil, fmt.Errorf("nc.ent.record: %w", err)
+			} else if ok {
+				noteFailed(bctx, q, st)
+				return record(r, Resolved{State: st}).term(), nil
+			}
+			v := entResolve(resp, string(typ), as)
+			noteFailed(bctx, q, v.State)
+			return sourceRecord(r, v).term(), nil
+		})
+}
+
+// entResolve returns the value of subject.entitledResources.of(typ).as(as)
+// that the entitlements service answered resp with: ERROR for an answer
+// [regobuiltins.ReadAnswer] reads as failed; otherwise the resourceId of each
+// resource under a reference named in as of an entitlement whose resourceType
+// equals typ ignoring case, in the order of the answer, where an id is left
+// out when an earlier id has the same [pyKey], or EMPTY_COLL for none. A body
+// the specification cannot walk, such as a list where it reads an object, is
+// ERROR: the legacy service fails on it.
+func entResolve(resp *ast.Term, typ string, as []string) Resolved {
+	errorState := Resolved{State: spectables.StateError}
+	ans, err := regobuiltins.ReadAnswer(rego.BuiltinContext{}, resp)
+	if err != nil || ans.Failed {
+		return errorState
+	}
+	body := ans.Body
+	if !truthy(body) {
+		return Resolved{State: spectables.StateEmptyColl}
+	}
+	root, ok := body.(*jsonvalue.Object)
+	if !ok {
+		return errorState
+	}
+	ents, ok := pyList(root, "entitlements")
+	if !ok {
+		return errorState
+	}
+	foldedType := legacyvalue.Fold(typ)
+	var ids []jsonvalue.Value
+	seen := map[string]bool{}
+	for _, e := range ents {
+		ent, ok := e.(*jsonvalue.Object)
+		if !ok {
+			return errorState
+		}
+		rt, _ := ent.Get("resourceType")
+		if legacyvalue.Fold(pyStr(rt)) != foldedType {
+			continue
+		}
+		refs, ok := pyList(ent, "references")
+		if !ok {
+			return errorState
+		}
+		for _, x := range refs {
+			ref, ok := x.(*jsonvalue.Object)
+			if !ok {
+				return errorState
+			}
+			name, _ := ref.Get("name")
+			if s, ok := name.(string); !ok || !containsString(as, s) {
+				continue
+			}
+			resources, ok := pyList(ref, "resources")
+			if !ok {
+				return errorState
+			}
+			for _, y := range resources {
+				res, ok := y.(*jsonvalue.Object)
+				if !ok {
+					return errorState
+				}
+				id, _ := res.Get("resourceId")
+				if k := pyKey(id); !seen[k] {
+					seen[k] = true
+					ids = append(ids, id)
+				}
+			}
+		}
+	}
+	if len(ids) == 0 {
+		return Resolved{State: spectables.StateEmptyColl}
+	}
+	return Resolved{State: spectables.StateValue, Value: ids}
+}
+
+// pyList returns the member key of o as Python's o.get(key) or [] reads
+// it: no member and a member Python counts false give an empty list, and
+// any other member that is not a list is not one (ok false).
+func pyList(o *jsonvalue.Object, key string) ([]jsonvalue.Value, bool) {
+	v, _ := o.Get(key)
+	if !truthy(v) {
+		return nil, true
+	}
+	l, ok := v.([]jsonvalue.Value)
+	return l, ok
+}
+
+// truthy reports whether Python counts the JSON value v true: every value
+// but null, false, a zero number, "", [], and {}.
+func truthy(v jsonvalue.Value) bool {
+	switch x := v.(type) {
+	case nil:
+		return false
+	case bool:
+		return x
+	case jsonvalue.Number:
+		f, err := strconv.ParseFloat(string(x), 64)
+		return err != nil || f != 0
+	case string:
+		return x != ""
+	case []jsonvalue.Value:
+		return len(x) > 0
+	case *jsonvalue.Object:
+		return len(x.Keys()) > 0
+	}
+	return true
+}
+
+// pyStr returns Python's str of the JSON value v as the specification reads
+// it: a string as itself, null as None, a boolean as True or False, a
+// number as written, and a list or an object as its Java text.
+func pyStr(v jsonvalue.Value) string {
+	return roleText(v)
+}
+
+func containsString(list []string, s string) bool {
+	for _, e := range list {
+		if e == s {
+			return true
+		}
+	}
+	return false
+}

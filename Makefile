@@ -9,20 +9,26 @@
 #           python3, zizmor, helm, docker (for test-stand-files), hadolint,
 #           kubeconform, trivy.  Install zizmor/yamllint: pip install yamllint zizmor
 #           Install hadolint/kubeconform/trivy: mise install (versions in mise.toml)
+# Every Go module is linted with the configuration super-linter reads, which
+# also runs the ruleguard rules of tools/ruleguard/rules.go. golangci-lint does
+# not invalidate its cache when only that file changes: run
+# `golangci-lint cache clean` after editing a rule.
+GOLANGCI_LINT := golangci-lint run -c $(CURDIR)/.github/linters/.golangci.yml
+
 lint: test-stand-files
 	@echo "[lint] Go — root module"
-	golangci-lint run ./...
-	golangci-lint run --build-tags paritytest ./components/authz-agent/...
+	$(GOLANGCI_LINT) ./...
+	$(GOLANGCI_LINT) --build-tags paritytest ./components/authz-agent/...
 	@echo "[lint] Go — test/parity/suite"
-	cd test/parity/suite && golangci-lint run ./...
+	cd test/parity/suite && $(GOLANGCI_LINT) ./...
 	@echo "[lint] Go — test/integration/testify"
-	cd test/integration/testify && golangci-lint run --build-tags integration ./...
+	cd test/integration/testify && $(GOLANGCI_LINT) --build-tags integration ./...
 	@echo "[lint] Go — test/integration/pipstub"
-	cd test/integration/pipstub && golangci-lint run ./...
+	cd test/integration/pipstub && $(GOLANGCI_LINT) ./...
 	@echo "[lint] Go — test/integration/tenantmanager"
-	cd test/integration/tenantmanager && golangci-lint run ./...
+	cd test/integration/tenantmanager && $(GOLANGCI_LINT) ./...
 	@echo "[lint] Go — tools/mutationreport"
-	cd tools/mutationreport && golangci-lint run ./...
+	cd tools/mutationreport && $(GOLANGCI_LINT) ./...
 	@echo "[lint] Shell"
 	find . -name '*.sh' -not -path './.git/*' | xargs shellcheck --severity=error
 	@echo "[lint] YAML"
@@ -57,6 +63,15 @@ test-jayway:
 	mvn -q -B -f $(JAYWAY_DIR)/pom.xml dependency:build-classpath -Dmdep.outputFile=$(CURDIR)/$(JAYWAY_DIR)/target/classpath.txt
 	test -s $(JAYWAY_DIR)/target/classpath.txt
 	JAYWAY_CLASSPATH="$$(cat $(JAYWAY_DIR)/target/classpath.txt)" go test -count=1 -tags jayway -run Jayway ./internal/jsonpath/
+
+# complexity-tests: run the tests that check how the cost of an act grows with
+# the size of its input, in every package with a test file under the
+# complexity build tag. They measure the bytes and the CPU time of the whole
+# process and take over a minute, so go test ./... leaves them out.
+COMPLEXITY_PACKAGES = $(sort $(dir $(shell git grep --untracked -lw -e '^//go:build .*complexity' -- '*_test.go')))
+complexity-tests:
+	@test -n "$(COMPLEXITY_PACKAGES)" || { echo "complexity-tests: no *_test.go file has a //go:build line with the complexity tag" >&2; exit 1; }
+	go test -count=1 -tags complexity $(addprefix ./,$(COMPLEXITY_PACKAGES))
 
 # jayway-suite-calls: run the tests of Jayway JsonPath with the agent in
 # testdata/jayway/recorder, which writes the path and the document of every
@@ -355,4 +370,4 @@ parity-logs:
 	kind export logs --name $(KIND_CLUSTER) $(E2E_ARTIFACTS)/parity/cluster
 	$(PARITY_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/parity/events.txt
 
-.PHONY: lint install-hooks test-jayway jayway-suite-calls mutation-diff e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs
+.PHONY: lint install-hooks test-jayway complexity-tests jayway-suite-calls mutation-diff e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs

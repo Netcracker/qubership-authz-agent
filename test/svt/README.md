@@ -58,15 +58,8 @@ tests/svt/
 │       └── svt_individual_matrix.py   # per-mode scenario matrix + workbook orchestration
 ├── profiler/                          # static OPA profiler assets
 │   ├── README.md
-│   ├── rls-condition/
-│   ├── rls-predicate/
-│   ├── rls-predicate-pips/
-│   ├── ols-single/
-│   ├── ols-bulk-50/
 │   ├── identity-verify-token/
-│   ├── identity-validate-jwt/
-│   ├── wildcard-all-single/
-│   └── wildcard-mixed-bulk/
+│   └── identity-validate-jwt/
 ├── load-tests/                        # per-test load scenarios
 │   ├── run                            # suite-level runner (all full, then all opa-direct)
 │   ├── full/                          # public-surface tests (canonical + legacy pairs)
@@ -144,19 +137,6 @@ tests/svt/profiler/<scenario>/
 └── profile-trace.sh
 ```
 
-Authorize-result profiler directories (`ols-*`, `rls-*`, `wildcard-*`) may also include:
-
-```text
-├── data-real-token.json
-├── input-real-token.json
-├── profile-real-token.sh
-└── bench-real-token.sh
-```
-
-Those additive files keep the same semantic scenario but swap the cached synthetic token for a
-fixed signed JWT plus committed public JWKS data in the same canonical authn runtime shape used by
-bootstrap (`trustedProviders.byId` plus the `jwksByKid` candidate index, authz-agent-ADR-0075).
-
 ## Quick Start
 
 ```bash
@@ -177,17 +157,11 @@ tests/svt/scripts/run
 tests/svt/scripts/run-opa-direct
 
 # 6. Profiler wrappers
-tests/svt/profiler/ols-single/profile.sh          # opa eval --profile
-tests/svt/profiler/ols-single/bench.sh             # opa bench (5 runs)
-tests/svt/profiler/ols-single/profile-trace.sh     # opa eval --explain=full
-tests/svt/profiler/ols-single/profile-real-token.sh
-tests/svt/profiler/ols-single/bench-real-token.sh
+tests/svt/profiler/identity-verify-token/profile.sh   # opa eval --profile
+tests/svt/profiler/identity-verify-token/bench.sh     # opa bench (5 runs)
+tests/svt/profiler/identity-verify-token/profile-trace.sh  # opa eval --explain=full
 tests/svt/profiler/identity-validate-jwt/profile.sh
 TOKEN_KIND=service tests/svt/profiler/identity-validate-jwt/profile.sh
-tests/svt/profiler/rls-predicate-pips/profile-real-token.sh
-tests/svt/profiler/rls-predicate-pips/bench-real-token.sh
-tests/svt/profiler/wildcard-mixed-bulk/profile-real-token.sh
-tests/svt/profiler/wildcard-mixed-bulk/bench-real-token.sh
 
 # 7. Individual per-mode scenario matrix
 tests/svt/scripts/run-individual-svt-matrix
@@ -330,8 +304,8 @@ load-tests/mixed-flow/
         └── mixed-load-report-<mode>-<timestamp>.md
 ```
 
-The 8-scenario mix is composed from the existing profiler set (same fixtures as
-`tests/svt/scripts/bench-report`). Per-thread-group share: `20% ols-single-10roles
+The 8-scenario mix takes the request shapes that `scripts/build-mixed-flow-seeds.py` seeds for the scenarios of the
+same names. Per-thread-group share: `20% ols-single-10roles
 / 5% rls-predicate / 5% rls-condition / 5% ols-bulk-100 / 25% rls-condition-2-expression
 / 25% rls-predicate-summary-2-predicates / 10% rls-predicate-pips-2-token-pip
 / 5% wildcard-all-single`. `ols-bulk-100` follows D-4 (1 HTTP request = 1 RPS slot,

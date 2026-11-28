@@ -18,72 +18,40 @@ import rego.v1
 
 fixtures := data.fixtures.identity
 
-policies_fixture := {
-  "ols": {
-    "CUSTOMER": {
-      "READ": ["ROLE_VIEWER"],
-    },
-  },
-  "rls": {
-    "CUSTOMER": {
-      "READ": {
-        "ROLE_VIEWER": [
-          {
-            "condition": true,
-            "predicates": [{"predicate": "true", "type": "rsql"}],
-          },
-        ],
-      },
-    },
-  },
-}
-
 authn_fixture := fixtures.authn
 
 valid_authz_token := sprintf("Bearer %v", [fixtures.tokens.valid])
 
-# ── Helper: canonical authorize with admission + subject ─────────────────
+# ── Helper: the input of a check request with admission + subject ────────
 
-canonical_input(authz_token, subject_token) := {
-  "authorizationToken": authz_token,
-  "resources": [{"resourceType": "Customer", "operation": "READ", "resource": {}}],
-  "subject": subject_token,
-  "ignoreRls": true,
-}
-
-legacy_input(authz_token, subject_token) := {
-  "compatPath": "/access/v1/check/resource",
+request_input(authz_token, subject_token) := {
   "authorizationToken": authz_token,
   "subject": subject_token,
-  "legacyBody": {"type": "Customer", "operation": "READ", "resource": {}},
 }
 
 # ── TOKEN_MISSING ────────────────────────────────────────────────────────
 
 test_admission_missing_returns_401 if {
-  actual := data.authorize
-    with input as canonical_input("", valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input("", valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "Authorization token is missing"
 }
 
 test_subject_missing_returns_deny if {
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, "")
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, "")
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "Authorization token is missing"
+  actual.subjectError
+  actual.subjectError == "Authorization token is missing"
 }
 
-test_legacy_missing_returns_401 if {
-  actual := data.authorize
-    with input as legacy_input("", "")
+test_both_tokens_missing_returns_401 if {
+  actual := data.authorize_internals.admission
+    with input as request_input("", "")
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "Authorization token is missing"
 }
@@ -129,56 +97,50 @@ test_anonymous_with_valid_token_uses_the_token_subject if {
 # ── TOKEN_SCHEME_INVALID ─────────────────────────────────────────────────
 
 test_admission_scheme_invalid_returns_401 if {
-  actual := data.authorize
-    with input as canonical_input("Basic sometoken", valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input("Basic sometoken", valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "Authorization scheme must be Bearer"
 }
 
 test_subject_scheme_invalid_returns_deny if {
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, "Basic sometoken")
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, "Basic sometoken")
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "Authorization scheme must be Bearer"
+  actual.subjectError
+  actual.subjectError == "Authorization scheme must be Bearer"
 }
 
 test_admission_naked_jwt_returns_401 if {
-  actual := data.authorize
-    with input as canonical_input(fixtures.tokens.valid, valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input(fixtures.tokens.valid, valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "Authorization scheme must be Bearer"
 }
 
 test_subject_naked_jwt_returns_deny if {
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, fixtures.tokens.valid)
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, fixtures.tokens.valid)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "Authorization scheme must be Bearer"
+  actual.subjectError
+  actual.subjectError == "Authorization scheme must be Bearer"
 }
 
-test_legacy_scheme_invalid_returns_401 if {
-  actual := data.authorize
-    with input as legacy_input("Basic sometoken", "Basic sometoken")
+test_both_tokens_scheme_invalid_returns_401 if {
+  actual := data.authorize_internals.admission
+    with input as request_input("Basic sometoken", "Basic sometoken")
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
 }
 
-test_legacy_naked_jwt_returns_401 if {
-  actual := data.authorize
-    with input as legacy_input(fixtures.tokens.valid, fixtures.tokens.valid)
+test_both_tokens_naked_jwt_returns_401 if {
+  actual := data.authorize_internals.admission
+    with input as request_input(fixtures.tokens.valid, fixtures.tokens.valid)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "Authorization scheme must be Bearer"
 }
@@ -186,45 +148,41 @@ test_legacy_naked_jwt_returns_401 if {
 # ── TOKEN_FORMAT_INVALID ─────────────────────────────────────────────────
 
 test_admission_format_invalid_returns_401 if {
-  actual := data.authorize
-    with input as canonical_input("Bearer not-a-jwt", valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input("Bearer not-a-jwt", valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "Token is not a valid JWT"
 }
 
 test_subject_format_invalid_returns_deny if {
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, "Bearer not-a-jwt")
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, "Bearer not-a-jwt")
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "Token is not a valid JWT"
+  actual.subjectError
+  actual.subjectError == "Token is not a valid JWT"
 }
 
 # ── TOKEN_EXPIRED ────────────────────────────────────────────────────────
 
 test_admission_expired_returns_401 if {
   token := sprintf("Bearer %v", [fixtures.tokens.expired])
-  actual := data.authorize
-    with input as canonical_input(token, valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "Token has expired"
 }
 
 test_subject_expired_returns_deny if {
   token := sprintf("Bearer %v", [fixtures.tokens.expired])
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "Token has expired"
+  actual.subjectError
+  actual.subjectError == "Token has expired"
 }
 
 # ── The iss claim is not a trust criterion (authz-agent-ADR-0075) ────────
@@ -238,36 +196,29 @@ test_subject_expired_returns_deny if {
 
 test_admission_foreign_issuer_is_accepted if {
   token := sprintf("Bearer %v", [fixtures.tokens.wrongIssuer])
-  actual := data.authorize
-    with input as canonical_input(token, valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  count(actual.results) == 1
-  actual.results[0].isAllowed == true
+  actual.tokenPayload
 }
 
 test_subject_foreign_issuer_is_accepted if {
   token := sprintf("Bearer %v", [fixtures.tokens.wrongIssuer])
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == true
+  actual.tokenPayload
 }
 
-# Only the absence of an authError is asserted here: the legacy_input helper
-# does not carry enough for the compat path to produce a decision — even the
-# `valid` token yields `results: []` through it — so 401-or-not is the whole
-# signal this shape can give. The canonical sibling above checks the decision.
-test_legacy_foreign_issuer_is_accepted if {
+test_both_tokens_foreign_issuer_is_accepted if {
   token := sprintf("Bearer %v", [fixtures.tokens.wrongIssuer])
-  actual := data.authorize
-    with input as legacy_input(token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
+  actual.tokenPayload
 }
 
 # ── One kid, several candidate keys ──────────────────────────────────────
@@ -299,112 +250,49 @@ test_second_key_of_same_provider_verifies if {
 
 test_admission_unknown_kid_returns_401 if {
   token := sprintf("Bearer %v", [fixtures.tokens.unknownKid])
-  actual := data.authorize
-    with input as canonical_input(token, valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "JWT kid is not found in trusted provider keys"
 }
 
 test_subject_unknown_kid_returns_deny if {
   token := sprintf("Bearer %v", [fixtures.tokens.unknownKid])
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "JWT kid is not found in trusted provider keys"
+  actual.subjectError
+  actual.subjectError == "JWT kid is not found in trusted provider keys"
 }
 
-test_legacy_unknown_kid_returns_401 if {
+test_both_tokens_unknown_kid_returns_401 if {
   token := sprintf("Bearer %v", [fixtures.tokens.unknownKid])
-  actual := data.authorize
-    with input as legacy_input(token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
 }
 
 # ── Valid admission + valid subject -> ALLOW ─────────────────────────────
 
 test_valid_admission_and_subject_allow if {
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == true
+  actual.tokenPayload
 }
 
-# ── Admission short-circuit: OLS/RLS not evaluated on admission failure ──
+# ── A refused admission carries no token payload to decide on ────────────
 
-test_admission_failure_short_circuits_policy if {
-  actual := data.authorize
-    with input as canonical_input("Bearer not-a-jwt", valid_authz_token)
+test_a_refused_admission_carries_no_token_payload if {
+  actual := data.authorize_internals.admission
+    with input as request_input("Bearer not-a-jwt", valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
-  not object.get(actual, "results", false)
-}
-
-# ── OLS DENY reason ─────────────────────────────────────────────────────
-
-test_ols_deny_reason if {
-  actual := data.authorize
-    with input as {
-      "resources": [{"resourceType": "Invoice", "operation": "READ", "resource": {}}],
-      "subject": valid_authz_token,
-      "ignoreRls": true,
-    }
-    with data.authn as authn_fixture
-    with data.policies as policies_fixture
-
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "No user roles associated with resource and operation"
-}
-
-# ── RLS DENY reason ─────────────────────────────────────────────────────
-
-test_rls_deny_reason if {
-  rls_policies := {
-    "ols": {
-      "CUSTOMER": {
-        "READ": ["ROLE_VIEWER"],
-      },
-    },
-    "rls": {
-      "CUSTOMER": {
-        "READ": {
-          "ROLE_VIEWER": [
-            {
-              "conditionAst": {
-                "op": "eq",
-                "args": [
-                  {"ref": {"scope": "resource", "path": ["ownerId"]}},
-                  {"ref": {"scope": "subject", "path": ["id"]}},
-                ],
-              },
-              "predicates": [{"predicate": "ownerId==${subject.id}", "type": "rsql"}],
-            },
-          ],
-        },
-      },
-    },
-  }
-
-  actual := data.authorize
-    with input as {
-      "resources": [{"resourceType": "Customer", "operation": "READ", "resource": {"ownerId": "someone-else"}}],
-      "subject": valid_authz_token,
-      "ignoreRls": false,
-    }
-    with data.authn as authn_fixture
-    with data.policies as rls_policies
-
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "ABAC validations failed for roles {ROLE_VIEWER}"
+  not object.get(actual, "tokenPayload", false)
 }
 
 # ── Incoming-Token ignored ───────────────────────────────────────────────
@@ -412,52 +300,44 @@ test_rls_deny_reason if {
 # and does not accept Incoming-Token as a field.
 
 test_incoming_token_field_is_not_used if {
-  actual := data.authorize
+  actual := data.authorize_internals.admission
     with input as {
       "authorizationToken": valid_authz_token,
-      "resources": [{"resourceType": "Customer", "operation": "READ", "resource": {}}],
       "subject": valid_authz_token,
       "incoming-token": valid_authz_token,
-      "ignoreRls": true,
     }
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
 
-  actual.results[0].isAllowed == true
+  actual.tokenPayload
 }
 
 test_incoming_token_cannot_replace_missing_subject if {
-  actual := data.authorize
+  actual := data.authorize_internals.admission
     with input as {
       "authorizationToken": valid_authz_token,
-      "resources": [{"resourceType": "Customer", "operation": "READ", "resource": {}}],
       "subject": "",
       "incoming-token": valid_authz_token,
-      "ignoreRls": true,
     }
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
 
-  actual.results[0].isAllowed == false
+  actual.subjectError
 }
 
-# ── Legacy endpoints: invalid token always 401, never 200+DENY ───────────
+# ── An invalid token is refused with 401, not decided ────────────────────
 
-test_legacy_expired_token_returns_401_not_deny if {
+test_both_tokens_expired_token_returns_401_not_deny if {
   token := sprintf("Bearer %v", [fixtures.tokens.expired])
-  actual := data.authorize
-    with input as legacy_input(token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
-  not object.get(actual, "results", false)
+  not object.get(actual, "tokenPayload", false)
 }
 
-test_legacy_format_invalid_returns_401 if {
-  actual := data.authorize
-    with input as legacy_input("Bearer garbage", "Bearer garbage")
+test_both_tokens_format_invalid_returns_401 if {
+  actual := data.authorize_internals.admission
+    with input as request_input("Bearer garbage", "Bearer garbage")
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "Token is not a valid JWT"
 }
@@ -550,31 +430,28 @@ test_vtwr_kid_missing if {
 
 test_admission_kid_missing_returns_401 if {
   token := sprintf("Bearer %v", [fixtures.tokens.noKid])
-  actual := data.authorize
-    with input as canonical_input(token, valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "JWT header does not contain required kid"
 }
 
 test_subject_kid_missing_returns_deny if {
   token := sprintf("Bearer %v", [fixtures.tokens.noKid])
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "JWT header does not contain required kid"
+  actual.subjectError
+  actual.subjectError == "JWT header does not contain required kid"
 }
 
-test_legacy_kid_missing_returns_401 if {
+test_both_tokens_kid_missing_returns_401 if {
   token := sprintf("Bearer %v", [fixtures.tokens.noKid])
-  actual := data.authorize
-    with input as legacy_input(token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
 }
 
@@ -635,10 +512,9 @@ test_vtwr_alg_not_allowed if {
 test_admission_alg_not_allowed_returns_401 if {
   bad_header := object.union(valid_header, {"alg": "HS256"})
   jwt := craft_jwt(bad_header, valid_payload)
-  actual := data.authorize
-    with input as canonical_input(sprintf("Bearer %v", [jwt]), valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input(sprintf("Bearer %v", [jwt]), valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "JWT algorithm is not allowed by trusted provider"
 }
@@ -646,23 +522,21 @@ test_admission_alg_not_allowed_returns_401 if {
 test_subject_alg_not_allowed_returns_deny if {
   bad_header := object.union(valid_header, {"alg": "HS256"})
   jwt := craft_jwt(bad_header, valid_payload)
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, sprintf("Bearer %v", [jwt]))
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, sprintf("Bearer %v", [jwt]))
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "JWT algorithm is not allowed by trusted provider"
+  actual.subjectError
+  actual.subjectError == "JWT algorithm is not allowed by trusted provider"
 }
 
-test_legacy_alg_not_allowed_returns_401 if {
+test_both_tokens_alg_not_allowed_returns_401 if {
   bad_header := object.union(valid_header, {"alg": "HS256"})
   jwt := craft_jwt(bad_header, valid_payload)
   token := sprintf("Bearer %v", [jwt])
-  actual := data.authorize
-    with input as legacy_input(token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
 }
 
@@ -757,32 +631,29 @@ test_vtwr_audience_missing if {
 
 test_admission_audience_missing_returns_401 if {
   jwt := craft_jwt(valid_header, object.remove(valid_payload, ["aud"]))
-  actual := data.authorize
-    with input as canonical_input(sprintf("Bearer %v", [jwt]), valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input(sprintf("Bearer %v", [jwt]), valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "JWT does not contain aud claim"
 }
 
 test_subject_audience_missing_returns_deny if {
   jwt := craft_jwt(valid_header, object.remove(valid_payload, ["aud"]))
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, sprintf("Bearer %v", [jwt]))
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, sprintf("Bearer %v", [jwt]))
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "JWT does not contain aud claim"
+  actual.subjectError
+  actual.subjectError == "JWT does not contain aud claim"
 }
 
-test_legacy_audience_missing_returns_401 if {
+test_both_tokens_audience_missing_returns_401 if {
   jwt := craft_jwt(valid_header, object.remove(valid_payload, ["aud"]))
   token := sprintf("Bearer %v", [jwt])
-  actual := data.authorize
-    with input as legacy_input(token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
 }
 
@@ -799,10 +670,9 @@ test_vtwr_audience_invalid if {
 test_admission_audience_invalid_returns_401 if {
   bad_payload := object.union(valid_payload, {"aud": ["wrong-audience"]})
   jwt := craft_jwt(valid_header, bad_payload)
-  actual := data.authorize
-    with input as canonical_input(sprintf("Bearer %v", [jwt]), valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input(sprintf("Bearer %v", [jwt]), valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "JWT audience is not allowed by trusted provider"
 }
@@ -810,23 +680,21 @@ test_admission_audience_invalid_returns_401 if {
 test_subject_audience_invalid_returns_deny if {
   bad_payload := object.union(valid_payload, {"aud": ["wrong-audience"]})
   jwt := craft_jwt(valid_header, bad_payload)
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, sprintf("Bearer %v", [jwt]))
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, sprintf("Bearer %v", [jwt]))
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "JWT audience is not allowed by trusted provider"
+  actual.subjectError
+  actual.subjectError == "JWT audience is not allowed by trusted provider"
 }
 
-test_legacy_audience_invalid_returns_401 if {
+test_both_tokens_audience_invalid_returns_401 if {
   bad_payload := object.union(valid_payload, {"aud": ["wrong-audience"]})
   jwt := craft_jwt(valid_header, bad_payload)
   token := sprintf("Bearer %v", [jwt])
-  actual := data.authorize
-    with input as legacy_input(token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
 }
 
@@ -843,10 +711,9 @@ test_vtwr_not_yet_valid if {
 test_admission_not_yet_valid_returns_401 if {
   bad_payload := object.union(valid_payload, {"nbf": 4102444800})
   jwt := craft_jwt(valid_header, bad_payload)
-  actual := data.authorize
-    with input as canonical_input(sprintf("Bearer %v", [jwt]), valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input(sprintf("Bearer %v", [jwt]), valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "Token is not yet valid"
 }
@@ -854,23 +721,21 @@ test_admission_not_yet_valid_returns_401 if {
 test_subject_not_yet_valid_returns_deny if {
   bad_payload := object.union(valid_payload, {"nbf": 4102444800})
   jwt := craft_jwt(valid_header, bad_payload)
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, sprintf("Bearer %v", [jwt]))
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, sprintf("Bearer %v", [jwt]))
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "Token is not yet valid"
+  actual.subjectError
+  actual.subjectError == "Token is not yet valid"
 }
 
-test_legacy_not_yet_valid_returns_401 if {
+test_both_tokens_not_yet_valid_returns_401 if {
   bad_payload := object.union(valid_payload, {"nbf": 4102444800})
   jwt := craft_jwt(valid_header, bad_payload)
   token := sprintf("Bearer %v", [jwt])
-  actual := data.authorize
-    with input as legacy_input(token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
 }
 
@@ -887,10 +752,9 @@ test_vtwr_iat_invalid if {
 test_admission_iat_invalid_returns_401 if {
   bad_payload := object.union(valid_payload, {"iat": 4102444800})
   jwt := craft_jwt(valid_header, bad_payload)
-  actual := data.authorize
-    with input as canonical_input(sprintf("Bearer %v", [jwt]), valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input(sprintf("Bearer %v", [jwt]), valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "Token iat claim is invalid"
 }
@@ -898,23 +762,21 @@ test_admission_iat_invalid_returns_401 if {
 test_subject_iat_invalid_returns_deny if {
   bad_payload := object.union(valid_payload, {"iat": 4102444800})
   jwt := craft_jwt(valid_header, bad_payload)
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, sprintf("Bearer %v", [jwt]))
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, sprintf("Bearer %v", [jwt]))
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "Token iat claim is invalid"
+  actual.subjectError
+  actual.subjectError == "Token iat claim is invalid"
 }
 
-test_legacy_iat_invalid_returns_401 if {
+test_both_tokens_iat_invalid_returns_401 if {
   bad_payload := object.union(valid_payload, {"iat": 4102444800})
   jwt := craft_jwt(valid_header, bad_payload)
   token := sprintf("Bearer %v", [jwt])
-  actual := data.authorize
-    with input as legacy_input(token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
 }
 
@@ -929,32 +791,29 @@ test_vtwr_signature_invalid if {
 
 test_admission_signature_invalid_returns_401 if {
   jwt := craft_jwt(valid_header, valid_payload)
-  actual := data.authorize
-    with input as canonical_input(sprintf("Bearer %v", [jwt]), valid_authz_token)
+  actual := data.authorize_internals.admission
+    with input as request_input(sprintf("Bearer %v", [jwt]), valid_authz_token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
   actual.authError.reason == "JWT signature verification failed"
 }
 
 test_subject_signature_invalid_returns_deny if {
   jwt := craft_jwt(valid_header, valid_payload)
-  actual := data.authorize
-    with input as canonical_input(valid_authz_token, sprintf("Bearer %v", [jwt]))
+  actual := data.authorize_internals.admission
+    with input as request_input(valid_authz_token, sprintf("Bearer %v", [jwt]))
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   not object.get(actual, "authError", false)
-  actual.results[0].isAllowed == false
-  actual.results[0].reason == "JWT signature verification failed"
+  actual.subjectError
+  actual.subjectError == "JWT signature verification failed"
 }
 
-test_legacy_signature_invalid_returns_401 if {
+test_both_tokens_signature_invalid_returns_401 if {
   jwt := craft_jwt(valid_header, valid_payload)
   token := sprintf("Bearer %v", [jwt])
-  actual := data.authorize
-    with input as legacy_input(token, token)
+  actual := data.authorize_internals.admission
+    with input as request_input(token, token)
     with data.authn as authn_fixture
-    with data.policies as policies_fixture
   actual.authError.status == 401
 }
 

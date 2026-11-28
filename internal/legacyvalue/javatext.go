@@ -83,11 +83,21 @@ func isIntegerText(s string) bool {
 
 // Text returns Java's String.valueOf of v: an object as {k=v, w=x} in member
 // order, a list as [v, w], null as null, a number by [NumberText], and a string
-// as itself. It is the text a string equals a list or an object by.
+// as itself.
 func Text(v jsonvalue.Value) string {
 	var b strings.Builder
 	writeText(&b, v)
 	return b.String()
+}
+
+// FilterText returns the text v takes in the text of a filter predicate: its
+// [Text], so 1e3 is 1000.0 and 5.0 is 5.0, and None for null. For a scalar or
+// null item of a list it is the text the specification's agent profile prints.
+func FilterText(v jsonvalue.Value) string {
+	if v == nil {
+		return "None"
+	}
+	return Text(v)
 }
 
 func writeText(b *strings.Builder, v jsonvalue.Value) {

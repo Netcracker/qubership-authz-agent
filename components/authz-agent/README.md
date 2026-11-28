@@ -6,20 +6,23 @@ in ADR 0080 under `docs/decisions`.
 
 ## What the service contains
 
-- `internal/engine`: compiles the embedded policies (`policies/`), keeps the data documents in an in-memory store,
-  and evaluates decisions.
+- `internal/engine`: compiles the embedded policies (`policies/`) and evaluates them over an in-memory store. They hold
+  the checks of the caller and of the subject's token that admit every check request.
 - `internal/authn`: the trusted providers. At start it fetches every provider's signing keys, through OIDC discovery
   or from a `jwksUri`, and publishes them as `data.authn`, indexed by key id and by provider; it reloads the file
   when it changes, and its outcome drives `/health` under the bootstrap rules: strict mode wants every provider,
   permissive mode wants one, and a provider marked `required` has to be there in either.
 - `internal/pull`: the policies and PIPs. Every interval it fetches the v3 configuration of the policy source with
-  the agent's token, converts it to the simplified model, and publishes `data.policies` and `data.pips`. The first
-  successful load makes the service ready.
+  the agent's token and builds each tenant's policies from it. The first successful load makes the service ready.
+- `internal/snapshot`: the decisions of the check routes. It generates one Rego module for each tenant from that
+  tenant's part of the configuration, compiles it, and publishes it for that tenant alone, so a tenant whose module
+  fails keeps its previous snapshot while the others are published.
 - `internal/m2m`: the agent's own token, obtained from the identity provider with client credentials and refreshed
-  before it expires, or read from a file another party keeps current. It is sent to the policy source and published
-  as `data.m2m.bearerToken` for the PIP calls.
-- `internal/legacy`: the check routes of the legacy access-control API. Each route's body and headers become the
-  input of the `authorize` decision, and the decision becomes the response shape of that route.
+  before it expires, or read from a file another party keeps current. The pull and the PIP calls send it. Without a
+  current token, before the first one or once it expired after failed refreshes, neither the pull nor a PIP call is
+  made.
+- `internal/legacy`: the check routes of the legacy access-control API: the request body and headers each route
+  accepts, and the response shape it answers with.
 - `internal/server`: the routes, on two listeners. The public surface carries the nine check routes,
   `GET /api-version`, `/health`, and `404 {"message":"not found"}` for every other path. The internal surface
   carries `/health`, `/ready`, `/api-version`, and `/prometheus`. No route reads or writes a store document: only
@@ -32,39 +35,184 @@ The chart assembles the agent Pod as this one container.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger; the chart sets it from its `LOG_LEVEL` value |
-| `AUTHZ_PUBLIC_ADDR` | `0.0.0.0:8080` | Listen address of the public surface |
-| `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the internal surface: the probes, the metrics, and `/api-version` |
+| `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger, one of `debug`, `info`, `warn`, `error`, and `fatal`; the chart sets it from its `LOG_LEVEL` value |
+| `AUTHZ_PUBLIC_ADDR` | `0.0.0.0:8080` | Listen address of the public surface, `host:port` with a port from 1 to 65535 |
+| `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the internal surface, which serves the probes, the metrics, and `/api-version`; written as `AUTHZ_PUBLIC_ADDR` is |
 | `AUTHZ_TRUSTED_PROVIDERS_FILE` | `/etc/authz/trusted-providers.json` | The trusted providers; empty runs without them |
-| `AUTHZ_JWKS_BOOTSTRAP_REQUIRED` | `true` | Strict mode: every provider has to bootstrap; `false` wants one |
-| `AUTHZ_JWKS_HTTP_TIMEOUT` | `5` | Seconds per discovery or JWKS request |
-| `AUTHZ_JWKS_HTTP_RETRIES` | `3` | Attempts per request |
+| `AUTHZ_JWKS_BOOTSTRAP_REQUIRED` | `true` | Strict mode: every provider has to bootstrap; `false` wants one. `yes`, `no`, `on`, `off`, `1`, and `0` are accepted too |
+| `AUTHZ_JWKS_HTTP_TIMEOUT` | `5` | Seconds per discovery or JWKS request, 1 or more |
+| `AUTHZ_JWKS_HTTP_RETRIES` | `3` | Attempts per request, 1 or more |
 | `AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL` | `30` | Seconds between checks of the file for a change; `0` never reloads |
-| `AUTHZ_TENANT_MANAGER_URL` | `http://tenant-manager:8080` | Resolves a realm written by its tenant display name; empty disables the lookup |
+| `AUTHZ_TENANT_MANAGER_URL` | `http://tenant-manager:8080` | Resolves to a tenant ID a realm written by its tenant display name, and `AUTHZ_DEFAULT_TENANT`; `/ready` answers 503 until `AUTHZ_DEFAULT_TENANT` is resolved. Empty disables the lookup, and the display name is then used as the ID |
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
 | `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
-| `AUTHZ_ENTITLEMENTS_URL`, `AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT`, `AUTHZ_ENTITLEMENTS_HTTP_RETRIES` | empty, `5`, `3` | The entitlements PIP pinned by the deployment; an empty URL adds none |
+| `AUTHZ_DEFAULT_TENANT` | `default` | Display name of the tenant a check request is decided in when it names none in the `tenant_id` parameter or the `Tenant` header ([The tenant of a request](#the-tenant-of-a-request)); resolved to the tenant ID through `AUTHZ_TENANT_MANAGER_URL`. It may not be empty |
+| `AUTHZ_PIP_TIMEOUT` | `2` | Seconds a policy waits for one call of a PIP, 1 or more; a call that takes longer is a failed PIP, as is a response whose status is other than 200 and 204 (the agent follows no redirect), whose body exceeds 8 MiB, or whose body is not empty and is not one JSON value, such as an HTML page or truncated JSON. A request may wait for several calls in turn: [How long a request waits for a PIP](#how-long-a-request-waits-for-a-pip) |
+| `AUTHZ_ENTITLEMENTS_URL` | empty | Base URL of the entitlements service, which a condition on `subject.entitledResources` calls with a GET of `/api/v3/user-entitlements/user/<subject id>` and the tenant of the decision in the `Tenant` header, once per decision request, within `AUTHZ_PIP_TIMEOUT` and without retries. Empty makes such a condition's operand fail, and the item is denied with the reason `PIP resolution failed` |
 | `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; empty reads the token from `AUTHZ_PAP_CLIENT_TOKEN_FILE` instead |
-| `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials |
-| `AUTHZ_M2M_RENEW_BEFORE_SECONDS` | `60` | How long before its expiry the token is refreshed |
-| `AUTHZ_PAP_CLIENT_TOKEN_FILE` | `/var/run/secrets/tokens/netcracker/token` | The token file, read every 15 seconds, when there is no token endpoint; the default is where the platform's charts mount the netcracker-audience projected token |
+| `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials; neither file name may be empty |
+| `AUTHZ_M2M_RENEW_BEFORE_SECONDS` | `60` | Seconds before its expiry that the token is refreshed, at half its lifetime at the earliest; `0` refreshes it at its expiry |
+| `AUTHZ_PAP_CLIENT_TOKEN_FILE` | `/var/run/secrets/tokens/netcracker/token` | The token file, read every 15 seconds, when there is no token endpoint; the default is where the platform's charts mount the netcracker-audience projected token. Empty, with no token endpoint either, sends the policy source no token and fails every PIP call |
 
-A variable set to the empty string switches its feature off where the table says so; an unset variable takes the
-default.
+An unset variable takes its default, and white space around the value of an `AUTHZ_` variable is ignored. A variable set to the empty string
+switches its feature off where the table says so. A URL is an `http` or `https` URL with a host, and seconds and
+counts are whole numbers. Any other value, such as an empty one where the row gives empty no meaning, stops the service
+at start, and the error names every variable at fault:
+
+```text
+invalid configuration: AUTHZ_PIP_TIMEOUT is "0"; expected a whole number of seconds from 1 to 9223372036
+```
 
 The policy source is the only way policies reach the agent.
 
 At the default level the service reports what it could not do: a policy that failed to evaluate or a document it
 could not store. `debug` adds a line per decision, per rejected legacy request, per unmatched route and per policy
-load. A decision that denies its caller is not reported at either level: it is the answer the policy gave.
-Every line carries the request id under `request_id`, the same id the response carries in `X-Request-Id`.
+load. A decision that denies its caller is not reported at either level: it is the answer the policy gave. A request
+whose handler panics is answered 500 and counted in `authz_agent_handler_panics_total` on `/prometheus`, labeled with
+the port it came to (`surface`: `internal` or `public`) and the matched route pattern. The first panic raised at a
+place in the code is logged at error with its stack; later panics there are logged at `debug`, without a stack.
+Every line carries the request id under `request_id`, the same id the response carries in `X-Request-Id`. Each call
+of a PIP, the entitlements service, or the permission scope carries it in `X-Request-Id` too.
 
-`GET /health` is 200 with the counts of the last policy conversion once the trusted providers meet the bootstrap
-rules, and 503 with the reason and its details until then. `GET /ready`, on the internal port, adds the policies:
-503 with the reason `policies not loaded yet` and the same details until they have loaded once, 200
-`{"status":"ready"}` after. A pull that fails later keeps the loaded policies and both verdicts. An empty
-`AUTHZ_PAP_CLIENT_SOURCE_URL` or an `AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and `/ready` then
-answers 200 as soon as the trusted providers meet the bootstrap rules, with no policies loaded.
+`GET /health` is 200 once the trusted providers meet the bootstrap rules, and 503 with the reason and its details until
+then. On the internal port, its `snapshots` member lists each tenant of the last policy load: whether it is `ready`, the
+snapshot it answers from, the sets, policies, and PIPs that fail permanently (`failures`), what the load left out
+(`dropped`), and the `rejected` reason of a candidate that was not published; its `orphans` member lists the elements
+that name no tenant. A check request whose decision depends on a part listed under `failures` is denied with a reason
+that starts with `PIP resolution failed`; the rest of the tenant is served. A load writes a warning for each element
+under `orphans` or `dropped`, each part under `failures`, and each tenant whose candidate is rejected, unless the
+previous load had the same one. An element is the same when its kind, its ID, and the reason match, whatever its
+position in the document; the warning and `/health` name a set or a PIP declaration by its position in this load's
+document. A tenant keeps its previous snapshot when a new candidate is rejected; a tenant rejected on its first load is
+not ready and denies every check request. The gauge `authz_agent_policy_tenants` on `/prometheus` counts the tenants by
+the snapshot they answer from: `current`, `stale` (an earlier snapshot, after a rejected candidate), or `none`. `GET
+/ready`, on the internal port, adds the policies: 503 with the same details until a load gives every tenant the source
+names a snapshot, then 200 `{"status":"ready"}`. The 503 reason is `no snapshot accepted yet for tenants <tenants>`
+while a tenant rejected on its first load holds readiness back, and `policies not loaded yet` before any load. With
+`AUTHZ_TENANT_MANAGER_URL` set, `/ready` also waits until tenant-manager resolves `AUTHZ_DEFAULT_TENANT` to its tenant
+ID, with the reason `default tenant "<name>" not resolved via tenant-manager yet`; the agent retries the lookup after 1,
+2, 4, 8, and then every 10 seconds. It logs one warning for each way the lookup fails, such as a refused connection
+or an HTTP 404. When the lookup fails again in a way it has already warned of, it logs that at `debug`. Once the name
+resolves, it logs at info how many attempts failed and how long they took. The reason names each unmet condition,
+separated by semicolons. `GET /health` does not wait for tenant-manager. Until tenant-manager resolves the name, every
+check route answers 503 with an empty body and `Retry-After: 60` to a request that needs the ID of the default tenant:
+one that names no tenant by `tenant_id` or `Tenant`, and one whose token in `Authorization` is not an M2M token and has
+no non-empty `tenant-id` claim, whichever tenant the request names. The policy data held under the name is never used
+for such a request. A request that names its tenant, from an M2M caller or from a caller whose `tenant-id` claim names
+that tenant, is decided as usual. Once ready, the service stays ready: a pull that fails later, or a later load that
+rejects a tenant, keeps the published snapshots and both verdicts. An empty `AUTHZ_PAP_CLIENT_SOURCE_URL` or an
+`AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and `/ready` then answers 200 as soon as the trusted
+providers meet the bootstrap rules and the default tenant is resolved, with no policies loaded.
+
+`GET /health` on the public port gives the same status, 200 `healthy` or 503 `unhealthy`, and counts the tenants
+instead of naming them: `tenants`, `served` (with a published snapshot), `rejected` (whose latest candidate was
+refused), and `failing` (whose snapshot has a part listed under `failures`). It names no tenant and no reason.
+
+### How long a request waits for a PIP
+
+A decision request has no deadline of its own: `AUTHZ_PIP_TIMEOUT` bounds each call of a PIP, the entitlements
+service, or the permission scope separately, from the connection attempt to the end of the response. When the called
+service does not answer, such as one that accepts the connection and never responds or one whose host drops the
+packets, a request waits up to about
+
+```text
+(ceil(items / 4) × per-item calls + shared calls) × AUTHZ_PIP_TIMEOUT
+```
+
+- `items` is the number of items in a bulk request, with each operation of a bulk/operations item counted as one item,
+  and 1 for `check/resource` and `check/filter`. The agent evaluates up to 4 items of one request at a time.
+- `per-item calls` is the largest number of PIP calls one item makes whose request differs from item to item, such as
+  a FILTERED PIP or `requestAttributes` that carry resource values. An item makes these calls one after another.
+- `shared calls` counts the calls made once per request: the entitlements service, the permission scope, and each PIP
+  whose request is the same for every item. A failed call is not repeated within the request.
+
+A bulk request of 50 items, each reading one FILTERED PIP with a request of its own that is never answered, waits about
+13 × 2 = 26 seconds with the default timeout. The agent does not cancel these calls when the caller disconnects, so a
+caller that gives up and retries adds the calls of its new request to those still waiting. A deadline for the whole
+request is tracked in [issue #372](https://github.com/Netcracker/qubership-authz-agent/issues/372).
+
+## The tenant of a request
+
+A check request is decided by the policies of one tenant: the tenant whose ID the `tenant_id` query parameter names,
+else the one the `Tenant` header names, else the default tenant, `AUTHZ_DEFAULT_TENANT` resolved to its ID. An empty
+parameter or header counts as absent.
+
+The token in `Authorization` limits the tenants a caller may name. An M2M token, as
+[ADR-0092](../../docs/decisions/20261029-authz-agent-adr-0092-tokens-in-authorization.md) defines it, may name any
+tenant. Any other token may name only the tenant of its `tenant-id` claim, or the default tenant when the token has no
+such claim or an empty one; a claim that is not a string matches no tenant. A request that names another tenant is
+answered 403 with an empty body. A request admitted without a token in `Authorization` may name any tenant.
+
+A tenant with no published policies, such as an ID the policy source does not know, denies every item with the reason
+`no policies are published for tenant <id>`: `check/resource` answers `false`, a bulk route allows no id, and
+`check/filter` answers `DENY`. Until tenant-manager resolves the name of the default tenant, a request that names no
+tenant, and a request whose token in `Authorization` is not an M2M token and has no non-empty `tenant-id` claim, are
+answered 503, as described under `/ready` above.
+
+## Comparisons in conditions
+
+The rules by which a condition compares two values are
+[ADR-0083](../../docs/decisions/20261024-authz-agent-adr-0083-operands-as-java-values.md). Two of them change what a
+policy author can write and what a client can receive.
+
+### Case
+
+No comparing operator of a condition keeps case. `==`, `!=`, `IN`, `NOT IN`, `CONTAINS`, `NOT CONTAINS`,
+`CONTAINS ANY`, `NOT CONTAINS ANY`, `IS SUBSET`, and `IS NOT SUBSET` compare two strings ignoring case, at any depth of
+a list or an object: `"abc"` equals `"ABC"`, and `["X"]` equals `["x"]`. The names of the members of an object keep
+their case.
+
+`MATCH` and `NOT MATCH` are the only tests with case. A pattern compares a string exactly only when it holds none of
+`*`, `?`, `.`, and the pair `()`, which match more than themselves, and none of `(`, `)`, `[`, `]`, `{`, `}`, `+`, `^`,
+`$`, `|`, and `\`, which keep their meaning in a regular expression.
+
+The regular expression a pattern stands for follows the RE2 syntax of the Go `regexp` package, not that of Java. A
+pattern that this syntax refuses, such as `a)|(b` or the backreference `(a)\1`, leaves its policy out of
+the evaluation: the policy, or the set whose target holds the pattern, fails permanently under its target, and the
+tenant's other policies are evaluated as usual. A set of simplified policies with such a pattern in a condition fails
+permanently as a whole. A decision that depends on it is denied with a reason that starts with `PIP resolution failed`.
+The tenant then counts as `failing`, and the internal `/health` names the set, the policy, and the pattern under
+`failures`.
+
+An operand written `subject.<name>` reads the subject: a built-in attribute such as `subject.roles`, a key such as
+`subject.permissionScope.region`, or a PIP of that name. An operand that is none of these, such as `subject.roles[0]`,
+`subject.x-y`, or `subject.a.`, leaves its policy, the set whose target holds it, or its set of simplified policies out
+of the evaluation in the same way, and the internal `/health` lists it under `dropped` with the reason
+`operand subject.roles[0] names no subject attribute, subject.permissionScope.<key>, or PIP; write resource.subject.roles[0] to read the resource, or test a subject attribute by its name, such as subject.roles CONTAINS 'admin'`.
+The admin refuses such a condition on upload. A `MATCH` pattern written `subject.x-y` is the text of the pattern and
+is not affected.
+
+A comparison with `subject.isM2M`, such as `subject.isM2M == true`, is never true. The condition `subject.isM2M` alone
+tests whether the token is M2M. The internal `/health` lists each such comparison under the tenant's `warnings`. The
+load that finds it logs it once, and a later load logs it again only where a policy or a rule with no ID is inserted
+before it.
+
+A rule with no `effect` counts as `NOT_APPLICABLE`: it neither permits nor denies, so under `PERMIT_UNLESS_DENY` the
+resource it was written to deny is allowed. The internal `/health` lists each such rule under the tenant's `warnings`.
+The load that finds it logs it once, and a later load logs it again only where a policy or a rule with no ID is
+inserted before it.
+
+### The limit on looking up nested values
+
+A request fails when a value a comparison reads is a list of nested lists or objects whose elements hold numbers as
+strings in too many ways, such as `"1"`, `"1.0"`, and `"01"` at differing positions, so that looking a value up among
+them would read more than 16 groups and scanned elements. Such a value is the caller's error when the request carries
+it: in the body, or in a token claim that a TOKEN PIP or a built-in subject attribute reads. The agent answers such a
+`check/resource` or `check/filter` request with 400, as it answers a malformed body, and logs it at `debug`. One such
+item refuses a whole bulk request, as one malformed item does. The `message` of the response names the operand, as in
+`the value of resource.b:`, and goes on with:
+
+```text
+a list holds elements of one shape that write their numbers in too many ways: a lookup among them would read more than 16 groups and scanned elements; the limit keeps the cost of a request linear in its size, and a list whose elements write their numbers alike stays below it
+```
+
+A list whose elements write their numbers alike stays far below the limit.
+
+The other values a condition reads come from a source: the permissions the tenant's MAPPING tables grant, or the
+answer of a GENERAL or FILTERED PIP, of the entitlements service, or of the permission scope. Such a value over the
+limit does not fail the request. The condition reads its source as failed, as it reads a call that failed: a resource
+whose decision depends on it is denied with a reason that starts with `PIP resolution failed`, and the other
+resources of a bulk request are decided as usual.
 
 ## Running it
 

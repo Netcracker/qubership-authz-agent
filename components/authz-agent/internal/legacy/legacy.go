@@ -19,7 +19,7 @@
 // container did before the service took the routes over.
 //
 // The Check functions parse a request and return its resources; [Input]
-// wraps them with the tokens and headers into the policy input; the
+// reads the tokens and headers into the input of the admission policies; the
 // Response functions shape the decision. A request the legacy API refuses
 // before any policy runs comes back as a *RequestError.
 package legacy
@@ -30,32 +30,62 @@ import (
 	"strings"
 
 	"github.com/open-policy-agent/opa/v1/util"
+
+	"authz-agent/internal/badrequest"
+	"authz-agent/internal/jsonvalue"
 )
 
-// RequestError is a request the legacy API refuses before any policy runs.
-// The response is status 400 with Message as its message.
-type RequestError struct {
-	Message string
-}
-
-func (e *RequestError) Error() string { return e.Message }
+// RequestError is the error this package gives a request the legacy API
+// refuses before any policy runs. It is a [badrequest.Error], so the
+// response is status 400 with Message as its message.
+type RequestError = badrequest.Error
 
 var (
 	errBadRequest  = &RequestError{Message: "bad request"}
 	errDuplicateID = &RequestError{Message: "Duplicate resource id in bulk request: resource ids must be unique"}
 )
 
-func errMissing(parameter string) *RequestError {
-	return &RequestError{Message: "Missing required parameter: " + parameter}
+// errEmpty is the refusal of a required field that carries no value, in the
+// words legacy uses for it.
+func errEmpty(field string) *RequestError {
+	return &RequestError{Message: "The request '" + field + "' cannot be empty"}
 }
 
-// Resource is one entry of input.resources. The values are kept as the
-// caller sent them, so a resource type or operation that is not a string
-// reaches the policy unchanged.
+// required refuses a required field of a request body that carries no
+// value: absent, null, and "" alike. A value of any other kind, a blank
+// string included, is present.
+func required(field string, raw json.RawMessage) *RequestError {
+	switch string(bytes.TrimSpace(raw)) {
+	case "", "null", `""`:
+		return errEmpty(field)
+	}
+	return nil
+}
+
+// Resource is one item a request asks about, or one operation of a
+// bulk/operations item. The type and operation are
+// kept as the caller sent them, so a resource type that is a number or a
+// boolean reaches the policy unchanged, and so does such an operation on
+// check/resource and check/resource/bulk. The bulk/operations routes give the
+// policy the text of each operation.
 type Resource struct {
 	ResourceType any
 	Operation    any
-	Resource     any
+	// Resource is the resource decoded once per item of the request: the
+	// Resources of the operations of one bulk/operations item share it, so
+	// it must not be modified. It is nil where the request left the resource
+	// out or sent null.
+	Resource jsonvalue.Value
+	// Raw holds the same three fields as the request wrote them, member
+	// order and number text included, for the generated policies; a field
+	// the request left out is empty.
+	Raw RawResource
+}
+
+// RawResource is the JSON text of a resource's fields as the request wrote
+// them; an empty field is one the request left out.
+type RawResource struct {
+	Type, Operation, Resource json.RawMessage
 }
 
 // Entry is the legacy id and operation behind one Resource of a
@@ -98,11 +128,12 @@ type v2Entry struct {
 }
 
 // CheckResource parses the body of the check/resource routes: an object
-// with type and operation, and an optional resource that defaults to an
-// empty object. A body that is empty, or JSON that is neither an object
-// nor null, is refused as "bad request"; a missing, null, or empty type or
-// operation names the parameter, so a null body is missing its type. Only
-// the top-level fields count: a type inside the resource is not the type.
+// with type and operation, and an optional resource. A body that is
+// empty, or JSON that is neither an object nor null, is refused as "bad
+// request"; a type or operation that is absent, null, or "" is refused by
+// [required] with the name of the field, so a null body is refused for its
+// type. Only the top-level fields
+// count: a type inside the resource is not the type.
 func CheckResource(body []byte) ([]Resource, *RequestError) {
 	if len(bytes.TrimSpace(body)) == 0 {
 		return nil, errBadRequest
@@ -133,7 +164,7 @@ func CheckResourceBulk(body []byte) ([]Resource, []string, *RequestError) {
 	for _, raw := range items {
 		var it checkItem
 		if json.Unmarshal(raw, &it) != nil {
-			return nil, nil, errMissing("type")
+			return nil, nil, errBadRequest
 		}
 		r, err := it.resource()
 		if err != nil {
@@ -153,8 +184,9 @@ func CheckResourceBulk(body []byte) ([]Resource, []string, *RequestError) {
 // routes: an array of objects with type, a non-empty operations array, and
 // an optional id and resource. Every operation of an item becomes one
 // Resource, paired with an Entry for [CheckResourceBulkOperationsResponse];
-// an operation that is an empty string or null contributes none, and an id
-// that is null counts as absent. Two items with the same id are refused.
+// an operation that is null contributes none, an empty string is decided like
+// any other operation, and an id that is null counts as absent. Two items with
+// the same id are refused.
 func CheckResourceBulkOperations(body []byte) ([]Resource, []Entry, *RequestError) {
 	items, err := array(body)
 	if err != nil {
@@ -165,12 +197,15 @@ func CheckResourceBulkOperations(body []byte) ([]Resource, []Entry, *RequestErro
 	rawIDs := make([]json.RawMessage, 0, len(items))
 	for _, raw := range items {
 		var it operationsItem
-		if json.Unmarshal(raw, &it) != nil || !present(it.Type) {
-			return nil, nil, errMissing("type")
+		if json.Unmarshal(raw, &it) != nil {
+			return nil, nil, errBadRequest
 		}
-		ops, ok := operations(it.Operations)
-		if !ok {
-			return nil, nil, errMissing("operations")
+		if err := required("type", it.Type); err != nil {
+			return nil, nil, err
+		}
+		ops, err := operations(it.Operations)
+		if err != nil {
+			return nil, nil, err
 		}
 		resources, entries, err = expand(resources, entries, it.Type, ops, it.Resource, text(it.ID))
 		if err != nil {
@@ -197,11 +232,11 @@ func CheckResourceBulkOperationsV2(body []byte) ([]Resource, []Entry, *RequestEr
 	if json.Unmarshal(body, &b) != nil {
 		return nil, nil, errBadRequest
 	}
-	if !present(b.Type) {
-		return nil, nil, errMissing("type")
+	if err := required("type", b.Type); err != nil {
+		return nil, nil, err
 	}
-	if len(b.Entries) == 0 {
-		return nil, nil, errMissing("entries")
+	if err := required("entries", b.Entries); err != nil {
+		return nil, nil, err
 	}
 	items, err := array(b.Entries)
 	if err != nil {
@@ -213,11 +248,11 @@ func CheckResourceBulkOperationsV2(body []byte) ([]Resource, []Entry, *RequestEr
 	for _, raw := range items {
 		var e v2Entry
 		if json.Unmarshal(raw, &e) != nil {
-			return nil, nil, errMissing("operations")
+			return nil, nil, errBadRequest
 		}
-		ops, ok := operations(e.Operations)
-		if !ok {
-			return nil, nil, errMissing("operations")
+		ops, err := operations(e.Operations)
+		if err != nil {
+			return nil, nil, err
 		}
 		resources, entries, err = expand(resources, entries, b.Type, ops, e.Resource, text(e.ID))
 		if err != nil {
@@ -232,60 +267,97 @@ func CheckResourceBulkOperationsV2(body []byte) ([]Resource, []Entry, *RequestEr
 }
 
 // CheckFilter builds the resource of the check/filter routes from the query
-// parameters. resourceType must not be blank; an operation that is blank
-// means ALL. Both values reach the policy as sent, spaces included.
-func CheckFilter(resourceType, operation string) ([]Resource, *RequestError) {
-	if strings.TrimSpace(resourceType) == "" {
-		return nil, errBadRequest
-	}
-	if strings.TrimSpace(operation) == "" {
-		operation = "ALL"
-	}
-	return []Resource{{ResourceType: resourceType, Operation: operation, Resource: map[string]any{}}}, nil
+// parameters. Neither parameter is required: both values are kept as sent,
+// spaces included, and a parameter the request left out is empty, so the
+// policies decide a request without resourceType for the empty type, as the
+// specification's model of legacy does.
+func CheckFilter(resourceType, operation string) Resource {
+	return Resource{ResourceType: resourceType, Operation: operation}
 }
 
 // resource validates the item and converts it.
 func (it checkItem) resource() (Resource, *RequestError) {
-	if !present(it.Type) {
-		return Resource{}, errMissing("type")
+	if err := required("type", it.Type); err != nil {
+		return Resource{}, err
 	}
-	if !present(it.Operation) {
-		return Resource{}, errMissing("operation")
+	if err := required("operation", it.Operation); err != nil {
+		return Resource{}, err
 	}
 	return newResource(it.Type, it.Operation, it.Resource)
 }
 
-// newResource converts the raw fields; a missing resource is an empty
-// object.
+// newResource converts the raw fields. A type or operation that is a list
+// or an object is a bad request: the policies compare both as text, and a
+// structure has no text a caller could mean.
 func newResource(typ, op, res json.RawMessage) (Resource, *RequestError) {
-	t, err := value(typ, "")
+	t, err := scalar(typ)
 	if err != nil {
 		return Resource{}, err
 	}
-	o, err := value(op, "")
+	o, err := scalar(op)
 	if err != nil {
 		return Resource{}, err
 	}
-	r, err := value(res, map[string]any{})
-	if err != nil {
-		return Resource{}, err
+	r := Resource{ResourceType: t, Operation: o, Raw: RawResource{Type: typ, Operation: op, Resource: res}}
+	if len(res) > 0 {
+		v, err := jsonvalue.Decode(res)
+		if err != nil {
+			return Resource{}, errBadRequest
+		}
+		r.Resource = v
 	}
-	return Resource{ResourceType: t, Operation: o, Resource: r}, nil
+	return r, nil
+}
+
+// scalar decodes a type or an operation into the Go value the engine takes,
+// with numbers as json.Number and "" where the field is absent, and refuses
+// a list or an object.
+func scalar(raw json.RawMessage) (any, *RequestError) {
+	if len(raw) == 0 {
+		return "", nil
+	}
+	var v any
+	if err := util.UnmarshalJSON(raw, &v); err != nil || structure(v) {
+		return nil, errBadRequest
+	}
+	return v, nil
+}
+
+// structure reports whether v is a list or an object.
+func structure(v any) bool {
+	switch v.(type) {
+	case []any, map[string]any:
+		return true
+	}
+	return false
 }
 
 // expand appends one Resource and Entry per operation of a bulk/operations
-// item, skipping operations that are empty strings or null.
+// item, skipping operations that are null. An empty operation is decided like
+// any other, so the answer lists it, with the ids it allows. An operation
+// that is a list or an object is a bad request, as in [newResource]. The type
+// and the resource are decoded once, at the first operation that is not
+// null, and the Resources of the item share them.
 func expand(resources []Resource, entries []Entry, typ json.RawMessage, ops []json.RawMessage, res json.RawMessage, id string) ([]Resource, []Entry, *RequestError) {
+	var item *Resource
 	for _, op := range ops {
-		name := text(op)
-		if name == "" {
+		if s := string(bytes.TrimSpace(op)); s == "" || s == "null" {
 			continue
 		}
-		r, err := newResource(typ, nil, res)
-		if err != nil {
+		if _, err := scalar(op); err != nil {
 			return nil, nil, err
 		}
+		if item == nil {
+			r, err := newResource(typ, nil, res)
+			if err != nil {
+				return nil, nil, err
+			}
+			item = &r
+		}
+		r := *item
+		name := text(op)
 		r.Operation = name
+		r.Raw.Operation = op
 		resources = append(resources, r)
 		entries = append(entries, Entry{ID: id, Operation: name})
 	}
@@ -306,40 +378,21 @@ func array(body []byte) ([]json.RawMessage, *RequestError) {
 	return items, nil
 }
 
-// operations splits the operations field of a bulk/operations item; ok is
-// false when the field is absent, not an array, or empty.
-func operations(raw json.RawMessage) (ops []json.RawMessage, ok bool) {
-	trimmed := bytes.TrimSpace(raw)
-	if len(trimmed) == 0 || trimmed[0] != '[' {
-		return nil, false
+// operations splits the operations field of a bulk/operations item. The
+// field is required, and an empty array counts as no value; a value that is
+// not an array is a bad request.
+func operations(raw json.RawMessage) ([]json.RawMessage, *RequestError) {
+	if err := required("operations", raw); err != nil {
+		return nil, err
 	}
-	if json.Unmarshal(trimmed, &ops) != nil || len(ops) == 0 {
-		return nil, false
+	ops, err := array(raw)
+	if err != nil {
+		return nil, err
 	}
-	return ops, true
-}
-
-// present reports whether a required field carries a value: absent, null,
-// and "" all count as missing.
-func present(raw json.RawMessage) bool {
-	switch string(bytes.TrimSpace(raw)) {
-	case "", "null", `""`:
-		return false
+	if len(ops) == 0 {
+		return nil, errEmpty("operations")
 	}
-	return true
-}
-
-// value decodes a field into the Go value the engine takes, with numbers
-// as json.Number, and returns fallback when the field is absent.
-func value(raw json.RawMessage, fallback any) (any, *RequestError) {
-	if len(raw) == 0 {
-		return fallback, nil
-	}
-	var v any
-	if err := util.UnmarshalJSON(raw, &v); err != nil {
-		return nil, errBadRequest
-	}
-	return v, nil
+	return ops, nil
 }
 
 // text is a scalar field as the response names it: a JSON string decoded,
@@ -378,59 +431,82 @@ func uniqueIDs(ids []json.RawMessage) *RequestError {
 }
 
 // skipHeaders are the request headers left out of input.requestHeaders: the
-// transport's own, the tokens the input carries in their own fields, and
-// the one the agent itself uses for the request id.
+// pseudo-headers of HTTP/2, the framing and proxy headers, the tokens the
+// input carries in their own fields, and the one the agent itself uses for
+// the request id. Host, Content-Type, and Accept-Encoding stay, because a
+// HEADER PIP over them reads them in legacy as any other header.
 var skipHeaders = map[string]bool{
 	":authority": true, ":path": true, ":method": true, ":scheme": true, ":status": true, ":protocol": true,
-	"content-type": true, "content-length": true, "accept-encoding": true, "host": true,
-	"transfer-encoding": true, "connection": true, "x-forwarded-for": true, "x-forwarded-proto": true,
+	"content-length": true, "transfer-encoding": true, "connection": true, "x-forwarded-for": true, "x-forwarded-proto": true,
 	"x-request-id": true, "x-envoy-expected-rq-timeout-ms": true, "authorization": true,
 	"incoming-token": true,
 }
 
-// Input builds the canonical authorize input of a legacy request from its
-// headers and resources. The admission token is the Authorization header.
-// The subject is Incoming-Token when present, else Authorization, and empty
-// when Authorization-Type is anonymous. input.requestHeaders carries the
-// remaining headers under their lowercase names for the HEADER PIPs, and
-// input.requestId the X-Request-Id. A repeated header contributes its last
-// value.
-func Input(headers map[string][]string, resources []Resource) map[string]any {
-	get := func(name string) string {
-		for k, values := range headers {
-			if strings.EqualFold(k, name) && len(values) > 0 {
-				return values[len(values)-1]
-			}
-		}
-		return ""
-	}
-	authType := get("authorization-type")
-	admission := get("authorization")
-	subject := ""
-	if !strings.EqualFold(strings.TrimSpace(authType), "anonymous") {
-		if subject = get("incoming-token"); subject == "" {
-			subject = admission
-		}
-	}
-	requestHeaders := map[string]any{}
+// RequestHeaders returns the headers of a request that policies and PIPs
+// may read, under their lowercase names: every header but [skipHeaders],
+// which leaves out the framing and proxy headers, the caller's admission
+// token, and the subject's token. A repeated header has its last value.
+func RequestHeaders(headers map[string][]string) map[string]string {
+	out := map[string]string{}
 	for k, values := range headers {
 		name := strings.ToLower(k)
 		if skipHeaders[name] || len(values) == 0 {
 			continue
 		}
-		requestHeaders[name] = values[len(values)-1]
+		out[name] = values[len(values)-1]
 	}
-	list := make([]any, len(resources))
-	for i, r := range resources {
-		list[i] = map[string]any{"resourceType": r.ResourceType, "operation": r.Operation, "resource": r.Resource}
+	return out
+}
+
+// Header returns the value of the request header called name, matched
+// without regard to case: the last value of a repeated one, and "" without
+// one.
+func Header(headers map[string][]string, name string) string {
+	for k, values := range headers {
+		if strings.EqualFold(k, name) && len(values) > 0 {
+			return values[len(values)-1]
+		}
+	}
+	return ""
+}
+
+// IncomingToken returns the Incoming-Token header of a request as sent, the
+// last value of a repeated one, and "" without one.
+func IncomingToken(headers map[string][]string) string {
+	return Header(headers, "Incoming-Token")
+}
+
+// SubjectToken returns the subject's token of a request: Incoming-Token
+// when present, else Authorization, and "" when Authorization-Type is
+// anonymous.
+func SubjectToken(headers map[string][]string) string {
+	if strings.EqualFold(strings.TrimSpace(Header(headers, "Authorization-Type")), "anonymous") {
+		return ""
+	}
+	if subject := IncomingToken(headers); subject != "" {
+		return subject
+	}
+	return Header(headers, "Authorization")
+}
+
+// Input builds the input of the admission policies of a legacy request from
+// its headers. The input carries no resource: the policies decide on the
+// tokens alone, and a decoded resource would cost its size again. The
+// admission token is the Authorization header, and the subject is
+// [SubjectToken]. input.requestHeaders carries the remaining headers under
+// their lowercase names for the HEADER PIPs, and input.requestId the
+// X-Request-Id. A repeated header contributes its last value.
+func Input(headers map[string][]string) map[string]any {
+	requestHeaders := map[string]any{}
+	for name, v := range RequestHeaders(headers) {
+		requestHeaders[name] = v
 	}
 	return map[string]any{
-		"authorizationToken": admission,
-		"subject":            subject,
-		"authorizationType":  authType,
+		"authorizationToken": Header(headers, "Authorization"),
+		"subject":            SubjectToken(headers),
+		"authorizationType":  Header(headers, "Authorization-Type"),
 		"requestHeaders":     requestHeaders,
-		"requestId":          get("x-request-id"),
-		"resources":          list,
+		"requestId":          Header(headers, "X-Request-Id"),
 	}
 }
 
@@ -502,68 +578,6 @@ func CheckResourceBulkOperationsResponse(result any, entries []Entry, v2 bool) [
 		return mustJSON(map[string]any{"decision": byOperation})
 	}
 	return mustJSON(byOperation)
-}
-
-// filterResponse is the wire shape of the check/filter routes, in the field
-// order the legacy service used.
-type filterResponse struct {
-	CalculationResult      string  `json:"calculationResult"`
-	FilterCondition        string  `json:"filterCondition"`
-	MongodbFilterCondition string  `json:"mongodbFilterCondition"`
-	RsqlFilterCondition    string  `json:"rsqlFilterCondition"`
-	SQLFilterCondition     string  `json:"sqlFilterCondition"`
-	CustomFilterCondition  *string `json:"customFilterCondition"`
-}
-
-// FilterResponse is the body of the check/filter routes. A missing or
-// denied first result is DENY with every condition empty. An allowed result
-// without predicates of the types rsql, querydsl, mongodb, sql, or custom is
-// ALLOW. With any of them it is USE_FILTER_CONDITION: the querydsl
-// predicate as filterCondition, the others in their own fields, and
-// customFilterCondition null unless a custom predicate exists.
-func FilterResponse(result any) []byte {
-	r := first(results(result))
-	if !allowed(r) {
-		return mustJSON(filterResponse{CalculationResult: "DENY"})
-	}
-	predicates, _ := object(r)["predicates"].([]any)
-	rsql := predicate(predicates, "rsql")
-	querydsl := predicate(predicates, "querydsl")
-	mongodb := predicate(predicates, "mongodb")
-	sql := predicate(predicates, "sql")
-	custom := predicate(predicates, "custom")
-	resp := filterResponse{CalculationResult: "ALLOW", FilterCondition: querydsl}
-	if custom != "" {
-		resp.CustomFilterCondition = &custom
-	}
-	if rsql != "" || querydsl != "" || mongodb != "" || sql != "" || custom != "" {
-		resp.CalculationResult = "USE_FILTER_CONDITION"
-		resp.MongodbFilterCondition = mongodb
-		resp.RsqlFilterCondition = rsql
-		resp.SQLFilterCondition = sql
-	}
-	return mustJSON(resp)
-}
-
-// predicate is the text of the first predicate of the given type: a string
-// as it is, any other value as JSON, and "" when the result has none or
-// the predicate is null.
-func predicate(predicates []any, typ string) string {
-	for _, p := range predicates {
-		fields := object(p)
-		if fields["predicateType"] != typ {
-			continue
-		}
-		switch v := fields["predicate"].(type) {
-		case nil:
-			return ""
-		case string:
-			return v
-		default:
-			return string(mustJSON(v))
-		}
-	}
-	return ""
 }
 
 func object(v any) map[string]any {
