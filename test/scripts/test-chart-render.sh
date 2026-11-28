@@ -242,16 +242,62 @@ done
 # whole block is compared, so a rollingUpdate left under Recreate would show.
 strategy_of() { deployment_of "$@" | sed -n '/^  strategy:/,/^  selector:/p' | sed '$d'; }
 
-# Renders a chart and returns the value of one environment variable, "" when
-# the chart renders none. The empty string is what the absent case has to
-# produce: an unguarded grep ends the whole run under `set -e`, and a suite
-# that stops says less than one that names the check that failed.
+# Renders a chart and prints its documents as one JSON object, {"docs": [...]},
+# each document parsed by fromYaml in a throwaway chart. fromYaml rather than a
+# YAML tool such as yq keeps the suite on helm and jq, and parses with the YAML
+# library that Helm itself uses for manifests. A document that fromYaml cannot
+# parse becomes an object that holds the parser's message under "Error". A
+# render that fails prints `helm template failed: ` and the first lines of
+# Helm's error instead, which is not JSON. Helm's warnings on a render that
+# passes stay out of the documents.
+decoded_render() {
+  local chart="$1" decoder
+  shift
+  decoder="$(mktemp -d)"
+  mkdir "${decoder}/templates"
+  if helm template t "${chart}" -f "${SIZING}" "$@" >"${decoder}/render.yaml" 2>"${decoder}/helm.err"; then
+    printf 'apiVersion: v2\nname: decoder\nversion: 0.0.0\n' >"${decoder}/Chart.yaml"
+    cat >"${decoder}/templates/decoded.yaml" <<'TEMPLATE'
+{{- $docs := list -}}
+{{- range regexSplit "(?m)^---$" (.Files.Get "render.yaml") -1 -}}
+{{- if trim . }}{{ $docs = append $docs (fromYaml .) }}{{ end -}}
+{{- end -}}
+{{ toJson (dict "docs" $docs) }}
+TEMPLATE
+    helm template d "${decoder}" 2>&1 | tail -n 1
+  else
+    echo "helm template failed: $(head -3 "${decoder}/helm.err" | paste -sd ' ' -)"
+  fi
+  rm -rf "${decoder}"
+}
+
+# Renders the Deployment of a chart and prints the value of one environment
+# variable as Helm sends it to the API server, "" when the chart sets none. A
+# value prints the same whichever YAML quoting the template writes it in. A
+# value that is neither a string nor null, which the Kubernetes schema does not
+# allow for an environment variable, prints as `not a string: ` and its JSON. A
+# render that fails prints the first lines of Helm's error, and a manifest that
+# fromYaml cannot parse prints `fromYaml failed: ` and its message, so a check
+# that prints the value it compared shows why it failed. None of these outputs
+# ends the run under `set -e`: a suite that stops says less than one that names
+# the check that failed.
 env_value_of() {
-  local chart="$1" name="$2"
+  local chart="$1" name="$2" decoded
   shift 2
-  helm template t "${chart}" -f "${SIZING}" "$@" 2>&1 \
-    | grep -A1 "name: ${name}$" \
-    | awk -F"'" '/value:/ && !seen {print $2; seen=1}' || true
+  decoded="$(decoded_render "${chart}" "$@" --show-only templates/deployment.yaml)"
+  if [[ "${decoded}" != "{"* ]]; then
+    printf '%s\n' "${decoded}"
+    return
+  fi
+  jq -r --arg name "${name}" '
+    .docs[0] as $d
+    | if $d.Error then "fromYaml failed: \($d.Error)"
+      else first($d.spec.template.spec.containers[]?.env[]? | select(.name == $name) | .value) as $v
+        | if ($v | type) == "string" then $v
+          elif $v == null then ""
+          else "not a string: \($v | tojson)"
+          end
+      end' <<<"${decoded}" 2>&1 || true
 }
 
 env_value() {
@@ -405,6 +451,95 @@ if helm template t "${CHART_DIR}" -f "${SIZING}" --set-json 'AUTHZ_IDP_REALMS=["
   fail "a duplicated realm must be rejected — it would collapse in the byId index"
 else
   pass "a duplicated realm is rejected"
+fi
+
+# ── The agent's env writes values through quote ──────────────────────────
+#
+# A value written inside a quoted YAML scalar, as in '{{ .Values.X }}', ends the
+# scalar early when it holds that quote (#340). A bare {{ .Values.X }} breaks
+# the YAML on a colon followed by a space, drops what follows a space followed
+# by `#`, and turns a value that looks like a number into a number. So the env
+# of the agent's container writes a string through `quote`, and an integer
+# through `int64 | quote`, each as the whole value.
+#
+# The two rules read the env block of the template as text, so they cover every
+# branch and every setting of the env with no list to keep. The first reads the
+# text after `key: ` on one line and flags it when it holds a {{ but does not
+# start with it, whatever stands before it: a quote, an escaped or doubled
+# quote, or plain text. The second flags a {{ }} whose whole content is a
+# .Values path. Neither sees a value on the line after its key, `squote`, or a
+# bare `include`, `default`, or range variable. The rules read nothing outside
+# the env block: the rest of deployment.yaml and the other templates still
+# write values inside quotes, in names, labels, the image, and resources.
+agent_env="$(awk '/^          env:$/ {on = 1; next} /^          [a-zA-Z]+:/ {on = 0} on {print "deployment.yaml line " FNR " |" $0}' \
+  "${CHART_DIR}/templates/deployment.yaml")"
+text_before_template=':[[:space:]]+[^{[:space:]][^{]*\{\{'
+if [[ "${agent_env}" != *"AUTHZ_TENANT_MANAGER_URL"* ]]; then
+  fail "the rules found no env block of the agent's container in templates/deployment.yaml"
+else
+  if found="$(grep -E "${text_before_template}" <<<"${agent_env}")"; then
+    fail "write the value as one {{ ... | quote }}, with nothing before the {{:"$'\n'"${found}"
+  else
+    pass "every templated value in the agent's env starts with {{"
+  fi
+  if found="$(grep -E '\{\{-?[[:space:]]*\$?\.Values\.[A-Za-z0-9_.]+[[:space:]]*-?\}\}' <<<"${agent_env}" | grep -vE "${text_before_template}")"; then
+    fail "end each bare .Values reference in the env with | quote, | int64 | quote, or another explicit conversion:"$'\n'"${found}"
+  else
+    pass "every .Values reference in the agent's env goes through a function"
+  fi
+fi
+
+# The rules check how the env is written; this check renders a value through
+# `quote`. The fragment holds an apostrophe, a double quote, a backslash, a
+# colon followed by a space, and a space followed by `#`.
+string_fragment=$'a\'b"c\\d: #e'
+tenant_manager_url="https://tenant-manager:8443/${string_fragment}"
+rendered_url="$(env_value AUTHZ_TENANT_MANAGER_URL --set-json "AUTHZ_TENANT_MANAGER_URL=$(jq -cn --arg v "${tenant_manager_url}" '$v')")"
+if [[ "${rendered_url}" == "${tenant_manager_url}" ]]; then
+  pass "AUTHZ_TENANT_MANAGER_URL=${tenant_manager_url} reaches the agent's env as set"
+else
+  fail "AUTHZ_TENANT_MANAGER_URL=${tenant_manager_url} renders as: ${rendered_url}; expected: ${tenant_manager_url}"
+fi
+
+# The schema requires the six integer settings of the env. null removes a key
+# from the chart's defaults, and `int64` would render it as 0, which turns the
+# policy pull or the provider reload off. The check matches the setting's name
+# alone, so that it does not depend on how the schema validator words the
+# error.
+for name in AUTHZ_JWKS_HTTP_TIMEOUT AUTHZ_JWKS_HTTP_RETRIES AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL \
+  AUTHZ_PAP_CLIENT_PULL_INTERVAL AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT AUTHZ_ENTITLEMENTS_HTTP_RETRIES; do
+  if refused="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set "${name}=null" 2>&1)"; then
+    fail "${name}=null must be refused, and it rendered as '$(env_value "${name}" --set "${name}=null")'"
+  elif [[ "${refused}" == *"${name}"* ]]; then
+    pass "${name}=null is refused, and the error names the setting"
+  else
+    fail "${name}=null is refused, but the error does not name the setting: $(head -3 <<<"${refused}")"
+  fi
+done
+
+# IDENTITY_PROVIDER_URL is the prefix of the token endpoint from which the
+# agent requests its own token.
+idp_url="https://identity-provider:8443/${string_fragment}"
+expected="${idp_url}/auth/realms/cloud-common/protocol/openid-connect/token"
+token_url="$(env_value AUTHZ_M2M_TOKEN_URL --set-json "IDENTITY_PROVIDER_URL=$(jq -cn --arg v "${idp_url}" '$v')")"
+if [[ "${token_url}" == "${expected}" ]]; then
+  pass "IDENTITY_PROVIDER_URL=${idp_url} reaches AUTHZ_M2M_TOKEN_URL as the prefix of the token path"
+else
+  fail "IDENTITY_PROVIDER_URL=${idp_url} renders AUTHZ_M2M_TOKEN_URL as: ${token_url}; expected: ${expected}"
+fi
+
+# The chart renders with IDENTITY_PROVIDER_URL unset when
+# AUTHZ_TRUSTED_PROVIDERS is set. AUTHZ_M2M_TOKEN_URL is then the bare token
+# path, which no token request can use; this check pins only that its prefix is
+# empty rather than %!s(<nil>).
+unset_idp="$(env_value AUTHZ_M2M_TOKEN_URL \
+  --set-json 'AUTHZ_TRUSTED_PROVIDERS=[{"id":"kc","jwksUri":"https://kc:8443/certs"}]' \
+  --set IDENTITY_PROVIDER_URL=null)"
+expected="/auth/realms/cloud-common/protocol/openid-connect/token"
+if [[ "${unset_idp}" == "${expected}" ]]; then
+  pass "an unset IDENTITY_PROVIDER_URL leaves an empty prefix on AUTHZ_M2M_TOKEN_URL"
+else
+  fail "an unset IDENTITY_PROVIDER_URL renders AUTHZ_M2M_TOKEN_URL as: ${unset_idp}; expected: ${expected}, where printf without default \"\" prints %!s(<nil>) for the prefix"
 fi
 
 # ── The agent Pod (authz-agent-ADR-0080) ─────────────────────────────────
