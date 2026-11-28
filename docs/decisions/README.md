@@ -26,6 +26,10 @@ A rule names the layer where its check runs, or two layers, in parentheses:
 | `client` | Outgoing calls, the policy pull, and the agent's token | `components/authz-agent/internal/{m2m,pull}`, `internal/pips` |
 | `policy` | The policies and the input they read | `policies/` |
 | `chart` | The Helm chart and its values schema | `helm-templates/authz-agent` |
+| `translate` | The translation of a tenant's policy data into the module that decides its requests | `internal/policyir`, `internal/regobuiltins`, and `internal/regogen` (added by PR #205) |
+| `snapshot` | Building, publishing, and rejecting a tenant's snapshot, and its state in `/health` | `components/authz-agent/internal/snapshot` (added by PR #205) |
+| `parity` | The parity suite, its goldens, and the departures it accepts | `test/parity` |
+| `docs` | The documentation of a release | `docs/`, the `README.md` of each component |
 
 A layer says where to look first. Another layer may meet a rule, provided the behavior the rule states holds.
 

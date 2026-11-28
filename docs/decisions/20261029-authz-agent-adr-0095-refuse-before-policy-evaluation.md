@@ -29,6 +29,10 @@ kichasov
   before the default tenant is translated.
 - [authz-agent-ADR-0094: Accept Kubernetes service account tokens from the namespaces of the installation](20261029-authz-agent-adr-0094-kubernetes-service-account-tokens.md):
   ADR-0094 R14, R16 to R18, and R25, the refusals of a Kubernetes token.
+- [authz-agent-ADR-0099: Answer check/filter with exactly the rows that a check of each row would allow](20261107-authz-agent-adr-0099-filter-as-a-check-of-each-row.md):
+  ADR-0099 R1, which R18 keeps for a request whose `Incoming-Token` failed.
+- [authz-agent-ADR-0103: Deny every request of a tenant without a published snapshot, and keep readiness on /ready](20261112-authz-agent-adr-0103-tenant-without-a-snapshot.md):
+  ADR-0103 R1, the denial of every resource on each check route, which R18 uses.
 
 ## Context
 
@@ -60,6 +64,9 @@ and the reason code in the audit and a metric.
 - **R3** (`handler`). A failure in step 2 does not end the request, and policy evaluation gets the reason code of the
   failure. The exception is `TOKEN_KEYS_UNAVAILABLE`, which ends the request with a 503, because the tenant of step 3
   cannot be known.
+- **R18** (`handler`). A request whose `Incoming-Token` failed in step 2 with a reason code other than
+  `TOKEN_KEYS_UNAVAILABLE` gets status 200 and the denial of every resource of ADR-0103 R1, whatever the policies of its
+  tenant allow. This holds on every check route of ADR-0092, `check/filter` and the bulk routes included.
 - **R4** (`handler`). A refusal in step 4 is a 403, or a 503 for `DEFAULT_TENANT_NOT_TRANSLATED` of ADR-0093 R22.
 - **R5** (`handler`). In step 5 a tenant without data or with a rejected snapshot gets the deny of ADR-0093 R16 or R18
   from Go. The exception is a request that ADR-0093 R22 refuses in step 5 with a 503 for
@@ -123,6 +130,11 @@ during the outage (R2, R7). Its 60 seconds is the minute in which a source of ke
 whose keys cannot be loaded ends the request, because otherwise the same request would move to another tenant for as
 long as the outage lasts (R3).
 
+A user token that fails a check names no user the agent can trust, so no route may answer as if it named someone (R18).
+One denial on every check route keeps `check/filter` from admitting a row that `check/resource` denies for the same
+request, which ADR-0099 R1 requires. The denial takes the forms of ADR-0103 R1, so a caller sees no answer it does not
+already handle.
+
 ### Alternatives considered
 
 - **A1. Carry `reasonCode` in the response body.** Rejected by R6: a caller gains nothing it can act on, and the error
@@ -134,6 +146,12 @@ long as the outage lasts (R3).
   traffic at the worst moment.
 - **A4. Evaluate a request whose user token failed for that reason.** Rejected by R3: the decision would move to the
   tenant the request names or to the default tenant, and move back when the keys arrive.
+- **A5. Deny on `check/resource` only, and evaluate the other check routes as a subject without claims.** Rejected by
+  R18: `check/filter` would admit rows that `check/resource` denies for the same request, and a forged user token would
+  get on those routes whatever the policies allow a subject without claims.
+- **A6. Answer a failed `Incoming-Token` with a 401.** Rejected by R18: a 401 is the status of a bad token in
+  `Authorization` (R2). The caller's own token is good, and a client that reacts to a 401 by fetching a new token and
+  retrying gets the same answer.
 
 ## Consequences
 
@@ -142,6 +160,9 @@ Negative:
 - A caller cannot tell from the response why it was refused, so its owner needs the operator or the logs.
 - A request with a good token in `Authorization` fails with a 503 when the keys of its `Incoming-Token` cannot be
   loaded.
+- A request whose `Incoming-Token` fails a check gets a denial on every check route (R18), where legacy access-control
+  reads the claims of any token that decodes and decides by them. The goldens
+  `check-resource-v1-outcome/regular/it72-signed/`, `it72-alg-none/`, and `it72-expired/` record the legacy answer.
 
 Follow-ups:
 
