@@ -1,0 +1,60 @@
+{
+  "md1-star-between-segments": {
+    "check-resource-v1-outcome/isolated/last-segment-differs": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/no-segment-in-between": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/one-segment-in-between": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/two-segments-in-between": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "md11-uppercase-in-the-pattern": {
+    "check-resource-v1-outcome/isolated/uri-in-lower-case": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/uri-in-the-same-case": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "md12-brace-placeholder": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "md13-parentheses": {
+    "check-resource-v1-outcome/isolated/empty-segment": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/longer-segment": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/one-character-segment": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/the-parentheses-themselves": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/two-segments": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "md14-star-over-characters-outside-a-uri": {
+    "check-resource-v1-outcome/isolated/angle-bracket": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/dot": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/double-quote": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/non-ascii-letters": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/space": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "md15-two-question-marks": {
+    "check-resource-v1-outcome/isolated/one-character": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/three-characters": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/two-characters": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "md3-double-star-between-segments": {
+    "check-resource-v1-outcome/isolated/last-segment-differs": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/no-segment-in-between": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/one-segment-in-between": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/two-segments-in-between": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "md5-question-mark": {
+    "check-resource-v1-outcome/isolated/no-character": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/one-character": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/two-characters": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "md7-pattern-without-a-metacharacter": {
+    "check-resource-v1-outcome/isolated/uri-equal": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/uri-with-a-longer-path": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/uri-with-a-prefix": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/uri-with-a-query-string": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/uri-with-a-trailing-separator": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "s69-undecl-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s69-undecl-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s69-undecl-plain-iterate": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR69Plain CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.parityR69Plain PIP doesn't exist"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "s69-undecl-plain-outside": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR69Plain CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.parityR69Plain PIP doesn't exist"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "s69-undecl-scopes-iterate": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.permissionScopes CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.permissionScopes PIP doesn't exist"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "s69-undecl-scopes-outside": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.permissionScopes CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.permissionScopes PIP doesn't exist"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "s69-undecl-scopex-iterate": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.permissionScopeX.a CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.permissionScopeX.a PIP doesn't exist"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "s69-undecl-scopex-outside": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.permissionScopeX.a CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.permissionScopeX.a PIP doesn't exist"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

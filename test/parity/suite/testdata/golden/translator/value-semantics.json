@@ -1,0 +1,122 @@
+{
+  "vc1-long-s-against-ascii-s": {
+    "check-resource-v1-outcome/isolated/ascii-lower-case": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/ascii-upper-case": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/long-s": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vc2-sharp-s-against-a-pair-of-s": {
+    "check-resource-v1-outcome/isolated/lower-case-pair": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/sharp-s": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/upper-case-pair": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vc3-dotted-and-dotless-i": {
+    "check-resource-v1-outcome/isolated/ascii-lower-case": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/ascii-upper-case": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/capital-i-with-dot-above": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/dotless-lower-case-i": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vc4-cyrillic-case": {
+    "check-resource-v1-outcome/isolated/lower-case": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/upper-case": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vc5-cyrillic-case-under-in": {
+    "check-resource-v1-outcome/isolated/lower-case": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/upper-case": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vc6-cyrillic-case-under-contains": {
+    "check-resource-v1-outcome/isolated/lower-case-element": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/upper-case-element": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vn1-integer-literal-against-written-decimals": {
+    "check-resource-v1-outcome/isolated/exponent": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/integer": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/one-decimal-place-as-a-string": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/two-decimal-places": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vn2-fractional-literal-against-an-integer": {
+    "check-resource-v1-outcome/isolated/integer": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/integer-as-a-string": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/one-decimal-place": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/one-decimal-place-as-a-string": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/two-decimal-places": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vn3-fractional-literal-against-longer-decimals": {
+    "check-resource-v1-outcome/isolated/four-decimal-places": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/one-decimal-place": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/two-decimal-places-as-a-string": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vn4-integer-literal-negated": {
+    "check-resource-v1-outcome/isolated/another-integer": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/integer": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/integer-as-a-string": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/one-decimal-place": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vn5-exponent-against-a-plain-integer": {
+    "check-resource-v1-outcome/isolated/exponent": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/exponent-as-a-string": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/plain-integer": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vn6-integer-past-float-precision": {
+    "check-resource-v1-outcome/isolated/exact": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/exact-as-a-string": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/neighbour-above": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vn7-relational-over-a-non-number": {
+    "check-resource-v1-outcome/isolated/boolean": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/collection": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/non-numeric-string": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/numeric-string-above": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vn8-relational-over-negative-strings": {
+    "check-resource-v1-outcome/isolated/negative-string-above": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/negative-string-below": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vt1-number-against-a-string-literal": {
+    "check-resource-v1-outcome/isolated/number": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/number-with-a-decimal-place": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/string": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vt2-boolean-against-an-upper-case-string-literal": {
+    "check-resource-v1-outcome/isolated/boolean-false": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/boolean-true": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/string-in-lower-case": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/string-in-the-same-case": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vt3-contains-over-elements-in-another-case": {
+    "check-resource-v1-outcome/isolated/element-in-lower-case": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/element-in-the-same-case": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vt4-contains-over-numbers": {
+    "check-resource-v1-outcome/isolated/element-with-a-decimal-place": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/number-element": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/string-element": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vt5-contains-over-an-object": {
+    "check-resource-v1-outcome/isolated/a-collection-holding-the-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/an-object-with-the-value-as-a-key": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/an-object-with-the-value-as-a-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "vt6-in-a-list-of-mixed-types": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  }
+}

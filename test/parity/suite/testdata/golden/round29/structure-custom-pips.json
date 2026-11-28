@@ -1,0 +1,161 @@
+{
+  "r29structure-cpip-add": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":false},
+    "import-pip-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-disable": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-disable-deny-twin": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":false},
+    "import-pip-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-headers": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read-after-a-n": {"calls":1,"requestAttributes":{"case":"r29structure-cpip"},"headers":{"x-parity-cp-fwd":"fv"}}
+  },
+  "r29structure-cpip-invalid-disable-unknown": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-invalid-level-other": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-invalid-path-unknown": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-jsonpath-bracket": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-jsonpath-no-dollar": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-level-omitted": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-levels": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-after-a-n-project": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-after-a-y-project": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/customer": {"status":200},
+    "import-pip-customization-v1/regular/project": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-replace": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-replace-partial": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-two-imports": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-after-a-n-first": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-after-a-y-first": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/first": {"status":200},
+    "import-pip-customization-v1/regular/second": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-type": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-cpip-validate-filtered-without-resource-type": {
+    "check-resource-v1-outcome/regular/read-after-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29structure-custom-pips-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-pips-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

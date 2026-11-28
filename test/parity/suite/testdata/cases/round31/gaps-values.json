@@ -1,0 +1,148 @@
+{
+ "about": "jsonPath over values round 30 did not send. Each comparison is `<comparison> OR resource.a == 'y'`.",
+ "resourceTypePrefix": "PARITY_SUITE_R31G_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r31gaps-values-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r31",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-nested-filter-over-object-not-holding",
+   "about": "The element's o is the object {\"k\": \"w\"}, which the inner filter does not select. False for a = n if the nested filter reads the object and finds it does not hold; true if it only asks that o exists.",
+   "condition": "resource.l[?(@.o[?(@.k == 'v')])].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "o": {
+         "k": "w"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "o": {
+         "k": "w"
+        }
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-star-after-star-over-scalar",
+   "about": "o holds the string v beside an object whose value is w. The first [*] selects both; false for a = n if the second [*] skips the string, true if it keeps it.",
+   "condition": "resource.o[*][*] CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n",
+      "o": {
+       "x": "v",
+       "y": {
+        "k": "w"
+       }
+      }
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y",
+      "o": {
+       "x": "v",
+       "y": {
+        "k": "w"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-values-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r31",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

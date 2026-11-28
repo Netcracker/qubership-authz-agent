@@ -1,0 +1,10 @@
+{
+  "scope-outside-iterate-beside-a-control": {
+    "check-resource-v1-outcome/regular/control-without-scope": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/probe-under-is-null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-under-is-empty": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-under-is-empty-or-true": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

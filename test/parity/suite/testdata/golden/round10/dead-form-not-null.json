@@ -1,0 +1,32 @@
+{
+  "dn-is-not-null-over-a-bracket-path": {
+    "check-resource-v1-outcome/isolated/x-absent": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-present": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "dn-is-not-null-over-a-bracket-path-alone": {
+    "check-resource-v1-outcome/isolated/x-absent": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/x-present": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "dn-is-not-null-over-a-bracket-path-control": {
+    "check-resource-v1-outcome/isolated/x-absent": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-present": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "dn-is-not-null-over-the-null-literal": {
+    "check-resource-v1-outcome/isolated/x-absent": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-present": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "dn-is-not-null-over-the-null-literal-alone": {
+    "check-resource-v1-outcome/isolated/x-absent": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/x-present": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "dn-is-not-null-over-the-null-literal-control": {
+    "check-resource-v1-outcome/isolated/x-absent": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-present": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

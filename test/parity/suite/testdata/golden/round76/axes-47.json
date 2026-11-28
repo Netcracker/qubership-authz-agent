@@ -1,0 +1,181 @@
+{
+  "ax76-47-r29structure-custom-add-policy-by-path": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-add-root": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-add-rule-by-path": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-disable-nested-set-at-the-top": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot disable item. Policy Set with '510cc2b1-845e-925a-3155-f4aa49826fcf' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-disable-nested-set-by-path": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-disable-policy": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-disable-set": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-invalid-add-rule-without-effect": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot create item. Rule with '74a8f14b-45ae-a5f0-1806-4f241b726108' id should have 'effect' attribute.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-invalid-disable-unknown-rule": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot disable item. Rule with '0ae7b88f-bb2b-77e6-42e1-a837b38b1ed7' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-invalid-replace-rule-without-effect": {
+    "check-resource-bulk-operations-v2-outcome/regular/read-after-bulk-operations-v2": {"status":200,"decision":{"READ":["r29"]}},
+    "check-resource-bulk-operations-v2-outcome/regular/read-before-bulk-operations-v2": {"status":200,"decision":{"READ":["r29"]}},
+    "check-resource-bulk-operations-v2-outcome/regular/update-after-bulk-operations-v2": {"status":200,"decision":{"UPDATE":[]}},
+    "check-resource-bulk-operations-v2-outcome/regular/update-before-bulk-operations-v2": {"status":200,"decision":{"UPDATE":[]}},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-invalid-unknown-policy-path": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot find referenced item. Policy with 'ab928f1e-5dac-a6f4-c573-8508c1317452' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-invalid-unknown-set-path": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot find referenced item. Policy Set with 'f737ae90-b056-60d0-669f-716b17030f83' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-replace-policy": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-replace-policy-partial": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-replace-set": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-of-another-type-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-custom-replace-set-partial": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-of-another-type-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-of-another-type-before": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-customization-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-47-r29structure-customization-control-last": {
+    "check-resource-bulk-operations-v2-outcome/regular/read-bulk-operations-v2": {"status":200,"decision":{"READ":["r29"]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

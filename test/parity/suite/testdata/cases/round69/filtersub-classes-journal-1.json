@@ -1,0 +1,219 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ],
+      "type": "USER"
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/obs-failed": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity observation wrapper"
+   }
+  },
+  "/api/v1/pip/r16-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 16 case"
+   }
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR16Failing",
+   "url": "http://pip-mock:8090/api/v1/pip/r16-failing",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR16Failing"
+   },
+   "cacheable": false
+  },
+  "obs-subject-parityobsfailed": {
+   "name": "subject.parityObsFailed",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/obs-failed",
+   "requestAttributes": {
+    "case": "obs-failed"
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "fs69-c-mt44-167-x",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "false",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p1-r2",
+         "target": "true",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0-p2",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY"
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "resource.a == 'y'",
+         "condition": "resource.a == 'y'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "a": "y",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {
+      "region": "r1",
+      "a": "y",
+      "b": "y"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {
+      "region": "zz",
+      "a": "y",
+      "b": "zz"
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "LIST",
+     "resource": {
+      "region": "r1",
+      "a": "y",
+      "b": "zz"
+     }
+    },
+    {
+     "name": "row-5",
+     "operation": "LIST",
+     "resource": {}
+    }
+   ]
+  }
+ ]
+}

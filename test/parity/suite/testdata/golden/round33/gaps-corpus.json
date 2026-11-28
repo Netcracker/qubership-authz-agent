@@ -1,0 +1,36 @@
+{
+  "r33gaps-corpus-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r33gaps-corpus-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r33gaps-double-space-after-or": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r33gaps-filtered-on-the-right-of-in": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r33gaps-key-with-a-trailing-space-rule": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r33gaps-key-with-a-trailing-space-simplified": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r33gaps-placeholder-in-a-condition": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r33gaps-rules-directly-in-a-set": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

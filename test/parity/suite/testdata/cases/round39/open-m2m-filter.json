@@ -1,0 +1,353 @@
+{
+ "about": "Which conditions check/filter fails on when they name a GENERAL whose requestAttributes carry a whole ${subject.isM2M}. Round 38 (r38open-m2m-filter) answered 200 DENY with empty texts for a predicate that reads such a GENERAL. Each case puts it in a condition instead: one the filter evaluates and that reads it, one decided before it reads it, and one beside a predicate, which the filter does not apply (golden f1). pipCalls records whether the GENERAL was called.",
+ "resourceTypePrefix": "PARITY_SUITE_R39F_",
+ "pins": {
+  "/api/v1/pip/r39open-m2m-filter-condition": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r39open-m2m-filter-condition-decided-first": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r39open-m2m-filter-condition-beside-a-predicate": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r39open-m2m-filter-rule-condition": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r39open-m2m-filter-rule-decided-first": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r39open-m2m-filter-rule-beside-a-predicate": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "r39open-m2m-filter-condition": {
+   "name": "subject.parityR39M2mFilterCondition",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r39open-m2m-filter-condition",
+   "requestAttributes": {
+    "case": "r39open-m2m-filter-condition",
+    "x": "${subject.isM2M}"
+   }
+  },
+  "r39open-m2m-filter-condition-decided-first": {
+   "name": "subject.parityR39M2mFilterDecidedFirst",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r39open-m2m-filter-condition-decided-first",
+   "requestAttributes": {
+    "case": "r39open-m2m-filter-condition-decided-first",
+    "x": "${subject.isM2M}"
+   }
+  },
+  "r39open-m2m-filter-condition-beside-a-predicate": {
+   "name": "subject.parityR39M2mFilterBesidePredicate",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r39open-m2m-filter-condition-beside-a-predicate",
+   "requestAttributes": {
+    "case": "r39open-m2m-filter-condition-beside-a-predicate",
+    "x": "${subject.isM2M}"
+   }
+  },
+  "r39open-m2m-filter-rule-condition": {
+   "name": "subject.parityR39M2mFilterRuleCondition",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r39open-m2m-filter-rule-condition",
+   "requestAttributes": {
+    "case": "r39open-m2m-filter-rule-condition",
+    "x": "${subject.isM2M}"
+   }
+  },
+  "r39open-m2m-filter-rule-decided-first": {
+   "name": "subject.parityR39M2mFilterRuleDecidedFirst",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r39open-m2m-filter-rule-decided-first",
+   "requestAttributes": {
+    "case": "r39open-m2m-filter-rule-decided-first",
+    "x": "${subject.isM2M}"
+   }
+  },
+  "r39open-m2m-filter-rule-beside-a-predicate": {
+   "name": "subject.parityR39M2mFilterRuleBesidePredicate",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r39open-m2m-filter-rule-beside-a-predicate",
+   "requestAttributes": {
+    "case": "r39open-m2m-filter-rule-beside-a-predicate",
+    "x": "${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r39openm2mfilter-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r39",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r39open-m2m-filter-condition",
+   "pips": [
+    "r39open-m2m-filter-condition"
+   ],
+   "condition": "subject.parityR39M2mFilterCondition == 'v'",
+   "about": "A simplified policy without a predicate whose condition is subject.parityR39M2mFilterCondition == 'v', under check/filter: the filter evaluates the condition of a policy without a predicate. DENY if the condition reads the GENERAL as a failed PIP, as the predicate of r38open-m2m-filter did; 400 if the filter fails a condition that names it before evaluation, as a check does.",
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "pipCalls": "/api/v1/pip/r39open-m2m-filter-condition"
+    }
+   ]
+  },
+  {
+   "id": "r39open-m2m-filter-condition-decided-first",
+   "pips": [
+    "r39open-m2m-filter-condition-decided-first"
+   ],
+   "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.parityR39M2mFilterDecidedFirst == 'v'",
+   "about": "A simplified policy without a predicate whose condition is subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.parityR39M2mFilterDecidedFirst == 'v': the first operand holds for the reader, so the GENERAL is not read. ALLOW if the filter fails the condition only when it reads the GENERAL; DENY if it fails, as a failed PIP, every condition that names it; 400 if it fails such a condition as a check does.",
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "pipCalls": "/api/v1/pip/r39open-m2m-filter-condition-decided-first"
+    }
+   ]
+  },
+  {
+   "id": "r39open-m2m-filter-condition-beside-a-predicate",
+   "pips": [
+    "r39open-m2m-filter-condition-beside-a-predicate"
+   ],
+   "condition": "subject.parityR39M2mFilterBesidePredicate == 'v'",
+   "policy": {
+    "rsqlPredicate": "fa==v"
+   },
+   "about": "A simplified policy with rsqlPredicate fa==v and condition subject.parityR39M2mFilterBesidePredicate == 'v'. The filter does not apply the condition of a policy with a predicate (golden f1): the predicate fa==v if it does not build the condition either; DENY if it builds it and the condition fails as a failed PIP.",
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "pipCalls": "/api/v1/pip/r39open-m2m-filter-condition-beside-a-predicate"
+    }
+   ]
+  },
+  {
+   "id": "r39open-m2m-filter-rule-condition",
+   "pips": [
+    "r39open-m2m-filter-rule-beside-a-predicate",
+    "r39open-m2m-filter-rule-condition",
+    "r39open-m2m-filter-rule-decided-first"
+   ],
+   "about": "A top-level set whose only rule allows on subject.parityR39M2mFilterRuleCondition == 'v' and has no predicate. DENY if the filter reads the GENERAL in a rule condition as a failed PIP, as it read the predicate of r38open-m2m-filter; 400 if it fails such a condition as a check does.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR39M2mFilterRuleCondition == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "pipCalls": "/api/v1/pip/r39open-m2m-filter-rule-condition"
+    }
+   ]
+  },
+  {
+   "id": "r39open-m2m-filter-rule-decided-first",
+   "pips": [
+    "r39open-m2m-filter-rule-beside-a-predicate",
+    "r39open-m2m-filter-rule-condition",
+    "r39open-m2m-filter-rule-decided-first"
+   ],
+   "about": "A top-level set whose only rule allows without a predicate on subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.parityR39M2mFilterRuleDecidedFirst == 'v': the first operand holds, so the GENERAL is not read. ALLOW if the filter fails the rule condition only when it reads the GENERAL; DENY if it fails, as a failed PIP, every condition that names it; 400 if it fails such a condition as a check does.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.parityR39M2mFilterRuleDecidedFirst == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "pipCalls": "/api/v1/pip/r39open-m2m-filter-rule-decided-first"
+    }
+   ]
+  },
+  {
+   "id": "r39open-m2m-filter-rule-beside-a-predicate",
+   "pips": [
+    "r39open-m2m-filter-rule-beside-a-predicate",
+    "r39open-m2m-filter-rule-condition",
+    "r39open-m2m-filter-rule-decided-first"
+   ],
+   "about": "A top-level set whose only rule allows with rsqlPredicate fb==v and condition subject.parityR39M2mFilterRuleBesidePredicate == 'v'. The filter does not apply the condition of a rule with a predicate (golden filter-allow-rule-condition-false): the predicate fb==v if it does not build the condition either; DENY if it builds it and the condition fails as a failed PIP.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR39M2mFilterRuleBesidePredicate == 'v'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fb==v"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "pipCalls": "/api/v1/pip/r39open-m2m-filter-rule-beside-a-predicate"
+    }
+   ]
+  },
+  {
+   "id": "r39openm2mfilter-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r39",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

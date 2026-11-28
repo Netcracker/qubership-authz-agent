@@ -1,0 +1,23 @@
+{
+  "f72-nested-bulk": {
+    "check-resource-bulk-v1-outcome/regular/bulk": {"status":200,"allowed":["i1","i2"]},
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "f72-nested-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "f72-nested-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "f72-nested-custom": {
+    "check-resource-bulk-v1-outcome/regular/bulk-after": {"status":200,"allowed":["i1","i2"]},
+    "check-resource-bulk-v1-outcome/regular/bulk-before": {"status":200,"allowed":["i1","i2"]},
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

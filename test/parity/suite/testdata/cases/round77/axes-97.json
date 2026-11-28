@@ -1,0 +1,116 @@
+{
+ "about": "Round 77, task 16: survivor:subject m2m | engine frontend_rules=skip, moved to subject = m2m from round76/axes-197.json (ax76-197-r29fields-frontend-body-true). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R29FD_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ax77-97-ax76-197-r29fields-frontend-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax77-97-ax76-197-r29fields-frontend-body-true",
+   "about": "applicableForFrontend true in the body, no query parameter. True and the predicate if the flag changes nothing; false and DENY if a policy for the user interface is left out. Task 16 moves it to subject = m2m.",
+   "condition": "resource.a == 'y'",
+   "policy": {
+    "rsqlPredicate": "a==\"y\"",
+    "applicableForFrontend": true
+   },
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "subject": "m2m"
+    }
+   ],
+   "roles": [
+    "ROLE_M2M"
+   ]
+  },
+  {
+   "id": "ax77-97-ax76-197-r29fields-frontend-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

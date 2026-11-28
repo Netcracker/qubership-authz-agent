@@ -1,0 +1,70 @@
+{
+  "d2p65-1767e4e88f": {
+    "load-simplified-policies-v1/sequence/w-empty-string": {"status":200}
+  },
+  "d2p65-95c85f74a5": {
+    "pap-error-v1/sequence/target": {"status":201,"body":null},
+    "pap-status-v1/sequence/target": {"status":201}
+  },
+  "d2p65-cc2224d957": {
+    "load-policy-sets-v1/sequence/inverse": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-status-v1/sequence/cleanup-r": {"status":200}
+  },
+  "d2p65-cdd5426099": {
+    "load-simplified-policies-v1/sequence/w-one-element-list": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+    }
+  },
+  "p65s-control-d2-may-first": {
+    "check-resource-v1-outcome/sequence/after-emptying": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/here": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/empty-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/empty-the-policies": {"status":200},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/declare-the-domain": {"status":201,"body":null},
+    "pap-error-v1/sequence/write-the-policy": {"status":200,"body":null},
+    "pap-read/sequence/declare-the-domain": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "parityP45OwnDomain",
+          "domain": "PARITY_P45_OWN_DOMAIN",
+          "name": "subject.parityP45OwnDomain",
+          "pipType": "TOKEN",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read/sequence/empty-the-domain": {"status":404},
+    "pap-read/sequence/export-after": {"status":200,"body":{"pips":[]}}
+  },
+  "p65s-control-d2-may-last": {
+    "check-resource-v1-outcome/sequence/after-emptying": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/here": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/empty-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/empty-the-policies": {"status":200},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/declare-the-domain": {"status":201,"body":null},
+    "pap-error-v1/sequence/write-the-policy": {"status":200,"body":null},
+    "pap-read/sequence/declare-the-domain": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "parityP45OwnDomain",
+          "domain": "PARITY_P45_OWN_DOMAIN",
+          "name": "subject.parityP45OwnDomain",
+          "pipType": "TOKEN",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read/sequence/empty-the-domain": {"status":404},
+    "pap-read/sequence/export-after": {"status":200,"body":{"pips":[]}}
+  }
+}

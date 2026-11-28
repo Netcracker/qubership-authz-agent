@@ -1,0 +1,486 @@
+{
+  "r63ob-bodies": {
+    "check-resource-v1-outcome/regular/read-when-the-user-is-a-list": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/read-when-the-user-is-a-string": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/read-when-the-user-is-an-empty-object": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-when-the-user-is-not-json": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/read-when-the-user-is-null": {"status":500,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "user-management-call/regular/read-when-the-user-is-a-list": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006313",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-when-the-user-is-a-string": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006314",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-when-the-user-is-an-empty-object": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006315",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-when-the-user-is-not-json": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006316",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-when-the-user-is-null": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006312",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "r63ob-bulk": {
+    "check-resource-bulk-operations-v1-outcome/regular/operations-as-a-user": {"status":200,"decision":{"READ":["r63a","r63b"]}},
+    "check-resource-bulk-v1-outcome/regular/bulk-as-a-user": {"status":200,"allowed":["r63a","r63b"]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "user-management-call/regular/bulk-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006317",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        },
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006317",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/operations-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006318",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        },
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006318",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "r63ob-call": {
+    "check-filter-v1-outcome/regular/filter-as-a-user": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/m2m-read-as-a-user": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-as-a-user": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-without-a-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "user-management-call/regular/filter-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006307",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/m2m-read-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006306",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006305",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-without-a-user-id": {"calls":[]}
+  },
+  "r63ob-encoding": {
+    "check-resource-v1-outcome/regular/read-as-hash": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-as-percent": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Malformed escape pair at index 73: http://user-management-mock:8080/api/v1/user-management/scim/users/parity%zz63"
+      }
+    },
+    "check-resource-v1-outcome/regular/read-as-plus": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-as-question-mark": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-as-slash": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-as-space": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Illegal character in path at index 73: http://user-management-mock:8080/api/v1/user-management/scim/users/parity 63"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "user-management-call/regular/read-as-hash": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/parity",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-as-percent": {"calls":[]},
+    "user-management-call/regular/read-as-plus": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/parity+63",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-as-question-mark": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/parity?63",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-as-slash": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/parity/63",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-as-space": {"calls":[]}
+  },
+  "r63ob-failures": {
+    "check-resource-v1-outcome/regular/read-when-user-management-answers-403": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/read-when-user-management-answers-404": {"status":404,"decision":false},
+    "check-resource-v1-outcome/regular/read-when-user-management-answers-500": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/read-when-user-management-answers-503": {"status":500,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "user-management-call/regular/read-when-user-management-answers-403": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006309",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-when-user-management-answers-404": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006308",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-when-user-management-answers-500": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006310",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-when-user-management-answers-503": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006311",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "r63ob-must-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r63ob-must-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r63ob-repeat": {
+    "check-resource-v1-outcome/regular/read-again": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-first": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "user-management-call/regular/read-again": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006301",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-first": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006301",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "r63ob-unrouted": {
+    "check-resource-v1-outcome/regular/read-as-a-user": {"status":404,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "user-management-call/regular/read-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006304",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  }
+}

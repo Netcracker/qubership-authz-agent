@@ -1,0 +1,295 @@
+{
+  "rp67-069": {
+    "check-filter-v1-outcome/regular/q1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q3": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/after-q0": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/q0": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/regular/q2": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-v1-outcome/regular/after-q1": {"status":200,"decision":false},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-070": {
+    "check-filter-v1-outcome/regular/q1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"LIST":[]}},
+    "check-resource-bulk-v1-outcome/regular/after-q0": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-v1-outcome/regular/after-q1": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/q0": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/q3": {"status":200,"decision":false},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-071": {
+    "check-filter-v1-outcome/regular/q1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/after-q1": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q3": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/q0": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/q2": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-v1-outcome/regular/after-q0": {"status":400,"decision":false,"message":{"message":"The request 'operation' cannot be empty"}},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-072": {
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":200,"decision":{"UPDATE":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q1": {"status":200,"decision":{"READ":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"READ":[]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-073": {
+    "check-filter-v1-outcome/regular/q1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/q2": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":200,"decision":{"LIST":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q3": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q4": {"status":200,"decision":{"LIST":[]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-074": {
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":200,"decision":{"LIST":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q1": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q3": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/after-q0": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/after-q1": {"status":200,"allowed":[]},
+    "check-resource-v1-outcome/regular/q2": {"status":200,"decision":false},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-075": {
+    "check-resource-bulk-operations-v1-outcome/regular/after-q0": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/after-q1": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/q3": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-v1-outcome/regular/q0": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/q1": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/q2": {"status":400,"decision":false,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-v1-outcome/regular/q4": {"status":200,"decision":false},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-076": {
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-operations-v1-outcome/regular/q1": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"UPDATE":[]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-077": {
+    "check-resource-bulk-operations-v1-outcome/regular/after-q0": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q1": {"status":200,"decision":{"LIST":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"LIST":[]}},
+    "check-resource-bulk-v1-outcome/regular/q0": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-v1-outcome/regular/after-q1": {"status":400,"decision":false,"message":{"message":"The request 'operation' cannot be empty"}},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-078": {
+    "check-filter-v1-outcome/regular/q3": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/q4": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-v1-outcome/regular/q0": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/q1": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-079": {
+    "check-filter-v1-outcome/regular/q3": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/after-q1": {"status":200,"decision":{"":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/after-q0": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/regular/q1": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-080": {
+    "check-resource-bulk-operations-v1-outcome/regular/after-q0": {"status":200,"decision":{"UPDATE":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/after-q1": {"status":200,"decision":{"READ":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q1": {"status":200,"decision":{"":[]}},
+    "check-resource-bulk-v1-outcome/regular/q0": {"status":200,"allowed":[]},
+    "check-resource-v1-outcome/regular/q2": {"status":200,"decision":false},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-081": {
+    "check-resource-bulk-operations-v1-outcome/regular/q1": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-operations-v1-outcome/regular/q3": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/q0": {"status":200,"allowed":[]},
+    "check-resource-v1-outcome/regular/q2": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-082": {
+    "check-filter-v1-outcome/regular/q1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/q2": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/q3": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/after-q1": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/q4": {"status":200,"allowed":[]},
+    "check-resource-v1-outcome/regular/after-q0": {"status":200,"decision":false},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-083": {
+    "check-filter-v1-outcome/regular/q3": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/q4": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/after-q0": {"status":200,"decision":{"UPDATE":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/after-q1": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/regular/q1": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-gnone-control-first": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp67-gnone-control-last": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

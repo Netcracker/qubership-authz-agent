@@ -1,0 +1,32 @@
+{
+  "r28subj-rt-01": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "x.t.eq(PARITY_SUITE_R28T_01_x\"}, {\"b\": 1)",
+        "mongodbFilterCondition": "{ { \"t\": PARITY_SUITE_R28T_01_x\"}, {\"b\": 1 } }",
+        "rsqlFilterCondition": "t==PARITY_SUITE_R28T_01_x\"}, {\"b\": 1",
+        "sqlFilterCondition": "t=PARITY_SUITE_R28T_01_x\"}, {\"b\": 1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check-list": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28subj-rt-06": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "x.t.eq(PARITY_SUITE_R28T_06_x\\y)",
+        "mongodbFilterCondition": "{ { \"t\": PARITY_SUITE_R28T_06_x\\y } }",
+        "rsqlFilterCondition": "t==PARITY_SUITE_R28T_06_x\\y",
+        "sqlFilterCondition": "t=PARITY_SUITE_R28T_06_x\\y",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check-list": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

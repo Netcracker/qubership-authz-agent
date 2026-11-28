@@ -1,0 +1,15 @@
+{
+  "ax77-06-ax76-121-id44-control-first-or": {
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-06-ax76-121-id44-control-last-or": {
+    "check-resource-bulk-operations-v2-outcome/regular/a-y-check-resource-v2-bulk-operations-v2": {"status":200,"decision":{"READ":["obs"]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-06-ax76-121-id44-number-text-0-or": {
+    "check-resource-bulk-operations-v2-outcome/regular/a-n-check-resource-v2-bulk-operations-v2": {"status":200,"decision":{"READ":["obs"]}},
+    "check-resource-bulk-operations-v2-outcome/regular/a-y-check-resource-v2-bulk-operations-v2": {"status":200,"decision":{"READ":["obs"]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

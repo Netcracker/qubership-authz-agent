@@ -1,0 +1,48 @@
+{
+  "q18-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q18-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q18-five-body-is-subset": {
+    "check-resource-v1-outcome/isolated/number-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/number-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/text-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/text-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q18-five-list-body-on-the-right-of-is-subset": {
+    "check-resource-v1-outcome/isolated/number-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/number-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/text-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/text-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q18-five-text-list-body-on-the-right-of-is-subset": {
+    "check-resource-v1-outcome/isolated/number-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/number-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/text-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/text-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q18-general-list-equals-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q18-general-list-less-than-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q18-true-body-is-subset": {
+    "check-resource-v1-outcome/isolated/boolean-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/boolean-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/text-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/text-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

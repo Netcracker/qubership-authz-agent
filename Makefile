@@ -161,7 +161,9 @@ TEST_STAND_HELM_ARGS ?=
 # How long `helm test` waits for each suite Job. A suite that runs longer
 # raises this together with suite.activeDeadlineSeconds in its values.
 E2E_SUITE_TIMEOUT ?= 15m
-PARITY_SUITE_TIMEOUT ?= 15m
+# The parity values give the parity suite five hours; see
+# test/k8s/parity/test-stand-values.yaml.
+PARITY_SUITE_TIMEOUT ?= 5h30m
 # How long a suite container may take to start before the suite target gives up.
 SUITE_START_SECONDS ?= 180
 # Where the suites send their requests: the chart's Service, which fronts the
@@ -198,7 +200,8 @@ e2e-images:
 
 # The realm and stub files the test-stand chart reads from files/: the realms
 # of test/k8s/authn/ and test/k8s/parity/idp-seed/, the users of
-# test/parity/suite/testdata/realm/, and the pip-stub rule files. The transfer
+# test/parity/suite/testdata/realm/, the clients of
+# test/parity/suite/testdata/realm-clients/, and the pip-stub rule files. The transfer
 # image generates the same files in the same Dockerfile stage.
 test-stand-files:
 	rm -rf $(TEST_STAND_CHART)/files
@@ -212,9 +215,12 @@ test-stand-files:
 # $(3) is restarted. The check reads the cluster rather than what this upgrade
 # changed, so a retry after a failed upgrade that replaced Keycloak still
 # restarts the agent. RFC 3339 timestamps in UTC sort as text.
-# $(1) is kubectl, $(2) is helm.
+# $(1) is kubectl, $(2) is helm. $(5), when given, is a command that runs
+# between the upgrade and the check, for a stand whose agent becomes ready only
+# after the command has run.
 define upgrade-test-stand
 $(2) upgrade authz-test-stand $(TEST_STAND_CHART) $(4) --wait --timeout 10m
+	$(5)
 	started='{range .items[*]}{range .status.containerStatuses[*]}{.state.running.startedAt}{"\n"}{end}{end}'; \
 	idp=$$($(1) get pods -l app=$(3) -o jsonpath="$$started" | sed '/^$$/d' | sort | tail -n 1); \
 	agent=$$($(1) get pods -l name=authz-agent -o jsonpath="$$started" | sed '/^$$/d' | sort | head -n 1); \
@@ -324,11 +330,12 @@ PARITY_HELM := helm --kube-context kind-$(KIND_CLUSTER) -n $(PARITY_NAMESPACE)
 parity: e2e-cluster e2e-images parity-harness parity-install parity-suite
 
 # The test stand of test/k8s/parity/test-stand-values.yaml: Keycloak with the
-# realms of test/k8s/parity/idp-seed/ and the users of
-# test/parity/suite/testdata/realm/, pip-mock,
-# entitlements-mock, the M2M client-credentials Secret for the parity-m2m
-# client of the cloud-common realm, and the parity suite Job, which
-# parity-suite runs.
+# realms of test/k8s/parity/idp-seed/, the users of
+# test/parity/suite/testdata/realm/ and the clients of
+# test/parity/suite/testdata/realm-clients/, pip-mock,
+# entitlements-mock, user-management-mock, the M2M client-credentials Secret
+# for the parity-m2m client of the cloud-common realm, and the parity suite
+# Job, which parity-suite runs.
 parity-harness: test-stand-files
 	$(call upgrade-test-stand,$(PARITY_KUBECTL),$(PARITY_HELM),idp,--install --create-namespace -f test/k8s/parity/test-stand-values.yaml --set suite.env.PARITY_AC_BASE_URL=$(PARITY_AC_BASE_URL) $(PARITY_PULL_URL_ARGS) $(TEST_STAND_HELM_ARGS))
 
@@ -344,15 +351,120 @@ ifneq ($(call given,PARITY_AC_BASE_URL),)
 endif
 	$(call run-suite,$(PARITY_KUBECTL),$(PARITY_HELM),parity-suite,$(PARITY_SUITE_TIMEOUT))
 
+# ── export-fed parity profile on kind ────────────────────────────────────────
+# The agent pulls v3 configuration exports from export-source, a pip-stub that
+# serves the export the suite configures on it, instead of simplified policies
+# from authz-policy-admin. A suite Job compares the agent's decisions with the
+# legacy goldens. PARITY_EXPORT_CHECK selects which check the Job runs:
+#
+#   bundle           TestExportFedAgent, over the bundle that the executable
+#                    specification writes (its pap-export-bundle check).
+#                    PARITY_EXPORT_BUNDLE names its directory; only the image
+#                    of parity-export-image, local/authz-parity-suite-export:ci,
+#                    carries it. A whole bundle takes hours.
+#   legacy           TestExportFedLegacyAgent, the legacy-export check: the v3
+#                    exports that the raw reads of the sequence cases recorded
+#                    on legacy access-control, compared with the goldens the
+#                    case recorded between the same writes.
+#   owner-decisions  TestExportFedOwnerDecisions: the exports that hold a form
+#                    legacy access-control accepts and then fails every
+#                    decision on (an iterate block it never evaluates, a
+#                    condition that reads an undeclared PIP). The agent has to
+#                    take the export, name the set in /health, and answer the
+#                    decisions with 200 and nothing allowed.
+#
+# legacy and owner-decisions read the goldens of the parity suite image and need
+# no bundle. Each check has a target of its own, parity-export,
+# parity-export-legacy, and parity-export-owner-decisions, with -harness and
+# -suite targets of its own beside it, so one make invocation can run several
+# checks in turn. See test/parity/README.md#export-fed-profile.
+PARITY_EXPORT_CHECK ?= bundle
+PARITY_EXPORT_CHECKS := bundle legacy owner-decisions
+# The values file each check layers over test-stand-values-export.yaml, and how
+# long `helm test` waits for its Job: longer than the activeDeadlineSeconds that
+# values file gives the Job.
+PARITY_EXPORT_VALUES_bundle :=
+PARITY_EXPORT_VALUES_legacy := -f test/k8s/parity/test-stand-values-export-legacy.yaml
+PARITY_EXPORT_VALUES_owner-decisions := -f test/k8s/parity/test-stand-values-export-owner-decisions.yaml
+PARITY_EXPORT_SUITE_TIMEOUT_bundle := 8h15m
+PARITY_EXPORT_SUITE_TIMEOUT_legacy := 2h10m
+PARITY_EXPORT_SUITE_TIMEOUT_owner-decisions := 40m
+PARITY_EXPORT_CHECK_KNOWN = case ' $(PARITY_EXPORT_CHECKS) ' in *' $(PARITY_EXPORT_CHECK) '*) ;; \
+	*) echo "PARITY_EXPORT_CHECK=$(PARITY_EXPORT_CHECK) is not a check of the export-fed profile; set it to one of: $(PARITY_EXPORT_CHECKS)"; exit 1;; esac
+# PARITY_EXPORT_RUN, a Go regexp, narrows the run: for bundle, to the test
+# functions it matches; for legacy and owner-decisions, to the cases whose
+# <case file>/<case id> it matches.
+PARITY_EXPORT_RUN ?=
+# An empty export, which export-source serves until the suite configures the
+# first one, so that the agent's first pull succeeds and the agent becomes ready.
+PARITY_EXPORT_EMPTY := [{"path":"/access/v3/config/policySets","responses":[{"statusCode":200,"body":{"policySets":[]}}]},{"path":"/access/v3/config/pips","responses":[{"statusCode":200,"body":{"pips":[]}}]}]
+# export-source keeps its routes in memory, so every new Pod of it needs the
+# empty export again before the agent can become ready.
+PARITY_EXPORT_SEED = $(PARITY_KUBECTL) rollout status deploy/export-source --timeout=3m \
+	&& $(PARITY_KUBECTL) exec deploy/export-source -- wget -qO- --header='Content-Type: application/json' --post-data='$(PARITY_EXPORT_EMPTY)' http://localhost:8090/pip-stub/configure
+# PARITY_EXPORT_RUN reaches the Job through stdin and --set-file, which keeps
+# the commas and backslashes of a regexp that --set would split or unescape.
+PARITY_EXPORT_RUN_STDIN = printf '%s' '$(subst ','\'',$(value PARITY_EXPORT_RUN))' |
+# The parity test stand with test-stand-values-export.yaml and the values file
+# of PARITY_EXPORT_CHECK layered over it: export-source beside the parity
+# stubs, and the suite Job of the check. export-source gets the empty export
+# before the agent restart of upgrade-test-stand, whose wait needs a pull to
+# succeed.
+PARITY_EXPORT_STAND = $(call upgrade-test-stand,$(PARITY_KUBECTL),$(PARITY_EXPORT_RUN_STDIN) $(PARITY_HELM),idp,--install --create-namespace -f test/k8s/parity/test-stand-values.yaml -f test/k8s/parity/test-stand-values-export.yaml $(PARITY_EXPORT_VALUES_$(PARITY_EXPORT_CHECK)) --set suite.env.PARITY_AC_BASE_URL=$(PARITY_AC_BASE_URL) $(PARITY_PULL_URL_ARGS) --set-file suite.env.PARITY_EXPORT_RUN=- $(TEST_STAND_HELM_ARGS),$(PARITY_EXPORT_SEED))
+
+# The suite image with the bundle under testdata/export-bundle, built from the
+# build context export-bundle; local/authz-parity-suite:ci stays without it.
+parity-export-image:
+	@test -n "$(PARITY_EXPORT_BUNDLE)" || { echo "PARITY_EXPORT_BUNDLE is not set; set it to the directory that the pap-export-bundle check of the executable specification writes (see test/parity/README.md#export-fed-profile). make parity-export-legacy and make parity-export-owner-decisions need no bundle."; exit 1; }
+	docker build --build-context 'export-bundle=$(PARITY_EXPORT_BUNDLE)' -t local/authz-parity-suite-export:ci -f test/parity/suite/Dockerfile test/parity/suite
+	kind load docker-image --name $(KIND_CLUSTER) local/authz-parity-suite-export:ci
+
+# The harness and suite targets of every check share their recipes; each
+# check's targets fix PARITY_EXPORT_CHECK below, and parity-export-harness and
+# parity-export-suite take it from the command line, bundle by default.
+parity-export-harness parity-export-legacy-harness parity-export-owner-decisions-harness: test-stand-files
+	@$(PARITY_EXPORT_CHECK_KNOWN)
+	$(PARITY_EXPORT_STAND)
+
+parity-export-install:
+	$(PARITY_HELM) upgrade --install authz-agent helm-templates/authz-agent -f helm-templates/authz-agent/resource-profiles/dev.yaml -f test/k8s/parity/values.yaml -f test/k8s/parity/values-export.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
+
+# The stand again first, so that a changed PARITY_EXPORT_RUN reaches the Job;
+# the upgrade restarts no Pod unless the stand's values changed.
+parity-export-suite parity-export-legacy-suite parity-export-owner-decisions-suite:
+	@$(PARITY_EXPORT_CHECK_KNOWN)
+	$(PARITY_EXPORT_STAND)
+	$(call run-suite,$(PARITY_KUBECTL),$(PARITY_HELM),parity-export,$(PARITY_EXPORT_SUITE_TIMEOUT_$(PARITY_EXPORT_CHECK)))
+
+# One target per check, each depending on the harness and suite targets of its
+# own check. parity-export-install reads no check and runs once.
+parity-export: override PARITY_EXPORT_CHECK = bundle
+parity-export: e2e-cluster e2e-images parity-export-image parity-export-harness parity-export-install parity-export-suite
+
+parity-export-legacy-harness parity-export-legacy-suite: override PARITY_EXPORT_CHECK = legacy
+parity-export-legacy: e2e-cluster e2e-images parity-export-legacy-harness parity-export-install parity-export-legacy-suite
+
+parity-export-owner-decisions-harness parity-export-owner-decisions-suite: override PARITY_EXPORT_CHECK = owner-decisions
+parity-export-owner-decisions: e2e-cluster e2e-images parity-export-owner-decisions-harness parity-export-install parity-export-owner-decisions-suite
+
 # The parity counterpart of e2e-restart, for the same reason.
-PARITY_LOCAL_DEPLOYMENTS := authz-agent authz-policy-admin pip-mock entitlements-mock
+PARITY_LOCAL_DEPLOYMENTS := authz-agent authz-policy-admin pip-mock entitlements-mock user-management-mock
 parity-restart:
 	$(PARITY_KUBECTL) rollout restart $(addprefix deploy/,$(PARITY_LOCAL_DEPLOYMENTS))
 	for d in $(PARITY_LOCAL_DEPLOYMENTS); do $(PARITY_KUBECTL) rollout status deploy/$$d --timeout=3m || exit 1; done
+
+# The same for the export-fed stand, which runs export-source and no
+# authz-policy-admin. The restarted export-source gets the empty export again
+# before the wait for the agent, whose new Pod is ready only after a pull.
+PARITY_EXPORT_LOCAL_DEPLOYMENTS := $(filter-out authz-policy-admin,$(PARITY_LOCAL_DEPLOYMENTS))
+parity-export-restart:
+	$(PARITY_KUBECTL) rollout restart $(addprefix deploy/,export-source $(PARITY_EXPORT_LOCAL_DEPLOYMENTS))
+	$(PARITY_EXPORT_SEED)
+	for d in $(PARITY_EXPORT_LOCAL_DEPLOYMENTS); do $(PARITY_KUBECTL) rollout status deploy/$$d --timeout=3m || exit 1; done
 
 parity-logs:
 	mkdir -p $(E2E_ARTIFACTS)/parity
 	kind export logs --name $(KIND_CLUSTER) $(E2E_ARTIFACTS)/parity/cluster
 	$(PARITY_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/parity/events.txt
 
-.PHONY: lint install-hooks test-jayway jayway-suite-calls mutation-diff e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs
+.PHONY: lint install-hooks test-jayway jayway-suite-calls mutation-diff e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-export parity-export-image parity-export-harness parity-export-install parity-export-suite parity-export-legacy parity-export-legacy-harness parity-export-legacy-suite parity-export-owner-decisions parity-export-owner-decisions-harness parity-export-owner-decisions-suite parity-restart parity-export-restart parity-logs

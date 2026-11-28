@@ -1,0 +1,295 @@
+{
+  "p50i-control-should-first": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_P50I_902": [
+                "parity_p50i_902_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P50_ID_902",
+          "name": "subject.permissions.PARITY_P50I902_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p50i-control-should-last": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_P50I_952": [
+                "parity_p50i_952_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P50_ID_952",
+          "name": "subject.permissions.PARITY_P50I952_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p50i-domain-pips-spelled-lead-space": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-spelled": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "PARITY_P50_ID_056",
+          "header": "x-parity-p50i-056-a",
+          "name": "subject.parityP50I056A",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/after-spelled": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": " PARITY_P50_ID_056",
+          "header": "x-parity-p50i-056-b",
+          "name": "subject.parityP50I056B",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/before-spelled": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/mid-spelled": {"status":404,"body":""}
+  },
+  "p50i-domain-pips-spelled-lower": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-spelled": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "PARITY_P50_ID_054",
+          "header": "x-parity-p50i-054-a",
+          "name": "subject.parityP50I054A",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/after-spelled": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "parity_p50_id_054",
+          "header": "x-parity-p50i-054-b",
+          "name": "subject.parityP50I054B",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/before-spelled": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/mid-spelled": {"status":404,"body":""}
+  },
+  "p50i-domain-pips-spelled-trail-space": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-spelled": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "PARITY_P50_ID_055",
+          "header": "x-parity-p50i-055-a",
+          "name": "subject.parityP50I055A",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/after-spelled": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "PARITY_P50_ID_055 ",
+          "header": "x-parity-p50i-055-b",
+          "name": "subject.parityP50I055B",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/before-spelled": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/mid-spelled": {"status":404,"body":""}
+  },
+  "p50i-domain-pips-spelled-trail-tab": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-spelled": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "PARITY_P50_ID_057",
+          "header": "x-parity-p50i-057-a",
+          "name": "subject.parityP50I057A",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/after-spelled": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "PARITY_P50_ID_057\t",
+          "header": "x-parity-p50i-057-b",
+          "name": "subject.parityP50I057B",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/before-spelled": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/mid-spelled": {"status":404,"body":""}
+  },
+  "p50i-pip-name-spelled-d": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-other": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "PARITY_P50_ID_053",
+          "header": "x-parity-p50i-053-a",
+          "name": "subject.parityP50I053A",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/after-other": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "PARITY_P50_ID_053_B",
+          "header": "x-parity-p50i-053-b",
+          "name": "subject.parityP50I053B",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/before-other": {"status":404,"body":""}
+  },
+  "p50i-pip-name-spelled-first-upper": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-other": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "PARITY_P50_ID_051",
+          "header": "x-parity-p50i-051-a",
+          "name": "subject.parityP50I051A",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/after-other": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "PARITY_P50_ID_051_B",
+          "header": "x-parity-p50i-051-b",
+          "name": "subject.ParityP50I051A",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/before-other": {"status":404,"body":""}
+  },
+  "p50i-role-spelled-d": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "level": "custom",
+        "permissions": [
+          {
+            "permission": "parity_p50i_076_m",
+            "pipNames": [
+              "subject.permissions.PARITY_P50I076_M"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "p50i-role-spelled-lower": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-read/sequence/after": {"status":200,"body":{"level":"custom","permissions":[]}}
+  }
+}

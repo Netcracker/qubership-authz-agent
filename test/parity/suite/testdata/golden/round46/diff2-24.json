@@ -1,0 +1,17 @@
+{
+  "d2r46-f23-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f23-control-last-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-ff7bd9fbd8": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

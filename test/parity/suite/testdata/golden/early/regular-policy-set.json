@@ -1,0 +1,162 @@
+{
+  "algorithm-absent": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "algorithm-deny-overrides": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "algorithm-deny-unless-permit": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "algorithm-first-applicable": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "algorithm-only-one-applicable": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "algorithm-permit-overrides": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "algorithm-permit-unless-deny": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "algorithm-unknown": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "bare-resource-condition": {
+    "check-resource-v1-outcome/regular/matching-element": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/other-element": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "deny-target-false-against-condition-false": {
+    "check-resource-v1-outcome/regular/read-condition-false": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-target-false": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "filter-allow-and-deny-rules": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "a==1",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "filter-allow-rule-condition-false": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "a==1,b==2",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "filter-nested-sets": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "(outer==1),(inner==1)",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "filter-two-allow-rules": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_REG_FILTER_TWO_ALLOW_RULES.a.eq(\"1\")).or(PARITY_SUITE_REG_FILTER_TWO_ALLOW_RULES.b.eq(\"1\"))",
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"a\": 1 }}, {{ \"b\": 1 }} ] }",
+        "rsqlFilterCondition": "a==1,b==1",
+        "sqlFilterCondition": "a=1 OR b=1",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "method-name-operation": {
+    "check-resource-v1-outcome/regular/other-case": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/same-name": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "missing-attribute-in-policy-target": {
+    "check-resource-v1-outcome/regular/sibling-allows": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "missing-attribute-in-rule-target": {
+    "check-resource-v1-outcome/regular/sibling-allows": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "missing-attribute-in-set-target": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "nested-outer-deny-inner-allow-deny-unless-permit": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "nested-outer-deny-inner-allow-permit-overrides": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "one-deny-list-in-one-set": {
+    "check-resource-v1-outcome/regular/denied-by-no-entry": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/denied-by-the-single-list": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "permission-policy-target": {
+    "check-resource-v1-outcome/regular/reader-without-permission": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "two-deny-lists-in-one-set": {
+    "check-resource-v1-outcome/regular/denied-by-both-lists": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/denied-by-neither-list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/denied-by-the-alpha-list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/denied-by-the-beta-list": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

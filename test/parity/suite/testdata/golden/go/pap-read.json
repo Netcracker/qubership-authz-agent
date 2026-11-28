@@ -1,0 +1,86 @@
+{
+  "two-domain-mapping/domain-pips-of-the-first-domain": {
+    "status": 200,
+    "body": [
+      {
+        "cacheable": false,
+        "customMapping": {
+          "subject.roles": {
+            "ROLE_PARITY_READER": [
+              "parity_r10_td_a"
+            ]
+          }
+        },
+        "domain": "PARITY_ISOLATED",
+        "name": "subject.permissions.PARITY_R10_TD_A",
+        "pipType": "MAPPING",
+        "type": "UUID"
+      }
+    ]
+  },
+  "two-domain-mapping/domain-pips-of-the-second-domain": {
+    "status": 200,
+    "body": [
+      {
+        "cacheable": false,
+        "customMapping": {
+          "subject.roles": {
+            "ROLE_PARITY_OTHER": [
+              "parity_r10_td_other"
+            ],
+            "ROLE_PARITY_READER": [
+              "parity_r10_td_b"
+            ]
+          }
+        },
+        "domain": "PARITY_ISOLATED_B",
+        "name": "subject.permissions.PARITY_R10_TD_B",
+        "pipType": "MAPPING",
+        "type": "UUID"
+      }
+    ]
+  },
+  "two-domain-mapping/permission-list-level-custom": {
+    "status": 200,
+    "body": {
+      "level": "custom",
+      "permissions": [
+        {
+          "permission": "parity_r10_td_a",
+          "pipNames": [
+            "subject.permissions.PARITY_R10_TD_A"
+          ]
+        },
+        {
+          "permission": "parity_r10_td_b",
+          "pipNames": [
+            "subject.permissions.PARITY_R10_TD_B"
+          ]
+        }
+      ]
+    }
+  },
+  "two-domain-mapping/permission-list-level-product": {"status":200,"body":{"level":"product","permissions":[]}},
+  "two-domain-mapping/permission-list-level-product-in-upper-case": {"status":400},
+  "two-domain-mapping/permission-list-with-no-level": {
+    "status": 200,
+    "body": {
+      "level": "custom",
+      "permissions": [
+        {
+          "permission": "parity_r10_td_a",
+          "pipNames": [
+            "subject.permissions.PARITY_R10_TD_A"
+          ]
+        },
+        {
+          "permission": "parity_r10_td_b",
+          "pipNames": [
+            "subject.permissions.PARITY_R10_TD_B"
+          ]
+        }
+      ]
+    }
+  },
+  "two-domain-mapping/pips": {"status":404}
+}

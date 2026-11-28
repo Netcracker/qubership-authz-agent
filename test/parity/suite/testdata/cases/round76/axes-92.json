@@ -1,0 +1,267 @@
+{
+ "about": "Round 76, task 16: survivor:route check/filter v2 | lang general_scalar_other R×EQ→ERR, moved to route = check/filter v2 from round21-ctx/context-two-grants.json (c21-002959). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R21C_",
+ "pins": {
+  "/api/v1/pip/c21-002959-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         },
+         {
+          "key": "tag",
+          "values": []
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/c21-006268-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c21-009957-l": {
+   "statusCode": 200,
+   "body": {
+    "k": "v"
+   }
+  },
+  "/api/v1/pip/c21-009957-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c21-011480-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c21-017890-l": {
+   "statusCode": 200,
+   "body": [
+    null
+   ]
+  },
+  "/api/v1/pip/c21-002953-l": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    5
+   ]
+  },
+  "/api/v1/pip/c21-002953-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c21-007857-l": {
+   "statusCode": 200,
+   "body": [
+    true
+   ]
+  },
+  "/api/v1/pip/c21-007857-r": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  }
+ },
+ "pips": {
+  "c21-002959-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-002959-r",
+   "requestAttributes": {
+    "case": "c21-002959-r"
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "c21-006268-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c21-006268-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-006268-r",
+   "requestAttributes": {
+    "case": "c21-006268-r"
+   }
+  },
+  "c21-009957-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-009957-l",
+   "requestAttributes": {
+    "case": "c21-009957-l"
+   }
+  },
+  "c21-009957-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-009957-r",
+   "requestAttributes": {
+    "case": "c21-009957-r"
+   }
+  },
+  "c21-011480-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-011480-r",
+   "requestAttributes": {
+    "case": "c21-011480-r"
+   }
+  },
+  "c21-017890-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-017890-l",
+   "requestAttributes": {
+    "case": "c21-017890-l"
+   }
+  },
+  "c21-002953-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-002953-l",
+   "requestAttributes": {
+    "case": "c21-002953-l"
+   }
+  },
+  "c21-002953-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-002953-r",
+   "requestAttributes": {
+    "case": "c21-002953-r"
+   }
+  },
+  "c21-007857-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-007857-l",
+   "requestAttributes": {
+    "case": "c21-007857-l"
+   }
+  },
+  "c21-007857-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-007857-r",
+   "requestAttributes": {
+    "case": "c21-007857-r"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "ax76-92-c21-002959",
+   "pips": [
+    "c21-002959-generalR",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.serviceAccount == subject.parityCxGR OR resource.a == 'y'",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter-check-filter-v2",
+     "filter": true,
+     "operation": "READ",
+     "v2": {}
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=subj.serviceAccount, rs=SCALAR_ODD; ls=NULL, rs=SCALAR_ODD Task 16 moves it to route = check/filter v2."
+  }
+ ]
+}

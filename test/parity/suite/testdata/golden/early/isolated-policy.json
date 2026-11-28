@@ -1,0 +1,230 @@
+{
+  "a1-attribute-equals-attribute": {
+    "check-resource-v1-outcome/isolated/both-equal": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/right-absent": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "a2-match-attribute-pattern": {
+    "check-resource-v1-outcome/isolated/pattern-matches": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "c1-number-literal": {
+    "check-resource-v1-outcome/isolated/float": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/integer": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/string": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "c2-number-precision": {
+    "check-resource-v1-outcome/isolated/exact": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/neighbour-below": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "c7-equals-empty-string": {
+    "check-resource-v1-outcome/isolated/attribute-absent": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/attribute-empty": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "h1-header-pip-no-value-neq": {
+    "check-resource-v1-outcome/isolated/header-absent": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/header-equal-value": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/header-other-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "h2-header-pip-no-value-is-null": {
+    "check-resource-v1-outcome/isolated/header-absent": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/header-sent": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "j1-nested-path-neq": {
+    "check-resource-v1-outcome/isolated/leaf-differs": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/parent-absent": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/parent-empty-object": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/parent-null": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "j5-array-index": {
+    "check-resource-v1-outcome/isolated/array-absent": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/first-element-matches": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "j6-array-wildcard-path": {
+    "check-resource-v1-outcome/isolated/an-item-has-the-id": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "j7-bracket-path": {
+    "check-resource-v1-outcome/isolated/attribute-matches": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "j8-hyphen-in-key": {
+    "check-resource-v1-outcome/isolated/hyphenated-key-matches": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "l3-in-resource-collection": {
+    "check-resource-v1-outcome/isolated/collection-absent": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/value-in-collection": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "l4-subset-of-literal-list": {
+    "check-resource-v1-outcome/isolated/empty-collection": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/foreign-element": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "l5-contains-literal": {
+    "check-resource-v1-outcome/isolated/collection-with-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/scalar-equal-to-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/string-containing-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "l8-number-list-in": {
+    "check-resource-v1-outcome/isolated/number": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/string-number": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "l9-is-not-empty": {
+    "check-resource-v1-outcome/isolated/attribute-absent": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/empty-collection": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/empty-string": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "o1-operation-operand": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "o2-resource-type-operand": {
+    "check-resource-v1-outcome/isolated/own-type": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r5-bare-resource-operand": {
+    "check-resource-v1-outcome/isolated/resource-string": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "u1-subject-roles-contains": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "u2-subject-roles-other-case": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "u3-subject-service-account-is-null": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "u4-subject-type": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "u5-subject-name": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "u6-subject-id-is-not-null": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "u7-has-access": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x1-literal-on-the-left": {
+    "check-resource-v1-outcome/isolated/attribute-matches": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x10-condition-literal-true": {
+    "check-resource-v1-outcome/isolated/any-resource": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x11-keyword-inside-string": {
+    "check-resource-v1-outcome/isolated/attribute-matches": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x12-list-without-spaces": {
+    "check-resource-v1-outcome/isolated/second-element": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x13-comma-inside-list-string": {
+    "check-resource-v1-outcome/isolated/part-before-comma": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/whole-string": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x14-leading-space": {
+    "check-resource-v1-outcome/isolated/attribute-matches": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x16-tab-between-tokens": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "x17-number-leading-zero": {
+    "check-resource-v1-outcome/isolated/number-five": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x19-undeclared-subject-attribute": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "x2-equals-keyword": {
+    "check-resource-v1-outcome/isolated/attribute-matches": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x20-undeclared-placeholder": {
+    "check-filter-v1-outcome/isolated/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x24-lowercase-is-null": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "x25-double-quoted-string": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "x26-null-literal": {
+    "check-resource-v1-outcome/isolated/attribute-absent": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/attribute-present": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x28-policy-resource-type-lowercase": {
+    "check-resource-v1-outcome/isolated/request-lowercase": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/request-uppercase": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x29-policy-role-lowercase": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x3-not-equals-keyword": {
+    "check-resource-v1-outcome/isolated/attribute-differs": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x30-policy-operation-all": {
+    "check-resource-v1-outcome/isolated/delete": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x31-policy-without-roles": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "x4-greater-or-equal-words": {
+    "check-resource-v1-outcome/isolated/boundary": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x5-match-unquoted-wildcard": {
+    "check-resource-v1-outcome/isolated/match-inside": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/prefix-matches": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/prefix-other-case": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x6-match-quoted-wildcard": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "x9-boolean-literal-uppercase": {
+    "check-resource-v1-outcome/isolated/attribute-true": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

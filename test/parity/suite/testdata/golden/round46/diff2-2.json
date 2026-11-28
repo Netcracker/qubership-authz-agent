@@ -1,0 +1,38 @@
+{
+  "d2r46-193fddb72c": {
+    "load-simplified-policies-v1/isolated": {"status":400,"message":{"message":"Simplified policy id=1-1-1-1-1 must be a valid UUID"}}
+  },
+  "d2r46-50e476344d": {
+    "load-simplified-policies-v1/isolated": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'subject.parityR16S-dash' is invalid."
+    }
+  },
+  "d2r46-bf4ad52937": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+    }
+  },
+  "d2r46-eba6994e02": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "d2r46-ee96235fa8": {
+    "load-simplified-policies-v1/isolated": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'subject.parityR16S-dash' is invalid."
+    }
+  },
+  "d2r46-f1-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f1-control-last-or": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f47de3f768": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

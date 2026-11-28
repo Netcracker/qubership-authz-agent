@@ -14,61 +14,268 @@
 
 package paritysuite
 
-import "testing"
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"io/fs"
+	"net/http"
+	"os"
+	"path/filepath"
+	"testing"
 
-// TestNormalizeRsqlInElements_SortsInClauseBothDirections pins the
-// D-AF-AA (2026-04-19) comparator-allowlist contract: for RSQL `in`
-// clauses, element order is set-semantic, so `("a","b")` and `("b","a")`
-// must normalize to the same string. The parity comparator relies on
-// this to diff-empty the `PSUITE_ROW_10_CHECK_FILTER_V2` /
-// `general-pip-dict` leaf where legacy emits reversed insertion order
-// and authz-agent emits forward index order.
-func TestNormalizeRsqlInElements_SortsInClauseBothDirections(t *testing.T) {
+	"authz-agent/test/parity/suite/model"
+)
+
+// A case written before its golden was captured has to be told apart from a
+// case whose golden exists and disagrees: the first skips, the second fails.
+func TestCompare_MissingGoldenIsReportedAsNotRecorded(t *testing.T) {
 	t.Parallel()
-	forward := `id=in=("row10-dict-1", "row10-dict-2");amount=le="1000"`
-	reverse := `id=in=("row10-dict-2", "row10-dict-1");amount=le="1000"`
-	if normalizeRsqlInElements(forward) != normalizeRsqlInElements(reverse) {
-		t.Fatalf("forward and reverse element orders must normalize to the same string\nforward:  %s\nreverse:  %s\nnormfwd:  %s\nnormrev:  %s",
-			forward, reverse, normalizeRsqlInElements(forward), normalizeRsqlInElements(reverse))
+	gc := &GoldenComparator{goldenRoot: t.TempDir()}
+	decision := true
+
+	err := gc.Compare(PSUITE_ROW_2_CHECK_RESOURCE_V1, "never-recorded", &decision)
+
+	if !errors.Is(err, ErrGoldenNotRecorded) {
+		t.Fatalf("Compare with no golden file: want ErrGoldenNotRecorded, got %v", err)
 	}
 }
 
-// TestNormalizeRsqlInElements_DoesNotCollapseDistinctSets guards
-// against silent element-drops — two `in` clauses with different
-// element sets must NOT normalize to the same string.
-func TestNormalizeRsqlInElements_DoesNotCollapseDistinctSets(t *testing.T) {
+func TestCompare_AKeyMissingFromAFileOfOtherAnswersIsNotRecorded(t *testing.T) {
 	t.Parallel()
-	a := `id=in=("alpha", "beta")`
-	b := `id=in=("alpha", "gamma")`
-	if normalizeRsqlInElements(a) == normalizeRsqlInElements(b) {
-		t.Fatalf("distinct element sets must not normalize equal: %q vs %q", a, b)
+	root := t.TempDir()
+	writeGolden(t, root, "check-resource-v1/recorded", "true")
+	gc := &GoldenComparator{goldenRoot: root}
+	decision := true
+
+	err := gc.Compare(PSUITE_ROW_2_CHECK_RESOURCE_V1, "never-recorded", &decision)
+
+	if !errors.Is(err, ErrGoldenNotRecorded) {
+		t.Fatalf("Compare of a key absent from go/check-resource-v1.json: want ErrGoldenNotRecorded, got %v", err)
 	}
 }
 
-// TestNormalizeRsqlInElements_PreservesSingleElement confirms the
-// normalizer is a no-op on single-element `in` clauses and on
-// expressions without any `in` clause.
-func TestNormalizeRsqlInElements_PreservesSingleElement(t *testing.T) {
+// A mismatch records the answer it got under the golden's key, in the
+// .observed.json file beside the golden file.
+func TestCompare_AMismatchRecordsTheAnswerBesideTheGoldenFile(t *testing.T) {
 	t.Parallel()
-	single := `id=in=("only")`
-	if got := normalizeRsqlInElements(single); got != single {
-		t.Fatalf("single-element in clause must round-trip; got %q", got)
+	root := t.TempDir()
+	writeGolden(t, root, "check-resource-v1/recorded-false", "false")
+	gc := &GoldenComparator{goldenRoot: root}
+	decision := true
+
+	_ = gc.Compare(PSUITE_ROW_2_CHECK_RESOURCE_V1, "recorded-false", &decision)
+
+	got, err := os.ReadFile(filepath.Join(root, "go", "check-resource-v1.observed.json"))
+	if err != nil {
+		t.Fatal(err)
 	}
-	plain := `status=="OPEN"`
-	if got := normalizeRsqlInElements(plain); got != plain {
-		t.Fatalf("expression without in clause must round-trip; got %q", got)
+	if want := "{\n  \"recorded-false\": true\n}\n"; string(got) != want {
+		t.Errorf("go/check-resource-v1.observed.json =\n%s\nwant\n%s", got, want)
 	}
 }
 
-// TestNormalizeRsqlInElements_HandlesMultipleInClauses exercises the
-// tokenizer when the same expression carries more than one `in` clause
-// (future-proofing for richer predicates).
-func TestNormalizeRsqlInElements_HandlesMultipleInClauses(t *testing.T) {
+// An answer that matches the golden of its second class writes no
+// .observed.json entry for the first, whose golden it does not match.
+func TestCompareAny_AMatchWritesNoObservedEntry(t *testing.T) {
 	t.Parallel()
-	expr := `id=in=("b", "a");tag=in=("z", "y", "x")`
-	got := normalizeRsqlInElements(expr)
-	want := `id=in=("a", "b");tag=in=("x", "y", "z")`
-	if got != want {
-		t.Fatalf("multi-in normalization mismatch\nwant: %s\ngot:  %s", want, got)
+	root := t.TempDir()
+	writeGolden(t, root, "check-resource-v1/req-when-the-pip-was-read", "false")
+	writeGolden(t, root, "check-resource-v1/req-when-the-pip-was-skipped", "true")
+	gc := &GoldenComparator{goldenRoot: root}
+	decision := true
+
+	if err := gc.CompareAny(PSUITE_ROW_2_CHECK_RESOURCE_V1, []string{"req-when-the-pip-was-read", "req-when-the-pip-was-skipped"}, &decision); err != nil {
+		t.Fatalf("CompareAny: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "go", "check-resource-v1.observed.json")); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("go/check-resource-v1.observed.json exists after a match (stat: %v)", err)
+	}
+}
+
+// An answer that matches no recorded class is written to the .observed.json
+// entry of each class it was compared with, and not under a name with no
+// golden.
+func TestCompareAny_AMismatchRecordsTheAnswerUnderEachRecordedClass(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	writeGolden(t, root, "check-resource-v1/req-when-the-pip-was-read", "false")
+	writeGolden(t, root, "check-resource-v1/req-when-the-pip-was-skipped", "false")
+	gc := &GoldenComparator{goldenRoot: root}
+	decision := true
+
+	err := gc.CompareAny(PSUITE_ROW_2_CHECK_RESOURCE_V1, []string{"req", "req-when-the-pip-was-read", "req-when-the-pip-was-skipped"}, &decision)
+	if err == nil {
+		t.Fatal("CompareAny: nil, want a mismatch")
+	}
+	got, readErr := os.ReadFile(filepath.Join(root, "go", "check-resource-v1.observed.json"))
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	if want := "{\n  \"req-when-the-pip-was-read\": true,\n  \"req-when-the-pip-was-skipped\": true\n}\n"; string(got) != want {
+		t.Errorf("go/check-resource-v1.observed.json =\n%s\nwant\n%s", got, want)
+	}
+}
+
+// The .observed.json entry holds the answer before the comparison rewrites
+// it, since goldens merge -observed records it as a golden: the body of a
+// refusal and the term order of a filter stay as the answer had them.
+func TestCompare_AMismatchRecordsTheAnswerAsReceived(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name, golden, observedFile string
+		id                         ParityEndpointID
+		actual                     any
+		want                       string
+	}{
+		{
+			name:         "refusal body",
+			id:           PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME,
+			golden:       `{"status":400,"decision":false,"message":{"error":"old"}}`,
+			observedFile: "check-resource-v1-outcome.observed.json",
+			actual:       &model.CheckResourceOutcome{Status: 409, Message: map[string]any{"error": "new"}},
+			want:         `{"status":409,"decision":false,"message":{"error":"new"}}`,
+		},
+		{
+			name:         "filter term order",
+			id:           PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME,
+			golden:       `{"status":200,"result":{"calculationResult":"DENY"}}`,
+			observedFile: "check-filter-v1-outcome.observed.json",
+			actual:       filterOutcomeWithRsql(t, `"b==1,a==1"`),
+			want:         `{"status":200,"result":{"calculationResult":"ALLOW","rsqlFilterCondition":"b==1,a==1"}}`,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			root := t.TempDir()
+			writeGolden(t, root, Meta(tc.id).GoldenDir+"/recorded", tc.golden)
+			gc := &GoldenComparator{goldenRoot: root}
+
+			_ = gc.Compare(tc.id, "recorded", tc.actual)
+
+			raw, err := os.ReadFile(filepath.Join(root, "go", tc.observedFile))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var observed map[string]json.RawMessage
+			if err := json.Unmarshal(raw, &observed); err != nil {
+				t.Fatalf("json.Unmarshal(%s): %v", raw, err)
+			}
+			var got bytes.Buffer
+			if err := json.Compact(&got, observed["recorded"]); err != nil {
+				t.Fatalf("json.Compact(%s): %v", observed["recorded"], err)
+			}
+			if got.String() != tc.want {
+				t.Errorf("go/%s[recorded] = %s, want %s", tc.observedFile, got.String(), tc.want)
+			}
+		})
+	}
+}
+
+func TestCompare_MismatchingGoldenIsNotReportedAsNotRecorded(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	writeGolden(t, root, "check-resource-v1/recorded-false", "false")
+	gc := &GoldenComparator{goldenRoot: root}
+	decision := true
+
+	err := gc.Compare(PSUITE_ROW_2_CHECK_RESOURCE_V1, "recorded-false", &decision)
+
+	var mismatch *GoldenMismatchError
+	if !errors.As(err, &mismatch) {
+		t.Fatalf("Compare(true) against golden false: want *GoldenMismatchError, got %v", err)
+	}
+	if errors.Is(err, ErrGoldenNotRecorded) {
+		t.Fatalf("Compare(true) against golden false must not report ErrGoldenNotRecorded: %v", err)
+	}
+}
+
+// The body of a refusal that a golden records beside the status takes no part
+// in the comparison, for every outcome that can carry one: the status alone
+// decides, whether the message is on the golden's side, on the answer's, or on
+// both with other wording.
+func TestCompare_RefusalMessageIsIgnored(t *testing.T) {
+	t.Parallel()
+	outcomes := []struct {
+		id     ParityEndpointID
+		dir    string
+		answer func(status int, message any) any
+	}{
+		{PSUITE_LOAD_POLICY_SETS, "load-policy-sets-v1", func(status int, message any) any {
+			return &model.PolicyLoadOutcome{Status: status, Message: message}
+		}},
+		{PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, "check-resource-v1-outcome", func(status int, message any) any {
+			return &model.CheckResourceOutcome{Status: status, Message: message}
+		}},
+		{PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, "check-filter-v1-outcome", func(status int, message any) any {
+			return &model.FilterOutcome{Status: status, Message: message}
+		}},
+		{PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME, "check-resource-bulk-v1-outcome", func(status int, message any) any {
+			return &model.CheckResourceBulkOutcome{Status: status, Message: message}
+		}},
+		{PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME, "check-resource-bulk-operations-v1-outcome", func(status int, message any) any {
+			return &model.CheckResourceBulkOperationsOutcome{Status: status, Message: message}
+		}},
+	}
+	goldens := map[string]string{
+		"with-a-message":    `{"status": 400, "message": {"message": "the stand's wording"}}`,
+		"without-a-message": `{"status": 400}`,
+	}
+	cases := []struct {
+		name    string
+		golden  string
+		status  int
+		message any
+		matches bool
+	}{
+		{"no message against a golden with one", "with-a-message", http.StatusBadRequest, nil, true},
+		{"another message against a golden with one", "with-a-message", http.StatusBadRequest, "other wording", true},
+		{"a message against a golden without one", "without-a-message", http.StatusBadRequest, "other wording", true},
+		{"another status", "with-a-message", http.StatusConflict, nil, false},
+	}
+	for _, o := range outcomes {
+		root := t.TempDir()
+		for name, golden := range goldens {
+			writeGolden(t, root, o.dir+"/regular/"+name, golden)
+		}
+		gc := &GoldenComparator{goldenRoot: root}
+		for _, tc := range cases {
+			t.Run(o.dir+"/"+tc.name, func(t *testing.T) {
+				err := gc.Compare(o.id, "regular/"+tc.golden, o.answer(tc.status, tc.message))
+				if (err == nil) != tc.matches {
+					t.Errorf("Compare(status %d, message %v) against %s = %v, want a match: %t",
+						tc.status, tc.message, goldens[tc.golden], err, tc.matches)
+				}
+			})
+		}
+	}
+}
+
+// An error golden carries its body for the spec repository, which compares the
+// class of the message; the suite compares the status alone, so a body with
+// other text matches and another status does not.
+func TestCompare_AnErrorGoldenComparesItsStatusAndNotItsBody(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	golden := `{"status": 400, "body": {"message": "Policy 'p-1' is invalid"}}`
+	writeGolden(t, root, "pap-error-v1/sequence/c/s", golden)
+	gc := &GoldenComparator{goldenRoot: root}
+	cases := []struct {
+		name     string
+		actual   *model.PapErrorOutcome
+		mismatch bool
+	}{
+		{"another message, the same status", &model.PapErrorOutcome{Status: 400, Body: map[string]any{"message": "Policy 'p-2' is invalid"}}, false},
+		{"the same message, another status", &model.PapErrorOutcome{Status: 409, Body: map[string]any{"message": "Policy 'p-1' is invalid"}}, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := gc.Compare(PSUITE_PAP_ERROR, "sequence/c/s", tc.actual)
+			var mismatch *GoldenMismatchError
+			if got := errors.As(err, &mismatch); got != tc.mismatch {
+				t.Errorf("Compare(%+v) against %s: mismatch = %v, want %v (err %v)", *tc.actual, golden, got, tc.mismatch, err)
+			}
+		})
 	}
 }

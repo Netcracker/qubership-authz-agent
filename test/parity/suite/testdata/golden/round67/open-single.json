@@ -1,0 +1,42 @@
+{
+  "op67-active-policy-twin": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "op67-assign-mapping-empty": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "op67-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "op67-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "op67-inactive-policy-allow": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "op67-inactive-policy-deny": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

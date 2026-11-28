@@ -1,0 +1,19 @@
+{
+  "r31open-url-filtered-source": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r31open-url-general-source": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r31open-url-subject-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r31open-url-subject-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r31open-url-token-source": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "d2r46-2e04206624": {
+    "check-filter-v1-outcome/regular/q1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/q2": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/q3": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/after-q0": {"status":200,"decision":{"READ":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":200,"decision":{"":[]}},
+    "check-resource-v1-outcome/regular/after-q1": {"status":200,"decision":false},
+    "import-customization-v1/regular/custom": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot find referenced item. Policy Set with '5bcf5234-73d4-10db-61cd-b7b0bcb44dc3' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f31-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f31-control-last-or": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

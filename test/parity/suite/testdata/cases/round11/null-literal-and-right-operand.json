@@ -1,0 +1,66 @@
+{
+ "about": "Whether the literal null on the left of == is a null value or ends the rule, and whether an absent resource key on the right of == is a false operand or ends the rule. null IS NULL and null IS NOT NULL are recorded (dn-*), and neither tells the two readings apart, since a null value and an absent key answer those two operators alike. The literal null on the right of != ends the rule (df2). a1/right-absent records the absent key on the right alone. Each goes through a probe and its control against a resource with v = v, no x, and a = y. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone.",
+ "resourceTypePrefix": "PARITY_SUITE_R11_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "lr-null-literal-equals",
+   "condition": "null == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r11-right",
+      "v": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "lr-null-literal-equals-control",
+   "resourceType": "PARITY_SUITE_R11_LR_NULL_LITERAL_EQUALS_CTL",
+   "condition": "resource.a == 'y' OR null == 'v'",
+   "requests": [
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r11-right",
+      "v": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "lr-absent-key-on-the-right",
+   "condition": "resource.v == resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r11-right",
+      "v": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "lr-absent-key-on-the-right-control",
+   "resourceType": "PARITY_SUITE_R11_LR_ABSENT_KEY_ON_THE_RIGHT_CTL",
+   "condition": "resource.a == 'y' OR resource.v == resource.x",
+   "requests": [
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r11-right",
+      "v": "v",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

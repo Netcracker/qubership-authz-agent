@@ -1,0 +1,16 @@
+{
+  "r58ord-4fa1d621a1-ctl35": {
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r58ord-diff2-35-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r58ord-f34-control-last-or": {
+    "check-resource-v1-outcome/regular/a-n-when-the-pip-was-read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

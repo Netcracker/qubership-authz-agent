@@ -1,0 +1,280 @@
+{
+ "about": "type and jsonPath of a GENERAL PIP at runtime: type JSON without jsonPath over the body [\"v\"], type REGULAR with jsonPath $.value, jsonPath without $ in dot and bracket form, and an explicit type UUID over a value that is no UUID. The last case is a filter over a type REGULAR PIP in a mongodb predicate: $uuid or plain strings.",
+ "resourceTypePrefix": "PARITY_SUITE_R29F_",
+ "pins": {
+  "/api/v1/pip/r29pipfield-type-json-without-jsonpath": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-type-regular-with-jsonpath": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  },
+  "/api/v1/pip/r29pipfield-type-jsonpath-without-dollar": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  },
+  "/api/v1/pip/r29pipfield-type-jsonpath-bracket-without-dollar": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  },
+  "/api/v1/pip/r29pipfield-type-uuid-explicit": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-type-regular-filter": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  }
+ },
+ "pips": {
+  "type-json-without-jsonpath": {
+   "name": "subject.parityR29TypeJsonWithoutJsonpath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-type-json-without-jsonpath",
+   "requestAttributes": {
+    "case": "r29pipfield-type-json-without-jsonpath"
+   },
+   "type": "JSON"
+  },
+  "type-regular-with-jsonpath": {
+   "name": "subject.parityR29TypeRegularWithJsonpath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-type-regular-with-jsonpath",
+   "requestAttributes": {
+    "case": "r29pipfield-type-regular-with-jsonpath"
+   },
+   "type": "REGULAR",
+   "jsonPath": "$.value"
+  },
+  "type-jsonpath-without-dollar": {
+   "name": "subject.parityR29TypeJsonpathWithoutDollar",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-type-jsonpath-without-dollar",
+   "requestAttributes": {
+    "case": "r29pipfield-type-jsonpath-without-dollar"
+   },
+   "type": "JSON",
+   "jsonPath": "value"
+  },
+  "type-jsonpath-bracket-without-dollar": {
+   "name": "subject.parityR29TypeJsonpathBracketWithoutDollar",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-type-jsonpath-bracket-without-dollar",
+   "requestAttributes": {
+    "case": "r29pipfield-type-jsonpath-bracket-without-dollar"
+   },
+   "type": "JSON",
+   "jsonPath": "['value']"
+  },
+  "type-uuid-explicit": {
+   "name": "subject.parityR29TypeUuidExplicit",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-type-uuid-explicit",
+   "requestAttributes": {
+    "case": "r29pipfield-type-uuid-explicit"
+   },
+   "type": "UUID"
+  },
+  "type-regular-filter": {
+   "name": "subject.parityR29TypeRegularFilter",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-type-regular-filter",
+   "requestAttributes": {
+    "case": "r29pipfield-type-regular-filter"
+   },
+   "type": "REGULAR"
+  }
+ },
+ "cases": [
+  {
+   "id": "r29pipfield-type-json-without-jsonpath",
+   "about": "GENERAL PIP with {'type': 'JSON'} over ['v']",
+   "condition": "subject.parityR29TypeJsonWithoutJsonpath == 'v' OR resource.a == 'y'",
+   "pips": [
+    "type-json-without-jsonpath"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-type-json-without-jsonpath"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-type-regular-with-jsonpath",
+   "about": "GENERAL PIP with {'type': 'REGULAR', 'jsonPath': '$.value'} over {'value': 'v'}",
+   "condition": "subject.parityR29TypeRegularWithJsonpath == 'v' OR resource.a == 'y'",
+   "pips": [
+    "type-regular-with-jsonpath"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-type-regular-with-jsonpath"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-type-jsonpath-without-dollar",
+   "about": "GENERAL PIP with {'type': 'JSON', 'jsonPath': 'value'} over {'value': 'v'}",
+   "condition": "subject.parityR29TypeJsonpathWithoutDollar == 'v' OR resource.a == 'y'",
+   "pips": [
+    "type-jsonpath-without-dollar"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-type-jsonpath-without-dollar"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-type-jsonpath-bracket-without-dollar",
+   "about": "GENERAL PIP with {'type': 'JSON', 'jsonPath': \"['value']\"} over {'value': 'v'}",
+   "condition": "subject.parityR29TypeJsonpathBracketWithoutDollar == 'v' OR resource.a == 'y'",
+   "pips": [
+    "type-jsonpath-bracket-without-dollar"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-type-jsonpath-bracket-without-dollar"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-type-uuid-explicit",
+   "about": "GENERAL PIP with {'type': 'UUID'} over ['v']",
+   "condition": "subject.parityR29TypeUuidExplicit == 'v' OR resource.a == 'y'",
+   "pips": [
+    "type-uuid-explicit"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-type-uuid-explicit"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-type-regular-mongodb-filter",
+   "about": "mongodb filter over a type REGULAR PIP",
+   "pips": [
+    "type-regular-filter"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "mongodbPredicate": "{\"a\": {\"$in\": ${subject.parityR29TypeRegularFilter}}}"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,15 @@
+{
+  "o78-bulk-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o78-bulk-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o78-bulk-type-empty": {
+    "check-resource-bulk-operations-v1-outcome/regular/operations-type-empty": {"status":400,"message":{"message":"The request 'type' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/regular/bulk-type-empty": {"status":400,"message":{"message":"The request 'type' cannot be empty"}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

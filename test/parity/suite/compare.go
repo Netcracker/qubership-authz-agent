@@ -16,11 +16,11 @@ package paritysuite
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"reflect"
-	"sort"
+	"slices"
 	"strings"
 
 	"authz-agent/test/parity/suite/model"
@@ -28,7 +28,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-// GoldenComparator owns golden read / diff plumbing per D-M. A single
+// GoldenComparator reads the goldens and diffs an answer against them. A single
 // comparator instance is shared across all replay tests; it stores the
 // on-disk golden root (defaults to test/parity/suite/testdata/golden under
 // the module root). The goldens are a frozen capture of the legacy
@@ -47,13 +47,10 @@ func NewGoldenComparator(_ Config) *GoldenComparator {
 	}
 }
 
-// GoldenPath constructs the full on-disk path for a golden file at
-// <goldenRoot>/<row-meta-dir>/<subCase>.json. Callers pass subCase as
-// "allow-incoming" or "token-pip/allow" — the latter form is the D-X sub-case
-// directory convention.
-func (gc *GoldenComparator) GoldenPath(id ParityEndpointID, subCase string) string {
-	meta := Meta(id)
-	return filepath.Join(gc.goldenRoot, meta.GoldenDir, subCase+".json")
+// Recorded returns the golden of row id under subCase, and reports whether one
+// is recorded.
+func (gc *GoldenComparator) Recorded(id ParityEndpointID, subCase string) (json.RawMessage, bool, error) {
+	return goldensAt(gc.goldenRoot).Lookup(GoldenKey(id, subCase))
 }
 
 // Compare asserts parity between the actual (freshly-decoded) response and
@@ -63,32 +60,78 @@ func (gc *GoldenComparator) GoldenPath(id ParityEndpointID, subCase string) stri
 // NewGoldenTarget factory; passing the wrong type is a test-authoring
 // bug and panics fast at compare time.
 func (gc *GoldenComparator) Compare(id ParityEndpointID, subCase string, actual any) error {
-	goldenPath := gc.GoldenPath(id, subCase)
+	return gc.compare(id, subCase, actual, true)
+}
 
-	raw, err := os.ReadFile(goldenPath)
+// CompareAny compares actual with the golden of row id under each of subCases
+// that is recorded, and returns nil as soon as one matches. It returns an error
+// that wraps ErrGoldenNotRecorded when none of them is recorded, and otherwise
+// an error that carries the mismatch with each recorded one, whose
+// .observed.json entries then hold actual. Nothing is written when one
+// matches.
+func (gc *GoldenComparator) CompareAny(id ParityEndpointID, subCases []string, actual any) error {
+	var mismatches []error
+	var mismatched []string
+	for _, subCase := range subCases {
+		err := gc.compare(id, subCase, actual, false)
+		switch {
+		case err == nil:
+			return nil
+		case errors.Is(err, ErrGoldenNotRecorded):
+			continue
+		}
+		mismatches = append(mismatches, err)
+		var mismatch *GoldenMismatchError
+		if errors.As(err, &mismatch) {
+			mismatched = append(mismatched, subCase)
+		}
+	}
+	if len(mismatches) == 0 {
+		return fmt.Errorf("%w: none of %s under %s", ErrGoldenNotRecorded, strings.Join(subCases, ", "), Meta(id).GoldenDir)
+	}
+	for _, subCase := range mismatched {
+		gc.writeObservedSidecar(GoldenKey(id, subCase), actual)
+	}
+	return fmt.Errorf("the answer matches none of the %d recorded goldens: %w", len(mismatches), errors.Join(mismatches...))
+}
+
+// compare is Compare; record says whether a mismatch writes actual to the
+// .observed.json file.
+func (gc *GoldenComparator) compare(id ParityEndpointID, subCase string, actual any, record bool) error {
+	key := GoldenKey(id, subCase)
+	goldens := goldensAt(gc.goldenRoot)
+	where := goldens.Where(key)
+
+	raw, ok, err := goldens.Lookup(key)
 	if err != nil {
-		return fmt.Errorf("read golden %s: %w", goldenPath, err)
+		return fmt.Errorf("read golden %s: %w", where, err)
+	}
+	if !ok {
+		return fmt.Errorf("%w: %s", ErrGoldenNotRecorded, where)
 	}
 
 	expected := NewGoldenTarget(id)
 	if err := json.Unmarshal(raw, expected); err != nil {
-		return fmt.Errorf("unmarshal golden %s: %w", goldenPath, err)
+		return fmt.Errorf("unmarshal golden %s: %w", where, err)
 	}
 
 	if reflect.TypeOf(actual) != reflect.TypeOf(expected) {
 		panic(fmt.Sprintf("paritysuite: comparator type mismatch for row %d: actual=%T expected=%T", int(id), actual, expected))
 	}
 
+	received := actual
 	expected = normalizeComparable(id, subCase, expected)
 	actual = normalizeComparable(id, subCase, actual)
 
 	opts := compareOptionsFor(id)
 	if diff := cmp.Diff(expected, actual, opts...); diff != "" {
-		gc.writeObservedSidecar(goldenPath, actual)
-		if accepted, ok := acceptedDivergenceFor(id, subCase); ok {
-			return gc.compareAgainstAccepted(id, subCase, goldenPath, actual, accepted, opts)
+		if record {
+			gc.writeObservedSidecar(key, received)
 		}
-		return &GoldenMismatchError{GoldenPath: goldenPath, Diff: diff}
+		if accepted, ok := acceptedDivergenceFor(id, subCase); ok {
+			return gc.compareAgainstAccepted(id, subCase, where, actual, accepted, opts)
+		}
+		return &GoldenMismatchError{GoldenPath: where, Diff: diff}
 	}
 	return nil
 }
@@ -105,7 +148,7 @@ func (gc *GoldenComparator) compareAgainstAccepted(
 	accepted AcceptedDivergence,
 	opts []cmp.Option,
 ) error {
-	acceptedPath := acceptedDivergencePath(gc.goldenRoot, goldenPath)
+	acceptedPath := acceptedDivergencePath(GoldenKey(id, subCase))
 
 	raw, err := os.ReadFile(acceptedPath)
 	if err != nil {
@@ -136,28 +179,39 @@ func (gc *GoldenComparator) compareAgainstAccepted(
 	return nil
 }
 
-func (gc *GoldenComparator) writeObservedSidecar(goldenPath string, actual any) {
-	observedPath := strings.TrimSuffix(goldenPath, ".json") + ".observed.json"
-	encoded, err := json.MarshalIndent(actual, "", "  ")
+// writeObservedSidecar records actual under key in the .observed.json file
+// beside the golden file that holds key. A failure to write it is ignored: the
+// mismatch error carries the diff either way.
+func (gc *GoldenComparator) writeObservedSidecar(key string, actual any) {
+	encoded, err := json.Marshal(actual)
 	if err != nil {
 		return
 	}
-	_ = os.MkdirAll(filepath.Dir(observedPath), 0o755)
-	_ = os.WriteFile(observedPath, append(encoded, '\n'), 0o644)
+	_ = observedAt(gc.goldenRoot).Put(map[string]json.RawMessage{key: encoded})
 }
 
-// compareOptionsFor returns the cmp.Option set for a given row per D-M. The
-// ignore-list is deliberately minimal — Obligations is the only pre-locked
-// entry (D-E); anything else requires a one-line justification and an
-// escalation OQ before being added.
+// compareOptionsFor returns the cmp.Option set for a given row. The comparison
+// leaves out three fields, and nothing else: the Obligations member of the
+// legacy check and filter answers of a row that sets IgnoreObligations, the
+// Body of a pap-error-v1 golden, and, through [normalizeComparable], the
+// Message of every outcome that records the body of a refusal. A field joins
+// them only where two conforming servers may answer it differently, with the
+// reason beside the option.
 func compareOptionsFor(id ParityEndpointID) []cmp.Option {
 	meta := Meta(id)
 	opts := []cmp.Option{}
 	if meta.SortSlices {
 		opts = append(opts, cmpopts.SortSlices(func(a, b string) bool { return a < b }))
 	}
+	if id == PSUITE_PAP_ERROR {
+		// The error body is recorded for the spec repository, which compares the
+		// class of its message rather than its text: the text changes between
+		// builds of access-control and differs in a replacement PAP.
+		opts = append(opts, cmpopts.IgnoreFields(model.PapErrorOutcome{}, "Body"))
+	}
 	if meta.IgnoreObligations {
-		// Obligations is the only pre-committed ignore per D-E / D3.
+		// These rows send obligations=false, so the member is not under test
+		// here; the v2 outcome rows record it.
 		opts = append(opts,
 			cmpopts.IgnoreFields(model.CheckResourceResponse{}, "Obligations"),
 			cmpopts.IgnoreFields(model.CheckResourcesResponse{}, "Obligations"),
@@ -167,118 +221,119 @@ func compareOptionsFor(id ParityEndpointID) []cmp.Option {
 	return opts
 }
 
-// normalizeComparable applies row/sub-case specific canonicalization before
-// cmp.Diff. Legacy AC's predicate-union path for row 63/PSUITE row 6
-// agg-two-predicates is semantically stable but order-unstable on a cold
-// stack: either `a,b` or `b,a` can be emitted for the same OR-aggregation.
-// Step 3 records semantic parity there by sorting the top-level comma-delimited
-// RSQL clauses for that single sub-case only.
-//
-// D-AF-AA (2026-04-19): `PSUITE_ROW_10_CHECK_FILTER_V2 / general-pip-dict`
-// exercises the same set-semantic ordering invariant on the `in` clause's
-// element list — authz-agent produces `("row10-dict-1","row10-dict-2")`
-// deterministically across runs while legacy's freshly-recorded golden
-// captured `("row10-dict-2","row10-dict-1")`. Authz-agent determinism is
-// verified (5-run byte-identical); the divergence is a set-semantic
-// element-order swap and is normalized here by sorting the elements
-// inside every `=in=(…)` clause before diff. The same normalizer applies
-// to `PSUITE_ROW_10_CHECK_FILTER_V2 / general-pip-list` for symmetry even
-// though its authz-agent ordering currently matches the golden — a future
-// variation in either side's array handling shouldn't re-red-flag a
-// set-semantic leaf that already matches today.
+// normalizeComparable rewrites a decoded golden or answer into the form the
+// comparison sees. Every outcome that records the body of a refusal goes
+// through withoutMessage, so a golden with the body and one without compare
+// alike; every v2 outcome goes through withSortedObligations; and every
+// check/filter row goes through normalizeFilterOrder, which states which lists
+// of a filter compare without regard to their order.
 func normalizeComparable(id ParityEndpointID, subCase string, v any) any {
-	if id == PSUITE_ROW_6_CHECK_FILTER_V1 && subCase == "agg-two-predicates" {
-		return normalizeFilterTopLevelCommaTerms(v)
-	}
-	if id == PSUITE_ROW_10_CHECK_FILTER_V2 && (subCase == "general-pip-dict" || subCase == "general-pip-list") {
-		return normalizeFilterInClauseElements(v)
+	v = withoutMessage(v)
+	v = withSortedObligations(v)
+	switch id {
+	case PSUITE_ROW_6_CHECK_FILTER_V1, PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, PSUITE_ROW_10_CHECK_FILTER_V2,
+		PSUITE_ROW_10_CHECK_FILTER_V2_OUTCOME:
+		return normalizeFilterOrder(v)
 	}
 	return v
 }
 
-func normalizeFilterTopLevelCommaTerms(v any) any {
+// withSortedObligations returns a copy of v with every list of strings in its
+// obligations member sorted when v is a v2 outcome, and v itself otherwise.
+// The fields of an obligation name a set of resource fields, and a merge of
+// the obligations of several roles need not list them in one order from run
+// to run.
+func withSortedObligations(v any) any {
 	switch typed := v.(type) {
-	case *model.OldFilterEvaluationResult:
+	case *model.CheckResourceV2Outcome:
 		clone := *typed
-		clone.RsqlFilterCondition = normalizeTopLevelCommaTerms(clone.RsqlFilterCondition)
+		clone.Obligations.Value = sortedStringLists(clone.Obligations.Value)
 		return &clone
-	case *model.FilterResponse:
+	case *model.CheckResourceBulkOperationsV2Outcome:
 		clone := *typed
-		clone.RsqlFilterCondition = normalizeTopLevelCommaTerms(clone.RsqlFilterCondition)
+		clone.Obligations.Value = sortedStringLists(clone.Obligations.Value)
 		return &clone
-	default:
-		return v
+	case *model.FilterV2Outcome:
+		clone := *typed
+		clone.Obligations.Value = sortedStringLists(clone.Obligations.Value)
+		return &clone
 	}
+	return v
 }
 
-func normalizeFilterInClauseElements(v any) any {
+// sortedStringLists returns a copy of v, a decoded JSON value, in which every
+// array whose elements are all strings is sorted.
+func sortedStringLists(v any) any {
+	switch x := v.(type) {
+	case map[string]any:
+		out := make(map[string]any, len(x))
+		for key, value := range x {
+			out[key] = sortedStringLists(value)
+		}
+		return out
+	case []any:
+		out := make([]any, len(x))
+		strs := true
+		for i, e := range x {
+			out[i] = sortedStringLists(e)
+			_, ok := e.(string)
+			strs = strs && ok
+		}
+		if strs {
+			slices.SortFunc(out, func(a, b any) int { return strings.Compare(a.(string), b.(string)) })
+		}
+		return out
+	}
+	return v
+}
+
+// withoutMessage returns a copy of v with its Message cleared when v is an
+// outcome that records the body of a refusal, and v itself otherwise. The body
+// is the stand's wording, which a replacement need not match; the status beside
+// it is what the golden asserts.
+func withoutMessage(v any) any {
 	switch typed := v.(type) {
-	case *model.OldFilterEvaluationResult:
+	case *model.PolicyLoadOutcome:
 		clone := *typed
-		clone.RsqlFilterCondition = normalizeRsqlInElements(clone.RsqlFilterCondition)
+		clone.Message = nil
 		return &clone
-	case *model.FilterResponse:
+	case *model.CheckResourceOutcome:
 		clone := *typed
-		clone.RsqlFilterCondition = normalizeRsqlInElements(clone.RsqlFilterCondition)
+		clone.Message = nil
 		return &clone
-	default:
-		return v
+	case *model.FilterOutcome:
+		clone := *typed
+		clone.Message = nil
+		return &clone
+	case *model.CheckResourceBulkOutcome:
+		clone := *typed
+		clone.Message = nil
+		return &clone
+	case *model.CheckResourceBulkOperationsOutcome:
+		clone := *typed
+		clone.Message = nil
+		return &clone
+	case *model.CheckResourceV2Outcome:
+		clone := *typed
+		clone.Message = nil
+		return &clone
+	case *model.CheckResourceBulkOperationsV2Outcome:
+		clone := *typed
+		clone.Message = nil
+		return &clone
+	case *model.FilterV2Outcome:
+		clone := *typed
+		clone.Message = nil
+		return &clone
 	}
+	return v
 }
 
-func normalizeTopLevelCommaTerms(expr string) string {
-	if expr == "" || !strings.Contains(expr, ",") {
-		return expr
-	}
-
-	parts := strings.Split(expr, ",")
-	for i := range parts {
-		parts[i] = strings.TrimSpace(parts[i])
-	}
-	sort.Strings(parts)
-	return strings.Join(parts, ",")
-}
-
-// normalizeRsqlInElements sorts the element list inside every `=in=(…)`
-// clause in the supplied RSQL expression. Used by the D-AF-AA comparator
-// allowlist extension for leaves where the rendered `in` clause is
-// semantically a set — element order carries no meaning, and the legacy
-// vs authz-agent diff of `("a","b")` vs `("b","a")` is a set-equivalent
-// divergence. The implementation is deliberately tolerant of whitespace
-// between elements and preserves the surrounding predicate shape byte-
-// for-byte outside the `(…)` block.
-func normalizeRsqlInElements(expr string) string {
-	if expr == "" {
-		return expr
-	}
-
-	var out strings.Builder
-	i := 0
-	for i < len(expr) {
-		idx := strings.Index(expr[i:], "=in=(")
-		if idx < 0 {
-			out.WriteString(expr[i:])
-			return out.String()
-		}
-		out.WriteString(expr[i : i+idx+len("=in=(")])
-		start := i + idx + len("=in=(")
-		close := strings.Index(expr[start:], ")")
-		if close < 0 {
-			out.WriteString(expr[start:])
-			return out.String()
-		}
-		inner := expr[start : start+close]
-		parts := strings.Split(inner, ",")
-		for k := range parts {
-			parts[k] = strings.TrimSpace(parts[k])
-		}
-		sort.Strings(parts)
-		out.WriteString(strings.Join(parts, ", "))
-		out.WriteString(")")
-		i = start + close + 1
-	}
-	return out.String()
-}
+// ErrGoldenNotRecorded is returned by [GoldenComparator.Compare] when no answer
+// is recorded under the golden key of the case. A case whose golden is expected to exist treats it
+// as a failure; a case written ahead of its golden capture skips on it (see
+// requirePendingGolden).
+var ErrGoldenNotRecorded = errors.New("golden not recorded")
 
 // GoldenMismatchError carries the diff text so the testify assertion layer
 // can surface it via s.T().Errorf without re-invoking cmp.Diff.

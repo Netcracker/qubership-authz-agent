@@ -1,0 +1,17 @@
+{
+  "r31fix-on-behalf-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r31fix-on-behalf-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r31fix-on-behalf-http-500-check": {
+    "check-resource-v1-outcome/regular/authorization-check": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/read-as-self": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/read-without-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

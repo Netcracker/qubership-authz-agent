@@ -1,0 +1,299 @@
+{
+  "ob75-check-token": {
+    "check-resource-v1-outcome/sequence/authorization-check": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/read-as-a-user": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/declare": {"status":201,"body":null},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "user-management-call/sequence/read-as-a-user": {"calls":[]}
+  },
+  "ob75-entitlements": {
+    "check-resource-v1-outcome/sequence/read-as-a-user": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/read-as-a-user-with-the-reader-id": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/read-as-self": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "user-management-call/sequence/read-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007509",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/read-as-a-user-with-the-reader-id": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007510",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "ob75-filter-placeholders": {
+    "check-filter-v1-outcome/sequence/filter-as-a-user": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ { \"owner\": 00000000-0000-0000-0000-000000000101, \"name\": parity-reader } }",
+        "rsqlFilterCondition": "owner==00000000-0000-0000-0000-000000000101;name==parity-reader",
+        "sqlFilterCondition": "owner=00000000-0000-0000-0000-000000000101 AND name=parity-reader",
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/sequence/filter-as-self": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ { \"owner\": 00000000-0000-0000-0000-000000000101, \"name\": parity-reader } }",
+        "rsqlFilterCondition": "owner==00000000-0000-0000-0000-000000000101;name==parity-reader",
+        "sqlFilterCondition": "owner=00000000-0000-0000-0000-000000000101 AND name=parity-reader",
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/sequence/m2m-filter-as-a-user": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ { \"owner\": ${subject.id}, \"name\": service-account-parity-m2m } }",
+        "rsqlFilterCondition": "owner==${subject.id};name==service-account-parity-m2m",
+        "sqlFilterCondition": "owner=${subject.id} AND name=service-account-parity-m2m",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "user-management-call/sequence/filter-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007501",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/m2m-filter-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007502",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "ob75-filtered": {
+    "check-resource-v1-outcome/sequence/read-as-a-user": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/read-as-self": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/declare": {"status":201,"body":null},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pip-call/sequence/read-as-a-user": {"calls":1,"requestAttributes":{"resourceType":"PARITY_SUITE_OB75_FILTERED_ITEMS"}},
+    "pip-call/sequence/read-as-self": {"calls":1,"requestAttributes":{"resourceType":"PARITY_SUITE_OB75_FILTERED_ITEMS"}},
+    "user-management-call/sequence/read-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007504",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "ob75-general": {
+    "check-resource-v1-outcome/sequence/attributes-as-a-user": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/url-as-a-user": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/declare": {"status":201,"body":null},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pip-call/sequence/attributes-as-a-user": {"calls":1,"requestAttributes":{"named":"parity-ob75-name","who":"parity-ob75-user"}},
+    "user-management-call/sequence/attributes-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007506",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/url-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007505",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "ob75-mapping": {
+    "check-resource-v1-outcome/sequence/read-as-a-user": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/read-as-self": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/declare": {"status":201,"body":null},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "user-management-call/sequence/read-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007507",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "ob75-must-control-first": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null}
+  },
+  "ob75-must-control-last": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null}
+  },
+  "ob75-scope": {
+    "check-resource-v1-outcome/sequence/read-caller-region-as-a-user": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/read-requested-region-as-a-user": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/read-user-region-as-a-user": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/declare": {"status":201,"body":null},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "user-management-call/sequence/read-caller-region-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007508",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/read-requested-region-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007508",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/read-user-region-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007508",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  }
+}

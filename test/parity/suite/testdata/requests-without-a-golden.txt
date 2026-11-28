@@ -1,0 +1,433 @@
+# The goldens of the case files that the runners compare with and that are not recorded, one
+# <case id>/<subtest> per line, where <subtest> is the path of the subtest that compares the golden below the
+# case: a request name, a step name with its observation suffix, upload-1, declare-the-domain, or a request
+# name followed by /pip-calls. The api-version golden of a file with standVersion is listed as
+# <test method>/api-version. They are grouped by case file. TestCaseFiles_EveryComparedGoldenIsRecorded fails
+# on a golden that is not recorded and not listed here, and on a listed golden that is recorded. Recording a
+# listed golden removes its line. Why each is missing is not known without a stand run: a run that skipped
+# it, or a round not recorded yet.
+
+# round12/scope-outside-iterate-control.json
+scope-outside-iterate-beside-a-control/scope-read-beside-a-true-rule
+
+# round16/sets.json
+t16-28/filter
+
+# round17/order.json
+o17-t16-28-as-it-was/filter
+o17-t16-28-inner-set-not-iterating/filter
+o17-t16-28-without-the-empty-set/filter
+o17-t16-28-without-the-predicate/filter
+o17-t16-28-without-the-scoped-allow/filter
+
+# round18/order.json
+o18-empty-policy-permit-unless-deny/filter
+o18-empty-set-target-true/filter
+o18-empty-set-without-policies/filter
+o18-t16-28-as-it-was/filter
+
+# round20/context-one-grant.json
+c20-007506/a-n
+c20-007506/a-y
+
+# round20/context-two-grants.json
+c20-000282/a-n
+c20-000282/a-y
+c20-008383/a-n
+c20-008383/a-y
+
+# round20/context.json
+c20-000681/filter
+c20-001721/a-n
+c20-001721/a-y
+c20-010565/a-n
+c20-010565/a-y
+c20-021477/filter
+
+# round29/pairs-no-grant.json
+r29pairs-none-001/q
+r29pairs-none-001/qc
+
+# round29/pairs-plain.json
+r29pairs-q-003/filter
+
+# round30/fixes-order.json
+r30fix-pairs-none-001/read-i1
+r30fix-pairs-none-001/read-i2
+
+# round30/gaps-on-behalf.json
+r30gaps-on-behalf-http-500-check/authorization-check
+r30gaps-on-behalf-http-500-check/read-as-self
+
+# round31/fixes-order-children.json
+r31fix-pairs-none-001-s0n0-s0n1/read-i1
+r31fix-pairs-none-001-s0n0-s0n1/read-i2
+r31fix-pairs-none-001-s0n1-s0n2/read-i1
+r31fix-pairs-none-001-s0n1-s0n2/read-i2
+r31fix-pairs-none-001-s0n1/read-i1
+r31fix-pairs-none-001-s0n1/read-i2
+
+# round44/rawpairs-gfail.json
+rp44-082/q1
+
+# round44/sentinel-nodes.json
+sn44-dup-rules/read/pip-calls
+sn44-policy-after-deny-overrides-na/read/pip-calls
+
+# round46/diff2-11.json
+d2r46-f10-control-last-or/a-n
+
+# round46/diff2-12.json
+d2r46-f11-control-last-or/a-n
+
+# round46/diff2-13.json
+d2r46-75222b7d72/ry
+d2r46-f12-control-last-or/a-n
+
+# round46/diff2-14.json
+d2r46-f13-control-last-or/a-n
+
+# round46/diff2-16.json
+d2r46-f15-control-last-or/a-n
+
+# round46/diff2-2.json
+d2r46-f1-control-last-or/a-n
+
+# round46/diff2-21.json
+d2r46-f20-control-last-or/a-n
+
+# round46/diff2-22.json
+d2r46-88a321f61d/filter
+
+# round46/diff2-23.json
+d2r46-f22-control-last-or/a-n
+d2r46-f9b46cd165/bulk
+
+# round46/diff2-25.json
+d2r46-f24-control-last-or/a-n
+
+# round46/diff2-26.json
+d2r46-f25-control-last-or/a-n
+
+# round46/diff2-27.json
+d2r46-0d967b298e/authorization-check
+d2r46-0d967b298e/read-as-self
+d2r46-f26-control-last-or/a-n
+
+# round46/diff2-29.json
+d2r46-f28-control-last-or/a-n
+
+# round46/diff2-31.json
+d2r46-f30-control-last-or/a-n
+
+# round46/diff2-32.json
+d2r46-f31-control-last-or/a-n
+
+# round46/diff2-33.json
+d2r46-f32-control-last-or/a-n
+
+# round46/diff2-34.json
+d2r46-f33-control-last-or/a-n
+
+# round46/diff2-35.json
+d2r46-f34-control-last-or/a-n
+
+# round46/diff2-36.json
+d2r46-f35-control-last-or/a-n
+
+# round46/diff2-37.json
+d2r46-f36-control-last-or/a-n
+
+# round46/diff2-38.json
+d2r46-f37-control-last-or/a-n
+
+# round46/diff2-39.json
+d2r46-f38-control-last-or/a-n
+
+# round46/diff2-4.json
+d2r46-f3-control-last-or/a-n
+
+# round46/diff2-41.json
+d2r46-f40-control-last-or/a-n
+
+# round46/diff2-42.json
+d2r46-f41-control-last-or/a-n
+
+# round46/diff2-43.json
+d2r46-f42-control-last-or/a-n
+
+# round46/diff2-44.json
+d2r46-f43-control-last-or/a-n
+
+# round46/diff2-45.json
+d2r46-f44-control-last-or/a-n
+
+# round46/diff2-46.json
+d2r46-f45-control-last-or/a-n
+
+# round46/diff2-6.json
+d2r46-f5-control-last-or/a-n
+
+# round46/diff2-7.json
+d2r46-f6-control-last-or/a-n
+
+# round50/papfields-must.json
+p50f-set-policysetid-absent/r-absent-read
+p50f-set-policysetid-edge-space/r-edge-space-read
+p50f-set-policysetid-empty-string/r-empty-string-read
+p50f-set-policysetid-other-type/r-other-type-read
+p50f-set-policysetid-blank-space/r-blank-space-read
+p50f-set-policysetid-edge-nbsp/r-edge-nbsp-read
+p50f-set-policysetid-edge-tab/r-edge-tab-read
+
+# round50/papfields-should.json
+p50f-policy-policyid-edge-space/r-edge-space-read
+p50f-policy-policyid-empty-string/r-empty-string-read
+p50f-policy-policyid-null/r-null-read
+p50f-policy-policyid-other-type/r-other-type-read
+p50f-policy-policyid-blank-space/r-blank-space-read
+p50f-policy-policyid-edge-nbsp/r-edge-nbsp-read
+p50f-policy-policyid-edge-tab/r-edge-tab-read
+p50f-rule-ruleid-edge-space/r-edge-space-read
+p50f-rule-ruleid-empty-string/r-empty-string-read
+p50f-rule-ruleid-null/r-null-read
+p50f-rule-ruleid-other-type/r-other-type-read
+p50f-rule-ruleid-blank-space/r-blank-space-read
+p50f-rule-ruleid-edge-nbsp/r-edge-nbsp-read
+p50f-rule-ruleid-edge-tab/r-edge-tab-read
+
+# round54/papfields-should.json
+p54f-set-policysetid-blank-ff/r-blank-ff-read
+p54f-set-policysetid-blank-lf/r-blank-lf-read
+p54f-set-policysetid-blank-lsep/r-blank-lsep-read
+p54f-set-policysetid-blank-nbsp/r-blank-nbsp-read
+p54f-set-policysetid-blank-tab/r-blank-tab-read
+p54f-set-policysetid-blank-vt/r-blank-vt-read
+p54f-set-policysetid-edge-cr/r-edge-cr-read
+p54f-set-policysetid-edge-ff/r-edge-ff-read
+p54f-set-policysetid-edge-lf/r-edge-lf-read
+p54f-set-policysetid-edge-lsep/r-edge-lsep-read
+p54f-policy-policyid-blank-ff/r-blank-ff-read
+p54f-policy-policyid-blank-lf/r-blank-lf-read
+p54f-policy-policyid-blank-lsep/r-blank-lsep-read
+p54f-policy-policyid-blank-nbsp/r-blank-nbsp-read
+p54f-policy-policyid-blank-tab/r-blank-tab-read
+p54f-policy-policyid-blank-vt/r-blank-vt-read
+p54f-policy-policyid-edge-cr/r-edge-cr-read
+p54f-policy-policyid-edge-ff/r-edge-ff-read
+p54f-policy-policyid-edge-lf/r-edge-lf-read
+p54f-policy-policyid-edge-lsep/r-edge-lsep-read
+p54f-rule-ruleid-blank-ff/r-blank-ff-read
+p54f-rule-ruleid-blank-lf/r-blank-lf-read
+p54f-rule-ruleid-blank-lsep/r-blank-lsep-read
+p54f-rule-ruleid-blank-nbsp/r-blank-nbsp-read
+p54f-rule-ruleid-blank-tab/r-blank-tab-read
+p54f-rule-ruleid-blank-vt/r-blank-vt-read
+p54f-rule-ruleid-edge-cr/r-edge-cr-read
+p54f-rule-ruleid-edge-ff/r-edge-ff-read
+p54f-rule-ruleid-edge-lf/r-edge-lf-read
+p54f-rule-ruleid-edge-lsep/r-edge-lsep-read
+
+# round58/diff2-3.json
+d2r58-5554977a26/ry
+
+# round58/diff2-8.json
+d2r58-87b26fbf0b/q
+d2r58-87b26fbf0b/qc
+
+# round58/spell-data.json
+sp58-data-general-more-num-beyond-double-or/a-n
+
+# round59/diff2pap-must.json
+d2p59-28430c0245/target-raw-sets-read-raw
+
+# round67/open-single.json
+op67-active-policy-twin/filter
+op67-inactive-policy-allow/filter
+
+# round67/owner-v18g-null-body.json
+v18g-null-body-dup/check-list-in-region-r1/pip-calls
+v18g-null-body-pud/check-list-in-region-r1/pip-calls
+v18g-null-body-do/check-list-in-region-r1/pip-calls
+v18g-null-body-po/check-list-in-region-r1/pip-calls
+
+# round67/owner-v18g-one-grant.json
+v18g-one-grant-dup/check-list-in-region-r1/pip-calls
+v18g-one-grant-pud/check-list-in-region-r1/pip-calls
+v18g-one-grant-do/check-list-in-region-r1/pip-calls
+v18g-one-grant-po/check-list-in-region-r1/pip-calls
+
+# round67/owner-v18g-scope-list-empty.json
+v18g-scope-list-empty-dup/check-list-in-region-r1/pip-calls
+v18g-scope-list-empty-pud/check-list-in-region-r1/pip-calls
+v18g-scope-list-empty-do/check-list-in-region-r1/pip-calls
+v18g-scope-list-empty-po/check-list-in-region-r1/pip-calls
+
+# round67/rawpairs-g0.json
+rp67-012/q0
+rp67-012/q1
+
+# round67/rawpairs-g2.json
+rp67-041/q1
+
+# round68/tokensubject-claims.json
+r68ts-bare-service/id-is-empty-text-a-n
+r68ts-bare-service/id-is-empty-text-a-y
+r68ts-bare-service/id-is-empty-text-deny
+r68ts-bare-service/name-is-empty-text-a-n
+r68ts-bare-service/name-is-empty-text-a-y
+r68ts-bare-service/name-is-empty-text-deny
+r68ts-bare-service/scopes-contain-openid-a-n
+r68ts-bare-service/scopes-contain-openid-a-y
+r68ts-bare-service/scopes-contain-openid-deny
+r68ts-bare-service/service-account-is-false-a-n
+r68ts-bare-service/service-account-is-false-a-y
+r68ts-bare-service/service-account-is-false-deny
+r68ts-bare-service/token-accepted
+r68ts-bare-service/type-is-service-a-n
+r68ts-bare-service/type-is-service-a-y
+r68ts-bare-service/type-is-service-deny
+r68ts-m2m/service-account-is-null-a-n
+r68ts-m2m/service-account-is-null-a-y
+r68ts-m2m/service-account-is-null-deny
+r68ts-m2m/token-accepted
+r68ts-many/id-is-sub-text-a-n
+r68ts-many/id-is-sub-text-a-y
+r68ts-many/id-is-sub-text-deny
+r68ts-many/name-is-preferred-username-text-a-n
+r68ts-many/name-is-preferred-username-text-a-y
+r68ts-many/name-is-preferred-username-text-deny
+r68ts-many/token-accepted
+r68ts-one/id-is-sub-text-a-n
+r68ts-one/id-is-sub-text-a-y
+r68ts-one/id-is-sub-text-deny
+r68ts-one/name-is-preferred-username-text-a-n
+r68ts-one/name-is-preferred-username-text-a-y
+r68ts-one/name-is-preferred-username-text-deny
+r68ts-one/token-accepted
+r68ts-scalar-roles/roles-contain-reader-a-n
+r68ts-scalar-roles/roles-contain-reader-a-y
+r68ts-scalar-roles/roles-contain-reader-deny
+r68ts-scalar-roles/token-accepted
+
+# round69/filtersub-classes-mirrored-5.json
+fs69-c-inv-iterN-11-5/filtersub
+
+# round69/open-filter.json
+op69-inactive-deny-pred/filter
+op69-parens-deny-and/filter
+op69-parens-deny-escaped/filter
+
+# round69/rerun-rp67-041.json
+rr69-041-as-recorded/q1
+rr69-041-q1-alone/q1
+rr69-041-q1-classified/q1-rp10
+rr69-041-q1-classified/q1-rp11
+
+# round72/filter-order.json
+f72-order-s13-s1/q1
+
+# round72/filter-render.json
+f72-render-function-spaced/filter
+f72-render-function-tight/filter
+f72-render-pip-ab/filter
+f72-render-pip-ba/filter
+
+# round75/failed-source-iterate.json
+v75i-failed-and-row-beside-granted/row-1
+v75i-failed-and-row-beside-granted/row-2
+
+# round76/axes-100.json
+ax76-100-d2r46-f3-control-last-or/a-n-check-resource-v2
+
+# round76/axes-104.json
+ax76-104-d2r46-f3-control-last-or/a-n-bulk-v1
+
+# round76/axes-107.json
+ax76-107-d2r46-f3-control-last-or/a-n-bulk-operations-v1
+
+# round76/axes-110.json
+ax76-110-d2r46-f3-control-last-or/a-n-bulk-operations-v2
+
+# round76/axes-162.json
+ax76-162-o22-rules-deny-unless-permit/filter
+ax76-162-o22-rules-deny-unless-permit/read
+
+# round76/axes-163.json
+ax76-163-r58ord-f9b46cd165/bulk-mty
+
+# round76/axes-164.json
+ax76-164-d2r46-f3-control-last-or/a-n
+
+# round76/axes-165.json
+ax76-165-o22-policies-deny-unless-permit/filter
+ax76-165-o22-policies-deny-unless-permit/read
+
+# round77/axes-112.json
+ax77-112-c20-021477/filter
+
+# round77/axes-116.json
+ax77-116-c20-000681/filter
+ax77-116-c20-001721/a-n
+ax77-116-c20-001721/a-y
+ax77-116-c20-010565/a-n
+ax77-116-c20-010565/a-y
+ax77-116-c20-021477/filter
+
+# round77/axes-129.json
+ax77-129-c20-000282/a-n
+ax77-129-c20-000282/a-y
+
+# round77/axes-137.json
+ax77-137-c20-021477/filter
+
+# round77/axes-155.json
+ax77-155-c20-000282/a-n
+ax77-155-c20-000282/a-y
+
+# round77/axes-53.json
+ax77-53-op67-inactive-policy-allow/filter
+
+# round77/axes-55.json
+ax77-55-t16-28/filter
+
+# round77/axes-89.json
+ax77-89-ax76-101-o22-rules-deny-unless-permit/filter
+ax77-89-ax76-101-o22-rules-deny-unless-permit/read
+
+# round77/axes-90.json
+ax77-90-r58ord-f9b46cd165/bulk-mty
+
+# round77/axes-91.json
+ax77-91-ax76-101-o22-policies-deny-unless-permit/filter
+ax77-91-ax76-101-o22-policies-deny-unless-permit/read-check-resource-v2
+
+# round78/axes-12.json
+ax78-12-o22-rules-deny-unless-permit/filter
+ax78-12-o22-rules-deny-unless-permit/read
+
+# round78/axes-13.json
+ax78-13-r58ord-f9b46cd165/bulk-mtn
+ax78-13-r58ord-f9b46cd165/bulk-mty
+
+# round78/axes-14.json
+ax78-14-o22-policies-deny-unless-permit/filter
+ax78-14-o22-policies-deny-unless-permit/read
+
+# round78/axes-34.json
+ax78-34-c20-021477/filter
+
+# round78/axes-35.json
+ax78-35-c20-021477/filter
+
+# round78/axes-36.json
+ax78-36-c20-021477/filter
+
+# round78/axes-39.json
+ax78-39-c20-021477/filter
+
+# round78/axes-44.json
+ax78-44-c20-000681/filter
+ax78-44-c20-001721/a-n
+ax78-44-c20-001721/a-y
+ax78-44-c20-021477/filter

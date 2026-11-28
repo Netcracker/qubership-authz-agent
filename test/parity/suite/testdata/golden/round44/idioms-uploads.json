@@ -1,0 +1,97 @@
+{
+  "id44-bind-bool-text-0": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-bind-bool-text-1": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-bind-int-text-0": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-blank-claim-0": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-blank-claim-1": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-blank-claim-2": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-blank-forwarded-0": {
+    "load-simplified-policies-v1/isolated": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+    }
+  },
+  "id44-blank-forwarded-1": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-blank-header-0": {
+    "load-simplified-policies-v1/isolated": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+    }
+  },
+  "id44-blank-header-1": {
+    "load-simplified-policies-v1/isolated": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+    }
+  },
+  "id44-blank-header-2": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-control-first": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-control-last": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-forwarded-name-trim-0": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-forwarded-name-trim-1": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-forwarded-name-trim-2": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-forwarded-split-0": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-header-name-trim-0": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-header-name-trim-1": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-header-name-trim-2": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "id44-http-method-case-0": {
+    "load-simplified-policies-v1/isolated": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityIdiomHttpMethodCase0'"
+    }
+  },
+  "id44-uuid-text-0": {
+    "load-simplified-policies-v1/isolated": {"status":400,"message":{"message":"Simplified policy id=1-1-1-1-1 must be a valid UUID"}}
+  }
+}

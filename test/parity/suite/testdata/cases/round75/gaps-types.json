@@ -1,0 +1,855 @@
+{
+ "about": "Round 75: a type, an operation or an element of operations that is not a JSON string, on the bulk routes. One case in a tenant of its own (parity-g75-types-bulk). Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "g75-types-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_G75_TYPES_CONTROL_FIRST",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_TYPES_CONTROL_FIRST'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g75-types-bulk",
+   "about": "Sets allow READ to anyone on the case's type and on the types 7501, true, [7503] and {k=7504}, the texts a number, a boolean, a list and an object could take. Each request carries an odd item, whose type, operation or one of operations is a number, a boolean, a list, an object or null, beside a plain item: on check/resource/bulk, on bulk/operations v1 and, for operations, v2 (whose type is one string for the request). Jackson binds a number or a boolean to a String as its text and refuses a list or an object with 400 for the whole body; a model that refuses every non-string, leaves the item out, or takes the Java text answers otherwise.",
+   "resourceType": "PARITY_SUITE_G75_TYPES_BULK",
+   "tenant": "parity-g75-types-bulk",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-g75-types-bulk"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:bulk-type-number",
+      "decide:bulk-operation-number",
+      "decide:operations-type-number",
+      "decide:operations-element-number",
+      "decide:operations-v2-element-number",
+      "decide:bulk-type-boolean",
+      "decide:bulk-operation-boolean",
+      "decide:operations-type-boolean",
+      "decide:operations-element-boolean",
+      "decide:operations-v2-element-boolean",
+      "decide:bulk-type-list",
+      "decide:bulk-operation-list",
+      "decide:operations-type-list",
+      "decide:operations-element-list",
+      "decide:operations-v2-element-list",
+      "decide:bulk-type-object",
+      "decide:bulk-operation-object",
+      "decide:operations-type-object",
+      "decide:operations-element-object",
+      "decide:operations-v2-element-object",
+      "decide:bulk-type-null",
+      "decide:bulk-operation-null",
+      "decide:operations-type-null",
+      "decide:operations-element-null",
+      "decide:operations-v2-element-null",
+      "decide:operations-not-a-list"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "dc9321d0-715b-b5d2-9684-1e930fabdc18",
+       "name": "g75-types-bulk own",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_G75_TYPES_BULK'",
+       "policies": [
+        {
+         "policyId": "71a05134-9959-c20b-8352-f5aee717606a",
+         "name": "g75-types-bulk anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "7f6f07b5-e456-2b98-3016-63274e049bcc",
+           "name": "g75-types-bulk any-own",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "82a26e5b-7b2a-3576-b553-2d463f93457d",
+       "name": "g75-types-bulk t0",
+       "status": "ACTIVE",
+       "target": "resourceType == '7501'",
+       "policies": [
+        {
+         "policyId": "a1139937-e922-59d2-d945-780b278aeba3",
+         "name": "g75-types-bulk anyone-0",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "8554f509-31d5-b587-d701-a587edc46d17",
+           "name": "g75-types-bulk any-0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "c0110f04-8bab-a569-2362-ea386b2d878b",
+       "name": "g75-types-bulk t1",
+       "status": "ACTIVE",
+       "target": "resourceType == 'true'",
+       "policies": [
+        {
+         "policyId": "6baab03a-cca7-6e90-3068-75f7eb6d1f82",
+         "name": "g75-types-bulk anyone-1",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "3db1cf22-eb2a-c3a4-fd3a-1298ef532f46",
+           "name": "g75-types-bulk any-1",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "0690db68-2409-77b8-bb99-59c2ba841270",
+       "name": "g75-types-bulk t2",
+       "status": "ACTIVE",
+       "target": "resourceType == '[7503]'",
+       "policies": [
+        {
+         "policyId": "67ca3c54-94ec-a06c-6218-44ad0f1ed3f4",
+         "name": "g75-types-bulk anyone-2",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "26bcd7aa-9593-cc35-3cc9-cdf292c77ee4",
+           "name": "g75-types-bulk any-2",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "fcf06b9f-b9ba-1dc0-0d86-4d4530a6138b",
+       "name": "g75-types-bulk t3",
+       "status": "ACTIVE",
+       "target": "resourceType == '{k=7504}'",
+       "policies": [
+        {
+         "policyId": "7b4a73fb-f628-fb89-9a1b-4d4398cb23ca",
+         "name": "g75-types-bulk anyone-3",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "2a9ff380-d0ba-8ff0-ca22-27a2247651cb",
+           "name": "g75-types-bulk any-3",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "bulk-type-number",
+       "bulk": [
+        {
+         "id": "odd",
+         "type": 7501,
+         "operation": "READ",
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operation": "READ",
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "bulk-operation-number",
+       "bulk": [
+        {
+         "id": "odd",
+         "operation": 7501,
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operation": "READ",
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-type-number",
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "type": 7501,
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-element-number",
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "operations": [
+          7501,
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-v2-element-number",
+       "v2": {},
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "operations": [
+          7501,
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "bulk-type-boolean",
+       "bulk": [
+        {
+         "id": "odd",
+         "type": true,
+         "operation": "READ",
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operation": "READ",
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "bulk-operation-boolean",
+       "bulk": [
+        {
+         "id": "odd",
+         "operation": true,
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operation": "READ",
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-type-boolean",
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "type": true,
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-element-boolean",
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "operations": [
+          true,
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-v2-element-boolean",
+       "v2": {},
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "operations": [
+          true,
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "bulk-type-list",
+       "bulk": [
+        {
+         "id": "odd",
+         "type": [
+          7503
+         ],
+         "operation": "READ",
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operation": "READ",
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "bulk-operation-list",
+       "bulk": [
+        {
+         "id": "odd",
+         "operation": [
+          7503
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operation": "READ",
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-type-list",
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "type": [
+          7503
+         ],
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-element-list",
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "operations": [
+          [
+           7503
+          ],
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-v2-element-list",
+       "v2": {},
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "operations": [
+          [
+           7503
+          ],
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "bulk-type-object",
+       "bulk": [
+        {
+         "id": "odd",
+         "type": {
+          "k": 7504
+         },
+         "operation": "READ",
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operation": "READ",
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "bulk-operation-object",
+       "bulk": [
+        {
+         "id": "odd",
+         "operation": {
+          "k": 7504
+         },
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operation": "READ",
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-type-object",
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "type": {
+          "k": 7504
+         },
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-element-object",
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "operations": [
+          {
+           "k": 7504
+          },
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-v2-element-object",
+       "v2": {},
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "operations": [
+          {
+           "k": 7504
+          },
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "bulk-type-null",
+       "bulk": [
+        {
+         "id": "odd",
+         "type": null,
+         "operation": "READ",
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operation": "READ",
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "bulk-operation-null",
+       "bulk": [
+        {
+         "id": "odd",
+         "operation": null,
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operation": "READ",
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-type-null",
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "type": null,
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-element-null",
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "operations": [
+          null,
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-v2-element-null",
+       "v2": {},
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "operations": [
+          null,
+          "READ"
+         ],
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      },
+      {
+       "name": "operations-not-a-list",
+       "bulkOperations": [
+        {
+         "id": "odd",
+         "operations": "READ",
+         "resource": {
+          "id": "odd"
+         }
+        },
+        {
+         "id": "plain",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "plain"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "g75-types-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_G75_TYPES_CONTROL_LAST",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_G75_TYPES_CONTROL_LAST'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r75",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

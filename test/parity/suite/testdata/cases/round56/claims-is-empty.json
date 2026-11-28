@@ -1,0 +1,647 @@
+{
+ "about": "Round 56: whether IS EMPTY over a null value makes the rule false, ends it, or fails the whole request, for four carriers of null. Each case runs in a tenant of its own. Every step that decides is followed by both raw reads of the v3 export, policySets and pips. They were added after the round was recorded, so that the export-fed profile can compare most decisions with legacy.",
+ "standVersion": true,
+ "pins": {
+  "/api/v1/pip/p56c-null-body": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  }
+ },
+ "cases": [
+  {
+   "id": "p56c-is-empty-control-first",
+   "about": "Control: an ACTIVE set whose only rule allows; the check is true unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_P56C_IS_EMPTY_CONTROL_FIRST",
+   "tenant": "parity-p56c-is-empty-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p56c-is-empty-control-first"
+     },
+     "observe": [
+      "status",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "2aacdf55-1fd1-b3b0-aca0-a32f32f3a049",
+       "name": "p56c-is-empty-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_IS_EMPTY_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "38f5a18f-e5ee-74c4-2ee0-88258675a76b",
+         "name": "p56c-is-empty-control-first set-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "9913d875-0a28-5257-9202-ed842d2f641c",
+           "name": "p56c-is-empty-control-first allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "p56"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p56c-is-empty-without-url",
+   "about": "IS EMPTY over a GENERAL declared with beanName and no url, which gives no value. Beside a true ALLOW rule the request is true if the probe is false or ends its rule, false if it fails the request; alone as a DENY rule it is true if the probe is false or ends its rule, false if it holds or fails the request.",
+   "resourceType": "PARITY_SUITE_P56C_IS_EMPTY_WITHOUT_URL",
+   "tenant": "parity-p56c-is-empty-without-url",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P56C_IS_EMPTY_WITHOUT_URL"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP56cWithoutUrl",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "beanName": "parityP56cWithoutUrl"
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p56c-is-empty-without-url"
+     },
+     "observe": [
+      "status",
+      "decide:beside-a-true-rule",
+      "decide:alone-in-a-deny-rule"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "666ef8a4-6a4a-9e8e-d95c-9f69604cfadf",
+       "name": "p56c-is-empty-without-url beside",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_IS_EMPTY_WITHOUT_URL_BESIDE'",
+       "policies": [
+        {
+         "policyId": "70781c81-c88c-5f9e-9284-15e1991c8962",
+         "name": "p56c-is-empty-without-url beside-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "4302db5a-2901-990f-5c1c-2d735b9763a0",
+           "name": "p56c-is-empty-without-url beside-probe",
+           "target": "true",
+           "condition": "subject.parityP56cWithoutUrl IS EMPTY",
+           "effect": "ALLOW"
+          },
+          {
+           "ruleId": "bf64aee9-2633-b6a0-3aa1-7681ebf8ea0d",
+           "name": "p56c-is-empty-without-url beside-allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_OVERRIDES"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_OVERRIDES"
+      },
+      {
+       "policySetId": "b0a11895-5113-0d0c-9b50-bae299d09aec",
+       "name": "p56c-is-empty-without-url deny",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_IS_EMPTY_WITHOUT_URL_DENY'",
+       "policies": [
+        {
+         "policyId": "c7419226-a2ec-5009-b220-cdce1dce4cf8",
+         "name": "p56c-is-empty-without-url deny-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "cfc2b2d1-43da-f6ed-8c41-3a3aefa45327",
+           "name": "p56c-is-empty-without-url deny-probe",
+           "target": "true",
+           "condition": "subject.parityP56cWithoutUrl IS EMPTY",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "beside-a-true-rule",
+       "type": "PARITY_SUITE_P56C_IS_EMPTY_WITHOUT_URL_BESIDE",
+       "resource": {
+        "id": "p56"
+       }
+      },
+      {
+       "name": "alone-in-a-deny-rule",
+       "type": "PARITY_SUITE_P56C_IS_EMPTY_WITHOUT_URL_DENY",
+       "resource": {
+        "id": "p56"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p56c-is-empty-null-body",
+   "about": "IS EMPTY over a GENERAL whose body is null, in the same two forms.",
+   "resourceType": "PARITY_SUITE_P56C_IS_EMPTY_NULL_BODY",
+   "tenant": "parity-p56c-is-empty-null-body",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P56C_IS_EMPTY_NULL_BODY"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP56cNullBody",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/p56c-null-body",
+       "requestAttributes": {
+        "case": "p56c-is-empty-null-body"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p56c-is-empty-null-body"
+     },
+     "observe": [
+      "status",
+      "decide:beside-a-true-rule",
+      "decide:alone-in-a-deny-rule"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "5f1c4986-393a-933f-c141-418d251150f1",
+       "name": "p56c-is-empty-null-body beside",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_IS_EMPTY_NULL_BODY_BESIDE'",
+       "policies": [
+        {
+         "policyId": "43533574-c66e-fda9-61e2-40fc0787117f",
+         "name": "p56c-is-empty-null-body beside-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "3f554c15-546e-b5e0-f8bb-19cc85d88d78",
+           "name": "p56c-is-empty-null-body beside-probe",
+           "target": "true",
+           "condition": "subject.parityP56cNullBody IS EMPTY",
+           "effect": "ALLOW"
+          },
+          {
+           "ruleId": "3890ae7b-a4b0-dcbe-fcfe-a4dac7122dd9",
+           "name": "p56c-is-empty-null-body beside-allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_OVERRIDES"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_OVERRIDES"
+      },
+      {
+       "policySetId": "ae430bec-4598-9a23-f824-ccd451b8d335",
+       "name": "p56c-is-empty-null-body deny",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_IS_EMPTY_NULL_BODY_DENY'",
+       "policies": [
+        {
+         "policyId": "068cd417-487d-e5f4-0248-2b1107c68f75",
+         "name": "p56c-is-empty-null-body deny-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "8c6b4dda-221d-d43e-875d-c413e10edc7d",
+           "name": "p56c-is-empty-null-body deny-probe",
+           "target": "true",
+           "condition": "subject.parityP56cNullBody IS EMPTY",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "beside-a-true-rule",
+       "type": "PARITY_SUITE_P56C_IS_EMPTY_NULL_BODY_BESIDE",
+       "resource": {
+        "id": "p56"
+       }
+      },
+      {
+       "name": "alone-in-a-deny-rule",
+       "type": "PARITY_SUITE_P56C_IS_EMPTY_NULL_BODY_DENY",
+       "resource": {
+        "id": "p56"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p56c-is-empty-absent-attribute",
+   "about": "IS EMPTY over a resource attribute the resource does not have, in the same two forms.",
+   "resourceType": "PARITY_SUITE_P56C_IS_EMPTY_ABSENT_ATTRIBUTE",
+   "tenant": "parity-p56c-is-empty-absent-attribute",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p56c-is-empty-absent-attribute"
+     },
+     "observe": [
+      "status",
+      "decide:beside-a-true-rule",
+      "decide:alone-in-a-deny-rule"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "baef20bd-e3a9-382c-d2a9-05315fdc7874",
+       "name": "p56c-is-empty-absent-attribute beside",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_IS_EMPTY_ABSENT_ATTRIBUTE_BESIDE'",
+       "policies": [
+        {
+         "policyId": "a01f4480-1f0d-9012-9451-6f00b258d12e",
+         "name": "p56c-is-empty-absent-attribute beside-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "ffe3f322-8047-e705-86ef-95a73207e85b",
+           "name": "p56c-is-empty-absent-attribute beside-probe",
+           "target": "true",
+           "condition": "resource.x IS EMPTY",
+           "effect": "ALLOW"
+          },
+          {
+           "ruleId": "5477094e-6764-da8d-a7a5-ddc120d39249",
+           "name": "p56c-is-empty-absent-attribute beside-allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_OVERRIDES"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_OVERRIDES"
+      },
+      {
+       "policySetId": "845b0efc-7945-214e-91e5-015e1a4ea65e",
+       "name": "p56c-is-empty-absent-attribute deny",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_IS_EMPTY_ABSENT_ATTRIBUTE_DENY'",
+       "policies": [
+        {
+         "policyId": "ef8e92da-bf1a-1204-133d-85e56f8d1a48",
+         "name": "p56c-is-empty-absent-attribute deny-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "c1c2c891-1efb-f07d-6487-b11ae9eba174",
+           "name": "p56c-is-empty-absent-attribute deny-probe",
+           "target": "true",
+           "condition": "resource.x IS EMPTY",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "beside-a-true-rule",
+       "type": "PARITY_SUITE_P56C_IS_EMPTY_ABSENT_ATTRIBUTE_BESIDE",
+       "resource": {
+        "id": "p56"
+       }
+      },
+      {
+       "name": "alone-in-a-deny-rule",
+       "type": "PARITY_SUITE_P56C_IS_EMPTY_ABSENT_ATTRIBUTE_DENY",
+       "resource": {
+        "id": "p56"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p56c-is-empty-null-attribute",
+   "about": "IS EMPTY over a resource attribute that is null, in the same two forms. Earlier answers show it false, so both requests are true unless the forms fail.",
+   "resourceType": "PARITY_SUITE_P56C_IS_EMPTY_NULL_ATTRIBUTE",
+   "tenant": "parity-p56c-is-empty-null-attribute",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p56c-is-empty-null-attribute"
+     },
+     "observe": [
+      "status",
+      "decide:beside-a-true-rule",
+      "decide:alone-in-a-deny-rule"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "c0c98241-8a3b-a8fa-d13e-c6c703aadd31",
+       "name": "p56c-is-empty-null-attribute beside",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_IS_EMPTY_NULL_ATTRIBUTE_BESIDE'",
+       "policies": [
+        {
+         "policyId": "9f6bddd8-1dea-8302-2302-82231432f93d",
+         "name": "p56c-is-empty-null-attribute beside-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "387c1c75-fdf5-e7b9-fd09-2d76e42a171e",
+           "name": "p56c-is-empty-null-attribute beside-probe",
+           "target": "true",
+           "condition": "resource.x IS EMPTY",
+           "effect": "ALLOW"
+          },
+          {
+           "ruleId": "b19a659b-e614-2783-f02d-c9d0f3aceb7f",
+           "name": "p56c-is-empty-null-attribute beside-allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_OVERRIDES"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_OVERRIDES"
+      },
+      {
+       "policySetId": "f44ffb09-8063-f27a-6b4b-3b6fc04bd161",
+       "name": "p56c-is-empty-null-attribute deny",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_IS_EMPTY_NULL_ATTRIBUTE_DENY'",
+       "policies": [
+        {
+         "policyId": "3a761c15-5c4f-3d70-63d7-97ca3d06c385",
+         "name": "p56c-is-empty-null-attribute deny-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "51541ceb-51b9-fc17-7752-84a06a71db39",
+           "name": "p56c-is-empty-null-attribute deny-probe",
+           "target": "true",
+           "condition": "resource.x IS EMPTY",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "beside-a-true-rule",
+       "type": "PARITY_SUITE_P56C_IS_EMPTY_NULL_ATTRIBUTE_BESIDE",
+       "resource": {
+        "id": "p56",
+        "x": null
+       }
+      },
+      {
+       "name": "alone-in-a-deny-rule",
+       "type": "PARITY_SUITE_P56C_IS_EMPTY_NULL_ATTRIBUTE_DENY",
+       "resource": {
+        "id": "p56",
+        "x": null
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p56c-is-empty-control-last",
+   "about": "Control: an ACTIVE set whose only rule allows; the check is true unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_P56C_IS_EMPTY_CONTROL_LAST",
+   "tenant": "parity-p56c-is-empty-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p56c-is-empty-control-last"
+     },
+     "observe": [
+      "status",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "3a2e2f70-d128-c133-7737-8073e5cb31dc",
+       "name": "p56c-is-empty-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_IS_EMPTY_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "1ee8bf9c-4581-6854-bbe5-860aff0e26af",
+         "name": "p56c-is-empty-control-last set-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "fc84534a-6d91-96dc-3e0b-ba19deac0570",
+           "name": "p56c-is-empty-control-last allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "p56"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}

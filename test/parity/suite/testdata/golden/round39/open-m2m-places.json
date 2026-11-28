@@ -1,0 +1,28 @@
+{
+  "r39open-m2m-iterate-rule-condition": {
+    "check-resource-v1-outcome/regular/read-a-y": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read-a-y": {"calls":0,"requestAttributes":null}
+  },
+  "r39open-m2m-nested-rule-condition": {
+    "check-resource-v1-outcome/regular/read-a-y": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read-a-y": {"calls":0,"requestAttributes":null}
+  },
+  "r39open-m2m-rule-condition": {
+    "check-resource-v1-outcome/regular/read-a-y": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read-a-y": {"calls":0,"requestAttributes":null}
+  },
+  "r39openm2mplaces-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r39openm2mplaces-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

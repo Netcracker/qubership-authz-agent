@@ -1,0 +1,10 @@
+{
+  "set-target-reads-missing-attribute-with-distinct-policy-ids": {
+    "check-resource-v1-outcome/regular/both-attributes-present": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/sibling-allows": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "two-sets-whose-policies-share-one-id": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  }
+}

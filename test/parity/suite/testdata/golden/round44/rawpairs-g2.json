@@ -1,0 +1,197 @@
+{
+  "rp44-054": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-055": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-056": {
+    "check-filter-v1-outcome/regular/q1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/after-q1": {"status":200,"decision":{"READ":["rp10","rp11"]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":200,"decision":{"READ":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q3": {"status":200,"decision":{"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/after-q0": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-057": {
+    "check-filter-v1-outcome/regular/q2": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q1": {"status":200,"decision":{"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/q0": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/q3": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-v1-outcome/regular/q4": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-058": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-059": {
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-operations-v1-outcome/regular/q1": {"status":200,"decision":{"UPDATE":[]}},
+    "check-resource-v1-outcome/regular/q2": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-060": {
+    "check-filter-v1-outcome/regular/q0": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/q3": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/after-q0": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/regular/q2": {"status":200,"allowed":[]},
+    "check-resource-v1-outcome/regular/after-q1": {"status":400,"decision":false,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-v1-outcome/regular/q1": {"status":200,"decision":false},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-061": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-062": {
+    "check-filter-v1-outcome/regular/after-q0": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/q3": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/after-q1": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-operations-v1-outcome/regular/q1": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/q0": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-063": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-064": {
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":200,"decision":{"":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"READ":[]}},
+    "check-resource-v1-outcome/regular/q1": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-065": {
+    "check-filter-v1-outcome/regular/q0": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q1": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-v1-outcome/regular/q2": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-066": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-067": {
+    "check-resource-bulk-v1-outcome/regular/q0": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/q2": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/regular/q3": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-v1-outcome/regular/q1": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-g2-control-first": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp44-g2-control-last": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

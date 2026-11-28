@@ -1,0 +1,359 @@
+{
+  "substitution-general-boolean": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_BOOLEAN.a.eq(\"true\")",
+        "mongodbFilterCondition": "{ { \"a\": [ \"true\" ] } }",
+        "rsqlFilterCondition": "a==\"true\"",
+        "sqlFilterCondition": "a='true'",
+        "customFilterCondition": {
+          "logic": {
+            "path": "8180e343-c9d3-9f42-e400-90ba04020f39"
+          },
+          "data": {
+            "8180e343-c9d3-9f42-e400-90ba04020f39": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": [
+                  true
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "substitution-general-empty-list": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_EMPTY_LIST.a.eq(\"\")",
+        "mongodbFilterCondition": "{ { \"a\": [  ] } }",
+        "rsqlFilterCondition": "a==",
+        "sqlFilterCondition": "a=NULL",
+        "customFilterCondition": {
+          "logic": {
+            "path": "2628f35c-fce9-83c8-cd87-8e81361fd388"
+          },
+          "data": {
+            "2628f35c-fce9-83c8-cd87-8e81361fd388": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "substitution-general-failed": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "substitution-general-list": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_LIST.a.eq(\"a\", \"b\")",
+        "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"a\" }, { \"$uuid\": \"b\" } ] } }",
+        "rsqlFilterCondition": "a==\"a\", \"b\"",
+        "sqlFilterCondition": "a='a', 'b'",
+        "customFilterCondition": {
+          "logic": {
+            "path": "401c375c-60f5-d85d-6495-bb6e640194bf"
+          },
+          "data": {
+            "401c375c-60f5-d85d-6495-bb6e640194bf": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": [
+                  "a",
+                  "b"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "substitution-general-null": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_NULL.a.eq(${subject.paritySubNull})",
+        "mongodbFilterCondition": "{ { \"a\": ${subject.paritySubNull} } }",
+        "rsqlFilterCondition": "a==${subject.paritySubNull}",
+        "sqlFilterCondition": "a=${subject.paritySubNull}",
+        "customFilterCondition": {
+          "logic": {
+            "path": "4c3a20bd-7ab0-12a5-336c-dc6477b424af"
+          },
+          "data": {
+            "4c3a20bd-7ab0-12a5-336c-dc6477b424af": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": "subject.paritySubNull"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "substitution-general-number": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_NUMBER.a.eq(\"1000\")",
+        "mongodbFilterCondition": "{ { \"a\": [ \"1000\" ] } }",
+        "rsqlFilterCondition": "a==\"1000\"",
+        "sqlFilterCondition": "a='1000'",
+        "customFilterCondition": {
+          "logic": {
+            "path": "442d1c30-19ea-6449-d525-73faa0a81c59"
+          },
+          "data": {
+            "442d1c30-19ea-6449-d525-73faa0a81c59": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": [
+                  1000
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "substitution-general-object": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_OBJECT.a.eq(${subject.paritySubObject})",
+        "mongodbFilterCondition": "{ { \"a\": ${subject.paritySubObject} } }",
+        "rsqlFilterCondition": "a==${subject.paritySubObject}",
+        "sqlFilterCondition": "a=${subject.paritySubObject}",
+        "customFilterCondition": {
+          "logic": {
+            "path": "beb02dff-ebba-7a31-2478-d767b1132525"
+          },
+          "data": {
+            "beb02dff-ebba-7a31-2478-d767b1132525": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": "subject.paritySubObject"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "substitution-general-single-element-list": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_SINGLE_ELEMENT_LIST.a.eq(\"a\")",
+        "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"a\" } ] } }",
+        "rsqlFilterCondition": "a==\"a\"",
+        "sqlFilterCondition": "a='a'",
+        "customFilterCondition": {
+          "logic": {
+            "path": "6da67573-6833-b3f5-b3b6-13ff8bf5b9d1"
+          },
+          "data": {
+            "6da67573-6833-b3f5-b3b6-13ff8bf5b9d1": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": [
+                  "a"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "substitution-general-special-chars": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_SPECIAL_CHARS.a.eq(\"red,blue;green('q')\"x\"\")",
+        "mongodbFilterCondition": "{ { \"a\": [ \"red,blue;green('q')\"x\"\" ] } }",
+        "rsqlFilterCondition": "a==\"red,blue;green('q')\"x\"\"",
+        "sqlFilterCondition": "a='red,blue;green('q')\"x\"'",
+        "customFilterCondition": {
+          "logic": {
+            "path": "6a387f9f-6aa8-7a54-5290-ea8d42f65cb7"
+          },
+          "data": {
+            "6a387f9f-6aa8-7a54-5290-ea8d42f65cb7": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": [
+                  "red,blue;green('q')\"x\""
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "substitution-general-string": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_STRING.a.eq(\"v\")",
+        "mongodbFilterCondition": "{ { \"a\": [ \"v\" ] } }",
+        "rsqlFilterCondition": "a==\"v\"",
+        "sqlFilterCondition": "a='v'",
+        "customFilterCondition": {
+          "logic": {
+            "path": "413b916d-b8fc-f32c-fb83-d6ee5c7f0bce"
+          },
+          "data": {
+            "413b916d-b8fc-f32c-fb83-d6ee5c7f0bce": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": [
+                  "v"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "substitution-header-scalar": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_HEADER_SCALAR.a.eq(\"parity-header-value\")",
+        "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"parity-header-value\" } ] } }",
+        "rsqlFilterCondition": "a==\"parity-header-value\"",
+        "sqlFilterCondition": "a='parity-header-value'",
+        "customFilterCondition": {
+          "logic": {
+            "path": "b0bf57c1-9030-3438-d96f-c2518cd6995f"
+          },
+          "data": {
+            "b0bf57c1-9030-3438-d96f-c2518cd6995f": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": [
+                  "parity-header-value"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "substitution-subject-roles": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_SUBJECT_ROLES.a.eq(\"ROLE_PARITY_READER\")",
+        "mongodbFilterCondition": "{ { \"a\": [ \"ROLE_PARITY_READER\" ] } }",
+        "rsqlFilterCondition": "a==\"ROLE_PARITY_READER\"",
+        "sqlFilterCondition": "a='ROLE_PARITY_READER'",
+        "customFilterCondition": {
+          "logic": {
+            "path": "8f6da4bf-5cc7-1ada-b718-48f6404cf7a9"
+          },
+          "data": {
+            "8f6da4bf-5cc7-1ada-b718-48f6404cf7a9": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": [
+                  "ROLE_PARITY_READER"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "substitution-token-scalar": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_TOKEN_SCALAR.a.eq(\"finance\")",
+        "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"finance\" } ] } }",
+        "rsqlFilterCondition": "a==\"finance\"",
+        "sqlFilterCondition": "a='finance'",
+        "customFilterCondition": {
+          "logic": {
+            "path": "dfd3cf92-7290-1d22-978b-a7fd57998a88"
+          },
+          "data": {
+            "dfd3cf92-7290-1d22-978b-a7fd57998a88": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": [
+                  "finance"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

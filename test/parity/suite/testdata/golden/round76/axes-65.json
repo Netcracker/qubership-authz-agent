@@ -1,0 +1,16 @@
+{
+  "ax76-65-z26-g-000": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax76-65-z26-g-001": {
+    "check-resource-v2-outcome/isolated/probe-a-n-check-resource-v2": {"status":200,"decision":false},
+    "check-resource-v2-outcome/isolated/probe-a-y-check-resource-v2": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax76-65-z26-g-control-first": {
+    "check-resource-v2-outcome/regular/read-check-resource-v2": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

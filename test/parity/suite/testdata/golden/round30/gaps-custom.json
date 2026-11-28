@@ -1,0 +1,36 @@
+{
+  "r30gaps-custom-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30gaps-custom-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30gaps-delete-without-children": {
+    "check-resource-v1-outcome/regular/read-after-delete": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-after-import": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "delete-customization-v1/regular/delete": {"status":204},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30gaps-pip-entry-name-only": {
+    "check-resource-v1-outcome/regular/after-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r30gaps-pip-entry-not-an-object": {
+    "check-resource-v1-outcome/regular/after-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

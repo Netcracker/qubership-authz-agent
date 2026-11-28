@@ -1,0 +1,1120 @@
+{
+ "about": "Round 72: requests on behalf of a user (userId) the earlier rounds did not send: a bulk whose lookup fails, a TOKEN PIP with a defaultValue, and the check of VIEW_AS_ANOTHER_USER over a source that fails. Each case runs in a tenant of its own; it needs the stand of round 63, whose User Management is the suite's stub. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "g72-onbehalf-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_G72_ONBEHALF_CONTROL_FIRST",
+   "tenant": "parity-g72-onbehalf-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-g72-onbehalf-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "d0e8a09b-49cb-15e7-30f7-4dd060da6d2a",
+       "name": "g72-onbehalf-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_G72_ONBEHALF_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "3b4c4891-bf43-3adc-6444-913810f4224f",
+         "name": "g72-onbehalf-control-first reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "56837ef6-b897-f2c1-5d33-f36fda42377f",
+           "name": "g72-onbehalf-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "g72-ob-bulk-lookup-500",
+   "about": "A set allows READ to anyone, and the reader may act as another user. A bulk of two READ items and a bulk/operations of two items with userId, whose lookup in User Management answers 500: the whole request answers 500, or each item is not allowed (200, no id). The same requests whose lookup finds the user are the control, both items.",
+   "resourceType": "PARITY_SUITE_G72_OB_BULK_LOOKUP_500",
+   "tenant": "parity-g72-ob-bulk-lookup-500",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-g72-ob-bulk-lookup-500"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:bulk-when-the-lookup-fails",
+      "decide:operations-when-the-lookup-fails",
+      "decide:bulk-when-the-lookup-finds-the-user",
+      "decide:operations-when-the-lookup-finds-the-user"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "a9678cd8-b02f-86e9-f095-78c24ee45ccb",
+       "name": "g72-ob-bulk-lookup-500 set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_G72_OB_BULK_LOOKUP_500'",
+       "policies": [
+        {
+         "policyId": "df5823c2-a33e-7ebe-de35-3a325789a794",
+         "name": "g72-ob-bulk-lookup-500 anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "3e2db994-265c-a9bd-1111-7c4a87f698fa",
+           "name": "g72-ob-bulk-lookup-500 read",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "73cd778a-b143-4e41-6a16-535ee891963e",
+       "name": "g72-ob-bulk-lookup-500 authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "bc9d4e26-aa84-1b96-07a8-824baf6bbeb0",
+         "name": "g72-ob-bulk-lookup-500 view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "68d5c4aa-0849-183b-71f2-25d8e219841c",
+           "name": "g72-ob-bulk-lookup-500 view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "bulk-when-the-lookup-fails",
+       "bulk": [
+        {
+         "id": "r72a",
+         "operation": "READ",
+         "resource": {
+          "id": "r72a"
+         }
+        },
+        {
+         "id": "r72b",
+         "operation": "READ",
+         "resource": {
+          "id": "r72b"
+         }
+        }
+       ],
+       "userId": "00000000-0000-0000-0000-000000007201",
+       "userManagement": {
+        "*": {
+         "statusCode": 500,
+         "body": {
+          "error": "parity"
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "operations-when-the-lookup-fails",
+       "bulkOperations": [
+        {
+         "id": "r72a",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "r72a"
+         }
+        },
+        {
+         "id": "r72b",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "r72b"
+         }
+        }
+       ],
+       "userId": "00000000-0000-0000-0000-000000007202",
+       "userManagement": {
+        "*": {
+         "statusCode": 500,
+         "body": {
+          "error": "parity"
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "bulk-when-the-lookup-finds-the-user",
+       "bulk": [
+        {
+         "id": "r72a",
+         "operation": "READ",
+         "resource": {
+          "id": "r72a"
+         }
+        },
+        {
+         "id": "r72b",
+         "operation": "READ",
+         "resource": {
+          "id": "r72b"
+         }
+        }
+       ],
+       "userId": "00000000-0000-0000-0000-000000007203",
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-um-id",
+          "username": "parity-um-username",
+          "realmRoles": [
+           "ROLE_PARITY_UM_REALM_ROLES"
+          ]
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "operations-when-the-lookup-finds-the-user",
+       "bulkOperations": [
+        {
+         "id": "r72a",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "r72a"
+         }
+        },
+        {
+         "id": "r72b",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "r72b"
+         }
+        }
+       ],
+       "userId": "00000000-0000-0000-0000-000000007204",
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-um-id",
+          "username": "parity-um-username",
+          "realmRoles": [
+           "ROLE_PARITY_UM_REALM_ROLES"
+          ]
+         }
+        }
+       },
+       "userManagementCalls": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "g72-ob-bulk-lookup-404",
+   "about": "A set allows READ to anyone, and the reader may act as another user. A bulk of two READ items and a bulk/operations of two items with userId, whose lookup in User Management answers 404: the whole request answers 404, or each item is not allowed (200, no id). The same requests whose lookup finds the user are the control, both items.",
+   "resourceType": "PARITY_SUITE_G72_OB_BULK_LOOKUP_404",
+   "tenant": "parity-g72-ob-bulk-lookup-404",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-g72-ob-bulk-lookup-404"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:bulk-when-the-lookup-fails",
+      "decide:operations-when-the-lookup-fails",
+      "decide:bulk-when-the-lookup-finds-the-user",
+      "decide:operations-when-the-lookup-finds-the-user"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "f6939189-24e7-6529-ec3b-3ca11aa51597",
+       "name": "g72-ob-bulk-lookup-404 set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_G72_OB_BULK_LOOKUP_404'",
+       "policies": [
+        {
+         "policyId": "b6a7e464-ded2-a6d8-b162-f30e206d41bb",
+         "name": "g72-ob-bulk-lookup-404 anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "c240421c-75f5-1eed-f2bd-d12ededc60f2",
+           "name": "g72-ob-bulk-lookup-404 read",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "2263d348-3fb8-3ad2-28f6-c41bcd422e1e",
+       "name": "g72-ob-bulk-lookup-404 authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "dc4453fa-4879-1eea-9c6f-24b78c3fd448",
+         "name": "g72-ob-bulk-lookup-404 view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "4daafc21-d7db-177f-5535-f0dc54da5e94",
+           "name": "g72-ob-bulk-lookup-404 view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "bulk-when-the-lookup-fails",
+       "bulk": [
+        {
+         "id": "r72a",
+         "operation": "READ",
+         "resource": {
+          "id": "r72a"
+         }
+        },
+        {
+         "id": "r72b",
+         "operation": "READ",
+         "resource": {
+          "id": "r72b"
+         }
+        }
+       ],
+       "userId": "00000000-0000-0000-0000-000000007205",
+       "userManagement": {
+        "*": {
+         "statusCode": 404,
+         "body": {
+          "error": "parity"
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "operations-when-the-lookup-fails",
+       "bulkOperations": [
+        {
+         "id": "r72a",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "r72a"
+         }
+        },
+        {
+         "id": "r72b",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "r72b"
+         }
+        }
+       ],
+       "userId": "00000000-0000-0000-0000-000000007206",
+       "userManagement": {
+        "*": {
+         "statusCode": 404,
+         "body": {
+          "error": "parity"
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "bulk-when-the-lookup-finds-the-user",
+       "bulk": [
+        {
+         "id": "r72a",
+         "operation": "READ",
+         "resource": {
+          "id": "r72a"
+         }
+        },
+        {
+         "id": "r72b",
+         "operation": "READ",
+         "resource": {
+          "id": "r72b"
+         }
+        }
+       ],
+       "userId": "00000000-0000-0000-0000-000000007207",
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-um-id",
+          "username": "parity-um-username",
+          "realmRoles": [
+           "ROLE_PARITY_UM_REALM_ROLES"
+          ]
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "operations-when-the-lookup-finds-the-user",
+       "bulkOperations": [
+        {
+         "id": "r72a",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "r72a"
+         }
+        },
+        {
+         "id": "r72b",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "r72b"
+         }
+        }
+       ],
+       "userId": "00000000-0000-0000-0000-000000007208",
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-um-id",
+          "username": "parity-um-username",
+          "realmRoles": [
+           "ROLE_PARITY_UM_REALM_ROLES"
+          ]
+         }
+        }
+       },
+       "userManagementCalls": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "g72-ob-token-default",
+   "about": "Two TOKEN PIPs with the defaultValue parity-g72-default: subject.parityG72Department over the claim department, which the reader's token holds (finance), and subject.parityG72Absent over a claim no token holds. A DENY_UNLESS_PERMIT rule `<pip> CONTAINS 'parity-g72-default' OR resource.a == 'y'` for each, decided for another user (userId, the lookup finds the user) and for the reader, a = n and a = y. On behalf of a user the token's claims are empty: the defaultValue makes both rules true, the empty collection the documentation promises makes them false for a = n. For the reader the absent claim takes the defaultValue (true) and department reads finance (false).",
+   "resourceType": "PARITY_SUITE_G72_OB_TOKEN_DEFAULT",
+   "tenant": "parity-g72-ob-token-default",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityG72Department",
+       "type": "UUID",
+       "pipType": "TOKEN",
+       "claim": "department",
+       "cacheable": false,
+       "defaultValue": "parity-g72-default"
+      },
+      {
+       "name": "subject.parityG72Absent",
+       "type": "UUID",
+       "pipType": "TOKEN",
+       "claim": "parityG72Absent",
+       "cacheable": false,
+       "defaultValue": "parity-g72-default"
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-g72-ob-token-default"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:dept-as-a-user-a-n",
+      "decide:dept-as-a-user-a-y",
+      "decide:dept-as-self-a-n",
+      "decide:dept-as-self-a-y",
+      "decide:absent-as-a-user-a-n",
+      "decide:absent-as-a-user-a-y",
+      "decide:absent-as-self-a-n",
+      "decide:absent-as-self-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "a757cbfb-760f-a0a8-e0eb-2cfe62208a3e",
+       "name": "g72-ob-token-default set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_G72_OB_TOKEN_DEFAULT'",
+       "policies": [
+        {
+         "policyId": "8dc7b79f-1f02-6461-3745-f74220152cae",
+         "name": "g72-ob-token-default reader",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "c1153a3f-70e9-4ac0-fa19-52970c7d36e2",
+           "name": "g72-ob-token-default dept",
+           "target": "resource.p == 'dept'",
+           "condition": "subject.parityG72Department CONTAINS 'parity-g72-default' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          },
+          {
+           "ruleId": "5947ff24-842d-d297-7d9e-89004a3ca350",
+           "name": "g72-ob-token-default absent",
+           "target": "resource.p == 'absent'",
+           "condition": "subject.parityG72Absent CONTAINS 'parity-g72-default' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "ef7c73f0-68a3-679f-1a4d-70a3721548a6",
+       "name": "g72-ob-token-default authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "3f3cfe6c-0f2e-7cc4-98e8-a931186e8cc6",
+         "name": "g72-ob-token-default view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "21fec59d-47c5-ed96-e531-3022e45491e9",
+           "name": "g72-ob-token-default view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "dept-as-a-user-a-n",
+       "resource": {
+        "id": "r72",
+        "p": "dept",
+        "a": "n"
+       },
+       "userId": "00000000-0000-0000-0000-000000007209",
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-um-id",
+          "username": "parity-um-username",
+          "realmRoles": [
+           "ROLE_PARITY_UM_REALM_ROLES"
+          ]
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "dept-as-a-user-a-y",
+       "resource": {
+        "id": "r72",
+        "p": "dept",
+        "a": "y"
+       },
+       "userId": "00000000-0000-0000-0000-000000007210",
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-um-id",
+          "username": "parity-um-username",
+          "realmRoles": [
+           "ROLE_PARITY_UM_REALM_ROLES"
+          ]
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "dept-as-self-a-n",
+       "resource": {
+        "id": "r72",
+        "p": "dept",
+        "a": "n"
+       }
+      },
+      {
+       "name": "dept-as-self-a-y",
+       "resource": {
+        "id": "r72",
+        "p": "dept",
+        "a": "y"
+       }
+      },
+      {
+       "name": "absent-as-a-user-a-n",
+       "resource": {
+        "id": "r72",
+        "p": "absent",
+        "a": "n"
+       },
+       "userId": "00000000-0000-0000-0000-000000007211",
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-um-id",
+          "username": "parity-um-username",
+          "realmRoles": [
+           "ROLE_PARITY_UM_REALM_ROLES"
+          ]
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "absent-as-a-user-a-y",
+       "resource": {
+        "id": "r72",
+        "p": "absent",
+        "a": "y"
+       },
+       "userId": "00000000-0000-0000-0000-000000007212",
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-um-id",
+          "username": "parity-um-username",
+          "realmRoles": [
+           "ROLE_PARITY_UM_REALM_ROLES"
+          ]
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "absent-as-self-a-n",
+       "resource": {
+        "id": "r72",
+        "p": "absent",
+        "a": "n"
+       }
+      },
+      {
+       "name": "absent-as-self-a-y",
+       "resource": {
+        "id": "r72",
+        "p": "absent",
+        "a": "y"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "g72-ob-check-source-500",
+   "about": "The rule that allows VIEW_AS_ANOTHER_USER reads `subject.parityG72AuthSource == 'y'`, a GENERAL PIP whose source answers 500. r32gaps-on-behalf-http-500-* failed the same check by an evaluation error (an iterate over scope values that are plain strings) and answered 500; here the check fails by its source. A request with userId answers 500 if any failure of the check fails the request, false (no item) if a failed source only makes the rule not apply. The direct check of VIEW_AS_ANOTHER_USER asks the same failure without a lookup; the request without userId is the control, true.",
+   "resourceType": "PARITY_SUITE_G72_OB_CHECK_SOURCE_500",
+   "tenant": "parity-g72-ob-check-source-500",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityG72AuthSource",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/g72-auth-source",
+       "requestAttributes": {
+        "case": "g72-auth-source"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-g72-ob-check-source-500"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-as-a-user",
+      "decide:bulk-as-a-user",
+      "decide:authorization-check",
+      "decide:read-without-user-id"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "d87b0ae5-1772-fc06-ab3d-4e4d6e230320",
+       "name": "g72-ob-check-source-500 set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_G72_OB_CHECK_SOURCE_500'",
+       "policies": [
+        {
+         "policyId": "e3ffa483-1da3-b72b-e21c-eebeb62c3fef",
+         "name": "g72-ob-check-source-500 anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "d23543ba-4ec9-e056-63db-90269696750e",
+           "name": "g72-ob-check-source-500 read",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "090b6e5d-f46c-08dd-f139-befee321fd9d",
+       "name": "g72-ob-check-source-500 authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "56ffd932-31f5-0471-028c-244e7f17377d",
+         "name": "g72-ob-check-source-500 view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "8a011784-59e3-556c-5e4c-d7e8a8f02811",
+           "name": "g72-ob-check-source-500 view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "subject.parityG72AuthSource == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-as-a-user",
+       "resource": {
+        "id": "r72"
+       },
+       "userId": "00000000-0000-0000-0000-000000007213",
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-um-id",
+          "username": "parity-um-username",
+          "realmRoles": [
+           "ROLE_PARITY_UM_REALM_ROLES"
+          ]
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "bulk-as-a-user",
+       "bulk": [
+        {
+         "id": "r72a",
+         "operation": "READ",
+         "resource": {
+          "id": "r72a"
+         }
+        }
+       ],
+       "userId": "00000000-0000-0000-0000-000000007214",
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-um-id",
+          "username": "parity-um-username",
+          "realmRoles": [
+           "ROLE_PARITY_UM_REALM_ROLES"
+          ]
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "authorization-check",
+       "resource": {
+        "id": "r72"
+       },
+       "type": "OnBehalfOfUserAuthorization",
+       "operation": "VIEW_AS_ANOTHER_USER"
+      },
+      {
+       "name": "read-without-user-id",
+       "resource": {
+        "id": "r72"
+       }
+      }
+     ]
+    }
+   ],
+   "pins": {
+    "/api/v1/pip/g72-auth-source": {
+     "statusCode": 500,
+     "body": {
+      "error": "parity"
+     }
+    }
+   }
+  },
+  {
+   "id": "g72-ob-check-source-ok",
+   "about": "The twin of g72-ob-check-source-500 whose source answers [\"y\"]: the rule that allows VIEW_AS_ANOTHER_USER holds, so every request is true. It shows that the failure, not the rule, decides g72-ob-check-source-500.",
+   "resourceType": "PARITY_SUITE_G72_OB_CHECK_SOURCE_OK",
+   "tenant": "parity-g72-ob-check-source-ok",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityG72AuthSourceOk",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/g72-auth-source-ok",
+       "requestAttributes": {
+        "case": "g72-auth-source-ok"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-g72-ob-check-source-ok"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-as-a-user",
+      "decide:bulk-as-a-user",
+      "decide:authorization-check",
+      "decide:read-without-user-id"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "d6f714a3-9e1a-e12e-e693-631115c26529",
+       "name": "g72-ob-check-source-ok set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_G72_OB_CHECK_SOURCE_OK'",
+       "policies": [
+        {
+         "policyId": "4d9c057f-fdb3-72aa-aa2c-32d59aea9bec",
+         "name": "g72-ob-check-source-ok anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "8dfd8480-557b-78d9-fba1-c7d28d4db99f",
+           "name": "g72-ob-check-source-ok read",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "policySetId": "9078fd6e-ee7d-3748-43cd-fbc105524111",
+       "name": "g72-ob-check-source-ok authorize",
+       "status": "ACTIVE",
+       "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+       "policies": [
+        {
+         "policyId": "2327c557-be09-4960-10e3-4ba9d3d2b956",
+         "name": "g72-ob-check-source-ok view-as",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR subject.roles CONTAINS 'ROLE_M2M'",
+         "rules": [
+          {
+           "ruleId": "ed80f5f2-d7b1-fe9a-657f-091c50f3cfd4",
+           "name": "g72-ob-check-source-ok view",
+           "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+           "condition": "subject.parityG72AuthSourceOk == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-as-a-user",
+       "resource": {
+        "id": "r72"
+       },
+       "userId": "00000000-0000-0000-0000-000000007215",
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-um-id",
+          "username": "parity-um-username",
+          "realmRoles": [
+           "ROLE_PARITY_UM_REALM_ROLES"
+          ]
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "bulk-as-a-user",
+       "bulk": [
+        {
+         "id": "r72a",
+         "operation": "READ",
+         "resource": {
+          "id": "r72a"
+         }
+        }
+       ],
+       "userId": "00000000-0000-0000-0000-000000007216",
+       "userManagement": {
+        "*": {
+         "statusCode": 200,
+         "body": {
+          "id": "parity-um-id",
+          "username": "parity-um-username",
+          "realmRoles": [
+           "ROLE_PARITY_UM_REALM_ROLES"
+          ]
+         }
+        }
+       },
+       "userManagementCalls": true
+      },
+      {
+       "name": "authorization-check",
+       "resource": {
+        "id": "r72"
+       },
+       "type": "OnBehalfOfUserAuthorization",
+       "operation": "VIEW_AS_ANOTHER_USER"
+      },
+      {
+       "name": "read-without-user-id",
+       "resource": {
+        "id": "r72"
+       }
+      }
+     ]
+    }
+   ],
+   "pins": {
+    "/api/v1/pip/g72-auth-source-ok": {
+     "statusCode": 200,
+     "body": [
+      "y"
+     ]
+    }
+   }
+  },
+  {
+   "id": "g72-onbehalf-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_G72_ONBEHALF_CONTROL_LAST",
+   "tenant": "parity-g72-onbehalf-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-g72-onbehalf-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "bc5cbae0-3782-76b5-21db-df5e30468400",
+       "name": "g72-onbehalf-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_G72_ONBEHALF_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "56faefa3-2e15-9c46-49a1-c15ff7445a2b",
+         "name": "g72-onbehalf-control-last reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "2006f009-b3a1-e8a4-660e-3c231c9d8048",
+           "name": "g72-onbehalf-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

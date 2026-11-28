@@ -1,0 +1,21 @@
+{
+  "r29pipfield-mapping-named-permissions": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pipfield-mapping-outside-pattern-merged": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r29pipfield-mapping-outside-pattern-own-name": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r29pipfield-name-starts-with-digit": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r29pipfield-name-starts-with-underscore": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

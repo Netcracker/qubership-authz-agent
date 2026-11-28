@@ -1,0 +1,708 @@
+{
+ "about": "Round 69: a rule of a set that carries its querydsl template in the member querydslPredicate instead of predicate, written through the API of regular sets with type DEFAULT and SIMPLIFIED, and simplified policies whose predicates object holds querydslPredicate, read back from the v3 export of policy sets. Each case runs in a tenant of its own and records check/resource, check/filter and the raw export. Controls first and last answer true.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "q69-control-first",
+   "about": "Control: a set of type DEFAULT whose ALLOW rule is true and has no predicate, written in a tenant of its own; check/resource true, check/filter without a predicate.",
+   "resourceType": "PARITY_SUITE_Q69_CONTROL_FIRST",
+   "tenant": "parity-q69-control-first",
+   "steps": [
+    {
+     "name": "write",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-q69-control-first"
+     },
+     "observe": [
+      "status",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "1e120518-58cc-b922-4b2f-45ebb7c02bf7",
+       "name": "q69-control-first set",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_Q69_CONTROL_FIRST'",
+       "status": "ACTIVE",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "6ccc7d5d-390e-ae49-8d28-3166b1927c6d",
+         "name": "q69-control-first policy",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "f9e60868-e88b-5142-efc8-dda058df2cc7",
+           "name": "q69-control-first rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "type": "DEFAULT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_Q69_CONTROL_FIRST",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_Q69_CONTROL_FIRST",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q69-default-predicate",
+   "about": "A set of type DEFAULT whose ALLOW rule carries the querydsl template in the member predicate: the filter's filterCondition is the template (the reading of the round 29 pairs goldens). The twin every querydslPredicate case is compared with.",
+   "resourceType": "PARITY_SUITE_Q69_DEFAULT_PREDICATE",
+   "tenant": "parity-q69-default-predicate",
+   "steps": [
+    {
+     "name": "write",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-q69-default-predicate"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "47c5b1e7-d5c2-f979-8abe-5a311d2905d8",
+       "name": "q69-default-predicate set",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_Q69_DEFAULT_PREDICATE'",
+       "status": "ACTIVE",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "6d4aa506-2dad-99f8-12dc-a67023e4ce94",
+         "name": "q69-default-predicate policy",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "dd1e0018-ee88-7b67-edd0-95481959c449",
+           "name": "q69-default-predicate rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicate": "PARITY_SUITE_Q69_DEFAULT_PREDICATE.a.eq(\"r69\")"
+          }
+         ]
+        }
+       ],
+       "type": "DEFAULT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_Q69_DEFAULT_PREDICATE",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_Q69_DEFAULT_PREDICATE",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q69-default-querydsl",
+   "about": "A set of type DEFAULT whose ALLOW rule carries the querydsl template in the member querydslPredicate and no predicate. Does the filter read it into filterCondition, and does the export keep the member?",
+   "resourceType": "PARITY_SUITE_Q69_DEFAULT_QUERYDSL",
+   "tenant": "parity-q69-default-querydsl",
+   "steps": [
+    {
+     "name": "write",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-q69-default-querydsl"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "6dc128fb-7130-8a3f-76df-d1381fc8ae82",
+       "name": "q69-default-querydsl set",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_Q69_DEFAULT_QUERYDSL'",
+       "status": "ACTIVE",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "45def9f2-a281-b63c-e94a-6efd85813058",
+         "name": "q69-default-querydsl policy",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "40820308-8f39-c6ca-65b8-03962a550879",
+           "name": "q69-default-querydsl rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "querydslPredicate": "PARITY_SUITE_Q69_DEFAULT_QUERYDSL.a.eq(\"r69\")"
+          }
+         ]
+        }
+       ],
+       "type": "DEFAULT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_Q69_DEFAULT_QUERYDSL",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_Q69_DEFAULT_QUERYDSL",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q69-simplified-querydsl",
+   "about": "A set of type SIMPLIFIED, written through the API of regular sets, whose ALLOW rule carries the querydsl template in querydslPredicate and no predicate.",
+   "resourceType": "PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL",
+   "tenant": "parity-q69-simplified-querydsl",
+   "steps": [
+    {
+     "name": "write",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-q69-simplified-querydsl"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "e1a71151-8d16-1027-dfbb-af4d386c5b72",
+       "name": "q69-simplified-querydsl set",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL'",
+       "status": "ACTIVE",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "f685c9d9-2367-fd87-ba9a-517c98fa944f",
+         "name": "q69-simplified-querydsl policy",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "049859db-37ae-abfc-47d3-05e9d2bd2d05",
+           "name": "q69-simplified-querydsl rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "querydslPredicate": "PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL.a.eq(\"r69\")"
+          }
+         ]
+        }
+       ],
+       "type": "SIMPLIFIED"
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q69-simplified-querydsl-operation-all",
+   "about": "A set of type SIMPLIFIED whose policy target is operation == 'ALL', a form the PAP never writes when it converts a simplified policy, with an ALLOW rule whose target is true and whose querydsl template is in querydslPredicate. The specification compares operation == 'ALL' as text, so the policy does not apply to READ: check false, filter DENY. Check true and a filter that applies say that the literal ALL matches every operation (ANY), as ALL does in a simplified policy; the twin of the other set type tells whether that holds only in a set of type SIMPLIFIED.",
+   "resourceType": "PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_OPERATION_ALL",
+   "tenant": "parity-q69-simplified-querydsl-operation-all",
+   "steps": [
+    {
+     "name": "write",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-q69-simplified-querydsl-operation-all"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "8a2f2bd7-537d-bb23-c312-50c48e33f203",
+       "name": "q69-simplified-querydsl-operation-all set",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_OPERATION_ALL'",
+       "status": "ACTIVE",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "0205e706-5a8d-bcdc-3015-b42e2aeba2b2",
+         "name": "q69-simplified-querydsl-operation-all policy",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "operation == 'ALL'",
+         "rules": [
+          {
+           "ruleId": "df803f01-dc69-486a-438d-69d1e56a3866",
+           "name": "q69-simplified-querydsl-operation-all rule",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "querydslPredicate": "PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_OPERATION_ALL.a.eq(\"r69\")"
+          }
+         ]
+        }
+       ],
+       "type": "SIMPLIFIED"
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_OPERATION_ALL",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_OPERATION_ALL",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q69-default-querydsl-operation-all",
+   "about": "A set of type DEFAULT whose policy target is operation == 'ALL', a form the PAP never writes when it converts a simplified policy, with an ALLOW rule whose target is true and whose querydsl template is in querydslPredicate. The specification compares operation == 'ALL' as text, so the policy does not apply to READ: check false, filter DENY. Check true and a filter that applies say that the literal ALL matches every operation (ANY), as ALL does in a simplified policy; the twin of the other set type tells whether that holds only in a set of type SIMPLIFIED.",
+   "resourceType": "PARITY_SUITE_Q69_DEFAULT_QUERYDSL_OPERATION_ALL",
+   "tenant": "parity-q69-default-querydsl-operation-all",
+   "steps": [
+    {
+     "name": "write",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-q69-default-querydsl-operation-all"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "dc77ccf2-50db-1259-c364-17c6905af84f",
+       "name": "q69-default-querydsl-operation-all set",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_Q69_DEFAULT_QUERYDSL_OPERATION_ALL'",
+       "status": "ACTIVE",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "4a0e0f4b-c467-5abf-d0df-affd7a833fe6",
+         "name": "q69-default-querydsl-operation-all policy",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "operation == 'ALL'",
+         "rules": [
+          {
+           "ruleId": "3686c47f-ea3b-2844-7a12-7bfba62ed8df",
+           "name": "q69-default-querydsl-operation-all rule",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "querydslPredicate": "PARITY_SUITE_Q69_DEFAULT_QUERYDSL_OPERATION_ALL.a.eq(\"r69\")"
+          }
+         ]
+        }
+       ],
+       "type": "DEFAULT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_Q69_DEFAULT_QUERYDSL_OPERATION_ALL",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_Q69_DEFAULT_QUERYDSL_OPERATION_ALL",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q69-simplified-querydsl-beside-rsql",
+   "about": "A set of type SIMPLIFIED whose ALLOW rule carries rsqlPredicate a==r69 and the querydsl template in querydslPredicate: the rule has a predicate either way, and filterCondition shows whether the querydsl member is read.",
+   "resourceType": "PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_BESIDE_RSQL",
+   "tenant": "parity-q69-simplified-querydsl-beside-rsql",
+   "steps": [
+    {
+     "name": "write",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-q69-simplified-querydsl-beside-rsql"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "1e74ea36-11ca-2cfa-2739-df3b013b8dc8",
+       "name": "q69-simplified-querydsl-beside-rsql set",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_BESIDE_RSQL'",
+       "status": "ACTIVE",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "66300d25-00d2-4883-80e4-ccb4a75e1789",
+         "name": "q69-simplified-querydsl-beside-rsql policy",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "b68f4a65-0e63-c431-68fb-f1a73e471603",
+           "name": "q69-simplified-querydsl-beside-rsql rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "rsqlPredicate": "a==r69",
+           "querydslPredicate": "PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_BESIDE_RSQL.a.eq(\"r69\")"
+          }
+         ]
+        }
+       ],
+       "type": "SIMPLIFIED"
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_BESIDE_RSQL",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_BESIDE_RSQL",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q69-export-nested-querydsl",
+   "about": "A simplified policy whose predicates object holds mongodbPredicate and querydslPredicate. Which member of the rule the v3 export synthesizes carries the querydsl template, querydslPredicate or predicate, or neither; and does check/filter give it in filterCondition?",
+   "resourceType": "PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL",
+   "tenant": "parity-q69-export-nested-querydsl",
+   "steps": [
+    {
+     "name": "write",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "operation": "READ",
+       "reason": "r69 q69-export-nested-querydsl",
+       "resourceType": "PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "predicates": {
+        "mongodbPredicate": "\"a\":{\"$eq\":\"r69\"}",
+        "querydslPredicate": "PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL.a.eq(\"nested\")"
+       }
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q69-export-nested-and-top-querydsl",
+   "about": "A simplified policy with a top-level querydslPredicate and another querydslPredicate in its predicates object beside mongodbPredicate: which of the two templates the v3 export and check/filter carry, if any.",
+   "resourceType": "PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL",
+   "tenant": "parity-q69-export-nested-and-top-querydsl",
+   "steps": [
+    {
+     "name": "write",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "operation": "READ",
+       "reason": "r69 q69-export-nested-and-top-querydsl",
+       "resourceType": "PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "querydslPredicate": "PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL.a.eq(\"top\")",
+       "predicates": {
+        "mongodbPredicate": "\"a\":{\"$eq\":\"r69\"}",
+        "querydslPredicate": "PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL.a.eq(\"nested\")"
+       }
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "q69-control-last",
+   "about": "Control: a set of type DEFAULT whose ALLOW rule is true and has no predicate, written in a tenant of its own; check/resource true, check/filter without a predicate.",
+   "resourceType": "PARITY_SUITE_Q69_CONTROL_LAST",
+   "tenant": "parity-q69-control-last",
+   "steps": [
+    {
+     "name": "write",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-q69-control-last"
+     },
+     "observe": [
+      "status",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "657f225d-ea63-8b94-b48e-5cd57080fb54",
+       "name": "q69-control-last set",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_Q69_CONTROL_LAST'",
+       "status": "ACTIVE",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "b8987cde-8c57-4fe4-5361-e8f819db111c",
+         "name": "q69-control-last policy",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "3c870b78-808b-8962-cd25-b3ac620d63c6",
+           "name": "q69-control-last rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "type": "DEFAULT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_Q69_CONTROL_LAST",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_Q69_CONTROL_LAST",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,44 @@
+{
+  "dead-form-beside-an-allowing-rule": {
+    "check-resource-v1-outcome/regular/the-neighbor-allows": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/the-neighbor-does-not": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "dead-form-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/form-beside-a-true-operand": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/nothing-denies": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "df1-bracket-path": {
+    "check-resource-v1-outcome/isolated/form-is-false-and-the-right-operand-true": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "df1-bracket-path-control": {
+    "check-resource-v1-outcome/isolated/form-is-false-and-the-right-operand-true": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "df2-null-literal": {
+    "check-resource-v1-outcome/isolated/form-is-false-and-the-right-operand-true": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "df2-null-literal-control": {
+    "check-resource-v1-outcome/isolated/form-is-false-and-the-right-operand-true": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "df3-match-against-an-attribute": {
+    "check-resource-v1-outcome/isolated/form-is-false-and-the-right-operand-true": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "df3-match-against-an-attribute-control": {
+    "check-resource-v1-outcome/isolated/form-is-false-and-the-right-operand-true": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "df4-match-against-a-regex-literal": {
+    "check-resource-v1-outcome/isolated/form-is-false-and-the-right-operand-true": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "df4-match-against-a-regex-literal-control": {
+    "check-resource-v1-outcome/isolated/form-is-false-and-the-right-operand-true": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "rt69-low-upper": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_R69_RTSUB_RT69_LOW_UPPER.t.eq(\"00000000-0000-0000-0000-000000000101\")",
+        "mongodbFilterCondition": "{ { \"t\": \"PARITY_SUITE_R69_RTSUB_RT69_LOW_UPPER\" } }",
+        "rsqlFilterCondition": "t==PARITY_SUITE_R69_RTSUB_RT69_LOW_UPPER",
+        "sqlFilterCondition": "t='PARITY_SUITE_R69_RTSUB_RT69_LOW_UPPER'",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-sets-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-sets-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-spaces": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": " PARITY_SUITE_R69_RTSUB_RT69_SPACES .b.eq(\"00000000-0000-0000-0000-000000000101\")",
+        "mongodbFilterCondition": "{ { \"b\": \" PARITY_SUITE_R69_RTSUB_RT69_SPACES \" } }",
+        "rsqlFilterCondition": "b== PARITY_SUITE_R69_RTSUB_RT69_SPACES ",
+        "sqlFilterCondition": "b=' PARITY_SUITE_R69_RTSUB_RT69_SPACES '",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-up-lower": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "parity_suite_r69_rtsub_rt69_up_lower.t.eq(\"00000000-0000-0000-0000-000000000101\")",
+        "mongodbFilterCondition": "{ { \"t\": \"parity_suite_r69_rtsub_rt69_up_lower\" } }",
+        "rsqlFilterCondition": "t==parity_suite_r69_rtsub_rt69_up_lower",
+        "sqlFilterCondition": "t='parity_suite_r69_rtsub_rt69_up_lower'",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-up-mixed": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "Parity_Suite_R69_Rtsub_Rt69_Up_Mixed.t.eq(\"00000000-0000-0000-0000-000000000101\")",
+        "mongodbFilterCondition": "{ { \"t\": \"Parity_Suite_R69_Rtsub_Rt69_Up_Mixed\" } }",
+        "rsqlFilterCondition": "t==Parity_Suite_R69_Rtsub_Rt69_Up_Mixed",
+        "sqlFilterCondition": "t='Parity_Suite_R69_Rtsub_Rt69_Up_Mixed'",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

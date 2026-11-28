@@ -1,0 +1,36 @@
+{
+  "r32gaps-on-behalf-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-on-behalf-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-on-behalf-http-500-bulk": {
+    "check-resource-bulk-v1-outcome/regular/bulk-as-self": {"status":500},
+    "check-resource-bulk-v1-outcome/regular/bulk-without-user-id": {"status":200,"allowed":["i1"]},
+    "check-resource-v1-outcome/regular/authorization-check": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/read-without-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r32gaps-on-behalf-http-500-filter": {
+    "check-filter-v1-outcome/regular/filter-as-self": {"status":500,"result":{"calculationResult":""}},
+    "check-filter-v1-outcome/regular/filter-without-user-id": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/authorization-check": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/read-without-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

@@ -1,0 +1,277 @@
+{
+ "about": "Where the failure of a subject.permissionScope read outside iterate ends. Round 12 showed it ends more than its own rule, and the one case that tells how much, scope-read-beside-a-true-rule, answers per stand. In each case here no second rule applies to the request, so no rule can decide before the read and the answer does not depend on the order. The scope service is pinned to two grants, region r1 and region r2. The first request waits out the cachePeriod of the declaration, as permission-scope-wire does, so that a scope an earlier function cached is not served.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "r13-scope-outside-iterate-in-a-deny-rule",
+   "about": "A PERMIT_UNLESS_DENY policy whose DENY rule reads the scope: check/resource is true if the read ends the rule alone, and false if it ends the answer. control-without-scope is its control, a DENY rule on another operation that does not apply, so the policy permits.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-deny-under-is-empty",
+         "target": "operation == 'READ'",
+         "condition": "subject.permissionScope.region IS EMPTY",
+         "effect": "DENY"
+        },
+        {
+         "key": "control-deny-without-scope",
+         "target": "operation == 'CONTROL'",
+         "condition": "resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-under-is-empty",
+     "pauseMs": 2000,
+     "resource": {
+      "id": "r13-scope-deny"
+     }
+    },
+    {
+     "name": "control-without-scope",
+     "operation": "CONTROL",
+     "resource": {
+      "id": "r13-scope-deny",
+      "a": "z"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-scope-outside-iterate-in-a-policy-target-under-deny-unless-permit",
+   "about": "Reads the scope in the policy target, beside the role, over an ALLOW rule; the permit-unless-deny case does the same over a DENY rule. A target that holds gives true here and false there, a target that does not apply gives false and true, and a read that ends the answer gives false twice.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' AND subject.permissionScope.region IS NULL",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "any",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r13-scope-target"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-scope-outside-iterate-in-a-policy-target-under-permit-unless-deny",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' AND subject.permissionScope.region IS NULL",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "any",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r13-scope-target"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-scope-placeholder-outside-iterate",
+   "about": "Renders the scope key into the predicate of a set that does not iterate, with no other rule on LIST: DENY says the placeholder denies the filter, a predicate says what it renders to.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-in-granted-regions",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r13-scope-condition-outside-iterate-beside-a-predicate",
+   "about": "Reads the scope key in the condition of a rule without a predicate, beside the allowed==1 policy: DENY says the read denies the whole filter, allowed==1 that the rule drops out. It sends the filter alone, since check/resource there has a permitting rule beside the read and answers per stand.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      },
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-under-is-empty",
+         "target": "operation == 'LIST'",
+         "condition": "subject.permissionScope.region IS EMPTY",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,20 @@
+{
+  "ax76-102-sn44-iterate-deny-overrides-deny": {
+    "check-resource-bulk-v1-outcome/regular/read-bulk-v1": {"status":200,"allowed":[]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read-bulk-v1": {"calls":0,"requestAttributes":null}
+  },
+  "ax76-102-sn44-nodes-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":2,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "ax76-102-sn44-nodes-control-last": {
+    "check-resource-bulk-v1-outcome/regular/read-bulk-v1": {"status":200,"allowed":["sn"]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read-bulk-v1": {"calls":2,"requestAttributes":{"case":"s44-sent"}}
+  }
+}

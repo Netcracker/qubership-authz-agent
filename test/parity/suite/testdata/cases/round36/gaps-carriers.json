@@ -1,0 +1,612 @@
+{
+ "about": "Second carriers: each case reaches, by another form, a decision that one golden of rounds 34 and 35 holds alone. Its about names the golden it repeats and the readings. A check probe is `<comparison> OR resource.a == 'y'` with a = n and a = y; a filter case asks one filter.",
+ "resourceTypePrefix": "PARITY_SUITE_R36K_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 36 case"
+   }
+  },
+  "/api/v1/pip/r36gaps-raw": {
+   "statusCode": 200,
+   "bodyRaw": "\"v\""
+  },
+  "/api/v1/pip/r36gaps-null": {
+   "statusCode": 200,
+   "body": {
+    "value": null
+   }
+  },
+  "/api/v1/pip/r36gaps-rt-PARITY_SUITE_R36K_R36GAPS_URL_RESOURCE_TYPE": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r36gaps-object": {
+   "statusCode": 200,
+   "body": {
+    "o": {
+     "k": "v"
+    }
+   }
+  },
+  "/api/v1/pip/r36gaps-boolean": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r36gaps-ra-list": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r36gaps-ra-descendant": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r36gaps-ra-undeclared": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "raw": {
+   "name": "subject.parityR36Raw",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-raw",
+   "requestAttributes": {
+    "case": "r36gaps-raw"
+   }
+  },
+  "null": {
+   "name": "subject.parityR36Null",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-null",
+   "requestAttributes": {
+    "case": "r36gaps-null"
+   },
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "rt": {
+   "name": "subject.parityR36Rt",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-rt-${resourceType}",
+   "requestAttributes": {
+    "case": "r36gaps-rt"
+   }
+  },
+  "ra-list": {
+   "name": "subject.parityR36RaList",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-ra-list",
+   "requestAttributes": {
+    "case": "r36gaps-ra-list",
+    "l": [
+     "${resource.a}"
+    ]
+   }
+  },
+  "token-descendant": {
+   "name": "subject.parityR36Descendant",
+   "pipType": "TOKEN",
+   "claim": "$..parityR36None",
+   "cacheable": false
+  },
+  "ra-descendant": {
+   "name": "subject.parityR36RaDescendant",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-ra-descendant",
+   "requestAttributes": {
+    "case": "r36gaps-ra-descendant",
+    "d": "${subject.parityR36Descendant}"
+   }
+  },
+  "ra-undeclared": {
+   "name": "subject.parityR36RaUndeclared",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-ra-undeclared",
+   "requestAttributes": {
+    "case": "r36gaps-ra-undeclared",
+    "u": "id-${subject.parityR36Nobody}"
+   }
+  },
+  "mapping-text": {
+   "name": "subject.permissions.parityR36",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": "PARITY_R36_TEXT"
+   }
+  },
+  "object": {
+   "name": "subject.parityR36Object",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-object",
+   "requestAttributes": {
+    "case": "r36gaps-object"
+   },
+   "type": "JSON",
+   "jsonPath": "$.o"
+  },
+  "boolean": {
+   "name": "subject.parityR36Boolean",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-boolean",
+   "requestAttributes": {
+    "case": "r36gaps-boolean"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r36gaps-carriers-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r36",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-jsonpath-selects-null-is-null",
+   "pips": [
+    "null"
+   ],
+   "about": "As r35gaps-general-jsonpath-selects-null, under IS NULL: the route answers {\"value\": null}, and the jsonPath $.value selects null. a = n true if that reads as a null body; both false if the PIP fails.",
+   "condition": "subject.parityR36Null IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r36",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r36",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-url-resource-type",
+   "pips": [
+    "rt"
+   ],
+   "about": "As r35gaps-request-attribute-resource-type, in a url: the url ends in r36gaps-rt-${resourceType}, and the route with the case's resource type answers v. Both false if the placeholder stays as written and its braces fail the call; a = n true if it becomes the resource type.",
+   "condition": "subject.parityR36Rt == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r36",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r36",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-ra-list-resource-placeholder",
+   "pips": [
+    "ra-list"
+   ],
+   "about": "As r35gaps-request-attribute-list, with a resource placeholder: requestAttributes.l is the list [\"${resource.a}\"]. The call carries the list as written if only text values are substituted; [\"n\"] if a list is substituted element by element.",
+   "condition": "subject.parityR36RaList == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r36",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r36gaps-ra-list"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r36",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-ra-descendant-claim-selects-nothing",
+   "pips": [
+    "token-descendant",
+    "ra-descendant"
+   ],
+   "about": "As r35gaps-request-attribute-empty-token, with a claim path that selects nothing: requestAttributes.d is ${subject.parityR36Descendant}, a TOKEN PIP whose claim $..parityR36None selects nothing and which has no defaultValue. The call carries null if the empty PIP is no value; [] if it is an empty list.",
+   "condition": "subject.parityR36RaDescendant == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r36",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r36gaps-ra-descendant"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r36",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-ra-undeclared-inside-a-text",
+   "pips": [
+    "ra-undeclared"
+   ],
+   "about": "As r35gaps-request-attribute-undeclared, inside a text: requestAttributes.u is id-${subject.parityR36Nobody}, a name no PIP declares. The domain upload is refused (400) if every placeholder of a value is checked; accepted if only a value that is one placeholder is.",
+   "condition": "subject.parityR36RaUndeclared == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r36",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r36gaps-ra-undeclared"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r36",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-mapping-table-a-text",
+   "pips": [
+    "mapping-text"
+   ],
+   "about": "As r35gaps-mapping-table-a-list, with a text: the MAPPING declaration's customMapping gives subject.roles the text PARITY_R36_TEXT instead of an object from role to permissions. The domain upload is refused (400) if the table must be an object; if it is accepted, a = n is false.",
+   "condition": "subject.permissions CONTAINS 'PARITY_R36_TEXT' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r36",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r36",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-simplified-empty-condition-update",
+   "operation": "UPDATE",
+   "about": "As r35gaps-simplified-empty-condition, for the operation UPDATE: the simplified policy's condition is the empty string. The upload is refused (400) as an empty rule expression is; if it is accepted, the update is allowed.",
+   "policy": {
+    "condition": ""
+   },
+   "requests": [
+    {
+     "name": "update",
+     "resource": {
+      "id": "r36",
+      "a": "n"
+     },
+     "operation": "UPDATE"
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-scope-index-past-the-end-not-in",
+   "pips": [
+    "scope"
+   ],
+   "about": "As r34open-scope-absent-key-not-in, with an index past the end on the left instead of an absent key: the only DENY rule of a PERMIT_UNLESS_DENY policy in a PERMIT_UNLESS_DENY set, and the scope service answers 404. False if NOT IN reads the scope first and its read fails the decision; true if the index past the end ends the rule first.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l[5] NOT IN subject.permissionScope.region",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r36",
+      "l": [
+       "v"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-filter-raw-json-string",
+   "pips": [
+    "raw",
+    "scope"
+   ],
+   "about": "As r35gaps-general-raw-json-string, in a filter: rsqlPredicate f1=in=(${subject.parityR36Raw}), and the route answers the raw text \"v\" (a JSON string, quotes included). The placeholder renders as a null body renders if the text reads as a JSON string body does; v if the string is the value.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f1=in=(${subject.parityR36Raw})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-filter-custom-false-parameter",
+   "pips": [],
+   "about": "As r35gaps-filter-custom-boolean-parameter, with false: the customPredicate parameter p is the boolean false. It goes into params as false if a boolean passes through; null if it binds as a text that names no source.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f2\",\"operator\":\"in\"}]",
+           "params": {
+            "p": false
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-filter-object-placeholder-mongodb",
+   "pips": [
+    "object",
+    "scope",
+    "raw"
+   ],
+   "about": "As r35gaps-filter-object-placeholder, in mongodb: mongodbPredicate { \"f3\": { \"$in\": ${subject.parityR36Object} } }, and the PIP's jsonPath $.o selects the object {\"k\": \"v\"}. The placeholder renders as an empty list if an object is no value; as written if it is kept.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "mongodbPredicate": "{ \"f3\": { \"$in\": ${subject.parityR36Object} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-filter-untyped-boolean-body",
+   "pips": [
+    "boolean",
+    "scope",
+    "raw",
+    "object"
+   ],
+   "about": "As r35gaps-filter-untyped-number-body, with the body true: a GENERAL PIP without type, in rsqlPredicate f4=in=(${subject.parityR36Boolean}). The placeholder stays as written if a body that is not a set of values is not parsed; true if the boolean is a value.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f4=in=(${subject.parityR36Boolean})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-carriers-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r36",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

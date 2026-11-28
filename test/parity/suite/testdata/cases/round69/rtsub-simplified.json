@@ -1,0 +1,110 @@
+{
+ "about": "Round 69, review of authz-agent PR #147: ${resourceType} in the rsql and mongodb predicates of a simplified policy whose resourceType differs from the request's type in letter case. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R69_RTSUB_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "rt69-simp-control-first",
+   "about": "Control: a simplified READ policy for the reader without a predicate; check/resource true, check/filter ALLOW.",
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rt69-simp-up-lower",
+   "about": "Policy resourceType in upper case, request type in lower case. rsqlPredicate t==${resourceType} and predicates.mongodbPredicate { \"t\": \"${resourceType}\" }; check/resource true says the policy matched, and the filter texts show whose spelling the substitution carries: the request's or the policy's resourceType.",
+   "policy": {
+    "rsqlPredicate": "t==${resourceType}",
+    "predicates": {
+     "mongodbPredicate": "{ \"t\": \"${resourceType}\" }"
+    }
+   },
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     },
+     "type": "parity_suite_r69_rtsub_rt69_simp_up_lower"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "type": "parity_suite_r69_rtsub_rt69_simp_up_lower"
+    }
+   ]
+  },
+  {
+   "id": "rt69-simp-up-mixed",
+   "about": "Policy resourceType in upper case, request type in mixed case. rsqlPredicate t==${resourceType} and predicates.mongodbPredicate { \"t\": \"${resourceType}\" }; check/resource true says the policy matched, and the filter texts show whose spelling the substitution carries: the request's or the policy's resourceType.",
+   "policy": {
+    "rsqlPredicate": "t==${resourceType}",
+    "predicates": {
+     "mongodbPredicate": "{ \"t\": \"${resourceType}\" }"
+    }
+   },
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     },
+     "type": "Parity_Suite_R69_Rtsub_Rt69_Simp_Up_Mixed"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "type": "Parity_Suite_R69_Rtsub_Rt69_Simp_Up_Mixed"
+    }
+   ]
+  },
+  {
+   "id": "rt69-simp-low-upper",
+   "about": "Policy resourceType in lower case, request type in upper case. rsqlPredicate t==${resourceType} and predicates.mongodbPredicate { \"t\": \"${resourceType}\" }; check/resource true says the policy matched, and the filter texts show whose spelling the substitution carries: the request's or the policy's resourceType.",
+   "policy": {
+    "rsqlPredicate": "t==${resourceType}",
+    "predicates": {
+     "mongodbPredicate": "{ \"t\": \"${resourceType}\" }"
+    },
+    "resourceType": "{{resourceTypeLowerCase}}"
+   },
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "rt69-simp-control-last",
+   "about": "Control: a simplified READ policy for the reader without a predicate; check/resource true, check/filter ALLOW.",
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     }
+    }
+   ]
+  }
+ ]
+}

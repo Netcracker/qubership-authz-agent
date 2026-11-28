@@ -1,0 +1,49 @@
+{
+  "r29structure-bulk-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-bulk-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-bulk-on-behalf-m2m-authorized": {
+    "check-resource-bulk-operations-v1-outcome/regular/m2m-operations-as-the-reader": {"status":404},
+    "check-resource-bulk-operations-v1-outcome/regular/operations-as-the-reader": {"status":200,"decision":{"READ":[]}},
+    "check-resource-bulk-v1-outcome/regular/bulk": {"status":200,"allowed":["i1"]},
+    "check-resource-bulk-v1-outcome/regular/bulk-as-an-unknown-user": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/bulk-as-the-reader": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/m2m-bulk-as-the-reader": {"status":404},
+    "check-resource-v1-outcome/regular/read-as-the-reader": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-bulk-on-behalf-reader-authorized": {
+    "check-resource-bulk-operations-v1-outcome/regular/m2m-operations-as-the-reader": {"status":404},
+    "check-resource-bulk-operations-v1-outcome/regular/operations-as-the-reader": {"status":404},
+    "check-resource-bulk-v1-outcome/regular/bulk": {"status":200,"allowed":["i1"]},
+    "check-resource-bulk-v1-outcome/regular/bulk-as-an-unknown-user": {"status":404},
+    "check-resource-bulk-v1-outcome/regular/bulk-as-the-reader": {"status":404},
+    "check-resource-bulk-v1-outcome/regular/m2m-bulk-as-the-reader": {"status":404},
+    "check-resource-v1-outcome/regular/read-as-the-reader": {"status":404,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-bulk-on-behalf-without-authorization": {
+    "check-resource-bulk-operations-v1-outcome/regular/m2m-operations-as-the-reader": {"status":200,"decision":{"READ":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/operations-as-the-reader": {"status":200,"decision":{"READ":[]}},
+    "check-resource-bulk-v1-outcome/regular/bulk": {"status":200,"allowed":["i1"]},
+    "check-resource-bulk-v1-outcome/regular/bulk-as-an-unknown-user": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/bulk-as-the-reader": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/m2m-bulk-as-the-reader": {"status":200,"allowed":[]},
+    "check-resource-v1-outcome/regular/read-as-the-reader": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-bulkops-per-operation": {
+    "check-resource-bulk-operations-v1-outcome/regular/operations": {"status":200,"decision":{"DELETE":[],"READ":["i-a-n","i-a-y"],"UPDATE":["i-a-y"]}},
+    "check-resource-bulk-operations-v1-outcome/regular/operations-anonymous": {"status":200,"decision":{"DELETE":[],"READ":["i-a-n","i-a-y"],"UPDATE":["i-a-y"]}},
+    "check-resource-bulk-operations-v1-outcome/regular/operations-m2m": {"status":200,"decision":{"DELETE":[],"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/bulk": {"status":200,"allowed":["i-a-y"]},
+    "check-resource-v1-outcome/regular/update-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

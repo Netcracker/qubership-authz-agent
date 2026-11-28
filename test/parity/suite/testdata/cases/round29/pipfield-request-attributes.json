@@ -1,0 +1,210 @@
+{
+ "about": "Which ${subject.X} a GENERAL PIP's requestAttributes reads, and in what form: another GENERAL PIP, a MAPPING PIP by its own name, a HEADER PIP over the header \"v,w\", a TOKEN PIP whose defaultValue is \"d1, d2\". pipCalls records the requestAttributes pip-mock received.",
+ "resourceTypePrefix": "PARITY_SUITE_R29F_",
+ "pins": {
+  "/api/v1/pip/r29pipfield-ra": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-ra-source": {
+   "statusCode": 200,
+   "body": [
+    "s"
+   ]
+  }
+ },
+ "pips": {
+  "ra-source-general": {
+   "name": "subject.parityR29RaGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-ra-source",
+   "requestAttributes": {
+    "case": "r29pipfield-ra-source"
+   }
+  },
+  "ra-source-mapping": {
+   "name": "subject.permissions.parityR29Ra",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_RA"
+     ]
+    }
+   }
+  },
+  "ra-source-header": {
+   "name": "subject.parityR29RaHeader",
+   "pipType": "HEADER",
+   "header": "x-parity-r29-h",
+   "cacheable": false
+  },
+  "ra-source-token": {
+   "name": "subject.parityR29RaToken",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "defaultValue": "d1, d2",
+   "cacheable": false
+  },
+  "ra-general": {
+   "name": "subject.parityR29RaProbeGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-ra",
+   "requestAttributes": {
+    "case": "r29pipfield-ra-general",
+    "x": "${subject.parityR29RaGeneral}"
+   }
+  },
+  "ra-mapping": {
+   "name": "subject.parityR29RaProbeMapping",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-ra",
+   "requestAttributes": {
+    "case": "r29pipfield-ra-mapping",
+    "x": "${subject.permissions.parityR29Ra}"
+   }
+  },
+  "ra-header-list": {
+   "name": "subject.parityR29RaProbeHeaderList",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-ra",
+   "requestAttributes": {
+    "case": "r29pipfield-ra-header-list",
+    "x": "${subject.parityR29RaHeader}"
+   }
+  },
+  "ra-token-default-list": {
+   "name": "subject.parityR29RaProbeTokenDefaultList",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-ra",
+   "requestAttributes": {
+    "case": "r29pipfield-ra-token-default-list",
+    "x": "${subject.parityR29RaToken}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29pipfield-ra-general",
+   "about": "requestAttributes x = ${subject.parityR29RaGeneral}",
+   "condition": "subject.parityR29RaProbeGeneral == 'v' OR resource.a == 'y'",
+   "pips": [
+    "ra-general",
+    "ra-source-general"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-ra"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-ra-mapping",
+   "about": "requestAttributes x = ${subject.permissions.parityR29Ra}",
+   "condition": "subject.parityR29RaProbeMapping == 'v' OR resource.a == 'y'",
+   "pips": [
+    "ra-mapping",
+    "ra-source-mapping"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-ra"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-ra-header-list",
+   "about": "requestAttributes x = ${subject.parityR29RaHeader}",
+   "condition": "subject.parityR29RaProbeHeaderList == 'v' OR resource.a == 'y'",
+   "pips": [
+    "ra-header-list",
+    "ra-source-header"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R29-H": "v,w"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-ra"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R29-H": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-ra-token-default-list",
+   "about": "requestAttributes x = ${subject.parityR29RaToken}",
+   "condition": "subject.parityR29RaProbeTokenDefaultList == 'v' OR resource.a == 'y'",
+   "pips": [
+    "ra-token-default-list",
+    "ra-source-token"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-ra"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

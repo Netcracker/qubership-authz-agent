@@ -1,0 +1,310 @@
+{
+ "about": "Resource paths no golden has run to the end: a function over a value it does not apply to, a union and a slice after [*] where the star selects a text beside a list, an existence filter beside a text, and a filter that orders a number against a text literal. Each probe is `<comparison> OR resource.a == 'y'` with a = n and a = y: true, false, or the end of the rule, which makes both false.",
+ "resourceTypePrefix": "PARITY_SUITE_R35G_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r35gaps-jsonpath-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r35",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-jp-first-of-an-object",
+   "about": "resource.o is the object {\"k\": \"v\"}. a = n true if first() of an object is its first value; both false if first() applies to a list only and the path fails.",
+   "condition": "resource.o.first() == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n",
+      "o": {
+       "k": "v"
+      }
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y",
+      "o": {
+       "k": "v"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-jp-union-after-star-beside-a-text",
+   "about": "resource.l is [[\"v\", \"w\"], \"s\"]: [*] selects a list and a text, and [0,1] applies to each. a = n true if the union skips the text and takes v and w from the list; both false if the text fails the path.",
+   "condition": "resource.l[*][0,1] CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n",
+      "l": [
+       [
+        "v",
+        "w"
+       ],
+       "s"
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y",
+      "l": [
+       [
+        "v",
+        "w"
+       ],
+       "s"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-jp-slice-after-star-beside-a-text",
+   "about": "resource.l is [[\"v\", \"w\"], \"s\"], and [0:1] after [*]. a = n true if the slice skips the text and takes v from the list; both false if the text fails the path.",
+   "condition": "resource.l[*][0:1] CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n",
+      "l": [
+       [
+        "v",
+        "w"
+       ],
+       "s"
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y",
+      "l": [
+       [
+        "v",
+        "w"
+       ],
+       "s"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-jp-exists-filter-beside-a-text",
+   "about": "resource.l is [\"s\", {\"k\": \"v\"}]. a = n true if [?(@.k)] skips the text and selects the object; both false if the text fails the path.",
+   "condition": "resource.l[?(@.k)].k CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n",
+      "l": [
+       "s",
+       {
+        "k": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y",
+      "l": [
+       "s",
+       {
+        "k": "v"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-jp-less-than-a-text-over-a-number",
+   "about": "resource.l is [{\"id\": \"a\", \"k\": 5}], and the filter asks k < 'b'. a = n false if a number is never less than a text; true if the number's text 5 compares with b as texts.",
+   "condition": "resource.l[?(@.k < 'b')].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": 5
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": 5
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-jp-keys-of-a-number",
+   "about": "resource.n is the number 5. a = n true if keys() of a number is no value, as an absent key reads under IS NULL; false if it is a value that is not null, as keys() of a list is.",
+   "condition": "resource.n.keys() IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n",
+      "n": 5
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y",
+      "n": 5
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-jp-length-of-a-boolean",
+   "about": "resource.b is true. Both false if length() of a boolean is no value and the rule ends; a = y true if it is null, as length() of a number is.",
+   "condition": "resource.b.length() == 'x' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n",
+      "b": true
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y",
+      "b": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-jp-length-of-null",
+   "about": "resource.z is null. Both false if length() of null is no value and the rule ends; a = y true if it is null.",
+   "condition": "resource.z.length() == 'x' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n",
+      "z": null
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y",
+      "z": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-jsonpath-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r35",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

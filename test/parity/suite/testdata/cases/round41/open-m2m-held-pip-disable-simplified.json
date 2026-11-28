@@ -1,0 +1,166 @@
+{
+ "about": "Whether a GENERAL that a CUSTOMER PIP customization disables still makes a simplified policy's condition one the tenant holds. The condition sits in a simplified policy: a set that reads a disabled PIP fails every check by itself (r29structure-cpip-disable), a simplified policy is not known to.",
+ "resourceTypePrefix": "PARITY_SUITE_R41HPD_",
+ "pins": {
+  "/api/v1/pip/r41open-m2m-held-pip-disable-simplified-policy": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "held": {
+   "name": "subject.parityR41HeldPipDisable",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r41open-m2m-held-pip-disable-simplified-policy",
+   "requestAttributes": {
+    "case": "r41open-m2m-held-pip-disable-simplified-policy",
+    "x": "${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r41openm2mheldpipdisablesimplified-control-first",
+   "condition": "resource.c == 'n'",
+   "about": "Control: a simplified policy for READ whose condition holds. True unless the stand answers every check with 400. The next case replaces it in the domain.",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r41open-m2m-held-pip-disable-simplified-policy",
+   "pips": [
+    "held"
+   ],
+   "condition": "resource.a == 'y' OR subject.parityR41HeldPipDisable == 'v'",
+   "about": "A simplified policy for READ with condition resource.a == 'y' OR subject.parityR41HeldPipDisable == 'v'; the domain declares that GENERAL with a whole ${subject.isM2M} in requestAttributes. read-a-y answers 400: the tenant holds the condition.",
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r41",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r41open-m2m-held-pip-disable-simplified-policy"
+    }
+   ]
+  },
+  {
+   "id": "r41open-m2m-held-pip-disable-simplified",
+   "about": "A set that never names the GENERAL, under which a check is true; the case declares no PIP, so the domain keeps the simplified policy before it. before-* answer 400, the tenant holding the simplified policy's condition. A CUSTOMER PIP customization then disables subject.parityR41HeldPipDisable. after-read answers true if the tenant reads the declarations the PIP customizations make and a simplified policy that reads an undeclared PIP fails nothing; 400 if the tenant still reads the uploaded declaration, if the disabled declaration stays with status INACTIVE, or if such a simplified policy fails every check as such a set does. after-read-policy asks the simplified policy's own type with a = y. The runner deletes the customization before the last control, which answers 400 under every reading.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before-read",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     }
+    },
+    {
+     "name": "before-read-policy",
+     "resource": {
+      "id": "r41",
+      "a": "y"
+     },
+     "type": "PARITY_SUITE_R41HPD_R41OPEN_M2M_HELD_PIP_DISABLE_SIMPLIFIED_POLICY"
+    }
+   ],
+   "customize": [
+    {
+     "name": "disable",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR41HeldPipDisable",
+       "status": "INACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "after-read",
+       "resource": {
+        "id": "r41",
+        "c": "n"
+       }
+      },
+      {
+       "name": "after-read-policy",
+       "resource": {
+        "id": "r41",
+        "a": "y"
+       },
+       "type": "PARITY_SUITE_R41HPD_R41OPEN_M2M_HELD_PIP_DISABLE_SIMPLIFIED_POLICY"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r41openm2mheldpipdisablesimplified-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

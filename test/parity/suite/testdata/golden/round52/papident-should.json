@@ -1,0 +1,60 @@
+{
+  "p52i-control-should-first": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_P52I_902": [
+                "parity_p52i_902_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P52_ID_902",
+          "name": "subject.permissions.PARITY_P52I902_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p52i-control-should-last": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_P52I_952": [
+                "parity_p52i_952_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P52_ID_952",
+          "name": "subject.permissions.PARITY_P52I952_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p52i-pip-name-twice-with-request-attribute-d": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p52i-pip-name-twice-with-request-attribute-x": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":409,"message":""},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  }
+}

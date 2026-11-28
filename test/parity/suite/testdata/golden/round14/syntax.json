@@ -1,0 +1,174 @@
+{
+  "sx-and-true": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-attribute-with-dash": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-attribute-with-digits": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-attribute-with-underscore": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-bare-nested-path": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-bare-path": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-boolean-as-string": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-boolean-mixed-case": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-boolean-upper-case": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-doubled-quote": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-empty-string-literal": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-exponent": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-greater-or-equal-words": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-is-m2m-alone": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-is-m2m-beside-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-is-m2m-declared-alone": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-is-m2m-declared-beside-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-leading-zeros": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-less-or-equal-words": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-list-with-spaces-before-commas": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-list-without-spaces": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-literal-contains": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-literal-is-empty": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-literal-is-subset": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-literal-match": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-literal-on-the-right-of-in-alone": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-negative-decimal": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-negative-leading-zero": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-negative-zero": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-not-equals-words": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-numbers-list-without-spaces": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-resource-type-is-empty": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-roles-equals": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-roles-greater-than": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-roles-in": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-roles-is-null": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-roles-match": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-roles-on-the-right-of-contains": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-single-equals": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-subject-id-contains": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-subject-id-contains-any": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-subject-id-is-empty": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-subject-id-on-the-right-of-contains-any": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-subject-id-on-the-right-of-in": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-true-and-false": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-true-or": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-two-literals-equal": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "sx-whole-false-upper-case": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sx-whole-true-lower-case": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

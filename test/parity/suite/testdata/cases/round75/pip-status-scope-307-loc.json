@@ -1,0 +1,128 @@
+{
+ "about": "Round 75: the scope service answers 307 with Location on a pip-mock route whose assignment has r9 (ECFG scope_status_redirect).",
+ "resourceTypePrefix": "PARITY_SUITE_P75S_",
+ "standVersion": true,
+ "pins": {
+  "/api/v1/pip/r75-status-scope-guard": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r9"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 307,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   "headers": {
+    "Location": "http://pip-mock:8090/api/v1/pip/r75-status-scope-guard"
+   }
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "p75c-307-loc",
+   "about": "permissionScope.region CONTAINS 'r1' OR resource.a == 'y' inside iterate. a-n: true for r1, false for r9; a failure answers 500.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "p75",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r75-status-scope-guard",
+     "pipHeaders": [
+      "request:method"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "p75",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,55 @@
+{
+  "r37open-ra-entitled-resources": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r37open-ra-id": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":1,"requestAttributes":{"case":"r37open-ra-id","x":"00000000-0000-0000-0000-000000000101"}}
+  },
+  "r37open-ra-is-m2m": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":400,"decision":false},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":400,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":0,"requestAttributes":null}
+  },
+  "r37open-ra-name": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":1,"requestAttributes":{"case":"r37open-ra-name","x":"parity-reader"}}
+  },
+  "r37open-ra-permission-scope": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r37open-ra-scope-declared": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r37open-ra-scopes": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":1,"requestAttributes":{"case":"r37open-ra-scopes","x":["openid","profile","email"]}}
+  },
+  "r37open-ra-service-account": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":1,"requestAttributes":{"case":"r37open-ra-service-account","x":null}}
+  },
+  "r37open-ra-type": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":1,"requestAttributes":{"case":"r37open-ra-type","x":"USER"}}
+  },
+  "r37openrawhole-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r37openrawhole-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

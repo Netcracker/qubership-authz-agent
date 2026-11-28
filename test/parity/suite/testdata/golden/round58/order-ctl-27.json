@@ -1,0 +1,37 @@
+{
+  "r58ord-0d967b298e-ctl27": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r58ord-0d967b298e-ctx1-ctl27": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r58ord-6d4b5e497b-ctl27": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r58ord-86e1d6e6bd-ctl27": {
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r58ord-8dd7861ea8-ctl27": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r58ord-93121b490f-ctl27": {
+    "import-customization-v1/regular/first": {"status":200},
+    "import-customization-v1/regular/second": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r58ord-c532aeac64-ctl27": {
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r58ord-diff2-27-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r58ord-f26-control-last-or": {
+    "check-resource-v1-outcome/regular/a-n-when-the-pip-was-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-n-when-the-pip-was-skipped": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

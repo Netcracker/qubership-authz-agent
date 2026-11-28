@@ -1,0 +1,18 @@
+{
+  "r29r28-url-backslash": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/want-m-dropped": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/want-m-kept": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29r28-url-quote": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/want-m-quote": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29r28-url-resource-plain": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/want-m-plain": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

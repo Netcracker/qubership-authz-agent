@@ -1,0 +1,789 @@
+{
+ "about": "Round 72: two lists under ==, the text of a list against a string, and MATCH over a number beyond the double range whose pattern is a resource path. Each case runs in a tenant of its own. Controls first and last answer true.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "o72-lists-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O72_LISTS_CONTROL_FIRST",
+   "tenant": "parity-o72-lists-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-lists-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "f71816ee-a2df-8b25-4726-b944cf3085e8",
+       "name": "o72-lists-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_LISTS_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "2abb48b5-97d6-fc0f-d3d0-80479bbdd6d1",
+         "name": "o72-lists-control-first reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "07bdb98b-5fb6-01e8-cbd0-cb7dea2ac090",
+           "name": "o72-lists-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-list-eq",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.l == resource.m OR resource.a == 'y'`, a = n and a = y, over the pairs of lists: strings, different strings, false; booleans, [true] and [true], true; nested-equal, [[1]] and [[1]], true; nested-scalar, [[1]] and [1], false; nested-length, [[1]] and [[1, 1]], false; extra, [a] and [a, b], false; order, [2, 1] and [1, 2], true as sets.",
+   "resourceType": "PARITY_SUITE_O72_LIST_EQ",
+   "tenant": "parity-o72-list-eq",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-list-eq"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:strings-a-n",
+      "decide:strings-a-y",
+      "decide:booleans-a-n",
+      "decide:booleans-a-y",
+      "decide:nested-equal-a-n",
+      "decide:nested-equal-a-y",
+      "decide:nested-scalar-a-n",
+      "decide:nested-scalar-a-y",
+      "decide:nested-length-a-n",
+      "decide:nested-length-a-y",
+      "decide:extra-a-n",
+      "decide:extra-a-y",
+      "decide:order-a-n",
+      "decide:order-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "f181e1e1-ef31-edba-a278-64d9cef2eb7b",
+       "name": "o72-list-eq set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_LIST_EQ'",
+       "policies": [
+        {
+         "policyId": "66bd3a8f-c17c-15b9-c346-5fb38ab38cf8",
+         "name": "o72-list-eq reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "0eaeb2c3-6610-8c79-d234-d8e852856faf",
+           "name": "o72-list-eq probe",
+           "target": "true",
+           "condition": "resource.l == resource.m OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "strings-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         "x"
+        ],
+        "m": [
+         "y"
+        ]
+       }
+      },
+      {
+       "name": "strings-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         "x"
+        ],
+        "m": [
+         "y"
+        ]
+       }
+      },
+      {
+       "name": "booleans-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         true
+        ],
+        "m": [
+         true
+        ]
+       }
+      },
+      {
+       "name": "booleans-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         true
+        ],
+        "m": [
+         true
+        ]
+       }
+      },
+      {
+       "name": "nested-equal-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         [
+          1
+         ]
+        ],
+        "m": [
+         [
+          1
+         ]
+        ]
+       }
+      },
+      {
+       "name": "nested-equal-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         [
+          1
+         ]
+        ],
+        "m": [
+         [
+          1
+         ]
+        ]
+       }
+      },
+      {
+       "name": "nested-scalar-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         [
+          1
+         ]
+        ],
+        "m": [
+         1
+        ]
+       }
+      },
+      {
+       "name": "nested-scalar-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         [
+          1
+         ]
+        ],
+        "m": [
+         1
+        ]
+       }
+      },
+      {
+       "name": "nested-length-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         [
+          1
+         ]
+        ],
+        "m": [
+         [
+          1,
+          1
+         ]
+        ]
+       }
+      },
+      {
+       "name": "nested-length-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         [
+          1
+         ]
+        ],
+        "m": [
+         [
+          1,
+          1
+         ]
+        ]
+       }
+      },
+      {
+       "name": "extra-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         "a"
+        ],
+        "m": [
+         "a",
+         "b"
+        ]
+       }
+      },
+      {
+       "name": "extra-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         "a"
+        ],
+        "m": [
+         "a",
+         "b"
+        ]
+       }
+      },
+      {
+       "name": "order-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         2,
+         1
+        ],
+        "m": [
+         1,
+         2
+        ]
+       }
+      },
+      {
+       "name": "order-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         2,
+         1
+        ],
+        "m": [
+         1,
+         2
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-list-text",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.l == resource.t OR resource.a == 'y'`, a = n and a = y. A list against a string compares the text of the HashSet legacy holds, in hash order and without repeats: thirteen, 13 strings against their text in order; ints, [2, 1] against [1, 2]; ints-listed, [2, 1] against [2, 1]; beyond-int, [3000000000, 1] against [1, 3000000000]; false-zero, [false, 0] against [0, false]; false-zero-listed, [false, 0] against [false, 0]. The text in list order is true for the listed twins instead.",
+   "resourceType": "PARITY_SUITE_O72_LIST_TEXT",
+   "tenant": "parity-o72-list-text",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-list-text"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:thirteen-a-n",
+      "decide:thirteen-a-y",
+      "decide:ints-a-n",
+      "decide:ints-a-y",
+      "decide:ints-listed-a-n",
+      "decide:ints-listed-a-y",
+      "decide:beyond-int-a-n",
+      "decide:beyond-int-a-y",
+      "decide:false-zero-a-n",
+      "decide:false-zero-a-y",
+      "decide:false-zero-listed-a-n",
+      "decide:false-zero-listed-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "1f6512aa-4c61-8d60-3a33-137063ebd02a",
+       "name": "o72-list-text set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_LIST_TEXT'",
+       "policies": [
+        {
+         "policyId": "a04faf99-253c-2bff-e4fd-ca5e7723bc22",
+         "name": "o72-list-text reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "9f0b8379-28f2-98b5-df48-3c3f4241620b",
+           "name": "o72-list-text probe",
+           "target": "true",
+           "condition": "resource.l == resource.t OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "thirteen-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         "s13",
+         "s12",
+         "s11",
+         "s10",
+         "s09",
+         "s08",
+         "s07",
+         "s06",
+         "s05",
+         "s04",
+         "s03",
+         "s02",
+         "s01"
+        ],
+        "t": "[s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13]"
+       }
+      },
+      {
+       "name": "thirteen-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         "s13",
+         "s12",
+         "s11",
+         "s10",
+         "s09",
+         "s08",
+         "s07",
+         "s06",
+         "s05",
+         "s04",
+         "s03",
+         "s02",
+         "s01"
+        ],
+        "t": "[s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13]"
+       }
+      },
+      {
+       "name": "ints-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         2,
+         1
+        ],
+        "t": "[1, 2]"
+       }
+      },
+      {
+       "name": "ints-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         2,
+         1
+        ],
+        "t": "[1, 2]"
+       }
+      },
+      {
+       "name": "ints-listed-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         2,
+         1
+        ],
+        "t": "[2, 1]"
+       }
+      },
+      {
+       "name": "ints-listed-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         2,
+         1
+        ],
+        "t": "[2, 1]"
+       }
+      },
+      {
+       "name": "beyond-int-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         3000000000,
+         1
+        ],
+        "t": "[1, 3000000000]"
+       }
+      },
+      {
+       "name": "beyond-int-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         3000000000,
+         1
+        ],
+        "t": "[1, 3000000000]"
+       }
+      },
+      {
+       "name": "false-zero-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         false,
+         0
+        ],
+        "t": "[0, false]"
+       }
+      },
+      {
+       "name": "false-zero-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         false,
+         0
+        ],
+        "t": "[0, false]"
+       }
+      },
+      {
+       "name": "false-zero-listed-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         false,
+         0
+        ],
+        "t": "[false, 0]"
+       }
+      },
+      {
+       "name": "false-zero-listed-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         false,
+         0
+        ],
+        "t": "[false, 0]"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-match-beyond-double",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.n MATCH resource.p OR resource.a == 'y'` over the JSON number n = 1e400 with p = Inf.* (infinity) and p = 1.* (one), a = n and a = y. The specification reads the text of the Double, Infinity, only for a pattern written in the condition (round 69), and ends the rule for a pattern from the resource: false for all four. Read as text here too, infinity is true and one false for a = n.",
+   "resourceType": "PARITY_SUITE_O72_MATCH_BEYOND_DOUBLE",
+   "tenant": "parity-o72-match-beyond-double",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-match-beyond-double"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:infinity-a-n",
+      "decide:infinity-a-y",
+      "decide:one-a-n",
+      "decide:one-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "b42ac917-6244-388e-fd6d-817c026b91db",
+       "name": "o72-match-beyond-double set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_MATCH_BEYOND_DOUBLE'",
+       "policies": [
+        {
+         "policyId": "f9ac4cfb-3c27-2668-24e8-3fd2cde59596",
+         "name": "o72-match-beyond-double reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "ebb0d18e-19d7-64b5-76f7-a7d6706d1c17",
+           "name": "o72-match-beyond-double probe",
+           "target": "true",
+           "condition": "resource.n MATCH resource.p OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "infinity-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "n": 1e400,
+        "p": "Inf.*"
+       }
+      },
+      {
+       "name": "infinity-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "n": 1e400,
+        "p": "Inf.*"
+       }
+      },
+      {
+       "name": "one-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "n": 1e400,
+        "p": "1.*"
+       }
+      },
+      {
+       "name": "one-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "n": 1e400,
+        "p": "1.*"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-lists-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O72_LISTS_CONTROL_LAST",
+   "tenant": "parity-o72-lists-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-lists-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "524864c8-4e2b-b59b-54c8-c7eb34f60cb3",
+       "name": "o72-lists-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_LISTS_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "d373135a-8e15-a951-741d-f453245ebca2",
+         "name": "o72-lists-control-last reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "e81132c8-3fb3-da30-91fa-de214f3c2389",
+           "name": "o72-lists-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}

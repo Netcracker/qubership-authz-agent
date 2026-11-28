@@ -1,0 +1,26 @@
+{
+  "d2r58-87b26fbf0b": {
+    "import-customization-v1/regular/cust": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot find referenced item. Policy Set with 'db2af134-3cc1-8679-c5c7-39f90a6b6ee8' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r58-87b26fbf0b-ctx0": {
+    "check-resource-bulk-v1-outcome/isolated/q": {"status":200,"allowed":[]},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "d2r58-f7-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r58-f7-control-last-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

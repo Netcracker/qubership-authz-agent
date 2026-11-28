@@ -26,7 +26,7 @@ import (
 )
 
 // UserProfile selects which seeded parity test user to acquire an end-user
-// token for. Values map to the users D-N locks into parity-realm.json.
+// token for. Values map to the users parity-realm.json seeds.
 type UserProfile int
 
 const (
@@ -70,8 +70,8 @@ func (p UserProfile) Username() string {
 }
 
 // TokenBundle is the per-request set of tokens the Go helper layer plants
-// into Authorization / Incoming-Token / Authorization-Type headers per D-V
-// items 2/3/4. Non-anonymous flows fill M2M + EndUser; anonymous flows fill
+// into the Authorization, Incoming-Token, and Authorization-Type headers.
+// Non-anonymous flows fill M2M + EndUser; anonymous flows fill
 // M2M only and set Anonymous=true.
 type TokenBundle struct {
 	M2M       string
@@ -97,7 +97,7 @@ type tokenEntry struct {
 
 // NewTokenFactory builds a TokenFactory bound to the given config. The
 // underlying HTTP client has a 10s timeout, matching the tests/integration/testify
-// helpers.go convention per D-I.
+// helpers.go convention.
 func NewTokenFactory(cfg Config) *TokenFactory {
 	return &TokenFactory{
 		cfg:    cfg,
@@ -114,13 +114,37 @@ func (tf *TokenFactory) M2MToken() (string, error) {
 	})
 }
 
+// M2MTokenFor returns a cached client_credentials access token of the given
+// client, for the cases whose token has to carry a claim the suite's M2M client
+// does not add.
+func (tf *TokenFactory) M2MTokenFor(client ClientCredentials) (string, error) {
+	return tf.cachedToken("m2m:"+client.ID, func() (tokenEntry, error) {
+		return tf.clientCredentialsGrant(client.ID, client.Secret)
+	})
+}
+
+// EndUserTokenVia returns a cached password-grant access token for username
+// issued by the given client rather than by the suite's end-user client, for the
+// cases whose token has to carry a claim only that client adds.
+func (tf *TokenFactory) EndUserTokenVia(client ClientCredentials, username string) (string, error) {
+	return tf.cachedToken("enduser:"+client.ID+":"+username, func() (tokenEntry, error) {
+		return tf.passwordGrantVia(client, username)
+	})
+}
+
 // EndUserToken returns a cached access token for the given UserProfile,
 // minting a fresh one via password grant against parity-end-user if the
 // cache entry is missing or close to expiry.
 func (tf *TokenFactory) EndUserToken(profile UserProfile) (string, error) {
-	key := "enduser:" + profile.Username()
+	return tf.EndUserTokenFor(profile.Username())
+}
+
+// EndUserTokenFor is EndUserToken for a user the parity realm does not seed,
+// such as a user of a tenant realm on a multi-tenant stand.
+func (tf *TokenFactory) EndUserTokenFor(username string) (string, error) {
+	key := "enduser:" + username
 	return tf.cachedToken(key, func() (tokenEntry, error) {
-		return tf.passwordGrant(profile.Username())
+		return tf.passwordGrant(username)
 	})
 }
 
@@ -152,14 +176,40 @@ func (tf *TokenFactory) clientCredentialsGrant(clientID, clientSecret string) (t
 }
 
 func (tf *TokenFactory) passwordGrant(username string) (tokenEntry, error) {
+	return tf.passwordGrantVia(ClientCredentials{ID: tf.cfg.EndUserClientID, Secret: tf.cfg.EndUserClientSecret}, username)
+}
+
+func (tf *TokenFactory) passwordGrantVia(client ClientCredentials, username string) (tokenEntry, error) {
 	form := url.Values{}
 	form.Set("grant_type", "password")
-	form.Set("client_id", tf.cfg.EndUserClientID)
-	form.Set("client_secret", tf.cfg.EndUserClientSecret)
+	form.Set("client_id", client.ID)
+	form.Set("client_secret", client.Secret)
 	form.Set("username", username)
 	form.Set("password", tf.cfg.EndUserPassword)
 	form.Set("scope", "openid")
 	return tf.tokenRequest(form)
+}
+
+// TokenRequestError is the answer of the token endpoint to a request it did
+// not grant: the HTTP status and the body, which carries the OAuth error code.
+type TokenRequestError struct {
+	Status int
+	Body   string
+}
+
+func (e *TokenRequestError) Error() string {
+	return fmt.Sprintf("token request failed: status=%d body=%s", e.Status, e.Body)
+}
+
+// InvalidGrant reports whether the endpoint refused the grant itself, as it
+// does for a user the realm does not have or a wrong password, rather than the
+// client or the request.
+func (e *TokenRequestError) InvalidGrant() bool {
+	var body struct {
+		Error string `json:"error"`
+	}
+	return (e.Status == http.StatusBadRequest || e.Status == http.StatusUnauthorized) &&
+		json.Unmarshal([]byte(e.Body), &body) == nil && body.Error == "invalid_grant"
 }
 
 func (tf *TokenFactory) tokenRequest(form url.Values) (tokenEntry, error) {
@@ -178,7 +228,7 @@ func (tf *TokenFactory) tokenRequest(form url.Values) (tokenEntry, error) {
 
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		return tokenEntry{}, fmt.Errorf("token request failed: status=%d body=%s", resp.StatusCode, string(body))
+		return tokenEntry{}, &TokenRequestError{Status: resp.StatusCode, Body: string(body)}
 	}
 
 	var payload struct {

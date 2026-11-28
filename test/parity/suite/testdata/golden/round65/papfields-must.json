@@ -1,0 +1,110 @@
+{
+  "p65f-cust-pip-status-edge-vt": {
+    "import-pip-customization-v1/sequence/w-edge-vt": {"status":200},
+    "load-simplified-policies-v1/sequence/w-pip": {"status":201},
+    "pap-read/sequence/r-edge-vt": {"status":200,"body":{"pips":[]}}
+  },
+  "p65f-cust-policy-status-edge-vt": {
+    "import-customization-v1/sequence/w-edge-vt": {"status":200},
+    "load-policy-sets-v1/sequence/w-set": {"status":200},
+    "pap-read/sequence/r-edge-vt": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p65f-cust-policy-status s",
+            "policies": [],
+            "policySetId": "8dbb7d4d-1363-c3c7-a60e-198794fc71c8",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P65_FLD_004'",
+            "tenantId": "parity-p65f-004-edge-vt",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p65f-004-edge-vt"
+      ]
+    }
+  },
+  "p65f-cust-rule-status-edge-vt": {
+    "import-customization-v1/sequence/w-edge-vt": {"status":200},
+    "load-policy-sets-v1/sequence/w-set": {"status":200},
+    "pap-read/sequence/r-edge-vt": {"status":500}
+  },
+  "p65f-cust-set-status-edge-vt": {
+    "import-customization-v1/sequence/w-edge-vt": {"status":200},
+    "load-policy-sets-v1/sequence/w-set": {"status":200},
+    "pap-read/sequence/r-edge-vt": {"status":200,"body":{"policySets":[]}}
+  },
+  "p65f-pip-piptype-edge-lsep": {
+    "load-simplified-policies-v1/sequence/w-edge-lsep": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"\u2028GENERAL\u2028\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
+    "pap-read-raw-v1/sequence/r-edge-lsep": {"status":404,"body":""},
+    "pap-read/sequence/rc-edge-lsep": {"status":200,"body":{"pips":[]}}
+  },
+  "p65f-pip-piptype-edge-vt": {
+    "load-simplified-policies-v1/sequence/w-edge-vt": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP 'subject.parityP65F001A' must have either a URL or bean name"
+    },
+    "pap-read-raw-v1/sequence/r-edge-vt": {"status":404,"body":""},
+    "pap-read/sequence/rc-edge-vt": {"status":200,"body":{"pips":[]}}
+  },
+  "p65f-set-status-edge-vt": {
+    "load-policy-sets-v1/sequence/w-edge-vt": {"status":200},
+    "pap-read/sequence/r-edge-vt": {"status":200,"body":{"policySets":[]}}
+  },
+  "p65i-control-fields-must-first": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_P65I_971": [
+                "parity_p65i_971_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P65_ID_971",
+          "name": "subject.permissions.PARITY_P65I971_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p65i-control-fields-must-last": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_P65I_981": [
+                "parity_p65i_981_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P65_ID_981",
+          "name": "subject.permissions.PARITY_P65I981_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  }
+}

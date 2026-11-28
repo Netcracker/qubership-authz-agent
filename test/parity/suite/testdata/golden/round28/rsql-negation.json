@@ -1,0 +1,198 @@
+{
+  "r28rsql-do-join-a-eq-1-and-b-eq-2": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "((PARITY_SUITE_R28RSQL_DO_JOIN_A_EQ_1_AND_B_EQ_2.a.eq(1)).and(PARITY_SUITE_R28RSQL_DO_JOIN_A_EQ_1_AND_B_EQ_2.b.eq(2))).not()",
+        "mongodbFilterCondition": "{ { \"$or\": [ { \"a\": 1 }, { \"b\": 2 } ] } }",
+        "rsqlFilterCondition": "a!=1 or b!=2",
+        "sqlFilterCondition": "NOT (a=1 AND b=2)",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-do-join-a-eq-1-or-b-eq-2-and-c-eq-3": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(((PARITY_SUITE_R28RSQL_DO_JOIN_A_EQ_1_OR_B_EQ_2_AND_C_EQ_3.a.eq(1)).or(PARITY_SUITE_R28RSQL_DO_JOIN_A_EQ_1_OR_B_EQ_2_AND_C_EQ_3.b.eq(2))).and(PARITY_SUITE_R28RSQL_DO_JOIN_A_EQ_1_OR_B_EQ_2_AND_C_EQ_3.c.eq(3))).not()",
+        "mongodbFilterCondition": "{ { \"$or\": [ { \"$and\": [ { \"a\": 1 }, { \"b\": 2 } ] }, { \"c\": 3 } ] } }",
+        "rsqlFilterCondition": "(a!=1;b!=2),c!=3",
+        "sqlFilterCondition": "NOT ((a=1 OR b=2) AND c=3)",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-do-join-a-ge-5-or-b-le-2": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "((PARITY_SUITE_R28RSQL_DO_JOIN_A_GE_5_OR_B_LE_2.a.goe(5)).or(PARITY_SUITE_R28RSQL_DO_JOIN_A_GE_5_OR_B_LE_2.b.loe(2))).not()",
+        "mongodbFilterCondition": "{ { \"$and\": [ { \"a\": { \"$lt\": 5 } }, { \"b\": { \"$gtee\": 2 } } ] } }",
+        "rsqlFilterCondition": "a=lt=5;b=gt=2",
+        "sqlFilterCondition": "NOT (a\u003e=5 OR b\u003c=2)",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-do-literal-a-eq-x-and-y": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R28RSQL_DO_LITERAL_A_EQ_X_AND_Y.a.eq(\"x;y\")).not()",
+        "mongodbFilterCondition": "{ { \"a\": \"x;y\" } }",
+        "rsqlFilterCondition": "a!='x,y'",
+        "sqlFilterCondition": "NOT (a='x;y')",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-do-op-gt-alt-quoted": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R28RSQL_DO_OP_GT_ALT_QUOTED.a.gt(\"x==y\")).not()",
+        "mongodbFilterCondition": "{ { \"a\": { \"$gt\": \"x==y\" } } }",
+        "rsqlFilterCondition": "a\u003c=\"x!=y\"",
+        "sqlFilterCondition": "NOT (a\u003e'x==y')",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-do-op-like-bare": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "a=like=5",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-do-op-lt-alt-bare": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R28RSQL_DO_OP_LT_ALT_BARE.a.lt(5)).not()",
+        "mongodbFilterCondition": "{ { \"a\": { \"$gte\": 5 } } }",
+        "rsqlFilterCondition": "a\u003e=5",
+        "sqlFilterCondition": "NOT (a\u003c5)",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-negation-control-first": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R28RSQL_NEGATION_CONTROL_FIRST.blocked.eq(1)).not()",
+        "mongodbFilterCondition": "{ { \"blocked\": 1 } }",
+        "rsqlFilterCondition": "blocked!=1",
+        "sqlFilterCondition": "NOT (blocked=1)",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-negation-control-last": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R28RSQL_NEGATION_CONTROL_LAST.blocked.eq(1)).not()",
+        "mongodbFilterCondition": "{ { \"blocked\": 1 } }",
+        "rsqlFilterCondition": "blocked!=1",
+        "sqlFilterCondition": "NOT (blocked=1)",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-pud-op-ge-alt-bare": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R28RSQL_PUD_OP_GE_ALT_BARE.a.goe(5)).not()",
+        "mongodbFilterCondition": "{ { \"a\": { \"$lt\": 5 } } }",
+        "rsqlFilterCondition": "a\u003c==5",
+        "sqlFilterCondition": "NOT (a\u003e=5)",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-pud-op-gt-bare": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R28RSQL_PUD_OP_GT_BARE.a.gt(5)).not()",
+        "mongodbFilterCondition": "{ { \"a\": { \"$gt\": 5 } } }",
+        "rsqlFilterCondition": "a=le=5",
+        "sqlFilterCondition": "NOT (a\u003e5)",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-pud-op-le-alt-bare": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R28RSQL_PUD_OP_LE_ALT_BARE.a.loe(5)).not()",
+        "mongodbFilterCondition": "{ { \"a\": { \"$gtee\": 5 } } }",
+        "rsqlFilterCondition": "a\u003e==5",
+        "sqlFilterCondition": "NOT (a\u003c=5)",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-pud-op-like-bare": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "a=like=5",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28rsql-pud-op-ne-bare": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R28RSQL_PUD_OP_NE_BARE.a.ne(5)).not()",
+        "mongodbFilterCondition": "{ { \"a\": { \"$eq\": 5 } } }",
+        "rsqlFilterCondition": "a==5",
+        "sqlFilterCondition": "NOT (a\u003c\u003e5)",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

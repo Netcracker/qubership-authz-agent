@@ -1,0 +1,25 @@
+{
+  "r40open-m2m-held-custom-add-condition": {
+    "check-resource-v1-outcome/regular/added-read-a-y": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/added-read-other": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/before-read-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-read-other": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/deleted-read-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/deleted-read-other": {"status":200,"decision":true},
+    "delete-customization-v1/regular/delete": {"status":204},
+    "import-customization-v1/regular/add": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/added-read-a-y": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/before-read-a-y": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/deleted-read-a-y": {"calls":0,"requestAttributes":null}
+  },
+  "r40openm2mheldcustomaddcondition-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r40openm2mheldcustomaddcondition-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

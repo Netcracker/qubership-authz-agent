@@ -1,0 +1,31 @@
+{
+  "r35gaps-request-attribute-empty-token": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":1,"requestAttributes":{"case":"r35gaps-ra-empty","e":null}}
+  },
+  "r35gaps-request-attribute-list": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":1,"requestAttributes":{"case":"r35gaps-ra-list","l":["${subject.id}","x"]}}
+  },
+  "r35gaps-request-attribute-resource-type": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":1,"requestAttributes":{"case":"r35gaps-ra-type","t":"${resourceType}"}}
+  },
+  "r35gaps-request-attribute-undeclared": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r35gaps-request-attributes-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r35gaps-request-attributes-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

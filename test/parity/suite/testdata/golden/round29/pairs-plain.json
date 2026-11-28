@@ -1,0 +1,166 @@
+{
+  "r29pairs-plain-001": {
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":[]},
+    "check-resource-v1-outcome/regular/qc": {"status":200,"decision":false},
+    "import-customization-v1/regular/cust": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-plain-001-s": {
+    "check-resource-bulk-v1-outcome/isolated/q": {"status":200,"allowed":[]},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-plain-002": {
+    "check-filter-v1-outcome/regular/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-plain-003": {
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":[]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-plain-004": {
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/qc": {"status":200,"allowed":[]},
+    "import-customization-v1/regular/cust": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-plain-004-s": {
+    "check-resource-bulk-v1-outcome/isolated/q": {"status":200,"allowed":[]},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-plain-005": {
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":["i1","i2"]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-plain-006": {
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/qc": {"status":200,"allowed":[]},
+    "import-customization-v1/regular/cust": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-plain-006-s": {
+    "check-resource-bulk-v1-outcome/isolated/q": {"status":200,"allowed":[]},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-plain-007": {
+    "check-filter-v1-outcome/regular/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "f1a=in=(\"x\", \"y\");f1b==v1;f1c==",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/qc": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "f1a=in=(\"x\", \"y\");f1b==v1;f1c==",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "import-customization-v1/regular/cust": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-plain-007-s": {
+    "check-filter-v1-outcome/isolated/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-plain-008": {
+    "check-filter-v1-outcome/regular/qc": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":["i1","i2"]},
+    "import-customization-v1/regular/cust": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-plain-008-s": {
+    "check-filter-v1-outcome/isolated/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-plain-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-plain-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-q-001": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "(fa==v0,fb==v1);fc!=v2",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/selected": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-q-002": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": "(fa='v0' OR fb='v1') AND NOT (fc='v2')",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/selected": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-q-003": {
+    "check-resource-v1-outcome/regular/selected": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,126 @@
+{
+ "about": "What resource.customerId IN <TOKEN> OR resource.customerId IN <GENERAL> answers, and whether the GENERAL PIP is called once the TOKEN operand holds. The product policies in reach write this form with a string claim on the left and a GENERAL PIP answering a list of ids on the right. ro-in-either-header records it over two HEADER PIPs, where nothing is called; a string claim on the right of IN and a GENERAL PIP on the right that answered 500 beside a true left operand are recorded nowhere. The agent's condition parser accepts the condition. The reader's department claim is finance. Each request pins the GENERAL PIP to its own answer and names the resource's customerId. A request whose TOKEN operand holds may reach the GENERAL PIP or not, and the answer of general-fails-and-token-holds-the-id depends on which, so both such requests are filed by the call log under -when-the-pip-was-read or -when-the-pip-was-skipped. Where the GENERAL operand decides, the PIP has to be called. The case lives in its own test function so that a recording run can be filtered to it and leave every golden already committed alone.",
+ "resourceTypePrefix": "PARITY_SUITE_R10_",
+ "pins": {},
+ "pips": {
+  "department": {
+   "name": "subject.parityR10Department",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "customers": {
+   "name": "subject.parityR10CustomerIds",
+   "url": "http://pip-mock:8090/api/v1/pip/r10-either-customer-ids",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "either-source"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "either-source",
+   "condition": "resource.customerId IN subject.parityR10Department OR resource.customerId IN subject.parityR10CustomerIds",
+   "pips": [
+    "department",
+    "customers"
+   ],
+   "requests": [
+    {
+     "name": "token-holds-the-id",
+     "pins": {
+      "/api/v1/pip/r10-either-customer-ids": {
+       "statusCode": 200,
+       "body": [
+        "c2"
+       ]
+      }
+     },
+     "resource": {
+      "id": "r10-either",
+      "customerId": "finance"
+     },
+     "classifyBy": "/api/v1/pip/r10-either-customer-ids"
+    },
+    {
+     "name": "general-holds-the-id",
+     "pins": {
+      "/api/v1/pip/r10-either-customer-ids": {
+       "statusCode": 200,
+       "body": [
+        "c1",
+        "c2"
+       ]
+      }
+     },
+     "resource": {
+      "id": "r10-either",
+      "customerId": "c1"
+     },
+     "readsRoutes": [
+      "/api/v1/pip/r10-either-customer-ids"
+     ]
+    },
+    {
+     "name": "neither-holds-the-id",
+     "pins": {
+      "/api/v1/pip/r10-either-customer-ids": {
+       "statusCode": 200,
+       "body": [
+        "c1"
+       ]
+      }
+     },
+     "resource": {
+      "id": "r10-either",
+      "customerId": "c9"
+     },
+     "readsRoutes": [
+      "/api/v1/pip/r10-either-customer-ids"
+     ]
+    },
+    {
+     "name": "general-fails-and-token-holds-the-id",
+     "pins": {
+      "/api/v1/pip/r10-either-customer-ids": {
+       "statusCode": 500,
+       "body": {
+        "error": "parity either-source case"
+       }
+      }
+     },
+     "resource": {
+      "id": "r10-either",
+      "customerId": "finance"
+     },
+     "classifyBy": "/api/v1/pip/r10-either-customer-ids"
+    },
+    {
+     "name": "general-fails-and-token-misses-the-id",
+     "pins": {
+      "/api/v1/pip/r10-either-customer-ids": {
+       "statusCode": 500,
+       "body": {
+        "error": "parity either-source case"
+       }
+      }
+     },
+     "resource": {
+      "id": "r10-either",
+      "customerId": "c9"
+     },
+     "readsRoutes": [
+      "/api/v1/pip/r10-either-customer-ids"
+     ]
+    }
+   ],
+   "policy": {
+    "id": "00000000-0000-0000-0000-0000000f1040"
+   }
+  }
+ ]
+}

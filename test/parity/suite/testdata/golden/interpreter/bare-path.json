@@ -1,0 +1,17 @@
+{
+  "bare-path-in-a-regular-set": {
+    "check-resource-v1-outcome/regular/attribute-equal": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/attribute-other": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "bp1-bare-path-against-a-literal": {
+    "check-resource-v1-outcome/isolated/attribute-equal": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/attribute-other": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "bp2-bare-nested-path-against-subject-id": {
+    "check-resource-v1-outcome/isolated/owner-is-someone-else": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/owner-is-the-reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

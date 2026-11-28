@@ -1,0 +1,76 @@
+{
+  "rp46-head-customized-effect-deny": {
+    "check-resource-v1-outcome/regular/after-rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/after-ry": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-head-customized-effect-none": {
+    "check-resource-v1-outcome/regular/after-rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/after-ry": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "import-customization-v1/regular/custom": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-head-filtered-condition": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-head-filtered-target": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [resource.id IN subject.parityRawIds FILTERED 'READ']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-head-iterate-algorithm-documented": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-head-iterate-algorithm-other": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"FIRST_APPLICABLE\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-head-simplified-predicate-member-other": {
+    "load-simplified-policies-v1/isolated": {
+      "status": 400,
+      "message": {
+        "message": "simplified policy 'predicates' must contain at least one predicate format"
+      }
+    }
+  },
+  "rp46-head-simplified-predicate-mongodb": {
+    "check-resource-v1-outcome/isolated/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/ry": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "rp46-head-simplified-predicate-mongodb-and-other": {
+    "check-resource-v1-outcome/isolated/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/ry": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "rp46-heads-control-first": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-heads-control-last": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

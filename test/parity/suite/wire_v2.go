@@ -31,7 +31,7 @@ const (
 )
 
 // v2Flags carries the per-call flag decisions. Parity always sends
-// obligations=false per D-E; Preview toggles the path template between
+// obligations=false; Preview toggles the path template between
 // /access/v2 and /preview/v2 (Flags.withPreview() — AbstractRemoteACCommon
 // (v2):45-61).
 type v2Flags struct {
@@ -39,8 +39,8 @@ type v2Flags struct {
 }
 
 // v2QueryExtra returns the query params v2 helpers append on top of
-// tenant_id + optional userId. obligations=false is unconditional per D-E
-// / D-V item 9.
+// tenant_id + optional userId: obligations=false on every request, since the
+// suite does not compare obligations on these rows.
 func v2QueryExtra() url.Values {
 	extra := url.Values{}
 	extra.Set("obligations", "false")
@@ -51,7 +51,7 @@ func v2QueryExtra() url.Values {
 // (POST /access/v2/check/resource). Parity suite never uses the preview
 // path for row 7; rows 5/9 that need preview use the bulk helpers instead.
 func HelperCheckResourceV2(ctx context.Context, cfg Config, body model.CheckResourceRequest, tokens TokenBundle, opts PerCallOptions) (int, model.CheckResourceResponse, []byte, error) {
-	target := buildURL(cfg.ACBaseURL, v2PathCheckResource, buildQuery(cfg, opts.UserID, v2QueryExtra()))
+	target := buildURL(cfg.ACBaseURL, v2PathCheckResource, buildQuery(cfg, opts, v2QueryExtra()))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
 	if err != nil {
 		return 0, model.CheckResourceResponse{}, nil, err
@@ -60,11 +60,8 @@ func HelperCheckResourceV2(ctx context.Context, cfg Config, body model.CheckReso
 	if err != nil {
 		return status, model.CheckResourceResponse{}, raw, err
 	}
-	var decoded model.CheckResourceResponse
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, decoded, raw, err
-	}
-	return status, decoded, raw, nil
+	decoded, err := answerOf[model.CheckResourceResponse](PSUITE_ROW_7_CHECK_RESOURCE_V2, status, raw)
+	return status, decoded, raw, err
 }
 
 // HelperCheckResourcesV2 drives row 8
@@ -75,7 +72,7 @@ func HelperCheckResourcesV2(ctx context.Context, cfg Config, body model.CheckRes
 	if flags.Preview {
 		path = v2PathPreviewBulkOperations
 	}
-	target := buildURL(cfg.ACBaseURL, path, buildQuery(cfg, opts.UserID, v2QueryExtra()))
+	target := buildURL(cfg.ACBaseURL, path, buildQuery(cfg, opts, v2QueryExtra()))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
 	if err != nil {
 		return 0, model.CheckResourcesResponse{}, nil, err
@@ -84,11 +81,12 @@ func HelperCheckResourcesV2(ctx context.Context, cfg Config, body model.CheckRes
 	if err != nil {
 		return status, model.CheckResourcesResponse{}, raw, err
 	}
-	var decoded model.CheckResourcesResponse
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, decoded, raw, err
+	row := PSUITE_ROW_8_CHECK_RESOURCE_BULK_OPERATIONS_V2
+	if flags.Preview {
+		row = PSUITE_ROW_9_PREVIEW_BULK_OPERATIONS_V2
 	}
-	return status, decoded, raw, nil
+	decoded, err := answerOf[model.CheckResourcesResponse](row, status, raw)
+	return status, decoded, raw, err
 }
 
 // HelperPreviewCheckResourcesV2 is a thin wrapper that forces
@@ -108,7 +106,7 @@ func HelperFilterV2(ctx context.Context, cfg Config, resourceType, operation str
 	if operation != "" {
 		extra.Set("operation", operation)
 	}
-	target := buildURL(cfg.ACBaseURL, v2PathCheckFilter, buildQuery(cfg, opts.UserID, extra))
+	target := buildURL(cfg.ACBaseURL, v2PathCheckFilter, buildQuery(cfg, opts, extra))
 	req, err := buildRequest(ctx, http.MethodPost, target, nil, tokens, opts)
 	if err != nil {
 		return 0, model.FilterResponse{}, nil, err
@@ -117,9 +115,20 @@ func HelperFilterV2(ctx context.Context, cfg Config, resourceType, operation str
 	if err != nil {
 		return status, model.FilterResponse{}, raw, err
 	}
-	var decoded model.FilterResponse
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, decoded, raw, err
+	decoded, err := answerOf[model.FilterResponse](PSUITE_ROW_10_CHECK_FILTER_V2, status, raw)
+	return status, decoded, raw, err
+}
+
+// HelperPostV2 posts body, nil for none, to the v2 path of access-control
+// with the tenant, the userId, and the headers of opts and the query
+// parameters extra, and returns the status and the raw body without decoding
+// it. Unlike the row helpers it sends no obligations parameter of its own:
+// extra carries one when the caller wants one.
+func HelperPostV2(ctx context.Context, cfg Config, path string, extra url.Values, body any, tokens TokenBundle, opts PerCallOptions) (int, []byte, error) {
+	target := buildURL(cfg.ACBaseURL, path, buildQuery(cfg, opts, extra))
+	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
+	if err != nil {
+		return 0, nil, err
 	}
-	return status, decoded, raw, nil
+	return doRequest(req)
 }

@@ -1,0 +1,528 @@
+{
+ "about": "Round 78: it72-not-a-jwt of round72/incoming-token.json, an Incoming-Token the stand refuses on check/resource, sent on bulk, bulk/operations and check/filter v1. The first and the last case are the controls of the source file.",
+ "resourceTypePrefix": "PARITY_SUITE_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "o78-i72-token-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78-bulk-it72-not-a-jwt",
+   "about": "Incoming-Token beside the M2M token: a value that is not a JWT. Four probes: the name of the token's claims (parity-minted-reader), no name (an anonymous subject), the name of the M2M token's service account (the header ignored), and the role the claims give. A token legacy reads answers true, false, false, true. Round 78 sends it on bulk v1.",
+   "resourceType": "PARITY_SUITE_IT72_NOT_A_JWT",
+   "sets": [
+    {
+     "key": "name-minted",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_NAME_MINTED'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-minted",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-minted",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-null",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_NAME_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-m2m",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_NAME_M2M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-m2m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-m2m",
+         "target": "true",
+         "condition": "subject.name == 'service-account-parity-m2m'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "roles-reader",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_ROLES_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-roles-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     },
+     "name": "name-minted-bulk-v1",
+     "bulk": [
+      {
+       "id": "it72",
+       "resource": {
+        "id": "it72"
+       },
+       "type": "PARITY_SUITE_IT72_NOT_A_JWT_NAME_MINTED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     },
+     "name": "name-null-bulk-v1",
+     "bulk": [
+      {
+       "id": "it72",
+       "resource": {
+        "id": "it72"
+       },
+       "type": "PARITY_SUITE_IT72_NOT_A_JWT_NAME_NULL",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     },
+     "name": "name-m2m-bulk-v1",
+     "bulk": [
+      {
+       "id": "it72",
+       "resource": {
+        "id": "it72"
+       },
+       "type": "PARITY_SUITE_IT72_NOT_A_JWT_NAME_M2M",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     },
+     "name": "roles-reader-bulk-v1",
+     "bulk": [
+      {
+       "id": "it72",
+       "resource": {
+        "id": "it72"
+       },
+       "type": "PARITY_SUITE_IT72_NOT_A_JWT_ROLES_READER",
+       "operation": "READ"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o78-bulkops-it72-not-a-jwt",
+   "about": "Incoming-Token beside the M2M token: a value that is not a JWT. Four probes: the name of the token's claims (parity-minted-reader), no name (an anonymous subject), the name of the M2M token's service account (the header ignored), and the role the claims give. A token legacy reads answers true, false, false, true. Round 78 sends it on bulk/operations v1.",
+   "resourceType": "PARITY_SUITE_IT72_NOT_A_JWT",
+   "sets": [
+    {
+     "key": "name-minted",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_NAME_MINTED'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-minted",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-minted",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-null",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_NAME_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-m2m",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_NAME_M2M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-m2m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-m2m",
+         "target": "true",
+         "condition": "subject.name == 'service-account-parity-m2m'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "roles-reader",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_ROLES_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-roles-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     },
+     "name": "name-minted-bulk-operations-v1",
+     "bulkOperations": [
+      {
+       "id": "it72",
+       "resource": {
+        "id": "it72"
+       },
+       "type": "PARITY_SUITE_IT72_NOT_A_JWT_NAME_MINTED",
+       "operations": [
+        "READ"
+       ]
+      }
+     ]
+    },
+    {
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     },
+     "name": "name-null-bulk-operations-v1",
+     "bulkOperations": [
+      {
+       "id": "it72",
+       "resource": {
+        "id": "it72"
+       },
+       "type": "PARITY_SUITE_IT72_NOT_A_JWT_NAME_NULL",
+       "operations": [
+        "READ"
+       ]
+      }
+     ]
+    },
+    {
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     },
+     "name": "name-m2m-bulk-operations-v1",
+     "bulkOperations": [
+      {
+       "id": "it72",
+       "resource": {
+        "id": "it72"
+       },
+       "type": "PARITY_SUITE_IT72_NOT_A_JWT_NAME_M2M",
+       "operations": [
+        "READ"
+       ]
+      }
+     ]
+    },
+    {
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     },
+     "name": "roles-reader-bulk-operations-v1",
+     "bulkOperations": [
+      {
+       "id": "it72",
+       "resource": {
+        "id": "it72"
+       },
+       "type": "PARITY_SUITE_IT72_NOT_A_JWT_ROLES_READER",
+       "operations": [
+        "READ"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o78-filter-it72-not-a-jwt",
+   "about": "Incoming-Token beside the M2M token: a value that is not a JWT. Four probes: the name of the token's claims (parity-minted-reader), no name (an anonymous subject), the name of the M2M token's service account (the header ignored), and the role the claims give. A token legacy reads answers true, false, false, true. Round 78 sends it on check/filter v1.",
+   "resourceType": "PARITY_SUITE_IT72_NOT_A_JWT",
+   "sets": [
+    {
+     "key": "name-minted",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_NAME_MINTED'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-minted",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-minted",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-null",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_NAME_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-m2m",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_NAME_M2M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-m2m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-m2m",
+         "target": "true",
+         "condition": "subject.name == 'service-account-parity-m2m'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "roles-reader",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_ROLES_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-roles-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     },
+     "name": "name-minted-check-filter-v1",
+     "filter": true,
+     "operation": "READ",
+     "type": "PARITY_SUITE_IT72_NOT_A_JWT_NAME_MINTED"
+    },
+    {
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     },
+     "name": "name-null-check-filter-v1",
+     "filter": true,
+     "operation": "READ",
+     "type": "PARITY_SUITE_IT72_NOT_A_JWT_NAME_NULL"
+    },
+    {
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     },
+     "name": "name-m2m-check-filter-v1",
+     "filter": true,
+     "operation": "READ",
+     "type": "PARITY_SUITE_IT72_NOT_A_JWT_NAME_M2M"
+    },
+    {
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     },
+     "name": "roles-reader-check-filter-v1",
+     "filter": true,
+     "operation": "READ",
+     "type": "PARITY_SUITE_IT72_NOT_A_JWT_ROLES_READER"
+    }
+   ]
+  },
+  {
+   "id": "o78-i72-token-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

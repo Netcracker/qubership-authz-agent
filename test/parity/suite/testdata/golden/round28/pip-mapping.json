@@ -1,0 +1,54 @@
+{
+  "r28pip-mapping-general-fail500-p-rule-target-reader": {
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":400}
+  },
+  "r28pip-mapping-general-fail500-p-simplified-reader": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r28pip-mapping-general-null-p-simplified-reader": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r28pip-mapping-general-ok-one-p-simplified-reader": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r28pip-mapping-header-absent-p-simplified-reader": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28pip-mapping-header-list-p-simplified-reader": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28pip-mapping-header-p-simplified-reader": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28pip-mapping-id-p-simplified-reader": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28pip-mapping-non-subject-p-simplified-reader": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r28pip-mapping-scope-p-iterate-reader": {
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":400}
+  },
+  "r28pip-mapping-scope-p-simplified-reader": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r28pip-mapping-self-p-rule-condition-reader": {
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":400}
+  },
+  "r28pip-mapping-token-absent-p-simplified-reader": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28pip-mapping-undeclared-p-simplified-reader": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  }
+}

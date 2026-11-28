@@ -1,0 +1,22 @@
+{
+  "fs69-c-mt44-167-x": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "region=in=(\"r1\")",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-4": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-5": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

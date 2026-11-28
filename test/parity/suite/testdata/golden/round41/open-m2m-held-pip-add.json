@@ -1,0 +1,25 @@
+{
+  "r41open-m2m-held-pip-add": {
+    "check-resource-v1-outcome/regular/before-read-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-read-other": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/customized-read-a-y": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/customized-read-other": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/deleted-read-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/deleted-read-other": {"status":200,"decision":true},
+    "delete-pip-customization-v1/regular/delete": {"status":204},
+    "import-pip-customization-v1/regular/replace": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/before-read-a-y": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/customized-read-a-y": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/deleted-read-a-y": {"calls":0,"requestAttributes":null}
+  },
+  "r41openm2mheldpipadd-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r41openm2mheldpipadd-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

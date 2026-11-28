@@ -1,0 +1,54 @@
+{
+  "ea-equals": {
+    "check-resource-v1-outcome/isolated/x-empty-array": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ea-equals-alone": {
+    "check-resource-v1-outcome/isolated/x-empty-array": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ea-equals-control": {
+    "check-resource-v1-outcome/isolated/x-empty-array": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ea-is-not-empty": {
+    "check-resource-v1-outcome/isolated/x-empty-array": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ea-is-not-empty-control": {
+    "check-resource-v1-outcome/isolated/x-empty-array": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ea-is-subset": {
+    "check-resource-v1-outcome/isolated/x-empty-array": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ea-is-subset-control": {
+    "check-resource-v1-outcome/isolated/x-empty-array": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ea-not-equals": {
+    "check-resource-v1-outcome/isolated/x-empty-array": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ea-not-equals-alone": {
+    "check-resource-v1-outcome/isolated/x-empty-array": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ea-not-equals-control": {
+    "check-resource-v1-outcome/isolated/x-empty-array": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "oob-is-empty": {
+    "check-resource-v1-outcome/isolated/index-past-the-end": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "oob-is-empty-control": {
+    "check-resource-v1-outcome/isolated/index-past-the-end": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sel-not-contains-alone": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

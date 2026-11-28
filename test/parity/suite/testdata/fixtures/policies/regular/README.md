@@ -6,7 +6,7 @@ instead of the simplified-policy channel.
 
 These files are imported by
 [`test/parity/suite/seed.go`](../../../../seed.go) during
-`ParitySuite.SetupSuite` rather than by a compose-side shell script.
+`ParitySuite.BeforeTest`, before the first `TestRow` test, rather than by a compose-side shell script.
 
 Why it exists:
 
@@ -17,5 +17,5 @@ Why it exists:
 Current coverage:
 
 - `parity-suite-full.json`
-  Covers the remaining Step 3 cases that need non-simplified predicate fields:
+  Covers the remaining cases that need non-simplified predicate fields:
   `PSUITE-6-use-filter-incoming` plus SUB rows 71/72/73.

@@ -1,0 +1,253 @@
+{
+  "r35gaps-filter-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r35gaps-filter-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r35gaps-filter-custom-boolean-parameter": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": {
+          "logic": {
+            "path": "8454bef6-468c-77a7-a7fe-14132429c229"
+          },
+          "data": {
+            "8454bef6-468c-77a7-a7fe-14132429c229": {
+              "predicate": "[{\"value\":${p},\"property\":\"f9\",\"operator\":\"in\"}]",
+              "params": {
+                "p": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r35gaps-filter-custom-fraction-parameter": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": {
+          "logic": {
+            "path": "6bff6ef3-ddbf-4071-4a3d-40fa2931971f"
+          },
+          "data": {
+            "6bff6ef3-ddbf-4071-4a3d-40fa2931971f": {
+              "predicate": "[{\"value\":${p},\"property\":\"f8\",\"operator\":\"in\"}]",
+              "params": {
+                "p": [
+                  5.5
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r35gaps-filter-custom-null-parameter": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": {
+          "logic": {
+            "path": "79fc3247-4e97-7b74-bdba-8cd6669e633c"
+          },
+          "data": {
+            "79fc3247-4e97-7b74-bdba-8cd6669e633c": {
+              "predicate": "[{\"value\":${p},\"property\":\"f9\",\"operator\":\"in\"}]",
+              "params": {
+                "p": null
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r35gaps-filter-custom-one-part": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "f6==v",
+        "sqlFilterCondition": null,
+        "customFilterCondition": {
+          "logic": {
+            "path": "44b0976d-7c42-ea71-dce1-20b854574065"
+          },
+          "data": {
+            "44b0976d-7c42-ea71-dce1-20b854574065": {
+              "predicate": "[{\"value\":${p},\"property\":\"f6\",\"operator\":\"in\"}]",
+              "params": {
+                "p": [
+                  "ROLE_PARITY_READER"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r35gaps-filter-custom-two-groups": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": {
+          "logic": {
+            "op": "OR",
+            "apply": [
+              {
+                "op": "OR",
+                "apply": [
+                  {
+                    "path": "51a1380f-7973-37ee-a832-1e5469f7a996"
+                  },
+                  {
+                    "path": "a965b191-9561-1682-4ca0-3ec37e8c848a"
+                  }
+                ]
+              },
+              {
+                "path": "9e4a1375-6cce-f0a5-0731-7ece2facabb1"
+              }
+            ]
+          },
+          "data": {
+            "9e4a1375-6cce-f0a5-0731-7ece2facabb1": {
+              "predicate": "[{\"value\":${p},\"property\":\"f7c\",\"operator\":\"in\"}]",
+              "params": {
+                "p": [
+                  "ROLE_PARITY_READER"
+                ]
+              }
+            },
+            "51a1380f-7973-37ee-a832-1e5469f7a996": {
+              "predicate": "[{\"value\":${p},\"property\":\"f7b\",\"operator\":\"in\"}]",
+              "params": {
+                "p": [
+                  "ROLE_PARITY_READER"
+                ]
+              }
+            },
+            "a965b191-9561-1682-4ca0-3ec37e8c848a": {
+              "predicate": "[{\"value\":${p},\"property\":\"f7a\",\"operator\":\"in\"}]",
+              "params": {
+                "p": [
+                  "ROLE_PARITY_READER"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r35gaps-filter-object-placeholder": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "f1=in=()",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r35gaps-filter-resource-placeholder": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r35gaps-filter-scope-key-the-grant-lacks": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r35gaps-filter-token-list-placeholder": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "f2=in=(\"ROLE_PARITY_READER\", \"ROLE_PARITY_REVIEWER\")",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r35gaps-filter-untyped-number-body": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ { \"f4\": { \"$in\": ${subject.parityR35Number} } } }",
+        "rsqlFilterCondition": "f4=in=(${subject.parityR35Number})",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

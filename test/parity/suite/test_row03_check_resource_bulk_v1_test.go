@@ -24,8 +24,8 @@ import (
 )
 
 // Row 3 drives POST /access/v1/check/resource/bulk. Response is a
-// Set<String> of allowed ids (sort-invariant per D-M). The bulk body
-// stuffs three entries against the Step 2 fixtures:
+// Set<String> of allowed ids, compared without regard to order. The bulk body
+// stuffs three entries against the smoke fixtures:
 //
 //	id=A: PARITY_CUSTOMER READ   → allow
 //	id=B: PARITY_CUSTOMER WRITE  → deny (no policy matches)

@@ -1,0 +1,44 @@
+{
+  "r29pipfield-type-json-without-jsonpath": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r29pipfield-type-jsonpath-bracket-without-dollar": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/a-n": {"calls":1,"requestAttributes":{"case":"r29pipfield-type-jsonpath-bracket-without-dollar"}}
+  },
+  "r29pipfield-type-jsonpath-without-dollar": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/a-n": {"calls":1,"requestAttributes":{"case":"r29pipfield-type-jsonpath-without-dollar"}}
+  },
+  "r29pipfield-type-regular-mongodb-filter": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ {\"a\": {\"$in\": [ \"v\", \"w\" ]}} }",
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29pipfield-type-regular-with-jsonpath": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/a-n": {"calls":1,"requestAttributes":{"case":"r29pipfield-type-regular-with-jsonpath"}}
+  },
+  "r29pipfield-type-uuid-explicit": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/a-n": {"calls":1,"requestAttributes":{"case":"r29pipfield-type-uuid-explicit"}}
+  }
+}

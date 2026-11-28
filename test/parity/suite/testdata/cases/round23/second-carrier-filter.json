@@ -1,0 +1,524 @@
+{
+ "about": "check/filter rules that exactly one earlier golden pins, asked one set deeper or in a regular set: groups of nested and top-level sets, repeated GENERAL values in a predicate, the operation ALL, unconditional rules beside predicates, and an absent header in a predicate. Each case's about names the golden it seconds.",
+ "resourceTypePrefix": "PARITY_SUITE_R23F_",
+ "pins": {
+  "/api/v1/pip/r23-s04-repeated": {
+   "statusCode": 200,
+   "body": [
+    "b",
+    "a",
+    "a"
+   ]
+  }
+ },
+ "pips": {
+  "parityr23s04repeated": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S04Repeated",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s04-repeated"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s04-repeated"
+  },
+  "parityr23noheader": {
+   "name": "subject.parityR23NoHeader",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r23-no-such-header",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "s23-second-carrier-filter-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-041-one-set-deeper",
+   "about": "Seconds the golden regular/x20-q15-groups-of-a-top-level-set-beside-a-predicate/filter. Pins how the filter groups the predicates of a set that brings several groups, here one set deeper.",
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-in",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "a==1"
+           }
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        },
+        {
+         "key": "s0-p1",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "key": "s0-p1-r0",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "b==2"
+           }
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      }
+     ]
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "s23-042-one-set-deeper",
+   "about": "Seconds the golden regular/substitution-general-repeated-values/filter. Pins the list that repeated GENERAL values give in a predicate, here one set deeper.",
+   "pips": [
+    "parityr23s04repeated"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-in",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "customPredicate": {
+             "params": {
+              "p": "subject.parityR23S04Repeated"
+             },
+             "predicate": "a:${p}"
+            },
+            "mongodbPredicate": "{ \"a\": ${subject.parityR23S04Repeated} }",
+            "predicate": "${resourceType}.a.eq(${subject.parityR23S04Repeated})",
+            "rsqlPredicate": "a==${subject.parityR23S04Repeated}",
+            "sqlPredicate": "a=${subject.parityR23S04Repeated}"
+           }
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "s23-043-one-set-deeper",
+   "about": "Seconds the golden regular/filter-without-an-operation/filter-with-the-operation-all. Pins what the filter answers for the operation ALL, here one set deeper.",
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-in",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "read==1"
+           }
+          },
+          {
+           "key": "s0-p0-r1",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "update==1"
+           }
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter-with-the-operation-all",
+     "filter": true,
+     "operation": "ALL"
+    }
+   ]
+  },
+  {
+   "id": "s23-044-one-set-deeper",
+   "about": "Seconds the golden regular/t16-10/filter. Pins what an unconditional ALLOW rule beside a predicate gives under DENY_OVERRIDES, here one set deeper.",
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-in",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          },
+          {
+           "key": "s0-p0-r1",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "DENY_OVERRIDES"
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "s23-045-one-set-deeper",
+   "about": "Seconds the golden regular/t16-16/filter. Pins what an unconditional DENY rule gives in a PERMIT_OVERRIDES policy, here one set deeper.",
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-in",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        },
+        {
+         "key": "s0-p1",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-p1-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "s23-046-one-set-deeper",
+   "about": "Seconds the golden regular/x20-q15-groups-of-a-nested-set-beside-a-predicate/filter. Pins how the filter groups the predicates of a set that brings several groups, here one set deeper.",
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-in",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "allowed==1"
+           }
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "sets": [
+        {
+         "key": "s0-s0",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "policies": [
+          {
+           "key": "s0-s0-p0",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "key": "s0-s0-p0-r0",
+             "target": "operation == 'LIST'",
+             "condition": "true",
+             "effect": "ALLOW",
+             "predicates": {
+              "rsqlPredicate": "a==1"
+             }
+            }
+           ],
+           "algorithm": "DENY_UNLESS_PERMIT"
+          },
+          {
+           "key": "s0-s0-p1",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "key": "s0-s0-p1-r0",
+             "target": "operation == 'LIST'",
+             "condition": "true",
+             "effect": "ALLOW",
+             "predicates": {
+              "rsqlPredicate": "b==2"
+             }
+            }
+           ],
+           "algorithm": "DENY_UNLESS_PERMIT"
+          }
+         ],
+         "sets": []
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "s23-047-absent-header-in-a-predicate-rsql",
+   "about": "Pins what an absent header gives in a predicate.",
+   "pips": [
+    "parityr23noheader",
+    "parityr23s04repeated"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR23NoHeader}"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "s23-second-carrier-filter-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

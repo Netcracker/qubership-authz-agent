@@ -1,0 +1,77 @@
+{
+  "r29pipfield-fwd-incoming-token": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r29pipfield-fwd-incoming-token"
+      },
+      "headers": {
+        "authorization": "\u003cother token\u003e",
+        "incoming-token": "\u003cuser token\u003e",
+        "tenant": "\u003ctenant_id\u003e",
+        "x-parity-r29-a": null,
+        "x-parity-r29-b": null
+      }
+    }
+  },
+  "r29pipfield-fwd-none-declared": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r29pipfield-fwd-none-declared"
+      },
+      "headers": {
+        "authorization": "\u003cother token\u003e",
+        "incoming-token": null,
+        "tenant": "\u003ctenant_id\u003e",
+        "x-parity-r29-a": null,
+        "x-parity-r29-b": null
+      }
+    }
+  },
+  "r29pipfield-fwd-padded-names": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r29pipfield-fwd-padded-names"
+      },
+      "headers": {
+        "authorization": "\u003cother token\u003e",
+        "incoming-token": null,
+        "tenant": "\u003ctenant_id\u003e",
+        "x-parity-r29-a": "va",
+        "x-parity-r29-b": null
+      }
+    }
+  },
+  "r29pipfield-fwd-reserved-names": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r29pipfield-fwd-two-one-sent": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r29pipfield-fwd-two-one-sent"
+      },
+      "headers": {
+        "authorization": "\u003cother token\u003e",
+        "incoming-token": null,
+        "tenant": "\u003ctenant_id\u003e",
+        "x-parity-r29-a": "va",
+        "x-parity-r29-b": null
+      }
+    }
+  }
+}

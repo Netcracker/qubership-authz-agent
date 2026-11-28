@@ -1,0 +1,17 @@
+{
+  "r41open-m2m-held-pip-twin": {
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":409}
+  },
+  "r41open-m2m-held-pip-twin-elsewhere": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r41openm2mheldpiptwin-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r41openm2mheldpiptwin-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

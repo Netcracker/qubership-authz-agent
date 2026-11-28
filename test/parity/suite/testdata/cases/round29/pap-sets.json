@@ -1,0 +1,670 @@
+{
+ "about": "Upload constraints on policy sets, policies, and rules that no earlier golden decides: status and effect values, column sizes, non-UUID rule ids, the operators of RSQL and MongoDB predicates. A valid upload is followed by one that breaks the constraint; the load golden of each is the answer. The sets read no PIP. The uploads with an unknown status or effect come last, before the closing control.",
+ "resourceTypePrefix": "PARITY_SUITE_R29P_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-sets-control-first",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Control: accepted, and the READ with a = 'y' is true unless the stand is broken."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}' OR resourceType == 'PARITY_R29_X'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-set-target-over-256-ok",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-set-target-over-256-bad: the same upload within the constraint (set target over 256)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}' OR resourceType == 'PARITY_R29_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-set-target-over-256-bad",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (set target over 256); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "resourceType == 'PARITY_R29_X' OR operation == 'READ'",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-policy-target-over-256-ok",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-policy-target-over-256-bad: the same upload within the constraint (policy target over 256)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "resourceType == 'PARITY_R29_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX' OR operation == 'READ'",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-policy-target-over-256-bad",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (policy target over 256); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW",
+         "fields": {
+          "name": "parity r29 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-rule-name-over-256-ok",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-rule-name-over-256-bad: the same upload within the constraint (rule name over 256)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW",
+         "fields": {
+          "name": "parity r29 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-rule-name-over-256-bad",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (rule name over 256); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-rule-predicate-over-1024-ok",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-rule-predicate-over-1024-bad: the same upload within the constraint (rule predicate over 1024)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-rule-predicate-over-1024-bad",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (rule predicate over 1024); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-rule-id-not-uuid-ok",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-rule-id-not-uuid-bad: the same upload within the constraint (rule id not uuid)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW",
+         "fields": {
+          "ruleId": "parity-r29-not-a-uuid"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-rule-id-not-uuid-bad",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (rule id not uuid); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-set-status-unknown-ok",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-set-status-unknown-bad: the same upload within the constraint (set status unknown)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "status": "PARITY_R29_BOGUS"
+    }
+   ],
+   "id": "r29pap-set-status-unknown-bad",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (set status unknown); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-rule-effect-permit-ok",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-rule-effect-permit-bad: the same upload within the constraint (rule effect permit)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "PERMIT"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-rule-effect-permit-bad",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (rule effect permit); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-rule-effect-filter-ok",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-rule-effect-filter-bad: the same upload within the constraint (rule effect filter)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "FILTER"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-rule-effect-filter-bad",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (rule effect filter); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "NOT_APPLICABLE"
+        },
+        {
+         "key": "allow2",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-rule-effect-use-filter-condition-ok",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-rule-effect-use-filter-condition-bad: the same upload within the constraint (rule effect use filter condition)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "USE_FILTER_CONDITION"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-rule-effect-use-filter-condition-bad",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (rule effect use filter condition); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-sets-control-last",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Control: accepted, and the READ with a = 'y' is true unless the stand is broken."
+  }
+ ]
+}

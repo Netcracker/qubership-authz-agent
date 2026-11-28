@@ -1,0 +1,89 @@
+{
+  "z26-z-000": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "z26-z-001": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "z26-z-002": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "z26-z-002-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/deny-a-n": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "z26-z-003": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "z26-z-004": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "z26-z-005": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "z26-z-006": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "z26-z-006-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/deny-a-n": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "z26-z-007": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "z26-z-008": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "z26-z-008-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/deny-a-n": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "z26-z-009": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "z26-z-010": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "z26-z-011": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "z26-z-011-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/deny-a-n": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "z26-z-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "z26-z-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

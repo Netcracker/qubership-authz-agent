@@ -1,0 +1,48 @@
+{
+  "r30open-added-draft-nested": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30open-added-inactive-rule": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30open-added-inactive-two-levels-down": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30open-customization-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30open-customization-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30open-level-other-between-customer": {
+    "check-resource-v1-outcome/regular/read-after-customer-again": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after-customer": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-after-customer-again": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-after-other": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":true},
+    "import-customization-v1/regular/customer": {"status":200},
+    "import-customization-v1/regular/customer-again": {"status":200},
+    "import-customization-v1/regular/other": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30open-replace-draft-to-active": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

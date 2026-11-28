@@ -133,11 +133,13 @@ make e2e-down     # delete the cluster
 - Changed a realm file: `make e2e-harness e2e-suite`. The harness replaces the Keycloak Pod, and a dev-mode Keycloak
   mints new realm keys on every start, so the harness also restarts the agent, whose JWKS bootstrap holds the old keys,
   and waits until it is Ready.
-- Another agent URL: `make e2e-suite E2E_BASE_URL=<url>` (`PARITY_AC_BASE_URL` for `parity-suite`) writes the URL into
-  the installed test-stand release, together with any realm edit not yet applied, and runs the suite against it. The URL
-  stays in the release for later runs until `make e2e-harness` restores the default. The same run clears
-  `AGENT_PULL_URL` (`PARITY_AGENT_PULL_URL`), so the suite waits a pull interval after each upload instead of asking
-  the local agent to pull; `make e2e-harness` (`make parity-harness`) without the URL restores it too.
+- Another agent URL: `make e2e-suite E2E_BASE_URL=<url>` (`PARITY_AC_BASE_URL` for `parity-suite`) writes the URL
+  into the installed test-stand release, together with any realm edit not yet applied, and runs the suite against it.
+  The URL stays in the release for later runs until `make e2e-harness` restores the default. The same run clears
+  `AGENT_PULL_URL` (`PARITY_AGENT_PULL_URL`), so the suite waits a pull interval after each upload instead of asking the
+  local agent to pull; `make e2e-harness` (`make parity-harness`) without the URL restores it too. The `parity-export*`
+  targets reinstall the stand on every run, so `PARITY_AC_BASE_URL` applies to that run only, and a run without it
+  sends its requests to the chart's Service and asks the local agent to pull.
 
 - A subset: set `RUNTIME_SUITE_RUN` (a `-test.run` regular expression) on the test-stand release, with
   `FULL_RUNTIME_SUITE` set to `false` so the coverage checks do not fail on a filtered run, then run `make e2e-suite`:
@@ -197,6 +199,6 @@ The minimum CI gate for compatibility-sensitive changes is listed in [test/readm
 | `make e2e-harness` or `make parity-harness` fails with `exists and cannot be imported into the current release: invalid ownership metadata` | The cluster still holds the harness objects an older `make e2e` or `make parity` created with `kubectl apply`. Run `make e2e-down` once, then rerun `make e2e` or `make parity`. |
 | `make e2e-harness` or `make parity-harness` runs out of its 10-minute wait | Check `kubectl -n authz-e2e get pods` (or `-n authz-parity`). A stub or tenant-manager Pod in `ErrImageNeverPull`: the images are not in the cluster, run `make e2e-images`. Keycloak still starting on the first run: the node is still pulling it, rerun the harness target. |
 | `setup.wait_for_agent` fails after Keycloak restarted outside `make e2e-harness` | Keycloak has new realm keys and the agent holds the old ones: `kubectl --context kind-authz-e2e -n authz-e2e rollout restart deploy/authz-agent` (namespace `authz-parity` for the parity stand). |
-| A long suite stops at 10 minutes with `panic: test timed out after 10m0s`, or `make e2e-suite` or `make parity-suite` fails after 15 minutes while the Job still runs | Three limits bound a suite run: `-test.timeout` in `suite.args` (600s), `suite.activeDeadlineSeconds` of the Job (900), and the `helm test` wait, `E2E_SUITE_TIMEOUT` or `PARITY_SUITE_TIMEOUT` (15m). Raise them together, each no lower than the one before: the first two in the stand's values file, which `make e2e-harness` or `make parity-harness` applies, and the third on the suite target, for example `make parity-suite PARITY_SUITE_TIMEOUT=5h30m`. |
+| A long suite stops with `panic: test timed out after <duration>`, or `make e2e-suite`, `make parity-suite`, or one of the export-fed suites (`make parity-export-suite`, `make parity-export-legacy-suite`, `make parity-export-owner-decisions-suite`) fails while the Job still runs | Three limits bound a suite run: `-test.timeout` in `suite.args`, `suite.activeDeadlineSeconds` of the Job, and the `helm test` wait, `E2E_SUITE_TIMEOUT`, `PARITY_SUITE_TIMEOUT`, or for an export-fed suite `PARITY_EXPORT_SUITE_TIMEOUT_<check>`. The stand's values file (`test/k8s/test-stand-values.yaml` or `test/k8s/parity/test-stand-values.yaml`, and for an export-fed suite also `test/k8s/parity/test-stand-values-export.yaml` and, for the legacy and owner-decisions checks, `test-stand-values-export-<check>.yaml`) sets the first two, the chart's `values.yaml` sets what it leaves out, and the `Makefile` sets the defaults of the third. Raise them together, each no lower than the one before: the first two in the stand's values file, which the harness target applies, and the third on the suite target, for example `make e2e-suite E2E_SUITE_TIMEOUT=30m` or `make parity-export-legacy-suite PARITY_EXPORT_SUITE_TIMEOUT_legacy=3h`. |
 | Need logs after a run | `make e2e-logs`, then look under `test/artifacts/kind/`. |
 | Cluster left behind | `make e2e-down`. |

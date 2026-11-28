@@ -1,0 +1,120 @@
+{
+ "about": "What subject.permissionScope.<key> resolves to in a set that does not iterate. scope-read-outside-iterate records CONTAINS over it, false with a resource value and with a literal alike, which an absent attribute, a null, and an empty list all produce (nn1, n4, nc-contains). IS EMPTY on READ is true over an empty list only. On UPDATE it stands on the left of an OR whose right operand holds: true over a null or an empty list, false over an absent attribute, which ends the rule (nn1). IS NULL on PROBE is true over each of the three. The scope service answers two grants, region r1 and region r2, as in the iterate binding cases. All three rules read the scope, so a false on each does not show that the policy is reached; TestRound12ScopeOutsideIterateControlCases adds a rule that reads none. The first request waits out the cachePeriod of the declaration, as permission-scope-wire does, so that a scope an earlier function cached is not served. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone. Legacy profile only.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ],
+      "type": "USER"
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "scope-is-empty-outside-iterate",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "region-is-empty",
+         "target": "operation == 'READ'",
+         "condition": "subject.permissionScope.region IS EMPTY",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "region-is-empty-or-true",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.permissionScope.region IS EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "region-is-null",
+         "target": "operation == 'PROBE'",
+         "condition": "subject.permissionScope.region IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-under-is-empty",
+     "pauseMs": 2000,
+     "resource": {
+      "id": "r11-scope-outside"
+     }
+    },
+    {
+     "name": "update-under-is-empty-or-true",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r11-scope-outside",
+      "a": "y"
+     }
+    },
+    {
+     "name": "probe-under-is-null",
+     "operation": "PROBE",
+     "resource": {
+      "id": "r11-scope-outside"
+     }
+    }
+   ]
+  }
+ ]
+}

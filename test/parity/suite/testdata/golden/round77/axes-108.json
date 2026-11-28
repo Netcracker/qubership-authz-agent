@@ -1,0 +1,62 @@
+{
+  "ax77-108-c16-cell-absent-contains-0-or": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax77-108-c16-cell-absent-contains-any-0-or": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax77-108-c16-cell-absent-ge-0-or": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax77-108-c16-cell-absent-gt-0-or": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax77-108-c16-cell-absent-in-0-or": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax77-108-c16-cell-absent-is-empty-0-or": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax77-108-c16-cell-absent-is-not-empty-0-or": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax77-108-c16-cell-absent-is-not-subset-0-or": {
+    "check-filter-v1-outcome/isolated/probe-a-n-check-filter-v1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/isolated/probe-a-y-check-filter-v1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

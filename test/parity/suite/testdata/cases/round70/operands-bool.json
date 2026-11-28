@@ -1,0 +1,413 @@
+{
+ "about": "Round 70: resource.x IN true,false, with no space after the comma: a list of the booleans or one attribute named true,false. Each case runs in a tenant of its own; the upload, the decisions and the raw reads of the export are separate steps. Controls first and last answer true.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "o70-bool-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O70_BOOL_CONTROL_FIRST",
+   "tenant": "parity-o70-bool-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o70-bool-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "832ee574-6a3f-4c1f-594a-137e5aee269d",
+       "name": "o70-bool-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O70_BOOL_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "06d70396-b0bf-43f0-eef0-09150f92c1cc",
+         "name": "o70-bool-control-first reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "f5a8d56e-0386-b14a-06f5-550f97b70d02",
+           "name": "o70-bool-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r70",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o70-bool-no-key",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.x IN true,false OR resource.a == 'y'` with x = true, a = n and a = y; the upload is recorded on its own, with its error body if refused. The resource has no key true,false. A list of the booleans true and false answers true for a = n; the attribute true,false is absent, so the probe is false (true for a = y) or ends the condition (false for a = y).",
+   "resourceType": "PARITY_SUITE_O70_BOOL_NO_KEY",
+   "tenant": "parity-o70-bool-no-key",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o70-bool-no-key"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "9662f0b9-65d2-6233-b5ec-8da6e8387cc5",
+       "name": "o70-bool-no-key set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O70_BOOL_NO_KEY'",
+       "policies": [
+        {
+         "policyId": "59a35559-43fe-cdba-46fd-717e3793ce59",
+         "name": "o70-bool-no-key reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "6bbae237-be7a-1856-21c1-1bbcca4aa266",
+           "name": "o70-bool-no-key probe",
+           "target": "true",
+           "condition": "resource.x IN true,false OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r70",
+        "a": "n",
+        "x": true
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r70",
+        "a": "y",
+        "x": true
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o70-bool-key-true",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.x IN true,false OR resource.a == 'y'` with x = true, a = n and a = y; the upload is recorded on its own, with its error body if refused. The resource holds true,false = [true]. Both the list of booleans and the attribute true,false answer true for a = n: the request shows that a key with a comma is read at all.",
+   "resourceType": "PARITY_SUITE_O70_BOOL_KEY_TRUE",
+   "tenant": "parity-o70-bool-key-true",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o70-bool-key-true"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "a7e11959-e6a9-6fa5-a8d6-b829579117e6",
+       "name": "o70-bool-key-true set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O70_BOOL_KEY_TRUE'",
+       "policies": [
+        {
+         "policyId": "92e95e08-d442-0385-6a0e-650f0b553fe9",
+         "name": "o70-bool-key-true reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "7d13aeca-a066-93f8-383f-39225b63f0f9",
+           "name": "o70-bool-key-true probe",
+           "target": "true",
+           "condition": "resource.x IN true,false OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r70",
+        "a": "n",
+        "x": true,
+        "true,false": [
+         true
+        ]
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r70",
+        "a": "y",
+        "x": true,
+        "true,false": [
+         true
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o70-bool-key-false",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.x IN true,false OR resource.a == 'y'` with x = true, a = n and a = y; the upload is recorded on its own, with its error body if refused. The resource holds true,false = [false]. The list of booleans answers true for a = n, the attribute true,false false.",
+   "resourceType": "PARITY_SUITE_O70_BOOL_KEY_FALSE",
+   "tenant": "parity-o70-bool-key-false",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o70-bool-key-false"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "9dccaf58-0ed3-7a9b-8626-4f3d41c61286",
+       "name": "o70-bool-key-false set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O70_BOOL_KEY_FALSE'",
+       "policies": [
+        {
+         "policyId": "cedf57d3-0916-5da3-27bb-8a8167b0d610",
+         "name": "o70-bool-key-false reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "91107abd-56bd-ae0c-46a4-2e8bba5a37e3",
+           "name": "o70-bool-key-false probe",
+           "target": "true",
+           "condition": "resource.x IN true,false OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r70",
+        "a": "n",
+        "x": true,
+        "true,false": [
+         false
+        ]
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r70",
+        "a": "y",
+        "x": true,
+        "true,false": [
+         false
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o70-bool-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O70_BOOL_CONTROL_LAST",
+   "tenant": "parity-o70-bool-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o70-bool-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "862b17d3-b6eb-21c9-dda8-d322a6296778",
+       "name": "o70-bool-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O70_BOOL_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "60e9ab93-4838-2f26-a8e5-5e45cfd0be63",
+         "name": "o70-bool-control-last reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "f97b9620-b980-8eb8-a80b-d09025336e80",
+           "name": "o70-bool-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r70",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,213 @@
+{
+ "about": "Whether the tenant holds a condition that a CUSTOMER customization puts in place, as it holds an uploaded one, when the condition names a GENERAL whose requestAttributes carry a whole ${subject.isM2M}, and whether the tenant answers again once that customization is deleted.",
+ "resourceTypePrefix": "PARITY_SUITE_R40ACO_",
+ "pins": {
+  "/api/v1/pip/r40open-m2m-held-custom-add-condition": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "held": {
+   "name": "subject.parityR40HeldAddCondition",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r40open-m2m-held-custom-add-condition",
+   "requestAttributes": {
+    "case": "r40open-m2m-held-custom-add-condition",
+    "x": "${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r40openm2mheldcustomaddcondition-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r40open-m2m-held-custom-add-condition",
+   "pips": [
+    "held"
+   ],
+   "about": "The case uploads an ACTIVE top-level set whose only rule allows on resource.a == 'y'. A CUSTOMER customization replaces that rule with one that allows on resource.a == 'y' OR subject.parityR40HeldAddCondition == 'v'. added-read-a-y evaluates that condition and answers 400 under every reading; added-read-other answers 400 if the tenant holds the conditions the customizations make, true if it holds the uploaded ones only. The second step deletes the customization: the deleted-* requests answer as before it if deleting the customization lets the tenant go, 400 if the tenant still holds the condition.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before-read-a-y",
+     "resource": {
+      "id": "r40",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r40open-m2m-held-custom-add-condition"
+    },
+    {
+     "name": "before-read-other",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     },
+     "type": "PARITY_SUITE_R40ACO_R40OPENM2MHELDCUSTOMADDCONDITION_CONTROL_FIRST"
+    }
+   ],
+   "customize": [
+    {
+     "name": "add",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "allow",
+           "name": "customized allow",
+           "target": "true",
+           "condition": "resource.a == 'y' OR subject.parityR40HeldAddCondition == 'v'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "added-read-a-y",
+       "resource": {
+        "id": "r40",
+        "a": "y"
+       },
+       "pipCalls": "/api/v1/pip/r40open-m2m-held-custom-add-condition"
+      },
+      {
+       "name": "added-read-other",
+       "resource": {
+        "id": "r40",
+        "c": "n"
+       },
+       "type": "PARITY_SUITE_R40ACO_R40OPENM2MHELDCUSTOMADDCONDITION_CONTROL_FIRST"
+      }
+     ]
+    },
+    {
+     "name": "delete",
+     "level": "CUSTOMER",
+     "delete": {
+      "key": "set",
+      "recursive": true
+     },
+     "requests": [
+      {
+       "name": "deleted-read-a-y",
+       "resource": {
+        "id": "r40",
+        "a": "y"
+       },
+       "pipCalls": "/api/v1/pip/r40open-m2m-held-custom-add-condition"
+      },
+      {
+       "name": "deleted-read-other",
+       "resource": {
+        "id": "r40",
+        "c": "n"
+       },
+       "type": "PARITY_SUITE_R40ACO_R40OPENM2MHELDCUSTOMADDCONDITION_CONTROL_FIRST"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r40openm2mheldcustomaddcondition-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

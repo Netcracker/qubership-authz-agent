@@ -16,7 +16,6 @@ package paritysuite
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/url"
 	"strings"
@@ -60,7 +59,7 @@ func HelperApiVersion(ctx context.Context, cfg Config) (int, model.ApiVersionRes
 // plus the raw status and body so validation rows (row 11) can assert on
 // error responses.
 func HelperCheckResourceV1(ctx context.Context, cfg Config, body model.CheckAccessRequest, tokens TokenBundle, opts PerCallOptions) (int, bool, []byte, error) {
-	target := buildURL(cfg.ACBaseURL, v1PathCheckResource, buildQuery(cfg, opts.UserID, nil))
+	target := buildURL(cfg.ACBaseURL, v1PathCheckResource, buildQuery(cfg, opts, nil))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
 	if err != nil {
 		return 0, false, nil, err
@@ -69,15 +68,15 @@ func HelperCheckResourceV1(ctx context.Context, cfg Config, body model.CheckAcce
 	if err != nil {
 		return status, false, raw, err
 	}
-	decision := decodeBoolean(raw)
-	return status, decision, raw, nil
+	decision, err := answerOf[bool](PSUITE_ROW_2_CHECK_RESOURCE_V1, status, raw)
+	return status, decision, raw, err
 }
 
 // HelperCheckResourcesV1 drives row 3 (POST /access/v1/check/resource/bulk).
 // The decoded set of allowed ids is returned as a []string; callers use
-// cmpopts.SortSlices at compare time per D-M.
+// cmpopts.SortSlices at compare time.
 func HelperCheckResourcesV1(ctx context.Context, cfg Config, body []model.CheckAccessRequestWithID, tokens TokenBundle, opts PerCallOptions) (int, []string, []byte, error) {
-	target := buildURL(cfg.ACBaseURL, v1PathCheckResourceBulk, buildQuery(cfg, opts.UserID, nil))
+	target := buildURL(cfg.ACBaseURL, v1PathCheckResourceBulk, buildQuery(cfg, opts, nil))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
 	if err != nil {
 		return 0, nil, nil, err
@@ -86,17 +85,14 @@ func HelperCheckResourcesV1(ctx context.Context, cfg Config, body []model.CheckA
 	if err != nil {
 		return status, nil, raw, err
 	}
-	var decoded []string
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, nil, raw, err
-	}
-	return status, decoded, raw, nil
+	decoded, err := answerOf[[]string](PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1, status, raw)
+	return status, decoded, raw, err
 }
 
 // HelperCheckResourcesByOperationsV1 drives row 4
 // (POST /access/v1/check/resource/bulk/operations).
 func HelperCheckResourcesByOperationsV1(ctx context.Context, cfg Config, body []model.CheckAccessBulkOperationsRequest, tokens TokenBundle, opts PerCallOptions) (int, map[string][]string, []byte, error) {
-	target := buildURL(cfg.ACBaseURL, v1PathCheckResourceBulkOperations, buildQuery(cfg, opts.UserID, nil))
+	target := buildURL(cfg.ACBaseURL, v1PathCheckResourceBulkOperations, buildQuery(cfg, opts, nil))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
 	if err != nil {
 		return 0, nil, nil, err
@@ -105,11 +101,8 @@ func HelperCheckResourcesByOperationsV1(ctx context.Context, cfg Config, body []
 	if err != nil {
 		return status, nil, raw, err
 	}
-	var decoded map[string][]string
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, nil, raw, err
-	}
-	return status, decoded, raw, nil
+	decoded, err := answerOf[map[string][]string](PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1, status, raw)
+	return status, decoded, raw, err
 }
 
 // HelperPreviewCheckResourcesByOperationsV1 drives row 5
@@ -117,7 +110,7 @@ func HelperCheckResourcesByOperationsV1(ctx context.Context, cfg Config, body []
 // row 4; differs only in the path prefix (thin client passes
 // Flags.withPreview() which rewrites the path template).
 func HelperPreviewCheckResourcesByOperationsV1(ctx context.Context, cfg Config, body []model.CheckAccessBulkOperationsRequest, tokens TokenBundle, opts PerCallOptions) (int, map[string][]string, []byte, error) {
-	target := buildURL(cfg.ACBaseURL, v1PathPreviewBulkOperations, buildQuery(cfg, opts.UserID, nil))
+	target := buildURL(cfg.ACBaseURL, v1PathPreviewBulkOperations, buildQuery(cfg, opts, nil))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
 	if err != nil {
 		return 0, nil, nil, err
@@ -126,26 +119,39 @@ func HelperPreviewCheckResourcesByOperationsV1(ctx context.Context, cfg Config, 
 	if err != nil {
 		return status, nil, raw, err
 	}
-	var decoded map[string][]string
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, nil, raw, err
-	}
-	return status, decoded, raw, nil
+	decoded, err := answerOf[map[string][]string](PSUITE_ROW_5_PREVIEW_BULK_OPERATIONS_V1, status, raw)
+	return status, decoded, raw, err
 }
 
 // HelperFilterV1 drives row 6 (POST /access/v1/check/filter). Body is empty —
 // the query string carries resourceType, operation, and userId. An empty
-// resourceType reaches the server and triggers the @NotNull validation
-// (row 29 relies on this for 400 assertions).
+// resourceType leaves the query parameter out.
 func HelperFilterV1(ctx context.Context, cfg Config, resourceType, operation string, tokens TokenBundle, opts PerCallOptions) (int, model.OldFilterEvaluationResult, []byte, error) {
+	return HelperFilterV1Query(ctx, cfg, filterV1Query(resourceType, operation, false), tokens, opts)
+}
+
+// filterV1Query returns the resourceType and operation parameters of a filter
+// request, each left out when empty, except that emptyOperation sends
+// operation with an empty value.
+func filterV1Query(resourceType, operation string, emptyOperation bool) url.Values {
 	extra := url.Values{}
 	if resourceType != "" {
 		extra.Set("resourceType", resourceType)
 	}
-	if operation != "" {
+	switch {
+	case emptyOperation:
+		extra.Set("operation", "")
+	case operation != "":
 		extra.Set("operation", operation)
 	}
-	target := buildURL(cfg.ACBaseURL, v1PathCheckFilter, buildQuery(cfg, opts.UserID, extra))
+	return extra
+}
+
+// HelperFilterV1Query is [HelperFilterV1] with the endpoint's own query
+// parameters given as they are sent, so that a parameter with an empty value,
+// such as operation=, is sent rather than left out.
+func HelperFilterV1Query(ctx context.Context, cfg Config, extra url.Values, tokens TokenBundle, opts PerCallOptions) (int, model.OldFilterEvaluationResult, []byte, error) {
+	target := buildURL(cfg.ACBaseURL, v1PathCheckFilter, buildQuery(cfg, opts, extra))
 	req, err := buildRequest(ctx, http.MethodPost, target, nil, tokens, opts)
 	if err != nil {
 		return 0, model.OldFilterEvaluationResult{}, nil, err
@@ -154,11 +160,25 @@ func HelperFilterV1(ctx context.Context, cfg Config, resourceType, operation str
 	if err != nil {
 		return status, model.OldFilterEvaluationResult{}, raw, err
 	}
-	var decoded model.OldFilterEvaluationResult
-	if err := decodeJSON(raw, &decoded); err != nil {
-		return status, decoded, raw, err
+	decoded, err := answerOf[model.OldFilterEvaluationResult](PSUITE_ROW_6_CHECK_FILTER_V1, status, raw)
+	return status, decoded, raw, err
+}
+
+// HelperPostV1 posts body to path of access-control with the tenant, the
+// userId, and the headers of opts, and returns the status and the raw body
+// without decoding it, so that a caller can record a refused request and send
+// a body the typed helpers would reshape.
+func HelperPostV1(ctx context.Context, cfg Config, path string, body any, tokens TokenBundle, opts PerCallOptions) (int, []byte, error) {
+	return HelperPostV1Query(ctx, cfg, path, nil, body, tokens, opts)
+}
+
+// HelperPostV1Query is HelperPostV1 with the query parameters extra added.
+func HelperPostV1Query(ctx context.Context, cfg Config, path string, extra url.Values, body any, tokens TokenBundle, opts PerCallOptions) (int, []byte, error) {
+	req, err := buildRequest(ctx, http.MethodPost, buildURL(cfg.ACBaseURL, path, buildQuery(cfg, opts, extra)), body, tokens, opts)
+	if err != nil {
+		return 0, nil, err
 	}
-	return status, decoded, raw, nil
+	return doRequest(req)
 }
 
 // buildURL composes base + path + ?query defensively against trailing slashes.
@@ -168,18 +188,4 @@ func buildURL(base, path, query string) string {
 		full += "?" + query
 	}
 	return full
-}
-
-// decodeBoolean mirrors the thin client's BOOLEAN_RESPONSE_TYPE handling —
-// empty/whitespace body → null → false.
-func decodeBoolean(body []byte) bool {
-	trimmed := strings.TrimSpace(string(body))
-	if trimmed == "" || trimmed == "null" {
-		return false
-	}
-	var decoded bool
-	if err := json.Unmarshal([]byte(trimmed), &decoded); err != nil {
-		return false
-	}
-	return decoded
 }

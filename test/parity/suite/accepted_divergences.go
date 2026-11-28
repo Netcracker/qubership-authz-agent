@@ -20,8 +20,8 @@ import (
 	"strings"
 )
 
-// acceptedDivergenceRoot holds one file per accepted divergence, mirroring the
-// layout under testdata/golden. It is deliberately a separate tree: the golden
+// acceptedDivergenceRoot holds one file per accepted divergence, at
+// <golden key>.json. It is deliberately a separate tree: the golden
 // directory is immutable evidence recorded from live access-control, and mixing
 // "what the agent does instead" into it would blur that line.
 const acceptedDivergenceRoot = "testdata/accepted-divergences"
@@ -67,6 +67,50 @@ var acceptedDivergences = map[string]AcceptedDivergence{
 		Reason:   "Same dict-alias resolution as row 2, on the v2 response shape.",
 		Decision: "docs/parity/general-pip-dict-divergences.md",
 	},
+	key(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, "isolated/q15-a-text-body-is-null/true-value"): {
+		Reason: "A PIP answer with status 200 and a body that is not empty and not JSON fails the PIP in the " +
+			"agent, so IS NULL over it is not true and the agent denies, where legacy reads the PIP as null and allows.",
+		Decision: "docs/parity/pip-and-filter-template-divergences.md",
+	},
+	key(PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, "regular/id44-template-0/filter"): {
+		Reason: "The agent fills the placeholders of a predicate template in one pass, so a PIP value that holds " +
+			"${subject.id} stays that text in the filter, where legacy substitutes it again with the subject id.",
+		Decision: "docs/parity/pip-and-filter-template-divergences.md",
+	},
+}
+
+// acceptedExportDivergences is keyed by the difference class the
+// specification's export bundle gives a golden of the export-fed profile
+// (TestExportFedAgent): set-type, conversion, tenant, pip-kind. A golden after
+// an export the agent did not load, which the bundle gives the class
+// pull-failure, is not compared (verdictBroken).
+// A class is accepted, not a case, because one decision about the conversion
+// explains every golden of the class. Such a golden still runs and passes only
+// when the agent answers exactly as the bundle predicts for it, so an agent that
+// answers a third way still fails.
+//
+// Every entry needs a decision document, as acceptedDivergences does. An
+// answer that allows what the golden denies (grantsMore) is never accepted:
+// it is an agent defect unless the rule it rests on is one an entry's
+// decision covers, and no check of the profile can tell from a golden which
+// rule an allow rests on. The legacy-export check (TestExportFedLegacyAgent)
+// also keys this map by the classes it derives from the exports legacy held
+// (legacyClass), such as undeclared-pip, which the bundle never gives.
+var acceptedExportDivergences = map[string]AcceptedDivergence{
+	"set-type": {
+		Reason: "The agent evaluates the simplified model only: it skips every policy set whose type is not " +
+			"SIMPLIFIED, so a decision that rests on a regular policy set differs from legacy.",
+		Decision: "docs/parity/export-fed-agent-divergences.md",
+	},
+	// TestExportFedOwnerDecisions reads this entry too, as the answer it
+	// wants for a decision legacy refused because of such an attribute.
+	"undeclared-pip": {
+		Reason: "A subject attribute with no declared PIP counts as a PIP that failed: the comparison " +
+			"that reads it has an unknown value, the agent evaluates the rest of the condition, answers 200, " +
+			"allows a request only where the answer does not depend on that value, and names the set in " +
+			"/health; legacy answers 400 to every check of the tenant while one of its sets reads such an attribute.",
+		Decision: "docs/parity/export-fed-agent-divergences.md",
+	},
 }
 
 func key(id ParityEndpointID, subCase string) string {
@@ -79,16 +123,10 @@ func acceptedDivergenceFor(id ParityEndpointID, subCase string) (AcceptedDiverge
 	return d, ok
 }
 
-// acceptedDivergencePath maps a golden path to its accepted-divergence
-// counterpart, keeping the same relative layout under the separate root.
-func acceptedDivergencePath(goldenRoot, goldenPath string) string {
-	rel, err := filepath.Rel(goldenRoot, goldenPath)
-	if err != nil {
-		// Fall back to the base name rather than failing the case for a path quirk;
-		// a missing file is reported clearly by the caller either way.
-		rel = filepath.Base(goldenPath)
-	}
-	return filepath.Join(acceptedDivergenceRoot, rel)
+// acceptedDivergencePath returns the file of the accepted answer of the golden
+// key: <acceptedDivergenceRoot>/<key>.json.
+func acceptedDivergencePath(key string) string {
+	return filepath.Join(acceptedDivergenceRoot, filepath.FromSlash(key)+".json")
 }
 
 // AcceptedDivergenceDriftError is returned when a case is registered as an

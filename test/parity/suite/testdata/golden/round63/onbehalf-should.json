@@ -1,0 +1,267 @@
+{
+  "r63ob-check-token": {
+    "check-resource-v1-outcome/regular/read-as-a-user": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "user-management-call/regular/read-as-a-user": {"calls":[]}
+  },
+  "r63ob-should-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r63ob-should-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r63ob-subject": {
+    "check-resource-v1-outcome/regular/read-claim-body": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-claim-caller": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-id": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-id-requested": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-name-login": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-name-name": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-name-username": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-realm-roles": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-roles": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-scopes-body": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-scopes-caller": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-type-body": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-type-user": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "user-management-call/regular/read-claim-body": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-claim-caller": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-id": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-id-requested": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-name-login": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-name-name": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-name-username": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-realm-roles": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-roles": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-scopes-body": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-scopes-caller": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-type-body": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/regular/read-type-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000006302",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  }
+}

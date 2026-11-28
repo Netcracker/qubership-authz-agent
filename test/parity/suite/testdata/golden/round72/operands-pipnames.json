@@ -1,0 +1,414 @@
+{
+  "o72-pip-entitled-declared": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/declare": {"status":201,"body":null},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "domain": "PARITY_ISOLATED",
+            "httpMethod": "POST",
+            "name": "subject.entitledResources",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r72-entitled"
+            },
+            "tenantId": "parity-o72-pip-entitled-declared",
+            "type": "UUID",
+            "url": "http://pip-mock:8090/api/v1/pip/r72-entitled"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-o72-pip-entitled-declared",
+            "name": "o72-pip-entitled-declared set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "o72-pip-entitled-declared reader",
+                "policyId": "c06abf74-b96c-c2da-14f8-6d548ea1efbd",
+                "rules": [
+                  {
+                    "condition": "subject.entitledResources CONTAINS 'v' OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "o72-pip-entitled-declared probe",
+                    "ruleId": "c6b104e3-e3df-efd2-7be5-07c2f522d2aa",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o72-pip-entitled-declared"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o72-pip-entitled-declared"
+              }
+            ],
+            "policySetId": "79acedf3-45ec-2985-1555-0f82aab242b0",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O72_PIP_ENTITLED_DECLARED'",
+            "tenantId": "parity-o72-pip-entitled-declared",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pip-call/sequence/read-a-n": {"calls":1,"requestAttributes":{"case":"r72-entitled"}}
+  },
+  "o72-pip-entitled-undeclared": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/upload": {
+      "status": 400,
+      "message": "Expression [subject.entitledResources CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.entitledResources PIP doesn't exist"
+    },
+    "pap-error-v1/sequence/upload": {
+      "status": 400,
+      "body": "Expression [subject.entitledResources CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.entitledResources PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {"status":200,"body":{"policySets":[]}}
+  },
+  "o72-pip-id-x-declared": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/declare": {"status":201,"body":null},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "domain": "PARITY_ISOLATED",
+            "httpMethod": "POST",
+            "name": "subject.id.x",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r72-id-x"
+            },
+            "tenantId": "parity-o72-pip-id-x-declared",
+            "type": "UUID",
+            "url": "http://pip-mock:8090/api/v1/pip/r72-id-x"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-o72-pip-id-x-declared",
+            "name": "o72-pip-id-x-declared set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "o72-pip-id-x-declared reader",
+                "policyId": "f9298ff7-f7e0-d896-e07c-a104e1768810",
+                "rules": [
+                  {
+                    "condition": "subject.id.x CONTAINS 'v' OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "o72-pip-id-x-declared probe",
+                    "ruleId": "37f089eb-3c0b-945d-89bd-66d167443f6e",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o72-pip-id-x-declared"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o72-pip-id-x-declared"
+              }
+            ],
+            "policySetId": "5ea3674e-4319-8d96-c879-d494dd91ad19",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O72_PIP_ID_X_DECLARED'",
+            "tenantId": "parity-o72-pip-id-x-declared",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pip-call/sequence/read-a-n": {"calls":1,"requestAttributes":{"case":"r72-id-x"}}
+  },
+  "o72-pip-id-x-undeclared": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/upload": {
+      "status": 400,
+      "message": "Expression [subject.id.x CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.id.x PIP doesn't exist"
+    },
+    "pap-error-v1/sequence/upload": {
+      "status": 400,
+      "body": "Expression [subject.id.x CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.id.x PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {"status":200,"body":{"policySets":[]}}
+  },
+  "o72-pip-name-x-declared": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/declare": {"status":201,"body":null},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "domain": "PARITY_ISOLATED",
+            "httpMethod": "POST",
+            "name": "subject.name.x",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r72-name-x"
+            },
+            "tenantId": "parity-o72-pip-name-x-declared",
+            "type": "UUID",
+            "url": "http://pip-mock:8090/api/v1/pip/r72-name-x"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-o72-pip-name-x-declared",
+            "name": "o72-pip-name-x-declared set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "o72-pip-name-x-declared reader",
+                "policyId": "8200acff-c416-e7d4-9930-1b56baf97799",
+                "rules": [
+                  {
+                    "condition": "subject.name.x CONTAINS 'v' OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "o72-pip-name-x-declared probe",
+                    "ruleId": "3ff5708e-4125-236d-8fce-a5d5d645f386",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o72-pip-name-x-declared"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o72-pip-name-x-declared"
+              }
+            ],
+            "policySetId": "254c86ac-6882-b7a2-1794-a375a638cc81",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O72_PIP_NAME_X_DECLARED'",
+            "tenantId": "parity-o72-pip-name-x-declared",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pip-call/sequence/read-a-n": {"calls":1,"requestAttributes":{"case":"r72-name-x"}}
+  },
+  "o72-pip-name-x-undeclared": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/upload": {
+      "status": 400,
+      "message": "Expression [subject.name.x CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.name.x PIP doesn't exist"
+    },
+    "pap-error-v1/sequence/upload": {
+      "status": 400,
+      "body": "Expression [subject.name.x CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.name.x PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {"status":200,"body":{"policySets":[]}}
+  },
+  "o72-pip-plain-declared": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/declare": {"status":201,"body":null},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "domain": "PARITY_ISOLATED",
+            "httpMethod": "POST",
+            "name": "subject.parityR72Plain",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r72-plain"
+            },
+            "tenantId": "parity-o72-pip-plain-declared",
+            "type": "UUID",
+            "url": "http://pip-mock:8090/api/v1/pip/r72-plain"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-o72-pip-plain-declared",
+            "name": "o72-pip-plain-declared set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "o72-pip-plain-declared reader",
+                "policyId": "3a88a393-21fe-437b-29b1-a7c3eb9e5acd",
+                "rules": [
+                  {
+                    "condition": "subject.parityR72Plain CONTAINS 'v' OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "o72-pip-plain-declared probe",
+                    "ruleId": "1e66b479-19ea-d2be-2e88-074207fecc53",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o72-pip-plain-declared"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o72-pip-plain-declared"
+              }
+            ],
+            "policySetId": "c3a53259-64a3-2c1b-4993-7615d337988e",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O72_PIP_PLAIN_DECLARED'",
+            "tenantId": "parity-o72-pip-plain-declared",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pip-call/sequence/read-a-n": {"calls":1,"requestAttributes":{"case":"r72-plain"}}
+  },
+  "o72-pip-plain-undeclared": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/upload": {
+      "status": 400,
+      "message": "Expression [subject.parityR72Plain CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.parityR72Plain PIP doesn't exist"
+    },
+    "pap-error-v1/sequence/upload": {
+      "status": 400,
+      "body": "Expression [subject.parityR72Plain CONTAINS 'v' OR resource.a == 'y']: Invalid expression: subject.parityR72Plain PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {"status":200,"body":{"policySets":[]}}
+  },
+  "o72-pipnames-control-first": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+            "externalId": "parity-o72-pipnames-control-first",
+            "name": "o72-pipnames-control-first set",
+            "policies": [
+              {
+                "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+                "name": "o72-pipnames-control-first reader",
+                "policyId": "40919ddf-9350-52f1-a8f3-d16ee1912688",
+                "rules": [
+                  {
+                    "condition": "resource.c == 'zz'",
+                    "effect": "DENY",
+                    "name": "o72-pipnames-control-first probe",
+                    "ruleId": "f5277e7b-866d-5d3b-bb6d-e3963cb6e109",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o72-pipnames-control-first"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o72-pipnames-control-first"
+              }
+            ],
+            "policySetId": "7d64d0d7-64f0-954e-d610-fd025281122b",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O72_PIPNAMES_CONTROL_FIRST'",
+            "tenantId": "parity-o72-pipnames-control-first",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
+  },
+  "o72-pipnames-control-last": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+            "externalId": "parity-o72-pipnames-control-last",
+            "name": "o72-pipnames-control-last set",
+            "policies": [
+              {
+                "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+                "name": "o72-pipnames-control-last reader",
+                "policyId": "674a5337-5970-2a91-40ef-c84a797416b1",
+                "rules": [
+                  {
+                    "condition": "resource.c == 'zz'",
+                    "effect": "DENY",
+                    "name": "o72-pipnames-control-last probe",
+                    "ruleId": "a3bf8689-40ee-bd18-d1e5-3d78657f8a13",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o72-pipnames-control-last"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o72-pipnames-control-last"
+              }
+            ],
+            "policySetId": "e12aadeb-fefb-7fe6-9c1c-4356019a033a",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O72_PIPNAMES_CONTROL_LAST'",
+            "tenantId": "parity-o72-pipnames-control-last",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
+  }
+}

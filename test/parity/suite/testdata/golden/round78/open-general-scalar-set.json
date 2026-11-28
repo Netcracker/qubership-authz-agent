@@ -1,0 +1,120 @@
+{
+  "o78gs-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o78gs-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o78gs-general-redeclared": {
+    "check-resource-v1-outcome/regular/l-contains-allow-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-contains-allow-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-contains-any-allow-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-contains-any-allow-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-contains-any-deny-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-contains-any-deny-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-contains-any-or-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-contains-any-or-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/l-contains-deny-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-contains-deny-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-contains-or-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-contains-or-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/l-in-allow-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-in-allow-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-in-deny-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-in-deny-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-in-or-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/l-in-or-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/own": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/r-eq-allow-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/r-eq-allow-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/r-eq-deny-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/r-eq-deny-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/r-eq-or-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/r-eq-or-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/r-in-allow-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/r-in-allow-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/r-in-deny-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/r-in-deny-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/r-in-or-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/r-in-or-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-l-contains-allow": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-l-contains-any-allow": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-l-contains-any-deny": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-l-contains-any-or": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-l-contains-deny": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-l-contains-or": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-l-in-allow": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-l-in-deny": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-l-in-or": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-r-eq-allow": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-r-eq-deny": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-r-eq-or": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-r-in-allow": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-r-in-deny": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "o78gs-r-in-or": {
+    "check-resource-v1-outcome/regular/before": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

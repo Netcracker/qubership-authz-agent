@@ -1,0 +1,16 @@
+{
+  "d2r46-83757ddac5": {
+    "load-simplified-policies-v1/regular/declare-the-domain": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+    }
+  },
+  "d2r46-f2-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f2-control-last-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

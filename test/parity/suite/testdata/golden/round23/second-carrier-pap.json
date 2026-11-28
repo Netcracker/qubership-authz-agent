@@ -1,0 +1,47 @@
+{
+  "s23-048-pap-same-rule-key-other-predicates": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "s23-049-deny-rule": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "s23-050-deny-rule": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "s23-051-deny-rule": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "s23-052-deny-rule": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "s23-053-deny-rule": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "s23-054-deny-rule": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "s23-055-deny-rule": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "s23-056-pap-filtered-resource-type-only-read-equals": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s23-057-pap-filtered-suffix-only-read-filtered-name": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s23-058-pap-scope-in-simplified-or": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s23-059-pap-headers-object-general": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s23-second-carrier-pap-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s23-second-carrier-pap-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

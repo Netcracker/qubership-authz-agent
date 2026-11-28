@@ -1,0 +1,176 @@
+{
+ "about": "Round 78: the MATCH pattern a[[:foo:]x] in a rule of a set, which regular-expression engines compile differently. The first and the last case are controls.",
+ "resourceTypePrefix": "PARITY_SUITE_O78M_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "o78m-posix-class-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r78",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78m-posix-class",
+   "about": "`resource.v MATCH a[[:foo:]x]` with OR resource.a == 'y' and the DENY twin, over v = ax and v = a[: does the pattern compile, and if not, does it fail the rule, the request or every check of the tenant?",
+   "resourceType": "PARITY_SUITE_O78M_POSIX_CLASS",
+   "sets": [
+    {
+     "key": "m",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-m",
+         "target": "true",
+         "condition": "resource.v MATCH a[[:foo:]x] OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "m-d",
+     "target": "resourceType == '{{resourceType}}_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p-m-d",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r-m-d",
+         "target": "true",
+         "condition": "resource.v MATCH a[[:foo:]x]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "v-ax-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "ax",
+      "a": "n"
+     }
+    },
+    {
+     "name": "v-ax-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "ax",
+      "a": "y"
+     }
+    },
+    {
+     "name": "v-a[-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "a[",
+      "a": "n"
+     }
+    },
+    {
+     "name": "v-a[-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "a[",
+      "a": "y"
+     }
+    },
+    {
+     "name": "v-ax-deny",
+     "resource": {
+      "id": "r78",
+      "v": "ax",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_O78M_POSIX_CLASS_D"
+    },
+    {
+     "name": "v-a[-deny",
+     "resource": {
+      "id": "r78",
+      "v": "a[",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_O78M_POSIX_CLASS_D"
+    }
+   ]
+  },
+  {
+   "id": "o78m-posix-class-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r78",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

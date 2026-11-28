@@ -1,0 +1,85 @@
+{
+  "ax76-53-r41open-m2m-held-pip-remove": {
+    "check-filter-v2-outcome/regular/before-read-a-y-check-filter-v2": {
+      "status": 400,
+      "result": {
+        "calculationResult": ""
+      },
+      "message": {
+        "message": "Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: subject.isM2M"
+      }
+    },
+    "check-filter-v2-outcome/regular/before-read-other-check-filter-v2": {
+      "status": 400,
+      "result": {
+        "calculationResult": ""
+      },
+      "message": {
+        "message": "Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: subject.isM2M"
+      }
+    },
+    "check-filter-v2-outcome/regular/customized-read-a-y-check-filter-v2": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v2-outcome/regular/customized-read-other-check-filter-v2": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v2-outcome/regular/deleted-read-a-y-check-filter-v2": {
+      "status": 400,
+      "result": {
+        "calculationResult": ""
+      },
+      "message": {
+        "message": "Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: subject.isM2M"
+      }
+    },
+    "check-filter-v2-outcome/regular/deleted-read-other-check-filter-v2": {
+      "status": 400,
+      "result": {
+        "calculationResult": ""
+      },
+      "message": {
+        "message": "Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: subject.isM2M"
+      }
+    },
+    "delete-pip-customization-v1/regular/delete": {"status":204},
+    "import-pip-customization-v1/regular/replace": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/before-read-a-y-check-filter-v2": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/customized-read-a-y-check-filter-v2": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/deleted-read-a-y-check-filter-v2": {"calls":0,"requestAttributes":null}
+  },
+  "ax76-53-r41openm2mheldpipremove-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-53-r41openm2mheldpipremove-control-last": {
+    "check-filter-v2-outcome/regular/read-check-filter-v2": {
+      "status": 400,
+      "result": {
+        "calculationResult": ""
+      },
+      "message": {
+        "message": "Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: subject.isM2M"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

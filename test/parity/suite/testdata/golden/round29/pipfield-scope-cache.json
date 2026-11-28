@@ -1,0 +1,21 @@
+{
+  "r29pipfield-scope-period-3": {
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/after-5s": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/again": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/first": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/after-5s": {"calls":1,"requestAttributes":null},
+    "pip-call/regular/again": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/first": {"calls":1,"requestAttributes":null}
+  },
+  "r29pipfield-scope-without-period": {
+    "check-resource-v1-outcome/regular/again": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/first": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/again": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/first": {"calls":0,"requestAttributes":null}
+  }
+}

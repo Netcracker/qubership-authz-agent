@@ -1,0 +1,106 @@
+{
+  "s16-bare-entitled-resources": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-bare-on": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-bare-to": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-blank-condition": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-boolean-list": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-double-quotes-in-a-path-filter": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-double-space-inside-a-string": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-double-space-inside-brackets": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-empty-brackets-in-a-path": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-entitled-as-space-before-a-comma": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-filtered-form": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-list-two-spaces-after-a-comma": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-match-pattern-non-ascii": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-match-pattern-plus": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-match-pattern-reserved-word": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-no-space-before-or": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-no-spaces-around-equals": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-non-ascii-letter-in-a-path": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-null-key-on-the-left": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-null-key-on-the-right": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-number-of-twenty-digits": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-pip-name-with-a-dash": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-pip-name-with-a-dash-control": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-prefix-in-another-case": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-slash-in-a-path": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-subject-id-with-a-step": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s16-tab-beside-a-space": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-tab-inside-a-string": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-trailing-dot-in-a-path": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s16-trailing-newline": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

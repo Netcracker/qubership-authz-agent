@@ -1,0 +1,1372 @@
+{
+  "regular/distinct-rule-ids-in-two-sets/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "(first==1),(second==2)",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/failed-pip-allow-without-predicate/filter-list-when-the-pip-was-read": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/failed-pip-allow-without-predicate/filter-update": {
+    "status": 200,
+    "result": {
+      "calculationResult": "ALLOW",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/failed-pip-deny-without-predicate/filter-list-when-the-pip-was-read": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/failed-pip-deny-without-predicate/filter-update": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-condition-without-predicate-beside-a-predicate/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "b==2",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-four-groups-on-one-type/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "(simplified1==1,simplified2==2),(regular2==2),(regular1==1)",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-rule-with-a-condition-and-no-predicate/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-rule-without-condition-or-predicate/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "ALLOW",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-set-beside-simplified-policy/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "(regular==1),(simplified==1)",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-target-reads-the-resource-in-the-policy/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-target-reads-the-resource-in-the-rule/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-under-a-deny-list-beside-an-allow/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "(area!=alpha),(area==open)",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-under-a-deny-list/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "area!=alpha;area!=beta",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-without-an-operation/filter-with-no-operation": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "read==1",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-without-an-operation/filter-with-read": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "read==1",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-without-an-operation/filter-with-the-operation-all": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "regular/substitution-general-repeated-values/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_REPEATED_VALUES.a.eq(\"a\", \"b\")",
+      "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"a\" }, { \"$uuid\": \"b\" } ] } }",
+      "rsqlFilterCondition": "a==\"a\", \"b\"",
+      "sqlFilterCondition": "a='a', 'b'",
+      "customFilterCondition": {
+        "logic": {
+          "path": "bcae5bbf-f527-80d1-7f03-b56370dfe16e"
+        },
+        "data": {
+          "bcae5bbf-f527-80d1-7f03-b56370dfe16e": {
+            "predicate": "a:${p}",
+            "params": {
+              "p": [
+                "a",
+                "b"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/no-grants/filter-all-fields-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-filter/no-grants/filter-custom-deny-overrides": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-filter/no-grants/filter-custom-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-filter/no-grants/filter-custom-permit-overrides": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-filter/no-grants/filter-custom-permit-unless-deny": {
+    "status": 200,
+    "result": {
+      "calculationResult": "ALLOW",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-filter/no-grants/filter-literal-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-filter/one-grant-one-value/filter-all-fields-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "PARITY_SUITE_REG_SCOPE_FILTER_ALL_FIELDS_DENY_UNLESS_PERMIT.region.in(\"r1\")",
+      "mongodbFilterCondition": "{ { \"region\": [ \"r1\" ] } }",
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": "region IN ('r1')",
+      "customFilterCondition": {
+        "logic": {
+          "path": "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_0_edd0b173-e7bc-629c-c3d2-bc58960cf482"
+        },
+        "data": {
+          "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_0_edd0b173-e7bc-629c-c3d2-bc58960cf482": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/one-grant-one-value/filter-custom-deny-overrides": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "path": "84992983-be95-89c6-b7a7-fe2fcf03281d_0_55dbea70-e47b-7796-b5ff-eb422b3fc166"
+        },
+        "data": {
+          "84992983-be95-89c6-b7a7-fe2fcf03281d_0_55dbea70-e47b-7796-b5ff-eb422b3fc166": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/one-grant-one-value/filter-custom-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "path": "f57e56d9-7df8-0aad-bbb5-3ba0874c394a_0_75a8911c-1880-b778-e539-b648301858b2"
+        },
+        "data": {
+          "f57e56d9-7df8-0aad-bbb5-3ba0874c394a_0_75a8911c-1880-b778-e539-b648301858b2": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/one-grant-one-value/filter-custom-permit-overrides": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "path": "fcfd7503-74d3-a7ba-c3b5-74421c8b83e1_0_b20ec7e4-3404-6ebc-476e-ffdd32a380ca"
+        },
+        "data": {
+          "fcfd7503-74d3-a7ba-c3b5-74421c8b83e1_0_b20ec7e4-3404-6ebc-476e-ffdd32a380ca": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/one-grant-one-value/filter-custom-permit-unless-deny": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "path": "a9bbb2b5-6095-7362-aecb-96bb304f5809_0_514a2740-aa92-2559-3f2c-53233fbbab2b"
+        },
+        "data": {
+          "a9bbb2b5-6095-7362-aecb-96bb304f5809_0_514a2740-aa92-2559-3f2c-53233fbbab2b": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/one-grant-one-value/filter-literal-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "scoped==1",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-filter/one-grant-two-values/filter-all-fields-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "PARITY_SUITE_REG_SCOPE_FILTER_ALL_FIELDS_DENY_UNLESS_PERMIT.region.in(\"r2\", \"r1\")",
+      "mongodbFilterCondition": "{ { \"region\": [ \"r2\", \"r1\" ] } }",
+      "rsqlFilterCondition": "region=in=(\"r2\", \"r1\")",
+      "sqlFilterCondition": "region IN ('r2', 'r1')",
+      "customFilterCondition": {
+        "logic": {
+          "path": "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_0_edd0b173-e7bc-629c-c3d2-bc58960cf482"
+        },
+        "data": {
+          "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_0_edd0b173-e7bc-629c-c3d2-bc58960cf482": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r2",
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/one-grant-two-values/filter-custom-deny-overrides": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "path": "84992983-be95-89c6-b7a7-fe2fcf03281d_0_55dbea70-e47b-7796-b5ff-eb422b3fc166"
+        },
+        "data": {
+          "84992983-be95-89c6-b7a7-fe2fcf03281d_0_55dbea70-e47b-7796-b5ff-eb422b3fc166": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r2",
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/one-grant-two-values/filter-custom-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "path": "f57e56d9-7df8-0aad-bbb5-3ba0874c394a_0_75a8911c-1880-b778-e539-b648301858b2"
+        },
+        "data": {
+          "f57e56d9-7df8-0aad-bbb5-3ba0874c394a_0_75a8911c-1880-b778-e539-b648301858b2": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r2",
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/one-grant-two-values/filter-custom-permit-overrides": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "path": "fcfd7503-74d3-a7ba-c3b5-74421c8b83e1_0_b20ec7e4-3404-6ebc-476e-ffdd32a380ca"
+        },
+        "data": {
+          "fcfd7503-74d3-a7ba-c3b5-74421c8b83e1_0_b20ec7e4-3404-6ebc-476e-ffdd32a380ca": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r2",
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/one-grant-two-values/filter-custom-permit-unless-deny": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "path": "a9bbb2b5-6095-7362-aecb-96bb304f5809_0_514a2740-aa92-2559-3f2c-53233fbbab2b"
+        },
+        "data": {
+          "a9bbb2b5-6095-7362-aecb-96bb304f5809_0_514a2740-aa92-2559-3f2c-53233fbbab2b": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r2",
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/one-grant-two-values/filter-literal-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "scoped==1",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-filter/scope-service-fails/filter-all-fields-deny-unless-permit": {"status":500,"result":{"calculationResult":""}},
+  "scope-filter/scope-service-fails/filter-custom-deny-overrides": {"status":500,"result":{"calculationResult":""}},
+  "scope-filter/scope-service-fails/filter-custom-deny-unless-permit": {"status":500,"result":{"calculationResult":""}},
+  "scope-filter/scope-service-fails/filter-custom-permit-overrides": {"status":500,"result":{"calculationResult":""}},
+  "scope-filter/scope-service-fails/filter-custom-permit-unless-deny": {"status":500,"result":{"calculationResult":""}},
+  "scope-filter/scope-service-fails/filter-literal-deny-unless-permit": {"status":500,"result":{"calculationResult":""}},
+  "scope-filter/two-grants-different-values/filter-all-fields-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "(PARITY_SUITE_REG_SCOPE_FILTER_ALL_FIELDS_DENY_UNLESS_PERMIT.region.in(\"r1\")).or(PARITY_SUITE_REG_SCOPE_FILTER_ALL_FIELDS_DENY_UNLESS_PERMIT.region.in(\"r2\"))",
+      "mongodbFilterCondition": "{ \"$or\": [ { { \"region\": [ \"r1\" ] } },{ { \"region\": [ \"r2\" ] } } ] }",
+      "rsqlFilterCondition": "(region=in=(\"r1\")),(region=in=(\"r2\"))",
+      "sqlFilterCondition": "(region IN ('r1')) or (region IN ('r2'))",
+      "customFilterCondition": {
+        "logic": {
+          "op": "OR",
+          "apply": [
+            {
+              "path": "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_0_edd0b173-e7bc-629c-c3d2-bc58960cf482"
+            },
+            {
+              "path": "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_1_edd0b173-e7bc-629c-c3d2-bc58960cf482"
+            }
+          ]
+        },
+        "data": {
+          "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_1_edd0b173-e7bc-629c-c3d2-bc58960cf482": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r2"
+              ]
+            }
+          },
+          "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_0_edd0b173-e7bc-629c-c3d2-bc58960cf482": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/two-grants-different-values/filter-custom-deny-overrides": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "op": "OR",
+          "apply": [
+            {
+              "path": "84992983-be95-89c6-b7a7-fe2fcf03281d_0_55dbea70-e47b-7796-b5ff-eb422b3fc166"
+            },
+            {
+              "path": "84992983-be95-89c6-b7a7-fe2fcf03281d_1_55dbea70-e47b-7796-b5ff-eb422b3fc166"
+            }
+          ]
+        },
+        "data": {
+          "84992983-be95-89c6-b7a7-fe2fcf03281d_0_55dbea70-e47b-7796-b5ff-eb422b3fc166": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          },
+          "84992983-be95-89c6-b7a7-fe2fcf03281d_1_55dbea70-e47b-7796-b5ff-eb422b3fc166": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r2"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/two-grants-different-values/filter-custom-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "op": "OR",
+          "apply": [
+            {
+              "path": "f57e56d9-7df8-0aad-bbb5-3ba0874c394a_0_75a8911c-1880-b778-e539-b648301858b2"
+            },
+            {
+              "path": "f57e56d9-7df8-0aad-bbb5-3ba0874c394a_1_75a8911c-1880-b778-e539-b648301858b2"
+            }
+          ]
+        },
+        "data": {
+          "f57e56d9-7df8-0aad-bbb5-3ba0874c394a_1_75a8911c-1880-b778-e539-b648301858b2": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r2"
+              ]
+            }
+          },
+          "f57e56d9-7df8-0aad-bbb5-3ba0874c394a_0_75a8911c-1880-b778-e539-b648301858b2": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/two-grants-different-values/filter-custom-permit-overrides": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "op": "OR",
+          "apply": [
+            {
+              "path": "fcfd7503-74d3-a7ba-c3b5-74421c8b83e1_0_b20ec7e4-3404-6ebc-476e-ffdd32a380ca"
+            },
+            {
+              "path": "fcfd7503-74d3-a7ba-c3b5-74421c8b83e1_1_b20ec7e4-3404-6ebc-476e-ffdd32a380ca"
+            }
+          ]
+        },
+        "data": {
+          "fcfd7503-74d3-a7ba-c3b5-74421c8b83e1_0_b20ec7e4-3404-6ebc-476e-ffdd32a380ca": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          },
+          "fcfd7503-74d3-a7ba-c3b5-74421c8b83e1_1_b20ec7e4-3404-6ebc-476e-ffdd32a380ca": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r2"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/two-grants-different-values/filter-custom-permit-unless-deny": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "op": "OR",
+          "apply": [
+            {
+              "path": "a9bbb2b5-6095-7362-aecb-96bb304f5809_0_514a2740-aa92-2559-3f2c-53233fbbab2b"
+            },
+            {
+              "path": "a9bbb2b5-6095-7362-aecb-96bb304f5809_1_514a2740-aa92-2559-3f2c-53233fbbab2b"
+            }
+          ]
+        },
+        "data": {
+          "a9bbb2b5-6095-7362-aecb-96bb304f5809_0_514a2740-aa92-2559-3f2c-53233fbbab2b": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          },
+          "a9bbb2b5-6095-7362-aecb-96bb304f5809_1_514a2740-aa92-2559-3f2c-53233fbbab2b": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r2"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/two-grants-different-values/filter-literal-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "(scoped==1),(scoped==1)",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-filter/two-grants-one-without-the-key/filter-all-fields-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "PARITY_SUITE_REG_SCOPE_FILTER_ALL_FIELDS_DENY_UNLESS_PERMIT.region.in(\"r1\")",
+      "mongodbFilterCondition": "{ { \"region\": [ \"r1\" ] } }",
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": "region IN ('r1')",
+      "customFilterCondition": {
+        "logic": {
+          "path": "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_0_edd0b173-e7bc-629c-c3d2-bc58960cf482"
+        },
+        "data": {
+          "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_0_edd0b173-e7bc-629c-c3d2-bc58960cf482": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/two-grants-one-without-the-key/filter-custom-deny-overrides": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-filter/two-grants-one-without-the-key/filter-custom-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "path": "f57e56d9-7df8-0aad-bbb5-3ba0874c394a_0_75a8911c-1880-b778-e539-b648301858b2"
+        },
+        "data": {
+          "f57e56d9-7df8-0aad-bbb5-3ba0874c394a_0_75a8911c-1880-b778-e539-b648301858b2": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/two-grants-one-without-the-key/filter-custom-permit-overrides": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": {
+        "logic": {
+          "path": "fcfd7503-74d3-a7ba-c3b5-74421c8b83e1_0_b20ec7e4-3404-6ebc-476e-ffdd32a380ca"
+        },
+        "data": {
+          "fcfd7503-74d3-a7ba-c3b5-74421c8b83e1_0_b20ec7e4-3404-6ebc-476e-ffdd32a380ca": {
+            "predicate": "region:${p}",
+            "params": {
+              "p": [
+                "r1"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "scope-filter/two-grants-one-without-the-key/filter-custom-permit-unless-deny": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-filter/two-grants-one-without-the-key/filter-literal-deny-unless-permit": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "scoped==1",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-node-under-a-set/no-grants/deny-unless-permit-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "ALLOW",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-node-under-a-set/one-grant-r1/deny-unless-permit-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/deny-unless-permit-set-node-without-algorithm/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/empty-region-beside-r1/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/no-grants/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/no-grants/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/no-grants/deny-unless-permit-set-node-without-algorithm/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/no-grants/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/no-grants/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/no-grants/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/no-grants/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "ALLOW",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/deny-unless-permit-set-node-without-algorithm/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/one-grant-empty-region/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/deny-unless-permit-set-node-without-algorithm/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/one-grant-r1/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/deny-unless-permit-set-node-without-algorithm/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/scope-service-not-found/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "ALLOW",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-unparsed-body/deny-unless-permit-set-deny-overrides-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/scope-service-unparsed-body/deny-unless-permit-set-deny-unless-permit-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/scope-service-unparsed-body/deny-unless-permit-set-node-without-algorithm/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/scope-service-unparsed-body/permit-unless-deny-set-deny-overrides-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/scope-service-unparsed-body/permit-unless-deny-set-deny-unless-permit-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/scope-service-unparsed-body/permit-unless-deny-set-permit-overrides-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/scope-service-unparsed-body/permit-unless-deny-set-permit-unless-deny-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/deny-unless-permit-set-deny-overrides-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/deny-unless-permit-set-deny-unless-permit-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/deny-unless-permit-set-node-without-algorithm/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/permit-unless-deny-set-deny-overrides-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/permit-unless-deny-set-deny-unless-permit-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/permit-unless-deny-set-permit-overrides-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/permit-unless-deny-set-permit-unless-deny-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/deny-unless-permit-set-deny-overrides-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/deny-unless-permit-set-deny-unless-permit-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/deny-unless-permit-set-node-without-algorithm/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/permit-unless-deny-set-deny-overrides-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/permit-unless-deny-set-deny-unless-permit-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/permit-unless-deny-set-permit-overrides-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/permit-unless-deny-set-permit-unless-deny-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-one-object/deny-unless-permit-set-deny-overrides-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-one-object/deny-unless-permit-set-deny-unless-permit-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-one-object/deny-unless-permit-set-node-without-algorithm/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-one-object/permit-unless-deny-set-deny-overrides-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-one-object/permit-unless-deny-set-deny-unless-permit-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-one-object/permit-unless-deny-set-permit-overrides-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "scope-set-algorithm/unparsed-body-as-one-object/permit-unless-deny-set-permit-unless-deny-node/filter": {"status":500,"result":{"calculationResult":""}},
+  "semantics/f1-false-condition-beside-predicate": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "p1==1,p2==2",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "semantics/f2-true-condition": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "p1==1",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "semantics/f3-resource-condition-without-resource": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "p1==1,p2==2",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "semantics/p8-placeholder-of-failed-pip": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": null,
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "simplified-group/one-domain-component-and-type": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "same1==1,same2==2",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "simplified-group/two-components": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "(component1==1),(component2==2)",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "simplified-group/two-domains": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "(domain1==1),(domain2==2)",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "simplified-group/two-spellings-asked-in-mixed-case": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "(upper==1),(mixed==2)",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  },
+  "simplified-group/two-spellings-asked-in-upper-case": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": null,
+      "mongodbFilterCondition": null,
+      "rsqlFilterCondition": "(upper==1),(mixed==2)",
+      "sqlFilterCondition": null,
+      "customFilterCondition": null
+    }
+  }
+}

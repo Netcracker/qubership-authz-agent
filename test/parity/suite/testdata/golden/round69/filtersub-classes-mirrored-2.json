@@ -1,0 +1,24 @@
+{
+  "fs69-c-inv-iter0-11-13": {
+    "check-filter-v1-outcome/regular/filtersub": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "f1a!=PARITY_SUITE_FS69_FS69_C_INV_ITER0_11_13,f1b!=v1;f1c!=v2",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-4": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-5": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-6": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-7": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

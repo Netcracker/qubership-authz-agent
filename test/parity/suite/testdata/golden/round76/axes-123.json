@@ -1,0 +1,15 @@
+{
+  "ax76-123-id44-control-first-or": {
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-123-id44-control-last-or": {
+    "check-resource-bulk-v1-outcome/regular/a-y-bulk-v1": {"status":200,"allowed":["obs"]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-123-id44-number-text-0-or": {
+    "check-resource-bulk-v1-outcome/regular/a-n-bulk-v1": {"status":200,"allowed":["obs"]},
+    "check-resource-bulk-v1-outcome/regular/a-y-bulk-v1": {"status":200,"allowed":["obs"]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "r40open-m2m-held-simplified-frontend": {
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":400,"decision":false},
+    "check-resource-v1-outcome/isolated/read-other": {"status":400,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-y": {"calls":0,"requestAttributes":null}
+  },
+  "r40openm2mheldsimplifiedfrontend-control-first": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r40openm2mheldsimplifiedfrontend-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

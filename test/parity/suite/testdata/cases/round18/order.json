@@ -1,0 +1,425 @@
+{
+ "about": "t16-28 answered ALLOW or DENY per stand, and round 17 showed it is stable without the sibling set s0-s0 that has a policy with no rules. Each case here changes that set in one way: its policy combines with PERMIT_UNLESS_DENY, its target does not read the scope, or it has no policy. Record on at least five stands and report each filter answer per stand, as in round 17. The reader has two grants, r1 and r2; subject.parityR18Failing answers 500 and no condition reads it, as in t16-28. Controls open and close the file.",
+ "resourceTypePrefix": "PARITY_SUITE_R18_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/r18-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 18 case"
+   }
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "failing": {
+   "name": "subject.parityR18Failing",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-failing",
+   "requestAttributes": {
+    "case": "r18-failing"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "o18-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o18-t16-28-as-it-was",
+   "about": "t16-28 unchanged, the control.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": []
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          },
+          {
+           "key": "s0-s1-p0-r1",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "o18-empty-policy-permit-unless-deny",
+   "about": "The policy with no rules combines with PERMIT_UNLESS_DENY.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": [],
+         "algorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "sets": []
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          },
+          {
+           "key": "s0-s1-p0-r1",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "o18-empty-set-target-true",
+   "about": "The set with no rules has target true.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": []
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          },
+          {
+           "key": "s0-s1-p0-r1",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "o18-empty-set-without-policies",
+   "about": "The set has no policy.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "policies": [],
+       "sets": []
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          },
+          {
+           "key": "s0-s1-p0-r1",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "o18-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  }
+ ]
+}

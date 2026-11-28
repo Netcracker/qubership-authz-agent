@@ -1,0 +1,176 @@
+{
+  "nested-no-rule-deny-overrides-in-deny-overrides": {
+    "check-resource-v1-outcome/regular/create-allowed-by-the-inner-set": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-without-a-rule-in-the-inner-set": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "nested-no-rule-deny-overrides-in-permit-unless-deny": {
+    "check-resource-v1-outcome/regular/create-allowed-by-the-inner-set": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-without-a-rule-in-the-inner-set": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "nested-no-rule-deny-unless-permit-in-deny-overrides": {
+    "check-resource-v1-outcome/regular/create-allowed-by-the-inner-set": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-without-a-rule-in-the-inner-set": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "nested-no-rule-deny-unless-permit-in-permit-unless-deny": {
+    "check-resource-v1-outcome/regular/create-allowed-by-the-inner-set": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-without-a-rule-in-the-inner-set": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "nested-no-rule-permit-overrides-in-deny-overrides": {
+    "check-resource-v1-outcome/regular/create-allowed-by-the-inner-set": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-without-a-rule-in-the-inner-set": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "nested-no-rule-permit-overrides-in-permit-unless-deny": {
+    "check-resource-v1-outcome/regular/create-allowed-by-the-inner-set": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-without-a-rule-in-the-inner-set": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "nested-no-rule-permit-unless-deny-in-deny-overrides": {
+    "check-resource-v1-outcome/regular/create-allowed-by-the-inner-set": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-without-a-rule-in-the-inner-set": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "nested-no-rule-permit-unless-deny-in-permit-unless-deny": {
+    "check-resource-v1-outcome/regular/create-allowed-by-the-inner-set": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-without-a-rule-in-the-inner-set": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "permit-overrides-over-a-default-permit-and-a-deny": {
+    "check-resource-v1-outcome/regular/delete-denied-by-both-policies": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-permitted-by-default-and-denied-by-a-rule": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "policy-with-a-false-target-under-permit-unless-deny": {
+    "check-resource-v1-outcome/regular/delete-denied-under-the-true-target": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-denied-only-under-the-false-target": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "policy-without-a-rule-under-deny-overrides": {
+    "check-resource-v1-outcome/regular/probe-allowed-by-both-policies": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-allowed-by-one-policy-without-a-rule-in-the-other": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "policy-without-a-rule-under-its-own-deny-overrides": {
+    "check-resource-v1-outcome/regular/probe-allowed-by-both-policies": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-allowed-by-one-policy-without-a-rule-in-the-other": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "policy-without-a-rule-under-permit-unless-deny": {
+    "check-resource-v1-outcome/regular/create-allowed": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/delete-denied": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-without-a-rule": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "set-deny-overrides-policy-deny-unless-permit": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "set-deny-overrides-policy-permit-overrides": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "set-deny-overrides-policy-permit-unless-deny": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "set-deny-unless-permit-policy-deny-overrides": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "set-deny-unless-permit-policy-permit-overrides": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "set-deny-unless-permit-policy-permit-unless-deny": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "set-permit-overrides-policy-deny-overrides": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "set-permit-overrides-policy-deny-unless-permit": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "set-permit-overrides-policy-permit-unless-deny": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "set-permit-unless-deny-policy-deny-overrides": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "set-permit-unless-deny-policy-deny-unless-permit": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "set-permit-unless-deny-policy-permit-overrides": {
+    "check-resource-v1-outcome/regular/approve-failed-allow-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/create-no-rule": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/delete-deny-alone": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-allow-then-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reject-failed-deny-beside-allow": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-deny-then-allow": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

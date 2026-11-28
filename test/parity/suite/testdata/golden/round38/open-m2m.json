@@ -1,0 +1,31 @@
+{
+  "r38open-m2m-filter": {
+    "check-filter-v1-outcome/isolated/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/filter": {"calls":0,"requestAttributes":null}
+  },
+  "r38open-m2m-not-read": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":400,"decision":false},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":400,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-y": {"calls":0,"requestAttributes":null}
+  },
+  "r38openm2m-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r38openm2m-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

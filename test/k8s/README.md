@@ -16,23 +16,30 @@ dev mode. The chart puts the realm files into a ConfigMap, and Keycloak imports
 them with `--import-realm` at every start; no test adds a realm, a client, or a
 user afterwards. The realm files of the chart are generated: `make
 test-stand-files` writes them into `helm-templates/authz-test-stand/files/`
-from `authn/`, `parity/idp-seed/`, and `test/parity/suite/testdata/realm/`, and
-`make e2e-harness` and `make parity-harness` run it first. A changed realm file
-reaches Keycloak with the next `make e2e-harness` or `make parity-harness`,
+from `authn/`, `parity/idp-seed/`, `test/parity/suite/testdata/realm/`, and
+`test/parity/suite/testdata/realm-clients/`. `make e2e-harness` and `make parity-harness` run it first. A changed realm
+file reaches Keycloak with the next `make e2e-harness` or `make parity-harness`,
 which restarts the Pod.
 
 The stubs run the pip-stub image, one Deployment per instance that the values
 file lists. The suite Job is a `helm test` hook of the test-stand release, so
 installing the stand does not start it.
 
-`parity/` holds the same shape for the parity replay suite (`test/parity`):
-its `test-stand-values.yaml` sets up Keycloak as `idp` with the realms of
-`parity/idp-seed/` and the users of `test/parity/suite/testdata/realm/`,
-`pip-mock`, `entitlements-mock`, and the parity
-suite Job. Its chart values add the parity realm as an explicit trusted
+`parity/` holds the same shape for the parity replay suite (`test/parity`): its `test-stand-values.yaml` sets up
+Keycloak as `idp` with the realms of `parity/idp-seed/`, the users of `test/parity/suite/testdata/realm/`, and the
+clients of `test/parity/suite/testdata/realm-clients/`; the stubs `pip-mock`, `entitlements-mock`, and
+`user-management-mock`; and the parity suite Job. Its chart values add the parity realm as an explicit trusted
 provider. It runs in its own namespace, so its Keycloak can be named `idp`, the
 issuer host in the parity realm's tokens, next to the e2e namespace's
 `keycloak`.
+
+`parity/test-stand-values-export.yaml` and `parity/values-export.yaml` are the export-fed profile of the parity suite,
+layered over the parity values: the stand adds `export-source`, a PIP stub that serves the v3 configuration export the
+suite configures on it, and runs `TestExportFedAgent` as the Job `parity-export`; the agent pulls its configuration from
+`export-source` instead of from `authz-policy-admin`. Layered over them, `parity/test-stand-values-export-legacy.yaml`
+makes the Job run the legacy-export check, `TestExportFedLegacyAgent`, and
+`parity/test-stand-values-export-owner-decisions.yaml` makes it run `TestExportFedOwnerDecisions`; both run from the
+parity suite image, with no export bundle. See [the export-fed profile](../parity/README.md#export-fed-profile).
 
 ## Run
 
@@ -63,12 +70,30 @@ The parity targets mirror these: `parity-harness`, `parity-install`,
 `parity-suite`, `parity-restart`, and `parity-logs`, all in `PARITY_NAMESPACE`. `parity` runs the
 cluster and image targets first, then the three.
 
+`make parity-export PARITY_EXPORT_BUNDLE=<dir>` runs the export-fed profile in the same namespace:
+`parity-export-image`, `parity-export-harness`, `parity-export-install`, and `parity-export-suite` after the cluster and
+image targets. Two more checks run on the same stand and need no bundle:
+
+| Target | Check | Its steps |
+| --- | --- | --- |
+| `parity-export-legacy` | The legacy-export check, `TestExportFedLegacyAgent`: the exports that the sequence cases recorded on legacy access-control | `parity-export-legacy-harness`, `parity-export-install`, `parity-export-legacy-suite` |
+| `parity-export-owner-decisions` | `TestExportFedOwnerDecisions`: exports that legacy access-control accepts and then fails every decision on | `parity-export-owner-decisions-harness`, `parity-export-install`, `parity-export-owner-decisions-suite` |
+
+`parity-export-harness` and `parity-export-suite` run the check that `PARITY_EXPORT_CHECK` names: `bundle` (the
+default), `legacy`, or `owner-decisions`; the targets above set it. `PARITY_EXPORT_RUN=<regexp>` narrows the run: for
+`parity-export`, to the test functions it matches, and for the other two, to the cases whose `<case file>/<case id>` it
+matches. `make parity-export-restart` is the counterpart of `parity-restart` for the export-fed stand: run it after
+`make e2e-images` on a running stand.
+
 `KIND_CLUSTER`, `E2E_NAMESPACE`, `PARITY_NAMESPACE`, and `E2E_ARTIFACTS`
 override the defaults. `E2E_HELM_ARGS` adds arguments to the installs of the agent and authz-policy-admin charts, and
 `TEST_STAND_HELM_ARGS` to the install of the test stand, which reads `TAG` and `IMAGE_PULL_POLICY` for images of its
-own. `E2E_SUITE_TIMEOUT` and `PARITY_SUITE_TIMEOUT`, 15m by default, set how long `e2e-suite` and `parity-suite` wait
-for the suite Job. They are the outermost of three limits: a suite that runs longer also needs `-test.timeout` in
-`suite.args` (600s) and `suite.activeDeadlineSeconds` (900) raised in its values file, each no higher than the next.
+own. `E2E_SUITE_TIMEOUT` and `PARITY_SUITE_TIMEOUT` set how long `e2e-suite` and `parity-suite` wait for the suite
+Job; their defaults are in the `Makefile`. They are the outermost of three limits. Inside them, `-test.timeout` in
+`suite.args` and `suite.activeDeadlineSeconds` bound the run, each no higher than the next; the stand's values file
+sets both (`test-stand-values.yaml`, `parity/test-stand-values.yaml`, or the export-fed check's file), and the chart's
+`values.yaml` sets what it leaves out. A suite that runs longer needs all three raised. The export-fed suites take
+their `helm test` wait from `PARITY_EXPORT_SUITE_TIMEOUT_<check>` in the `Makefile`.
 `SUITE_START_SECONDS`, 180 by default, sets how long a suite container may take to start before `e2e-suite` or
 `parity-suite` gives up with `The <job> container did not start within 180 seconds:`.
 `E2E_BASE_URL` and `PARITY_AC_BASE_URL` set where the suites send their

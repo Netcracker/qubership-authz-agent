@@ -1,0 +1,289 @@
+{
+ "about": "Round 76, task 16: survivor:depth nested | engine frontend_rules=skip, moved to depth = nested from round29/fields-frontend.json (r29fields-rule-type-frontend-allow). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R29FD_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ax76-197-r29fields-frontend-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ax76-197-r29fields-frontend-body-true",
+   "about": "applicableForFrontend true in the body, no query parameter. True and the predicate if the flag changes nothing; false and DENY if a policy for the user interface is left out.",
+   "condition": "resource.a == 'y'",
+   "policy": {
+    "rsqlPredicate": "a==\"y\"",
+    "applicableForFrontend": true
+   },
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    },
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "ax76-197-r29fields-frontend-body-false-query-true",
+   "about": "applicableForFrontend false in the body, the query parameter applicableForFrontend=true on the upload. Left out only if the query parameter overrides the body.",
+   "condition": "resource.a == 'y'",
+   "policy": {
+    "rsqlPredicate": "a==\"y\"",
+    "applicableForFrontend": false
+   },
+   "policiesQuery": "applicableForFrontend=true",
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    },
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "ax76-197-r29fields-frontend-body-absent-query-true",
+   "about": "No applicableForFrontend in the body, the query parameter true. Left out if the query parameter sets the flag when the body has none.",
+   "condition": "resource.a == 'y'",
+   "policy": {
+    "rsqlPredicate": "a==\"y\""
+   },
+   "policyOmit": [
+    "applicableForFrontend"
+   ],
+   "policiesQuery": "applicableForFrontend=true",
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    },
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "ax76-197-r29fields-frontend-body-true-query-false",
+   "about": "applicableForFrontend true in the body, the query parameter false. Left out if the body decides; kept if the query parameter overrides it.",
+   "condition": "resource.a == 'y'",
+   "policy": {
+    "rsqlPredicate": "a==\"y\"",
+    "applicableForFrontend": true
+   },
+   "policiesQuery": "applicableForFrontend=false",
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    },
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "ax76-197-r29fields-frontend-body-false-query-false",
+   "about": "applicableForFrontend false in the body and in the query parameter: the control of the four cases before. True and the predicate whatever the reading.",
+   "condition": "resource.a == 'y'",
+   "policy": {
+    "rsqlPredicate": "a==\"y\"",
+    "applicableForFrontend": false
+   },
+   "policiesQuery": "applicableForFrontend=false",
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    },
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "ax76-197-r29fields-rule-type-frontend-allow",
+   "about": "An ALLOW rule with ruleType APPLICABLE_FOR_FRONTEND, alone under DENY_UNLESS_PERMIT, with rsqlPredicate p==1. Read: true and the predicate if the rule applies, false and DENY if it is left out; the upload golden says whether the PAP stores the ruleType. Task 16 moves it to depth = nested.",
+   "sets": [
+    {
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "status": "ACTIVE",
+     "key": "dset",
+     "sets": [
+      {
+       "key": "set",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p==1"
+           },
+           "fields": {
+            "ruleType": "APPLICABLE_FOR_FRONTEND"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "ax76-197-r29fields-frontend-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

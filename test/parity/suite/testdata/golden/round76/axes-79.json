@@ -1,0 +1,16 @@
+{
+  "ax76-79-g21-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-79-g21-control-last": {
+    "check-resource-bulk-operations-v2-outcome/regular/read-bulk-operations-v2": {"status":200,"decision":{"READ":["r21"]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-79-g21-num-in-in-an-allow-rule": {
+    "check-resource-bulk-operations-v2-outcome/regular/a-n-bulk-operations-v2": {"status":200,"decision":{"READ":[]}},
+    "check-resource-bulk-operations-v2-outcome/regular/a-y-bulk-operations-v2": {"status":200,"decision":{"READ":["r21"]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

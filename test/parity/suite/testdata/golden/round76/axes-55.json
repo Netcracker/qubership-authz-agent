@@ -1,0 +1,19 @@
+{
+  "ax76-55-r41open-m2m-held-pip-in-text": {
+    "check-resource-bulk-v1-outcome/regular/read-a-n-bulk-v1": {"status":200,"allowed":["r41"]},
+    "check-resource-bulk-v1-outcome/regular/read-a-y-bulk-v1": {"status":200,"allowed":["r41"]},
+    "check-resource-bulk-v1-outcome/regular/read-other-bulk-v1": {"status":200,"allowed":[]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read-a-n-bulk-v1": {"calls":1,"requestAttributes":{"case":"r41open-m2m-held-pip-in-text","x":"id-${subject.isM2M}"}},
+    "pip-call/regular/read-a-y-bulk-v1": {"calls":0,"requestAttributes":null}
+  },
+  "ax76-55-r41openm2mheldpipintext-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-55-r41openm2mheldpipintext-control-last": {
+    "check-resource-bulk-v1-outcome/regular/read-bulk-v1": {"status":200,"allowed":["r41"]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

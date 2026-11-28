@@ -1,0 +1,20 @@
+{
+  "h26-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "h26-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "h26-nested-list-contains-any": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "h26-nested-list-not-contains-any": {
+    "check-resource-v1-outcome/isolated/probe-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/probe-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

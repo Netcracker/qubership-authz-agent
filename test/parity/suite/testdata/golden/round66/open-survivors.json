@@ -1,0 +1,822 @@
+{
+  "p66x-assign-beside-mapping": {
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/w3": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-error-v1/sequence/w1": {"status":201,"body":null},
+    "pap-error-v1/sequence/w2": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/w2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "customMapping": {
+              "subject.roles": {
+                "ROLE_PARITY_READER": [
+                  "parity_p66x_assigned"
+                ]
+              }
+            },
+            "domain": "PARITY_P66X_ASSIGN_MAPPING",
+            "name": "subject.permissions",
+            "pipType": "MAPPING",
+            "tenantId": "parity-p66x-assign-beside-mapping",
+            "type": "UUID"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/w3-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "customMapping": {
+              "subject.roles": {
+                "ROLE_PARITY_READER": [
+                  "parity_p66x_assigned"
+                ]
+              }
+            },
+            "domain": "PARITY_P66X_ASSIGN_MAPPING",
+            "name": "subject.permissions",
+            "pipType": "MAPPING",
+            "tenantId": "parity-p66x-assign-beside-mapping",
+            "type": "UUID"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/w3-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-assign-beside-mapping",
+            "name": "p66x-assign-beside-mapping a",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-assign-beside-mapping a reader",
+                "policyId": "215e60df-6641-4f33-2934-8c379cc78846",
+                "rules": [
+                  {
+                    "condition": "subject.permissions CONTAINS 'parity_p66x_assigned'",
+                    "effect": "ALLOW",
+                    "name": "p66x-assign-beside-mapping a rule",
+                    "ruleId": "251949c2-e1e4-ded5-df1a-a53147b517d3",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'UPDATE'",
+                    "tenantId": "parity-p66x-assign-beside-mapping"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-assign-beside-mapping"
+              }
+            ],
+            "policySetId": "4e3ead87-16d9-9ecd-8552-5edf255b34c3",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_ASSIGN_BESIDE_MAPPING'",
+            "tenantId": "parity-p66x-assign-beside-mapping",
+            "type": "DEFAULT"
+          },
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-assign-beside-mapping",
+            "name": "p66x-assign-beside-mapping d",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-assign-beside-mapping d reader",
+                "policyId": "e6654d26-c2b6-c370-529b-4c103302f3e1",
+                "rules": [
+                  {
+                    "condition": "subject.permissions CONTAINS 'parity_p66x_declared'",
+                    "effect": "ALLOW",
+                    "name": "p66x-assign-beside-mapping d rule",
+                    "ruleId": "29d0e11c-c014-a28d-d665-70b49c425b55",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p66x-assign-beside-mapping"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-assign-beside-mapping"
+              }
+            ],
+            "policySetId": "10d922ad-093c-79fd-4eef-2c923a5f9328",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_ASSIGN_BESIDE_MAPPING'",
+            "tenantId": "parity-p66x-assign-beside-mapping",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/r1": {
+      "status": 200,
+      "body": {
+        "level": "custom",
+        "permissions": [
+          {
+            "permission": "parity_p66x_assigned",
+            "pipNames": [
+              "subject.permissions"
+            ]
+          }
+        ]
+      }
+    },
+    "pap-status-v1/sequence/w2": {"status":200}
+  },
+  "p66x-assign-product": {
+    "pap-error-v1/sequence/w1": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/r3": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": true,
+            "name": "subject.permissions",
+            "pipType": "MAPPING",
+            "productMapping": {
+              "subject.roles": {
+                "ROLE_PARITY_P66X_PRODUCT": [
+                  "parity_p66x_product"
+                ]
+              }
+            },
+            "tenantId": "parity-p66x-assign-product",
+            "type": "UUID"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/r1": {
+      "status": 200,
+      "body": {
+        "level": "product",
+        "permissions": [
+          {
+            "permission": "parity_p66x_product",
+            "pipNames": [
+              "subject.permissions"
+            ]
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/r2": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/w1": {"status":200}
+  },
+  "p66x-d2p59-named": {
+    "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
+    "pap-read-raw-v1/sequence/target-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/target-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-d2p59-named s",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-d2p59-named p",
+                "policyId": "\u003cgenerated UUID\u003e",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-d2p59-named r",
+                    "ruleId": "\u003cgenerated UUID\u003e",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-p66x-d2p59-named"
+                  }
+                ],
+                "target": "true",
+                "tenantId": "parity-p66x-d2p59-named"
+              }
+            ],
+            "policySetId": "\u003cgenerated UUID\u003e",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "true",
+            "tenantId": "parity-p66x-d2p59-named",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-status-v1/sequence/import-sets": {"status":200},
+    "pap-status-v1/sequence/target": {"status":404}
+  },
+  "p66x-deprecated-number-policy": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/w1": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"1\": only \"true\" or \"false\" recognized"
+    },
+    "pap-error-v1/sequence/w1": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"1\": only \"true\" or \"false\" recognized"
+    },
+    "pap-read-raw-v1/sequence/raw": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/w1-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w1-raw-sets": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/w1-export": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/cleanup": {"status":404}
+  },
+  "p66x-deprecated-number-rule": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/w1": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"1\": only \"true\" or \"false\" recognized"
+    },
+    "pap-error-v1/sequence/w1": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"1\": only \"true\" or \"false\" recognized"
+    },
+    "pap-read-raw-v1/sequence/raw": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/w1-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w1-raw-sets": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/w1-export": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/cleanup": {"status":404}
+  },
+  "p66x-deprecated-number-set": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/w1": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"1\": only \"true\" or \"false\" recognized"
+    },
+    "pap-error-v1/sequence/w1": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"1\": only \"true\" or \"false\" recognized"
+    },
+    "pap-read-raw-v1/sequence/raw": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/w1-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w1-raw-sets": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/w1-export": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/cleanup": {"status":404}
+  },
+  "p66x-pip-name-twice-error-class": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":409,"message":""},
+    "pap-error-v1/sequence/w1": {"status":409,"body":""}
+  },
+  "p66x-scope-in-simplified-undeclared": {
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {
+      "status": 400,
+      "message": "Expression [subject.permissionScope.region CONTAINS 'r1']: Invalid expression: subject.permissionScope PIP doesn't exist"
+    },
+    "pap-error-v1/sequence/w2": {
+      "status": 400,
+      "body": "Expression [subject.permissionScope.region CONTAINS 'r1']: Invalid expression: subject.permissionScope PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/w2-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w2-raw-sets": {"status":200,"body":{"policySets":[]}}
+  },
+  "p66x-simplified-empty-reason-text": {
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-error-v1/sequence/w2": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/w2-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w2-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P66X_SIMPLIFIED_EMPTY_REASON_TEXT",
+            "name": "PARITY_P66X_SIMPLIFIED_EMPTY_REASON_TEXT_PARITY_PARITY_SUITE_P66X_SIMPLIFIED_EMPTY_REASON_TEXT_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P66X_SIMPLIFIED_EMPTY_REASON_TEXT_PARITY_PARITY_SUITE_P66X_SIMPLIFIED_EMPTY_REASON_TEXT_READ_Policy",
+                "policyId": "b2688af2-0df8-d77e-31b8-1e10837200de",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "",
+                    "ruleId": "84cbb324-dd0e-a327-d30f-28735242762e",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p66x-simplified-empty-reason-text"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-simplified-empty-reason-text"
+              }
+            ],
+            "policySetId": "e1b2688a-f20d-f8d7-7e31-b81e10837200",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_SIMPLIFIED_EMPTY_REASON_TEXT'",
+            "tenantId": "parity-p66x-simplified-empty-reason-text",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/w2-export": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P66X_SIMPLIFIED_EMPTY_REASON_TEXT",
+            "name": "PARITY_P66X_SIMPLIFIED_EMPTY_REASON_TEXT_PARITY_PARITY_SUITE_P66X_SIMPLIFIED_EMPTY_REASON_TEXT_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P66X_SIMPLIFIED_EMPTY_REASON_TEXT_PARITY_PARITY_SUITE_P66X_SIMPLIFIED_EMPTY_REASON_TEXT_READ_Policy",
+                "policyId": "b2688af2-0df8-d77e-31b8-1e10837200de",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "",
+                    "ruleId": "84cbb324-dd0e-a327-d30f-28735242762e",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p66x-simplified-empty-reason-text"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-simplified-empty-reason-text"
+              }
+            ],
+            "policySetId": "e1b2688a-f20d-f8d7-7e31-b81e10837200",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_SIMPLIFIED_EMPTY_REASON_TEXT'",
+            "tenantId": "parity-p66x-simplified-empty-reason-text",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p66x-simplified-empty-reason-text"
+      ]
+    }
+  },
+  "p66x-simplified-empty-roles-list": {
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-error-v1/sequence/w2": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/w2-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w2-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P66X_SIMPLIFIED_EMPTY_ROLES_LIST",
+            "name": "PARITY_P66X_SIMPLIFIED_EMPTY_ROLES_LIST_PARITY_PARITY_SUITE_P66X_SIMPLIFIED_EMPTY_ROLES_LIST_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P66X_SIMPLIFIED_EMPTY_ROLES_LIST_PARITY_PARITY_SUITE_P66X_SIMPLIFIED_EMPTY_ROLES_LIST_READ_Policy",
+                "policyId": "89ba7d22-e8c2-4623-9037-fecde171df50",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-simplified-empty-roles-list",
+                    "ruleId": "b53941c7-b6a0-f2a5-0dde-226d9a5058b2",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY ''",
+                    "tenantId": "parity-p66x-simplified-empty-roles-list"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-simplified-empty-roles-list"
+              }
+            ],
+            "policySetId": "4589ba7d-22e8-c246-2390-37fecde171df",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_SIMPLIFIED_EMPTY_ROLES_LIST'",
+            "tenantId": "parity-p66x-simplified-empty-roles-list",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/w2-export": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P66X_SIMPLIFIED_EMPTY_ROLES_LIST",
+            "name": "PARITY_P66X_SIMPLIFIED_EMPTY_ROLES_LIST_PARITY_PARITY_SUITE_P66X_SIMPLIFIED_EMPTY_ROLES_LIST_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P66X_SIMPLIFIED_EMPTY_ROLES_LIST_PARITY_PARITY_SUITE_P66X_SIMPLIFIED_EMPTY_ROLES_LIST_READ_Policy",
+                "policyId": "89ba7d22-e8c2-4623-9037-fecde171df50",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-simplified-empty-roles-list",
+                    "ruleId": "b53941c7-b6a0-f2a5-0dde-226d9a5058b2",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY ''",
+                    "tenantId": "parity-p66x-simplified-empty-roles-list"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-simplified-empty-roles-list"
+              }
+            ],
+            "policySetId": "4589ba7d-22e8-c246-2390-37fecde171df",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_SIMPLIFIED_EMPTY_ROLES_LIST'",
+            "tenantId": "parity-p66x-simplified-empty-roles-list",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p66x-simplified-empty-roles-list"
+      ]
+    }
+  },
+  "p66x-simplified-empty-roles-text": {
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {
+      "status": 400,
+      "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+    },
+    "pap-error-v1/sequence/w2": {
+      "status": 400,
+      "body": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+    },
+    "pap-read-raw-v1/sequence/w2-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w2-raw-sets": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/w2-export": {"status":200,"body":{"policySets":[]}}
+  },
+  "p66x-survivors-control-first": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read-raw-v1/sequence/w1-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w1-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-survivors-control-first",
+            "name": "p66x-survivors-control-first s",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-survivors-control-first s reader",
+                "policyId": "ce0af2ca-ef3c-4de1-6e25-6eac42ab8a09",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-survivors-control-first s rule",
+                    "ruleId": "265d4e82-8bd5-d69d-fd68-b5a56e7dbb79",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p66x-survivors-control-first"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-survivors-control-first"
+              }
+            ],
+            "policySetId": "73a75c7a-f2e3-5f6a-67ed-dba7c23f6978",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_SURVIVORS_CONTROL_FIRST'",
+            "tenantId": "parity-p66x-survivors-control-first",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-survivors-control-first",
+            "name": "p66x-survivors-control-first s",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-survivors-control-first s reader",
+                "policyId": "ce0af2ca-ef3c-4de1-6e25-6eac42ab8a09",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-survivors-control-first s rule",
+                    "ruleId": "265d4e82-8bd5-d69d-fd68-b5a56e7dbb79",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p66x-survivors-control-first"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-survivors-control-first"
+              }
+            ],
+            "policySetId": "73a75c7a-f2e3-5f6a-67ed-dba7c23f6978",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_SURVIVORS_CONTROL_FIRST'",
+            "tenantId": "parity-p66x-survivors-control-first",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p66x-survivors-control-first"
+      ]
+    }
+  },
+  "p66x-survivors-control-last": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read-raw-v1/sequence/w1-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w1-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-survivors-control-last",
+            "name": "p66x-survivors-control-last s",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-survivors-control-last s reader",
+                "policyId": "72e5d6c5-c5d3-8f80-e22c-fb20ea589f75",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-survivors-control-last s rule",
+                    "ruleId": "5a5181aa-50c8-097a-cefe-5d5cd71395cc",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p66x-survivors-control-last"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-survivors-control-last"
+              }
+            ],
+            "policySetId": "2a871321-5731-f024-c8f6-200a289dfa4d",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_SURVIVORS_CONTROL_LAST'",
+            "tenantId": "parity-p66x-survivors-control-last",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-survivors-control-last",
+            "name": "p66x-survivors-control-last s",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-survivors-control-last s reader",
+                "policyId": "72e5d6c5-c5d3-8f80-e22c-fb20ea589f75",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-survivors-control-last s rule",
+                    "ruleId": "5a5181aa-50c8-097a-cefe-5d5cd71395cc",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p66x-survivors-control-last"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-survivors-control-last"
+              }
+            ],
+            "policySetId": "2a871321-5731-f024-c8f6-200a289dfa4d",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_SURVIVORS_CONTROL_LAST'",
+            "tenantId": "parity-p66x-survivors-control-last",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p66x-survivors-control-last"
+      ]
+    }
+  },
+  "p66x-uuid-tab-after-spaces": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {"status":500},
+    "pap-error-v1/sequence/w1": {"status":200,"body":null},
+    "pap-error-v1/sequence/w2": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/w1-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w1-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-uuid-tab-after-spaces-space",
+            "name": "p66x-uuid-tab-after-spaces space",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-uuid-tab-after-spaces space reader",
+                "policyId": "b6521f85-e32f-dd12-e597-3f4db8a87065",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-uuid-tab-after-spaces space rule",
+                    "ruleId": "d9e63692-910d-7ef9-c624-c2ffcacbc4dc",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p66x-uuid-tab-after-spaces"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-uuid-tab-after-spaces"
+              }
+            ],
+            "policySetId": "00000000-0000-0000-0000-0000000d0c66",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_UUID_TAB_AFTER_SPACES'",
+            "tenantId": "parity-p66x-uuid-tab-after-spaces",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/w2-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w2-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-uuid-tab-after-spaces-space",
+            "name": "p66x-uuid-tab-after-spaces space",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-uuid-tab-after-spaces space reader",
+                "policyId": "b6521f85-e32f-dd12-e597-3f4db8a87065",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-uuid-tab-after-spaces space rule",
+                    "ruleId": "d9e63692-910d-7ef9-c624-c2ffcacbc4dc",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p66x-uuid-tab-after-spaces"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-uuid-tab-after-spaces"
+              }
+            ],
+            "policySetId": "00000000-0000-0000-0000-0000000d0c66",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_UUID_TAB_AFTER_SPACES'",
+            "tenantId": "parity-p66x-uuid-tab-after-spaces",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/w1-export": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-uuid-tab-after-spaces-space",
+            "name": "p66x-uuid-tab-after-spaces space",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-uuid-tab-after-spaces space reader",
+                "policyId": "b6521f85-e32f-dd12-e597-3f4db8a87065",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-uuid-tab-after-spaces space rule",
+                    "ruleId": "d9e63692-910d-7ef9-c624-c2ffcacbc4dc",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p66x-uuid-tab-after-spaces"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-uuid-tab-after-spaces"
+              }
+            ],
+            "policySetId": "00000000-0000-0000-0000-0000000d0c66",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_UUID_TAB_AFTER_SPACES'",
+            "tenantId": "parity-p66x-uuid-tab-after-spaces",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p66x-uuid-tab-after-spaces"
+      ]
+    },
+    "pap-read/sequence/w2-export": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-uuid-tab-after-spaces-space",
+            "name": "p66x-uuid-tab-after-spaces space",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-uuid-tab-after-spaces space reader",
+                "policyId": "b6521f85-e32f-dd12-e597-3f4db8a87065",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-uuid-tab-after-spaces space rule",
+                    "ruleId": "d9e63692-910d-7ef9-c624-c2ffcacbc4dc",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p66x-uuid-tab-after-spaces"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-uuid-tab-after-spaces"
+              }
+            ],
+            "policySetId": "00000000-0000-0000-0000-0000000d0c66",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_UUID_TAB_AFTER_SPACES'",
+            "tenantId": "parity-p66x-uuid-tab-after-spaces",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p66x-uuid-tab-after-spaces"
+      ]
+    },
+    "pap-status-v1/sequence/cleanup": {"status":200}
+  }
+}

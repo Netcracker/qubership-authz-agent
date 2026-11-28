@@ -1,0 +1,786 @@
+{
+ "about": "Round 72: what the caller check counts as M2M. Each case is one token alone in Authorization, against the case's own tenant and the default tenant. Needs the realm users of testdata/realm/round72-token-users.json and the subject form bearer:<username> (a user's token alone in Authorization).",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "c72-m2m-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own, decided by the M2M token. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_C72_M2M_CONTROL_FIRST",
+   "tenant": "parity-c72-m2m-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-m2m-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "d3908b47-174a-7678-0000-e4c005b40e18",
+       "name": "c72-m2m-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_M2M_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "f526ba13-51ef-c3b3-5d4c-e9f96de49ffe",
+         "name": "c72-m2m-control-first reader",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "4620c4f7-bde6-7d2c-9a27-71c8b1511e29",
+           "name": "c72-m2m-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "subject": "m2m",
+       "resource": {
+        "id": "c72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c72-m2m-m2m",
+   "about": "The caller check over the suite's service account: ROLE_M2M and the service-account- prefix, sent alone in Authorization. A set any subject reaches allows in the case's own tenant, which no tenant claim names: an M2M token is decided (true), any other is refused with 403. The same request against the default tenant passes the check under every reading (a decision, false: no set there).",
+   "resourceType": "PARITY_SUITE_C72_M2M_M2M",
+   "tenant": "parity-c72-m2m-m2m",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-m2m-m2m"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:own-tenant",
+      "decide:default-tenant"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "30dad31a-4850-88be-4044-21a964debe2e",
+       "name": "c72-m2m-m2m set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_M2M_M2M'",
+       "policies": [
+        {
+         "policyId": "959e7893-d28a-9abb-9c31-abf9e6e55538",
+         "name": "c72-m2m-m2m anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "218704be-d1ff-2e89-0f54-8ac93de059a6",
+           "name": "c72-m2m-m2m anyone",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "own-tenant",
+       "subject": "m2m",
+       "subjectClaims": {
+        "preferred_username": "service-account-parity-m2m"
+       },
+       "resource": {
+        "id": "c72"
+       }
+      },
+      {
+       "name": "default-tenant",
+       "subject": "m2m",
+       "subjectClaims": {
+        "preferred_username": "service-account-parity-m2m"
+       },
+       "tenantId": "default",
+       "resource": {
+        "id": "c72"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c72-m2m-ts-service",
+   "about": "The caller check over the service account of parity-ts-service: the prefix, no realm role, sent alone in Authorization. A set any subject reaches allows in the case's own tenant, which no tenant claim names: an M2M token is decided (true), any other is refused with 403. The same request against the default tenant passes the check under every reading (a decision, false: no set there).",
+   "resourceType": "PARITY_SUITE_C72_M2M_TS_SERVICE",
+   "tenant": "parity-c72-m2m-ts-service",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-m2m-ts-service"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:own-tenant",
+      "decide:default-tenant"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "1dc8bf8d-0f37-7fad-86cf-56daf5b1869f",
+       "name": "c72-m2m-ts-service set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_M2M_TS_SERVICE'",
+       "policies": [
+        {
+         "policyId": "9541e630-a4de-e193-a5eb-95968660bcbc",
+         "name": "c72-m2m-ts-service anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "f840c58c-93d9-9c74-6a04-54b1bb12eaf0",
+           "name": "c72-m2m-ts-service anyone",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "own-tenant",
+       "subject": "m2m@parity-ts-service",
+       "subjectClaims": {
+        "preferred_username": "service-account-parity-ts-service",
+        "realm_access": null
+       },
+       "resource": {
+        "id": "c72"
+       }
+      },
+      {
+       "name": "default-tenant",
+       "subject": "m2m@parity-ts-service",
+       "subjectClaims": {
+        "preferred_username": "service-account-parity-ts-service",
+        "realm_access": null
+       },
+       "tenantId": "default",
+       "resource": {
+        "id": "c72"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c72-m2m-ts-bare",
+   "about": "The caller check over the service account of parity-ts-bare: no preferred_username, no realm role, sent alone in Authorization. A set any subject reaches allows in the case's own tenant, which no tenant claim names: an M2M token is decided (true), any other is refused with 403. The same request against the default tenant passes the check under every reading (a decision, false: no set there).",
+   "resourceType": "PARITY_SUITE_C72_M2M_TS_BARE",
+   "tenant": "parity-c72-m2m-ts-bare",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-m2m-ts-bare"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:own-tenant",
+      "decide:default-tenant"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "d3ae8506-f4fe-c9d4-1c12-9fb7144cea47",
+       "name": "c72-m2m-ts-bare set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_M2M_TS_BARE'",
+       "policies": [
+        {
+         "policyId": "6b706d47-b2df-628f-c178-dfdef77fddf2",
+         "name": "c72-m2m-ts-bare anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "6b9e1a05-2f3a-f61c-f4bc-fd068f338e25",
+           "name": "c72-m2m-ts-bare anyone",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "own-tenant",
+       "subject": "m2m@parity-ts-bare",
+       "subjectClaims": {
+        "preferred_username": null,
+        "realm_access": null
+       },
+       "resource": {
+        "id": "c72"
+       }
+      },
+      {
+       "name": "default-tenant",
+       "subject": "m2m@parity-ts-bare",
+       "subjectClaims": {
+        "preferred_username": null,
+        "realm_access": null
+       },
+       "tenantId": "default",
+       "resource": {
+        "id": "c72"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c72-m2m-role-m2m",
+   "about": "The caller check over the user parity-r72-role-m2m: ROLE_M2M, no prefix, sent alone in Authorization. A set any subject reaches allows in the case's own tenant, which no tenant claim names: an M2M token is decided (true), any other is refused with 403. The same request against the default tenant passes the check under every reading (a decision, false: no set there).",
+   "resourceType": "PARITY_SUITE_C72_M2M_ROLE_M2M",
+   "tenant": "parity-c72-m2m-role-m2m",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-m2m-role-m2m"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:own-tenant",
+      "decide:default-tenant"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "72fc8498-243b-c2d3-653b-ac107b3c4dde",
+       "name": "c72-m2m-role-m2m set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_M2M_ROLE_M2M'",
+       "policies": [
+        {
+         "policyId": "1d3e3139-cf9f-cbec-e3bf-bb6ee1d99936",
+         "name": "c72-m2m-role-m2m anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "105d1ac2-cbb8-a655-0668-fa458cc000c5",
+           "name": "c72-m2m-role-m2m anyone",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "own-tenant",
+       "subject": "bearer:parity-r72-role-m2m",
+       "subjectClaims": {
+        "preferred_username": "parity-r72-role-m2m",
+        "realm_access": {
+         "roles": [
+          "ROLE_PARITY_READER",
+          "ROLE_M2M"
+         ]
+        }
+       },
+       "resource": {
+        "id": "c72"
+       }
+      },
+      {
+       "name": "default-tenant",
+       "subject": "bearer:parity-r72-role-m2m",
+       "subjectClaims": {
+        "preferred_username": "parity-r72-role-m2m",
+        "realm_access": {
+         "roles": [
+          "ROLE_PARITY_READER",
+          "ROLE_M2M"
+         ]
+        }
+       },
+       "tenantId": "default",
+       "resource": {
+        "id": "c72"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c72-m2m-level-m2m",
+   "about": "The caller check over the user parity-r29-level-m2m: level m2m, sent alone in Authorization. A set any subject reaches allows in the case's own tenant, which no tenant claim names: an M2M token is decided (true), any other is refused with 403. The same request against the default tenant passes the check under every reading (a decision, false: no set there).",
+   "resourceType": "PARITY_SUITE_C72_M2M_LEVEL_M2M",
+   "tenant": "parity-c72-m2m-level-m2m",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-m2m-level-m2m"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:own-tenant",
+      "decide:default-tenant"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "a78d47b7-6b91-0e71-d581-ad4c15d62003",
+       "name": "c72-m2m-level-m2m set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_M2M_LEVEL_M2M'",
+       "policies": [
+        {
+         "policyId": "65e34df3-f50b-6399-9881-a1ad41ef247b",
+         "name": "c72-m2m-level-m2m anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "a1f69a64-8e81-1411-c549-ab460f316a13",
+           "name": "c72-m2m-level-m2m anyone",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "own-tenant",
+       "subject": "bearer:parity-r29-level-m2m",
+       "subjectClaims": {
+        "level": "m2m"
+       },
+       "resource": {
+        "id": "c72"
+       }
+      },
+      {
+       "name": "default-tenant",
+       "subject": "bearer:parity-r29-level-m2m",
+       "subjectClaims": {
+        "level": "m2m"
+       },
+       "tenantId": "default",
+       "resource": {
+        "id": "c72"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c72-m2m-level-external",
+   "about": "The caller check over the user parity-r29-level-external: level external, sent alone in Authorization. A set any subject reaches allows in the case's own tenant, which no tenant claim names: an M2M token is decided (true), any other is refused with 403. The same request against the default tenant passes the check under every reading (a decision, false: no set there).",
+   "resourceType": "PARITY_SUITE_C72_M2M_LEVEL_EXTERNAL",
+   "tenant": "parity-c72-m2m-level-external",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-m2m-level-external"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:own-tenant",
+      "decide:default-tenant"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "05358b8a-11c9-129a-362b-622550b2362f",
+       "name": "c72-m2m-level-external set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_M2M_LEVEL_EXTERNAL'",
+       "policies": [
+        {
+         "policyId": "262420c0-dcc2-0d05-b46b-8c9ec888b4a0",
+         "name": "c72-m2m-level-external anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "b475aac3-7cb4-4fd2-9443-2228a73a9e15",
+           "name": "c72-m2m-level-external anyone",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "own-tenant",
+       "subject": "bearer:parity-r29-level-external",
+       "subjectClaims": {
+        "level": "external"
+       },
+       "resource": {
+        "id": "c72"
+       }
+      },
+      {
+       "name": "default-tenant",
+       "subject": "bearer:parity-r29-level-external",
+       "subjectClaims": {
+        "level": "external"
+       },
+       "tenantId": "default",
+       "resource": {
+        "id": "c72"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c72-m2m-reader",
+   "about": "The caller check over the user parity-reader: no role, no level, no prefix, sent alone in Authorization. A set any subject reaches allows in the case's own tenant, which no tenant claim names: an M2M token is decided (true), any other is refused with 403. The same request against the default tenant passes the check under every reading (a decision, false: no set there).",
+   "resourceType": "PARITY_SUITE_C72_M2M_READER",
+   "tenant": "parity-c72-m2m-reader",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-m2m-reader"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:own-tenant",
+      "decide:default-tenant"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "0d0b6c48-4585-7564-8880-5b1f85f5cf44",
+       "name": "c72-m2m-reader set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_M2M_READER'",
+       "policies": [
+        {
+         "policyId": "c7e7271c-e3b2-8baf-d491-3089efbc167f",
+         "name": "c72-m2m-reader anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "fd3ab408-2890-f016-36b4-a6518bc6f317",
+           "name": "c72-m2m-reader anyone",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "own-tenant",
+       "subject": "bearer:parity-reader",
+       "subjectClaims": {
+        "preferred_username": "parity-reader"
+       },
+       "resource": {
+        "id": "c72"
+       }
+      },
+      {
+       "name": "default-tenant",
+       "subject": "bearer:parity-reader",
+       "subjectClaims": {
+        "preferred_username": "parity-reader"
+       },
+       "tenantId": "default",
+       "resource": {
+        "id": "c72"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c72-m2m-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own, decided by the M2M token. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_C72_M2M_CONTROL_LAST",
+   "tenant": "parity-c72-m2m-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-m2m-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "64cfa62c-7039-f091-e92d-fc0347a114d0",
+       "name": "c72-m2m-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_M2M_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "3bcd01c9-8197-e763-c051-e4922f055ed4",
+         "name": "c72-m2m-control-last reader",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "834be094-a3d8-69dd-2c29-f9f28c9526a8",
+           "name": "c72-m2m-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "subject": "m2m",
+       "resource": {
+        "id": "c72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}

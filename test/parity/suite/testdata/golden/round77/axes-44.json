@@ -1,0 +1,22 @@
+{
+  "ax77-44-f72-num-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-44-f72-num-control-last": {
+    "check-resource-bulk-operations-v1-outcome/regular/read-bulk-operations-v1": {"status":200,"decision":{"READ":["r33"]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-44-f72-num-list-1e3-double": {
+    "check-resource-bulk-operations-v1-outcome/regular/read-bulk-operations-v1": {"status":200,"decision":{"READ":["r33"]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-44-f72-num-list-1e3-plain": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-44-f72-num-list-1e3-sci": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

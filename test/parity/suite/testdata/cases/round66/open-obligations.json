@@ -1,0 +1,1340 @@
+{
+ "about": "Round 66: writes of obligations the earlier rounds did not send, each case in a tenant and a domain of its own, the merged export read first: a null element, members of another JSON type, blank texts, no id, a domain member of its own, two grants of one role in one domain and in two, a refused rewrite, two violations at once. The stand runs as it is (access-control.obligations.enabled=false): a write and a read of obligations do not depend on it.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p66x-obligations-control-first",
+   "about": "Control: an ACTIVE set uploaded in a tenant of its own, decided and read back.",
+   "resourceType": "PARITY_SUITE_P66X_OBLIGATIONS_CONTROL_FIRST",
+   "tenant": "parity-p66x-obligations-control-first",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p66x-obligations-control-first"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "e5370121-06b8-90dd-2b6e-5951faf27741",
+       "name": "p66x-obligations-control-first s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66X_OBLIGATIONS_CONTROL_FIRST'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "1e65f8e8-aa51-b730-129e-9802b728e2d6",
+         "name": "p66x-obligations-control-first s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "43465ba7-d1da-4cf2-14cf-5805c8be9593",
+           "name": "p66x-obligations-control-first s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P66X_OBLIGATIONS_CONTROL_FIRST",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p66x-obligations-control-first",
+      "PARITY_SUITE_P66X_OBLIGATIONS_CONTROL_FIRST"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p66b-null-element",
+   "about": "An obligations body whose second element is null beside a valid one, then the domain read back: refused with 400, failed with 500, or the null skipped.",
+   "resourceType": "PARITY_SUITE_P66B_NULL_ELEMENT",
+   "tenant": "parity-p66b-null-element",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-merged-obligations",
+     "args": {},
+     "observe": [
+      "read:read-merged-obligations"
+     ],
+     "markers": [
+      "parity-p66b-null-element"
+     ]
+    },
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P66B_NULL_ELEMENT"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_NULL_ELEMENT"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "b07e4d9c-906c-4043-114c-971d8da7f0ad",
+       "component": "PARITY_SUITE_P66B_NULL_ELEMENT",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-null-element",
+       "resourceType": "PARITY_SUITE_P66B_NULL_ELEMENT",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      },
+      null
+     ]
+    },
+    {
+     "name": "r1",
+     "op": "read-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_NULL_ELEMENT"
+     },
+     "observe": [
+      "read:read-domain-obligations"
+     ],
+     "markers": [
+      "parity-p66b-null-element"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_NULL_ELEMENT"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p66b-member-types",
+   "about": "Obligations whose members have another JSON type than the table names, one write each: an operation that is a number, a type that is a list, a component that is a list, a reason that is an object, roles that are a text or hold a list, fields that are a text or hold an object.",
+   "resourceType": "PARITY_SUITE_P66B_MEMBER_TYPES",
+   "tenant": "parity-p66b-member-types",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-merged-obligations",
+     "args": {},
+     "observe": [
+      "read:read-merged-obligations"
+     ],
+     "markers": [
+      "parity-p66b-member-types"
+     ]
+    },
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P66B_MEMBER_TYPES"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "w-op-number",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_MEMBER_TYPES"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "b5fa65dd-5d98-81a5-0b9e-69845317ea8b",
+       "component": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-member-types",
+       "resourceType": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "fieldPolicyOperation": "5",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "w-type-list",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_MEMBER_TYPES"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "b2d302e2-1767-eaa9-0fc2-bb30fdc64748",
+       "component": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-member-types",
+       "resourceType": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": [
+        "WHITELIST"
+       ],
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "w-component-list",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_MEMBER_TYPES"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "e1cb9a2c-6d94-10ed-1329-19f3b3bc4684",
+       "component": [
+        "PARITY"
+       ],
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-member-types",
+       "resourceType": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "w-reason-object",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_MEMBER_TYPES"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "dba19212-188f-b605-c272-26261f4d37dd",
+       "component": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": {
+        "a": "b"
+       },
+       "resourceType": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "w-roles-text",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_MEMBER_TYPES"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "12889c6e-5ad4-8528-4736-87283bb47f3d",
+       "component": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "roles": "ROLE_PARITY_READER",
+       "reason": "parity p66b-member-types",
+       "resourceType": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "w-roles-nested",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_MEMBER_TYPES"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "651940a0-e87c-aa72-8ec6-d8f456e72ee2",
+       "component": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "roles": [
+        [
+         "ROLE_PARITY_READER"
+        ]
+       ],
+       "reason": "parity p66b-member-types",
+       "resourceType": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "w-fields-text",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_MEMBER_TYPES"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "18bdd3f8-5369-075b-b53f-625439674cb3",
+       "component": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-member-types",
+       "resourceType": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": "f1"
+      }
+     ]
+    },
+    {
+     "name": "w-fields-object",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_MEMBER_TYPES"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "6ba34778-d2bd-fd9f-af25-cd0715a4e606",
+       "component": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-member-types",
+       "resourceType": "PARITY_SUITE_P66B_MEMBER_TYPES",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        {
+         "a": "f1"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "r1",
+     "op": "read-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_MEMBER_TYPES"
+     },
+     "observe": [
+      "read:read-domain-obligations"
+     ],
+     "markers": [
+      "parity-p66b-member-types"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_MEMBER_TYPES"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p66b-blank-texts",
+   "about": "Obligations with a blank text where the refusal of a missing member says \"can't be blank\": component and resourceType empty, a space or a tab, a role and a field empty, one write each, the domain read back after each.",
+   "resourceType": "PARITY_SUITE_P66B_BLANK_TEXTS",
+   "tenant": "parity-p66b-blank-texts",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-merged-obligations",
+     "args": {},
+     "observe": [
+      "read:read-merged-obligations"
+     ],
+     "markers": [
+      "parity-p66b-blank-texts"
+     ]
+    },
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "w-component-empty",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "11aaf3e1-c67e-9372-3f2d-c0794f934800",
+       "component": "",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-blank-texts",
+       "resourceType": "PARITY_SUITE_P66B_BLANK_TEXTS",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "r-component-empty",
+     "op": "read-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "read:read-domain-obligations"
+     ],
+     "markers": [
+      "parity-p66b-blank-texts"
+     ]
+    },
+    {
+     "name": "w-component-space",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "09c32ca6-fec1-dd02-77b6-62ea48254971",
+       "component": " ",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-blank-texts",
+       "resourceType": "PARITY_SUITE_P66B_BLANK_TEXTS",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "r-component-space",
+     "op": "read-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "read:read-domain-obligations"
+     ],
+     "markers": [
+      "parity-p66b-blank-texts"
+     ]
+    },
+    {
+     "name": "w-component-tab",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "ae6e7169-130a-2728-5c88-308172fe122e",
+       "component": "\t",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-blank-texts",
+       "resourceType": "PARITY_SUITE_P66B_BLANK_TEXTS",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "r-component-tab",
+     "op": "read-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "read:read-domain-obligations"
+     ],
+     "markers": [
+      "parity-p66b-blank-texts"
+     ]
+    },
+    {
+     "name": "w-type-empty",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "0f8895a8-4572-8e6f-57d1-559d70d91a45",
+       "component": "PARITY_SUITE_P66B_BLANK_TEXTS",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-blank-texts",
+       "resourceType": "",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "r-type-empty",
+     "op": "read-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "read:read-domain-obligations"
+     ],
+     "markers": [
+      "parity-p66b-blank-texts"
+     ]
+    },
+    {
+     "name": "w-type-space",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "6c50d65f-c356-82ef-d0b4-412d74fabe5e",
+       "component": "PARITY_SUITE_P66B_BLANK_TEXTS",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-blank-texts",
+       "resourceType": " ",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "r-type-space",
+     "op": "read-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "read:read-domain-obligations"
+     ],
+     "markers": [
+      "parity-p66b-blank-texts"
+     ]
+    },
+    {
+     "name": "w-role-empty",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "7a150300-fa85-cd4c-4eed-0d6b19e7e459",
+       "component": "PARITY_SUITE_P66B_BLANK_TEXTS",
+       "roles": [
+        ""
+       ],
+       "reason": "parity p66b-blank-texts",
+       "resourceType": "PARITY_SUITE_P66B_BLANK_TEXTS",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "r-role-empty",
+     "op": "read-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "read:read-domain-obligations"
+     ],
+     "markers": [
+      "parity-p66b-blank-texts"
+     ]
+    },
+    {
+     "name": "w-field-empty",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "46f7bbd6-c0d5-497c-dd87-f13d7b90f46a",
+       "component": "PARITY_SUITE_P66B_BLANK_TEXTS",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-blank-texts",
+       "resourceType": "PARITY_SUITE_P66B_BLANK_TEXTS",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        ""
+       ]
+      }
+     ]
+    },
+    {
+     "name": "r-field-empty",
+     "op": "read-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "read:read-domain-obligations"
+     ],
+     "markers": [
+      "parity-p66b-blank-texts"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_BLANK_TEXTS"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p66b-no-id-own-domain",
+   "about": "An obligation written without an id (the status only: an id the PAP generates differs on each stand), then one that carries a domain member of its own other than the path's, read back by domain and raw.",
+   "resourceType": "PARITY_SUITE_P66B_NO_ID_OWN_DOMAIN",
+   "tenant": "parity-p66b-no-id-own-domain",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-merged-obligations",
+     "args": {},
+     "observe": [
+      "read:read-merged-obligations"
+     ],
+     "markers": [
+      "parity-p66b-no-id-own-domain"
+     ]
+    },
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P66B_NO_ID_OWN_DOMAIN"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_NO_ID_OWN_DOMAIN"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "component": "PARITY_SUITE_P66B_NO_ID_OWN_DOMAIN",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-no-id-own-domain",
+       "resourceType": "PARITY_SUITE_P66B_NO_ID_OWN_DOMAIN",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_NO_ID_OWN_DOMAIN"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "609dd3c9-1e63-b4fb-4050-081d836c273c",
+       "component": "PARITY_SUITE_P66B_NO_ID_OWN_DOMAIN",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-no-id-own-domain",
+       "resourceType": "PARITY_SUITE_P66B_NO_ID_OWN_DOMAIN",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ],
+       "domain": "PARITY_P66B_ELSEWHERE"
+      }
+     ]
+    },
+    {
+     "name": "r2",
+     "op": "read-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_NO_ID_OWN_DOMAIN"
+     },
+     "observe": [
+      "read:read-domain-obligations"
+     ],
+     "markers": [
+      "parity-p66b-no-id-own-domain"
+     ]
+    },
+    {
+     "name": "r3",
+     "op": "read-raw-obligations",
+     "args": {},
+     "observe": [
+      "read:read-raw-obligations"
+     ],
+     "markers": [
+      "parity-p66b-no-id-own-domain"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_NO_ID_OWN_DOMAIN"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p66b-two-grants",
+   "about": "Two WHITELIST obligations of one role, type and operation with other fields in one domain, then a third in a second domain of the tenant: the merged export reads them as one grant with the union of fields, or apart.",
+   "resourceType": "PARITY_SUITE_P66B_TWO_GRANTS",
+   "tenant": "parity-p66b-two-grants",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-merged-obligations",
+     "args": {},
+     "observe": [
+      "read:read-merged-obligations"
+     ],
+     "markers": [
+      "parity-p66b-two-grants"
+     ]
+    },
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P66B_TWO_GRANTS"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "declare-2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P66B_TWO_GRANTS_SECOND"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_TWO_GRANTS"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "72c2353c-7b4a-cad2-49ef-d0831df41bf2",
+       "component": "PARITY_SUITE_P66B_TWO_GRANTS",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-two-grants",
+       "resourceType": "PARITY_SUITE_P66B_TWO_GRANTS",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      },
+      {
+       "id": "03e1a3f0-ab1b-21b7-ef37-cfb8feace2d4",
+       "component": "PARITY_SUITE_P66B_TWO_GRANTS",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-two-grants",
+       "resourceType": "PARITY_SUITE_P66B_TWO_GRANTS",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f2"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "r1",
+     "op": "read-merged-obligations",
+     "args": {
+      "resource_types": "PARITY_SUITE_P66B_TWO_GRANTS"
+     },
+     "observe": [
+      "read:read-merged-obligations"
+     ],
+     "markers": [
+      "parity-p66b-two-grants"
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_TWO_GRANTS_SECOND"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "ede486fe-2a9a-32e0-c84d-dd9e4a70a53e",
+       "component": "PARITY_SUITE_P66B_TWO_GRANTS",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-two-grants",
+       "resourceType": "PARITY_SUITE_P66B_TWO_GRANTS",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f3"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "r2",
+     "op": "read-merged-obligations",
+     "args": {
+      "resource_types": "PARITY_SUITE_P66B_TWO_GRANTS"
+     },
+     "observe": [
+      "read:read-merged-obligations"
+     ],
+     "markers": [
+      "parity-p66b-two-grants"
+     ]
+    },
+    {
+     "name": "r3",
+     "op": "read-merged-obligations",
+     "args": {},
+     "observe": [
+      "read:read-merged-obligations"
+     ],
+     "markers": [
+      "parity-p66b-two-grants"
+     ]
+    },
+    {
+     "name": "cleanup-2",
+     "op": "delete-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_TWO_GRANTS_SECOND"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_TWO_GRANTS"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p66b-refused-rewrite",
+   "about": "Obligations written, then a rewrite of the same domain that the PAP refuses (fields a text): the domain read back keeps the first obligations or is empty.",
+   "resourceType": "PARITY_SUITE_P66B_REFUSED_REWRITE",
+   "tenant": "parity-p66b-refused-rewrite",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-merged-obligations",
+     "args": {},
+     "observe": [
+      "read:read-merged-obligations"
+     ],
+     "markers": [
+      "parity-p66b-refused-rewrite"
+     ]
+    },
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P66B_REFUSED_REWRITE"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_REFUSED_REWRITE"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "617d9889-8780-9f8b-c27d-18d0f17d586c",
+       "component": "PARITY_SUITE_P66B_REFUSED_REWRITE",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-refused-rewrite",
+       "resourceType": "PARITY_SUITE_P66B_REFUSED_REWRITE",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_REFUSED_REWRITE"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "1fc6580d-6fd5-451c-ed32-c52b20695a51",
+       "component": "PARITY_SUITE_P66B_REFUSED_REWRITE",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-refused-rewrite",
+       "resourceType": "PARITY_SUITE_P66B_REFUSED_REWRITE",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "WHITELIST",
+       "fields": "f1"
+      }
+     ]
+    },
+    {
+     "name": "r1",
+     "op": "read-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_REFUSED_REWRITE"
+     },
+     "observe": [
+      "read:read-domain-obligations"
+     ],
+     "markers": [
+      "parity-p66b-refused-rewrite"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_REFUSED_REWRITE"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p66b-two-violations",
+   "about": "One obligation with two violations, no component and an unknown fieldPolicyType: which refusal comes.",
+   "resourceType": "PARITY_SUITE_P66B_TWO_VIOLATIONS",
+   "tenant": "parity-p66b-two-violations",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-merged-obligations",
+     "args": {},
+     "observe": [
+      "read:read-merged-obligations"
+     ],
+     "markers": [
+      "parity-p66b-two-violations"
+     ]
+    },
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P66B_TWO_VIOLATIONS"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_TWO_VIOLATIONS"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "id": "e464731d-ecf2-0704-c326-eb6ba30561a5",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "reason": "parity p66b-two-violations",
+       "resourceType": "PARITY_SUITE_P66B_TWO_VIOLATIONS",
+       "fieldPolicyOperation": "READ",
+       "fieldPolicyType": "PARITY_UNKNOWN",
+       "fields": [
+        "f1"
+       ]
+      }
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-domain-obligations",
+     "args": {
+      "domain": "PARITY_P66B_TWO_VIOLATIONS"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p66x-obligations-control-last",
+   "about": "Control: an ACTIVE set uploaded in a tenant of its own, decided and read back.",
+   "resourceType": "PARITY_SUITE_P66X_OBLIGATIONS_CONTROL_LAST",
+   "tenant": "parity-p66x-obligations-control-last",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p66x-obligations-control-last"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "b6cecf38-d6c4-cab5-f04f-ad37fad1b89d",
+       "name": "p66x-obligations-control-last s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66X_OBLIGATIONS_CONTROL_LAST'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "a2b554d3-964d-c40a-c90a-7d948faf16ff",
+         "name": "p66x-obligations-control-last s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "17659f67-9456-66e4-b807-640616fb99d0",
+           "name": "p66x-obligations-control-last s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P66X_OBLIGATIONS_CONTROL_LAST",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p66x-obligations-control-last",
+      "PARITY_SUITE_P66X_OBLIGATIONS_CONTROL_LAST"
+     ]
+    }
+   ]
+  }
+ ]
+}

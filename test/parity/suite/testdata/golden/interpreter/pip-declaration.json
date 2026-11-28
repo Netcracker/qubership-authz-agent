@@ -1,0 +1,43 @@
+{
+  "hl1-header-list-contains": {
+    "check-resource-v1-outcome/isolated/header-a-comma-b": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "hl2-header-list-equals-joined": {
+    "check-resource-v1-outcome/isolated/header-a-comma-b": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "hl3-header-list-is-empty": {
+    "check-resource-v1-outcome/isolated/header-a-comma-b": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/no-header": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "hl4-default-with-a-space-contains": {
+    "check-resource-v1-outcome/isolated/no-header": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "hl5-default-with-a-space-equals-joined": {
+    "check-resource-v1-outcome/isolated/no-header": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "mk1-mapping-keyed-on-subject-id": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "mk2-mapping-keyed-on-a-token-pip": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "mk3-mapping-keyed-on-a-role-not-held": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "tk1-token-claim-by-path": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "tk2-token-claim-list-by-path": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

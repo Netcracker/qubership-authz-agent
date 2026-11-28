@@ -1,0 +1,109 @@
+{
+  "q20-allowed-over-a-failing-decision-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/update": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q20-allowed-over-a-failing-decision-in-an-allow-rule": {
+    "check-resource-v1-outcome/regular/update": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q20-allowed-over-an-unapplied-decision-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/update": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q20-allowed-over-an-unapplied-decision-in-an-allow-rule": {
+    "check-resource-v1-outcome/regular/update": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q20-allowed-over-an-undecided-decision-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/update": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q20-allowed-over-an-undecided-decision-in-an-allow-rule": {
+    "check-resource-v1-outcome/regular/update": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q20-blank-policy-target": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "q20-blank-rule-condition": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "q20-blank-rule-target": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "q20-blank-set-target": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "q20-control-after-the-nested-decisions": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q20-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q20-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q20-denied-over-a-failing-decision-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/update": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q20-denied-over-a-failing-decision-in-an-allow-rule": {
+    "check-resource-v1-outcome/regular/update": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q20-denied-over-an-unapplied-decision-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/update": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q20-denied-over-an-unapplied-decision-in-an-allow-rule": {
+    "check-resource-v1-outcome/regular/update": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q20-denied-over-an-undecided-decision-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/update": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q20-denied-over-an-undecided-decision-in-an-allow-rule": {
+    "check-resource-v1-outcome/regular/update": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "q20-empty-policy-target": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "q20-empty-rule-target": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "q20-empty-set-target": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "q20-same-predicate-in-two-policies-with-distinct-keys": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "(q==3),(q==3)",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

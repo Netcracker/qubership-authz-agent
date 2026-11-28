@@ -1,0 +1,24 @@
+{
+  "rr69-041-as-recorded": {
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":200,"decision":{"UPDATE":[]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rr69-041-q1-alone": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rr69-041-q1-classified": {
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":200,"decision":{"UPDATE":[]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rr69-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rr69-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

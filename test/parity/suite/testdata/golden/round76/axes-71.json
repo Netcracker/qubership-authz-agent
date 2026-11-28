@@ -1,0 +1,11 @@
+{
+  "ax76-71-z26-g-000": {
+    "check-resource-bulk-v1-outcome/isolated/probe-a-n-bulk-v1": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/isolated/probe-a-y-bulk-v1": {"status":200,"allowed":["r26"]},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax76-71-z26-g-control-first": {
+    "check-resource-bulk-v1-outcome/regular/read-bulk-v1": {"status":200,"allowed":["r26"]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

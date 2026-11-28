@@ -1,0 +1,191 @@
+{
+ "about": "Round 76, task 16: survivor:subject m2m | filter set_none DENY_OVERRIDES→ALLOW, moved to subject = m2m from round46/diff2-42.json (d2r46-d15f745034). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R46_D2_",
+ "pins": {
+  "/api/v1/pip/idiom-gen": {
+   "statusCode": 404,
+   "body": {
+    "error": "no route"
+   }
+  }
+ },
+ "pips": {},
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ax76-166-d2r46-f41-control-first-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "customize": [
+    {
+     "level": "CUSTOMER",
+     "name": "first",
+     "sets": [
+      {
+       "key": "s1",
+       "sets": [
+        {
+         "key": "s1-s0",
+         "policies": [
+          {
+           "key": "s1-s0-p0",
+           "status": "INACTIVE"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "level": "CUSTOMER",
+     "name": "second",
+     "requests": [
+      {
+       "name": "ry-both",
+       "resource": {
+        "a": "y",
+        "b": "y",
+        "id": "mty",
+        "obsMark": "y"
+       },
+       "subject": "m2m"
+      },
+      {
+       "name": "rn-both",
+       "resource": {
+        "a": "n",
+        "id": "mtn",
+        "obsMark": "y"
+       },
+       "subject": "m2m"
+      },
+      {
+       "filter": true,
+       "name": "filter-both",
+       "subject": "m2m"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s1",
+       "sets": [
+        {
+         "key": "s1-s0",
+         "policies": [
+          {
+           "key": "s1-s0-p0",
+           "rules": [
+            {
+             "condition": "true",
+             "effect": "ALLOW",
+             "key": "s1-s0-p0-added",
+             "target": "true"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "ax76-166-d2r46-d15f745034",
+   "pips": [],
+   "requests": [],
+   "sets": [
+    {
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "key": "s1",
+     "policies": [],
+     "sets": [
+      {
+       "algorithm": "DENY_OVERRIDES",
+       "key": "s1-s0",
+       "policies": [
+        {
+         "key": "s1-s0-p0",
+         "rules": [],
+         "target": "true"
+        }
+       ],
+       "sets": [],
+       "target": "true"
+      }
+     ],
+     "target": "true"
+    }
+   ],
+   "resourceType": "PARITY_SUITE_MT_MT_3_T27",
+   "about": "Task 16 moves it to subject = m2m."
+  },
+  {
+   "id": "ax76-166-d2r46-f41-control-last-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

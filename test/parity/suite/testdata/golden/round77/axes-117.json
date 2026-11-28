@@ -1,0 +1,52 @@
+{
+  "ax77-117-g16-eq-002": {
+    "check-resource-v1-outcome/isolated/p00-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/p00-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax77-117-g16-ge-005": {
+    "check-filter-v1-outcome/isolated/p00-a-n-check-filter-v1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/isolated/p00-a-y-check-filter-v1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax77-117-g16-gt-001": {
+    "check-resource-v1-outcome/isolated/p00-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/p00-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax77-117-g16-le-004": {
+    "check-resource-v1-outcome/isolated/p00-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/p00-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax77-117-g16-lt-000": {
+    "check-resource-v1-outcome/isolated/p00-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/p00-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ax77-117-g16-ne-003": {
+    "check-resource-v1-outcome/isolated/p00-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/p00-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

@@ -1,0 +1,1023 @@
+{
+ "about": "Round 78: a GENERAL PIP whose body is the number 5, compared in the set-target of a rule whose set the PAP loads while the domain declares the name as a TOKEN; the last case but one declares it as a GENERAL PIP and asks the types of the cases before it. The first and the last case are controls.",
+ "resourceTypePrefix": "PARITY_SUITE_R78G_",
+ "pins": {
+  "/api/v1/pip/r78g-scalar": {
+   "statusCode": 200,
+   "body": 5
+  }
+ },
+ "pips": {
+  "gs-token": {
+   "name": "subject.parityR78GScalar",
+   "pipType": "TOKEN",
+   "type": "REGULAR",
+   "claim": "preferred_username",
+   "cacheable": false
+  },
+  "gs-general": {
+   "name": "subject.parityR78GScalar",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r78g-scalar",
+   "requestAttributes": {
+    "case": "r78g-scalar"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "o78gs-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r78",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-l-contains-allow",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target subject.parityR78GScalar CONTAINS '5' of an ALLOW rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}' AND subject.parityR78GScalar CONTAINS '5'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-l-contains-deny",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target subject.parityR78GScalar CONTAINS '5' of an DENY rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}' AND subject.parityR78GScalar CONTAINS '5'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-l-contains-or",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target subject.parityR78GScalar CONTAINS '5' OR resource.a == 'y-l-contains-or' of an ALLOW rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "subject.parityR78GScalar CONTAINS '5' OR resource.a == 'y-l-contains-or'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y-l-contains-or"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-l-contains-any-allow",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target subject.parityR78GScalar CONTAINS ANY '5', 'b' of an ALLOW rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}' AND subject.parityR78GScalar CONTAINS ANY '5', 'b'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-l-contains-any-deny",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target subject.parityR78GScalar CONTAINS ANY '5', 'b' of an DENY rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}' AND subject.parityR78GScalar CONTAINS ANY '5', 'b'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-l-contains-any-or",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target subject.parityR78GScalar CONTAINS ANY '5', 'b' OR resource.a == 'y-l-contains-any-or' of an ALLOW rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "subject.parityR78GScalar CONTAINS ANY '5', 'b' OR resource.a == 'y-l-contains-any-or'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y-l-contains-any-or"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-l-in-allow",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target subject.parityR78GScalar IN '5', 'b' of an ALLOW rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}' AND subject.parityR78GScalar IN '5', 'b'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-l-in-deny",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target subject.parityR78GScalar IN '5', 'b' of an DENY rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}' AND subject.parityR78GScalar IN '5', 'b'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-l-in-or",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target subject.parityR78GScalar IN '5', 'b' OR resource.a == 'y-l-in-or' of an ALLOW rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "subject.parityR78GScalar IN '5', 'b' OR resource.a == 'y-l-in-or'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y-l-in-or"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-r-eq-allow",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target resource.v == subject.parityR78GScalar of an ALLOW rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}' AND resource.v == subject.parityR78GScalar",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-r-eq-deny",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target resource.v == subject.parityR78GScalar of an DENY rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}' AND resource.v == subject.parityR78GScalar",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-r-eq-or",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target resource.v == subject.parityR78GScalar OR resource.a == 'y-r-eq-or' of an ALLOW rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resource.v == subject.parityR78GScalar OR resource.a == 'y-r-eq-or'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y-r-eq-or"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-r-in-allow",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target resource.v IN subject.parityR78GScalar of an ALLOW rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}' AND resource.v IN subject.parityR78GScalar",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-r-in-deny",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target resource.v IN subject.parityR78GScalar of an DENY rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}' AND resource.v IN subject.parityR78GScalar",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-r-in-or",
+   "pips": [
+    "gs-token"
+   ],
+   "about": "The set-target resource.v IN subject.parityR78GScalar OR resource.a == 'y-r-in-or' of an ALLOW rule, loaded while subject.parityR78GScalar is a TOKEN PIP and read once it is a GENERAL PIP that answers 5.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resource.v IN subject.parityR78GScalar OR resource.a == 'y-r-in-or'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y-r-in-or"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o78gs-general-redeclared",
+   "pips": [
+    "gs-general"
+   ],
+   "about": "The domain declares subject.parityR78GScalar again, as a GENERAL PIP that answers 5. The requests ask the resource types of the cases before, whose targets read the name.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "own",
+     "resource": {
+      "id": "r78"
+     }
+    },
+    {
+     "name": "l-contains-allow-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_CONTAINS_ALLOW"
+    },
+    {
+     "name": "l-contains-allow-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_CONTAINS_ALLOW"
+    },
+    {
+     "name": "l-contains-deny-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_CONTAINS_DENY"
+    },
+    {
+     "name": "l-contains-deny-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_CONTAINS_DENY"
+    },
+    {
+     "name": "l-contains-or-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_CONTAINS_OR"
+    },
+    {
+     "name": "l-contains-or-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y-l-contains-or"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_CONTAINS_OR"
+    },
+    {
+     "name": "l-contains-any-allow-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_CONTAINS_ANY_ALLOW"
+    },
+    {
+     "name": "l-contains-any-allow-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_CONTAINS_ANY_ALLOW"
+    },
+    {
+     "name": "l-contains-any-deny-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_CONTAINS_ANY_DENY"
+    },
+    {
+     "name": "l-contains-any-deny-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_CONTAINS_ANY_DENY"
+    },
+    {
+     "name": "l-contains-any-or-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_CONTAINS_ANY_OR"
+    },
+    {
+     "name": "l-contains-any-or-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y-l-contains-any-or"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_CONTAINS_ANY_OR"
+    },
+    {
+     "name": "l-in-allow-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_IN_ALLOW"
+    },
+    {
+     "name": "l-in-allow-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_IN_ALLOW"
+    },
+    {
+     "name": "l-in-deny-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_IN_DENY"
+    },
+    {
+     "name": "l-in-deny-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_IN_DENY"
+    },
+    {
+     "name": "l-in-or-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_IN_OR"
+    },
+    {
+     "name": "l-in-or-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y-l-in-or"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_L_IN_OR"
+    },
+    {
+     "name": "r-eq-allow-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_R_EQ_ALLOW"
+    },
+    {
+     "name": "r-eq-allow-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_R_EQ_ALLOW"
+    },
+    {
+     "name": "r-eq-deny-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_R_EQ_DENY"
+    },
+    {
+     "name": "r-eq-deny-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_R_EQ_DENY"
+    },
+    {
+     "name": "r-eq-or-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_R_EQ_OR"
+    },
+    {
+     "name": "r-eq-or-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y-r-eq-or"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_R_EQ_OR"
+    },
+    {
+     "name": "r-in-allow-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_R_IN_ALLOW"
+    },
+    {
+     "name": "r-in-allow-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_R_IN_ALLOW"
+    },
+    {
+     "name": "r-in-deny-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_R_IN_DENY"
+    },
+    {
+     "name": "r-in-deny-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_R_IN_DENY"
+    },
+    {
+     "name": "r-in-or-a-n",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "n"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_R_IN_OR"
+    },
+    {
+     "name": "r-in-or-a-y",
+     "resource": {
+      "id": "r78",
+      "v": "5",
+      "a": "y-r-in-or"
+     },
+     "type": "PARITY_SUITE_R78G_O78GS_R_IN_OR"
+    }
+   ]
+  },
+  {
+   "id": "o78gs-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r78",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,32 @@
+{
+  "ro-equals-an-absent-claim": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ro-equals-an-absent-claim-control": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ro-in-a-failed-pip": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ro-in-a-failed-pip-control": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ro-in-an-absent-header": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ro-in-an-absent-header-control": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ro-in-either-header": {
+    "check-resource-v1-outcome/isolated/neither-header-holds-the-id": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/only-delegated-holds-the-id": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/only-home-holds-the-id": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

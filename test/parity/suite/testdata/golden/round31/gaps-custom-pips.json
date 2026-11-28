@@ -1,0 +1,93 @@
+{
+  "r31gaps-cpip-body-an-object": {
+    "check-resource-v1-outcome/regular/after-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r31gaps-cpip-delete-without-level": {
+    "check-resource-v1-outcome/regular/after-delete-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/after-delete-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/after-import-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/after-import-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-a-y": {"status":200,"decision":true},
+    "delete-pip-customization-v1/regular/delete": {"status":400},
+    "import-pip-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r31gaps-cpip-forwards-blank": {
+    "check-resource-v1-outcome/regular/after-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/after-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r31gaps-fwd"
+      },
+      "headers": {
+        "authorization": "\u003cother token\u003e",
+        "tenant": "\u003ctenant_id\u003e",
+        "x-parity-r31-fwd": null
+      }
+    },
+    "pip-call/regular/before-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r31gaps-fwd"
+      },
+      "headers": {
+        "authorization": "\u003cother token\u003e",
+        "tenant": "\u003ctenant_id\u003e",
+        "x-parity-r31-fwd": null
+      }
+    }
+  },
+  "r31gaps-cpip-forwards-reserved": {
+    "check-resource-v1-outcome/regular/after-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/after-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/before-a-y": {"status":200,"decision":true},
+    "import-pip-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/after-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r31gaps-fwd"
+      },
+      "headers": {
+        "authorization": "\u003cother token\u003e",
+        "tenant": "\u003ctenant_id\u003e",
+        "x-parity-r31-fwd": null
+      }
+    },
+    "pip-call/regular/before-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r31gaps-fwd"
+      },
+      "headers": {
+        "authorization": "\u003cother token\u003e",
+        "tenant": "\u003ctenant_id\u003e",
+        "x-parity-r31-fwd": null
+      }
+    }
+  },
+  "r31gaps-custom-pips-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r31gaps-custom-pips-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

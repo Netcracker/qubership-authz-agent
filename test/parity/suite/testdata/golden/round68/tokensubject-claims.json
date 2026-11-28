@@ -1,0 +1,45 @@
+{
+  "r68ts-bare-service": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r68ts-bare-user": {
+    "check-resource-v1-outcome/regular/id-is-empty-text-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/id-is-empty-text-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-empty-text-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/name-is-empty-text-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-is-empty-text-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/name-is-empty-text-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/scopes-contain-profile-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/scopes-contain-profile-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/scopes-contain-profile-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r68ts-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r68ts-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r68ts-level-m2m": {
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-deny": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r68ts-m2m": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r68ts-many": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r68ts-one": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r68ts-scalar-roles": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

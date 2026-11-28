@@ -1,0 +1,49 @@
+{
+  "r42open-predicates-nested-every-format": {
+    "check-filter-v1-outcome/isolated/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"a\":{\"$eq\":\"nested\"} }",
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r42open-predicates-nested-mongodb-and-unknown-key": {
+    "check-filter-v1-outcome/isolated/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"a\":{\"$eq\":\"nested\"} }",
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r42open-predicates-nested-rsql": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r42open-predicates-nested-sql": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r42open-predicates-nested-unknown-key": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r42openpredicatesnested-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r42openpredicatesnested-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

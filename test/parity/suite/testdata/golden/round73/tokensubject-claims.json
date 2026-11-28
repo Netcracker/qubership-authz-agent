@@ -1,0 +1,45 @@
+{
+  "ts73-anon-m2m": {
+    "check-resource-v1-outcome/regular/id-is-azp-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/id-is-azp-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-azp-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-empty-text-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/id-is-empty-text-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-empty-text-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-not-null-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-not-null-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-not-null-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/id-is-null-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/id-is-null-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-null-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-anonymous-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-anonymous-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-anonymous-deny": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts73-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts73-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts73-m2m": {
+    "check-resource-v1-outcome/regular/id-is-azp-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/id-is-azp-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-azp-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-empty-text-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/id-is-empty-text-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-empty-text-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-not-null-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/id-is-not-null-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-not-null-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-null-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-null-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-null-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

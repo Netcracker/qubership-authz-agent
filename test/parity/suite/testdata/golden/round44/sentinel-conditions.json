@@ -1,0 +1,580 @@
+{
+  "sn44-and-first-abort-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-and-first-err-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-and-first-f-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-and-first-t-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-and-first-t-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-and-next-abort-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-and-next-err-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-and-next-f-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-and-next-t-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-and-third-abort-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-and-third-err-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-and-third-f-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-and-third-t-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-conditions-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":2,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-conditions-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":2,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-contains-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-contains-any-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-contains-any-error-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-contains-any-value-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-contains-error-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-contains-value-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-eq-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-eq-error-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-eq-value-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-gt-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-gt-error-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-gt-value-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-in-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-operand-left-in-error-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-operand-left-in-value-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-is-empty--or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-is-null--or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-is-subset-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-is-subset-error-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-is-subset-value-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-left-match-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-contains-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-operand-right-contains-any-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-operand-right-contains-any-error-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-operand-right-contains-any-null-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-contains-any-value-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-contains-error-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-operand-right-contains-null-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-contains-value-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-eq-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-operand-right-eq-error-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-operand-right-eq-null-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-eq-value-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-gt-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-operand-right-gt-error-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-operand-right-gt-null-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-gt-value-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-in-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-in-error-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-in-null-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-in-value-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-is-subset-absent-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-operand-right-is-subset-error-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/a-y": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-operand-right-is-subset-null-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-operand-right-is-subset-value-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-or-first-abort-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-or-first-err-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-or-first-f-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-or-first-t-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-or-later-group-abort-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-or-later-group-err-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-or-later-group-f-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-or-later-group-t-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-or-next-abort-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-or-next-err-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-or-next-f-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-or-next-t-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-or-third-abort-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-or-third-err-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-or-third-f-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/regular/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-or-third-t-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  }
+}

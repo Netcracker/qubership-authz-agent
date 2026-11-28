@@ -1,0 +1,32 @@
+{
+  "ra-literal": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated": {"calls":1,"requestAttributes":{"value":"lit"}}
+  },
+  "ra-resource-id": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated": {"calls":1,"requestAttributes":{"value":"r10-ra"}}
+  },
+  "ra-resource-missing": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated": {"calls":1,"requestAttributes":{"value":null}}
+  },
+  "ra-resource-object": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated": {"calls":1,"requestAttributes":{"value":null}}
+  },
+  "ra-subject-roles": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated": {"calls":1,"requestAttributes":{"value":["ROLE_PARITY_READER"]}}
+  },
+  "ra-token": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated": {"calls":1,"requestAttributes":{"value":"finance"}}
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "ax76-09-g75-body-html": {
+    "check-resource-v1-outcome/regular/eq-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/eq-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/eq-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/null-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/null-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/null-deny": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax76-09-g75-body-text": {
+    "check-resource-v1-outcome/regular/eq-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/eq-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/eq-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/null-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/null-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/null-deny": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax76-09-g75-body-truncated": {
+    "check-resource-v1-outcome/regular/eq-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/eq-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/eq-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/null-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/null-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/null-deny": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "ax76-09-g75-list-text-eq": {
+    "check-resource-v1-outcome/regular/dec-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/dec-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/dec-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/int-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/int-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/int-deny": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-09-g75-list-text-subset": {
+    "check-resource-v1-outcome/regular/not-subset-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/subset-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/subset-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/subset-deny": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-09-g75-match-unbalanced": {
+    "check-resource-bulk-operations-v2-outcome/regular/v-a-a-n-bulk-operations-v2": {"status":400,"message":{"message":"Unmatched closing ')' near index 0\na)|(b\n^"}},
+    "check-resource-bulk-operations-v2-outcome/regular/v-a-a-y-bulk-operations-v2": {"status":400,"message":{"message":"Unmatched closing ')' near index 0\na)|(b\n^"}},
+    "check-resource-bulk-operations-v2-outcome/regular/v-a-deny-bulk-operations-v2": {"status":400,"message":{"message":"Unmatched closing ')' near index 0\na)|(b\n^"}},
+    "check-resource-bulk-operations-v2-outcome/regular/v-ab-a-n-bulk-operations-v2": {"status":400,"message":{"message":"Unmatched closing ')' near index 0\na)|(b\n^"}},
+    "check-resource-bulk-operations-v2-outcome/regular/v-ab-a-y-bulk-operations-v2": {"status":400,"message":{"message":"Unmatched closing ')' near index 0\na)|(b\n^"}},
+    "check-resource-bulk-operations-v2-outcome/regular/v-ab-deny-bulk-operations-v2": {"status":400,"message":{"message":"Unmatched closing ')' near index 0\na)|(b\n^"}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-09-g75-values-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax76-09-g75-values-control-last": {
+    "check-resource-bulk-operations-v2-outcome/regular/read-bulk-operations-v2": {"status":400,"message":{"message":"Unmatched closing ')' near index 0\na)|(b\n^"}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "r29structure-on-behalf-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-on-behalf-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-on-behalf-m2m-authorized": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/filter-as-the-reader": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/authorization-check": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/authorization-check-reader": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/m2m-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/m2m-read-as-the-reader": {"status":404,"decision":false},
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-as-an-unknown-user": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-as-the-reader": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-with-an-empty-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-on-behalf-reader-authorized": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/filter-as-the-reader": {"status":404,"result":{"calculationResult":""}},
+    "check-resource-v1-outcome/regular/authorization-check-reader": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/m2m-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/m2m-read-as-the-reader": {"status":404,"decision":false},
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-as-an-unknown-user": {"status":404,"decision":false},
+    "check-resource-v1-outcome/regular/read-as-the-reader": {"status":404,"decision":false},
+    "check-resource-v1-outcome/regular/read-with-an-empty-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-on-behalf-without-authorization": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/filter-as-the-reader": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/m2m-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/m2m-read-as-the-reader": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-as-an-unknown-user": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-as-the-reader": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-with-an-empty-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

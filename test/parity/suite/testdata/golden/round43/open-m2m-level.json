@@ -1,0 +1,40 @@
+{
+  "r43open-m2m-level-alone": {
+    "check-resource-v1-outcome/isolated/level-external": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/level-internal": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/level-m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/level-partner": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/level-upper": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r43open-m2m-level-beside-or": {
+    "check-resource-v1-outcome/isolated/level-external": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/level-internal": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/level-m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/level-partner": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/level-upper": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r43open-m2m-level-control": {
+    "check-resource-v1-outcome/isolated/level-external": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/level-internal": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/level-m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/level-partner": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/level-upper": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r43openm2mlevel-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r43openm2mlevel-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,6 @@
+# Chart values of the export-fed parity profile, layered over values.yaml: the
+# agent pulls the v3 configuration export the suite configures on
+# export-source every second, so the agent loads a new export within about two
+# seconds.
+AUTHZ_PAP_CLIENT_SOURCE_URL: http://export-source:8090
+AUTHZ_PAP_CLIENT_PULL_INTERVAL: 1

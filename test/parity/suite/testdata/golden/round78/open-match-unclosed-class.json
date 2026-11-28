@@ -1,0 +1,61 @@
+{
+  "o78m-unclosed-class": {
+    "check-resource-v1-outcome/regular/v-a[-a-n": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unclosed character class near index 4\na[[x]\n    ^"
+      }
+    },
+    "check-resource-v1-outcome/regular/v-a[-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unclosed character class near index 4\na[[x]\n    ^"
+      }
+    },
+    "check-resource-v1-outcome/regular/v-a[-deny": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unclosed character class near index 4\na[[x]\n    ^"
+      }
+    },
+    "check-resource-v1-outcome/regular/v-ax-a-n": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unclosed character class near index 4\na[[x]\n    ^"
+      }
+    },
+    "check-resource-v1-outcome/regular/v-ax-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unclosed character class near index 4\na[[x]\n    ^"
+      }
+    },
+    "check-resource-v1-outcome/regular/v-ax-deny": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unclosed character class near index 4\na[[x]\n    ^"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o78m-unclosed-class-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o78m-unclosed-class-control-last": {
+    "check-resource-v1-outcome/regular/read": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unclosed character class near index 4\na[[x]\n    ^"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -167,6 +167,138 @@ func (ds *legacyPapSeeder) putJSON(ctx context.Context, endpoint, token string, 
 	return nil
 }
 
+// HelperPutSimplifiedPolicies uploads policies into domain on the legacy PAP and
+// returns the status and body instead of failing on a non-2xx status, so a case
+// can record that access-control refused the upload.
+func HelperPutSimplifiedPolicies(ctx context.Context, cfg Config, m2mToken, domain string, policies []any) (int, []byte, error) {
+	endpoint := buildURL(
+		cfg.ACBaseURL,
+		simplifiedPath("domainPolicies", domain),
+		url.Values{"tenant_id": []string{cfg.TenantID}}.Encode(),
+	)
+	req, err := buildRequest(ctx, http.MethodPut, endpoint, policies, TokenBundle{M2M: m2mToken}, PerCallOptions{})
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
+}
+
+// HelperPutPolicySets uploads regular policy sets under externalID on the legacy
+// PAP, replacing the sets uploaded earlier under the same externalID, and returns
+// the status and body instead of failing on a non-2xx status.
+func HelperPutPolicySets(ctx context.Context, cfg Config, m2mToken, externalID string, sets []any) (int, []byte, error) {
+	endpoint := buildURL(
+		cfg.ACBaseURL,
+		"/access/v1/policySets/externalId/"+url.PathEscape(externalID),
+		url.Values{"tenant_id": []string{cfg.TenantID}}.Encode(),
+	)
+	req, err := buildRequest(ctx, http.MethodPut, endpoint, sets, TokenBundle{M2M: m2mToken}, PerCallOptions{})
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
+}
+
+// HelperDeletePolicySetsByExternalID deletes the regular policy sets uploaded
+// under externalID on the legacy PAP and returns the status and body. The PAP
+// answers 200, also when nothing is uploaded under externalID. Uploading an
+// empty list under externalID is not a delete: the PAP takes the externalId to
+// replace from the first uploaded set, so with no set it replaces nothing and
+// the sets uploaded earlier stay.
+func HelperDeletePolicySetsByExternalID(ctx context.Context, cfg Config, m2mToken, externalID string) (int, []byte, error) {
+	endpoint := buildURL(
+		cfg.ACBaseURL,
+		"/access/v1/policySets/externalId/"+url.PathEscape(externalID),
+		url.Values{"tenant_id": []string{cfg.TenantID}}.Encode(),
+	)
+	req, err := buildRequest(ctx, http.MethodDelete, endpoint, nil, TokenBundle{M2M: m2mToken}, PerCallOptions{})
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
+}
+
+// UploadIsolatedPolicies replaces the PIPs and the policies of domain with the given
+// ones and returns the status of the first upload that was not accepted, or of the
+// last one. It empties the policies before replacing the PIPs, so no policy still
+// references a PIP being removed. On the legacy profile the status is the PAP's,
+// which refuses a declaration or a condition it does not accept. On the authz-agent
+// profile the uploads go to authz-policy-admin, and the status is its own: it
+// refuses part of what the PAP refuses, with a body of its own wording. After an
+// accepted upload the call waits for the agent's next pull; the status 200 then
+// says nothing about the agent, and a load the agent did not complete returns
+// 200 with an *[agentLoadError].
+func UploadIsolatedPolicies(ctx context.Context, cfg Config, tokens *TokenFactory, domain string, pips, policies []any) (int, error) {
+	status, _, err := UploadIsolatedPoliciesWithQuery(ctx, cfg, tokens, domain, pips, policies, "")
+	return status, err
+}
+
+// UploadIsolatedPoliciesWithQuery is [UploadIsolatedPolicies] with policiesQuery,
+// when not empty, appended as written, after &, to the query of the last
+// upload, the one that carries policies. An example is
+// applicableForFrontend=true. The authz-agent profile ignores it, since
+// authz-policy-admin reads no query. It also returns the response body of the
+// upload whose status it returns; on the authz-agent profile that body is nil
+// unless the upload was refused.
+func UploadIsolatedPoliciesWithQuery(ctx context.Context, cfg Config, tokens *TokenFactory, domain string, pips, policies []any, policiesQuery string) (int, []byte, error) {
+	steps := []struct {
+		kind    string
+		payload []any
+		query   string
+	}{
+		{"domainPolicies", []any{}, ""},
+		{"domainPIPs", emptyIfNil(pips), ""},
+		{"domainPolicies", emptyIfNil(policies), policiesQuery},
+	}
+	if isAuthzAgentProfile(cfg.Profile) {
+		seeder := &authzAgentInternalSeeder{cfg: cfg}
+		for _, step := range steps {
+			status, body, err := seeder.putACStubStatus(ctx, simplifiedPath(step.kind, domain), step.payload)
+			if err != nil {
+				return status, body, err
+			}
+			if status < http.StatusOK || status >= http.StatusMultipleChoices {
+				return status, body, nil
+			}
+		}
+		if err := awaitPull(ctx); err != nil {
+			return http.StatusOK, nil, err
+		}
+		return http.StatusOK, nil, nil
+	}
+	m2m, err := tokens.M2MToken()
+	if err != nil {
+		return 0, nil, fmt.Errorf("mint M2M token for upload: %w", err)
+	}
+	status, body := 0, []byte(nil)
+	for _, step := range steps {
+		query := url.Values{"tenant_id": []string{cfg.TenantID}}.Encode()
+		if step.query != "" {
+			query += "&" + step.query
+		}
+		endpoint := buildURL(cfg.ACBaseURL, simplifiedPath(step.kind, domain), query)
+		req, err := buildRequest(ctx, http.MethodPut, endpoint, step.payload, TokenBundle{M2M: m2m}, PerCallOptions{})
+		if err != nil {
+			return 0, nil, err
+		}
+		status, body, err = doRequest(req)
+		if err != nil {
+			return status, body, err
+		}
+		if status < http.StatusOK || status >= http.StatusMultipleChoices {
+			return status, body, nil
+		}
+	}
+	return status, body, nil
+}
+
+func emptyIfNil(items []any) []any {
+	if items == nil {
+		return []any{}
+	}
+	return items
+}
+
 // pullSettleDelay is how long awaitPull waits for the agent's next pull when
 // it cannot ask the agent to load the policies.
 //
@@ -199,14 +331,17 @@ func pullSettleDelay() time.Duration {
 // policies it fetched after the request. With the variable empty, or on the 404
 // of an agent built without the tag, it waits pullSettleDelay. Any other
 // answer, or no answer, means the agent did not load what the seeder wrote, and
-// awaitPull returns an error rather than let the case run against the policies
-// of the previous one. The wait is a fixed delay, not a poll, for the same
+// awaitPull returns an *[agentLoadError] rather than let the case run against
+// the policies of the previous one. The wait is a fixed delay, not a poll, for the same
 // reason the runtime suite's waitForACPull is: the agent exposes no "applied
 // revision" that a poll could compare against.
 func awaitPull(ctx context.Context) error {
 	loaded, err := pullNow(ctx)
-	if err != nil || loaded {
-		return err
+	if err != nil {
+		return &agentLoadError{err: err}
+	}
+	if loaded {
+		return nil
 	}
 	select {
 	case <-ctx.Done():
@@ -214,6 +349,18 @@ func awaitPull(ctx context.Context) error {
 	}
 	return nil
 }
+
+// agentLoadError is a load the agent did not complete after the seeder wrote
+// the policies, so the agent holds the policies it had before. Its message
+// starts with setupBrokenPrefix: a case that fails on it has a broken setup,
+// not a wrong answer.
+type agentLoadError struct {
+	err error
+}
+
+func (e *agentLoadError) Error() string { return setupBroken(e.err) }
+
+func (e *agentLoadError) Unwrap() error { return e.err }
 
 // pullNowTimeout bounds one POST to PARITY_AGENT_PULL_URL. A load on the
 // parity stand takes well under a second; an agent whose fetch from the stub
@@ -242,7 +389,7 @@ func pullNow(ctx context.Context) (bool, error) {
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return false, fmt.Errorf("ask the agent to load the seeded policies: %w", err)
+		return false, fmt.Errorf("ask the agent to load the policies: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 	switch resp.StatusCode {
@@ -256,9 +403,22 @@ func pullNow(ctx context.Context) (bool, error) {
 		return false, nil
 	default:
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return false, fmt.Errorf("the agent did not load the seeded policies: POST %s: HTTP %d: %s",
-			target, resp.StatusCode, strings.TrimSpace(string(body)))
+		return false, &pullStatusError{url: target, status: resp.StatusCode, body: strings.TrimSpace(string(body))}
 	}
+}
+
+// pullStatusError is an answer of the pull route other than 204 and 404. A
+// 502 says the load failed and the agent kept its previous policies: a fetch
+// from the source failed, or the agent refused what it fetched. The body
+// carries the agent's reason.
+type pullStatusError struct {
+	url    string
+	status int
+	body   string
+}
+
+func (e *pullStatusError) Error() string {
+	return fmt.Sprintf("the agent did not load the policies: POST %s: HTTP %d: %s", e.url, e.status, e.body)
 }
 
 func (ds *authzAgentInternalSeeder) WipeDomain(ctx context.Context, domain string) error {
@@ -308,6 +468,19 @@ func simplifiedPath(kind, domain string) string {
 }
 
 func (ds *authzAgentInternalSeeder) putACStub(ctx context.Context, path string, payload any) error {
+	status, raw, err := ds.putACStubStatus(ctx, path, payload)
+	if err != nil {
+		return err
+	}
+	if status < 200 || status >= 300 {
+		return fmt.Errorf("status=%d body=%s", status, strings.TrimSpace(string(raw)))
+	}
+	return nil
+}
+
+// putACStubStatus is putACStub that returns a refusal as its status and body
+// rather than as an error.
+func (ds *authzAgentInternalSeeder) putACStubStatus(ctx context.Context, path string, payload any) (int, []byte, error) {
 	req, err := buildRequest(
 		ctx,
 		http.MethodPut,
@@ -317,17 +490,9 @@ func (ds *authzAgentInternalSeeder) putACStub(ctx context.Context, path string, 
 		PerCallOptions{},
 	)
 	if err != nil {
-		return err
+		return 0, nil, err
 	}
-
-	status, raw, err := doRequest(req)
-	if err != nil {
-		return err
-	}
-	if status < 200 || status >= 300 {
-		return fmt.Errorf("status=%d body=%s", status, strings.TrimSpace(string(raw)))
-	}
-	return nil
+	return doRequest(req)
 }
 
 func loadFixturePayloads(root fs.FS) ([]any, []any, []regularPolicyFixture, error) {

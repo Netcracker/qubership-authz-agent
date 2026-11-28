@@ -1,0 +1,1557 @@
+{
+ "about": "Round 77, task 16: survivor:route check/filter v2 | lang header_list_scalar_op=ERR, moved to route = check/filter v2 from round76/axes-82.json (ax76-82-c20-002861). The cases before it in that file come along: the stand they leave is what the rule reads.",
+ "resourceTypePrefix": "PARITY_SUITE_R20C_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         },
+         {
+          "key": "tag",
+          "values": []
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/c20-005911-l": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-010658-l": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-009808-r": {
+   "statusCode": 200,
+   "body": [
+    5,
+    6
+   ]
+  },
+  "/api/v1/pip/c20-012973-r": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/c20-026206-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-044555-l": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-001158-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-001928-l": {
+   "statusCode": 200,
+   "body": [
+    true
+   ]
+  },
+  "/api/v1/pip/c20-002941-l": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-004357-r": {
+   "statusCode": 200,
+   "body": []
+  },
+  "/api/v1/pip/c20-005582-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-015235-l": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-026189-r": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-000247-l": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/c20-000571-r": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/c20-000966-l": {
+   "statusCode": 200,
+   "body": {
+    "k": "v"
+   }
+  },
+  "/api/v1/pip/c20-001324-l": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/c20-002361-l": {
+   "statusCode": 200,
+   "body": [
+    {
+     "k": "v"
+    }
+   ]
+  },
+  "/api/v1/pip/c20-002523-l": {
+   "statusCode": 200,
+   "body": [
+    null
+   ]
+  },
+  "/api/v1/pip/c20-002964-r": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/c20-003403-l": {
+   "statusCode": 200,
+   "body": [
+    5,
+    6
+   ]
+  },
+  "/api/v1/pip/c20-003592-l": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/c20-003794-r": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 20 case"
+   }
+  },
+  "/api/v1/pip/c20-004585-l": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  },
+  "/api/v1/pip/c20-004591-l": {
+   "statusCode": 200,
+   "body": [
+    null
+   ]
+  },
+  "/api/v1/pip/c20-004729-l": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    5
+   ]
+  },
+  "/api/v1/pip/c20-005908-l": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    5
+   ]
+  },
+  "/api/v1/pip/c20-006099-l": {
+   "statusCode": 200,
+   "body": {
+    "k": "v"
+   }
+  },
+  "/api/v1/pip/c20-006775-l": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-007028-l": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    5
+   ]
+  },
+  "/api/v1/pip/c20-007156-r": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-007506-r": {
+   "statusCode": 200,
+   "body": [
+    {
+     "k": "v"
+    }
+   ]
+  },
+  "/api/v1/pip/c20-008320-l": {
+   "statusCode": 200,
+   "body": [
+    {
+     "k": "v"
+    }
+   ]
+  },
+  "/api/v1/pip/c20-008768-r": {
+   "statusCode": 200,
+   "body": [
+    5,
+    6
+   ]
+  },
+  "/api/v1/pip/c20-009794-l": {
+   "statusCode": 200,
+   "body": [
+    5,
+    6
+   ]
+  },
+  "/api/v1/pip/c20-010543-r": {
+   "statusCode": 200,
+   "body": [
+    {
+     "k": "v"
+    }
+   ]
+  },
+  "/api/v1/pip/c20-012991-l": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-025221-l": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/c20-037803-r": {
+   "statusCode": 200,
+   "body": 5
+  }
+ },
+ "pips": {
+  "c20-003891-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "c20-017356-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-005060-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-004476-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-002861-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-005911-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-005911-l",
+   "requestAttributes": {
+    "case": "c20-005911-l"
+   }
+  },
+  "c20-010658-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-010658-l",
+   "requestAttributes": {
+    "case": "c20-010658-l"
+   }
+  },
+  "c20-000634-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-009808-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-009808-r",
+   "requestAttributes": {
+    "case": "c20-009808-r"
+   }
+  },
+  "c20-012973-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-012973-r",
+   "requestAttributes": {
+    "case": "c20-012973-r"
+   }
+  },
+  "c20-026206-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-026206-r",
+   "requestAttributes": {
+    "case": "c20-026206-r"
+   }
+  },
+  "c20-044555-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-044555-l",
+   "requestAttributes": {
+    "case": "c20-044555-l"
+   }
+  },
+  "c20-000115-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "realm_access.roles",
+   "cacheable": false
+  },
+  "c20-001158-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-001158-r",
+   "requestAttributes": {
+    "case": "c20-001158-r"
+   }
+  },
+  "c20-001928-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-001928-l",
+   "requestAttributes": {
+    "case": "c20-001928-l"
+   }
+  },
+  "c20-001928-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-002941-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-002941-l",
+   "requestAttributes": {
+    "case": "c20-002941-l"
+   }
+  },
+  "c20-002941-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-004357-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-004357-r",
+   "requestAttributes": {
+    "case": "c20-004357-r"
+   }
+  },
+  "c20-005582-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-005582-r",
+   "requestAttributes": {
+    "case": "c20-005582-r"
+   }
+  },
+  "c20-015235-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-015235-l",
+   "requestAttributes": {
+    "case": "c20-015235-l"
+   }
+  },
+  "c20-026189-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-026189-r",
+   "requestAttributes": {
+    "case": "c20-026189-r"
+   }
+  },
+  "c20-000130-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-000130-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "c20-000247-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-000247-l",
+   "requestAttributes": {
+    "case": "c20-000247-l"
+   }
+  },
+  "c20-000247-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "realm_access.roles",
+   "cacheable": false
+  },
+  "c20-000290-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "realm_access.roles",
+   "cacheable": false
+  },
+  "c20-000501-tokenL": {
+   "name": "subject.parityCxTL",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-000564-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-000564-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-000571-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-000571-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-000571-r",
+   "requestAttributes": {
+    "case": "c20-000571-r"
+   }
+  },
+  "c20-000583-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-000587-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-000610-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-000622-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-000944-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-000966-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-000966-l",
+   "requestAttributes": {
+    "case": "c20-000966-l"
+   }
+  },
+  "c20-001060-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-001086-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-001151-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "realm_access.roles",
+   "cacheable": false
+  },
+  "c20-001324-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-001324-l",
+   "requestAttributes": {
+    "case": "c20-001324-l"
+   }
+  },
+  "c20-002361-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-002361-l",
+   "requestAttributes": {
+    "case": "c20-002361-l"
+   }
+  },
+  "c20-002361-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-002523-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-002523-l",
+   "requestAttributes": {
+    "case": "c20-002523-l"
+   }
+  },
+  "c20-002964-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-002964-r",
+   "requestAttributes": {
+    "case": "c20-002964-r"
+   }
+  },
+  "c20-003403-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-003403-l",
+   "requestAttributes": {
+    "case": "c20-003403-l"
+   }
+  },
+  "c20-003592-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-003592-l",
+   "requestAttributes": {
+    "case": "c20-003592-l"
+   }
+  },
+  "c20-003592-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_OTHER": [
+      "PARITY_PERM_V"
+     ]
+    }
+   }
+  },
+  "c20-003794-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-003794-r",
+   "requestAttributes": {
+    "case": "c20-003794-r"
+   }
+  },
+  "c20-004585-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-004585-l",
+   "requestAttributes": {
+    "case": "c20-004585-l"
+   }
+  },
+  "c20-004585-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-004591-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-004591-l",
+   "requestAttributes": {
+    "case": "c20-004591-l"
+   }
+  },
+  "c20-004729-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-004729-l",
+   "requestAttributes": {
+    "case": "c20-004729-l"
+   }
+  },
+  "c20-005372-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-005908-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-005908-l",
+   "requestAttributes": {
+    "case": "c20-005908-l"
+   }
+  },
+  "c20-005908-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_OTHER": [
+      "PARITY_PERM_V"
+     ]
+    }
+   }
+  },
+  "c20-006099-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-006099-l",
+   "requestAttributes": {
+    "case": "c20-006099-l"
+   }
+  },
+  "c20-006775-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-006775-l",
+   "requestAttributes": {
+    "case": "c20-006775-l"
+   }
+  },
+  "c20-006954-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-007028-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-007028-l",
+   "requestAttributes": {
+    "case": "c20-007028-l"
+   }
+  },
+  "c20-007156-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-007156-r",
+   "requestAttributes": {
+    "case": "c20-007156-r"
+   }
+  },
+  "c20-007506-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-007506-r",
+   "requestAttributes": {
+    "case": "c20-007506-r"
+   }
+  },
+  "c20-007823-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-008320-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-008320-l",
+   "requestAttributes": {
+    "case": "c20-008320-l"
+   }
+  },
+  "c20-008768-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-008768-r",
+   "requestAttributes": {
+    "case": "c20-008768-r"
+   }
+  },
+  "c20-009794-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-009794-l",
+   "requestAttributes": {
+    "case": "c20-009794-l"
+   }
+  },
+  "c20-010543-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-010543-r",
+   "requestAttributes": {
+    "case": "c20-010543-r"
+   }
+  },
+  "c20-012991-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-012991-l",
+   "requestAttributes": {
+    "case": "c20-012991-l"
+   }
+  },
+  "c20-025221-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-025221-l",
+   "requestAttributes": {
+    "case": "c20-025221-l"
+   }
+  },
+  "c20-037803-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-037803-r",
+   "requestAttributes": {
+    "case": "c20-037803-r"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "ax77-33-ax76-82-c20-003891",
+   "pips": [
+    "c20-003891-tokenR",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resourceType == 'PARITY_CX_NONE' OR subject.scopes NOT CONTAINS ANY subject.parityCxTR",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "18 pairs of context dimensions no golden reached, among them lk=subj.scopes, alg=PERMIT_UNLESS_DENY; lk=subj.scopes, eff=-; lk=subj.scopes, place=set_target; lk=subj.scopes, pos=or-later"
+  },
+  {
+   "id": "ax77-33-ax76-82-c20-041112",
+   "pips": [
+    "scope",
+    "c20-003891-tokenR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resourceType == '{{resourceType}}' AND subject.name < resource.p.y",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "p": {
+       "y": [
+        "v",
+        5
+       ]
+      },
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "p": {
+       "y": [
+        "v",
+        5
+       ]
+      },
+      "a": "y"
+     }
+    }
+   ],
+   "about": "14 pairs of context dimensions no golden reached, among them lk=subj.name, alg=PERMIT_OVERRIDES; lk=subj.name, eff=-; lk=subj.name, place=policy_target; lk=subj.name, pos=and-later"
+  },
+  {
+   "id": "ax77-33-ax76-82-c20-009945",
+   "pips": [
+    "scope",
+    "c20-003891-tokenR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == '{{resourceType}}' AND null < null",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": 5.5,
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": 5.5,
+      "a": "y"
+     }
+    }
+   ],
+   "about": "12 pairs of context dimensions no golden reached, among them lk=null, ls=dec; lk=null, rk=null; lk=null, rs=dec; ls=dec, alg=DENY_OVERRIDES"
+  },
+  {
+   "id": "ax77-33-ax76-82-c20-017356",
+   "pips": [
+    "c20-017356-headerL",
+    "scope",
+    "c20-003891-tokenR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == 'PARITY_CX_NONE' OR subject.parityCxHL MATCH **",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    }
+   ],
+   "about": "11 pairs of context dimensions no golden reached, among them lk=pip:HEADER, pos=or-later; ls=hlist, alg=DENY_UNLESS_PERMIT; ls=hlist, iter=iter1; ls=hlist, place=rule_target"
+  },
+  {
+   "id": "ax77-33-ax76-82-c20-005060",
+   "pips": [
+    "c20-005060-headerR",
+    "scope",
+    "c20-003891-tokenR",
+    "c20-017356-headerL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == '{{resourceType}}' AND null == subject.parityCxHR",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": [
+       true
+      ],
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-r": ""
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": [
+       true
+      ],
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-r": ""
+     }
+    }
+   ],
+   "about": "9 pairs of context dimensions no golden reached, among them lk=null, alg=DENY_UNLESS_PERMIT; lk=null, rk=pip:HEADER; lk=null, rs=PIP_EMPTY; ls=list[bool], place=rule_target"
+  },
+  {
+   "id": "ax77-33-ax76-82-c20-001697",
+   "pips": [
+    "scope",
+    "c20-003891-tokenR",
+    "c20-017356-headerL",
+    "c20-005060-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.id == resource OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "8 pairs of context dimensions no golden reached, among them lk=subj.id, eff=-; lk=subj.id, ep=filter; lk=subj.id, place=policy_target; lk=subj.id, rs=ABSENT"
+  },
+  {
+   "id": "ax77-33-ax76-82-c20-006552",
+   "pips": [
+    "scope",
+    "c20-003891-tokenR",
+    "c20-017356-headerL",
+    "c20-005060-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND null MATCH null",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": [
+       true
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": [
+       true
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "6 pairs of context dimensions no golden reached, among them lk=null, rk=pattern; ls=list[bool], rk=pattern; op=MATCH, alg=PERMIT_OVERRIDES; op=MATCH, lk=null"
+  },
+  {
+   "id": "ax77-33-ax76-82-c20-021661",
+   "pips": [
+    "scope",
+    "c20-003891-tokenR",
+    "c20-017356-headerL",
+    "c20-005060-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "null NOT IN resource.m[0] AND resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": 5.5,
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": 5.5,
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "6 pairs of context dimensions no golden reached, among them lk=null, rs=INDEX_OOB; ls=dec, place=policy_target; ls=dec, rk=res:jsonpath; ls=dec, rs=INDEX_OOB"
+  },
+  {
+   "id": "ax77-33-ax76-82-c20-000283",
+   "pips": [
+    "scope",
+    "c20-003891-tokenR",
+    "c20-017356-headerL",
+    "c20-005060-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "'5' == operation AND resourceType == '{{resourceType}}'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "5 pairs of context dimensions no golden reached, among them lk=lit:str, eff=DENY; lk=lit:str, pos=and-first; rk=operation, alg=DENY_OVERRIDES; rk=operation, eff=DENY"
+  },
+  {
+   "id": "ax77-33-ax76-82-c20-004476",
+   "pips": [
+    "c20-004476-tokenR",
+    "scope",
+    "c20-017356-headerL",
+    "c20-005060-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resourceType == 'PARITY_CX_NONE' OR 'v' != subject.parityCxTR",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "5 pairs of context dimensions no golden reached, among them lk=lit:str, place=policy_target; lk=lit:str, pos=or-later; lk=lit:str, rs=PIP_EMPTY; rs=PIP_EMPTY, alg=DENY_OVERRIDES"
+  },
+  {
+   "id": "ax77-33-ax76-82-c20-010995",
+   "pips": [
+    "scope",
+    "c20-003891-tokenR",
+    "c20-017356-headerL",
+    "c20-005060-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == '{{resourceType}}' AND null IS NOT EMPTY",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": null,
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": null,
+      "a": "y"
+     }
+    }
+   ],
+   "about": "5 pairs of context dimensions no golden reached, among them lk=null, ls=NULL; op=IS_NOT_EMPTY, alg=PERMIT_OVERRIDES; op=IS_NOT_EMPTY, lk=null; op=IS_NOT_EMPTY, place=rule_target"
+  },
+  {
+   "id": "ax77-33-ax76-82-c20-002861",
+   "pips": [
+    "c20-002861-headerL",
+    "scope",
+    "c20-003891-tokenR",
+    "c20-005060-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND subject.parityCxHL NOT MATCH resource.p.y",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     },
+     "name": "a-n-check-filter-v2",
+     "filter": true,
+     "operation": "READ",
+     "v2": {}
+    },
+    {
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     },
+     "name": "a-y-check-filter-v2",
+     "filter": true,
+     "operation": "READ",
+     "v2": {}
+    }
+   ],
+   "about": "4 pairs of context dimensions no golden reached, among them ls=hlist, pos=and-later; ls=hlist, rk=res:nested; op=NOT_MATCH, alg=DENY_OVERRIDES; op=NOT_MATCH, ls=hlist Task 16 moves it to route = check/filter v2."
+  }
+ ]
+}

@@ -1,0 +1,683 @@
+{
+ "about": "What a placeholder inside a requestAttributes text does. Round 36 took id-${subject.X} over an undeclared X and sent it as written (r36gaps-ra-undeclared-inside-a-text): the undeclared-name check reads only a value that is one placeholder. Whether the kind check reads inside a text, and whether a placeholder with a value is substituted, no golden says. Each case gives requestAttributes.x the text id-${subject.X}, X one builtin or a declared PIP of one kind. pipCalls records what the call carried: the text as written, or id- and a value.",
+ "resourceTypePrefix": "PARITY_SUITE_R37T_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 37 case"
+   }
+  },
+  "/api/v1/pip/r37open-ra-source": {
+   "statusCode": 200,
+   "body": [
+    "s"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-filtered-source": {
+   "statusCode": 200,
+   "body": [
+    "f"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-id-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-name-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-roles-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-type-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-scopes-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-service-account-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-permissions-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-entitled-resources-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-permission-scope-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-is-m2m-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-general-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-token-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-header-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-mapping-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-filtered-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-scope-in-text": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "source-general": {
+   "name": "subject.parityR37RaSource",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-source",
+   "requestAttributes": {
+    "case": "r37open-ra-source"
+   }
+  },
+  "source-token": {
+   "name": "subject.parityR37RaSrcToken",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "source-header": {
+   "name": "subject.parityR37RaSrcHeader",
+   "pipType": "HEADER",
+   "header": "x-parity-r37-h",
+   "cacheable": false
+  },
+  "source-mapping": {
+   "name": "subject.permissions.parityR37",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R37_P"
+     ]
+    }
+   }
+  },
+  "source-filtered": {
+   "name": "subject.parityR37RaSrcFiltered.filtered",
+   "pipType": "FILTERED",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-filtered-source",
+   "requestAttributes": {
+    "case": "r37open-ra-filtered-source"
+   },
+   "resourceType": "PARITY_R37_FILTERED"
+  },
+  "source-scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "r37open-ra-id-in-text": {
+   "name": "subject.parityR37TextId",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-id-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-id-in-text",
+    "x": "id-${subject.id}"
+   }
+  },
+  "r37open-ra-name-in-text": {
+   "name": "subject.parityR37TextName",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-name-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-name-in-text",
+    "x": "id-${subject.name}"
+   }
+  },
+  "r37open-ra-roles-in-text": {
+   "name": "subject.parityR37TextRoles",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-roles-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-roles-in-text",
+    "x": "id-${subject.roles}"
+   }
+  },
+  "r37open-ra-type-in-text": {
+   "name": "subject.parityR37TextType",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-type-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-type-in-text",
+    "x": "id-${subject.type}"
+   }
+  },
+  "r37open-ra-scopes-in-text": {
+   "name": "subject.parityR37TextScopes",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-scopes-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-scopes-in-text",
+    "x": "id-${subject.scopes}"
+   }
+  },
+  "r37open-ra-service-account-in-text": {
+   "name": "subject.parityR37TextServiceAccount",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-service-account-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-service-account-in-text",
+    "x": "id-${subject.serviceAccount}"
+   }
+  },
+  "r37open-ra-permissions-in-text": {
+   "name": "subject.parityR37TextPermissions",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-permissions-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-permissions-in-text",
+    "x": "id-${subject.permissions}"
+   }
+  },
+  "r37open-ra-entitled-resources-in-text": {
+   "name": "subject.parityR37TextEntitledResources",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-entitled-resources-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-entitled-resources-in-text",
+    "x": "id-${subject.entitledResources}"
+   }
+  },
+  "r37open-ra-permission-scope-in-text": {
+   "name": "subject.parityR37TextPermissionScope",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-permission-scope-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-permission-scope-in-text",
+    "x": "id-${subject.permissionScope}"
+   }
+  },
+  "r37open-ra-is-m2m-in-text": {
+   "name": "subject.parityR37TextIsM2M",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-is-m2m-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-is-m2m-in-text",
+    "x": "id-${subject.isM2M}"
+   }
+  },
+  "r37open-ra-general-in-text": {
+   "name": "subject.parityR37TextKindGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-general-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-general-in-text",
+    "x": "id-${subject.parityR37RaSource}"
+   }
+  },
+  "r37open-ra-token-in-text": {
+   "name": "subject.parityR37TextKindToken",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-token-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-token-in-text",
+    "x": "id-${subject.parityR37RaSrcToken}"
+   }
+  },
+  "r37open-ra-header-in-text": {
+   "name": "subject.parityR37TextKindHeader",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-header-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-header-in-text",
+    "x": "id-${subject.parityR37RaSrcHeader}"
+   }
+  },
+  "r37open-ra-mapping-in-text": {
+   "name": "subject.parityR37TextKindMapping",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-mapping-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-mapping-in-text",
+    "x": "id-${subject.permissions.parityR37}"
+   }
+  },
+  "r37open-ra-filtered-in-text": {
+   "name": "subject.parityR37TextKindFiltered",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-filtered-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-filtered-in-text",
+    "x": "id-${subject.parityR37RaSrcFiltered.filtered}"
+   }
+  },
+  "r37open-ra-scope-in-text": {
+   "name": "subject.parityR37TextKindScope",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-scope-in-text",
+   "requestAttributes": {
+    "case": "r37open-ra-scope-in-text",
+    "x": "id-${subject.permissionScope}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r37openratext-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r37",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-id-in-text",
+   "pips": [
+    "r37open-ra-id-in-text"
+   ],
+   "about": "requestAttributes.x is id-${subject.id}, the builtin subject.id inside a text. The call carries the text as written if a text goes as written; id- and the builtin's value if a placeholder with a value is substituted.",
+   "condition": "subject.parityR37TextId == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-id-in-text"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-service-account-in-text",
+   "pips": [
+    "r37open-ra-service-account-in-text"
+   ],
+   "about": "requestAttributes.x is id-${subject.serviceAccount}, the builtin subject.serviceAccount inside a text. The call carries the text as written if a text goes as written; id-null if every placeholder of a text is substituted and one without a value renders null.",
+   "condition": "subject.parityR37TextServiceAccount == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-service-account-in-text"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-permissions-in-text",
+   "pips": [
+    "r37open-ra-permissions-in-text"
+   ],
+   "about": "requestAttributes.x is id-${subject.permissions}, the builtin subject.permissions inside a text. The call carries the text as written if a text goes as written; id-null if every placeholder of a text is substituted and one without a value renders null.",
+   "condition": "subject.parityR37TextPermissions == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-permissions-in-text"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-is-m2m-in-text",
+   "pips": [
+    "r37open-ra-is-m2m-in-text"
+   ],
+   "about": "requestAttributes.x is id-${subject.isM2M}, the builtin subject.isM2M inside a text. The call carries the text as written if a text goes as written; id-null if every placeholder of a text is substituted and one without a value renders null.",
+   "condition": "subject.parityR37TextIsM2M == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-is-m2m-in-text"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-general-in-text",
+   "pips": [
+    "source-general",
+    "r37open-ra-general-in-text"
+   ],
+   "about": "The upload declares the GENERAL PIP subject.parityR37RaSource, and requestAttributes.x is id-${subject.parityR37RaSource}. As the whole value a GENERAL is refused. The upload is refused (400) if the kind check reads each placeholder of a text; accepted if it reads only a value that is one placeholder. The call carries the text as written if a text goes as written; id- and s if the placeholder is substituted.",
+   "condition": "subject.parityR37TextKindGeneral == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-general-in-text"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-token-in-text",
+   "pips": [
+    "source-token",
+    "r37open-ra-token-in-text"
+   ],
+   "about": "The upload declares the TOKEN PIP subject.parityR37RaSrcToken, and requestAttributes.x is id-${subject.parityR37RaSrcToken}. As the whole value a TOKEN is taken. The call carries the text as written if a text goes as written; id- and finance (the reader's department) if the placeholder is substituted.",
+   "condition": "subject.parityR37TextKindToken == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-token-in-text"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-header-in-text",
+   "pips": [
+    "source-header",
+    "r37open-ra-header-in-text"
+   ],
+   "about": "The upload declares the HEADER PIP subject.parityR37RaSrcHeader, and requestAttributes.x is id-${subject.parityR37RaSrcHeader}. As the whole value a HEADER is taken. The call carries the text as written if a text goes as written; id- and v (the request header) if the placeholder is substituted.",
+   "condition": "subject.parityR37TextKindHeader == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-header-in-text",
+     "headers": {
+      "x-parity-r37-h": "v"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r37-h": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-mapping-in-text",
+   "pips": [
+    "source-mapping",
+    "r37open-ra-mapping-in-text"
+   ],
+   "about": "The upload declares the MAPPING PIP subject.permissions.parityR37, and requestAttributes.x is id-${subject.permissions.parityR37}. As the whole value a MAPPING is refused. The upload is refused (400) if the kind check reads each placeholder of a text; accepted if it reads only a value that is one placeholder. The call carries the text as written if a text goes as written; id- and the MAPPING's permissions (null, as in a condition, if a MAPPING by its own name has no value) if the placeholder is substituted.",
+   "condition": "subject.parityR37TextKindMapping == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-mapping-in-text"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-filtered-in-text",
+   "pips": [
+    "source-filtered",
+    "r37open-ra-filtered-in-text"
+   ],
+   "about": "The upload declares the FILTERED PIP subject.parityR37RaSrcFiltered.filtered, and requestAttributes.x is id-${subject.parityR37RaSrcFiltered.filtered}. As the whole value a FILTERED is refused. The upload is refused (400) if the kind check reads each placeholder of a text; accepted if it reads only a value that is one placeholder. The call carries the text as written if a text goes as written; id- and f if the placeholder is substituted.",
+   "condition": "subject.parityR37TextKindFiltered == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-filtered-in-text"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-scope-in-text",
+   "pips": [
+    "source-scope",
+    "r37open-ra-scope-in-text"
+   ],
+   "about": "The upload declares the PERMISSION_SCOPE PIP subject.permissionScope, and requestAttributes.x is id-${subject.permissionScope}. The call carries the text as written if a text goes as written; id-null if every placeholder of a text is substituted and one without a value renders null.",
+   "condition": "subject.parityR37TextKindScope == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-scope-in-text"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37openratext-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r37",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

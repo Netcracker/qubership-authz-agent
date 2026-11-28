@@ -1,0 +1,220 @@
+{
+  "r29pairs-two-001": {
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/qc": {"status":200,"allowed":[]},
+    "import-customization-v1/regular/cust": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-002": {
+    "check-filter-v1-outcome/regular/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-v1-outcome/regular/qc": {"status":200,"allowed":[]},
+    "import-customization-v1/regular/cust": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-003": {
+    "check-resource-v1-outcome/regular/q": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/qc": {"status":200,"decision":false},
+    "import-customization-v1/regular/cust": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-004": {
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/qc": {"status":200,"allowed":[]},
+    "import-customization-v1/regular/cust": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-004-s": {
+    "check-resource-bulk-v1-outcome/isolated/q": {"status":200,"allowed":[]},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-two-005": {
+    "check-resource-bulk-v1-outcome/regular/qc": {"status":200,"allowed":["i1","i2"]},
+    "check-resource-v1-outcome/regular/q": {"status":200,"decision":true},
+    "import-customization-v1/regular/cust": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-005-s": {
+    "check-filter-v1-outcome/isolated/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-two-006": {
+    "check-filter-v1-outcome/regular/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-v1-outcome/regular/qc": {"status":200,"allowed":[]},
+    "import-customization-v1/regular/cust": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-006-s": {
+    "check-resource-v1-outcome/isolated/q": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-two-007": {
+    "check-filter-v1-outcome/regular/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-v1-outcome/regular/qc": {"status":200,"allowed":[]},
+    "import-customization-v1/regular/cust": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-007-s": {
+    "check-resource-bulk-v1-outcome/isolated/q": {"status":200,"allowed":[]},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-two-008": {
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":["i1","i2"]},
+    "check-resource-bulk-v1-outcome/regular/qc": {"status":200,"allowed":["i1","i2"]},
+    "import-customization-v1/regular/cust": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-009": {
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":[]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-010": {
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":["i1","i2"]},
+    "check-resource-v1-outcome/regular/qc": {"status":200,"decision":true},
+    "import-customization-v1/regular/cust": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-010-s": {
+    "check-resource-bulk-v1-outcome/isolated/q": {"status":200,"allowed":["i1","i2"]},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-two-011": {
+    "check-filter-v1-outcome/regular/qc": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":[]},
+    "import-customization-v1/regular/cust": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-012": {
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/qc": {"status":200,"allowed":[]},
+    "import-customization-v1/regular/cust": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-012-s": {
+    "check-resource-bulk-v1-outcome/isolated/q": {"status":200,"allowed":[]},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-two-013": {
+    "check-resource-bulk-v1-outcome/regular/q": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/qc": {"status":200,"allowed":[]},
+    "import-customization-v1/regular/cust": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-013-s": {
+    "check-resource-bulk-v1-outcome/isolated/q": {"status":200,"allowed":[]},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-two-014": {
+    "check-filter-v1-outcome/regular/qc": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/q": {"status":200,"decision":false},
+    "import-customization-v1/regular/cust": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-015": {
+    "check-filter-v1-outcome/regular/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(((PARITY_SUITE_R29P_R29PAIRS_TWO_015_S.f8a.in(\"x\", \"y\")).or(PARITY_SUITE_R29P_R29PAIRS_TWO_015_S.f8b.eq(\"v1\"))).and(PARITY_SUITE_R29P_R29PAIRS_TWO_015_S.f8c.eq(\"v2\"))).or(((PARITY_SUITE_R29P_R29PAIRS_TWO_015_S.f8a.in(\"x\", \"y\")).or(PARITY_SUITE_R29P_R29PAIRS_TWO_015_S.f8b.eq(\"v1\"))).and(PARITY_SUITE_R29P_R29PAIRS_TWO_015_S.f8c.eq(\"v2\")))",
+        "mongodbFilterCondition": "{ \"$or\": [ { { \"$and\": [ { \"f7a\": [ { \"$uuid\": \"finance\" } ] }, { \"f7b\": \"v1\" } ] } },{ { \"$and\": [ { \"f7a\": [ { \"$uuid\": \"finance\" } ] }, { \"f7b\": \"v1\" } ] } } ] }",
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/qc": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(((PARITY_SUITE_R29P_R29PAIRS_TWO_015_S.f8a.in(\"x\", \"y\")).or(PARITY_SUITE_R29P_R29PAIRS_TWO_015_S.f8b.eq(\"v1\"))).and(PARITY_SUITE_R29P_R29PAIRS_TWO_015_S.f8c.eq(\"v2\"))).or(((PARITY_SUITE_R29P_R29PAIRS_TWO_015_S.f8a.in(\"x\", \"y\")).or(PARITY_SUITE_R29P_R29PAIRS_TWO_015_S.f8b.eq(\"v1\"))).and(PARITY_SUITE_R29P_R29PAIRS_TWO_015_S.f8c.eq(\"v2\")))",
+        "mongodbFilterCondition": "{ \"$or\": [ { { \"$and\": [ { \"f7a\": [ { \"$uuid\": \"finance\" } ] }, { \"f7b\": \"v1\" } ] } },{ { \"$and\": [ { \"f7a\": [ { \"$uuid\": \"finance\" } ] }, { \"f7b\": \"v1\" } ] } } ] }",
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "import-customization-v1/regular/cust": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-015-s": {
+    "check-filter-v1-outcome/isolated/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29pairs-two-grants-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-grants-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

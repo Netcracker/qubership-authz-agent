@@ -1,0 +1,17 @@
+{
+  "ax77-66-d2r46-db11addb18-or": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/a-n": {"calls":1,"requestAttributes":{"case":"s44-sent"}},
+    "pip-call/isolated/a-y": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "ax77-66-d2r46-f17-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ax77-66-d2r46-f17-control-last-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

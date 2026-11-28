@@ -1,0 +1,473 @@
+{
+ "about": "Round 57 (pap-export): how the v3 export renders the members of a simplified policy the specification's export synthesis leaves out; each case uploads one in a tenant of its own and reads the tenant's whole export back Every step that decides is followed by both raw reads of the v3 export, policySets and pips. They were added after the round was recorded, so that the export-fed profile can compare most decisions with legacy.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p57x-000-control-first",
+   "about": "control: a simplified policy with rendered members only",
+   "resourceType": "PARITY_SUITE_P57X_000",
+   "tenant": "parity-p57x-000-control-first",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_SUITE_P57X_000"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "component": "PARITY",
+       "operation": "READ",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "condition": "true",
+       "resourceType": "PARITY_SUITE_P57X_000",
+       "reason": "papexport PARITY_SUITE_P57X_000"
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_P57X_000",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_P57X_000",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p57x-001-condition",
+   "about": "how the v3 export renders the member 'condition ' of a simplified policy",
+   "resourceType": "PARITY_SUITE_P57X_001",
+   "tenant": "parity-p57x-001-condition",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_SUITE_P57X_001"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "condition ": "resource.a == 'y'",
+       "operation": "READ",
+       "reason": "papexport PARITY_SUITE_P57X_001",
+       "resourceType": "PARITY_SUITE_P57X_001",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_P57X_001",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_P57X_001",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p57x-002-custompredicate",
+   "about": "how the v3 export renders the member 'customPredicate' of a simplified policy",
+   "resourceType": "PARITY_SUITE_P57X_002",
+   "tenant": "parity-p57x-002-custompredicate",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_SUITE_P57X_002"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "condition": "resource.fa IN subject.roles",
+       "customPredicate": {
+        "params": {
+         "p0": "subject.roles"
+        },
+        "predicate": "[{\"value\":${p0},\"property\":\"fa\",\"operator\":\"in\"}]"
+       },
+       "operation": "READ",
+       "reason": "papexport PARITY_SUITE_P57X_002",
+       "resourceType": "PARITY_SUITE_P57X_002",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_P57X_002",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_P57X_002",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p57x-003-fields",
+   "about": "how the v3 export renders the member 'fields' of a simplified policy",
+   "resourceType": "PARITY_SUITE_P57X_003",
+   "tenant": "parity-p57x-003-fields",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_SUITE_P57X_003"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "condition": "resource.a == 'y'",
+       "fields": null,
+       "operation": "READ",
+       "reason": "papexport PARITY_SUITE_P57X_003",
+       "resourceType": "PARITY_SUITE_P57X_003",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_P57X_003",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_P57X_003",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p57x-004-predicate",
+   "about": "how the v3 export renders the member 'predicate' of a simplified policy",
+   "resourceType": "PARITY_SUITE_P57X_004",
+   "tenant": "parity-p57x-004-predicate",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_SUITE_P57X_004"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "condition": "resource.fa == 'PARITY_SUITE_R29P_R29PAIRS_NONE_008_S' AND resource.fb == 'v1'",
+       "operation": "READ",
+       "predicate": "(${resourceType}.fa.eq(${resourceType})).and(${resourceType}.fb.eq(\"v1\"))",
+       "reason": "papexport PARITY_SUITE_P57X_004",
+       "resourceType": "PARITY_SUITE_P57X_004",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_P57X_004",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_P57X_004",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p57x-005-predicates",
+   "about": "how the v3 export renders the member 'predicates' of a simplified policy",
+   "resourceType": "PARITY_SUITE_P57X_005",
+   "tenant": "parity-p57x-005-predicates",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_SUITE_P57X_005"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "mongodbPredicate": "\"a\":{\"$eq\":\"mongo-top\"}",
+       "operation": "READ",
+       "predicates": {
+        "mongodbPredicate": "\"a\":{\"$eq\":\"mongo-nested\"}"
+       },
+       "querydslPredicate": "PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY.a.eq(\"querydsl\")",
+       "reason": "papexport PARITY_SUITE_P57X_005",
+       "resourceType": "PARITY_SUITE_P57X_005",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "rsqlPredicate": "a==rsql",
+       "sqlPredicate": "a='sql'"
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_P57X_005",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_P57X_005",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p57x-006-control-last",
+   "about": "control: a simplified policy with rendered members only",
+   "resourceType": "PARITY_SUITE_P57X_006",
+   "tenant": "parity-p57x-006-control-last",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_SUITE_P57X_006"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:check",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "component": "PARITY",
+       "operation": "READ",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "condition": "true",
+       "resourceType": "PARITY_SUITE_P57X_006",
+       "reason": "papexport PARITY_SUITE_P57X_006"
+      }
+     ],
+     "requests": [
+      {
+       "name": "check",
+       "type": "PARITY_SUITE_P57X_006",
+       "operation": "READ"
+      },
+      {
+       "name": "filter",
+       "type": "PARITY_SUITE_P57X_006",
+       "operation": "READ",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "write-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}

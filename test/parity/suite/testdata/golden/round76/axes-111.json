@@ -1,0 +1,22 @@
+{
+  "ax76-111-fs69-c-inv-iterN-11-13": {
+    "check-filter-v2-outcome/regular/filtersub-check-filter-v2": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "((((PARITY_SUITE_FS69_AX76_111_FS69_C_INV_ITERN_11_13.f5a.eq(\"v0\")).and(PARITY_SUITE_FS69_AX76_111_FS69_C_INV_ITERN_11_13.f5b.eq(\"v1\"))).or(PARITY_SUITE_FS69_AX76_111_FS69_C_INV_ITERN_11_13.f5c.eq(\"v2\"))).or(((PARITY_SUITE_FS69_AX76_111_FS69_C_INV_ITERN_11_13.f5a.eq(\"v0\")).and(PARITY_SUITE_FS69_AX76_111_FS69_C_INV_ITERN_11_13.f5b.eq(\"v1\"))).or(PARITY_SUITE_FS69_AX76_111_FS69_C_INV_ITERN_11_13.f5c.eq(\"v2\")))).or(((PARITY_SUITE_FS69_AX76_111_FS69_C_INV_ITERN_11_13.f4a.eq(\"v0\")).not()).or((PARITY_SUITE_FS69_AX76_111_FS69_C_INV_ITERN_11_13.f4a.eq(\"v0\")).not()))",
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "((f6a=in=(\"h1\", \"h2\")),(f6a=in=(\"h1\", \"h2\"))),((f3a=in=(\"h1\", \"h2\")),(f3a=in=(\"h1\", \"h2\")))",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-4": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-5": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

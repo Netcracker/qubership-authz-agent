@@ -1,0 +1,759 @@
+{
+  "p54-state-control-must-first": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_READER": [
+                "parity_p901_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P54_STATE_901",
+          "name": "subject.permissions.PARITY_P901_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p54-state-control-must-last": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_READER": [
+                "parity_p951_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P54_STATE_951",
+          "name": "subject.permissions.PARITY_P951_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p54-state-pips-body-shape": {
+    "check-resource-v1-outcome/sequence/w1-probe": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-simplified-policies-v1/sequence/w3": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    },
+    "load-simplified-policies-v1/sequence/w4": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-simplified-policies-v1/sequence/w5": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Integer value (token `\u003credacted\u003e`)"
+    },
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "none",
+          "domain": "PARITY_P54_STATE_039",
+          "name": "subject.parityP039A",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/mid": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "none",
+          "domain": "PARITY_P54_STATE_039",
+          "name": "subject.parityP039A",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/w1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "claim": "department",
+            "defaultValue": "none",
+            "domain": "PARITY_P54_STATE_039",
+            "name": "subject.parityP039A",
+            "pipType": "TOKEN",
+            "tenantId": "parity-p54-state-039",
+            "type": "REGULAR"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/w1-raw-sets": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/w2-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "claim": "department",
+            "defaultValue": "none",
+            "domain": "PARITY_P54_STATE_039",
+            "name": "subject.parityP039A",
+            "pipType": "TOKEN",
+            "tenantId": "parity-p54-state-039",
+            "type": "REGULAR"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/w2-raw-sets": {"status":200,"body":{"policySets":[]}}
+  },
+  "p54-state-pips-element-shape": {
+    "check-resource-v1-outcome/sequence/w1-probe": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('parity')"
+    },
+    "load-simplified-policies-v1/sequence/w3": {"status":500},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "none",
+          "domain": "PARITY_P54_STATE_040",
+          "name": "subject.parityP040A",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/mid": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "none",
+          "domain": "PARITY_P54_STATE_040",
+          "name": "subject.parityP040A",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/w1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "claim": "department",
+            "defaultValue": "none",
+            "domain": "PARITY_P54_STATE_040",
+            "name": "subject.parityP040A",
+            "pipType": "TOKEN",
+            "tenantId": "parity-p54-state-040",
+            "type": "REGULAR"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/w1-raw-sets": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/w2-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "claim": "department",
+            "defaultValue": "none",
+            "domain": "PARITY_P54_STATE_040",
+            "name": "subject.parityP040A",
+            "pipType": "TOKEN",
+            "tenantId": "parity-p54-state-040",
+            "type": "REGULAR"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/w2-raw-sets": {"status":200,"body":{"policySets":[]}}
+  },
+  "p54-state-policies-body-shape": {
+    "check-resource-v1-outcome/sequence/w1-probe": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":200},
+    "load-simplified-policies-v1/sequence/w2": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-simplified-policies-v1/sequence/w3": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    },
+    "load-simplified-policies-v1/sequence/w4": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-simplified-policies-v1/sequence/w5": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Integer value (token `\u003credacted\u003e`)"
+    },
+    "pap-read-raw-v1/sequence/w1-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w1-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P54_STATE_041",
+            "name": "PARITY_P54_STATE_041_PARITY_PARITY_SUITE_P54_STATE_041_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P54_STATE_041_PARITY_PARITY_SUITE_P54_STATE_041_READ_Policy",
+                "policyId": "62809d46-7c6c-402d-3222-e8015582d6b7",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p54-state-policies-body-shape p",
+                    "ruleId": "b770f3d2-44ea-a10d-1f50-8d6638d067b1",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p54-state-041"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p54-state-041"
+              }
+            ],
+            "policySetId": "e962809d-467c-6c40-2d32-22e8015582d6",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P54_STATE_041'",
+            "tenantId": "parity-p54-state-041",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/w2-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w2-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P54_STATE_041",
+            "name": "PARITY_P54_STATE_041_PARITY_PARITY_SUITE_P54_STATE_041_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P54_STATE_041_PARITY_PARITY_SUITE_P54_STATE_041_READ_Policy",
+                "policyId": "62809d46-7c6c-402d-3222-e8015582d6b7",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p54-state-policies-body-shape p",
+                    "ruleId": "b770f3d2-44ea-a10d-1f50-8d6638d067b1",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p54-state-041"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p54-state-041"
+              }
+            ],
+            "policySetId": "e962809d-467c-6c40-2d32-22e8015582d6",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P54_STATE_041'",
+            "tenantId": "parity-p54-state-041",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P54_STATE_041",
+            "name": "PARITY_P54_STATE_041_PARITY_PARITY_SUITE_P54_STATE_041_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P54_STATE_041_PARITY_PARITY_SUITE_P54_STATE_041_READ_Policy",
+                "policyId": "62809d46-7c6c-402d-3222-e8015582d6b7",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p54-state-policies-body-shape p",
+                    "ruleId": "b770f3d2-44ea-a10d-1f50-8d6638d067b1",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p54-state-041"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p54-state-041"
+              }
+            ],
+            "policySetId": "e962809d-467c-6c40-2d32-22e8015582d6",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P54_STATE_041'",
+            "tenantId": "parity-p54-state-041",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p54-state-041"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/mid": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P54_STATE_041",
+            "name": "PARITY_P54_STATE_041_PARITY_PARITY_SUITE_P54_STATE_041_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P54_STATE_041_PARITY_PARITY_SUITE_P54_STATE_041_READ_Policy",
+                "policyId": "62809d46-7c6c-402d-3222-e8015582d6b7",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p54-state-policies-body-shape p",
+                    "ruleId": "b770f3d2-44ea-a10d-1f50-8d6638d067b1",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p54-state-041"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p54-state-041"
+              }
+            ],
+            "policySetId": "e962809d-467c-6c40-2d32-22e8015582d6",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P54_STATE_041'",
+            "tenantId": "parity-p54-state-041",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p54-state-041"
+      ]
+    }
+  },
+  "p54-state-policies-element-shape": {
+    "check-resource-v1-outcome/sequence/w1-probe": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":200},
+    "load-simplified-policies-v1/sequence/w2": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('parity')"
+    },
+    "load-simplified-policies-v1/sequence/w3": {"status":500},
+    "pap-read-raw-v1/sequence/w1-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w1-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P54_STATE_042",
+            "name": "PARITY_P54_STATE_042_PARITY_PARITY_SUITE_P54_STATE_042_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P54_STATE_042_PARITY_PARITY_SUITE_P54_STATE_042_READ_Policy",
+                "policyId": "9ba4a0fb-b283-5309-c5c3-1e3f2472e3c4",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p54-state-policies-element-shape p",
+                    "ruleId": "901de384-7e92-248e-ea42-461b6265e021",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p54-state-042"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p54-state-042"
+              }
+            ],
+            "policySetId": "059ba4a0-fbb2-8353-09c5-c31e3f2472e3",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P54_STATE_042'",
+            "tenantId": "parity-p54-state-042",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/w2-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w2-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P54_STATE_042",
+            "name": "PARITY_P54_STATE_042_PARITY_PARITY_SUITE_P54_STATE_042_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P54_STATE_042_PARITY_PARITY_SUITE_P54_STATE_042_READ_Policy",
+                "policyId": "9ba4a0fb-b283-5309-c5c3-1e3f2472e3c4",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p54-state-policies-element-shape p",
+                    "ruleId": "901de384-7e92-248e-ea42-461b6265e021",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p54-state-042"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p54-state-042"
+              }
+            ],
+            "policySetId": "059ba4a0-fbb2-8353-09c5-c31e3f2472e3",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P54_STATE_042'",
+            "tenantId": "parity-p54-state-042",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P54_STATE_042",
+            "name": "PARITY_P54_STATE_042_PARITY_PARITY_SUITE_P54_STATE_042_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P54_STATE_042_PARITY_PARITY_SUITE_P54_STATE_042_READ_Policy",
+                "policyId": "9ba4a0fb-b283-5309-c5c3-1e3f2472e3c4",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p54-state-policies-element-shape p",
+                    "ruleId": "901de384-7e92-248e-ea42-461b6265e021",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p54-state-042"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p54-state-042"
+              }
+            ],
+            "policySetId": "059ba4a0-fbb2-8353-09c5-c31e3f2472e3",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P54_STATE_042'",
+            "tenantId": "parity-p54-state-042",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p54-state-042"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/mid": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P54_STATE_042",
+            "name": "PARITY_P54_STATE_042_PARITY_PARITY_SUITE_P54_STATE_042_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P54_STATE_042_PARITY_PARITY_SUITE_P54_STATE_042_READ_Policy",
+                "policyId": "9ba4a0fb-b283-5309-c5c3-1e3f2472e3c4",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p54-state-policies-element-shape p",
+                    "ruleId": "901de384-7e92-248e-ea42-461b6265e021",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p54-state-042"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p54-state-042"
+              }
+            ],
+            "policySetId": "059ba4a0-fbb2-8353-09c5-c31e3f2472e3",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P54_STATE_042'",
+            "tenantId": "parity-p54-state-042",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p54-state-042"
+      ]
+    }
+  },
+  "p54-state-sets-body-shape": {
+    "check-resource-v1-outcome/sequence/w1-probe": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-policy-sets-v1/sequence/w3": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    },
+    "load-policy-sets-v1/sequence/w4": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-policy-sets-v1/sequence/w5": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Integer value (token `\u003credacted\u003e`)"
+    },
+    "pap-read-raw-v1/sequence/w1-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w1-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p54-state-043",
+            "name": "p54-state-sets-body-shape r",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p54-state-sets-body-shape r reader",
+                "policyId": "17c8dfac-4891-7b35-58a2-c60f63e6253b",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p54-state-sets-body-shape r rule",
+                    "ruleId": "a51ffeab-9b30-ebf3-90a3-82d6378bbe5f",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p54-state-043"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p54-state-043"
+              }
+            ],
+            "policySetId": "c250d995-7745-90c0-4aa7-51673187008d",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P54_STATE_043'",
+            "tenantId": "parity-p54-state-043",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/w2-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/w2-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p54-state-043",
+            "name": "p54-state-sets-body-shape r",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p54-state-sets-body-shape r reader",
+                "policyId": "17c8dfac-4891-7b35-58a2-c60f63e6253b",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p54-state-sets-body-shape r rule",
+                    "ruleId": "a51ffeab-9b30-ebf3-90a3-82d6378bbe5f",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p54-state-043"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p54-state-043"
+              }
+            ],
+            "policySetId": "c250d995-7745-90c0-4aa7-51673187008d",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P54_STATE_043'",
+            "tenantId": "parity-p54-state-043",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p54-state-043",
+            "name": "p54-state-sets-body-shape r",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p54-state-sets-body-shape r reader",
+                "policyId": "17c8dfac-4891-7b35-58a2-c60f63e6253b",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p54-state-sets-body-shape r rule",
+                    "ruleId": "a51ffeab-9b30-ebf3-90a3-82d6378bbe5f",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p54-state-043"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p54-state-043"
+              }
+            ],
+            "policySetId": "c250d995-7745-90c0-4aa7-51673187008d",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P54_STATE_043'",
+            "tenantId": "parity-p54-state-043",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p54-state-043"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/mid": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p54-state-043",
+            "name": "p54-state-sets-body-shape r",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p54-state-sets-body-shape r reader",
+                "policyId": "17c8dfac-4891-7b35-58a2-c60f63e6253b",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p54-state-sets-body-shape r rule",
+                    "ruleId": "a51ffeab-9b30-ebf3-90a3-82d6378bbe5f",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p54-state-043"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p54-state-043"
+              }
+            ],
+            "policySetId": "c250d995-7745-90c0-4aa7-51673187008d",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P54_STATE_043'",
+            "tenantId": "parity-p54-state-043",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p54-state-043"
+      ]
+    }
+  }
+}
