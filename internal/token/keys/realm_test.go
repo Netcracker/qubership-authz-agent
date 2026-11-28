@@ -31,7 +31,7 @@ import (
 func iss(realm string) string { return "https://public.example" + realmsPath + realm }
 
 // lookupRealm asks for key k1 of realm.
-func lookupRealm(t *testing.T, set *Set, realm string) (Key, error) {
+func lookupRealm(t *testing.T, set *Set, realm string) ([]Key, error) {
 	t.Helper()
 	return set.LookupOrReload(t.Context(), Query{Issuer: iss(realm), KID: "k1"})
 }
@@ -152,11 +152,11 @@ func TestLookupOrReload_LoadsARealmFromTheJWKSURIOfItsProvider(t *testing.T) {
 		kc := newKeycloakTransport(t)
 		kc.publishRealm("tenant-1", ecJWK(t, "k1", nil))
 		set := keycloakSet(t, kc, testOptions())
-		key, err := lookupRealm(t, set, "tenant-1")
+		found, err := lookupRealm(t, set, "tenant-1")
 		if err != nil {
 			t.Fatalf("LookupOrReload() error = %v", err)
 		}
-		if key.Source.Realm != "tenant-1" || key.Source.Provider == nil || key.Source.Provider.ID != IdentityProviderID {
+		if key := onlyKey(t, found); key.Source.Realm != "tenant-1" || key.Source.Provider == nil || key.Source.Provider.ID != IdentityProviderID {
 			t.Errorf("Source = %+v, want the realm tenant-1 of provider %q", key.Source, IdentityProviderID)
 		}
 		if _, err := lookupRealm(t, set, "tenant-1"); err != nil {
@@ -176,12 +176,12 @@ func TestLookupOrReload_KeepsTheKeysOfTwoRealmsApart(t *testing.T) {
 		kc.publishRealm("b", ecJWK(t, "k1", nil))
 		set := keycloakSet(t, kc, testOptions())
 		for _, realm := range []string{"a", "b"} {
-			key, err := lookupRealm(t, set, realm)
+			found, err := lookupRealm(t, set, realm)
 			if err != nil {
 				t.Errorf("LookupOrReload(realm %q) error = %v", realm, err)
 				continue
 			}
-			if got := key.Source.Realm; got != realm {
+			if got := onlyKey(t, found).Source.Realm; got != realm {
 				t.Errorf("LookupOrReload(realm %q).Source.Realm = %q", realm, got)
 			}
 		}
@@ -298,8 +298,8 @@ func TestLookupOrReload_StartsAtMostTenLoadsAMinute(t *testing.T) {
 		}
 		for _, step := range []time.Duration{0, 59 * time.Second} {
 			time.Sleep(step)
-			if _, err := lookupRealm(t, set, "tenant-1"); !errors.Is(err, ErrKeyUnknown) {
-				t.Errorf("LookupOrReload() %s after the limit of loads was reached: error = %v, want %v", step, err, ErrKeyUnknown)
+			if _, err := lookupRealm(t, set, "tenant-1"); !unavailable(err, reasonOfTheLoadLimit) {
+				t.Errorf("LookupOrReload() %s after the limit of loads was reached: error = %v, want the reason %q", step, err, reasonOfTheLoadLimit)
 			}
 			if got := kc.loadsOf("tenant-1"); got != 0 {
 				t.Errorf("JWKS requests %s after the limit of loads was reached = %d, want 0", step, got)
@@ -328,8 +328,8 @@ func TestLookupOrReload_TheLimitOfLoadsCoversTheReloadOfAKnownRealm(t *testing.T
 		time.Sleep(30 * time.Second)
 		_, _ = lookupRealm(t, set, "invented-last")
 		q := Query{Issuer: iss("tenant-1"), KID: "rotated"}
-		if _, err := set.LookupOrReload(t.Context(), q); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(%+v) error = %v, want %v", q, err, ErrKeyUnknown)
+		if _, err := set.LookupOrReload(t.Context(), q); !unavailable(err, reasonOfTheLoadLimit) {
+			t.Errorf("LookupOrReload(%+v) error = %v, want the reason %q, although the last load of the realm got a JWKS", q, err, reasonOfTheLoadLimit)
 		}
 		if got := kc.loadsOf("tenant-1"); got != 1 {
 			t.Errorf("JWKS requests at the limit of loads = %d, want 1", got)
@@ -424,8 +424,8 @@ func TestLookupOrReload_KeepsNoMoreRealmsThanTheLimit(t *testing.T) {
 			}
 		}
 		time.Sleep(time.Hour)
-		if _, err := lookupRealm(t, set, "c"); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(realm %q) error = %v, want %v", "c", err, ErrKeyUnknown)
+		if _, err := lookupRealm(t, set, "c"); !unavailable(err, "the agent holds 2 realms, the most it keeps") {
+			t.Errorf("LookupOrReload(realm %q) error = %v, want the reason %q", "c", err, "the agent holds 2 realms, the most it keeps")
 		}
 		if got := kc.loadsOf("c"); got != 0 {
 			t.Errorf("JWKS requests for realm %q = %d, want 0", "c", got)
@@ -451,8 +451,8 @@ func TestLookupOrReload_ANewRealmTakesThePlaceOfARealmThatFailedAMinuteAgo(t *te
 		}
 		_, _ = lookupRealm(t, set, "ghost")
 		time.Sleep(59 * time.Second)
-		if _, err := lookupRealm(t, set, "b"); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(realm %q) 59 s after the failure: error = %v, want %v", "b", err, ErrKeyUnknown)
+		if _, err := lookupRealm(t, set, "b"); !unavailable(err, "the agent holds 2 realms, the most it keeps") {
+			t.Errorf("LookupOrReload(realm %q) 59 s after the failure: error = %v, want the reason %q", "b", err, "the agent holds 2 realms, the most it keeps")
 		}
 		time.Sleep(time.Second)
 		if _, err := lookupRealm(t, set, "b"); err != nil {
@@ -538,8 +538,8 @@ func TestLookupOrReload_KeepsARealmThatFailedLaterUntilItsOwnMinute(t *testing.T
 		if got := kc.loadsOf("young"); got != 1 {
 			t.Errorf("JWKS requests for realm young by 89 s = %d, want 1", got)
 		}
-		if _, err := lookupRealm(t, set, "c"); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(realm c) at 89 s error = %v, want %v", err, ErrKeyUnknown)
+		if _, err := lookupRealm(t, set, "c"); !unavailable(err, "the agent holds 2 realms, the most it keeps") {
+			t.Errorf("LookupOrReload(realm c) at 89 s error = %v, want the reason %q", err, "the agent holds 2 realms, the most it keeps")
 		}
 		time.Sleep(time.Second)
 		if _, err := lookupRealm(t, set, "c"); err != nil {
@@ -566,8 +566,8 @@ func TestLookupOrReload_ARealmRefusedForTheRealmLimitTakesNoLoad(t *testing.T) {
 		}
 		time.Sleep(time.Minute)
 		for range maxLoadsPerMinute {
-			if _, err := lookupRealm(t, set, "tenant-3"); !errors.Is(err, ErrKeyUnknown) {
-				t.Fatalf("LookupOrReload(realm tenant-3) error = %v, want %v", err, ErrKeyUnknown)
+			if _, err := lookupRealm(t, set, "tenant-3"); !unavailable(err, "the agent holds 2 realms, the most it keeps") {
+				t.Fatalf("LookupOrReload(realm tenant-3) error = %v, want the reason %q", err, "the agent holds 2 realms, the most it keeps")
 			}
 		}
 		kc.publishRealm("tenant-1", ecJWK(t, "k1", nil), ecJWK(t, "k2", nil))
@@ -602,27 +602,32 @@ func TestLookupOrReload_ARealmThatLostItsKeysKeepsItsPlace(t *testing.T) {
 		if _, err := lookupRealm(t, set, "c"); err != nil {
 			t.Errorf("LookupOrReload(realm c) at 60 s error = %v, want the place of realm ghost", err)
 		}
-		if _, err := lookupRealm(t, set, "d"); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(realm d) at 60 s error = %v, want %v for the limit of realms", err, ErrKeyUnknown)
+		if _, err := lookupRealm(t, set, "d"); !unavailable(err, "the agent holds 2 realms, the most it keeps") {
+			t.Errorf("LookupOrReload(realm d) at 60 s error = %v, want the reason %q", err, "the agent holds 2 realms, the most it keeps")
 		}
 	})
 }
 
 // The realm that loaded keys answers 404 from then on, and its keys stay, also
-// when the Set drops the realms that failed. The error names it as a realm, and
-// a token of another kid gets ErrKeyUnknown, as a token of any realm that
-// holds keys does.
+// when the Set drops the realms that failed. The warning names it as a realm,
+// and Lookup gives a token of another kid ErrKeyUnknown.
 func TestRefresh_ARealmThatDisappearsKeepsItsKeys(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		kc := newKeycloakTransport(t)
 		kc.publishRealm("tenant-1", ecJWK(t, "k1", nil))
-		set := keycloakSet(t, kc, testOptions())
+		log := &warnRecorder{}
+		opts := testOptions()
+		opts.Log = log
+		set := keycloakSet(t, kc, opts)
 		if _, err := lookupRealm(t, set, "tenant-1"); err != nil {
 			t.Fatalf("LookupOrReload() error = %v", err)
 		}
 		kc.removeRealm("tenant-1")
-		if err := set.Refresh(t.Context()); err == nil || !strings.Contains(err.Error(), `realm "tenant-1" of provider "identity-provider" keeps its previous keys`) {
-			t.Errorf("Refresh() error = %v, want an error saying the realm keeps its keys", err)
+		if err := set.Refresh(t.Context()); err != nil {
+			t.Errorf("Refresh() error = %v, want none: a realm outside readinessRealms gets a warning of its own", err)
+		}
+		if want := `trusted providers: reload: realm "tenant-1" of provider "identity-provider" keeps its previous keys after a load that got HTTP 404: GET `; log.count(want) != 1 {
+			t.Errorf("warnings = %q, want one that starts with %q", log.warnings, want)
 		}
 		time.Sleep(time.Hour)
 		_, _ = lookupRealm(t, set, "ghost")
@@ -639,21 +644,27 @@ func TestRefresh_ARealmThatDisappearsKeepsItsKeys(t *testing.T) {
 func TestRefresh_DropsARealmThatFailedAMinuteAgo(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		kc := newKeycloakTransport(t)
-		set := keycloakSet(t, kc, testOptions())
+		log := &warnRecorder{}
+		opts := testOptions()
+		opts.Log = log
+		set := keycloakSet(t, kc, opts)
 		_, _ = lookupRealm(t, set, "ghost")
 		time.Sleep(59 * time.Second)
-		if err := set.Refresh(t.Context()); err == nil {
-			t.Errorf("Refresh() at 59 s error = nil, want the 404 of the realm")
-		}
+		_ = set.Refresh(t.Context())
+		const warning = `trusted providers: reload: realm "ghost" of provider "identity-provider" has no keys after a load that got HTTP 404`
 		if got := kc.loadsOf("ghost"); got != 2 {
 			t.Errorf("JWKS requests at 59 s = %d, want 2", got)
 		}
-		time.Sleep(time.Second)
-		if err := set.Refresh(t.Context()); err != nil {
-			t.Errorf("Refresh() at 60 s error = %v, want none", err)
+		if got := log.count(warning); got != 1 {
+			t.Errorf("warnings about the reload of the realm at 59 s = %d, want 1; warnings: %q", got, log.warnings)
 		}
+		time.Sleep(time.Second)
+		_ = set.Refresh(t.Context())
 		if got := kc.loadsOf("ghost"); got != 2 {
 			t.Errorf("JWKS requests at 60 s = %d, want 2", got)
+		}
+		if got := log.count(warning); got != 1 {
+			t.Errorf("warnings about the reload of the realm by 60 s = %d, want 1; warnings: %q", got, log.warnings)
 		}
 	})
 }
@@ -703,6 +714,241 @@ func TestReady_WaitsForTheRequiredRealmAndNotForAnyOther(t *testing.T) {
 	}
 }
 
+// Each realm holds no keys, and its first load gets the response the row
+// names. The lookup 30 s later falls in the minute in which the realm is not
+// asked again, and gets the error of that first load.
+func TestLookupOrReload_RefusesATokenOfARealmWithoutKeysWithTheErrorOfItsFirstLoad(t *testing.T) {
+	tests := []struct {
+		name    string
+		respond func(t *testing.T, kc *fakeTransport)
+		want    error
+	}{
+		{"404", func(*testing.T, *fakeTransport) {}, ErrKeyUnknown},
+		{"503", func(_ *testing.T, kc *fakeTransport) { kc.setStatus(keycloakHost, http.StatusServiceUnavailable) }, ErrKeysUnavailable},
+		{"JWKS of an encryption key alone", func(t *testing.T, kc *fakeTransport) {
+			kc.publishRealm("ghost", ecJWK(t, "enc", map[string]any{"use": "enc"}))
+		}, ErrKeyUnknown},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				kc := newKeycloakTransport(t)
+				tt.respond(t, kc)
+				set := keycloakSet(t, kc, testOptions())
+				for _, at := range []string{"0 s", "30 s"} {
+					if _, err := lookupRealm(t, set, "ghost"); !errors.Is(err, tt.want) {
+						t.Errorf("LookupOrReload() at %s error = %v, want %v", at, err, tt.want)
+					}
+					time.Sleep(30 * time.Second)
+				}
+				if got := kc.loadsOf("ghost"); got != 1 {
+					t.Errorf("JWKS requests for the realm in its first minute = %d, want 1", got)
+				}
+			})
+		})
+	}
+}
+
+// The 404 carries a body whose every read fails, so the lookup gets
+// ErrKeyUnknown only when the load decides by the status without reading the
+// body.
+func TestLookupOrReload_DecidesA404ByItsStatusWithoutReadingItsBody(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		transport := roundTripper(func(*http.Request) (*http.Response, error) {
+			return &http.Response{StatusCode: http.StatusNotFound, Body: errorBody{}}, nil
+		})
+		set := bubbleSetOf(t, Config{Providers: []Provider{keycloakProvider()}}, testOptions(), transport)
+		if _, err := lookupRealm(t, set, "ghost"); !errors.Is(err, ErrKeyUnknown) {
+			t.Errorf("LookupOrReload() error = %v, want %v", err, ErrKeyUnknown)
+		}
+	})
+}
+
+// The hourly reload may ask a realm once more within its minute, and the token
+// after it gets the code of that load.
+func TestLookupOrReload_RefusesATokenOfARealmWithoutKeysWithTheCodeOfItsLastLoad(t *testing.T) {
+	tests := []struct {
+		name          string
+		first, reload int
+		want          error
+	}{
+		{"404 and then 503", http.StatusNotFound, http.StatusServiceUnavailable, ErrKeysUnavailable},
+		{"503 and then 404", http.StatusServiceUnavailable, http.StatusNotFound, ErrKeyUnknown},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				kc := newKeycloakTransport(t)
+				kc.setStatus(keycloakHost, tt.first)
+				set := keycloakSet(t, kc, testOptions())
+				_, _ = lookupRealm(t, set, "ghost")
+				time.Sleep(30 * time.Second)
+				kc.setStatus(keycloakHost, tt.reload)
+				_ = set.Refresh(t.Context())
+				if _, err := lookupRealm(t, set, "ghost"); !errors.Is(err, tt.want) {
+					t.Errorf("LookupOrReload() after the reload error = %v, want %v", err, tt.want)
+				}
+				if got := kc.loadsOf("ghost"); got != 2 {
+					t.Errorf("JWKS requests for the realm = %d, want 2: the first load and the reload", got)
+				}
+			})
+		})
+	}
+}
+
+func TestLookupOrReload_LogsTheProviderTheRealmAndTheAddressOfA404(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		kc := newKeycloakTransport(t)
+		log := &warnRecorder{}
+		opts := testOptions()
+		opts.Log = log
+		set := keycloakSet(t, kc, opts)
+		_, _ = lookupRealm(t, set, "ghost")
+		synctest.Wait()
+		want := `trusted providers: on-demand load: realm "ghost" of provider "identity-provider" has no keys after a load that got HTTP 404: ` +
+			`GET ` + keycloakURL + jwksPath("ghost") + `: HTTP 404`
+		if !slices.Equal(log.warnings, []string{want}) {
+			t.Errorf("warnings = %q, want %q", log.warnings, want)
+		}
+	})
+}
+
+// The required realm answers 404 until the test publishes it, so Run retries
+// it and the Pod stays not ready, and its token gets ErrKeyUnknown.
+func TestRun_RetriesARequiredRealmThatAnswers404(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		kc := newKeycloakTransport(t)
+		set := bubbleSetOf(t, Config{Providers: []Provider{keycloakProvider("cloud-common")}}, testOptions(), kc)
+		stop := runSet(t, set)
+		defer stop()
+		synctest.Wait()
+		if set.Ready() {
+			t.Errorf("Ready() = true while the required realm answers 404, want false")
+		}
+		if _, err := set.Lookup(Query{Issuer: iss("cloud-common"), KID: "k1"}); !errors.Is(err, ErrKeyUnknown) {
+			t.Errorf("Lookup() while the required realm answers 404: error = %v, want %v", err, ErrKeyUnknown)
+		}
+		kc.publishRealm("cloud-common", ecJWK(t, "k1", nil))
+		time.Sleep(time.Second)
+		synctest.Wait()
+		if !set.Ready() {
+			t.Errorf("Ready() after the required realm answered = false, want true")
+		}
+	})
+}
+
+// The realm holds no keys, and its first load gets the response the row
+// names, a JWKS that does not list the kid k1 of the token.
+func TestLookupOrReload_RefusesAKIDOfARealmWhoseLoadGotAJWKSWithoutItAsUnknown(t *testing.T) {
+	tests := []struct {
+		name  string
+		serve func(t *testing.T, transport *fakeTransport)
+	}{
+		{"JWKS whose keys array is empty", func(_ *testing.T, transport *fakeTransport) { transport.setJWKS([]byte(`{"keys": []}`)) }},
+		{"JWKS of another kid", func(t *testing.T, transport *fakeTransport) { transport.publish(t, ecJWK(t, "other", nil)) }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				transport := newFakeTransport(t)
+				tt.serve(t, transport)
+				set := bubbleSetOf(t, Config{Providers: []Provider{keycloakProvider()}}, testOptions(), transport)
+				if _, err := lookupRealm(t, set, "tenant-1"); !errors.Is(err, ErrKeyUnknown) {
+					t.Errorf("LookupOrReload() error = %v, want %v", err, ErrKeyUnknown)
+				}
+			})
+		})
+	}
+}
+
+// The realm holds no keys, and its first load gets the response the row
+// names. Where that response lists the kid k1 of the token, only the refusal
+// of the response keeps the key from the token.
+func TestLookupOrReload_RefusesAKIDOfARealmWhoseLoadFailedAsUnavailable(t *testing.T) {
+	tests := []struct {
+		name  string
+		serve func(t *testing.T, transport *fakeTransport)
+	}{
+		{"body that is not JSON", func(_ *testing.T, transport *fakeTransport) { transport.setJWKS([]byte(`<html></html>`)) }},
+		{"JWKS whose keys is null", func(_ *testing.T, transport *fakeTransport) { transport.setJWKS([]byte(`{"keys": null}`)) }},
+		{"JWKS whose keys member is spelled Keys", func(t *testing.T, transport *fakeTransport) {
+			transport.setJWKS([]byte(`{"Keys": [` + string(ecJWK(t, "k1", nil)) + `]}`))
+		}},
+		{"JWKS of the kid one byte over 1 MiB", func(t *testing.T, transport *fakeTransport) {
+			transport.setJWKS(paddedJWKS(ecJWK(t, "k1", nil), maxResponseBytes+1))
+		}},
+		{"403", func(_ *testing.T, transport *fakeTransport) {
+			transport.setStatus(keycloakHost, http.StatusForbidden)
+		}},
+		{"503", func(_ *testing.T, transport *fakeTransport) {
+			transport.setStatus(keycloakHost, http.StatusServiceUnavailable)
+		}},
+		{"refused connection", func(_ *testing.T, transport *fakeTransport) { transport.setDown() }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				transport := newFakeTransport(t)
+				tt.serve(t, transport)
+				set := bubbleSetOf(t, Config{Providers: []Provider{keycloakProvider()}}, testOptions(), transport)
+				if _, err := lookupRealm(t, set, "tenant-1"); !unavailable(err, reasonOfAFailedLoad) {
+					t.Errorf("LookupOrReload() error = %v, want the reason %q", err, reasonOfAFailedLoad)
+				}
+			})
+		})
+	}
+}
+
+// A load of the provider that got HTTP 404 keeps the keys the provider holds:
+// none when it never loaded a key, none when a reload of an encryption key
+// alone removed them, and k1 when it holds k1. A token of the kid k2, which no
+// row holds, gets ErrKeyUnknown from both lookups.
+func TestLookupOrReload_KeepsTheKeysOfASingleProviderThatAnswers404(t *testing.T) {
+	tests := []struct {
+		name    string
+		prepare func(t *testing.T, set *Set, transport *fakeTransport)
+		keepsK1 bool
+	}{
+		{"provider that never loaded a key", func(*testing.T, *Set, *fakeTransport) {}, false},
+		{"provider that lost its keys", func(t *testing.T, set *Set, transport *fakeTransport) {
+			if err := set.Refresh(t.Context()); err != nil {
+				t.Fatalf("Refresh() error = %v", err)
+			}
+			transport.publish(t, ecJWK(t, "enc", map[string]any{"use": "enc"}))
+			_ = set.Refresh(t.Context())
+		}, false},
+		{"provider that holds its keys", func(t *testing.T, set *Set, _ *fakeTransport) {
+			if err := set.Refresh(t.Context()); err != nil {
+				t.Fatalf("Refresh() error = %v", err)
+			}
+		}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				transport := newFakeTransport(t)
+				provider := providerOf(KubernetesID)
+				set := bubbleSetOf(t, Config{Providers: []Provider{provider}}, testOptions(), transport)
+				tt.prepare(t, set, transport)
+				transport.setStatus("idp.test", http.StatusNotFound)
+				if err := set.Refresh(t.Context()); !strings.Contains(fmt.Sprint(err), "after a load that got HTTP 404: ") {
+					t.Errorf("Refresh() error = %v, want one that names the 404", err)
+				}
+				if _, err := set.Lookup(Query{Issuer: provider.Issuer, KID: "k1"}); (err == nil) != tt.keepsK1 {
+					t.Errorf("Lookup(k1) after a 404 error = %v, want the key found: %t", err, tt.keepsK1)
+				}
+				q := Query{Issuer: provider.Issuer, KID: "k2"}
+				if _, err := set.Lookup(q); !errors.Is(err, ErrKeyUnknown) {
+					t.Errorf("Lookup(k2) after a 404 error = %v, want %v", err, ErrKeyUnknown)
+				}
+				if _, err := set.LookupOrReload(t.Context(), q); !errors.Is(err, ErrKeyUnknown) {
+					t.Errorf("LookupOrReload(k2) after a 404 error = %v, want %v", err, ErrKeyUnknown)
+				}
+			})
+		})
+	}
+}
+
 // Ten invented realms use up the limit of loads of the provider
 // identity-provider. The provider kubernetes then publishes a new key, which
 // its token loads, and a new realm of identity-provider loads nothing.
@@ -720,8 +966,8 @@ func TestLookupOrReload_KeepsTheLimitOfLoadsOfEachProviderApart(t *testing.T) {
 		if _, err := set.LookupOrReload(t.Context(), Query{Issuer: k8s.Issuer, KID: "rotated"}); err != nil {
 			t.Errorf("LookupOrReload(the rotated key of provider kubernetes) error = %v, want none", err)
 		}
-		if _, err := lookupRealm(t, set, "tenant-1"); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(realm tenant-1) error = %v, want %v", err, ErrKeyUnknown)
+		if _, err := lookupRealm(t, set, "tenant-1"); !unavailable(err, reasonOfTheLoadLimit) {
+			t.Errorf("LookupOrReload(realm tenant-1) error = %v, want the reason %q", err, reasonOfTheLoadLimit)
 		}
 		if got := kc.loadsOf("tenant-1"); got != 0 {
 			t.Errorf("JWKS requests for realm tenant-1 = %d, want 0", got)

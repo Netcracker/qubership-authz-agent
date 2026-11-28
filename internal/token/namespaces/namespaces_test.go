@@ -246,14 +246,14 @@ func TestAllowlist_IsSafeForConcurrentUse(t *testing.T) {
 // oneKey is a verify.KeyFinder that publishes one key.
 type oneKey struct{ key keys.Key }
 
-func (o oneKey) Lookup(q keys.Query) (keys.Key, error) {
+func (o oneKey) Lookup(q keys.Query) ([]keys.Key, error) {
 	if q.KID != o.key.ID {
-		return keys.Key{}, keys.ErrKeyUnknown
+		return nil, keys.ErrKeyUnknown
 	}
-	return o.key, nil
+	return []keys.Key{o.key}, nil
 }
 
-func (o oneKey) LookupOrReload(_ context.Context, q keys.Query) (keys.Key, error) {
+func (o oneKey) LookupOrReload(_ context.Context, q keys.Query) ([]keys.Key, error) {
 	return o.Lookup(q)
 }
 

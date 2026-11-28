@@ -18,7 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
+	"maps"
 	"sync"
 	"sync/atomic"
 )
@@ -35,60 +35,86 @@ type source struct {
 
 	// reloading serializes the fetches of this source.
 	reloading sync.Mutex
-	// current holds what the last load left, and nil before the first load
-	// ends.
+	// current holds what the last load that ended left, and an empty
+	// loadResult before the first load ends. Each load stores a new value and
+	// changes no stored one, so two values read at different times are the
+	// same pointer only when no load stored a result in between.
 	current atomic.Pointer[loadResult]
 	// loaded is set by the first load that finds a usable key, and stays set.
 	loaded atomic.Bool
 }
 
-// loadResult is what a load leaves for the lookups after it.
+// result is what a load that ended decides about its source.
+type result int
+
+// The values of result.
+const (
+	// noResult is the result of a source whose first load has not ended.
+	noResult result = iota
+	// answer is the result of a load that got a JWKS, as
+	// [Set.LookupOrReload] defines it.
+	answer
+	// notFound is the result of a load that got HTTP 404.
+	notFound
+	// failedLoad is the result of any other load.
+	failedLoad
+)
+
+// loadResult is what a load leaves for the lookups after it. One value holds
+// the keys and the result, so a lookup reads both from the same load.
 type loadResult struct {
-	// keys holds the keys loaded last: those of this load, or those it kept
-	// when it failed. It is nil when no load found a usable signing key, and
-	// after a load that got a JWKS without one.
-	keys []Key
+	// keys holds the keys loaded last by kid, each list in the order of the
+	// JWKS. After an answer they are the keys of that answer; after a 404 or a
+	// failed load, the keys the source held before that load. It is nil when
+	// no load found a usable signing key, and after an answer without one.
+	keys   map[string][]Key
+	result result
 }
 
-// last returns what the last load left, and an empty loadResult before the
-// first load ends.
-func (src *source) last() loadResult {
-	if p := src.current.Load(); p != nil {
-		return *p
-	}
-	return loadResult{}
-}
+// last returns what the last load that ended left.
+func (src *source) last() loadResult { return *src.current.Load() }
 
 // label names the source in a log line or an error: realm "<name>" of
 // provider "<id>" for a realm, provider "<id>" for a single provider.
 func (src *source) label() string { return src.fetcher.source.label() }
 
-// find returns the key of r with the given kid, and false when there is none.
-// [fetcher.parseJWKS] keeps one key per kid.
-func (r loadResult) find(kid string) (Key, bool) {
-	if i := slices.IndexFunc(r.keys, func(k Key) bool { return k.ID == kid }); i >= 0 {
-		return r.keys[i], true
-	}
-	return Key{}, false
-}
-
-// find returns the key with the given kid among the keys loaded last, and
+// find returns the keys of r with the given kid in the order of the JWKS, and
 // false when there is none.
-func (src *source) find(kid string) (Key, bool) { return src.last().find(kid) }
-
-// lookup returns the key with the given kid among the keys loaded last, and
-// [ErrKeyUnknown] when there is none.
-func (src *source) lookup(kid string) (Key, error) {
-	if key, ok := src.find(kid); ok {
-		return key, nil
-	}
-	return Key{}, ErrKeyUnknown
+func (r loadResult) find(kid string) ([]Key, bool) {
+	keys, ok := r.keys[kid]
+	return keys, ok
 }
 
-// reload fetches the keys once and replaces the loaded ones. A fetch that
-// fails keeps them, and a JWKS without a usable signing key removes them, so
-// the tokens they signed are refused. Each failure returns an error that names
-// the source and what happened to its keys.
+// find returns the keys with the given kid among the keys loaded last, and
+// false when there is none.
+func (src *source) find(kid string) ([]Key, bool) { return src.last().find(kid) }
+
+// lookup returns the keys with the given kid among the keys loaded last, and
+// [ErrKeyUnknown] when there is none.
+func (src *source) lookup(kid string) ([]Key, error) {
+	if keys, ok := src.find(kid); ok {
+		return keys, nil
+	}
+	return nil, ErrKeyUnknown
+}
+
+// lookupErr returns the error of a lookup that counts r and finds no key in
+// it, as [Set.LookupOrReload] describes. A lookup that waited for a load
+// counts r only when a load stored it, so r is never noResult here; for that
+// case it returns what it returns for failedLoad.
+func (r *loadResult) lookupErr() error {
+	if r.result == answer || r.result == notFound {
+		return ErrKeyUnknown
+	}
+	return &UnavailableError{Reason: reasonFailedLoad}
+}
+
+// reload fetches the keys once, stores the result, and replaces the loaded
+// keys. An answer with usable signing keys replaces them, and an answer
+// without one removes them, so the tokens they signed are refused. A load that
+// gets HTTP 404, and every other load that does not get a JWKS, keeps the
+// keys. Each load that does not end with usable keys returns an error that
+// names the source, what its load ended with, and what happened to its keys.
 func (src *source) reload(ctx context.Context) error {
 	src.reloading.Lock()
 	defer src.reloading.Unlock()
@@ -97,31 +123,39 @@ func (src *source) reload(ctx context.Context) error {
 	previous := src.last().keys
 	switch {
 	case errors.Is(err, errNoUsableKey):
-		src.current.Store(&loadResult{})
+		src.current.Store(&loadResult{result: answer})
 		return fmt.Errorf("%s has no keys, and its tokens are refused until a reload finds a usable key: %w", src.label(), err)
 	case err != nil:
-		src.current.Store(&loadResult{keys: previous})
-		if len(previous) == 0 {
-			return fmt.Errorf("%s has no keys: %w", src.label(), err)
+		result, ended := failedLoad, "a failed load"
+		if isNotFound(err) {
+			result, ended = notFound, "a load that got HTTP 404"
 		}
-		return fmt.Errorf("%s keeps its previous keys: %w", src.label(), err)
+		src.current.Store(&loadResult{keys: previous, result: result})
+		if len(previous) == 0 {
+			return fmt.Errorf("%s has no keys after %s: %w", src.label(), ended, err)
+		}
+		return fmt.Errorf("%s keeps its previous keys after %s: %w", src.label(), ended, err)
 	}
-	src.current.Store(&loadResult{keys: fetched})
+	loaded := byKID(fetched)
+	src.current.Store(&loadResult{keys: loaded, result: answer})
 	src.loaded.Store(true)
-	if !sameKIDs(previous, fetched) {
+	if !sameKIDs(previous, loaded) {
 		src.fetcher.log.Infof("trusted providers: %s now publishes %s", src.label(), countOf(len(fetched), "signing key"))
 	}
 	return nil
 }
 
-func sameKIDs(a, b []Key) bool {
-	ids := func(keys []Key) []string {
-		out := make([]string, len(keys))
-		for i, k := range keys {
-			out[i] = k.ID
-		}
-		slices.Sort(out)
-		return out
+// byKID groups keys by kid, each list in the order of keys.
+func byKID(keys []Key) map[string][]Key {
+	out := make(map[string][]Key)
+	for _, k := range keys {
+		out[k.ID] = append(out[k.ID], k)
 	}
-	return slices.Equal(ids(a), ids(b))
+	return out
+}
+
+// sameKIDs reports whether a and b hold the same kids with the same number of
+// keys under each.
+func sameKIDs(a, b map[string][]Key) bool {
+	return maps.EqualFunc(a, b, func(x, y []Key) bool { return len(x) == len(y) })
 }

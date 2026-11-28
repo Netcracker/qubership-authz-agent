@@ -23,6 +23,7 @@ import (
 	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -183,6 +184,16 @@ func singleOf(id string, idp *fakeIdP) Provider {
 	return Provider{ID: id, Type: Single, Issuer: idp.srv.URL, JWKSURI: idp.srv.URL + "/jwks", Audience: ignoreAudience}
 }
 
+// onlyKey returns the one key of found, the keys a lookup returned for a kid
+// that its source lists once.
+func onlyKey(t *testing.T, found []Key) Key {
+	t.Helper()
+	if len(found) != 1 {
+		t.Fatalf("lookup returned %d keys, want 1", len(found))
+	}
+	return found[0]
+}
+
 // ecJWK returns the public JWK of a new P-256 key with kid, alg ES256, and
 // use sig. Each entry of fields sets that member of the JWK, and a nil value
 // removes it.
@@ -246,6 +257,26 @@ func rsaJWK(t *testing.T, bits int, kid string, fields map[string]any) json.RawM
 		"e":   base64.RawURLEncoding.EncodeToString(big.NewInt(int64(private.E)).Bytes()),
 	}
 	return withMembers(t, members, map[string]any{"kid": kid, "alg": "RS256", "use": "sig"}, fields)
+}
+
+// twinJWKs returns a JWK of one new RSA key under the kid twin, with alg RS256
+// and use sig, for each of fields, applied as in ecJWK.
+func twinJWKs(t *testing.T, fields ...map[string]any) []json.RawMessage {
+	t.Helper()
+	private, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := make([]json.RawMessage, len(fields))
+	for i, f := range fields {
+		members := map[string]any{
+			"kty": "RSA",
+			"n":   base64.RawURLEncoding.EncodeToString(private.N.Bytes()),
+			"e":   base64.RawURLEncoding.EncodeToString(big.NewInt(int64(private.E)).Bytes()),
+		}
+		out[i] = withMembers(t, members, map[string]any{"kid": "twin", "alg": "RS256", "use": "sig"}, f)
+	}
+	return out
 }
 
 func publicJWK(t *testing.T, public any, defaults, fields map[string]any) json.RawMessage {
@@ -366,6 +397,19 @@ func (r *warnRecorder) count(part string) int {
 		}
 	}
 	return matched
+}
+
+// The reasons of an UnavailableError that need no value of a Set.
+const (
+	reasonOfTheLoadLimit  = "the agent started 10 on-demand loads of the provider in the last minute, the most it allows for one provider"
+	reasonOfAFailedLoad   = "the last load of the source failed"
+	reasonOfAnEndedCaller = "the caller stopped waiting before the load ended"
+)
+
+// unavailable reports whether err is an *UnavailableError with reason.
+func unavailable(err error, reason string) bool {
+	u, ok := errors.AsType[*UnavailableError](err)
+	return ok && u.Reason == reason
 }
 
 // errorText returns the text of err, and "" for nil.

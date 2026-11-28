@@ -16,6 +16,7 @@ package keys
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -35,7 +36,7 @@ type realmKey struct {
 
 // realmSource returns the source of the realm name of the realms provider t,
 // adding it and starting its first load when no token named that realm
-// before. It returns [ErrKeyUnknown] when the limit of
+// before. It returns an [*UnavailableError] when the limit of
 // [maxLoadsPerMinute] on-demand loads of t refuses another, and when the Set
 // already holds [Options.maxRealms] realms. A realm that is not required and
 // never loaded a usable key stays for a minute after its last load started, so
@@ -61,13 +62,13 @@ func (s *Set) realmSource(ctx context.Context, t *trusted, name string) (*source
 	now := time.Now()
 	if !t.loads.take(now) {
 		s.warnOnce(now, "trusted providers: realm %q of provider %q is not loaded, and its tokens are refused for now: %s", name, t.provider.ID, t.loadLimitReason())
-		return nil, ErrKeyUnknown
+		return nil, &UnavailableError{Reason: reasonLoadLimit}
 	}
 	s.dropFailedRealms(now)
 	if len(s.realms) >= s.opts.maxRealms {
 		t.loads.refund(now)
 		s.warnOnce(now, "trusted providers: realm %q of provider %q is not loaded, and its tokens are refused: the agent holds %d realms, the most it keeps", name, t.provider.ID, s.opts.maxRealms)
-		return nil, ErrKeyUnknown
+		return nil, &UnavailableError{Reason: fmt.Sprintf("the agent holds %d realms, the most it keeps", s.opts.maxRealms)}
 	}
 	src := s.newSource(t, Source{Provider: t.provider, Realm: name}, t.jwks.with(name), false)
 	s.realms[key] = src

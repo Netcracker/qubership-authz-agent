@@ -15,9 +15,7 @@
 package keys
 
 import (
-	"bytes"
 	"context"
-	"crypto"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
@@ -134,11 +132,25 @@ func newClient(timeout time.Duration) *http.Client {
 // A reload that gets it removes the keys of the source.
 var errNoUsableKey = errors.New("no usable signing key")
 
+// statusError reports a response whose status is not 2xx.
+type statusError struct {
+	url    string
+	status int
+}
+
+func (e *statusError) Error() string { return fmt.Sprintf("GET %s: HTTP %d", e.url, e.status) }
+
+// isNotFound reports whether err holds a [statusError] for HTTP 404.
+func isNotFound(err error) bool {
+	status, ok := errors.AsType[*statusError](err)
+	return ok && status.status == http.StatusNotFound
+}
+
 // fetch downloads the JWKS of the source and returns its signing keys. It
-// fails when the request fails or answers a status other than 2xx, when the
-// body is longer than maxResponseBytes or is not the JSON of a JWKS, and when
-// the JWKS lists two different keys under one kid; a JWKS without a usable
-// signing key fails with errNoUsableKey.
+// fails with a *statusError when the response is not 2xx. It also fails when
+// the request fails, and when the body is longer than maxResponseBytes or is
+// not the JSON of a JWKS; a JWKS without a usable signing key fails with
+// errNoUsableKey.
 func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 	body, err := f.get(ctx)
 	if err != nil {
@@ -153,7 +165,8 @@ func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 
 // get returns the body of a 2xx response to a GET of the address, with the
 // bearer token of the [Provider.JWKSBearerTokenFile] of a provider that sets
-// one. Any other status, a redirect included, is an error.
+// one. Any other status, a redirect included, is a *statusError, and its body
+// is not read.
 func (f *fetcher) get(ctx context.Context) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, f.address, nil)
 	if err != nil {
@@ -172,12 +185,12 @@ func (f *fetcher) get(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, &statusError{url: f.address, status: resp.StatusCode}
+	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes+1))
 	if err != nil {
 		return nil, fmt.Errorf("GET %s: read body: %w", f.address, err)
-	}
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, fmt.Errorf("GET %s: HTTP %d", f.address, resp.StatusCode)
 	}
 	if len(body) > maxResponseBytes {
 		return nil, fmt.Errorf("GET %s: response is longer than %d bytes", f.address, maxResponseBytes)
@@ -197,32 +210,32 @@ func readToken(path string) (string, error) {
 	return token, nil
 }
 
-// parseJWKS returns the signing keys of a JWKS document. A key that cannot sign
-// a token the service accepts is skipped, and when the parse loads a key,
-// [fetcher.reportSkipped] reports the skipped keys. The same key listed twice
-// under one kid is kept once. A keys member that is null counts as an empty
-// array, the way a Go server writes an empty key set; one that is missing or
-// holds another value is an error. So is a JWKS left with no usable signing
-// key, which fails with errNoUsableKey and the [skippedKeys.describe] text: the
-// reasons of the first maxListedSkippedKeys skipped keys, the count of the
-// rest, and the count of encryption keys.
+// parseJWKS returns the signing keys of a JWKS document in the order of the
+// entries of its keys array. The member of the document named exactly keys
+// holds that array; a document without that member, or with null or another
+// value in it, is an error. Each usable
+// entry is a key of its own, also where several entries share a kid. A key
+// that cannot sign a token the service accepts is skipped, and when the parse
+// loads a key, [fetcher.reportSkipped] reports the skipped keys. A JWKS left
+// with no usable signing key fails with errNoUsableKey and the
+// [skippedKeys.describe] text: the reasons of the first maxListedSkippedKeys
+// skipped keys, the count of the rest, and the count of encryption keys.
 func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
-	var doc struct {
-		Keys json.RawMessage `json:"keys"`
-	}
+	// A map, unlike a struct, matches a member by its exact name.
+	var doc map[string]json.RawMessage
 	if err := json.Unmarshal(body, &doc); err != nil {
 		return nil, err
 	}
-	if doc.Keys == nil {
+	keys, ok := doc["keys"]
+	if !ok || isNull(keys) {
 		return nil, errors.New("no keys array")
 	}
 	var entries []json.RawMessage
-	if err := json.Unmarshal(doc.Keys, &entries); err != nil {
+	if err := json.Unmarshal(keys, &entries); err != nil {
 		return nil, fmt.Errorf("keys is not an array: %w", err)
 	}
 	var out []Key
 	var skipped skippedKeys
-	thumbprints := make(map[string][]byte, len(entries))
 	for i, raw := range entries {
 		key, reason := signingKey(raw)
 		if reason == encryptionKey {
@@ -233,18 +246,6 @@ func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 			skipped.add(i, raw, reason)
 			continue
 		}
-		thumbprint, err := key.JWK.Thumbprint(crypto.SHA256)
-		if err != nil {
-			skipped.add(i, raw, fmt.Sprintf("thumbprint: %q", err.Error()))
-			continue
-		}
-		if earlier, seen := thumbprints[key.ID]; seen {
-			if bytes.Equal(earlier, thumbprint) {
-				continue
-			}
-			return nil, fmt.Errorf("kid %q names two different keys", key.ID)
-		}
-		thumbprints[key.ID] = thumbprint
 		key.Source = f.source
 		out = append(out, key)
 	}
@@ -328,9 +329,10 @@ func countOf(n int, noun string) string {
 // reportSkipped warns about the keys that a parse which loaded a key skipped,
 // other than encryption keys, when they differ from the keys that the last such
 // parse skipped. A source is parsed on every load, and an unchanged JWKS says
-// nothing new. A parse that loads no key does not call it: its errNoUsableKey
-// error lists the keys, and the hourly reload may log that error for only one
-// realm of many, so the next parse that loads a key reports them.
+// nothing new. A parse that loads no key does not call it, because its
+// errNoUsableKey error already lists the skipped keys. The record of skipped
+// keys then stays as the last parse that loaded a key left it, and the next
+// such parse compares against that record.
 func (f *fetcher) reportSkipped(keys skippedKeys) {
 	if keys.entries == f.skipped {
 		return

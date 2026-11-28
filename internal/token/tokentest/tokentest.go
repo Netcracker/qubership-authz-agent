@@ -159,19 +159,19 @@ func (i *Issuer) KubernetesKeys() verify.KeyFinder {
 type kubernetesKeys struct{ key keys.Key }
 
 // Lookup implements [verify.KeyFinder].
-func (k kubernetesKeys) Lookup(q keys.Query) (keys.Key, error) {
+func (k kubernetesKeys) Lookup(q keys.Query) ([]keys.Key, error) {
 	if q.Issuer != k.key.Source.Provider.Issuer {
-		return keys.Key{}, keys.ErrIssuerUnknown
+		return nil, keys.ErrIssuerUnknown
 	}
 	if q.KID != k.key.ID {
-		return keys.Key{}, keys.ErrKeyUnknown
+		return nil, keys.ErrKeyUnknown
 	}
-	return k.key, nil
+	return []keys.Key{k.key}, nil
 }
 
 // LookupOrReload implements [verify.KeyFinder]. It loads nothing, so it
 // returns what [kubernetesKeys.Lookup] returns.
-func (k kubernetesKeys) LookupOrReload(_ context.Context, q keys.Query) (keys.Key, error) {
+func (k kubernetesKeys) LookupOrReload(_ context.Context, q keys.Query) ([]keys.Key, error) {
 	return k.Lookup(q)
 }
 

@@ -88,8 +88,42 @@ const (
 var (
 	// ErrIssuerUnknown reports an issuer that matches no [Provider].
 	ErrIssuerUnknown = errors.New("issuer is not trusted")
-	// ErrKeyUnknown reports that no loaded key of the source has the kid.
+	// ErrKeyUnknown reports that no loaded key of the source has the kid. From
+	// [Set.LookupOrReload] it also means that the result the lookup counts is
+	// an answer or a 404: a load got a JWKS or HTTP 404 from the source.
 	ErrKeyUnknown = errors.New("no loaded key has the kid")
+	// ErrKeysUnavailable reports that no loaded key of the source has the kid,
+	// and that the result the lookup counts is a failed load, or that it counts
+	// no result. [Set.LookupOrReload] says which result a lookup counts, and
+	// returns this error as an [*UnavailableError] whose Reason says why.
+	ErrKeysUnavailable = errors.New("the keys of the source are not available")
+)
+
+// UnavailableError is the [ErrKeysUnavailable] of one lookup.
+type UnavailableError struct {
+	// Reason says why the lookup counts no answer. It names no source and no
+	// provider, because the signature of the token is not checked yet, and
+	// the token only claims to come from that source.
+	Reason string
+}
+
+// Error returns the text of [ErrKeysUnavailable] and the reason.
+func (e *UnavailableError) Error() string { return ErrKeysUnavailable.Error() + ": " + e.Reason }
+
+// Is reports whether target is [ErrKeysUnavailable].
+func (e *UnavailableError) Is(target error) bool { return target == ErrKeysUnavailable }
+
+// The reasons of an [UnavailableError] that need no value of a [Set].
+var (
+	// reasonFailedLoad is the reason when the result a lookup counts is a
+	// failed load.
+	reasonFailedLoad = "the last load of the source failed"
+	// reasonLoadLimit is the reason when the limit of [maxLoadsPerMinute]
+	// on-demand loads refused the load of the lookup.
+	reasonLoadLimit = fmt.Sprintf("the agent started %d on-demand loads of the provider in the last minute, the most it allows for one provider", maxLoadsPerMinute)
+	// reasonCallerStopped is the reason when the context of the caller ended
+	// before a load stored a result the lookup counts.
+	reasonCallerStopped = "the caller stopped waiting before the load ended"
 )
 
 // Query names the key a token asks for.
@@ -167,7 +201,7 @@ func (discard) Warnf(string, ...any) {
 type Key struct {
 	// Source is the source whose JWKS lists the key.
 	Source Source
-	// ID is the key's kid, unique within its source.
+	// ID is the key's kid. A source may list several keys under one kid.
 	ID string
 	// JWK is the public key.
 	JWK jwk.Key
@@ -327,7 +361,9 @@ func (s *Set) newSource(t *trusted, from Source, address string, required bool) 
 		fetcher:  &fetcher{source: from, address: address, client: t.client, log: s.opts.Log},
 		required: required,
 	}
+	src.current.Store(&loadResult{result: noResult})
 	src.onDemand = onDemand{
+		current: &src.current,
 		load: func(ctx context.Context) {
 			if err := src.reload(ctx); err != nil {
 				s.opts.Log.Warnf("trusted providers: on-demand load: %v", err)
@@ -371,49 +407,90 @@ func (s *Set) sources() []*source {
 	return out
 }
 
-// Lookup returns the key q names from the keys loaded last, without a request.
-// It returns [ErrIssuerUnknown] for an issuer that matches no provider, and
-// [ErrKeyUnknown] when no loaded key has q.KID.
-func (s *Set) Lookup(q Query) (Key, error) {
+// Lookup returns the keys q names from the keys loaded last, without a
+// request: every usable signing key that the source of q.Issuer lists under
+// q.KID, in the order of its JWKS. It returns [ErrIssuerUnknown] for an issuer that matches
+// no provider, and [ErrKeyUnknown] when no loaded key has q.KID, whatever the
+// last load ended with. The slice it returns without an error is not empty,
+// and the caller does not modify it.
+func (s *Set) Lookup(q Query) ([]Key, error) {
 	src, t, realm, err := s.resolve(q.Issuer)
 	if err != nil {
-		return Key{}, err
+		return nil, err
 	}
 	if src == nil {
 		var ok bool
 		if src, ok = s.knownRealm(realmKey{t, realm}); !ok {
-			return Key{}, ErrKeyUnknown
+			return nil, ErrKeyUnknown
 		}
 	}
 	return src.lookup(q.KID)
 }
 
-// LookupOrReload returns the key q names. When no loaded key of the source of
-// q.Issuer matches, it starts an on-demand load of that source, waits until the
-// load ends, ctx ends, or [Options.ReloadWait] passes, and looks again among
-// the keys loaded by then. A realm no token named before is loaded the same
-// way. The errors are those of [Set.Lookup].
+// LookupOrReload returns the keys q names, as [Set.Lookup] does. When no
+// loaded key of the source of q.Issuer matches, it starts an on-demand load of
+// that source, waits until the load ends, ctx ends, or [Options.ReloadWait]
+// passes, and looks again among the keys loaded by then. A realm no token named
+// before is loaded the same way. It returns [ErrIssuerUnknown] for an issuer
+// that matches no provider, as [Set.Lookup] does.
 //
 // Callers that ask while such a load runs wait for it rather than start
 // another. One source loads at most once a minute this way, a [Set] starts at
 // most 10 such loads a minute over the sources of one provider, and it keeps
 // at most 1000 realms. When a limit refuses a load, the key is looked up among
-// the keys already loaded and no request is sent. A load that fails logs a
-// warning and keeps the previous keys of the source, unless it got a JWKS
-// without a usable key, which removes them. A load goes on after the wait
-// ends.
-func (s *Set) LookupOrReload(ctx context.Context, q Query) (Key, error) {
+// the keys already loaded and no request is sent. A load that loads no usable
+// key logs a warning. A 404 or a failed load keeps the previous keys of the
+// source, and an answer without a usable key removes them. A load goes on
+// after the wait ends.
+//
+// A lookup that finds no key returns the error of the result it counts: an
+// answer or a 404 gives [ErrKeyUnknown], and a failed load
+// [ErrKeysUnavailable]. A load ends with an answer when it gets a JWKS: a
+// document of at most 1 MiB (1048576 bytes) whose member named exactly keys
+// holds an array. The array need not hold the kid or any usable key. A load
+// ends with a 404 when it gets HTTP 404, and as a failed load in every other
+// case. The lookup counts the last result of the source, a scheduled
+// [Set.Refresh] included, with two exceptions. A lookup that started or joined
+// an on-demand load counts only a result stored after that load started, and a
+// lookup whose load the limit of loads refused counts only a result stored
+// after the refusal. When no such result is stored by the time the wait ends,
+// the lookup counts no result and returns [ErrKeysUnavailable]. A realm that
+// the limit of loads or of realms refuses has no result either. [Set.Lookup]
+// reports none of these cases with ErrKeysUnavailable.
+func (s *Set) LookupOrReload(ctx context.Context, q Query) ([]Key, error) {
 	src, err := s.sourceFor(ctx, q.Issuer)
 	if err != nil {
-		return Key{}, err
+		return nil, err
 	}
-	if key, ok := src.find(q.KID); ok {
-		return key, nil
+	if keys, ok := src.find(q.KID); ok {
+		return keys, nil
 	}
-	ctx, cancel := context.WithTimeout(ctx, s.opts.ReloadWait)
+	waitCtx, cancel := context.WithTimeout(ctx, s.opts.ReloadWait)
 	defer cancel()
-	src.onDemand.wait(ctx)
-	return src.lookup(q.KID)
+	from, waitErr := src.onDemand.wait(waitCtx)
+	// last is read once, so the keys and the result come from the same load.
+	last := src.current.Load()
+	if keys, ok := last.find(q.KID); ok {
+		return keys, nil
+	}
+	if waitErr != nil && last == from {
+		return nil, &UnavailableError{Reason: s.waitReason(ctx, waitErr)}
+	}
+	return nil, last.lookupErr()
+}
+
+// waitReason returns the reason of a wait for an on-demand load that ended
+// with err before a result was stored. It names one of three causes: the limit
+// of loads refused the load, the context ctx of the caller ended, or
+// [Options.ReloadWait] passed.
+func (s *Set) waitReason(ctx context.Context, err error) string {
+	switch {
+	case errors.Is(err, errLoadRefused):
+		return reasonLoadLimit
+	case ctx.Err() != nil:
+		return reasonCallerStopped
+	}
+	return fmt.Sprintf("the load did not end within %s", s.opts.ReloadWait)
 }
 
 // sourceFor returns the source of issuer, adding a realm no token named
@@ -446,15 +523,14 @@ func (s *Set) resolve(issuer string) (*source, *trusted, string, error) {
 // Refresh fetches the keys of every source once and replaces the loaded keys
 // with them, as [Set.LookupOrReload] does for one source. The returned error
 // has a line for each single provider and each required realm whose reload did
-// not load a usable key, in the order of their [Source.ID]. When a realm
-// outside [Provider.ReadinessRealms] fails, the error ends with one line for
-// all such realms, because the realms of a provider share its server and any
-// sender can name a realm. That line counts the failed realms and those of
-// them without keys, and quotes the error of the failed realm whose name sorts
-// first. Eight
-// sources fetch at a time. The Set drops a realm that is not required and never
-// loaded a usable key a minute after its last load started, rather than asking
-// for it again; a realm that loaded keys once keeps its place.
+// not load a usable key, in the order of their [Source.ID]. A realm outside
+// [Provider.ReadinessRealms] whose reload did not load a usable key gives no
+// line: Refresh logs one warning for each such realm instead, in the order of
+// the realm names. Each warning names the realm, what its load ended with, and
+// the request. Eight sources fetch at a time. The Set drops a realm that is not
+// required and never loaded a usable key a minute after its last load started,
+// rather than asking for it again; a realm that loaded keys once keeps its
+// place.
 func (s *Set) Refresh(ctx context.Context) error {
 	return s.refresh(ctx, 0)
 }
@@ -481,75 +557,57 @@ func (s *Set) refresh(ctx context.Context, spread time.Duration) error {
 		})
 	}
 	wg.Wait()
+	for _, err := range otherRealmErrors(sources, errs) {
+		s.opts.Log.Warnf("trusted providers: reload: %v", err)
+	}
 	return joinReloadErrors(sources, errs)
 }
 
+// failure is the error of the reload of one source, with the key that orders
+// it among the others.
+type failure struct {
+	key string
+	err error
+}
+
 // joinReloadErrors joins errs, the errors of the reloads of sources by index,
-// into the lines [Set.Refresh] describes.
+// into the lines of the single providers and the required realms that
+// [Set.Refresh] describes.
 func joinReloadErrors(sources []*source, errs []error) error {
-	type failure struct {
-		id  string
-		err error
-	}
 	var own []failure
-	var others otherRealms
 	for i, src := range sources {
-		from := src.fetcher.source
-		if from.Realm != "" && !src.required {
-			others.add(src, errs[i])
-			continue
-		}
-		if errs[i] != nil {
+		if from := src.fetcher.source; errs[i] != nil && !otherRealm(src) {
 			own = append(own, failure{from.ID(), errs[i]})
 		}
 	}
-	slices.SortFunc(own, func(a, b failure) int { return strings.Compare(a.id, b.id) })
-	out := make([]error, 0, len(own)+1)
-	for _, f := range own {
-		out = append(out, f.err)
-	}
-	if line := others.line(); line != nil {
-		out = append(out, line)
-	}
-	return errors.Join(out...)
+	return errors.Join(sortedErrors(own)...)
 }
 
-// otherRealms sums up the reloads of the realms outside
-// [Provider.ReadinessRealms], which [Set.Refresh] reports in one line.
-type otherRealms struct {
-	// total counts the realms.
-	total int
-	// failed counts the realms that did not reload.
-	failed int
-	// keyless counts the failed realms that hold no keys.
-	keyless int
-	// firstName is the name that sorts first among the failed realms, and
-	// firstErr is the error of that realm.
-	firstName string
-	firstErr  error
+// otherRealmErrors returns the non-nil errors of the reloads of the realms
+// outside [Provider.ReadinessRealms], in the order of the realm names. errs
+// holds the error of the reload of each of sources, by index.
+func otherRealmErrors(sources []*source, errs []error) []error {
+	var others []failure
+	for i, src := range sources {
+		if errs[i] != nil && otherRealm(src) {
+			others = append(others, failure{src.fetcher.source.Realm, errs[i]})
+		}
+	}
+	return sortedErrors(others)
 }
 
-// add records the reload of src, which failed with err unless err is nil.
-func (r *otherRealms) add(src *source, err error) {
-	r.total++
-	if err == nil {
-		return
-	}
-	r.failed++
-	if len(src.last().keys) == 0 {
-		r.keyless++
-	}
-	if name := src.fetcher.source.Realm; r.firstErr == nil || name < r.firstName {
-		r.firstName, r.firstErr = name, err
-	}
-}
+// otherRealm reports whether src is a realm outside [Provider.ReadinessRealms],
+// the one kind of source that is not required.
+func otherRealm(src *source) bool { return !src.required }
 
-// line returns the line of the failed realms, and nil when none failed.
-func (r *otherRealms) line() error {
-	if r.failed == 0 {
-		return nil
+// sortedErrors returns the errors of failures in the order of their keys.
+func sortedErrors(failures []failure) []error {
+	slices.SortFunc(failures, func(a, b failure) int { return strings.Compare(a.key, b.key) })
+	out := make([]error, len(failures))
+	for i, f := range failures {
+		out[i] = f.err
 	}
-	return fmt.Errorf("%d of %d realms outside readinessRealms did not reload, %d of them without keys; the first by name: %w", r.failed, r.total, r.keyless, r.firstErr)
+	return out
 }
 
 // Run loads the required sources, retrying each with growing pauses until it
